@@ -1,30 +1,32 @@
-import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { FormEventHandler } from 'react';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
+    BayOption,
+    ItemType,
     MaintenanceCategory,
-    WorkOrder,
-    WorkOrderVehicle,
-    WorkOrderItem,
+    MechanicOption,
     SparePartOption,
     VendorOption,
-    MechanicOption,
-    BayOption,
-    statusOptions,
-    priorityOptions,
-    typeOptions,
+    WorkOrder,
+    WorkOrderItem,
+    WorkOrderVehicle,
+    formatCurrency,
     itemTypeOptions,
     locationOptions,
-    formatCurrency,
+    priorityOptions,
+    statusOptions,
+    typeOptions,
 } from '../../../../maintenanceUtils';
 
 interface Props {
@@ -86,17 +88,19 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts, 
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(prefixedRoute('maintenance.work-orders.update', wo.id));
+        patch(prefixedRoute('maintenance.work-orders.update', wo.id), {
+            onError: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+        });
     };
 
-    const addItem = () => {
+    const addItem = (): void => {
         setData('items', [
             ...data.items,
             { item_type: 'part', product_id: null, warehouse_id: null, name: '', description: null, quantity: 1, unit: 'pcs', unit_price: 0, total_price: 0 },
         ]);
     };
 
-    const updateItem = (index: number, field: keyof WorkOrderItem, value: string | number | null) => {
+    const updateItem = (index: number, field: keyof WorkOrderItem, value: string | number | null): void => {
         const newItems = [...data.items];
         const item = { ...newItems[index], [field]: value };
 
@@ -113,7 +117,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts, 
         setData('items', newItems);
     };
 
-    const selectSparePart = (index: number, productId: string) => {
+    const selectSparePart = (index: number, productId: string): void => {
         const newItems = [...data.items];
         const item = { ...newItems[index] };
 
@@ -136,7 +140,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts, 
         setData('items', newItems);
     };
 
-    const removeItem = (index: number) => {
+    const removeItem = (index: number): void => {
         setData('items', data.items.filter((_, i) => i !== index));
     };
 
@@ -146,365 +150,615 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts, 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.work_orders.edit_title')}</h2>
-                        <p className="mt-1 font-mono text-sm text-gray-500">{wo.reference_number}</p>
-                    </div>
-                    <Link href={prefixedRoute('maintenance.work-orders.show', wo.id)}>
-                        <SecondaryButton>{t('maintenance.actions.back')}</SecondaryButton>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={`Edit SPK: ${wo.reference_number}`}
+                    subtitle="Perbarui informasi pekerjaan, status, kendaraan, teknisi, lokasi servis, dan rincian sparepart/jasa."
+                    actions={
+                        <Link
+                            href={prefixedRoute('maintenance.work-orders.show', wo.id)}
+                            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        >
+                            ← Kembali ke Detail SPK
+                        </Link>
+                    }
+                />
             }
         >
-            <Head title={`${t('maintenance.work_orders.edit_title')} — ${wo.reference_number}`} />
+            <Head title={`Edit SPK ${wo.reference_number} — ${wo.title}`} />
             <MaintenanceNav />
 
-            <form onSubmit={submit} className="space-y-6">
-                {/* Main Info */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.work_orders.job_info')}</h3>
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div className="sm:col-span-2">
-                            <InputLabel htmlFor="title" value={t('maintenance.work_orders.title')} />
-                            <TextInput id="title" className="mt-1 block w-full" value={data.title} onChange={(e) => setData('title', e.target.value)} required />
-                            <InputError message={errors.title} className="mt-2" />
-                        </div>
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-28">
+                {/* Breadcrumb Navigation */}
+                <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">Fleet</Link>
+                    <span>/</span>
+                    <Link href={prefixedRoute('maintenance.work-orders.index')} className="hover:text-slate-700 dark:hover:text-slate-200">Maintenance & Work Orders</Link>
+                    <span>/</span>
+                    <Link href={prefixedRoute('maintenance.work-orders.show', wo.id)} className="hover:text-slate-700 dark:hover:text-slate-200">{wo.reference_number}</Link>
+                    <span>/</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">Edit</span>
+                </nav>
 
-                        <div>
-                            <InputLabel htmlFor="vehicle_id" value={t('maintenance.work_orders.vehicle')} />
-                            <Select
-                                id="vehicle_id"
-                                className="mt-1 w-full"
-                                value={data.vehicle_id}
-                                onChange={(val) => setData('vehicle_id', val)}
-                                searchable
-                                options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
-                                placeholder={t('maintenance.work_orders.select_vehicle')}
-                            />
-                            <InputError message={errors.vehicle_id} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="category_id" value={t('maintenance.work_orders.category')} />
-                            <Select
-                                id="category_id"
-                                className="mt-1 w-full"
-                                value={data.category_id}
-                                onChange={(val) => setData('category_id', val)}
-                                searchable
-                                options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
-                                placeholder={t('maintenance.work_orders.select_category')}
-                            />
-                            <InputError message={errors.category_id} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="status" value={t('maintenance.work_orders.status_label')} />
-                            <Select id="status" className="mt-1 w-full" value={data.status} onChange={(val) => setData('status', val)} options={statusOptions(t)} />
-                            <InputError message={errors.status} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="priority" value={t('maintenance.work_orders.priority_label')} />
-                            <Select id="priority" className="mt-1 w-full" value={data.priority} onChange={(val) => setData('priority', val)} options={priorityOptions(t)} />
-                            <InputError message={errors.priority} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="type" value={t('maintenance.work_orders.type_label')} />
-                            <Select id="type" className="mt-1 w-full" value={data.type} onChange={(val) => setData('type', val)} options={typeOptions(t)} />
-                            <InputError message={errors.type} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="scheduled_date" value={t('maintenance.work_orders.scheduled_date')} />
-                            <TextInput id="scheduled_date" type="date" className="mt-1 block w-full" value={data.scheduled_date} onChange={(e) => setData('scheduled_date', e.target.value)} />
-                            <InputError message={errors.scheduled_date} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="started_at" value={t('maintenance.work_orders.started_at')} />
-                            <TextInput id="started_at" type="datetime-local" className="mt-1 block w-full" value={data.started_at} onChange={(e) => setData('started_at', e.target.value)} />
-                            <InputError message={errors.started_at} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="completed_at" value={t('maintenance.work_orders.completed_at')} />
-                            <TextInput id="completed_at" type="datetime-local" className="mt-1 block w-full" value={data.completed_at} onChange={(e) => setData('completed_at', e.target.value)} />
-                            <InputError message={errors.completed_at} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="odometer_at_service" value={t('maintenance.work_orders.odometer')} />
-                            <TextInput id="odometer_at_service" type="number" className="mt-1 block w-full" value={data.odometer_at_service} onChange={(e) => setData('odometer_at_service', e.target.value)} />
-                            <InputError message={errors.odometer_at_service} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="service_location" value={t('maintenance.work_orders.service_location')} />
-                            <Select id="service_location" className="mt-1 w-full" value={data.service_location} onChange={(val) => setData('service_location', val)} options={locationOptions(t)} />
-                            <InputError message={errors.service_location} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="vendor_partner_id" value={t('maintenance.work_orders.vendor')} />
-                            {vendors.length > 0 ? (
-                                <Select
-                                    id="vendor_partner_id"
-                                    className="mt-1 w-full"
-                                    value={data.vendor_partner_id}
-                                    onChange={(val) => {
-                                        const vendor = vendors.find((v) => String(v.id) === val);
-                                        setData({
-                                            ...data,
-                                            vendor_partner_id: val,
-                                            vendor_name: vendor?.name ?? data.vendor_name,
-                                        });
-                                    }}
-                                    options={[
-                                        { value: '', label: t('maintenance.work_orders.vendor_select') },
-                                        ...vendors.map((v) => ({
-                                            value: String(v.id),
-                                            label: v.code ? `${v.name} (${v.code})` : v.name,
-                                        })),
-                                    ]}
-                                />
-                            ) : (
-                                <TextInput id="vendor_name" className="mt-1 block w-full" value={data.vendor_name} onChange={(e) => setData('vendor_name', e.target.value)} />
-                            )}
-                            {vendors.length > 0 && !data.vendor_partner_id && (
-                                <TextInput id="vendor_name" className="mt-2 block w-full" value={data.vendor_name} onChange={(e) => setData('vendor_name', e.target.value)} placeholder={t('maintenance.work_orders.vendor_placeholder')} />
-                            )}
-                            <InputError message={errors.vendor_partner_id || errors.vendor_name} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="mechanic_user_id" value={t('maintenance.work_orders.mechanic')} />
-                            {mechanics.length > 0 && data.service_location === 'in_house' ? (
-                                <Select
-                                    id="mechanic_user_id"
-                                    className="mt-1 w-full"
-                                    value={data.mechanic_user_id}
-                                    onChange={(val) => {
-                                        const mechanic = mechanics.find((m) => String(m.id) === val);
-                                        setData({
-                                            ...data,
-                                            mechanic_user_id: val,
-                                            mechanic_name: mechanic?.name ?? '',
-                                        });
-                                    }}
-                                    options={[
-                                        { value: '', label: t('maintenance.work_orders.mechanic_select') },
-                                        ...mechanics.map((m) => ({ value: String(m.id), label: m.name })),
-                                    ]}
-                                />
-                            ) : (
-                                <TextInput id="mechanic_name" className="mt-1 block w-full" value={data.mechanic_name} onChange={(e) => setData('mechanic_name', e.target.value)} />
-                            )}
-                            <InputError message={errors.mechanic_user_id || errors.mechanic_name} className="mt-2" />
-                        </div>
-
-                        {data.service_location === 'in_house' && (
+                <form onSubmit={submit} className="space-y-6">
+                    {/* Card 1: Identitas & Klasifikasi Pekerjaan */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-100 text-base font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">1</span>
                             <div>
-                                <InputLabel htmlFor="bay_id" value={t('maintenance.work_orders.bay')} />
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">Identitas & Klasifikasi SPK</h3>
+                                <p className="text-xs text-slate-500">Judul perbaikan, unit kendaraan, kategori servis, status, dan prioritas pekerjaan.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            <div className="sm:col-span-2 lg:col-span-3">
+                                <InputLabel htmlFor="title" value="Judul Perbaikan / Servis *" />
+                                <TextInput
+                                    id="title"
+                                    className="mt-1.5 block w-full !rounded-2xl font-bold shadow-2xs"
+                                    value={data.title}
+                                    onChange={(e) => setData('title', e.target.value)}
+                                    required
+                                    placeholder="Ganti Oli Mesin & Filter, Ganti Kampas Rem Depan..."
+                                />
+                                <InputError message={errors.title} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="vehicle_id" value="Unit Kendaraan *" />
                                 <Select
-                                    id="bay_id"
-                                    className="mt-1 w-full"
-                                    value={data.bay_id}
-                                    onChange={(val) => setData('bay_id', val)}
-                                    options={[
-                                        { value: '', label: t('maintenance.work_orders.bay_select') },
-                                        ...bays.map((bay) => ({
-                                            value: String(bay.id),
-                                            label: `${bay.code} — ${bay.name}`,
-                                        })),
-                                    ]}
+                                    id="vehicle_id"
+                                    className="mt-1.5 w-full"
+                                    value={data.vehicle_id}
+                                    onChange={(val) => setData('vehicle_id', val)}
+                                    searchable
+                                    options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
+                                    placeholder="Pilih Kendaraan..."
                                 />
-                                <InputError message={errors.bay_id} className="mt-2" />
+                                <InputError message={errors.vehicle_id} className="mt-1" />
                             </div>
-                        )}
 
-                        <div>
-                            <InputLabel htmlFor="estimated_hours" value={t('maintenance.work_orders.estimated_hours')} />
-                            <TextInput id="estimated_hours" type="number" step="0.25" className="mt-1 block w-full" value={data.estimated_hours} onChange={(e) => setData('estimated_hours', e.target.value)} />
-                            <InputError message={errors.estimated_hours} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="actual_hours" value={t('maintenance.work_orders.actual_hours')} />
-                            <TextInput id="actual_hours" type="number" step="0.25" className="mt-1 block w-full" value={data.actual_hours} onChange={(e) => setData('actual_hours', e.target.value)} />
-                            <InputError message={errors.actual_hours} className="mt-2" />
-                        </div>
-
-                        {data.status === 'in_progress' && (
-                            <label className="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2">
-                                <input
-                                    type="checkbox"
-                                    checked={data.waiting_parts}
-                                    onChange={(e) => setData('waiting_parts', e.target.checked)}
-                                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                            <div>
+                                <InputLabel htmlFor="category_id" value="Kategori Maintenance *" />
+                                <Select
+                                    id="category_id"
+                                    className="mt-1.5 w-full"
+                                    value={data.category_id}
+                                    onChange={(val) => setData('category_id', val)}
+                                    searchable
+                                    options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
+                                    placeholder="Pilih Kategori..."
                                 />
-                                {t('maintenance.work_orders.waiting_parts')}
-                            </label>
-                        )}
-
-                        <div>
-                            <InputLabel htmlFor="invoice_number" value={t('maintenance.work_orders.invoice_number')} />
-                            <TextInput id="invoice_number" className="mt-1 block w-full" value={data.invoice_number} onChange={(e) => setData('invoice_number', e.target.value)} />
-                            <InputError message={errors.invoice_number} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="estimated_cost" value={t('maintenance.work_orders.estimated_cost')} />
-                            <TextInput id="estimated_cost" type="number" className="mt-1 block w-full" value={String(data.estimated_cost)} onChange={(e) => setData('estimated_cost', e.target.value)} />
-                            <InputError message={errors.estimated_cost} className="mt-2" />
-                        </div>
-
-                        {isCompleted && (
-                            <>
-                                <div>
-                                    <InputLabel htmlFor="actual_labor_cost" value={t('maintenance.work_orders.actual_labor')} />
-                                    <TextInput id="actual_labor_cost" type="number" className="mt-1 block w-full" value={String(data.actual_labor_cost)} onChange={(e) => setData('actual_labor_cost', e.target.value)} />
-                                    <InputError message={errors.actual_labor_cost} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="actual_parts_cost" value={t('maintenance.work_orders.actual_parts')} />
-                                    <TextInput id="actual_parts_cost" type="number" className="mt-1 block w-full" value={String(data.actual_parts_cost)} onChange={(e) => setData('actual_parts_cost', e.target.value)} />
-                                    <InputError message={errors.actual_parts_cost} className="mt-2" />
-                                </div>
-                            </>
-                        )}
-
-                        <div className="sm:col-span-2">
-                            <InputLabel htmlFor="description" value={t('maintenance.work_orders.description')} />
-                            <textarea id="description" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                value={data.description} onChange={(e) => setData('description', e.target.value)} />
-                            <InputError message={errors.description} className="mt-2" />
-                        </div>
-
-                        <div className="sm:col-span-2">
-                            <InputLabel htmlFor="notes" value={t('maintenance.work_orders.notes')} />
-                            <textarea id="notes" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
-                            <InputError message={errors.notes} className="mt-2" />
-                        </div>
-
-                        {isCompleted && (
-                            <div className="sm:col-span-2">
-                                <InputLabel htmlFor="resolution_notes" value={t('maintenance.work_orders.resolution_notes')} />
-                                <textarea id="resolution_notes" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                    value={data.resolution_notes} onChange={(e) => setData('resolution_notes', e.target.value)} />
-                                <InputError message={errors.resolution_notes} className="mt-2" />
+                                <InputError message={errors.category_id} className="mt-1" />
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Items */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-900">{t('maintenance.work_orders.parts_and_labor')}</h3>
-                        <button type="button" onClick={addItem}
-                            className="flex items-center gap-1 rounded-lg border border-dashed border-indigo-400 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50">
-                            <PlusIcon /> {t('maintenance.work_orders.add_item')}
-                        </button>
+                            <div>
+                                <InputLabel htmlFor="status" value="Status SPK *" />
+                                <Select
+                                    id="status"
+                                    className="mt-1.5 w-full"
+                                    value={data.status}
+                                    onChange={(val) => setData('status', val as WorkOrder['status'])}
+                                    options={statusOptions(t)}
+                                />
+                                <InputError message={errors.status} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="priority" value="Tingkat Prioritas *" />
+                                <Select
+                                    id="priority"
+                                    className="mt-1.5 w-full"
+                                    value={data.priority}
+                                    onChange={(val) => setData('priority', val as WorkOrder['priority'])}
+                                    options={priorityOptions(t)}
+                                />
+                                <InputError message={errors.priority} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="type" value="Jenis Perbaikan *" />
+                                <Select
+                                    id="type"
+                                    className="mt-1.5 w-full"
+                                    value={data.type}
+                                    onChange={(val) => setData('type', val as WorkOrder['type'])}
+                                    options={typeOptions(t)}
+                                />
+                                <InputError message={errors.type} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="odometer_at_service" value="Odometer Kendaraan (km)" />
+                                <TextInput
+                                    id="odometer_at_service"
+                                    type="number"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.odometer_at_service}
+                                    onChange={(e) => setData('odometer_at_service', e.target.value)}
+                                    placeholder="contoh: 125000"
+                                />
+                                <InputError message={errors.odometer_at_service} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="scheduled_date" value="Tanggal Jadwal Servis" />
+                                <TextInput
+                                    id="scheduled_date"
+                                    type="date"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.scheduled_date}
+                                    onChange={(e) => setData('scheduled_date', e.target.value)}
+                                />
+                                <InputError message={errors.scheduled_date} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="started_at" value="Waktu Waktu Mulai Pengerjaan" />
+                                <TextInput
+                                    id="started_at"
+                                    type="datetime-local"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs text-xs"
+                                    value={data.started_at}
+                                    onChange={(e) => setData('started_at', e.target.value)}
+                                />
+                                <InputError message={errors.started_at} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="completed_at" value="Waktu Waktu Selesai Pengerjaan" />
+                                <TextInput
+                                    id="completed_at"
+                                    type="datetime-local"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs text-xs"
+                                    value={data.completed_at}
+                                    onChange={(e) => setData('completed_at', e.target.value)}
+                                />
+                                <InputError message={errors.completed_at} className="mt-1" />
+                            </div>
+                        </div>
                     </div>
 
-                    {data.items.length === 0 ? (
-                        <p className="py-6 text-center text-sm text-gray-400">{t('maintenance.work_orders.items_empty_short')}</p>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-200 text-xs text-gray-500">
-                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.type')}</th>
-                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.spare_part')}</th>
-                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.name')}</th>
-                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.qty')}</th>
-                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.unit')}</th>
-                                        <th className="pb-2 text-right font-medium">{t('maintenance.work_orders.item_columns.unit_price')}</th>
-                                        <th className="pb-2 text-right font-medium">{t('maintenance.work_orders.item_columns.total')}</th>
-                                        <th className="pb-2"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {data.items.map((item, i) => (
-                                        <tr key={i}>
-                                            <td className="py-2 pr-2">
-                                                <Select
-                                                    className="w-36"
-                                                    value={item.item_type}
-                                                    onChange={(val) => updateItem(i, 'item_type', val)}
-                                                    options={itemTypeOptions(t)}
-                                                />
-                                            </td>
-                                            <td className="py-2 pr-2">
-                                                {item.item_type === 'part' ? (
-                                                    <Select
-                                                        className="w-52"
-                                                        value={item.product_id != null ? String(item.product_id) : ''}
-                                                        onChange={(val) => selectSparePart(i, val)}
-                                                        searchable
-                                                        disabled={spareParts.length === 0}
-                                                        placeholder={spareParts.length === 0 ? t('maintenance.work_orders.no_spare_parts') : t('maintenance.work_orders.manual_no_stock')}
-                                                        options={[
-                                                            {
-                                                                value: '',
-                                                                label: spareParts.length === 0
-                                                                    ? t('maintenance.work_orders.no_spare_parts')
-                                                                    : t('maintenance.work_orders.manual_no_stock'),
-                                                            },
-                                                            ...spareParts.map((p) => ({
-                                                                value: String(p.id),
-                                                                label: p.name,
-                                                            })),
-                                                        ]}
-                                                    />
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">—</span>
-                                                )}
-                                            </td>
-                                            <td className="py-2 pr-2">
-                                                <TextInput className="w-48" value={item.name} onChange={(e) => updateItem(i, 'name', e.target.value)} placeholder={t('maintenance.work_orders.item_name_placeholder')} />
-                                            </td>
-                                            <td className="py-2 pr-2">
-                                                <TextInput type="number" className="w-20" value={String(item.quantity)} onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))} />
-                                            </td>
-                                            <td className="py-2 pr-2">
-                                                <TextInput className="w-20" value={item.unit ?? ''} onChange={(e) => updateItem(i, 'unit', e.target.value)} placeholder="pcs" />
-                                            </td>
-                                            <td className="py-2 pr-2">
-                                                <TextInput type="number" className="w-32 text-right" value={String(item.unit_price)} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} />
-                                            </td>
-                                            <td className="py-2 pr-2 text-right text-sm font-medium text-gray-900">{formatCurrency(item.total_price, localeTag)}</td>
-                                            <td className="py-2">
-                                                <button type="button" onClick={() => removeItem(i)} className="text-red-500 hover:text-red-700"><TrashIcon /></button>
-                                            </td>
+                    {/* Card 2: Lokasi & Penugasan Teknisi */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-100 text-base font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">2</span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">Lokasi Servis & Penugasan Teknisi</h3>
+                                <p className="text-xs text-slate-500">Penentuan pengerjaan internal/bengkel luar, penugasan mekanik, dan bay lokasi.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            <div>
+                                <InputLabel htmlFor="service_location" value="Lokasi Pengerjaan *" />
+                                <Select
+                                    id="service_location"
+                                    className="mt-1.5 w-full"
+                                    value={data.service_location}
+                                    onChange={(val) => setData('service_location', val as WorkOrder['service_location'])}
+                                    options={locationOptions(t)}
+                                />
+                                <InputError message={errors.service_location} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="vendor_partner_id" value="Bengkel / Vendor Rekanan" />
+                                {vendors.length > 0 ? (
+                                    <Select
+                                        id="vendor_partner_id"
+                                        className="mt-1.5 w-full"
+                                        value={data.vendor_partner_id}
+                                        onChange={(val) => {
+                                            const vendor = vendors.find((v) => String(v.id) === val);
+                                            setData({
+                                                ...data,
+                                                vendor_partner_id: val,
+                                                vendor_name: vendor?.name ?? data.vendor_name,
+                                            });
+                                        }}
+                                        options={[
+                                            { value: '', label: '— Pilih Vendor Bengkel Rekanan —' },
+                                            ...vendors.map((v) => ({
+                                                value: String(v.id),
+                                                label: v.code ? `${v.name} (${v.code})` : v.name,
+                                            })),
+                                        ]}
+                                    />
+                                ) : (
+                                    <TextInput
+                                        id="vendor_name"
+                                        className="mt-1.5 block w-full !rounded-2xl shadow-2xs"
+                                        value={data.vendor_name}
+                                        onChange={(e) => setData('vendor_name', e.target.value)}
+                                        placeholder="Nama Bengkel Luar..."
+                                    />
+                                )}
+                                {vendors.length > 0 && !data.vendor_partner_id && (
+                                    <TextInput
+                                        id="vendor_name"
+                                        className="mt-2 block w-full !rounded-2xl text-xs shadow-2xs"
+                                        value={data.vendor_name}
+                                        onChange={(e) => setData('vendor_name', e.target.value)}
+                                        placeholder="Atau ketik nama bengkel manual..."
+                                    />
+                                )}
+                                <InputError message={errors.vendor_partner_id || errors.vendor_name} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="mechanic_user_id" value="Mekanik / Teknisi Penanggung Jawab" />
+                                {mechanics.length > 0 && data.service_location === 'in_house' ? (
+                                    <Select
+                                        id="mechanic_user_id"
+                                        className="mt-1.5 w-full"
+                                        value={data.mechanic_user_id}
+                                        onChange={(val) => {
+                                            const mechanic = mechanics.find((m) => String(m.id) === val);
+                                            setData({
+                                                ...data,
+                                                mechanic_user_id: val,
+                                                mechanic_name: mechanic?.name ?? '',
+                                            });
+                                        }}
+                                        options={[
+                                            { value: '', label: '— Pilih Mekanisi Internal —' },
+                                            ...mechanics.map((m) => ({ value: String(m.id), label: m.name })),
+                                        ]}
+                                    />
+                                ) : (
+                                    <TextInput
+                                        id="mechanic_name"
+                                        className="mt-1.5 block w-full !rounded-2xl shadow-2xs"
+                                        value={data.mechanic_name}
+                                        onChange={(e) => setData('mechanic_name', e.target.value)}
+                                        placeholder="Nama Mekanik..."
+                                    />
+                                )}
+                                <InputError message={errors.mechanic_user_id || errors.mechanic_name} className="mt-1" />
+                            </div>
+
+                            {data.service_location === 'in_house' && (
+                                <div>
+                                    <InputLabel htmlFor="bay_id" value="Bay / Stall Lokasi Servis" />
+                                    <Select
+                                        id="bay_id"
+                                        className="mt-1.5 w-full"
+                                        value={data.bay_id}
+                                        onChange={(val) => setData('bay_id', val)}
+                                        options={[
+                                            { value: '', label: '— Pilih Bay Bengkel —' },
+                                            ...bays.map((bay) => ({
+                                                value: String(bay.id),
+                                                label: `${bay.code} — ${bay.name}`,
+                                            })),
+                                        ]}
+                                    />
+                                    <InputError message={errors.bay_id} className="mt-1" />
+                                </div>
+                            )}
+
+                            <div>
+                                <InputLabel htmlFor="estimated_hours" value="Estimasi Jam Pengerjaan (Jam)" />
+                                <TextInput
+                                    id="estimated_hours"
+                                    type="number"
+                                    step="0.25"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.estimated_hours}
+                                    onChange={(e) => setData('estimated_hours', e.target.value)}
+                                    placeholder="contoh: 2.5"
+                                />
+                                <InputError message={errors.estimated_hours} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="actual_hours" value="Aktual Jam Pengerjaan (Jam)" />
+                                <TextInput
+                                    id="actual_hours"
+                                    type="number"
+                                    step="0.25"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.actual_hours}
+                                    onChange={(e) => setData('actual_hours', e.target.value)}
+                                    placeholder="contoh: 3.0"
+                                />
+                                <InputError message={errors.actual_hours} className="mt-1" />
+                            </div>
+
+                            {data.status === 'in_progress' && (
+                                <div className="sm:col-span-2 flex items-center gap-2 pt-4">
+                                    <label className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300 cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/40 dark:bg-amber-950/30">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.waiting_parts}
+                                            onChange={(e) => setData('waiting_parts', e.target.checked)}
+                                            className="h-4 w-4 rounded-md border-amber-300 text-amber-600 focus:ring-amber-500"
+                                        />
+                                        <span>⏳ Tandai Kendaraan Menunggu Ketersediaan Sparepart</span>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Card 3: Rincian Sparepart & Jasa */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-base font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">3</span>
+                                <div>
+                                    <h3 className="text-base font-black text-slate-900 dark:text-white">Rincian Item Sparepart & Jasa Maintanance</h3>
+                                    <p className="text-xs text-slate-500">Tambah rincian suku cadang, ongkos kerja mekanik, dan biaya faktur pendukung.</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={addItem}
+                                className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-black text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900/40 dark:bg-indigo-950/40 dark:text-indigo-300"
+                            >
+                                <PlusIcon />
+                                <span>Tambah Item</span>
+                            </button>
+                        </div>
+
+                        {/* Financial Inputs */}
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <InputLabel htmlFor="invoice_number" value="Nomor Faktur / Invoice Vendor" />
+                                <TextInput
+                                    id="invoice_number"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.invoice_number}
+                                    onChange={(e) => setData('invoice_number', e.target.value)}
+                                    placeholder="INV/2026/08/..."
+                                />
+                                <InputError message={errors.invoice_number} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="estimated_cost" value="Estimasi Total Biaya (Rp)" />
+                                <TextInput
+                                    id="estimated_cost"
+                                    type="number"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={String(data.estimated_cost)}
+                                    onChange={(e) => setData('estimated_cost', e.target.value)}
+                                    placeholder="0"
+                                />
+                                <InputError message={errors.estimated_cost} className="mt-1" />
+                            </div>
+
+                            {isCompleted && (
+                                <>
+                                    <div>
+                                        <InputLabel htmlFor="actual_labor_cost" value="Aktual Biaya Jasa (Rp)" />
+                                        <TextInput
+                                            id="actual_labor_cost"
+                                            type="number"
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                            value={String(data.actual_labor_cost)}
+                                            onChange={(e) => setData('actual_labor_cost', e.target.value)}
+                                        />
+                                        <InputError message={errors.actual_labor_cost} className="mt-1" />
+                                    </div>
+                                    <div>
+                                        <InputLabel htmlFor="actual_parts_cost" value="Aktual Biaya Sparepart (Rp)" />
+                                        <TextInput
+                                            id="actual_parts_cost"
+                                            type="number"
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                            value={String(data.actual_parts_cost)}
+                                            onChange={(e) => setData('actual_parts_cost', e.target.value)}
+                                        />
+                                        <InputError message={errors.actual_parts_cost} className="mt-1" />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Dynamic Item Table */}
+                        {data.items.length === 0 ? (
+                            <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
+                                <p className="text-xs font-bold text-slate-400">Belum ada item rincian sparepart/jasa ditambahkan.</p>
+                                <button
+                                    type="button"
+                                    onClick={addItem}
+                                    className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                >
+                                    <PlusIcon /> Tambah Item Pertama
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-850/50 p-2">
+                                <table className="min-w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-slate-200/60 text-[10px] font-black uppercase text-slate-400 dark:border-slate-800">
+                                            <th className="pb-2 text-left px-2">Tipe Item</th>
+                                            <th className="pb-2 text-left px-2">Pilih Stok Sparepart</th>
+                                            <th className="pb-2 text-left px-2">Nama / Deskripsi Item</th>
+                                            <th className="pb-2 text-left px-2">Qty</th>
+                                            <th className="pb-2 text-left px-2">Satuan</th>
+                                            <th className="pb-2 text-right px-2">Harga Satuan (Rp)</th>
+                                            <th className="pb-2 text-right px-2">Total Harga</th>
+                                            <th className="pb-2 w-10"></th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="border-t-2 border-gray-300">
-                                        <td colSpan={6} className="pt-3 text-right text-sm font-semibold text-gray-700">{t('maintenance.work_orders.total')}</td>
-                                        <td className="pt-3 text-right text-sm font-bold text-gray-900">{formatCurrency(totalItems, localeTag)}</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    )}
-                </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {data.items.map((item, i) => (
+                                            <tr key={i} className="hover:bg-white/60 dark:hover:bg-slate-800/60">
+                                                <td className="py-2.5 px-2">
+                                                    <Select
+                                                        className="w-32 !py-1 text-xs"
+                                                        value={item.item_type}
+                                                        onChange={(val) => updateItem(i, 'item_type', val as ItemType)}
+                                                        options={itemTypeOptions(t)}
+                                                    />
+                                                </td>
+                                                <td className="py-2.5 px-2">
+                                                    {item.item_type === 'part' ? (
+                                                        <Select
+                                                            className="w-48 !py-1 text-xs"
+                                                            value={item.product_id != null ? String(item.product_id) : ''}
+                                                            onChange={(val) => selectSparePart(i, val)}
+                                                            searchable
+                                                            disabled={spareParts.length === 0}
+                                                            placeholder={spareParts.length === 0 ? 'Stok Tidak Ada' : 'Manual / Pilih Stok'}
+                                                            options={[
+                                                                { value: '', label: spareParts.length === 0 ? 'Stok Tidak Ada' : 'Manual / Non-Stok' },
+                                                                ...spareParts.map((p) => ({ value: String(p.id), label: p.name })),
+                                                            ]}
+                                                        />
+                                                    ) : (
+                                                        <span className="text-[10px] text-slate-400">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2.5 px-2">
+                                                    <TextInput
+                                                        className="w-48 !py-1 text-xs !rounded-xl"
+                                                        value={item.name}
+                                                        onChange={(e) => updateItem(i, 'name', e.target.value)}
+                                                        placeholder="Nama barang / jasa..."
+                                                    />
+                                                </td>
+                                                <td className="py-2.5 px-2">
+                                                    <TextInput
+                                                        type="number"
+                                                        className="w-16 !py-1 text-xs !rounded-xl font-mono text-center"
+                                                        value={String(item.quantity)}
+                                                        onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))}
+                                                    />
+                                                </td>
+                                                <td className="py-2.5 px-2">
+                                                    <TextInput
+                                                        className="w-16 !py-1 text-xs !rounded-xl"
+                                                        value={item.unit ?? ''}
+                                                        onChange={(e) => updateItem(i, 'unit', e.target.value)}
+                                                        placeholder="pcs"
+                                                    />
+                                                </td>
+                                                <td className="py-2.5 px-2">
+                                                    <TextInput
+                                                        type="number"
+                                                        className="w-28 !py-1 text-xs !rounded-xl font-mono text-right"
+                                                        value={String(item.unit_price)}
+                                                        onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))}
+                                                    />
+                                                </td>
+                                                <td className="py-2.5 px-2 text-right font-mono font-bold text-slate-900 dark:text-white">
+                                                    {formatCurrency(item.total_price, localeTag)}
+                                                </td>
+                                                <td className="py-2.5 px-2 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeItem(i)}
+                                                        className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/40"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className="border-t border-slate-200 dark:border-slate-700">
+                                            <td colSpan={6} className="pt-3 text-right text-xs font-black text-slate-700 dark:text-slate-300">
+                                                Total Rincian Item:
+                                            </td>
+                                            <td className="pt-3 text-right font-mono text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                                {formatCurrency(totalItems, localeTag)}
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        )}
+                    </div>
 
-                <div className="flex justify-end gap-3">
-                    <Link href={prefixedRoute('maintenance.work-orders.show', wo.id)}>
-                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                    </Link>
-                    <PrimaryButton disabled={processing}>
-                        {processing ? t('maintenance.actions.saving') : t('maintenance.work_orders.submit_update')}
-                    </PrimaryButton>
-                </div>
-            </form>
+                    {/* Card 4: Deskripsi & Catatan Pekerjaan */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-100 text-base font-black text-sky-700 dark:bg-sky-950 dark:text-sky-300">4</span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">Deskripsi Pekerjaan & Catatan Penyelesaian</h3>
+                                <p className="text-xs text-slate-500">Rincian kendala kendaraan, instruksi pekerjaan, serta rincian penyelesaian.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <InputLabel htmlFor="description" value="Deskripsi Masalah / Instuksi Pekerjaan" />
+                                <textarea
+                                    id="description"
+                                    rows={3}
+                                    className="mt-1.5 block w-full rounded-2xl border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white"
+                                    value={data.description}
+                                    onChange={(e) => setData('description', e.target.value)}
+                                    placeholder="Jelaskan kendala kendaraan atau instruksi khusus perbaikan..."
+                                />
+                                <InputError message={errors.description} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="notes" value="Catatan Tambahan" />
+                                <textarea
+                                    id="notes"
+                                    rows={2}
+                                    className="mt-1.5 block w-full rounded-2xl border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    placeholder="Catatan internal tambahan..."
+                                />
+                                <InputError message={errors.notes} className="mt-1" />
+                            </div>
+
+                            {isCompleted && (
+                                <div>
+                                    <InputLabel htmlFor="resolution_notes" value="Catatan Hasil Penyelesaian Pekerjaan" />
+                                    <textarea
+                                        id="resolution_notes"
+                                        rows={2}
+                                        className="mt-1.5 block w-full rounded-2xl border-emerald-200 bg-emerald-50/50 p-3 text-xs font-medium text-emerald-900 placeholder:text-emerald-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200"
+                                        value={data.resolution_notes}
+                                        onChange={(e) => setData('resolution_notes', e.target.value)}
+                                        placeholder="Tuliskan catatan hasil pengujian dan penyelesaian pekerjaan..."
+                                    />
+                                    <InputError message={errors.resolution_notes} className="mt-1" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sticky Action Footer */}
+                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
+                        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+                            <div className="flex items-center gap-2 text-xs">
+                                <span className="rounded-xl bg-slate-900 px-2.5 py-0.5 font-mono text-[11px] font-black text-white dark:bg-slate-200 dark:text-slate-900">
+                                    {wo.reference_number}
+                                </span>
+                                <span className="font-black text-slate-900 dark:text-white truncate max-w-xs">{data.title || wo.title}</span>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <Link
+                                    href={prefixedRoute('maintenance.work-orders.show', wo.id)}
+                                    className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                >
+                                    ← Batal
+                                </Link>
+                                <PrimaryButton
+                                    type="submit"
+                                    disabled={processing}
+                                    className="rounded-2xl px-6 py-3 text-sm font-black shadow-md"
+                                >
+                                    {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan SPK'}
+                                </PrimaryButton>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </DynamicLayout>
     );
 }

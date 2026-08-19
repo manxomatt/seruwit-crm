@@ -40,6 +40,7 @@ class VehicleController extends Controller
         $user = Auth::user();
 
         $vehicles = Vehicle::query()
+            ->with('homeBase:id,code,name')
             ->when(request('search'), function ($query, $search) {
                 $like = "%{$search}%";
 
@@ -51,6 +52,8 @@ class VehicleController extends Controller
                 });
             })
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
+            ->when(request('type'), fn ($query, $type) => $query->where('type', $type))
+            ->when(request('home_base_id'), fn ($query, $baseId) => $query->where('home_base_id', $baseId))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -60,7 +63,10 @@ class VehicleController extends Controller
             'filters' => [
                 'search' => request('search'),
                 'status' => request('status'),
+                'type' => request('type'),
+                'home_base_id' => request('home_base_id'),
             ],
+            'bases' => $this->homeBaseOptions(),
             'can' => [
                 'create' => $user->hasPermissionFor('fleet', 'create'),
                 'update' => $user->hasPermissionFor('fleet', 'update'),

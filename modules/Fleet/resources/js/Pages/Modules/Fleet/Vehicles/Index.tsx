@@ -1,19 +1,22 @@
-import DynamicLayout from '@/Layouts/DynamicLayout';
 import ColumnVisibilityMenu, {
     buildColumnVisibility,
     type ColumnDef,
 } from '@/Components/ColumnVisibilityMenu';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import PageHeader from '@/Components/PageHeader';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
-import PrimaryButton from '@/Components/PrimaryButton';
-import Select from '@/Components/Select';
-import TextInput from '@/Components/TextInput';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState, FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import FleetNav from '../../../../FleetNav';
-import PageHeader from '@/Components/PageHeader';
+
+interface HomeBase {
+    id: number;
+    code: string;
+    name: string;
+}
 
 interface Vehicle {
     id: number;
@@ -26,6 +29,8 @@ interface Vehicle {
     photo_url: string | null;
     status: string;
     odometer_km: number;
+    home_base_id?: number | null;
+    home_base?: HomeBase | null;
 }
 
 interface PaginatedVehicles {
@@ -40,51 +45,105 @@ interface PaginatedVehicles {
 interface Filters {
     search: string | null;
     status: string | null;
+    type?: string | null;
+    home_base_id?: string | null;
 }
 
 interface Props {
     vehicles: PaginatedVehicles;
     filters: Filters;
+    bases?: HomeBase[];
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-type VehicleColumn = 'photo' | 'name' | 'plate_number' | 'model_year' | 'color' | 'type' | 'odometer' | 'status';
+type VehicleColumn =
+    | 'photo'
+    | 'name'
+    | 'plate_number'
+    | 'type'
+    | 'brand'
+    | 'home_base'
+    | 'model_year'
+    | 'color'
+    | 'odometer'
+    | 'status';
 
-const STORAGE_KEY = 'fleet.vehicles.list.visibleColumns';
+const STORAGE_KEY = 'fleet.vehicles.list.visibleColumns.v2';
 
 const VEHICLE_COLUMN_KEYS: Array<{ key: VehicleColumn; required?: boolean; defaultVisible?: boolean }> = [
     { key: 'photo', defaultVisible: true },
     { key: 'name', required: true },
     { key: 'plate_number', required: true },
+    { key: 'type', defaultVisible: true },
+    { key: 'home_base', defaultVisible: true },
+    { key: 'brand', defaultVisible: true },
     { key: 'model_year', defaultVisible: false },
     { key: 'color', defaultVisible: false },
-    { key: 'type', defaultVisible: true },
     { key: 'odometer', defaultVisible: true },
     { key: 'status', defaultVisible: true },
 ];
 
-const STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'];
+const STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'] as const;
 
-const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-        case 'active':
-            return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20';
-        case 'maintenance':
-            return 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
-        case 'out_of_service':
-            return 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20';
-        case 'retired':
-            return 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20';
+const VEHICLE_TYPES = [
+    { key: 'car', label: 'Mobil', icon: '🚗' },
+    { key: 'van', label: 'Van / Minibus', icon: '🚐' },
+    { key: 'truck', label: 'Truk', icon: '🚚' },
+    { key: 'bus', label: 'Bus', icon: '🚌' },
+    { key: 'motorcycle', label: 'Motor', icon: '🏍️' },
+] as const;
+
+const getVehicleTypeInfo = (type: string) => {
+    switch (type) {
+        case 'car':
+            return { label: 'Mobil', icon: '🚗' };
+        case 'van':
+            return { label: 'Van / Minibus', icon: '🚐' };
+        case 'truck':
+            return { label: 'Truk', icon: '🚚' };
+        case 'bus':
+            return { label: 'Bus', icon: '🚌' };
+        case 'motorcycle':
+            return { label: 'Motor', icon: '🏍️' };
         default:
-            return 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20';
+            return { label: type, icon: '🚗' };
     }
 };
 
-const SearchIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-    </svg>
-);
+const getStatusBadge = (status: string) => {
+    switch (status) {
+        case 'active':
+            return {
+                label: 'Siap Operasi',
+                className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+                dot: 'bg-emerald-500',
+            };
+        case 'maintenance':
+            return {
+                label: 'Perawatan (Servis)',
+                className: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                dot: 'bg-amber-500',
+            };
+        case 'out_of_service':
+            return {
+                label: 'Rusak / Non-Aktif',
+                className: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                dot: 'bg-rose-500',
+            };
+        case 'retired':
+            return {
+                label: 'Purna Tugas / Dijual',
+                className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                dot: 'bg-slate-400',
+            };
+        default:
+            return {
+                label: status,
+                className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                dot: 'bg-slate-400',
+            };
+    }
+};
 
 const EyeIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -105,14 +164,8 @@ const TrashIcon = () => (
     </svg>
 );
 
-const CloseIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-);
-
 const EllipsisVerticalIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden>
         <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -122,18 +175,15 @@ const EllipsisVerticalIcon = () => (
 );
 
 const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
 
 const menuItemDangerClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/50';
 
 function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-            return null;
-        }
-
+        if (!raw) return null;
         const parsed = JSON.parse(raw) as Partial<Record<VehicleColumn, boolean>>;
         return parsed && typeof parsed === 'object' ? parsed : null;
     } catch {
@@ -141,29 +191,34 @@ function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
     }
 }
 
-export default function Index({ vehicles, filters, can }: Props): JSX.Element {
+export default function Index({ vehicles, filters, bases = [], can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+
     const [search, setSearch] = useState(filters.search || '');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
     const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [selected, setSelected] = useState<number[]>([]);
-    const [batchStatus, setBatchStatus] = useState('');
 
     const canBatch = can.update || can.delete;
     const pageIds = useMemo(() => vehicles.data.map((vehicle) => vehicle.id), [vehicles.data]);
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
     const somePageSelected = pageIds.some((id) => selected.includes(id));
-    const hasActiveFilters = Boolean(filters.search || filters.status);
-    const selectionMode = canBatch && selected.length > 0;
+    const hasActiveFilters = Boolean(filters.search || filters.status || filters.type || filters.home_base_id);
+
+    // KPI stats calculations
+    const totalVehicles = vehicles.total;
+    const activeVehiclesCount = vehicles.data.filter((v) => v.status === 'active').length;
+    const maintenanceVehiclesCount = vehicles.data.filter((v) => v.status === 'maintenance' || v.status === 'out_of_service').length;
 
     const columnDefs = useMemo<Array<ColumnDef<VehicleColumn>>>(
         () =>
             VEHICLE_COLUMN_KEYS.map((column) => ({
                 ...column,
-                label: t(`fleet.vehicles.columns.${column.key}`),
+                label: t(`fleet.vehicles.columns.${column.key}`, undefined, column.key.toUpperCase()),
             })),
         [t],
     );
@@ -184,12 +239,19 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         setSearch(filters.search || '');
     }, [filters.search]);
 
-    const applyFilters = (next: { search?: string; status?: string | null }) => {
+    const applyFilters = (next: {
+        search?: string;
+        status?: string | null;
+        type?: string | null;
+        home_base_id?: string | null;
+    }) => {
         router.get(
             prefixedRoute('fleet.vehicles.index'),
             {
                 search: (next.search ?? search) || undefined,
                 status: (next.status !== undefined ? next.status : filters.status) || undefined,
+                type: (next.type !== undefined ? next.type : filters.type) || undefined,
+                home_base_id: (next.home_base_id !== undefined ? next.home_base_id : filters.home_base_id) || undefined,
             },
             { preserveState: true, replace: true },
         );
@@ -202,6 +264,14 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
 
     const handleStatusFilter = (status: string) => {
         applyFilters({ status: status || null });
+    };
+
+    const handleTypeFilter = (type: string) => {
+        applyFilters({ type: type || null });
+    };
+
+    const handleBaseFilter = (baseId: string) => {
+        applyFilters({ home_base_id: baseId || null });
     };
 
     const clearFilters = () => {
@@ -218,14 +288,12 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
             if (allPageSelected) {
                 return prev.filter((id) => !pageIds.includes(id));
             }
-
             return Array.from(new Set([...prev, ...pageIds]));
         });
     };
 
     const clearSelection = () => {
         setSelected([]);
-        setBatchStatus('');
     };
 
     const openDeleteDialog = (vehicle: Vehicle) => {
@@ -247,15 +315,12 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         });
     };
 
-    const applyBatchStatus = () => {
-        if (!can.update || selected.length === 0 || !batchStatus) {
-            return;
-        }
-
+    const applyBatchStatus = (newStatus: string) => {
+        if (!can.update || selected.length === 0) return;
         setProcessing(true);
         router.patch(
             prefixedRoute('fleet.vehicles.batch-status'),
-            { ids: selected, status: batchStatus },
+            { ids: selected, status: newStatus },
             {
                 preserveScroll: true,
                 onSuccess: () => clearSelection(),
@@ -265,10 +330,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
     };
 
     const confirmBatchDelete = () => {
-        if (!can.delete || selected.length === 0) {
-            return;
-        }
-
+        if (!can.delete || selected.length === 0) return;
         setProcessing(true);
         router.post(
             prefixedRoute('fleet.vehicles.batch-destroy'),
@@ -284,179 +346,435 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         );
     };
 
-    const statusPills = [
-        { value: '', label: t('fleet.vehicles.all_statuses') },
-        ...STATUSES.map((status) => ({
-            value: status,
-            label: t(`fleet.status.${status}`),
-        })),
-    ];
-
     return (
         <DynamicLayout
             header={
                 <PageHeader
-                    title={t('fleet.title')}
-                    actions={can.create && (
-                        <Link href={prefixedRoute('fleet.vehicles.create')}>
-                            <PrimaryButton>{t('fleet.vehicles.add')}</PrimaryButton>
-                        </Link>
-                    )}
+                    title="Manajemen Unit Kendaraan & Armada"
+                    subtitle="Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan."
+                    actions={
+                        can.create && (
+                            <Link
+                                href={prefixedRoute('fleet.vehicles.create')}
+                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                            >
+                                <span>＋</span>
+                                <span>Tambah Kendaraan Baru</span>
+                            </Link>
+                        )
+                    }
                 />
             }
         >
-            <Head title={t('fleet.vehicles.title')} />
-
+            <Head title="Armada Kendaraan (Vehicles)" />
             <FleetNav />
 
-            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                <div className="border-b border-slate-100 dark:border-slate-800 px-4 py-3 sm:px-5">
-                    {selectionMode ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white">
-                                {t('fleet.vehicles.batch_selected', { count: selected.length })}
-                            </span>
-
-                            {can.update && (
-                                <div className="flex items-center gap-1.5">
-                                    <Select
-                                        className="!py-1.5 text-sm"
-                                        value={batchStatus}
-                                        onChange={setBatchStatus}
-                                        placeholder={t('fleet.vehicles.batch_status_placeholder')}
-                                        options={STATUSES.map((status) => ({
-                                            value: status,
-                                            label: t(`fleet.status.${status}`),
-                                        }))}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={applyBatchStatus}
-                                        disabled={!batchStatus || processing}
-                                        className="inline-flex h-9 items-center rounded-md bg-gray-900 px-3 text-xs font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        {t('fleet.vehicles.batch_apply_status')}
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="ml-auto flex items-center gap-1.5">
-                                {can.delete && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowBatchDeleteDialog(true)}
-                                        disabled={processing}
-                                        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-40"
-                                    >
-                                        <TrashIcon />
-                                        {t('fleet.vehicles.batch_delete')}
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={clearSelection}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                                    title={t('fleet.vehicles.batch_clear')}
-                                >
-                                    <CloseIcon />
-                                </button>
-                            </div>
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+                {/* KPI Stats Cards */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Armada Terdaftar</p>
+                            <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{totalVehicles} Unit</p>
                         </div>
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
-                                <div className="relative min-w-[200px] flex-1">
-                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-                                        <SearchIcon />
-                                    </span>
-                                    <TextInput
-                                        type="search"
-                                        placeholder={t('fleet.vehicles.search')}
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full !py-2 pl-9 text-sm"
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                                >
-                                    {t('common.search')}
-                                </button>
-                                <ColumnVisibilityMenu
-                                    columns={columnDefs}
-                                    visible={visibleColumns}
-                                    onChange={setVisibleColumns}
-                                    label={t('fleet.vehicles.columns_menu')}
-                                    requiredHint={t('fleet.vehicles.columns_required_hint')}
-                                    iconOnly
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                            🚗
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Siap Operasi (Aktif)</p>
+                            <p className="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">{activeVehiclesCount} Unit</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-xl font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                            ✓
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Perawatan & Bengkel</p>
+                            <p className="mt-1 text-2xl font-black text-amber-600 dark:text-amber-400">{maintenanceVehiclesCount} Unit</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-xl font-bold text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+                            🛠️
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filter Toolbar & Actions */}
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        {/* Search & Filters */}
+                        <div className="flex flex-1 flex-wrap items-center gap-3">
+                            {/* Search Input */}
+                            <form onSubmit={handleSearch} className="relative min-w-[240px] flex-1 sm:max-w-xs">
+                                <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400">
+                                    🔍
+                                </span>
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Cari mobil, plat nomor, merk, warna..."
+                                    className="w-full rounded-2xl border-slate-200 bg-slate-50/50 pl-10 pr-8 py-2 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white shadow-2xs"
                                 />
-                                {hasActiveFilters && (
+                                {search && (
                                     <button
                                         type="button"
-                                        onClick={clearFilters}
-                                        className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                        onClick={() => {
+                                            setSearch('');
+                                            applyFilters({ search: '' });
+                                        }}
+                                        className="absolute inset-y-0 right-3 flex items-center text-xs text-slate-400 hover:text-slate-600"
                                     >
-                                        <CloseIcon />
-                                        {t('fleet.vehicles.clear_filters')}
+                                        ✕
                                     </button>
                                 )}
                             </form>
 
-                            <div className="flex flex-wrap items-center gap-1.5">
-                                {statusPills.map((pill) => {
-                                    const active = (filters.status || '') === pill.value;
-
-                                    return (
-                                        <button
-                                            key={pill.value || 'all'}
-                                            type="button"
-                                            onClick={() => handleStatusFilter(pill.value)}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
-                                                ? 'bg-gray-900 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                                                }`}
-                                        >
-                                            {pill.label}
-                                        </button>
-                                    );
-                                })}
-                                <span className="ml-auto text-xs tabular-nums text-gray-400">
-                                    {t('common.showing_results', {
-                                        from: vehicles.total === 0 ? 0 : (vehicles.current_page - 1) * vehicles.per_page + 1,
-                                        to: Math.min(vehicles.current_page * vehicles.per_page, vehicles.total),
-                                        total: vehicles.total,
-                                    })}
-                                </span>
+                            {/* Vehicle Type Tabs */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850 overflow-x-auto max-w-full">
+                                <button
+                                    type="button"
+                                    onClick={() => handleTypeFilter('')}
+                                    className={`rounded-xl px-3 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                        !filters.type
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                    }`}
+                                >
+                                    Semua Tipe
+                                </button>
+                                {VEHICLE_TYPES.map((t) => (
+                                    <button
+                                        key={t.key}
+                                        type="button"
+                                        onClick={() => handleTypeFilter(t.key)}
+                                        className={`rounded-xl px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                            filters.type === t.key
+                                                ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        <span className="mr-1">{t.icon}</span>
+                                        <span>{t.label}</span>
+                                    </button>
+                                ))}
                             </div>
+
+                            {/* Status Filter */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                                {[
+                                    { key: '', label: 'Semua Status' },
+                                    { key: 'active', label: 'Siap Operasi' },
+                                    { key: 'maintenance', label: 'Perawatan' },
+                                    { key: 'out_of_service', label: 'Non-Aktif' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => handleStatusFilter(tab.key)}
+                                        className={`rounded-xl px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                            (filters.status || '') === tab.key
+                                                ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Base Filter if available */}
+                            {bases.length > 0 && (
+                                <select
+                                    value={filters.home_base_id || ''}
+                                    onChange={(e) => handleBaseFilter(e.target.value)}
+                                    className="rounded-2xl border-slate-200 bg-slate-50/80 py-1 px-3 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-300"
+                                >
+                                    <option value="">Semua Pool / Base</option>
+                                    {bases.map((base) => (
+                                        <option key={base.id} value={String(base.id)}>
+                                            🏢 {base.name} ({base.code})
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                >
+                                    ✕ Reset Filter
+                                </button>
+                            )}
                         </div>
-                    )}
+
+                        {/* View Switcher & Column Menu */}
+                        <div className="flex items-center gap-2">
+                            {/* View Switcher */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('table')}
+                                    className={`rounded-xl p-1.5 text-xs font-bold transition ${
+                                        viewMode === 'table'
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                    title="Tampilan Tabel"
+                                >
+                                    📋
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('grid')}
+                                    className={`rounded-xl p-1.5 text-xs font-bold transition ${
+                                        viewMode === 'grid'
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                    title="Tampilan Grid Kartu"
+                                >
+                                    🗂️
+                                </button>
+                            </div>
+
+                            <ColumnVisibilityMenu
+                                columns={columnDefs}
+                                visible={visibleColumns}
+                                onChange={setVisibleColumns}
+                                label="Kolom"
+                                iconOnly
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {vehicles.data.length === 0 ? (
-                    <div className="px-6 py-16 text-center">
-                        <h3 className="text-sm font-medium text-gray-900">{t('fleet.vehicles.empty')}</h3>
-                        {hasActiveFilters && (
+                {/* Floating Batch Action Toolbar */}
+                {canBatch && selected.length > 0 && (
+                    <div className="sticky top-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-600/95 backdrop-blur-md px-5 py-3 text-white shadow-xl ring-1 ring-indigo-500/50">
+                        <div className="flex items-center gap-2 text-xs font-bold">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 text-xs font-black">
+                                {selected.length}
+                            </span>
+                            <span>Unit Armada dipilih</span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            {can.update && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyBatchStatus('active')}
+                                        disabled={processing}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-emerald-600 disabled:opacity-50"
+                                    >
+                                        ✓ Set Siap Operasi
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyBatchStatus('maintenance')}
+                                        disabled={processing}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-amber-600 disabled:opacity-50"
+                                    >
+                                        🛠️ Masuk Perawatan
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyBatchStatus('retired')}
+                                        disabled={processing}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-slate-700 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800 disabled:opacity-50"
+                                    >
+                                        ⏸ Non-Aktifkan
+                                    </button>
+                                </>
+                            )}
+                            {can.delete && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBatchDeleteDialog(true)}
+                                    disabled={processing}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-rose-600 disabled:opacity-50"
+                                >
+                                    <TrashIcon />
+                                    <span>Hapus ({selected.length})</span>
+                                </button>
+                            )}
                             <button
                                 type="button"
-                                onClick={clearFilters}
-                                className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                onClick={clearSelection}
+                                disabled={processing}
+                                className="rounded-xl bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/20 disabled:opacity-50"
                             >
-                                {t('fleet.vehicles.clear_filters')}
+                                ✕ Batal
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {vehicles.data.length === 0 ? (
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <span className="text-4xl mb-3 block">🚗</span>
+                        <h3 className="text-base font-black text-slate-900 dark:text-white">
+                            {hasActiveFilters ? 'Tidak Ditemukan Kendaraan yang Sesuai' : 'Belum Ada Armada Terdaftar'}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                            {hasActiveFilters
+                                ? 'Coba ubah kata kunci pencarian atau sesuaikan filter jenis dan status di atas.'
+                                : 'Tambahkan unit mobil, van, atau truk baru untuk mulai melacak operasional armada.'}
+                        </p>
+                        {can.create && !hasActiveFilters && (
+                            <Link
+                                href={prefixedRoute('fleet.vehicles.create')}
+                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
+                            >
+                                ＋ Tambah Kendaraan Pertama
+                            </Link>
                         )}
                     </div>
+                ) : viewMode === 'grid' ? (
+                    /* Grid Card View */
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {vehicles.data.map((vehicle) => {
+                            const isSelected = selected.includes(vehicle.id);
+                            const typeInfo = getVehicleTypeInfo(vehicle.type);
+                            const statusInfo = getStatusBadge(vehicle.status);
+
+                            return (
+                                <div
+                                    key={vehicle.id}
+                                    className={`relative overflow-hidden rounded-3xl border bg-white p-5 shadow-xs transition hover:shadow-md dark:bg-slate-900 flex flex-col justify-between ${
+                                        isSelected
+                                            ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+                                            : 'border-slate-200/80 dark:border-slate-800'
+                                    }`}
+                                >
+                                    <div>
+                                        {/* Card Header */}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-center gap-2.5">
+                                                {canBatch && (
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                        checked={isSelected}
+                                                        onChange={() => toggleRow(vehicle.id)}
+                                                        aria-label={vehicle.name}
+                                                    />
+                                                )}
+                                                <span className="font-mono text-xs font-black text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
+                                                    {vehicle.plate_number}
+                                                </span>
+                                            </div>
+
+                                            <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-0.5 text-[11px] font-black ${statusInfo.className}`}>
+                                                <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
+                                                <span>{statusInfo.label}</span>
+                                            </span>
+                                        </div>
+
+                                        {/* Photo & Title */}
+                                        <div className="mt-3 flex items-start gap-3">
+                                            {vehicle.photo_url ? (
+                                                <img
+                                                    src={vehicle.photo_url}
+                                                    alt={vehicle.name}
+                                                    className="h-16 w-20 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200 shadow-2xs dark:ring-slate-700"
+                                                />
+                                            ) : (
+                                                <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-2xl dark:bg-indigo-950/60">
+                                                    {typeInfo.icon}
+                                                </div>
+                                            )}
+
+                                            <div className="min-w-0 flex-1">
+                                                <Link
+                                                    href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
+                                                    className="font-black text-sm text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400 block truncate"
+                                                >
+                                                    {vehicle.name}
+                                                </Link>
+                                                <p className="text-xs text-slate-500 truncate">
+                                                    {vehicle.brand || '—'} {vehicle.model_year ? `(${vehicle.model_year})` : ''}
+                                                </p>
+                                                <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
+                                                    <span>{typeInfo.icon}</span>
+                                                    <span>{typeInfo.label}</span>
+                                                    {vehicle.color && <span>· {vehicle.color}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Info Specs */}
+                                        <div className="mt-4 space-y-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-slate-400">🏢 Home Base:</span>
+                                                <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[160px]">
+                                                    {vehicle.home_base?.name || '—'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-slate-400">📟 Odometer:</span>
+                                                <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">
+                                                    {vehicle.odometer_km.toLocaleString()} KM
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Footer Actions */}
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                                        <Link
+                                            href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
+                                            className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                        >
+                                            Detail Unit →
+                                        </Link>
+
+                                        <div className="flex items-center gap-1">
+                                            {can.update && (
+                                                <Link
+                                                    href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
+                                                    className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                    title="Edit Kendaraan"
+                                                >
+                                                    <PencilIcon />
+                                                </Link>
+                                            )}
+                                            {can.delete && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openDeleteDialog(vehicle)}
+                                                    className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                    title="Hapus Kendaraan"
+                                                >
+                                                    <TrashIcon />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 ) : (
-                    <>
+                    /* Table View */
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-100">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
                                 <thead>
-                                    <tr className="bg-gray-50/80">
+                                    <tr className="bg-slate-50/80 dark:bg-slate-850/80">
                                         {canBatch && (
-                                            <th className="w-10 px-3 py-2.5">
+                                            <th className="w-10 px-4 py-3.5">
                                                 <input
                                                     type="checkbox"
-                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                     checked={allPageSelected}
                                                     ref={(input) => {
                                                         if (input) {
@@ -464,189 +782,246 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                         }
                                                     }}
                                                     onChange={toggleAllOnPage}
-                                                    aria-label={t('fleet.vehicles.batch_selected', { count: pageIds.length })}
+                                                    aria-label="Pilih Semua"
                                                 />
                                             </th>
                                         )}
                                         {visibleColumns.photo && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.photo')}
+                                            <th className="w-16 px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Foto
                                             </th>
                                         )}
                                         {visibleColumns.name && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.name')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Nama Kendaraan
                                             </th>
                                         )}
                                         {visibleColumns.plate_number && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.plate_number')}
-                                            </th>
-                                        )}
-                                        {visibleColumns.model_year && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.model_year')}
-                                            </th>
-                                        )}
-                                        {visibleColumns.color && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.color')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Plat Nomor
                                             </th>
                                         )}
                                         {visibleColumns.type && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.type')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Tipe
+                                            </th>
+                                        )}
+                                        {visibleColumns.home_base && (
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Home Base
+                                            </th>
+                                        )}
+                                        {visibleColumns.brand && (
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Merk
+                                            </th>
+                                        )}
+                                        {visibleColumns.model_year && (
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Tahun
+                                            </th>
+                                        )}
+                                        {visibleColumns.color && (
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Warna
                                             </th>
                                         )}
                                         {visibleColumns.odometer && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.odometer')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Odometer
                                             </th>
                                         )}
                                         {visibleColumns.status && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.vehicles.columns.status')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Status
                                             </th>
                                         )}
-                                        <th className="w-24 px-3 py-2.5">
-                                            <span className="sr-only">{t('common.actions')}</span>
+                                        <th className="w-24 px-4 py-3.5 text-right font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Aksi
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                                     {vehicles.data.map((vehicle) => {
                                         const isSelected = selected.includes(vehicle.id);
+                                        const typeInfo = getVehicleTypeInfo(vehicle.type);
+                                        const statusInfo = getStatusBadge(vehicle.status);
 
                                         return (
                                             <tr
                                                 key={vehicle.id}
-                                                className={`group transition-colors hover:bg-gray-50/80 ${isSelected ? 'bg-indigo-50/50' : ''}`}
+                                                className={`group transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-850/50 ${
+                                                    isSelected ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
+                                                }`}
                                             >
                                                 {canBatch && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="w-10 px-4 py-3.5">
                                                         <input
                                                             type="checkbox"
-                                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                             checked={isSelected}
                                                             onChange={() => toggleRow(vehicle.id)}
                                                             aria-label={vehicle.name}
                                                         />
                                                     </td>
                                                 )}
+
                                                 {visibleColumns.photo && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
                                                         {vehicle.photo_url ? (
                                                             <img
                                                                 src={vehicle.photo_url}
                                                                 alt={vehicle.name}
-                                                                className="h-9 w-12 rounded-md object-cover ring-1 ring-gray-200"
+                                                                className="h-10 w-14 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700 shadow-2xs"
                                                             />
                                                         ) : (
-                                                            <span className="inline-flex h-9 w-12 items-center justify-center rounded-md bg-gray-100 text-[10px] text-gray-400">
-                                                                —
-                                                            </span>
+                                                            <div className="flex h-10 w-14 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-800">
+                                                                {typeInfo.icon}
+                                                            </div>
                                                         )}
                                                     </td>
                                                 )}
+
                                                 {visibleColumns.name && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
                                                         <Link
                                                             href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
-                                                            className="text-sm font-medium text-gray-900 hover:text-indigo-700"
+                                                            className="font-black text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
                                                         >
                                                             {vehicle.name}
                                                         </Link>
-                                                        {vehicle.brand && <div className="text-xs text-gray-500">{vehicle.brand}</div>}
+                                                        {vehicle.brand && (
+                                                            <div className="text-[11px] text-slate-400">
+                                                                {vehicle.brand} {vehicle.model_year ? `(${vehicle.model_year})` : ''}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                 )}
+
                                                 {visibleColumns.plate_number && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-sm text-gray-800">
-                                                        {vehicle.plate_number}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.model_year && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
-                                                        {vehicle.model_year ?? '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.color && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
-                                                        {vehicle.color || '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.type && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm capitalize text-gray-500">
-                                                        {vehicle.type}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.odometer && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm tabular-nums text-gray-500">
-                                                        {vehicle.odometer_km.toLocaleString()} km
-                                                    </td>
-                                                )}
-                                                {visibleColumns.status && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
-                                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
-                                                            {t(`fleet.status.${vehicle.status}`)}
+                                                    <td className="whitespace-nowrap px-4 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
+                                                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
+                                                            {vehicle.plate_number}
                                                         </span>
                                                     </td>
                                                 )}
-                                                <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                    <Menu as="div" className="relative inline-block text-right">
-                                                        <MenuButton
-                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                            title={t('common.actions')}
-                                                            aria-label={t('common.actions')}
-                                                        >
-                                                            <EllipsisVerticalIcon />
-                                                        </MenuButton>
 
-                                                        <MenuItems
-                                                            transition
-                                                            anchor="bottom end"
-                                                            className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                                {visibleColumns.type && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-700 dark:text-slate-300">
+                                                        <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold dark:bg-slate-800">
+                                                            <span>{typeInfo.icon}</span>
+                                                            <span>{typeInfo.label}</span>
+                                                        </span>
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.home_base && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600 dark:text-slate-300">
+                                                        {vehicle.home_base ? (
+                                                            <span className="font-bold text-slate-800 dark:text-slate-200">
+                                                                🏢 {vehicle.home_base.name}
+                                                            </span>
+                                                        ) : (
+                                                            '—'
+                                                        )}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.brand && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600 dark:text-slate-300">
+                                                        {vehicle.brand || '—'}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.model_year && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 font-mono text-slate-600 dark:text-slate-300">
+                                                        {vehicle.model_year ?? '—'}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.color && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600 dark:text-slate-300">
+                                                        {vehicle.color || '—'}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.odometer && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                        {vehicle.odometer_km.toLocaleString()} KM
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.status && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                                        <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-black ${statusInfo.className}`}>
+                                                            <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
+                                                            <span>{statusInfo.label}</span>
+                                                        </span>
+                                                    </td>
+                                                )}
+
+                                                <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Link
+                                                            href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
+                                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                            title="Buka Detail Unit"
                                                         >
-                                                            <MenuItem>
-                                                                <Link
-                                                                    href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
-                                                                    className={menuItemClassName}
-                                                                >
-                                                                    <span className="text-gray-500">
-                                                                        <EyeIcon />
-                                                                    </span>
-                                                                    {t('common.view', undefined, 'View')}
-                                                                </Link>
-                                                            </MenuItem>
-                                                            {can.update && (
+                                                            <EyeIcon />
+                                                            <span>Detail</span>
+                                                        </Link>
+
+                                                        <Menu as="div" className="relative inline-block text-left">
+                                                            <MenuButton
+                                                                className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                                title="Menu Aksi Lainnya"
+                                                            >
+                                                                <EllipsisVerticalIcon />
+                                                            </MenuButton>
+
+                                                            <MenuItems
+                                                                anchor="bottom end"
+                                                                className="z-30 w-44 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                            >
                                                                 <MenuItem>
                                                                     <Link
-                                                                        href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
+                                                                        href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
                                                                         className={menuItemClassName}
                                                                     >
-                                                                        <span className="text-indigo-600">
-                                                                            <PencilIcon />
-                                                                        </span>
-                                                                        {t('common.edit')}
+                                                                        <EyeIcon />
+                                                                        <span>Lihat Detail</span>
                                                                     </Link>
                                                                 </MenuItem>
-                                                            )}
-                                                            {(can.update || can.delete) && (
-                                                                <div className="my-1 border-t border-gray-100" />
-                                                            )}
-                                                            {can.delete && (
-                                                                <MenuItem>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => openDeleteDialog(vehicle)}
-                                                                        className={menuItemDangerClassName}
-                                                                    >
-                                                                        <TrashIcon />
-                                                                        {t('common.delete')}
-                                                                    </button>
-                                                                </MenuItem>
-                                                            )}
-                                                        </MenuItems>
-                                                    </Menu>
+                                                                {can.update && (
+                                                                    <MenuItem>
+                                                                        <Link
+                                                                            href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
+                                                                            className={menuItemClassName}
+                                                                        >
+                                                                            <PencilIcon />
+                                                                            <span>Edit Kendaraan</span>
+                                                                        </Link>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {can.delete && (
+                                                                    <>
+                                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                        <MenuItem>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => openDeleteDialog(vehicle)}
+                                                                                className={menuItemDangerClassName}
+                                                                            >
+                                                                                <TrashIcon />
+                                                                                <span>Hapus Unit</span>
+                                                                            </button>
+                                                                        </MenuItem>
+                                                                    </>
+                                                                )}
+                                                            </MenuItems>
+                                                        </Menu>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -654,58 +1029,59 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                 </tbody>
                             </table>
                         </div>
-
-                        {vehicles.last_page > 1 && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 sm:px-5">
-                                <p className="text-xs text-gray-500">
-                                    {t('common.showing_results', {
-                                        from: (vehicles.current_page - 1) * vehicles.per_page + 1,
-                                        to: Math.min(vehicles.current_page * vehicles.per_page, vehicles.total),
-                                        total: vehicles.total,
-                                    })}
-                                </p>
-                                <div className="flex gap-1">
-                                    {vehicles.links.map((link, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() => link.url && router.get(link.url)}
-                                            disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${link.active
-                                                ? 'bg-gray-900 text-white'
-                                                : link.url
-                                                    ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                    : 'cursor-not-allowed text-gray-300'
-                                                }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </>
+                    </div>
                 )}
+
+                {/* Pagination */}
+                {vehicles.last_page > 1 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Menampilkan {(vehicles.current_page - 1) * vehicles.per_page + 1} hingga{' '}
+                            {Math.min(vehicles.current_page * vehicles.per_page, vehicles.total)} dari{' '}
+                            {vehicles.total} kendaraan
+                        </p>
+                        <div className="flex gap-1.5">
+                            {vehicles.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white shadow-2xs'
+                                            : link.url
+                                                ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                : 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Confirmation Dialogs */}
+                <ConfirmDeleteDialog
+                    show={showDeleteDialog}
+                    onClose={closeDeleteDialog}
+                    onConfirm={confirmDelete}
+                    processing={processing}
+                    message={
+                        vehicleToDelete
+                            ? `Apakah Anda yakin ingin menghapus unit kendaraan "${vehicleToDelete.name}" (${vehicleToDelete.plate_number})?`
+                            : undefined
+                    }
+                />
+
+                <ConfirmDeleteDialog
+                    show={showBatchDeleteDialog}
+                    onClose={() => !processing && setShowBatchDeleteDialog(false)}
+                    onConfirm={confirmBatchDelete}
+                    processing={processing}
+                    message={`Anda akan menghapus ${selected.length} kendaraan sekaligus.`}
+                />
             </div>
-
-            <ConfirmDeleteDialog
-                show={showDeleteDialog}
-                onClose={closeDeleteDialog}
-                onConfirm={confirmDelete}
-                processing={processing}
-                message={
-                    vehicleToDelete
-                        ? t('fleet.vehicles.delete_confirm', { name: vehicleToDelete.name })
-                        : undefined
-                }
-            />
-
-            <ConfirmDeleteDialog
-                show={showBatchDeleteDialog}
-                onClose={() => !processing && setShowBatchDeleteDialog(false)}
-                onConfirm={confirmBatchDelete}
-                processing={processing}
-                message={t('fleet.vehicles.batch_delete_confirm', { count: selected.length })}
-            />
         </DynamicLayout>
     );
 }

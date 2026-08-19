@@ -1,19 +1,16 @@
-import DynamicLayout from '@/Layouts/DynamicLayout';
 import ColumnVisibilityMenu, {
     buildColumnVisibility,
     type ColumnDef,
 } from '@/Components/ColumnVisibilityMenu';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import PageHeader from '@/Components/PageHeader';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
-import PrimaryButton from '@/Components/PrimaryButton';
-import Select from '@/Components/Select';
-import TextInput from '@/Components/TextInput';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState, FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import FleetNav from '../../../../FleetNav';
-import PageHeader from '@/Components/PageHeader';
 
 interface Manager {
     id: number;
@@ -72,20 +69,40 @@ const BASE_COLUMN_KEYS: Array<{ key: BaseColumn; required?: boolean; defaultVisi
 
 const STATUSES = ['active', 'inactive'];
 
-const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-        case 'active':
-            return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20';
+const getKindBadge = (kind: string) => {
+    switch (kind) {
+        case 'depot':
+            return {
+                icon: '🏢',
+                label: 'Depot Utama',
+                className: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/60 dark:bg-indigo-950/60 dark:text-indigo-300 dark:ring-indigo-800',
+            };
+        case 'yard':
+            return {
+                icon: '🅿️',
+                label: 'Yard / Pool Parkir',
+                className: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-800',
+            };
+        case 'satellite':
+            return {
+                icon: '📍',
+                label: 'Cabang Satelit',
+                className: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200/60 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-800',
+            };
+        case 'workshop_base':
+            return {
+                icon: '🛠️',
+                label: 'Workshop Base',
+                className: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800',
+            };
         default:
-            return 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20';
+            return {
+                icon: '🏢',
+                label: kind,
+                className: 'bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300',
+            };
     }
 };
-
-const SearchIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-    </svg>
-);
 
 const EyeIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -106,14 +123,8 @@ const TrashIcon = () => (
     </svg>
 );
 
-const CloseIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-);
-
 const EllipsisVerticalIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden>
         <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -123,57 +134,15 @@ const EllipsisVerticalIcon = () => (
 );
 
 const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
 
 const menuItemDangerClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
-
-function FilterSegment({
-    label,
-    options,
-    value,
-    onChange,
-}: {
-    label: string;
-    options: Array<{ value: string; label: string }>;
-    value: string;
-    onChange: (value: string) => void;
-}): JSX.Element {
-    return (
-        <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                {label}
-            </span>
-            <div className="inline-flex max-w-full flex-wrap gap-0.5 rounded-lg bg-gray-100 p-0.5">
-                {options.map((option) => {
-                    const active = value === option.value;
-
-                    return (
-                        <button
-                            key={option.value || `${label}-all`}
-                            type="button"
-                            onClick={() => onChange(option.value)}
-                            className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${active
-                                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5'
-                                : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                        >
-                            {option.label}
-                        </button>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/50';
 
 function readStoredColumns(): Partial<Record<BaseColumn, boolean>> | null {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-            return null;
-        }
-
+        if (!raw) return null;
         const parsed = JSON.parse(raw) as Partial<Record<BaseColumn, boolean>>;
         return parsed && typeof parsed === 'object' ? parsed : null;
     } catch {
@@ -184,26 +153,31 @@ function readStoredColumns(): Partial<Record<BaseColumn, boolean>> | null {
 export default function Index({ bases, filters, kinds, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+
     const [search, setSearch] = useState(filters.search || '');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [baseToDelete, setBaseToDelete] = useState<FleetBaseRow | null>(null);
     const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [selected, setSelected] = useState<number[]>([]);
-    const [batchStatus, setBatchStatus] = useState('');
 
     const canBatch = can.update || can.delete;
     const pageIds = useMemo(() => bases.data.map((base) => base.id), [bases.data]);
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
     const somePageSelected = pageIds.some((id) => selected.includes(id));
     const hasActiveFilters = Boolean(filters.search || filters.status || filters.kind);
-    const selectionMode = canBatch && selected.length > 0;
+
+    // KPI stats calculations
+    const totalBases = bases.total;
+    const activeBasesCount = bases.data.filter((b) => b.status === 'active').length;
+    const totalVehiclesParked = bases.data.reduce((sum, b) => sum + (b.vehicles_count || 0), 0);
 
     const columnDefs = useMemo<Array<ColumnDef<BaseColumn>>>(
         () =>
             BASE_COLUMN_KEYS.map((column) => ({
                 ...column,
-                label: t(`fleet.bases.columns.${column.key}`),
+                label: t(`fleet.bases.columns.${column.key}`, undefined, column.key.toUpperCase()),
             })),
         [t],
     );
@@ -263,14 +237,12 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
             if (allPageSelected) {
                 return prev.filter((id) => !pageIds.includes(id));
             }
-
             return Array.from(new Set([...prev, ...pageIds]));
         });
     };
 
     const clearSelection = () => {
         setSelected([]);
-        setBatchStatus('');
     };
 
     const openDeleteDialog = (base: FleetBaseRow) => {
@@ -292,15 +264,12 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
         });
     };
 
-    const applyBatchStatus = () => {
-        if (!can.update || selected.length === 0 || !batchStatus) {
-            return;
-        }
-
+    const applyBatchStatus = (newStatus: 'active' | 'inactive') => {
+        if (!can.update || selected.length === 0) return;
         setProcessing(true);
         router.patch(
             prefixedRoute('fleet.bases.batch-status'),
-            { ids: selected, status: batchStatus },
+            { ids: selected, status: newStatus },
             {
                 preserveScroll: true,
                 onSuccess: () => clearSelection(),
@@ -310,10 +279,7 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
     };
 
     const confirmBatchDelete = () => {
-        if (!can.delete || selected.length === 0) {
-            return;
-        }
-
+        if (!can.delete || selected.length === 0) return;
         setProcessing(true);
         router.post(
             prefixedRoute('fleet.bases.batch-destroy'),
@@ -329,185 +295,404 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
         );
     };
 
-    const statusOptions = [
-        { value: '', label: t('fleet.bases.all_statuses') },
-        ...STATUSES.map((status) => ({
-            value: status,
-            label: t(`fleet.status.${status}`),
-        })),
-    ];
-
-    const kindOptions = [
-        { value: '', label: t('fleet.bases.all_kinds') },
-        ...kinds.map((kind) => ({
-            value: kind,
-            label: t(`fleet.base_kinds.${kind}`),
-        })),
-    ];
-
     return (
         <DynamicLayout
             header={
                 <PageHeader
-                    title={t('fleet.title')}
-                    actions={can.create && (
-                        <Link href={prefixedRoute('fleet.bases.create')}>
-                            <PrimaryButton>{t('fleet.bases.add')}</PrimaryButton>
-                        </Link>
-                    )}
+                    title={t('fleet.bases.title', undefined, 'Manajemen Pool & Base Armada')}
+                    subtitle="Kelola titik pool kendaraan, depot pusat, cabang satelit, penanggung jawab, dan distribusi unit armada."
+                    actions={
+                        can.create && (
+                            <Link
+                                href={prefixedRoute('fleet.bases.create')}
+                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                            >
+                                <span>＋</span>
+                                <span>{t('fleet.bases.add', undefined, 'Tambah Base Baru')}</span>
+                            </Link>
+                        )
+                    }
                 />
             }
         >
-            <Head title={t('fleet.bases.title')} />
-
+            <Head title={t('fleet.bases.title', undefined, 'Pool Armada (Bases)')} />
             <FleetNav />
 
-            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                <div className="border-b border-slate-100 dark:border-slate-800 px-4 py-3 sm:px-5">
-                    {selectionMode ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white">
-                                {t('fleet.bases.batch_selected', { count: selected.length })}
-                            </span>
-
-                            {can.update && (
-                                <div className="flex items-center gap-1.5">
-                                    <Select
-                                        className="!py-1.5 text-sm"
-                                        value={batchStatus}
-                                        onChange={setBatchStatus}
-                                        placeholder={t('fleet.bases.batch_status_placeholder')}
-                                        options={STATUSES.map((status) => ({
-                                            value: status,
-                                            label: t(`fleet.status.${status}`),
-                                        }))}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={applyBatchStatus}
-                                        disabled={!batchStatus || processing}
-                                        className="inline-flex h-9 items-center rounded-md bg-gray-900 px-3 text-xs font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        {t('fleet.bases.batch_apply_status')}
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="ml-auto flex items-center gap-1.5">
-                                {can.delete && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowBatchDeleteDialog(true)}
-                                        disabled={processing}
-                                        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-40"
-                                    >
-                                        <TrashIcon />
-                                        {t('fleet.bases.batch_delete')}
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={clearSelection}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                                    title={t('fleet.bases.batch_clear')}
-                                >
-                                    <CloseIcon />
-                                </button>
-                            </div>
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+                {/* KPI Stats Cards */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Pool & Base</p>
+                            <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{totalBases}</p>
                         </div>
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
-                                <div className="relative min-w-[200px] flex-1">
-                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-                                        <SearchIcon />
-                                    </span>
-                                    <TextInput
-                                        type="search"
-                                        placeholder={t('fleet.bases.search')}
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full !py-2 pl-9 text-sm"
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                                >
-                                    {t('common.search')}
-                                </button>
-                                <ColumnVisibilityMenu
-                                    columns={columnDefs}
-                                    visible={visibleColumns}
-                                    onChange={setVisibleColumns}
-                                    label={t('fleet.bases.columns_menu')}
-                                    requiredHint={t('fleet.bases.columns_required_hint')}
-                                    iconOnly
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                            🏢
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Base Beroperasi (Aktif)</p>
+                            <p className="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">{activeBasesCount}</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-xl font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                            ✓
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Kendaraan Terdaftar</p>
+                            <p className="mt-1 text-2xl font-black text-indigo-600 dark:text-indigo-400">{totalVehiclesParked} Unit</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                            🚗
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filter Toolbar & Actions */}
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        {/* Search & Filters */}
+                        <div className="flex flex-1 flex-wrap items-center gap-3">
+                            {/* Search Input */}
+                            <form onSubmit={handleSearch} className="relative min-w-[240px] flex-1 sm:max-w-xs">
+                                <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400">
+                                    🔍
+                                </span>
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder={t('fleet.bases.search', undefined, 'Cari kode, nama, kota, telepon...')}
+                                    className="w-full rounded-2xl border-slate-200 bg-slate-50/50 pl-10 pr-8 py-2 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white shadow-2xs"
                                 />
-                                {hasActiveFilters && (
+                                {search && (
                                     <button
                                         type="button"
-                                        onClick={clearFilters}
-                                        className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                        onClick={() => {
+                                            setSearch('');
+                                            applyFilters({ search: '' });
+                                        }}
+                                        className="absolute inset-y-0 right-3 flex items-center text-xs text-slate-400 hover:text-slate-600"
                                     >
-                                        <CloseIcon />
-                                        {t('fleet.bases.clear_filters')}
+                                        ✕
                                     </button>
                                 )}
                             </form>
 
-                            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-                                <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
-                                    <FilterSegment
-                                        label={t('fleet.bases.filter_status')}
-                                        options={statusOptions}
-                                        value={filters.status || ''}
-                                        onChange={handleStatusFilter}
-                                    />
-                                    <div className="hidden h-5 w-px bg-gray-200 sm:block" aria-hidden />
-                                    <FilterSegment
-                                        label={t('fleet.bases.filter_kind')}
-                                        options={kindOptions}
-                                        value={filters.kind || ''}
-                                        onChange={handleKindFilter}
-                                    />
-                                </div>
-                                <span className="shrink-0 text-xs tabular-nums text-gray-400">
-                                    {t('common.showing_results', {
-                                        from: bases.total === 0 ? 0 : (bases.current_page - 1) * bases.per_page + 1,
-                                        to: Math.min(bases.current_page * bases.per_page, bases.total),
-                                        total: bases.total,
-                                    })}
-                                </span>
+                            {/* Kind Filters */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850 overflow-x-auto max-w-full">
+                                <button
+                                    type="button"
+                                    onClick={() => handleKindFilter('')}
+                                    className={`rounded-xl px-3 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                        !filters.kind
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                    }`}
+                                >
+                                    Semua Jenis
+                                </button>
+                                {kinds.map((k) => {
+                                    const kindInfo = getKindBadge(k);
+                                    return (
+                                        <button
+                                            key={k}
+                                            type="button"
+                                            onClick={() => handleKindFilter(k)}
+                                            className={`rounded-xl px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                                filters.kind === k
+                                                    ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="mr-1">{kindInfo.icon}</span>
+                                            <span>{kindInfo.label}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
+
+                            {/* Status Filter */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                                {[
+                                    { key: '', label: 'Semua Status' },
+                                    { key: 'active', label: 'Aktif' },
+                                    { key: 'inactive', label: 'Non Aktif' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => handleStatusFilter(tab.key)}
+                                        className={`rounded-xl px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                            (filters.status || '') === tab.key
+                                                ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                >
+                                    ✕ Reset Filter
+                                </button>
+                            )}
                         </div>
-                    )}
+
+                        {/* View Switcher & Column Menu */}
+                        <div className="flex items-center gap-2">
+                            {/* View Switcher */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('table')}
+                                    className={`rounded-xl p-1.5 text-xs font-bold transition ${
+                                        viewMode === 'table'
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                    title="Tampilan Tabel"
+                                >
+                                    📋
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('grid')}
+                                    className={`rounded-xl p-1.5 text-xs font-bold transition ${
+                                        viewMode === 'grid'
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                    title="Tampilan Grid Kartu"
+                                >
+                                    🗂️
+                                </button>
+                            </div>
+
+                            <ColumnVisibilityMenu
+                                columns={columnDefs}
+                                visible={visibleColumns}
+                                onChange={setVisibleColumns}
+                                label={t('fleet.bases.columns_menu', undefined, 'Kolom')}
+                                requiredHint={t('fleet.bases.columns_required_hint', undefined, 'Kolom wajib tidak dapat disembunyikan')}
+                                iconOnly
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {bases.data.length === 0 ? (
-                    <div className="px-6 py-16 text-center">
-                        <h3 className="text-sm font-medium text-gray-900">{t('fleet.bases.empty')}</h3>
-                        {hasActiveFilters && (
+                {/* Floating Batch Action Toolbar */}
+                {canBatch && selected.length > 0 && (
+                    <div className="sticky top-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-600/95 backdrop-blur-md px-5 py-3 text-white shadow-xl ring-1 ring-indigo-500/50">
+                        <div className="flex items-center gap-2 text-xs font-bold">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 text-xs font-black">
+                                {selected.length}
+                            </span>
+                            <span>Base / Pool dipilih</span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            {can.update && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyBatchStatus('active')}
+                                        disabled={processing}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-emerald-600 disabled:opacity-50"
+                                    >
+                                        ✓ Aktifkan
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyBatchStatus('inactive')}
+                                        disabled={processing}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-slate-700 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800 disabled:opacity-50"
+                                    >
+                                        ⏸ Nonaktifkan
+                                    </button>
+                                </>
+                            )}
+                            {can.delete && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBatchDeleteDialog(true)}
+                                    disabled={processing}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-rose-600 disabled:opacity-50"
+                                >
+                                    <TrashIcon />
+                                    <span>Hapus ({selected.length})</span>
+                                </button>
+                            )}
                             <button
                                 type="button"
-                                onClick={clearFilters}
-                                className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                onClick={clearSelection}
+                                disabled={processing}
+                                className="rounded-xl bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/20 disabled:opacity-50"
                             >
-                                {t('fleet.bases.clear_filters')}
+                                ✕ Batal
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {bases.data.length === 0 ? (
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <span className="text-4xl mb-3 block">🏢</span>
+                        <h3 className="text-base font-black text-slate-900 dark:text-white">
+                            {hasActiveFilters ? 'Tidak Ditemukan Base yang Sesuai' : 'Belum Ada Base / Pool Armada'}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                            {hasActiveFilters
+                                ? 'Coba ubah kata kunci pencarian atau sesuaikan filter jenis dan status di atas.'
+                                : 'Tambahkan titik pool utama, depot armada, atau cabang satelit untuk mengelola persebaran unit.'}
+                        </p>
+                        {can.create && !hasActiveFilters && (
+                            <Link
+                                href={prefixedRoute('fleet.bases.create')}
+                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
+                            >
+                                ＋ Tambah Base Pertama
+                            </Link>
                         )}
                     </div>
-                ) : (
-                    <>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-100">
-                                <thead>
-                                    <tr className="bg-gray-50/80">
-                                        {canBatch && (
-                                            <th className="w-10 px-3 py-2.5">
+                ) : viewMode === 'grid' ? (
+                    /* Grid Card View */
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {bases.data.map((base) => {
+                            const kindInfo = getKindBadge(base.kind);
+                            const isSelected = selected.includes(base.id);
+
+                            return (
+                                <div
+                                    key={base.id}
+                                    className={`relative overflow-hidden rounded-3xl border bg-white p-5 shadow-xs transition hover:shadow-md dark:bg-slate-900 ${
+                                        isSelected
+                                            ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+                                            : 'border-slate-200/80 dark:border-slate-800'
+                                    }`}
+                                >
+                                    {/* Card Header */}
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2.5">
+                                            {canBatch && (
                                                 <input
                                                     type="checkbox"
-                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleRow(base.id)}
+                                                    aria-label={base.name}
+                                                />
+                                            )}
+                                            <span className="font-mono text-xs font-bold text-slate-400">
+                                                {base.code}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5">
+                                            <span
+                                                className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-0.5 text-xs font-black ${
+                                                    base.status === 'active'
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <span className={`h-1.5 w-1.5 rounded-full ${base.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                                <span>{base.status === 'active' ? 'Aktif' : 'Non Aktif'}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Name & Kind */}
+                                    <div className="mt-3 space-y-1.5">
+                                        <Link
+                                            href={prefixedRoute('fleet.bases.show', base.id)}
+                                            className="text-base font-black text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400 block truncate"
+                                        >
+                                            {base.name}
+                                        </Link>
+
+                                        <span className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold ${kindInfo.className}`}>
+                                            <span>{kindInfo.icon}</span>
+                                            <span>{kindInfo.label}</span>
+                                        </span>
+                                    </div>
+
+                                    {/* Info Grid */}
+                                    <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-400">📍 Kota / Lokasi:</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200">{base.city || '—'}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-400">👤 Penanggung Jawab:</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200">{base.manager?.name || '—'}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-400">🚗 Armada Terparkir:</span>
+                                            <span className="rounded-lg bg-indigo-50 px-2 py-0.5 font-mono font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                {base.vehicles_count} Unit
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Footer Actions */}
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                                        <Link
+                                            href={prefixedRoute('fleet.bases.show', base.id)}
+                                            className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                        >
+                                            Buka Detail Base →
+                                        </Link>
+
+                                        <div className="flex items-center gap-1">
+                                            {can.update && (
+                                                <Link
+                                                    href={prefixedRoute('fleet.bases.edit', base.id)}
+                                                    className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                    title="Edit Base"
+                                                >
+                                                    <PencilIcon />
+                                                </Link>
+                                            )}
+                                            {can.delete && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openDeleteDialog(base)}
+                                                    className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                    title="Hapus Base"
+                                                >
+                                                    <TrashIcon />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    /* Table View */
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
+                                <thead>
+                                    <tr className="bg-slate-50/80 dark:bg-slate-850/80">
+                                        {canBatch && (
+                                            <th className="w-10 px-4 py-3.5">
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                     checked={allPageSelected}
                                                     ref={(input) => {
                                                         if (input) {
@@ -515,178 +700,208 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
                                                         }
                                                     }}
                                                     onChange={toggleAllOnPage}
-                                                    aria-label={t('fleet.bases.batch_selected', { count: pageIds.length })}
+                                                    aria-label={t('common.select_all')}
                                                 />
                                             </th>
                                         )}
                                         {visibleColumns.code && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.code')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.code', undefined, 'Kode')}
                                             </th>
                                         )}
                                         {visibleColumns.name && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.name')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.name', undefined, 'Nama Base')}
                                             </th>
                                         )}
                                         {visibleColumns.kind && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.kind')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.kind', undefined, 'Jenis Base')}
                                             </th>
                                         )}
                                         {visibleColumns.city && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.city')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.city', undefined, 'Kota / Lokasi')}
                                             </th>
                                         )}
                                         {visibleColumns.phone && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.phone')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.phone', undefined, 'Telepon')}
                                             </th>
                                         )}
                                         {visibleColumns.manager && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.manager')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.manager', undefined, 'Penanggung Jawab')}
                                             </th>
                                         )}
                                         {visibleColumns.vehicles && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.vehicles')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.vehicles', undefined, 'Armada')}
                                             </th>
                                         )}
                                         {visibleColumns.status && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                {t('fleet.bases.columns.status')}
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('fleet.bases.columns.status', undefined, 'Status')}
                                             </th>
                                         )}
-                                        <th className="w-24 px-3 py-2.5">
-                                            <span className="sr-only">{t('common.actions')}</span>
+                                        <th className="w-24 px-4 py-3.5 text-right font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Aksi
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                                     {bases.data.map((base) => {
+                                        const kindInfo = getKindBadge(base.kind);
                                         const isSelected = selected.includes(base.id);
 
                                         return (
                                             <tr
                                                 key={base.id}
-                                                className={`group transition-colors hover:bg-gray-50/80 ${isSelected ? 'bg-indigo-50/50' : ''}`}
+                                                className={`group transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-850/50 ${
+                                                    isSelected ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
+                                                }`}
                                             >
                                                 {canBatch && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="w-10 px-4 py-3.5">
                                                         <input
                                                             type="checkbox"
-                                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                             checked={isSelected}
                                                             onChange={() => toggleRow(base.id)}
                                                             aria-label={base.name}
                                                         />
                                                     </td>
                                                 )}
+
                                                 {visibleColumns.code && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-sm text-gray-800">
+                                                    <td className="whitespace-nowrap px-4 py-3.5 font-mono font-bold text-slate-700 dark:text-slate-300">
                                                         {base.code}
                                                     </td>
                                                 )}
+
                                                 {visibleColumns.name && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
                                                         <Link
                                                             href={prefixedRoute('fleet.bases.show', base.id)}
-                                                            className="text-sm font-medium text-gray-900 hover:text-indigo-700"
+                                                            className="font-black text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
                                                         >
                                                             {base.name}
                                                         </Link>
                                                     </td>
                                                 )}
+
                                                 {visibleColumns.kind && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
-                                                        {t(`fleet.base_kinds.${base.kind}`)}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.city && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
-                                                        {base.city || '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.phone && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
-                                                        {base.phone || '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.manager && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
-                                                        {base.manager?.name || '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.vehicles && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm tabular-nums text-gray-500">
-                                                        {base.vehicles_count}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.status && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
-                                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeColor(base.status)}`}>
-                                                            {t(`fleet.status.${base.status}`)}
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                                        <span className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold ${kindInfo.className}`}>
+                                                            <span>{kindInfo.icon}</span>
+                                                            <span>{kindInfo.label}</span>
                                                         </span>
                                                     </td>
                                                 )}
-                                                <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                    <Menu as="div" className="relative inline-block text-right">
-                                                        <MenuButton
-                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                            title={t('common.actions')}
-                                                            aria-label={t('common.actions')}
-                                                        >
-                                                            <EllipsisVerticalIcon />
-                                                        </MenuButton>
 
-                                                        <MenuItems
-                                                            transition
-                                                            anchor="bottom end"
-                                                            className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                                {visibleColumns.city && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600 dark:text-slate-300">
+                                                        {base.city || '—'}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.phone && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 font-mono text-slate-500">
+                                                        {base.phone || '—'}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.manager && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-700 dark:text-slate-300 font-bold">
+                                                        {base.manager?.name || '—'}
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.vehicles && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                                        <span className="rounded-lg bg-indigo-50 px-2 py-0.5 font-mono font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                            {base.vehicles_count} Unit
+                                                        </span>
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.status && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                                        <span
+                                                            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-black ${
+                                                                base.status === 'active'
+                                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                            }`}
                                                         >
-                                                            <MenuItem>
-                                                                <Link
-                                                                    href={prefixedRoute('fleet.bases.show', base.id)}
-                                                                    className={menuItemClassName}
-                                                                >
-                                                                    <span className="text-gray-500">
-                                                                        <EyeIcon />
-                                                                    </span>
-                                                                    {t('common.view', undefined, 'View')}
-                                                                </Link>
-                                                            </MenuItem>
-                                                            {can.update && (
+                                                            <span className={`h-1.5 w-1.5 rounded-full ${base.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                                            <span>{base.status === 'active' ? 'Aktif' : 'Non Aktif'}</span>
+                                                        </span>
+                                                    </td>
+                                                )}
+
+                                                <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Link
+                                                            href={prefixedRoute('fleet.bases.show', base.id)}
+                                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                            title="Buka Detail"
+                                                        >
+                                                            <EyeIcon />
+                                                            <span>Detail</span>
+                                                        </Link>
+
+                                                        <Menu as="div" className="relative inline-block text-left">
+                                                            <MenuButton
+                                                                className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                                title="Menu Aksi Lainnya"
+                                                            >
+                                                                <EllipsisVerticalIcon />
+                                                            </MenuButton>
+
+                                                            <MenuItems
+                                                                anchor="bottom end"
+                                                                className="z-30 w-44 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                            >
                                                                 <MenuItem>
                                                                     <Link
-                                                                        href={prefixedRoute('fleet.bases.edit', base.id)}
+                                                                        href={prefixedRoute('fleet.bases.show', base.id)}
                                                                         className={menuItemClassName}
                                                                     >
-                                                                        <span className="text-indigo-600">
-                                                                            <PencilIcon />
-                                                                        </span>
-                                                                        {t('common.edit')}
+                                                                        <EyeIcon />
+                                                                        <span>{t('common.view', undefined, 'Lihat Detail')}</span>
                                                                     </Link>
                                                                 </MenuItem>
-                                                            )}
-                                                            {(can.update || can.delete) && (
-                                                                <div className="my-1 border-t border-gray-100" />
-                                                            )}
-                                                            {can.delete && (
-                                                                <MenuItem>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => openDeleteDialog(base)}
-                                                                        className={menuItemDangerClassName}
-                                                                    >
-                                                                        <TrashIcon />
-                                                                        {t('common.delete')}
-                                                                    </button>
-                                                                </MenuItem>
-                                                            )}
-                                                        </MenuItems>
-                                                    </Menu>
+                                                                {can.update && (
+                                                                    <MenuItem>
+                                                                        <Link
+                                                                            href={prefixedRoute('fleet.bases.edit', base.id)}
+                                                                            className={menuItemClassName}
+                                                                        >
+                                                                            <PencilIcon />
+                                                                            <span>{t('common.edit', undefined, 'Edit Base')}</span>
+                                                                        </Link>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {can.delete && (
+                                                                    <>
+                                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                        <MenuItem>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => openDeleteDialog(base)}
+                                                                                className={menuItemDangerClassName}
+                                                                            >
+                                                                                <TrashIcon />
+                                                                                <span>{t('common.delete', undefined, 'Hapus Base')}</span>
+                                                                            </button>
+                                                                        </MenuItem>
+                                                                    </>
+                                                                )}
+                                                            </MenuItems>
+                                                        </Menu>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -694,58 +909,61 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
                                 </tbody>
                             </table>
                         </div>
-
-                        {bases.last_page > 1 && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 sm:px-5">
-                                <p className="text-xs text-gray-500">
-                                    {t('common.showing_results', {
-                                        from: (bases.current_page - 1) * bases.per_page + 1,
-                                        to: Math.min(bases.current_page * bases.per_page, bases.total),
-                                        total: bases.total,
-                                    })}
-                                </p>
-                                <div className="flex gap-1">
-                                    {bases.links.map((link, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() => link.url && router.get(link.url)}
-                                            disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${link.active
-                                                ? 'bg-gray-900 text-white'
-                                                : link.url
-                                                    ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                    : 'cursor-not-allowed text-gray-300'
-                                                }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </>
+                    </div>
                 )}
+
+                {/* Pagination */}
+                {bases.last_page > 1 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {t('common.showing_results', {
+                                from: bases.total === 0 ? 0 : (bases.current_page - 1) * bases.per_page + 1,
+                                to: Math.min(bases.current_page * bases.per_page, bases.total),
+                                total: bases.total,
+                            })}
+                        </p>
+                        <div className="flex gap-1.5">
+                            {bases.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white shadow-2xs'
+                                            : link.url
+                                                ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                : 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Confirmation Dialogs */}
+                <ConfirmDeleteDialog
+                    show={showDeleteDialog}
+                    onClose={closeDeleteDialog}
+                    onConfirm={confirmDelete}
+                    processing={processing}
+                    message={
+                        baseToDelete
+                            ? t('fleet.bases.delete_confirm', { name: baseToDelete.name }, `Apakah Anda yakin ingin menghapus base "${baseToDelete.name}"?`)
+                            : undefined
+                    }
+                />
+
+                <ConfirmDeleteDialog
+                    show={showBatchDeleteDialog}
+                    onClose={() => !processing && setShowBatchDeleteDialog(false)}
+                    onConfirm={confirmBatchDelete}
+                    processing={processing}
+                    message={t('fleet.bases.batch_delete_confirm', { count: selected.length }, `Anda akan menghapus ${selected.length} base sekaligus.`)}
+                />
             </div>
-
-            <ConfirmDeleteDialog
-                show={showDeleteDialog}
-                onClose={closeDeleteDialog}
-                onConfirm={confirmDelete}
-                processing={processing}
-                message={
-                    baseToDelete
-                        ? t('fleet.bases.delete_confirm', { name: baseToDelete.name })
-                        : undefined
-                }
-            />
-
-            <ConfirmDeleteDialog
-                show={showBatchDeleteDialog}
-                onClose={() => !processing && setShowBatchDeleteDialog(false)}
-                onConfirm={confirmBatchDelete}
-                processing={processing}
-                message={t('fleet.bases.batch_delete_confirm', { count: selected.length })}
-            />
         </DynamicLayout>
     );
 }

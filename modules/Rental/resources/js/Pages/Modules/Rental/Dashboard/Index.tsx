@@ -1,9 +1,12 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import PageHeader from '@/Components/PageHeader';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import { formatMoney } from '@/utils/money';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import RentalNav from '../../../../RentalNav';
-import PageHeader from '@/Components/PageHeader';
 
 interface RentalRow {
     id: number;
@@ -68,303 +71,599 @@ interface Props {
     exportUrl: string;
 }
 
-const money = (value: number) => 'Rp ' + value.toLocaleString('id-ID');
-
-function StatCard({ label, value, hint, tone }: { label: string; value: string | number; hint?: string; tone?: 'danger' | 'warn' }): JSX.Element {
-    const valueClass =
-        tone === 'danger' ? 'text-red-700' : tone === 'warn' ? 'text-amber-700' : 'text-gray-900';
-
-    return (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wider text-gray-500">{label}</p>
-            <p className={`mt-2 text-3xl font-semibold tabular-nums ${valueClass}`}>{value}</p>
-            {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
-        </div>
-    );
-}
-
-function RentalTable({ rows, empty }: { rows: RentalRow[]; empty: string }): JSX.Element {
-    const { prefixedRoute } = useRoutePrefix();
-    const { t } = useTrans();
-
-    if (rows.length === 0) {
-        return <p className="px-4 py-8 text-center text-sm text-gray-500">{empty}</p>;
-    }
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.code')}</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.vehicle')}</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.customer')}</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.end_date')}</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('rental.dashboard.amount')}</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                    {rows.map((row) => (
-                        <tr key={row.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                                <Link href={prefixedRoute('rental.show', row.id)} className="font-mono font-medium text-indigo-600 hover:underline">
-                                    {row.code}
-                                </Link>
-                                {row.is_overdue && (
-                                    <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700">
-                                        {t('rental.status.overdue')}
-                                    </span>
-                                )}
-                            </td>
-                            <td className="px-4 py-3">
-                                {row.vehicle ? (
-                                    <>
-                                        <div>{row.vehicle.name}</div>
-                                        <div className="text-xs text-gray-500">{row.vehicle.plate_number}</div>
-                                    </>
-                                ) : (
-                                    '—'
-                                )}
-                            </td>
-                            <td className="px-4 py-3">{row.partner?.name ?? '—'}</td>
-                            <td className="px-4 py-3 tabular-nums">{row.end_date}</td>
-                            <td className="px-4 py-3 text-right tabular-nums">{money(row.total_amount)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
 export default function Index({ board, exportUrl }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { counts, utilisation, revenue, overdue, ending_soon, idle_vehicles, compliance, kpis } = board;
 
+    const [revenueTab, setRevenueTab] = useState<'vehicle' | 'partner' | 'type'>('vehicle');
+
     const exportHref = (type: string) => `${exportUrl}?type=${encodeURIComponent(type)}`;
 
     return (
-        <DynamicLayout header={<PageHeader title={t('rental.title')} />}>
-            <Head title={t('rental.dashboard.title')} />
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('rental.dashboard.title', undefined, 'Cockpit Operasional Rental')}
+                    subtitle="Monitor utilisasi armada, transaksi berjalan, pendapatan MTD, dan tindak lanjut operasional unit."
+                    actions={
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href={prefixedRoute('rental.create')}
+                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                            >
+                                <span>🚗</span>
+                                <span>+ Buat Sewa Baru</span>
+                            </Link>
 
+                            {/* Export CSV Dropdown */}
+                            <Menu as="div" className="relative inline-block text-left">
+                                <MenuButton className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                    <span>📥</span>
+                                    <span>Export CSV</span>
+                                    <span className="text-[10px] text-slate-400">▼</span>
+                                </MenuButton>
+
+                                <MenuItems
+                                    anchor="bottom end"
+                                    className="z-30 mt-1 w-52 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                >
+                                    <MenuItem>
+                                        <a
+                                            href={exportHref('overdue')}
+                                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                                        >
+                                            <span>⚠️</span>
+                                            <span>Export Unit Terlambat</span>
+                                        </a>
+                                    </MenuItem>
+                                    <MenuItem>
+                                        <a
+                                            href={exportHref('ending_soon')}
+                                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                                        >
+                                            <span>⏳</span>
+                                            <span>Export Segera Berakhir</span>
+                                        </a>
+                                    </MenuItem>
+                                    <MenuItem>
+                                        <a
+                                            href={exportHref('revenue_mtd')}
+                                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                                        >
+                                            <span>💰</span>
+                                            <span>Export Pendapatan MTD</span>
+                                        </a>
+                                    </MenuItem>
+                                    <MenuItem>
+                                        <a
+                                            href={exportHref('idle')}
+                                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                                        >
+                                            <span>🅿️</span>
+                                            <span>Export Unit Idle (Tersedia)</span>
+                                        </a>
+                                    </MenuItem>
+                                </MenuItems>
+                            </Menu>
+                        </div>
+                    }
+                />
+            }
+        >
+            <Head title={t('rental.dashboard.title', undefined, 'Dashboard Rental')} />
             <RentalNav />
 
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-                <p className="text-sm text-gray-600">{t('rental.dashboard.subtitle')}</p>
-                <div className="flex flex-wrap gap-2">
-                    <a href={exportHref('overdue')} className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                        {t('rental.dashboard.export_overdue')}
-                    </a>
-                    <a href={exportHref('ending_soon')} className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                        {t('rental.dashboard.export_ending_soon')}
-                    </a>
-                    <a href={exportHref('revenue_mtd')} className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                        {t('rental.dashboard.export_revenue')}
-                    </a>
-                    <a href={exportHref('idle')} className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                        {t('rental.dashboard.export_idle')}
-                    </a>
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+                {/* 1. Main Executive KPI Cards (Top 4) */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Active Rentals */}
+                    <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Unit Sedang Disewa</span>
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-50 text-base font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                                🚗
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-baseline gap-2">
+                            <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">
+                                {counts.active}
+                            </span>
+                            <span className="text-xs font-bold text-slate-500">Unit Berjalan</span>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800">
+                            <span className="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                {counts.confirmed} Dikonfirmasi
+                            </span>
+                            <span>siap serah terima</span>
+                        </div>
+                    </div>
+
+                    {/* Fleet Utilisation */}
+                    <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Utilisasi Armada</span>
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-50 text-base font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                                📈
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-baseline gap-2">
+                            <span className="font-mono text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                {utilisation.percent}%
+                            </span>
+                            <span className="text-xs font-bold text-slate-500">
+                                ({utilisation.on_rent}/{utilisation.fleet_active} Unit)
+                            </span>
+                        </div>
+                        {/* Progress Bar */}
+                        <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 dark:border-slate-800">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <div
+                                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                                    style={{ width: `${Math.min(100, utilisation.percent)}%` }}
+                                />
+                            </div>
+                            <p className="text-[11px] text-slate-400">{utilisation.idle} unit siap disewakan</p>
+                        </div>
+                    </div>
+
+                    {/* Revenue MTD */}
+                    <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Pendapatan Bulan Ini</span>
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-50 text-base font-bold text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
+                                💰
+                            </span>
+                        </div>
+                        <div className="mt-3">
+                            <span className="font-mono text-2xl font-black text-slate-900 dark:text-white">
+                                {formatMoney(revenue.mtd)}
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800">
+                            <span>ADR (Rata-rata/Hari):</span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-slate-200">
+                                {kpis ? formatMoney(kpis.adr) : '—'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Overdue Alert Card */}
+                    <div
+                        className={`relative overflow-hidden rounded-3xl border p-5 shadow-xs transition hover:shadow-md ${
+                            counts.overdue > 0
+                                ? 'border-rose-300 bg-rose-50/50 dark:border-rose-900/60 dark:bg-rose-950/30'
+                                : 'border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between">
+                            <span
+                                className={`text-xs font-bold uppercase tracking-wider ${
+                                    counts.overdue > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-slate-400'
+                                }`}
+                            >
+                                Unit Terlambat (Overdue)
+                            </span>
+                            <span
+                                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-base font-bold ${
+                                    counts.overdue > 0
+                                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-200'
+                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800'
+                                }`}
+                            >
+                                {counts.overdue > 0 ? '⚠️' : '✓'}
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-baseline gap-2">
+                            <span
+                                className={`font-mono text-3xl font-black ${
+                                    counts.overdue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'
+                                }`}
+                            >
+                                {counts.overdue}
+                            </span>
+                            <span className="text-xs font-bold text-slate-500">Unit Melewati Batas</span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800">
+                            <span>Segera berakhir (≤3 hari):</span>
+                            <span className="font-bold text-amber-600 dark:text-amber-400">
+                                {counts.ending_soon} Unit
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard
-                    label={t('rental.dashboard.active')}
-                    value={counts.active}
-                    hint={t('rental.dashboard.confirmed_hint', { count: counts.confirmed })}
-                />
-                <StatCard
-                    label={t('rental.dashboard.utilisation')}
-                    value={`${utilisation.percent}%`}
-                    hint={t('rental.dashboard.utilisation_hint', {
-                        on_rent: utilisation.on_rent,
-                        fleet: utilisation.fleet_active,
-                    })}
-                />
-                <StatCard label={t('rental.dashboard.revenue_mtd')} value={money(revenue.mtd)} />
-                <StatCard
-                    label={t('rental.dashboard.overdue')}
-                    value={counts.overdue}
-                    tone={counts.overdue > 0 ? 'danger' : undefined}
-                    hint={t('rental.dashboard.ending_soon_hint', { count: counts.ending_soon })}
-                />
-            </div>
+                {/* 2. Secondary Metrics Row */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-[11px] font-bold text-slate-400">RevPAC (Per Mobil Aktif)</p>
+                        <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
+                            {kpis ? formatMoney(kpis.revpac) : '—'}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Efisiensi unit MTD</p>
+                    </div>
 
-            {kpis && (
-                <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <StatCard
-                        label={t('rental.dashboard.kpi_adr')}
-                        value={money(kpis.adr)}
-                        hint={t('rental.dashboard.kpi_adr_hint', { days: kpis.rental_days_mtd })}
-                    />
-                    <StatCard
-                        label={t('rental.dashboard.kpi_revpac')}
-                        value={money(kpis.revpac)}
-                        hint={t('rental.dashboard.kpi_revpac_hint', { fleet: utilisation.fleet_active })}
-                    />
-                    <StatCard
-                        label={t('rental.dashboard.kpi_overdue_rate')}
-                        value={`${kpis.overdue_rate}%`}
-                        tone={kpis.overdue_rate > 0 ? 'warn' : undefined}
-                        hint={t('rental.dashboard.kpi_overdue_rate_hint')}
-                    />
-                    <StatCard
-                        label={t('rental.dashboard.kpi_damage_rate')}
-                        value={`${kpis.damage_rate}%`}
-                        tone={kpis.damage_rate > 0 ? 'warn' : undefined}
-                        hint={t('rental.dashboard.kpi_damage_rate_hint', {
-                            damaged: kpis.damaged_mtd,
-                            closed: kpis.closed_mtd,
-                        })}
-                    />
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-[11px] font-bold text-slate-400">Deposit Tertahan (Held)</p>
+                        <p className="mt-1 font-mono text-base font-black text-amber-600 dark:text-amber-400">
+                            {counts.unsettled_deposits} Transaksi
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Perlu pengembalian</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-[11px] font-bold text-slate-400">Tingkat Kerusakan</p>
+                        <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
+                            {kpis ? `${kpis.damage_rate}%` : '0%'}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Rasio klaim kerusakan</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-[11px] font-bold text-slate-400">Selesai & Dikembalikan</p>
+                        <p className="mt-1 font-mono text-base font-black text-emerald-600 dark:text-emerald-400">
+                            {counts.returned + counts.completed} Unit
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Total transaksi rampung</p>
+                    </div>
                 </div>
-            )}
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard label={t('rental.dashboard.idle_units')} value={utilisation.idle} />
-                <StatCard
-                    label={t('rental.dashboard.unsettled_deposits')}
-                    value={counts.unsettled_deposits}
-                    tone={counts.unsettled_deposits > 0 ? 'warn' : undefined}
-                />
-                <StatCard label={t('rental.dashboard.returned')} value={counts.returned} />
-                <StatCard label={t('rental.dashboard.completed')} value={counts.completed} />
-            </div>
-
-            {(compliance.documents.available && (compliance.documents.expired > 0 || compliance.documents.expiring_30 > 0)) && (
-                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    {t('rental.dashboard.docs_alert', {
-                        expired: compliance.documents.expired,
-                        expiring: compliance.documents.expiring_30,
-                    })}{' '}
-                    <Link href={prefixedRoute('documents.index')} className="font-medium underline">
-                        {t('rental.dashboard.open_documents')}
-                    </Link>
-                </div>
-            )}
-
-            {compliance.maintenance.available &&
-                (compliance.maintenance.overdue_work_orders > 0 || compliance.maintenance.due_schedules > 0) && (
-                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                        {t('rental.dashboard.maintenance_alert', {
-                            overdue: compliance.maintenance.overdue_work_orders,
-                            due: compliance.maintenance.due_schedules,
-                        })}{' '}
-                        <Link href={prefixedRoute('maintenance.schedules.index')} className="font-medium underline">
-                            {t('rental.dashboard.open_maintenance')}
+                {/* 3. Compliance & Maintenance Alerts */}
+                {(compliance.documents.available && (compliance.documents.expired > 0 || compliance.documents.expiring_30 > 0)) && (
+                    <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 shadow-2xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+                        <div className="flex items-center gap-2.5">
+                            <span className="text-lg">📄</span>
+                            <div>
+                                <span className="font-bold">Peringatan Dokumen Armada: </span>
+                                <span>
+                                    {compliance.documents.expired} dokumen STNK/KIR kadaluwarsa, {compliance.documents.expiring_30} jatuh tempo dalam 30 hari.
+                                </span>
+                            </div>
+                        </div>
+                        <Link
+                            href={prefixedRoute('documents.index')}
+                            className="rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 transition hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-200"
+                        >
+                            Buka Dokumen →
                         </Link>
                     </div>
                 )}
 
-            <div className="mb-6 grid gap-6 lg:grid-cols-2">
-                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                    <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4">
-                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{t('rental.dashboard.overdue_list')}</h3>
-                    </div>
-                    <RentalTable rows={overdue} empty={t('rental.dashboard.overdue_empty')} />
-                </div>
-                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                    <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4">
-                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{t('rental.dashboard.ending_soon_list')}</h3>
-                    </div>
-                    <RentalTable rows={ending_soon} empty={t('rental.dashboard.ending_soon_empty')} />
-                </div>
-            </div>
-
-            <div className="mb-6 grid gap-6 lg:grid-cols-3">
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-gray-800">{t('rental.dashboard.revenue_by_type')}</h3>
-                    </div>
-                    <ul className="divide-y divide-gray-100">
-                        {revenue.by_type.length === 0 ? (
-                            <li className="px-4 py-6 text-center text-sm text-gray-500">{t('rental.dashboard.reports_empty')}</li>
-                        ) : (
-                            revenue.by_type.map((row) => (
-                                <li key={row.type} className="flex items-center justify-between px-4 py-3 text-sm">
-                                    <span>
-                                        {row.type}
-                                        <span className="ml-2 text-xs text-gray-400">×{row.count}</span>
-                                    </span>
-                                    <span className="tabular-nums font-medium">{money(row.total)}</span>
-                                </li>
-                            ))
-                        )}
-                    </ul>
-                </div>
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-gray-800">{t('rental.dashboard.revenue_by_partner')}</h3>
-                    </div>
-                    <ul className="divide-y divide-gray-100">
-                        {revenue.by_partner.length === 0 ? (
-                            <li className="px-4 py-6 text-center text-sm text-gray-500">{t('rental.dashboard.reports_empty')}</li>
-                        ) : (
-                            revenue.by_partner.map((row) => (
-                                <li key={row.partner_id} className="flex items-center justify-between px-4 py-3 text-sm">
-                                    <span>
-                                        {row.name}
-                                        <span className="ml-2 text-xs text-gray-400">×{row.count}</span>
-                                    </span>
-                                    <span className="tabular-nums font-medium">{money(row.total)}</span>
-                                </li>
-                            ))
-                        )}
-                    </ul>
-                </div>
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-gray-800">{t('rental.dashboard.revenue_by_vehicle')}</h3>
-                    </div>
-                    <ul className="divide-y divide-gray-100">
-                        {revenue.by_vehicle.length === 0 ? (
-                            <li className="px-4 py-6 text-center text-sm text-gray-500">{t('rental.dashboard.reports_empty')}</li>
-                        ) : (
-                            revenue.by_vehicle.map((row) => (
-                                <li key={row.vehicle_id} className="flex items-center justify-between gap-2 px-4 py-3 text-sm">
-                                    <span className="min-w-0">
-                                        <span className="block truncate">{row.name}</span>
-                                        <span className="text-xs text-gray-400">{row.plate_number} · ×{row.count}</span>
-                                    </span>
-                                    <span className="shrink-0 tabular-nums font-medium">{money(row.total)}</span>
-                                </li>
-                            ))
-                        )}
-                    </ul>
-                </div>
-            </div>
-
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-                    <h3 className="text-sm font-semibold text-gray-800">{t('rental.dashboard.idle_list')}</h3>
-                    <Link href={prefixedRoute('rental.availability.index')} className="text-sm font-medium text-indigo-600 hover:underline">
-                        {t('rental.dashboard.open_availability')}
-                    </Link>
-                </div>
-                {idle_vehicles.length === 0 ? (
-                    <p className="px-4 py-8 text-center text-sm text-gray-500">{t('rental.dashboard.idle_empty')}</p>
-                ) : (
-                    <ul className="divide-y divide-gray-100">
-                        {idle_vehicles.map((vehicle) => (
-                            <li key={vehicle.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                {compliance.maintenance.available &&
+                    (compliance.maintenance.overdue_work_orders > 0 || compliance.maintenance.due_schedules > 0) && (
+                        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 shadow-2xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+                            <div className="flex items-center gap-2.5">
+                                <span className="text-lg">🛠️</span>
                                 <div>
-                                    <p className="font-medium text-gray-900">{vehicle.name}</p>
-                                    <p className="text-xs text-gray-500">
-                                        {vehicle.plate_number}
-                                        {vehicle.type ? ` · ${vehicle.type}` : ''}
-                                    </p>
+                                    <span className="font-bold">Jadwal Servis & Perawatan: </span>
+                                    <span>
+                                        {compliance.maintenance.overdue_work_orders} SPK terlambat, {compliance.maintenance.due_schedules} servis berkala jatuh tempo.
+                                    </span>
                                 </div>
-                                    <Link
-                                    href={prefixedRoute('rental.create')}
-                                    className="text-indigo-600 hover:underline"
+                            </div>
+                            <Link
+                                href={prefixedRoute('maintenance.schedules.index')}
+                                className="rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 transition hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-200"
+                            >
+                                Buka Perawatan →
+                            </Link>
+                        </div>
+                    )}
+
+                {/* 4. Actionable Operations Grid (Overdue & Ending Soon) */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* Overdue Rentals List */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-100 text-xs font-black text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                                    ⚠️
+                                </span>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                    Perlu Tindakan: Unit Terlambat ({overdue.length})
+                                </h3>
+                            </div>
+                            <Link
+                                href={prefixedRoute('rental.index')}
+                                className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                            >
+                                Lihat Semua
+                            </Link>
+                        </div>
+
+                        {overdue.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                <span className="text-3xl mb-2">🎉</span>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Semua Unit Tepat Waktu</p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">Tidak ada pengembalian yang melewati batas waktu.</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {overdue.map((row) => (
+                                    <div
+                                        key={row.id}
+                                        className="flex items-center justify-between p-4 transition hover:bg-slate-50/70 dark:hover:bg-slate-850/50"
+                                    >
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={prefixedRoute('rental.show', row.id)}
+                                                    className="font-mono text-xs font-black text-indigo-600 hover:underline dark:text-indigo-400"
+                                                >
+                                                    {row.code}
+                                                </Link>
+                                                <span className="rounded-md bg-rose-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-300">
+                                                    Terlambat
+                                                </span>
+                                            </div>
+
+                                            <div className="text-xs text-slate-700 dark:text-slate-300">
+                                                <span className="font-bold">{row.vehicle?.name ?? 'Unit'}</span>
+                                                <span className="font-mono text-[11px] text-slate-400"> ({row.vehicle?.plate_number})</span>
+                                                <span className="text-slate-400"> · {row.partner?.name ?? 'Pelanggan'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right">
+                                            <div className="font-mono text-xs font-bold text-rose-600 dark:text-rose-400">
+                                                Jatuh Tempo: {row.end_date}
+                                            </div>
+                                            <Link
+                                                href={prefixedRoute('rental.show', row.id)}
+                                                className="mt-1 inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
+                                            >
+                                                Proses Return →
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Ending Soon List */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-amber-100 text-xs font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                    ⏳
+                                </span>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                    Berakhir Dalam 3 Hari ({ending_soon.length})
+                                </h3>
+                            </div>
+                            <Link
+                                href={prefixedRoute('rental.index')}
+                                className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                            >
+                                Lihat Semua
+                            </Link>
+                        </div>
+
+                        {ending_soon.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                <span className="text-3xl mb-2">📅</span>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Tidak Ada Sewa Segera Berakhir</p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">Tidak ada pengembalian unit dalam 3 hari ke depan.</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {ending_soon.map((row) => (
+                                    <div
+                                        key={row.id}
+                                        className="flex items-center justify-between p-4 transition hover:bg-slate-50/70 dark:hover:bg-slate-850/50"
+                                    >
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={prefixedRoute('rental.show', row.id)}
+                                                    className="font-mono text-xs font-black text-indigo-600 hover:underline dark:text-indigo-400"
+                                                >
+                                                    {row.code}
+                                                </Link>
+                                                <span className="rounded-md bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                                                    Segera Kembali
+                                                </span>
+                                            </div>
+
+                                            <div className="text-xs text-slate-700 dark:text-slate-300">
+                                                <span className="font-bold">{row.vehicle?.name ?? 'Unit'}</span>
+                                                <span className="font-mono text-[11px] text-slate-400"> ({row.vehicle?.plate_number})</span>
+                                                <span className="text-slate-400"> · {row.partner?.name ?? 'Pelanggan'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right">
+                                            <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                Kembali: {row.end_date}
+                                            </div>
+                                            <div className="mt-0.5 font-mono text-[11px] text-slate-400">
+                                                {formatMoney(row.total_amount)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 5. Revenue Breakdown & Top Contributors (Analytics) */}
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-indigo-100 text-xs font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                📊
+                            </span>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                    Analitik Pendapatan Sewa (MTD)
+                                </h3>
+                                <p className="text-xs text-slate-400">Rincian pendapatan berdasarkan unit armada, partner, dan jenis sewa.</p>
+                            </div>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                            {[
+                                { key: 'vehicle', label: '🚗 Per Armada' },
+                                { key: 'partner', label: '👥 Per Pelanggan' },
+                                { key: 'type', label: '⏱️ Jenis Sewa' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setRevenueTab(tab.key as any)}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                                        revenueTab === tab.key
+                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                    }`}
                                 >
-                                    {t('rental.dashboard.book_now')}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="p-5">
+                        {revenueTab === 'vehicle' && (
+                            <div className="space-y-3">
+                                {revenue.by_vehicle.length === 0 ? (
+                                    <p className="py-8 text-center text-xs text-slate-400">Belum ada data pendapatan per armada bulan ini.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        {revenue.by_vehicle.map((row) => (
+                                            <div
+                                                key={row.vehicle_id}
+                                                className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-850"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-bold text-slate-900 dark:text-white">{row.name}</p>
+                                                    <p className="font-mono text-[11px] text-slate-400">{row.plate_number} · ×{row.count} sewa</p>
+                                                </div>
+                                                <span className="font-mono text-xs font-black text-indigo-600 dark:text-indigo-400">
+                                                    {formatMoney(row.total)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {revenueTab === 'partner' && (
+                            <div className="space-y-3">
+                                {revenue.by_partner.length === 0 ? (
+                                    <p className="py-8 text-center text-xs text-slate-400">Belum ada data pendapatan per partner bulan ini.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        {revenue.by_partner.map((row) => (
+                                            <div
+                                                key={row.partner_id}
+                                                className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-850"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-bold text-slate-900 dark:text-white">{row.name}</p>
+                                                    <p className="text-[11px] text-slate-400">×{row.count} transaksi</p>
+                                                </div>
+                                                <span className="font-mono text-xs font-black text-indigo-600 dark:text-indigo-400">
+                                                    {formatMoney(row.total)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {revenueTab === 'type' && (
+                            <div className="space-y-3">
+                                {revenue.by_type.length === 0 ? (
+                                    <p className="py-8 text-center text-xs text-slate-400">Belum ada data pendapatan per jenis sewa bulan ini.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                        {revenue.by_type.map((row) => (
+                                            <div
+                                                key={row.type}
+                                                className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-850"
+                                            >
+                                                <div>
+                                                    <p className="font-bold uppercase tracking-wider text-slate-900 dark:text-white">{row.type}</p>
+                                                    <p className="text-[11px] text-slate-400">×{row.count} penyewaan</p>
+                                                </div>
+                                                <span className="font-mono text-sm font-black text-indigo-600 dark:text-indigo-400">
+                                                    {formatMoney(row.total)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 6. Idle / Available Fleet Ready for Booking */}
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center justify-between border-b border-slate-100 p-5 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                🅿️
+                            </span>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                    Armada Tersedia / Siap Disewakan ({idle_vehicles.length})
+                                </h3>
+                                <p className="text-xs text-slate-400">Unit dalam kondisi aktif yang siap diambil untuk sewa baru.</p>
+                            </div>
+                        </div>
+                        <Link
+                            href={prefixedRoute('rental.availability.index')}
+                            className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                        >
+                            Cek Kalender Ketersediaan →
+                        </Link>
+                    </div>
+
+                    <div className="p-5">
+                        {idle_vehicles.length === 0 ? (
+                            <p className="py-8 text-center text-xs text-slate-400">Seluruh armada sedang dalam masa sewa (utilisasi 100%).</p>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                {idle_vehicles.map((vehicle) => (
+                                    <div
+                                        key={vehicle.id}
+                                        className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-xs shadow-2xs transition hover:border-indigo-200 hover:bg-indigo-50/20 dark:border-slate-800 dark:bg-slate-850"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-mono text-xs font-bold text-slate-500">{vehicle.plate_number}</span>
+                                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                    Tersedia
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 font-bold text-slate-900 dark:text-white truncate">{vehicle.name}</p>
+                                            {vehicle.type && (
+                                                <p className="text-[11px] text-slate-400">{vehicle.type}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex justify-end">
+                                            <Link
+                                                href={prefixedRoute('rental.create', { vehicle_id: vehicle.id })}
+                                                className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-indigo-700"
+                                            >
+                                                <span>＋</span>
+                                                <span>Sewa Sekarang</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </DynamicLayout>
     );

@@ -24,6 +24,16 @@ class RentalHandoverChecklist
     }
 
     /**
+     * Alias for itemKeys().
+     *
+     * @return list<string>
+     */
+    public static function keys(): array
+    {
+        return self::itemKeys();
+    }
+
+    /**
      * @return list<string>
      */
     public static function fuelLevels(): array

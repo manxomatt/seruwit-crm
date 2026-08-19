@@ -143,12 +143,13 @@ export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props)
             header={
                 <PageHeader
                     title={pageTitle}
+                    subtitle={mode === 'create' ? 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.' : 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.'}
                     actions={
                         <Link
                             href={prefixedRoute('rental.rates.index')}
-                            className="text-sm text-gray-600 hover:text-gray-900"
+                            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            ← Kembali ke Daftar Tarif
+                            ← {t('rental.nav.back_to_rates', undefined, 'Kembali ke Daftar Tarif')}
                         </Link>
                     }
                 />
@@ -157,36 +158,36 @@ export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props)
             <Head title={pageTitle} />
             <RentalNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-5">
                 {flash?.success && (
-                    <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                        {flash.success}
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 shadow-2xs dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                        ✓ {flash.success}
                     </div>
                 )}
                 {flash?.error && (
-                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                        {flash.error}
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-800 shadow-2xs dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+                        ⚠️ {flash.error}
                     </div>
                 )}
                 {flash?.warning && (
-                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                        {flash.warning}
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-bold text-amber-800 shadow-2xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+                        ⚠️ {flash.warning}
                     </div>
                 )}
 
-                <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-xs text-gray-500">
-                    <Link href={prefixedRoute('rental.dashboard')} className="hover:text-gray-700">
+                <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Link href={prefixedRoute('rental.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">
                         Rental
                     </Link>
                     <span>/</span>
-                    <Link href={prefixedRoute('rental.settings.index', { tab: 'rates' })} className="hover:text-gray-700">
-                        {t('rental.settings.tab_rates')}
+                    <Link href={prefixedRoute('rental.rates.index')} className="hover:text-slate-700 dark:hover:text-slate-200">
+                        {t('rental.nav.rates', undefined, 'Tarif & Diskon')}
                     </Link>
                     <span>/</span>
-                    <span className="font-medium text-gray-700">{pageTitle}</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{pageTitle}</span>
                 </nav>
 
-                <div className="pb-20">
+                <div>
                     <RateForm
                         form={form}
                         onSubmit={submitHandler}

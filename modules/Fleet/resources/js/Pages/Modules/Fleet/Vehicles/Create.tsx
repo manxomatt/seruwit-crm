@@ -1,21 +1,43 @@
-import DynamicLayout from '@/Layouts/DynamicLayout';
-import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
 import ImageUploader from '@/Components/ImageUploader';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, type ReactNode } from 'react';
+import { FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
 
 const VEHICLE_STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'] as const;
-const VEHICLE_TYPES = ['car', 'truck', 'van', 'motorcycle', 'bus'] as const;
-const FUEL_TYPES = ['petrol', 'diesel', 'electric', 'hybrid'] as const;
-const RENTAL_CLASSES = ['economy', 'mpv', 'suv', 'van', 'premium', 'other'] as const;
+
+const VEHICLE_TYPES = [
+    { key: 'car', label: 'Mobil (Car)', icon: '🚗', desc: 'Mobil penumpang sedan, hatchback, MPV, SUV' },
+    { key: 'van', label: 'Van / Minibus', icon: '🚐', desc: 'Van komersial, minibus travel / blindvan' },
+    { key: 'truck', label: 'Truk (Truck)', icon: '🚚', desc: 'Truk kargo, engkel, dump truck, logistik' },
+    { key: 'bus', label: 'Bus', icon: '🚌', desc: 'Medium bus atau big bus pariwisata' },
+    { key: 'motorcycle', label: 'Motor', icon: '🏍️', desc: 'Sepeda motor operasional kurir / lapangan' },
+] as const;
+
+const FUEL_TYPES = [
+    { key: 'petrol', label: '⛽ Bensin (Petrol)' },
+    { key: 'diesel', label: '🛢️ Solar (Diesel)' },
+    { key: 'electric', label: '⚡ Listrik (EV)' },
+    { key: 'hybrid', label: '🔋 Hybrid' },
+] as const;
+
+const RENTAL_CLASSES = [
+    { value: '', label: 'Tanpa Kelas Rental Khusus' },
+    { value: 'economy', label: 'Economy (City Car)' },
+    { value: 'mpv', label: 'MPV (Keluarga)' },
+    { value: 'suv', label: 'SUV (Tangguh / Offroad)' },
+    { value: 'van', label: 'Van / Minibus VIP' },
+    { value: 'premium', label: 'Premium / Luxury VIP' },
+    { value: 'other', label: 'Lainnya' },
+] as const;
 
 interface HomeBaseOption {
     id: number;
@@ -25,26 +47,6 @@ interface HomeBaseOption {
 
 interface Props {
     bases?: HomeBaseOption[];
-}
-
-function FormSection({
-    title,
-    subtitle,
-    children,
-}: {
-    title: string;
-    subtitle?: string;
-    children: ReactNode;
-}): JSX.Element {
-    return (
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-            <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-700 sm:px-6">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
-                {subtitle && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
-            </div>
-            <div className="space-y-5 px-5 py-5 sm:px-6">{children}</div>
-        </section>
-    );
 }
 
 export default function Create({ bases = [] }: Props): JSX.Element {
@@ -66,7 +68,7 @@ export default function Create({ bases = [] }: Props): JSX.Element {
         expected_km_per_liter: '',
         fuel_type: 'petrol',
         status: 'active',
-        home_base_id: '',
+        home_base_id: bases[0] ? String(bases[0].id) : '',
         odometer_km: 0,
         stnk_expires_at: '',
         kir_expires_at: '',
@@ -74,338 +76,483 @@ export default function Create({ bases = [] }: Props): JSX.Element {
         notes: '',
     });
 
-    const displayName = data.name.trim() || t('fleet.vehicles.preview_untitled');
-    const displayPlate = data.plate_number.trim() || t('fleet.vehicles.preview_no_plate');
-
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(prefixedRoute('fleet.vehicles.store'));
+        post(prefixedRoute('fleet.vehicles.store'), {
+            onError: () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+        });
     };
-
-    const textareaClass =
-        'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white';
 
     return (
         <DynamicLayout
             header={
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            {t('fleet.vehicles.title')}
-                        </p>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-100">
-                            {t('fleet.vehicles.add')}
-                        </h2>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Link href={prefixedRoute('fleet.vehicles.index')}>
-                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                <PageHeader
+                    title="Tambah Unit Kendaraan Baru"
+                    subtitle="Daftarkan kendaraan operasional baru ke dalam armada sistem dengan spesifikasi lengkap, foto unit, dan home base pool."
+                    actions={
+                        <Link
+                            href={prefixedRoute('fleet.vehicles.index')}
+                            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        >
+                            ← Kembali ke Daftar Kendaraan
                         </Link>
-                        <PrimaryButton type="submit" form="fleet-vehicle-create-form" disabled={processing}>
-                            {processing ? t('fleet.vehicles.creating') : t('fleet.vehicles.create')}
-                        </PrimaryButton>
-                    </div>
-                </div>
+                    }
+                />
             }
         >
-            <Head title={t('fleet.vehicles.add')} />
+            <Head title="Tambah Kendaraan Baru · Armada" />
             <FleetNav />
 
-            <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">
-                <div className="space-y-6">
-                    <FormSection
-                        title={t('fleet.vehicles.sections.identity')}
-                        subtitle={t('fleet.vehicles.sections.identity_hint')}
-                    >
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-28">
+                {/* Breadcrumbs */}
+                <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">
+                        Fleet
+                    </Link>
+                    <span>/</span>
+                    <Link href={prefixedRoute('fleet.vehicles.index')} className="hover:text-slate-700 dark:hover:text-slate-200">
+                        Armada Kendaraan
+                    </Link>
+                    <span>/</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">Tambah Unit Baru</span>
+                </nav>
+
+                <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">
+                    {/* 1. Identitas & Foto Kendaraan */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-100 text-base font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                1
+                            </span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Identitas, Foto & Tipe Kendaraan
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Informasi dasar kendaraan, nomor plat polisi, foto unit, dan kategori jenis armada.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Photo Uploader */}
+                        <div>
+                            <InputLabel value="Foto Kendaraan (Opsional)" />
+                            <p className="text-xs text-slate-400 mb-2">Upload foto tampak depan/samping kendaraan untuk kemudahan identifikasi.</p>
+                            <ImageUploader value={data.photo_url} onChange={(value) => setData('photo_url', value)} />
+                            <InputError message={errors.photo_url} className="mt-1" />
+                        </div>
+
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="name" value={t('fleet.vehicles.name')} />
+                                <InputLabel htmlFor="name" value="Nama / Model Unit *" />
                                 <TextInput
                                     id="name"
-                                    className="mt-1 block w-full"
+                                    className="mt-1.5 block w-full !rounded-2xl font-bold shadow-2xs"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                     autoFocus
-                                    placeholder="Avanza Putih 01"
+                                    placeholder="Contoh: Toyota Avanza 1.5 G MT, Isuzu Giga Dump"
                                 />
-                                <InputError message={errors.name} className="mt-2" />
+                                <InputError message={errors.name} className="mt-1" />
                             </div>
+
                             <div>
-                                <InputLabel htmlFor="plate_number" value={t('fleet.vehicles.plate')} />
+                                <InputLabel htmlFor="plate_number" value="Nomor Polisi (Plat Nomor) *" />
                                 <TextInput
                                     id="plate_number"
-                                    className="mt-1 block w-full font-mono uppercase"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono uppercase font-black shadow-2xs"
                                     value={data.plate_number}
                                     onChange={(e) => setData('plate_number', e.target.value.toUpperCase())}
                                     required
                                     placeholder="B 1234 XYZ"
                                 />
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('fleet.vehicles.plate_hint')}</p>
-                                <InputError message={errors.plate_number} className="mt-2" />
+                                <InputError message={errors.plate_number} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="brand" value="Merk / Pabrikan (Brand)" />
+                                <TextInput
+                                    id="brand"
+                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                    value={data.brand}
+                                    onChange={(e) => setData('brand', e.target.value)}
+                                    placeholder="Toyota, Daihatsu, Mitsubishi, Hino, Isuzu..."
+                                />
+                                <InputError message={errors.brand} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="rental_class" value="Klasifikasi / Kelas Rental" />
+                                <Select
+                                    id="rental_class"
+                                    className="mt-1.5"
+                                    value={data.rental_class}
+                                    onChange={(value) => setData('rental_class', value)}
+                                    options={RENTAL_CLASSES.map((rc) => ({
+                                        value: rc.value,
+                                        label: rc.label,
+                                    }))}
+                                />
+                                <InputError message={errors.rental_class} className="mt-1" />
                             </div>
                         </div>
 
+                        {/* Vehicle Type Selector Cards */}
                         <div>
-                            <InputLabel value={t('fleet.vehicles.type')} />
-                            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                {VEHICLE_TYPES.map((type) => {
-                                    const active = data.type === type;
+                            <InputLabel value="Tipe Kendaraan *" />
+                            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                {VEHICLE_TYPES.map((vt) => {
+                                    const active = data.type === vt.key;
 
                                     return (
                                         <button
-                                            key={type}
+                                            key={vt.key}
                                             type="button"
-                                            onClick={() => setData('type', type)}
-                                            className={`rounded-xl border px-4 py-3 text-left transition ${
+                                            onClick={() => setData('type', vt.key)}
+                                            className={`flex flex-col items-start rounded-2xl border p-3.5 text-left transition ${
                                                 active
-                                                    ? 'border-sky-300 bg-sky-50 ring-1 ring-sky-200 dark:border-sky-700 dark:bg-sky-950/40 dark:ring-sky-800'
-                                                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500 dark:hover:bg-gray-700/60'
+                                                    ? 'border-indigo-500 bg-indigo-50/70 ring-2 ring-indigo-500/20 dark:border-indigo-500 dark:bg-indigo-950/40'
+                                                    : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 dark:border-slate-800 dark:bg-slate-850/40'
                                             }`}
                                         >
-                                            <p className={`text-sm font-semibold ${active ? 'text-sky-900 dark:text-sky-100' : 'text-gray-900 dark:text-white'}`}>
-                                                {t(`fleet.vehicles.types.${type}`)}
-                                            </p>
-                                            <p className={`mt-0.5 text-xs ${active ? 'text-sky-700 dark:text-sky-300' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                {t(`fleet.vehicles.type_hints.${type}`)}
+                                            <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+                                                <span className="text-base">{vt.icon}</span>
+                                                <span>{vt.label}</span>
+                                            </div>
+                                            <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                {vt.desc}
                                             </p>
                                         </button>
                                     );
                                 })}
                             </div>
-                            <InputError message={errors.type} className="mt-2" />
+                            <InputError message={errors.type} className="mt-1" />
+                        </div>
+                    </div>
+
+                    {/* 2. Spesifikasi Fisik & Kapasitas */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-100 text-base font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                2
+                            </span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Spesifikasi Fisik & Daya Tampung
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Tahun perakitan, warna fisik, kapasitas kursi penumpang, dan kapasitas angkut muatan barang.
+                                </p>
+                            </div>
                         </div>
 
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            <div>
+                                <InputLabel htmlFor="model_year" value="Tahun Pembuatan (Model Year)" />
+                                <TextInput
+                                    id="model_year"
+                                    type="number"
+                                    min={1990}
+                                    max={2030}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.model_year}
+                                    onChange={(e) => setData('model_year', e.target.value)}
+                                    placeholder="2023"
+                                />
+                                <InputError message={errors.model_year} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="color" value="Warna Kendaraan" />
+                                <TextInput
+                                    id="color"
+                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                    value={data.color}
+                                    onChange={(e) => setData('color', e.target.value)}
+                                    placeholder="Putih Metalik, Hitam, Silver..."
+                                />
+                                <InputError message={errors.color} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="capacity_seats" value="Kapasitas Tempat Duduk (Kursi)" />
+                                <TextInput
+                                    id="capacity_seats"
+                                    type="number"
+                                    min={1}
+                                    max={100}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                    value={data.capacity_seats}
+                                    onChange={(e) => setData('capacity_seats', e.target.value)}
+                                    placeholder="Contoh: 7"
+                                />
+                                <InputError message={errors.capacity_seats} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="capacity_kg" value="Kapasitas Muatan Berat (KG)" />
+                                <TextInput
+                                    id="capacity_kg"
+                                    type="number"
+                                    step="0.01"
+                                    min={0}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                    value={data.capacity_kg}
+                                    onChange={(e) => setData('capacity_kg', e.target.value)}
+                                    placeholder="Contoh: 1500"
+                                />
+                                <InputError message={errors.capacity_kg} className="mt-1" />
+                            </div>
+
+                            <div className="sm:col-span-2">
+                                <InputLabel htmlFor="capacity" value="Label Ringkasan Kapasitas (Teks Bebas)" />
+                                <TextInput
+                                    id="capacity"
+                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                    value={data.capacity}
+                                    onChange={(e) => setData('capacity', e.target.value)}
+                                    placeholder="Contoh: 7 Kursi Penumpang + Bagasi Luas"
+                                />
+                                <InputError message={errors.capacity} className="mt-1" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. Bahan Bakar & Odometer */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-base font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                3
+                            </span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Bahan Bakar, Efisiensi & Odometer
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Jenis bahan bakar, kapasitas tangki, estimasi konsumsi BBM, dan catatan kilometer odometer.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Fuel Type Chips */}
                         <div>
-                            <InputLabel htmlFor="rental_class" value={t('fleet.vehicles.rental_class')} />
-                            <Select
-                                id="rental_class"
-                                className="mt-1"
-                                value={data.rental_class}
-                                onChange={(value) => setData('rental_class', value)}
-                                placeholder={t('fleet.vehicles.rental_class_none')}
-                                options={[
-                                    { value: '', label: t('fleet.vehicles.rental_class_none') },
-                                    ...RENTAL_CLASSES.map((rentalClass) => ({
-                                        value: rentalClass,
-                                        label: t(`fleet.rental_class.${rentalClass}`),
-                                    })),
-                                ]}
-                            />
-                            <InputError message={errors.rental_class} className="mt-2" />
+                            <InputLabel value="Jenis Bahan Bakar *" />
+                            <div className="mt-2 flex flex-wrap gap-2.5">
+                                {FUEL_TYPES.map((ft) => (
+                                    <button
+                                        key={ft.key}
+                                        type="button"
+                                        onClick={() => setData('fuel_type', ft.key)}
+                                        className={`rounded-2xl border px-4 py-2.5 text-xs font-bold transition ${
+                                            data.fuel_type === ft.key
+                                                ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-500/20 dark:border-amber-500 dark:bg-amber-950/60 dark:text-amber-200'
+                                                : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                        }`}
+                                    >
+                                        {ft.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <InputError message={errors.fuel_type} className="mt-1" />
                         </div>
-                    </FormSection>
 
-                        <FormSection
-                            title={t('fleet.vehicles.sections.specs')}
-                            subtitle={t('fleet.vehicles.sections.specs_hint')}
-                        >
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                <div>
-                                    <InputLabel htmlFor="brand" value={t('fleet.vehicles.brand')} />
-                                    <TextInput id="brand" className="mt-1 block w-full" value={data.brand} onChange={(e) => setData('brand', e.target.value)} />
-                                    <InputError message={errors.brand} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="model_year" value={t('fleet.vehicles.model_year')} />
-                                    <TextInput id="model_year" type="number" className="mt-1 block w-full" value={data.model_year} onChange={(e) => setData('model_year', e.target.value)} />
-                                    <InputError message={errors.model_year} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="color" value={t('fleet.vehicles.color')} />
-                                    <TextInput id="color" className="mt-1 block w-full" value={data.color} onChange={(e) => setData('color', e.target.value)} />
-                                    <InputError message={errors.color} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="capacity" value={t('fleet.vehicles.capacity')} />
-                                    <TextInput
-                                        id="capacity"
-                                        placeholder="e.g. 1200 kg or 12 seats"
-                                        className="mt-1 block w-full"
-                                        value={data.capacity}
-                                        onChange={(e) => setData('capacity', e.target.value)}
-                                    />
-                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('fleet.vehicles.capacity_label_hint')}</p>
-                                    <InputError message={errors.capacity} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="capacity_kg" value={t('fleet.vehicles.capacity_kg')} />
-                                    <TextInput id="capacity_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.capacity_kg} onChange={(e) => setData('capacity_kg', e.target.value)} />
-                                    <InputError message={errors.capacity_kg} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="capacity_seats" value={t('fleet.vehicles.capacity_seats')} />
-                                    <TextInput id="capacity_seats" type="number" min={1} max={100} className="mt-1 block w-full" value={data.capacity_seats} onChange={(e) => setData('capacity_seats', e.target.value)} />
-                                    <InputError message={errors.capacity_seats} className="mt-2" />
-                                </div>
-                            </div>
-                        </FormSection>
-
-                        <FormSection
-                            title={t('fleet.vehicles.sections.fuel')}
-                            subtitle={t('fleet.vehicles.sections.fuel_hint')}
-                        >
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
-                                <InputLabel value={t('fleet.vehicles.fuel_type')} />
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {FUEL_TYPES.map((fuelType) => {
-                                        const active = data.fuel_type === fuelType;
-
-                                        return (
-                                            <button
-                                                key={fuelType}
-                                                type="button"
-                                                onClick={() => setData('fuel_type', fuelType)}
-                                                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                                                    active
-                                                        ? 'bg-sky-600 text-white shadow-sm'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                                                }`}
-                                            >
-                                                {t(`fleet.vehicles.fuel_types.${fuelType}`)}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <InputError message={errors.fuel_type} className="mt-2" />
+                                <InputLabel htmlFor="tank_capacity_liters" value="Kapasitas Tangki (Liter)" />
+                                <TextInput
+                                    id="tank_capacity_liters"
+                                    type="number"
+                                    step="0.01"
+                                    min={0}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                    value={data.tank_capacity_liters}
+                                    onChange={(e) => setData('tank_capacity_liters', e.target.value)}
+                                    placeholder="Contoh: 45"
+                                />
+                                <InputError message={errors.tank_capacity_liters} className="mt-1" />
                             </div>
 
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                <div>
-                                    <InputLabel htmlFor="tank_capacity_liters" value={t('fleet.vehicles.tank_capacity')} />
-                                    <TextInput id="tank_capacity_liters" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.tank_capacity_liters} onChange={(e) => setData('tank_capacity_liters', e.target.value)} />
-                                    <InputError message={errors.tank_capacity_liters} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="expected_km_per_liter" value={t('fleet.vehicles.expected_kml')} />
-                                    <TextInput id="expected_km_per_liter" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.expected_km_per_liter} onChange={(e) => setData('expected_km_per_liter', e.target.value)} />
-                                    <InputError message={errors.expected_km_per_liter} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="cost_per_km" value={t('fleet.vehicles.cost_per_km')} />
-                                    <TextInput id="cost_per_km" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.cost_per_km} onChange={(e) => setData('cost_per_km', e.target.value)} />
-                                    <InputError message={errors.cost_per_km} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="odometer_km" value={t('fleet.vehicles.odometer')} />
-                                    <TextInput
-                                        id="odometer_km"
-                                        type="number"
-                                        min={0}
-                                        className="mt-1 block w-full"
-                                        value={data.odometer_km}
-                                        onChange={(e) => setData('odometer_km', parseInt(e.target.value) || 0)}
-                                    />
-                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('fleet.vehicles.odometer_hint')}</p>
-                                    <InputError message={errors.odometer_km} className="mt-2" />
-                                </div>
-                            </div>
-                        </FormSection>
-
-                        <FormSection
-                            title={t('fleet.vehicles.sections.assignment')}
-                            subtitle={t('fleet.vehicles.sections.assignment_hint')}
-                        >
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                <div>
-                                    <InputLabel htmlFor="status" value={t('fleet.vehicles.status')} />
-                                    <Select
-                                        id="status"
-                                        className="mt-1"
-                                        value={data.status}
-                                        onChange={(value) => setData('status', value)}
-                                        options={VEHICLE_STATUSES.map((status) => ({
-                                            value: status,
-                                            label: t(`fleet.status.${status}`),
-                                        }))}
-                                    />
-                                    <InputError message={errors.status} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="home_base_id" value={t('fleet.vehicles.home_base')} />
-                                    <Select
-                                        id="home_base_id"
-                                        className="mt-1"
-                                        value={data.home_base_id}
-                                        onChange={(value) => setData('home_base_id', value)}
-                                        placeholder={t('fleet.vehicles.home_base_none')}
-                                        options={[
-                                            { value: '', label: t('fleet.vehicles.home_base_none') },
-                                            ...bases.map((base) => ({
-                                                value: String(base.id),
-                                                label: `${base.code} — ${base.name}`,
-                                            })),
-                                        ]}
-                                    />
-                                    <InputError message={errors.home_base_id} className="mt-2" />
-                                </div>
-                            </div>
-                        </FormSection>
-
-                        <FormSection
-                            title={t('fleet.vehicles.sections.compliance')}
-                            subtitle={t('fleet.vehicles.sections.compliance_hint')}
-                        >
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                <div>
-                                    <InputLabel htmlFor="stnk_expires_at" value={t('fleet.vehicles.stnk_expires')} />
-                                    <TextInput id="stnk_expires_at" type="date" className="mt-1 block w-full" value={data.stnk_expires_at} onChange={(e) => setData('stnk_expires_at', e.target.value)} />
-                                    <InputError message={errors.stnk_expires_at} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="kir_expires_at" value={t('fleet.vehicles.kir_expires')} />
-                                    <TextInput id="kir_expires_at" type="date" className="mt-1 block w-full" value={data.kir_expires_at} onChange={(e) => setData('kir_expires_at', e.target.value)} />
-                                    <InputError message={errors.kir_expires_at} className="mt-2" />
-                                </div>
-                            </div>
-                        </FormSection>
-
-                        <FormSection
-                            title={t('fleet.vehicles.sections.photo')}
-                            subtitle={t('fleet.vehicles.sections.photo_hint')}
-                        >
-                            <ImageUploader value={data.photo_url} onChange={(value) => setData('photo_url', value)} />
-                            <InputError message={errors.photo_url} className="mt-2" />
-                        </FormSection>
-
-                        <FormSection
-                            title={t('fleet.vehicles.sections.notes')}
-                            subtitle={t('fleet.vehicles.sections.notes_hint')}
-                        >
                             <div>
-                                <InputLabel htmlFor="notes" value={t('fleet.vehicles.notes')} />
+                                <InputLabel htmlFor="expected_km_per_liter" value="Target Konsumsi (KM / Liter)" />
+                                <TextInput
+                                    id="expected_km_per_liter"
+                                    type="number"
+                                    step="0.01"
+                                    min={0}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                    value={data.expected_km_per_liter}
+                                    onChange={(e) => setData('expected_km_per_liter', e.target.value)}
+                                    placeholder="Contoh: 12.5"
+                                />
+                                <InputError message={errors.expected_km_per_liter} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="cost_per_km" value="Estimasi Biaya Operasional / KM (Rp)" />
+                                <TextInput
+                                    id="cost_per_km"
+                                    type="number"
+                                    step="0.01"
+                                    min={0}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                    value={data.cost_per_km}
+                                    onChange={(e) => setData('cost_per_km', e.target.value)}
+                                    placeholder="Contoh: 1800"
+                                />
+                                <InputError message={errors.cost_per_km} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="odometer_km" value="Odometer Saat Ini (KM) *" />
+                                <TextInput
+                                    id="odometer_km"
+                                    type="number"
+                                    min={0}
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                    value={data.odometer_km}
+                                    onChange={(e) => setData('odometer_km', parseInt(e.target.value) || 0)}
+                                    required
+                                />
+                                <InputError message={errors.odometer_km} className="mt-1" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 4. Penugasan Base Pool & Status */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-purple-100 text-base font-black text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                                4
+                            </span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Penugasan Home Base Pool & Status Operasional
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Tentukan titik pangkalan pool tempat unit diparkir dan status kesiapan operasionalnya.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div>
+                                <InputLabel htmlFor="home_base_id" value="Home Base / Pangkalan Pool" />
+                                <Select
+                                    id="home_base_id"
+                                    className="mt-1.5"
+                                    value={data.home_base_id}
+                                    onChange={(value) => setData('home_base_id', value)}
+                                    placeholder="Pilih Home Base Pool Kendaraan"
+                                    options={[
+                                        { value: '', label: 'Tanpa Home Base Khusus' },
+                                        ...bases.map((base) => ({
+                                            value: String(base.id),
+                                            label: `🏢 ${base.name} (${base.code})`,
+                                        })),
+                                    ]}
+                                />
+                                <InputError message={errors.home_base_id} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="status" value="Status Kesiapan Operasional *" />
+                                <Select
+                                    id="status"
+                                    className="mt-1.5"
+                                    value={data.status}
+                                    onChange={(value) => setData('status', value)}
+                                    options={[
+                                        { value: 'active', label: '✓ Siap Operasi (Aktif)' },
+                                        { value: 'maintenance', label: '🛠️ Dalam Perawatan (Servis)' },
+                                        { value: 'out_of_service', label: '✕ Rusak / Non-Aktif' },
+                                        { value: 'retired', label: '⏸ Purna Tugas / Dijual' },
+                                    ]}
+                                />
+                                <InputError message={errors.status} className="mt-1" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 5. Kepatuhan Dokumen & Catatan */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-100 text-base font-black text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                                5
+                            </span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Kepatuhan Pajak, Uji KIR & Catatan Unit
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Catat tanggal jatuh tempo STNK dan uji berkala KIR agar sistem dapat memberikan peringatan dini.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div>
+                                <InputLabel htmlFor="stnk_expires_at" value="Masa Berlaku STNK / Pajak" />
+                                <TextInput
+                                    id="stnk_expires_at"
+                                    type="date"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.stnk_expires_at}
+                                    onChange={(e) => setData('stnk_expires_at', e.target.value)}
+                                />
+                                <InputError message={errors.stnk_expires_at} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="kir_expires_at" value="Masa Berlaku Uji KIR (Opsional)" />
+                                <TextInput
+                                    id="kir_expires_at"
+                                    type="date"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.kir_expires_at}
+                                    onChange={(e) => setData('kir_expires_at', e.target.value)}
+                                />
+                                <InputError message={errors.kir_expires_at} className="mt-1" />
+                            </div>
+
+                            <div className="sm:col-span-2">
+                                <InputLabel htmlFor="notes" value="Catatan Khusus Unit Kendaraan" />
                                 <textarea
                                     id="notes"
                                     rows={3}
-                                    className={textareaClass}
+                                    className="mt-1.5 block w-full rounded-2xl border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white"
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
+                                    placeholder="Catatan kondisi velg, riwayat baret, perlengkapan dongkrak, atau modifikasi khusus..."
                                 />
-                                <InputError message={errors.notes} className="mt-2" />
+                                <InputError message={errors.notes} className="mt-1" />
                             </div>
-                        </FormSection>
-                </div>
+                        </div>
+                    </div>
 
-                <div className="sticky bottom-4 z-10">
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white/95 px-5 py-4 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
-                        <p className="min-w-0 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-medium text-gray-800 dark:text-gray-100">{displayName}</span>
-                            <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                            <span className="font-mono text-xs">{displayPlate}</span>
-                            <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                            <span>{t(`fleet.vehicles.types.${data.type}`, undefined, data.type)}</span>
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            <Link href={prefixedRoute('fleet.vehicles.index')}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                    {/* Sticky Action Footer */}
+                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
+                        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+                            <Link
+                                href={prefixedRoute('fleet.vehicles.index')}
+                                className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                            >
+                                ← Batal & Kembali
                             </Link>
-                            <PrimaryButton disabled={processing}>
-                                {processing ? t('fleet.vehicles.creating') : t('fleet.vehicles.create')}
+
+                            <PrimaryButton
+                                type="submit"
+                                disabled={processing}
+                                className="rounded-2xl px-6 py-3 text-sm font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+                            >
+                                {processing ? 'Menyimpan Unit...' : '＋ Simpan Kendaraan Baru'}
                             </PrimaryButton>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </DynamicLayout>
     );
 }

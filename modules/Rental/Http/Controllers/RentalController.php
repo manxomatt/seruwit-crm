@@ -618,7 +618,7 @@ class RentalController extends Controller
         return Inertia::render('Modules/Rental/Checkout', [
             'rental' => $rental->append('is_overdue'),
             'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
-            'checklistItems' => RentalHandoverChecklist::keys(),
+            'checklistItems' => RentalHandoverChecklist::itemKeys(),
             'depositBlocksCheckout' => $depositBlocksCheckout,
             'checkoutBlockedReason' => $checkoutBlockedReason,
             'pickupCustomerSignatureUrl' => $pickupCustomerSignatureUrl,
@@ -646,7 +646,7 @@ class RentalController extends Controller
         return Inertia::render('Modules/Rental/Return', [
             'rental' => $rental->append('is_overdue'),
             'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
-            'checklistItems' => RentalHandoverChecklist::keys(),
+            'checklistItems' => RentalHandoverChecklist::itemKeys(),
             'aiInspectionEnabled' => (bool) $aiInspectionEnabled,
             'aiInspectLiveUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental),
         ]);
