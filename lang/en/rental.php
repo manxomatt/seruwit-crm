@@ -149,8 +149,8 @@ return [
         'calendar' => 'Calendar',
         'rates' => 'Rates',
         'settings' => 'Settings',
-        'back_to_list' => '← Back to Rentals',
-        'back' => '← Back',
+        'back_to_list' => 'Back to Rentals',
+        'back' => 'Back',
     ],
 
     'status' => [

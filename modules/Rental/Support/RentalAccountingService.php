@@ -150,13 +150,13 @@ class RentalAccountingService
                 continue;
             }
 
-            if (class_exists(PaymentRecorder::class)) {
+            if ($this->receivablesAvailable()) {
                 try {
                     PaymentRecorder::record([
                         'partner_id' => $rental->partner_id,
                         'payment_date' => now()->toDateString(),
                         'amount' => $balance,
-                        'type' => Payment::TYPE_FULL,
+                        'type' => Payment::TYPE_SETTLEMENT,
                         'method' => $rental->deposit_payment_method ?? Payment::METHOD_TRANSFER,
                         'company_bank_account_id' => $rental->deposit_company_bank_account_id,
                         'notes' => "Pelunasan bukti transfer sewa {$rental->code}",
@@ -168,12 +168,14 @@ class RentalAccountingService
                     $invoice->update([
                         'status' => Invoice::STATUS_PAID,
                         'amount_paid' => $invoice->total,
+                        'paid_at' => now(),
                     ]);
                 }
             } else {
                 $invoice->update([
                     'status' => Invoice::STATUS_PAID,
                     'amount_paid' => $invoice->total,
+                    'paid_at' => now(),
                 ]);
             }
         }

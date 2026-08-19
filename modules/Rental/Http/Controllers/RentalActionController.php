@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -174,7 +175,8 @@ class RentalActionController extends Controller
 
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CHECKED_OUT);
 
-        return back()->with('success', __('rental.messages.checked_out'));
+        return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
+            ->with('success', __('rental.messages.checked_out'));
     }
 
     /**
@@ -260,7 +262,8 @@ class RentalActionController extends Controller
 
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_RETURNED);
 
-        return back()->with('success', __('rental.messages.returned'));
+        return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
+            ->with('success', __('rental.messages.returned'));
     }
 
     /**
@@ -317,27 +320,51 @@ class RentalActionController extends Controller
 
     public function payInvoices(PayRentalInvoicesRequest $request, Rental $rental): RedirectResponse
     {
-        if (! class_exists(\Modules\Receivables\Support\PaymentRecorder::class)) {
-            return back()->with('error', __('rental.errors.invoicing_unavailable'));
-        }
-
         $data = $request->validated();
         $allocations = collect($data['allocations'])->map(fn (array $row): array => [
             'invoice_id' => (int) $row['invoice_id'],
             'amount' => round((float) $row['amount'], 2),
         ])->all();
 
-        \Modules\Receivables\Support\PaymentRecorder::record([
-            'partner_id' => $rental->partner_id,
-            'payment_date' => $data['payment_date'],
-            'amount' => round((float) $data['amount'], 2),
-            'type' => $data['type'] ?? \Modules\Receivables\Models\Payment::TYPE_SETTLEMENT,
-            'method' => $data['method'] ?? \Modules\Receivables\Models\Payment::METHOD_TRANSFER,
-            'company_bank_account_id' => $data['company_bank_account_id'] ?? null,
-            'reference_number' => $data['reference_number'] ?? null,
-            'notes' => $data['notes'] ?? null,
-            'allocations' => $allocations,
-        ]);
+        if (Schema::hasTable('payments') && class_exists(\Modules\Receivables\Support\PaymentRecorder::class)) {
+            \Modules\Receivables\Support\PaymentRecorder::record([
+                'partner_id' => $rental->partner_id,
+                'payment_date' => $data['payment_date'],
+                'amount' => round((float) $data['amount'], 2),
+                'type' => $data['type'] ?? \Modules\Receivables\Models\Payment::TYPE_SETTLEMENT,
+                'method' => $data['method'] ?? \Modules\Receivables\Models\Payment::METHOD_TRANSFER,
+                'company_bank_account_id' => $data['company_bank_account_id'] ?? null,
+                'reference_number' => $data['reference_number'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'allocations' => $allocations,
+            ]);
+        } else {
+            DB::transaction(function () use ($allocations): void {
+                foreach ($allocations as $row) {
+                    $invoice = Invoice::query()->lockForUpdate()->find($row['invoice_id']);
+                    if (! $invoice) {
+                        continue;
+                    }
+
+                    $currentPaid = (float) ($invoice->amount_paid ?? 0);
+                    $newAmountPaid = round($currentPaid + (float) $row['amount'], 2);
+                    $total = round((float) $invoice->total, 2);
+                    $status = ($newAmountPaid + 0.009 >= $total)
+                        ? Invoice::STATUS_PAID
+                        : Invoice::STATUS_PARTIALLY_PAID;
+
+                    $invoice->update([
+                        'amount_paid' => min($newAmountPaid, $total),
+                        'status' => $status,
+                        'paid_at' => ($status === Invoice::STATUS_PAID) ? now() : null,
+                    ]);
+
+                    if ($status === Invoice::STATUS_PAID && class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                        \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh(['lines', 'partner']));
+                    }
+                }
+            });
+        }
 
         return back()->with('success', __('rental.messages.invoices_paid'));
     }

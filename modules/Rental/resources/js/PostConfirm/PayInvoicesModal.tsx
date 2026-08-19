@@ -5,9 +5,10 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import Select from '@/Components/Select';
+import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
-import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { formatMoney } from '@/utils/money';
+import { formatDateDmY } from '@/utils/date';
 
 export type DepositPaymentMethod = 'cash' | 'transfer' | 'giro' | 'card' | 'other';
 
@@ -57,7 +58,6 @@ export default function PayInvoicesModal({
     errors = {},
 }: Props): JSX.Element {
     const { t } = useTrans();
-    const { prefixedRoute } = useRoutePrefix();
 
     const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [method, setMethod] = useState<DepositPaymentMethod>('transfer');
@@ -85,7 +85,7 @@ export default function PayInvoicesModal({
     const needsBank = method === 'transfer' || method === 'giro';
     const bankOptions = useMemo(
         () => [
-            { value: '', label: t('rental.confirm_payment.select_bank') },
+            { value: '', label: t('rental.confirm_payment.select_bank', undefined, '-- Pilih Rekening Bank Tujuan --') },
             ...companyBankAccounts.map((account) => ({
                 value: String(account.id),
                 label: account.name,
@@ -102,19 +102,26 @@ export default function PayInvoicesModal({
     };
 
     const handleFull = (invoiceId: number, balance: number) => {
-        setAllocations((prev) => ({
-            ...prev,
-            [invoiceId]: String(balance),
-        }));
+        setAllocations((prev) => {
+            const next = { ...prev, [invoiceId]: String(balance) };
+            const nextTotal = openInvoices.reduce(
+                (sum, inv) => sum + (Number(next[inv.id]) || 0),
+                0,
+            );
+            setAmount(String(nextTotal));
+            return next;
+        });
     };
 
     const handleMatchAmount = () => {
         const newAllocations: Record<number, string> = {};
+        let total = 0;
         openInvoices.forEach((inv) => {
             newAllocations[inv.id] = String(inv.balance);
+            total += inv.balance;
         });
         setAllocations(newAllocations);
-        setAmount(String(totalAllocated));
+        setAmount(String(total));
     };
 
     const handleSubmit = () => {
@@ -155,80 +162,112 @@ export default function PayInvoicesModal({
 
     return (
         <Modal show={show} maxWidth="2xl" onClose={handleClose}>
-            <div className="px-5 py-4 sm:px-6">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                            {t('rental.actions.pay_invoices')} - {rentalCode}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                            {t('rental.post_confirm.payment_modal.subtitle', {
-                                code: rentalCode,
-                            })}
-                        </p>
+            <div className="p-6 space-y-5">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 text-xl shadow-2xs">
+                            💳
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    {t('rental.actions.pay_invoices', undefined, 'Pelunasan Tagihan Invoice')}
+                                </h3>
+                                <span className="rounded-lg bg-indigo-50 px-2 py-0.5 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                                    {rentalCode}
+                                </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                {t('rental.post_confirm.payment_modal.subtitle', { code: rentalCode }, 'Catat penerimaan pembayaran dan alokasikan ke invoice terkait.')}
+                            </p>
+                        </div>
                     </div>
-                    <SecondaryButton type="button" onClick={handleClose} disabled={processing}>
-                        {t('rental.nav.back')}
-                    </SecondaryButton>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition"
+                        title="Tutup"
+                    >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                <div className="mt-4 space-y-4">
-                    <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                        <table className="min-w-full text-sm">
-                            <thead className="bg-gray-50 dark:bg-gray-800">
+                {/* Invoices Selection Card */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-850/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                            📑 1. Pilih Tagihan & Alokasi Pembayaran
+                        </h4>
+                        {openInvoices.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleMatchAmount}
+                                className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-bold text-indigo-600 shadow-2xs hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-800 dark:text-indigo-300 transition"
+                            >
+                                ⚡ {t('rental.invoices.match_amount', undefined, 'Alokasikan Semua (Lunas)')}
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                        <table className="min-w-full text-xs">
+                            <thead className="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                        {t('rental.invoices.code')}
+                                    <th className="px-3.5 py-2.5 text-left font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        {t('rental.invoices.code', undefined, 'No. Invoice')}
                                     </th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                        {t('rental.invoices.due_date')}
+                                    <th className="px-3.5 py-2.5 text-left font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        {t('rental.invoices.due_date', undefined, 'Jatuh Tempo')}
                                     </th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                        {t('rental.invoices.balance')}
+                                    <th className="px-3.5 py-2.5 text-right font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        {t('rental.invoices.balance', undefined, 'Sisa Tagihan')}
                                     </th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                        {t('rental.invoices.allocate')}
+                                    <th className="px-3.5 py-2.5 text-right font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        {t('rental.invoices.allocate', undefined, 'Nominal Dibayar (Rp)')}
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {openInvoices.length === 0 ? (
                                     <tr>
-                                        <td
-                                            colSpan={4}
-                                            className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
-                                        >
-                                            {t('rental.invoices.no_open_invoices')}
+                                        <td colSpan={4} className="px-4 py-6 text-center text-xs text-slate-400">
+                                            {t('rental.invoices.no_open_invoices', undefined, 'Tidak ada invoice yang membutuhkan pembayaran.')}
                                         </td>
                                     </tr>
                                 ) : (
                                     openInvoices.map((inv) => (
-                                        <tr key={inv.id}>
-                                            <td className="whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-900 dark:text-white">
+                                        <tr key={inv.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition">
+                                            <td className="whitespace-nowrap px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-white">
                                                 {inv.code}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-2 text-sm text-gray-600 dark:text-gray-300">
-                                                {inv.due_date ? new Date(inv.due_date).toLocaleDateString('id-ID') : '—'}
+                                            <td className="whitespace-nowrap px-3.5 py-2.5 text-slate-500 dark:text-slate-400">
+                                                {inv.due_date ? formatDateDmY(inv.due_date) : '—'}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-900 dark:text-white">
+                                            <td className="whitespace-nowrap px-3.5 py-2.5 text-right font-mono font-bold text-rose-600 dark:text-rose-400">
                                                 {formatMoney(inv.balance)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-2 text-right text-sm">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={allocations[inv.id] ?? ''}
-                                                        onChange={(e) => handleAllocateChange(inv.id, e.target.value)}
-                                                        className="w-28 rounded-md border border-gray-300 px-2 py-1 text-right text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                                    />
+                                            <td className="whitespace-nowrap px-3.5 py-2.5 text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={allocations[inv.id] ?? ''}
+                                                            onChange={(e) => handleAllocateChange(inv.id, e.target.value)}
+                                                            className="w-32 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-right font-mono text-xs font-bold text-slate-900 shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleFull(inv.id, inv.balance)}
-                                                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                        className="rounded-lg bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 transition"
                                                     >
-                                                        {t('rental.invoices.full')}
+                                                        Lunas
                                                     </button>
                                                 </div>
                                             </td>
@@ -240,61 +279,67 @@ export default function PayInvoicesModal({
                     </div>
 
                     {openInvoices.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                {t('rental.invoices.total_allocated', { amount: formatMoney(totalAllocated) })}
+                        <div className="flex items-center justify-between rounded-xl border border-indigo-200/80 bg-indigo-50/70 px-4 py-2.5 dark:border-indigo-900/50 dark:bg-indigo-950/40">
+                            <span className="text-xs font-semibold text-indigo-950 dark:text-indigo-200">
+                                Total Alokasi Tagihan:
                             </span>
-                            <button
-                                type="button"
-                                onClick={handleMatchAmount}
-                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
-                            >
-                                {t('rental.invoices.match_amount')}
-                            </button>
+                            <span className="font-mono text-sm font-black text-indigo-700 dark:text-indigo-300">
+                                {formatMoney(totalAllocated)}
+                            </span>
                         </div>
                     )}
+                </div>
+
+                {/* Payment Detail Form */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-850/50 space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        💳 2. Informasi Transaksi Pembayaran
+                    </h4>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <InputLabel htmlFor="payment_date" value={t('rental.fields.payment_date')} />
-                            <input
+                            <InputLabel htmlFor="payment_date" value={`${t('rental.fields.payment_date', undefined, 'Tanggal Pembayaran')} *`} />
+                            <TextInput
                                 id="payment_date"
                                 type="date"
                                 value={paymentDate}
                                 onChange={(e) => setPaymentDate(e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="mt-1 w-full !rounded-xl"
+                                required
                             />
                             <InputError message={errors.payment_date} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="method" value={t('rental.confirm_payment.method')} />
+                            <InputLabel htmlFor="method" value={`${t('rental.confirm_payment.method', undefined, 'Metode Pembayaran')} *`} />
                             <Select
                                 id="method"
                                 value={method}
                                 onChange={(val) => setMethod(val as DepositPaymentMethod)}
+                                className="mt-1 w-full !rounded-xl"
                                 options={[
-                                    { value: 'cash', label: t('receivables.methods.cash', undefined, 'cash') },
-                                    { value: 'transfer', label: t('receivables.methods.transfer', undefined, 'transfer') },
-                                    { value: 'giro', label: t('receivables.methods.giro', undefined, 'giro') },
-                                    { value: 'card', label: t('receivables.methods.card', undefined, 'card') },
-                                    { value: 'other', label: t('receivables.methods.other', undefined, 'other') },
+                                    { value: 'transfer', label: '🏦 ' + t('receivables.methods.transfer', undefined, 'Transfer Bank') },
+                                    { value: 'cash', label: '💵 ' + t('receivables.methods.cash', undefined, 'Tunai (Cash)') },
+                                    { value: 'card', label: '💳 ' + t('receivables.methods.card', undefined, 'Kartu Debit / Kredit') },
+                                    { value: 'giro', label: '📜 ' + t('receivables.methods.giro', undefined, 'Giro / Cek') },
+                                    { value: 'other', label: '⚡ ' + t('receivables.methods.other', undefined, 'Lainnya') },
                                 ]}
                             />
                             <InputError message={errors.method} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="type" value={t('rental.invoices.payment_type')} />
+                            <InputLabel htmlFor="type" value={t('rental.invoices.payment_type', undefined, 'Jenis Pembayaran')} />
                             <Select
                                 id="type"
                                 value={type}
                                 onChange={(val) => setType(val)}
+                                className="mt-1 w-full !rounded-xl"
                                 options={[
-                                    { value: 'settlement', label: t('receivables.types.settlement', undefined, 'Settlement') },
-                                    { value: 'installment', label: t('receivables.types.installment', undefined, 'Installment') },
-                                    { value: 'down_payment', label: t('receivables.types.down_payment', undefined, 'Down Payment') },
-                                    { value: 'other', label: t('receivables.types.other', undefined, 'Other') },
+                                    { value: 'settlement', label: t('receivables.types.settlement', undefined, 'Pelunasan (Settlement)') },
+                                    { value: 'installment', label: t('receivables.types.installment', undefined, 'Cicilan (Installment)') },
+                                    { value: 'down_payment', label: t('receivables.types.down_payment', undefined, 'Uang Muka (Down Payment)') },
+                                    { value: 'other', label: t('receivables.types.other', undefined, 'Lainnya') },
                                 ]}
                             />
                             <InputError message={errors.type} className="mt-1" />
@@ -302,66 +347,80 @@ export default function PayInvoicesModal({
 
                         {needsBank && companyBankAccounts.length > 0 && (
                             <div>
-                                <InputLabel htmlFor="bank_account" value={t('rental.confirm_payment.select_bank')} />
+                                <InputLabel htmlFor="bank_account" value={`${t('rental.confirm_payment.select_bank', undefined, 'Rekening Tujuan')} *`} />
                                 <Select
                                     id="bank_account"
                                     value={bankAccountId}
                                     onChange={(val) => setBankAccountId(val)}
                                     options={bankOptions}
+                                    className="mt-1 w-full !rounded-xl"
                                 />
                                 <InputError message={errors.company_bank_account_id} className="mt-1" />
                             </div>
                         )}
 
                         <div>
-                            <InputLabel htmlFor="amount" value={t('rental.fields.amount')} />
-                            <input
-                                id="amount"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            />
+                            <InputLabel htmlFor="amount" value={`${t('rental.fields.amount', undefined, 'Total Nominal Diterima')} (Rp) *`} />
+                            <div className="relative mt-1">
+                                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xs font-bold text-slate-400">
+                                    Rp
+                                </span>
+                                <input
+                                    id="amount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder={totalAllocated > 0 ? String(totalAllocated) : '0'}
+                                    className="block w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 font-mono text-sm font-bold text-slate-900 shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                />
+                            </div>
                             <InputError message={errors.amount} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="reference_number" value={t('rental.invoices.reference_number')} />
-                            <input
+                            <InputLabel htmlFor="reference_number" value={t('rental.invoices.reference_number', undefined, 'No. Referensi / Bukti Transfer')} />
+                            <TextInput
                                 id="reference_number"
                                 type="text"
                                 value={referenceNumber}
                                 onChange={(e) => setReferenceNumber(e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: TRF-20260819-001"
+                                className="mt-1 w-full !rounded-xl"
                             />
                             <InputError message={errors.reference_number} className="mt-1" />
                         </div>
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="notes" value={t('rental.invoices.notes')} />
+                        <InputLabel htmlFor="notes" value={t('rental.invoices.notes', undefined, 'Catatan Pembayaran')} />
                         <textarea
                             id="notes"
                             rows={2}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            placeholder="Catatan tambahan pembayaran (opsional)..."
+                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
                         <InputError message={errors.notes} className="mt-1" />
                     </div>
 
                     <InputError message={errors.allocations} className="mt-1" />
-                    <InputError message={errors.amount} className="mt-1" />
                 </div>
 
-                <div className="mt-6 flex flex-wrap justify-end gap-2">
-                    <SecondaryButton type="button" onClick={handleClose} disabled={processing}>
-                        {t('rental.nav.back')}
+                {/* Footer Actions */}
+                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
+                    <SecondaryButton type="button" onClick={handleClose} disabled={processing} className="rounded-xl px-4 py-2">
+                        {t('rental.nav.back', undefined, 'Kembali')}
                     </SecondaryButton>
-                    <PrimaryButton type="button" onClick={handleSubmit} disabled={processing || totalAllocated <= 0.009}>
-                        {processing ? t('rental.actions.confirming') : t('rental.actions.pay_invoices')}
+                    <PrimaryButton
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={processing || totalAllocated <= 0.009}
+                        className="rounded-xl px-5 py-2"
+                    >
+                        {processing ? 'Menyimpan Pembayaran...' : t('rental.actions.pay_invoices', undefined, 'Konfirmasi & Catat Pembayaran')}
                     </PrimaryButton>
                 </div>
             </div>

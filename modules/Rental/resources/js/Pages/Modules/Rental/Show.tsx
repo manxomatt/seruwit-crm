@@ -33,8 +33,11 @@ import type { PostConfirmAction, PostConfirmProgress, PostConfirmStepId } from '
 import { POST_CONFIRM_STEPS } from '../../../PostConfirm/types';
 import RentalNav from '../../../RentalNav';
 import {
+    ChecklistToggleCard,
     DetailRow,
     EmptyBlock,
+    FuelLevelPicker,
+    ModalHeader,
     PaymentBadge,
     SectionCard,
     StatCard,
@@ -318,25 +321,6 @@ export default function Show({
     const cancelForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
     const noShowForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
     const rejectProofForm = useForm({ rejected_reason: 'Bukti transfer tidak terbaca atau nominal tidak sesuai' });
-    const checkoutForm = useForm({
-        start_odometer: '',
-        start_fuel_level: 'full',
-        checkout_checklist: emptyChecklist(checklistItems),
-        checkout_notes: '',
-        checkout_photos: [] as string[],
-        checkout_signature: null as string | null,
-        checkout_staff_signature: null as string | null,
-    });
-    const returnForm = useForm({
-        actual_return_date: '',
-        end_odometer: '',
-        end_fuel_level: 'full',
-        return_checklist: emptyChecklist(checklistItems),
-        return_notes: '',
-        deposit_returned: false,
-        return_photos: [] as string[],
-        return_signature: null as string | null,
-    });
     const extendForm = useForm({ new_end_date: '', notes: '' });
     const swapForm = useForm({ to_vehicle_id: '', odometer_km: '', notes: '' });
     const damageForm = useForm({ description: '', amount: '', photo_path: '' });
@@ -384,45 +368,6 @@ export default function Show({
 
     const submitCancel: FormEventHandler = (e) => { e.preventDefault(); cancelForm.post(prefixedRoute('rental.cancel', rental.id), { onSuccess: () => setModal(null) }); };
     const submitNoShow: FormEventHandler = (e) => { e.preventDefault(); noShowForm.post(prefixedRoute('rental.no_show', rental.id), { onSuccess: () => setModal(null) }); };
-    const submitCheckout: FormEventHandler = (e) => { e.preventDefault(); checkoutForm.post(prefixedRoute('rental.checkout', rental.id), { onSuccess: () => setModal(null) }); };
-    const submitReturn: FormEventHandler = (e) => { e.preventDefault(); returnForm.post(prefixedRoute('rental.return', rental.id), { onSuccess: () => setModal(null) }); };
-
-    const handleLiveAiScan = async () => {
-        if (!aiInspectLiveUrl || returnForm.data.return_photos.length === 0 || liveScanning) return;
-        setLiveScanning(true);
-        setLiveScanError(null);
-        try {
-            const token = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-            const response = await fetch(aiInspectLiveUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    return_photos: returnForm.data.return_photos,
-                }),
-            });
-            const data = await response.json();
-            if (data.success && data.inspection) {
-                setLiveAiResult(data.inspection);
-                if (data.inspection.extracted_odometer !== null) {
-                    returnForm.setData('end_odometer', String(data.inspection.extracted_odometer));
-                }
-                if (data.inspection.extracted_fuel_level) {
-                    returnForm.setData('end_fuel_level', data.inspection.extracted_fuel_level);
-                }
-            } else {
-                setLiveScanError(data.message || 'Gagal menjalankan inspeksi AI.');
-            }
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat memanggil AI Vision.';
-            setLiveScanError(msg);
-        } finally {
-            setLiveScanning(false);
-        }
-    };
     const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
     const submitSwap: FormEventHandler = (e) => {
         e.preventDefault();
@@ -485,10 +430,10 @@ export default function Show({
                 setModal('deposit');
                 break;
             case 'checkout':
-                setModal('checkout');
+                router.visit(prefixedRoute('rental.checkout_page', rental.id));
                 break;
             case 'return':
-                setModal('return');
+                router.visit(prefixedRoute('rental.return_page', rental.id));
                 break;
             case 'complete':
                 action('complete');
@@ -544,11 +489,11 @@ export default function Show({
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            {t('rental.title')}
+                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                            {t('rental.title', undefined, 'Modul Rental & Reservasi')}
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <h2 className="font-mono text-xl font-semibold leading-tight text-gray-800 dark:text-white">
+                            <h2 className="font-mono text-xl font-black leading-tight text-slate-900 dark:text-white">
                                 {rental.code}
                             </h2>
                             <StatusBadge
@@ -556,43 +501,50 @@ export default function Show({
                                 label={t(`rental.status.${rental.status}`, undefined, rental.status)}
                             />
                             {rental.is_overdue && (
-                                <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950 dark:text-rose-200">
-                                    {t('rental.status.overdue')}
+                                <span className="inline-flex items-center rounded-xl bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950/60 dark:text-rose-300">
+                                    ⚠️ {t('rental.status.overdue', undefined, 'Terlambat')}
                                 </span>
                             )}
                         </div>
                     </div>
                     <Link href={prefixedRoute('rental.index')}>
-                        <SecondaryButton type="button">{t('rental.nav.back_to_list')}</SecondaryButton>
+                        <SecondaryButton type="button" className="rounded-xl px-3 py-1.5 text-xs font-bold shadow-2xs">
+                            ← {t('rental.nav.back_to_list', undefined, 'Kembali ke Daftar')}
+                        </SecondaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title={t('rental.pages.show.title', { code: rental.code })} />
+            <Head title={t('rental.pages.show.title', { code: rental.code }, `Rental ${rental.code}`)} />
 
             <RentalNav />
 
             <div className="space-y-6">
-                {/* Hero identity */}
-                <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                    <div className="flex flex-col gap-5 border-b border-gray-100 p-5 dark:border-gray-700 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+                {/* 1. Hero Identity & Action Card */}
+                <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col gap-6 border-b border-slate-100 p-6 dark:border-slate-800 lg:flex-row lg:items-start lg:justify-between">
                         <div className="flex min-w-0 flex-1 flex-col gap-5 sm:flex-row sm:items-start">
-                            <div className="shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-900/40 dark:ring-gray-600">
+                            {/* Vehicle Photo Container */}
+                            <div className="relative shrink-0 overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-700 sm:h-44 sm:w-64">
                                 {rental.vehicle.photo_url ? (
                                     <img
                                         src={rental.vehicle.photo_url}
                                         alt={rental.vehicle.name}
-                                        className="h-40 w-full object-cover sm:h-44 sm:w-64"
+                                        className="h-44 w-full object-cover sm:h-44 sm:w-64"
                                     />
                                 ) : (
-                                    <div className="flex h-40 w-full items-center justify-center px-4 text-center sm:h-44 sm:w-64">
-                                        <p className="text-sm text-gray-400 dark:text-gray-500">
-                                            {t('rental.availability.no_photo')}
-                                        </p>
+                                    <div className="flex h-44 w-full items-center justify-center px-4 text-center text-xs text-slate-400 sm:h-44 sm:w-64">
+                                        🚗 {t('rental.availability.no_photo', undefined, 'Tanpa Foto')}
                                     </div>
+                                )}
+                                {rental.vehicle.rental_class && (
+                                    <span className="absolute bottom-2 left-2 rounded-lg bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                                        {t(`fleet.rental_class.${rental.vehicle.rental_class}`, undefined, rental.vehicle.rental_class)}
+                                    </span>
                                 )}
                             </div>
 
+                            {/* Details & Status */}
                             <div className="min-w-0 flex-1 space-y-3">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <StatusBadge
@@ -606,143 +558,176 @@ export default function Show({
                                         />
                                     )}
                                     {depositHeld && !rental.deposit_received_at && (
-                                        <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
-                                            {t('rental.deposit.not_received')}
+                                        <span className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/60 dark:text-rose-300">
+                                            🛡️ {t('rental.deposit.not_received', undefined, 'Deposit Belum Diterima')}
                                         </span>
                                     )}
                                     {depositHeld && rental.deposit_received_at && rental.deposit_status !== 'settled' && (
-                                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                                            {t('rental.deposit.received')}
+                                        <span className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                            🛡️ {t('rental.deposit.received', undefined, 'Deposit Diterima')}
                                         </span>
                                     )}
                                 </div>
 
                                 <div>
-                                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+                                    <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
                                         {rental.vehicle.name}
                                     </h1>
-                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="font-mono font-medium text-gray-700 dark:text-gray-200">
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                        <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                             {rental.vehicle.plate_number}
                                         </span>
-                                        <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                                        {rental.partner.name}
+                                        <span>·</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            👤 {rental.partner.name}
+                                        </span>
                                         {rental.driver && (
                                             <>
-                                                <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                                                {rental.driver.name}
+                                                <span>·</span>
+                                                <span className="font-medium text-slate-600 dark:text-slate-300">
+                                                    👨‍✈️ {rental.driver.name}
+                                                </span>
                                             </>
                                         )}
-                                    </p>
+                                    </div>
                                 </div>
 
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                    <span className="font-medium text-gray-900 dark:text-white">
-                                        {rental.start_date} → {rental.end_date}
+                                {/* Interval Dates Bar */}
+                                <div className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
+                                    <span className="font-bold text-slate-900 dark:text-white">
+                                        📅 {rental.start_date}
                                     </span>
-                                    <span className="ml-2 text-gray-500">
-                                        ({rental.total_periods} {periodLabel})
+                                    <span className="text-slate-400">➔</span>
+                                    <span className="font-bold text-slate-900 dark:text-white">
+                                        {rental.end_date}
                                     </span>
-                                </p>
+                                    <span className="ml-1 rounded-md bg-indigo-100 px-1.5 py-0.5 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        {rental.total_periods} {periodLabel}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Toolbar */}
-                        <div className="flex max-w-full shrink-0 flex-nowrap items-center justify-end gap-2 overflow-x-auto lg:max-w-[min(100%,36rem)]">
+                        {/* Action Toolbar */}
+                        <div className="flex shrink-0 items-center justify-start gap-2 flex-nowrap overflow-x-auto pb-1 sm:pb-0 lg:justify-end">
                             {canPrintContract && (
                                 <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
-                                    <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
+                                    <SecondaryButton type="button" className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs">
+                                        📄 {t('rental.actions.print_contract', undefined, 'Cetak Kontrak')}
+                                    </SecondaryButton>
                                 </a>
                             )}
                             {canPrintHandover && (
                                 <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
-                                    <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
+                                    <SecondaryButton type="button" className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs">
+                                        📋 {t('rental.actions.print_handover', undefined, 'Cetak BA Serah Terima')}
+                                    </SecondaryButton>
                                 </a>
                             )}
                             {(is('active') || is('returned')) && (
-                                <SecondaryButton className="shrink-0" onClick={() => setModal('damage')}>
-                                    {t('rental.actions.add_damage')}
+                                <SecondaryButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs" onClick={() => setModal('damage')}>
+                                    🛠️ {t('rental.actions.add_damage', undefined, 'Tambah Damage')}
                                 </SecondaryButton>
                             )}
                             {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
                                 <Link href={prefixedRoute('rental.edit', rental.id)} className="shrink-0">
-                                    <SecondaryButton>{t('common.edit')}</SecondaryButton>
+                                    <SecondaryButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs">
+                                        ✏️ {t('common.edit', undefined, 'Edit')}
+                                    </SecondaryButton>
                                 </Link>
                             )}
                             {canCancel && (
-                                <DangerButton className="shrink-0" onClick={() => setModal('cancel')}>
-                                    {t('common.cancel')}
+                                <DangerButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs" onClick={() => setModal('cancel')}>
+                                    {t('common.cancel', undefined, 'Batal')}
                                 </DangerButton>
                             )}
                             {canConfirm && !showConfirmPayment && (
-                                <PrimaryButton className="shrink-0" onClick={openConfirmPayment}>
-                                    {t('rental.actions.confirm')}
+                                <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-indigo-600 hover:bg-indigo-700 shadow-2xs" onClick={openConfirmPayment}>
+                                    ✓ {t('rental.actions.confirm', undefined, 'Konfirmasi Sewa')}
                                 </PrimaryButton>
                             )}
                             {is('confirmed') && (
-                                <DangerButton className="shrink-0" onClick={() => setModal('no_show')}>
-                                    {t('rental.actions.mark_no_show')}
+                                <DangerButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs" onClick={() => setModal('no_show')}>
+                                    {t('rental.actions.mark_no_show', undefined, 'No Show')}
                                 </DangerButton>
                             )}
                             {!postConfirm.visible && canPayDepositOnline && (
-                                <SecondaryButton className="shrink-0" onClick={() => action('deposit.pay_online')}>
-                                    {t('receivables.gateway.pay_deposit')}
+                                <SecondaryButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs" onClick={() => action('deposit.pay_online')}>
+                                    💳 {t('receivables.gateway.pay_deposit', undefined, 'Bayar Deposit Online')}
                                 </SecondaryButton>
                             )}
                             {!postConfirm.visible && is('confirmed') && (
                                 <>
                                     {canReceiveDeposit && (
-                                        <PrimaryButton className="shrink-0" onClick={() => action('deposit.receive')}>
-                                            {t('rental.actions.receive_deposit')}
+                                        <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-2xs" onClick={() => action('deposit.receive')}>
+                                            🛡️ {t('rental.actions.receive_deposit', undefined, 'Terima Deposit')}
                                         </PrimaryButton>
                                     )}
-                                    <PrimaryButton
-                                        className={`shrink-0${depositBlocksCheckout ? ' opacity-50' : ''}`}
-                                        onClick={() => setModal('checkout')}
-                                        disabled={depositBlocksCheckout}
-                                        title={depositBlocksCheckout ? checkoutBlockedReason : undefined}
-                                    >
-                                        {t('rental.actions.checkout')}
-                                    </PrimaryButton>
+                                    {depositBlocksCheckout ? (
+                                        <PrimaryButton
+                                            className="shrink-0 whitespace-nowrap text-xs font-bold bg-blue-600 opacity-50 cursor-not-allowed shadow-2xs"
+                                            disabled
+                                            title={checkoutBlockedReason || undefined}
+                                        >
+                                            🚗 {t('rental.actions.checkout', undefined, 'Checkout (Serah Terima)')}
+                                        </PrimaryButton>
+                                    ) : (
+                                        <Link href={prefixedRoute('rental.checkout_page', rental.id)} className="shrink-0">
+                                            <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-blue-600 hover:bg-blue-700 shadow-2xs">
+                                                🚗 {t('rental.actions.checkout', undefined, 'Checkout (Serah Terima)')}
+                                            </PrimaryButton>
+                                        </Link>
+                                    )}
                                 </>
                             )}
                             {!postConfirm.visible && is('active') && (
                                 <>
-                                    <SecondaryButton className="shrink-0" onClick={() => setModal('extend')}>
-                                        {t('rental.actions.extend')}
+                                    <SecondaryButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs" onClick={() => setModal('extend')}>
+                                        ⏱️ {t('rental.actions.extend', undefined, 'Perpanjang')}
                                     </SecondaryButton>
-                                    <PrimaryButton className="shrink-0" onClick={() => setModal('return')}>
-                                        {t('rental.actions.return')}
-                                    </PrimaryButton>
+                                    <Link href={prefixedRoute('rental.return_page', rental.id)} className="shrink-0">
+                                        <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-purple-600 hover:bg-purple-700 shadow-2xs">
+                                            🏁 {t('rental.actions.return', undefined, 'Kembalikan Mobil')}
+                                        </PrimaryButton>
+                                    </Link>
                                 </>
                             )}
                             {!postConfirm.visible && is('returned') && (
-                                <PrimaryButton className="shrink-0" onClick={() => action('complete')}>
-                                    {t('rental.actions.complete')}
+                                <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-2xs" onClick={() => action('complete')}>
+                                    ✓ {t('rental.actions.complete', undefined, 'Selesaikan Sewa')}
                                 </PrimaryButton>
                             )}
                             {canMarkFeePaid && (
-                                <SecondaryButton className="shrink-0" onClick={() => action('mark_fee_paid')}>
-                                    {t('rental.actions.mark_fee_paid')}
+                                <SecondaryButton className="shrink-0 whitespace-nowrap text-xs font-bold shadow-2xs" onClick={() => action('mark_fee_paid')}>
+                                    {t('rental.actions.mark_fee_paid', undefined, 'Tandai Biaya Lunas')}
                                 </SecondaryButton>
                             )}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 bg-gray-50/70 p-4 dark:bg-gray-900/40 sm:grid-cols-4 sm:px-6">
+                    {/* KPI Stat Cards Bar */}
+                    <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-4 dark:bg-slate-850/50 sm:grid-cols-4 sm:p-6">
                         <StatCard
-                            label={t('rental.fields.total_amount')}
+                            label={t('rental.fields.total_amount', undefined, 'Total Biaya Sewa')}
                             value={formatMoney(rental.total_amount)}
+                            icon="💳"
+                            tone="indigo"
+                            hint={
+                                rental.tier_discount_amount && Number(rental.tier_discount_amount) > 0
+                                    ? `Diskon Tier: −${formatMoney(rental.tier_discount_amount)}`
+                                    : undefined
+                            }
                         />
                         <StatCard
-                            label={t('rental.fields.deposit')}
+                            label={t('rental.fields.deposit', undefined, 'Deposit Jaminan')}
                             value={formatMoney(rental.deposit_amount)}
+                            icon="🛡️"
                             hint={
                                 Number(rental.deposit_amount) <= 0
-                                    ? t('rental.deposit.none')
+                                    ? t('rental.deposit.none', undefined, 'Tanpa Deposit')
                                     : rental.deposit_received_at
-                                        ? t('rental.deposit.received')
-                                        : t('rental.deposit.not_received')
+                                        ? t('rental.deposit.received', undefined, 'Deposit Diterima')
+                                        : t('rental.deposit.not_received', undefined, 'Belum Diterima')
                             }
                             tone={
                                 Number(rental.deposit_amount) <= 0 || rental.deposit_received_at
@@ -751,21 +736,24 @@ export default function Show({
                             }
                         />
                         <StatCard
-                            label={t('rental.fields.period')}
+                            label={t('rental.fields.period', undefined, 'Durasi Sewa')}
                             value={`${rental.total_periods} ${periodLabel}`}
+                            icon="🗓️"
                             hint={`${rental.start_date} → ${rental.end_date}`}
                         />
                         {invoicingEnabled ? (
                             <StatCard
-                                label={t('rental.fields.balance_due')}
+                                label={t('rental.fields.balance_due', undefined, 'Sisa Tagihan')}
                                 value={formatMoney(payment.balance_due)}
+                                icon="💰"
                                 hint={t(`rental.payment.${payment.status}`, undefined, payment.status)}
                                 tone={payment.balance_due > 0 ? 'warning' : 'success'}
                             />
                         ) : (
                             <StatCard
-                                label={t('rental.fields.base_amount')}
+                                label={t('rental.fields.base_amount', undefined, 'Tarif Pokok')}
                                 value={formatMoney(rental.base_amount)}
+                                icon="💵"
                             />
                         )}
                     </div>
@@ -823,14 +811,14 @@ export default function Show({
                 )}
 
                 {depositBlocksCheckout && (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
-                        <p className="font-medium">{checkoutBlockedReason}</p>
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-900 shadow-2xs dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+                        <p className="font-bold">{checkoutBlockedReason}</p>
                         {Number(rental.deposit_amount) > 0 ? (
                             <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
                                 {t('rental.modals.confirm_deposit_body', {
                                     code: rental.code,
                                     amount: formatMoney(rental.deposit_amount),
-                                })}
+                                }, 'Selesaikan penerimaan deposit jaminan terlebih dahulu.')}
                             </p>
                         ) : (
                             <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
@@ -842,56 +830,56 @@ export default function Show({
 
                 {/* Deposit Proof Verification Card */}
                 {rental.deposit_proof_status === 'pending' && (
-                    <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-5 dark:border-amber-800 dark:bg-amber-950/40 shadow-sm space-y-4">
+                    <div className="rounded-3xl border border-amber-300 bg-gradient-to-r from-amber-50/90 via-orange-50/50 to-amber-50/90 p-6 dark:border-amber-800 dark:bg-slate-900 shadow-xs space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/80 pb-3 dark:border-amber-800/80">
                             <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center rounded-full bg-amber-200/80 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                                <span className="inline-flex items-center rounded-xl bg-amber-200/80 px-2.5 py-0.5 text-xs font-black text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
                                     Pending Verification
                                 </span>
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                                     {Number(rental.deposit_amount) > 0
                                         ? `Verifikasi Bukti Transfer Manual Deposit (${formatMoney(rental.deposit_amount)})`
                                         : `Verifikasi Bukti Transfer Pembayaran Sewa (${formatMoney(rental.total_amount)})`}
                                 </h3>
                             </div>
                             {rental.deposit_proof_uploaded_at && (
-                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                     Diunggah: {formatDateTimeDmYHi(rental.deposit_proof_uploaded_at)}
                                 </span>
                             )}
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                            <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
                                 <div>
-                                    <span className="font-semibold text-gray-500">Rekening Tujuan:</span>{' '}
-                                    <span className="font-bold text-gray-900 dark:text-white">
+                                    <span className="font-semibold text-slate-500">Rekening Tujuan:</span>{' '}
+                                    <span className="font-bold text-slate-900 dark:text-white">
                                         {rental.depositCompanyBankAccount
                                             ? `${rental.depositCompanyBankAccount.bank_name || ''} ${rental.depositCompanyBankAccount.name} (${rental.depositCompanyBankAccount.account_number || ''})`
                                             : 'Transfer Bank'}
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="font-semibold text-gray-500">
+                                    <span className="font-semibold text-slate-500">
                                         {Number(rental.deposit_amount) > 0 ? 'Jumlah Deposit:' : 'Jumlah Pembayaran Sewa:'}
                                     </span>{' '}
-                                    <span className="font-bold text-teal-700 dark:text-teal-400 text-sm">
+                                    <span className="font-black text-indigo-700 dark:text-indigo-400 text-sm">
                                         {formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="font-semibold text-gray-500">Metode:</span> Transfer Bank Manual
+                                    <span className="font-semibold text-slate-500">Metode:</span> Transfer Bank Manual
                                 </div>
                             </div>
 
                             {depositProofUrl && (
                                 <div className="space-y-1">
-                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 block">Pratinjau Bukti Transfer:</span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 block">Pratinjau Bukti Transfer:</span>
                                     <a
                                         href={depositProofUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-block overflow-hidden rounded-lg border border-gray-200 shadow-sm transition hover:opacity-90 dark:border-gray-700"
+                                        className="inline-block overflow-hidden rounded-2xl border border-slate-200 shadow-2xs transition hover:opacity-90 dark:border-slate-700"
                                     >
                                         <img
                                             src={depositProofUrl}
@@ -901,7 +889,7 @@ export default function Show({
                                                 (e.target as HTMLElement).style.display = 'none';
                                             }}
                                         />
-                                        <span className="block p-1 text-center text-[11px] font-bold text-indigo-600 underline dark:text-indigo-400">
+                                        <span className="block p-1.5 text-center text-[11px] font-bold text-indigo-600 underline dark:text-indigo-400">
                                             Buka Dokumen Bukti Transfer ↗
                                         </span>
                                     </a>
@@ -909,14 +897,14 @@ export default function Show({
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-amber-200/80 dark:border-amber-800/80">
-                            <DangerButton type="button" onClick={() => setShowRejectProofModal(true)}>
+                        <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-amber-200/80 dark:border-amber-800/80">
+                            <DangerButton type="button" onClick={() => setShowRejectProofModal(true)} className="text-xs font-bold">
                                 Tolak Bukti Transfer
                             </DangerButton>
                             <PrimaryButton
                                 type="button"
                                 onClick={() => setShowApproveProofModal(true)}
-                                className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+                                className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500 text-xs font-bold"
                             >
                                 {Number(rental.deposit_amount) > 0
                                     ? 'Setujui & Konfirmasi Deposit'
@@ -928,37 +916,37 @@ export default function Show({
 
                 {/* Customer Pickup Request & Contract Signature Card */}
                 {rental.pickup_requested_at && rental.status === 'confirmed' && (
-                    <div className="rounded-xl border border-blue-300 bg-blue-50/80 p-5 dark:border-blue-800 dark:bg-blue-950/40 shadow-sm space-y-4">
+                    <div className="rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-sky-50/90 p-6 dark:border-blue-800/80 dark:bg-slate-900 shadow-xs space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/80 pb-3 dark:border-blue-800/80">
                             <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center rounded-full bg-blue-200/80 px-2.5 py-0.5 text-xs font-bold text-blue-900 dark:bg-blue-900/60 dark:text-blue-200">
+                                <span className="inline-flex items-center rounded-xl bg-blue-200/80 px-2.5 py-0.5 text-xs font-black text-blue-900 dark:bg-blue-900/60 dark:text-blue-200">
                                     Siap Serah Terima (Pickup)
                                 </span>
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                                     Permohonan Pickup & Kontrak Digital Pelanggan
                                 </h3>
                             </div>
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                 Waktu Pengajuan: {formatDateTimeDmYHi(rental.pickup_requested_at)}
                             </span>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                            <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
                                 <div>
-                                    <span className="font-semibold text-gray-500">Persetujuan Syarat & Kontrak:</span>{' '}
+                                    <span className="font-semibold text-slate-500">Persetujuan Syarat & Kontrak:</span>{' '}
                                     <span className="font-bold text-emerald-700 dark:text-emerald-400">
                                         ✓ Disetujui oleh Penyewa ({rental.partner?.name})
                                     </span>
                                 </div>
                                 {rental.pickup_notes && (
                                     <div>
-                                        <span className="font-semibold text-gray-500">Catatan Pelanggan:</span>{' '}
-                                        <span className="italic text-gray-900 dark:text-white">{rental.pickup_notes}</span>
+                                        <span className="font-semibold text-slate-500">Catatan Pelanggan:</span>{' '}
+                                        <span className="italic text-slate-900 dark:text-white">{rental.pickup_notes}</span>
                                     </div>
                                 )}
                                 <div>
-                                    <span className="font-semibold text-gray-500">Status Pembayaran Deposit:</span>{' '}
+                                    <span className="font-semibold text-slate-500">Status Pembayaran Deposit:</span>{' '}
                                     <span className="font-bold text-emerald-700 dark:text-emerald-400">
                                         {Number(rental.deposit_amount) > 0 ? `Lunas (${formatMoney(rental.deposit_amount)})` : '-'}
                                     </span>
@@ -967,8 +955,8 @@ export default function Show({
 
                             {pickupCustomerSignatureUrl && (
                                 <div className="space-y-1">
-                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 block">Tanda Tangan Digital Pelanggan:</span>
-                                    <div className="rounded-lg border border-gray-200 bg-white p-2 text-center dark:border-gray-700 dark:bg-gray-800">
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 block">Tanda Tangan Digital Pelanggan:</span>
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center dark:border-slate-700 dark:bg-slate-800">
                                         <img
                                             src={pickupCustomerSignatureUrl}
                                             alt="Tanda Tangan Digital Pelanggan"
@@ -979,28 +967,29 @@ export default function Show({
                             )}
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-blue-200/80 dark:border-blue-800/80">
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-blue-200/80 dark:border-blue-800/80">
                             <PrimaryButton
                                 type="button"
                                 onClick={() => setModal('checkout')}
-                                className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                                className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-xs font-bold"
                             >
-                                Proses Pickup & Serahkan Kendaraan (Checkout)
+                                🚗 Proses Pickup & Serahkan Kendaraan (Checkout)
                             </PrimaryButton>
                         </div>
                     </div>
                 )}
 
-                {/* Live map — show prominently when tracking is relevant */}
+                {/* Live GPS Map Card */}
                 {(isLiveTracking || live || (trackingEnabled && hasGpsDevice)) && (
                     <SectionCard
-                        title={isLiveTracking && live ? t('rental.sections.live_location') : t('rental.sections.last_location')}
+                        title={isLiveTracking && live ? t('rental.sections.live_location', undefined, 'Posisi & Pelacakan GPS Real-Time') : t('rental.sections.last_location', undefined, 'Lokasi Terakhir Kendaraan')}
+                        icon="🛰️"
                         action={
                             <div className="flex flex-wrap items-center gap-3">
                                 {isLiveTracking && live && (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                                        {t('rental.tracking.live')}
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950 dark:text-emerald-300">
+                                        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                                        {t('rental.tracking.live', undefined, 'Live GPS Aktif')}
                                     </span>
                                 )}
                                 {trackingEnabled && hasGpsDevice && gpsSummary && (
@@ -1010,9 +999,9 @@ export default function Show({
                                             from: gpsSummary.from,
                                             to: gpsSummary.to,
                                         })}
-                                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
                                     >
-                                        {t('rental.tracking.view_trail')}
+                                        {t('rental.tracking.view_trail', undefined, 'Lihat Jejak Rute ↗')}
                                     </Link>
                                 )}
                             </div>
@@ -1021,102 +1010,110 @@ export default function Show({
                         {live ? (
                             <div className="space-y-3">
                                 {recordedLabel && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        {formatSpeedKph(livePosition?.speed_kph)}
-                                        {` — ${t('rental.tracking.last_seen', { time: recordedLabel })}`}
+                                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        ⚡ Kecepatan: {formatSpeedKph(livePosition?.speed_kph)}
+                                        {` — Terakhir aktif: ${recordedLabel}`}
                                     </p>
                                 )}
-                                <LeafletMap bounds={[live]} height="320px">
-                                    <VehicleMarker
-                                        position={live}
-                                        label={`${rental.vehicle.name} (${rental.vehicle.plate_number})`}
-                                        tone={liveTone}
-                                    >
-                                        <>
-                                            <br />
-                                            {formatSpeedKph(livePosition?.speed_kph)}
-                                            {recordedLabel && (
-                                                <>
-                                                    <br />
-                                                    <span className="text-gray-500">{recordedLabel}</span>
-                                                </>
-                                            )}
-                                        </>
-                                    </VehicleMarker>
-                                </LeafletMap>
+                                <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                                    <LeafletMap bounds={[live]} height="320px">
+                                        <VehicleMarker
+                                            position={live}
+                                            label={`${rental.vehicle.name} (${rental.vehicle.plate_number})`}
+                                            tone={liveTone}
+                                        >
+                                            <>
+                                                <br />
+                                                {formatSpeedKph(livePosition?.speed_kph)}
+                                                {recordedLabel && (
+                                                    <>
+                                                        <br />
+                                                        <span className="text-slate-500">{recordedLabel}</span>
+                                                    </>
+                                                )}
+                                            </>
+                                        </VehicleMarker>
+                                    </LeafletMap>
+                                </div>
                                 {isLiveTracking && (
-                                    <p className="text-xs text-gray-400">{t('rental.tracking.hint_active')}</p>
+                                    <p className="text-[11px] text-slate-400">{t('rental.tracking.hint_active', undefined, 'Peta memperbarui koordinat secara berkala.')}</p>
                                 )}
                                 {gpsSummary && (
-                                    <div className="grid grid-cols-1 gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-gray-900/50 dark:text-gray-300 sm:grid-cols-3">
-                                        <p>{t('rental.tracking.gps_km', { km: gpsSummary.distance_km.toLocaleString('id-ID') })}</p>
-                                        <p>
-                                            {gpsSummary.odometer_km !== null
-                                                ? t('rental.tracking.odometer_km', { km: gpsSummary.odometer_km.toLocaleString('id-ID') })
-                                                : t('rental.tracking.odometer_pending')}
+                                    <div className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300 sm:grid-cols-3">
+                                        <p className="font-medium">📍 Jarak Tempuh: <strong>{gpsSummary.distance_km.toLocaleString('id-ID')} km</strong></p>
+                                        <p className="font-medium">
+                                            📊 Odometer:{' '}
+                                            <strong>
+                                                {gpsSummary.odometer_km !== null
+                                                    ? `${gpsSummary.odometer_km.toLocaleString('id-ID')} km`
+                                                    : 'Menunggu sinkronisasi'}
+                                            </strong>
                                         </p>
-                                        <p>{t('rental.tracking.gps_points', { count: gpsSummary.points })}</p>
+                                        <p className="font-medium">📡 Titik GPS: <strong>{gpsSummary.points} log</strong></p>
                                     </div>
                                 )}
                             </div>
                         ) : (
                             <EmptyBlock>
                                 {!trackingEnabled
-                                    ? t('rental.tracking.unavailable')
+                                    ? t('rental.tracking.unavailable', undefined, 'Modul pelacakan GPS tidak aktif.')
                                     : !hasGpsDevice
-                                        ? t('rental.tracking.no_device')
-                                        : t('rental.tracking.no_fix')}
+                                        ? t('rental.tracking.no_device', undefined, 'Unit ini belum terpasang perangkat GPS.')
+                                        : t('rental.tracking.no_fix', undefined, 'Belum ada sinyal koordinat GPS.')}
                             </EmptyBlock>
                         )}
                     </SectionCard>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-5">
+                    {/* Left Column (3 of 5 cols) */}
                     <div className="space-y-6 lg:col-span-3">
-                        <SectionCard title={t('rental.sections.booking_details')}>
+                        {/* 1. Booking Details Card */}
+                        <SectionCard title={t('rental.sections.booking_details', undefined, 'Detail Reservasi & Rute')} icon="📍">
                             <dl>
-                                <DetailRow label={t('rental.fields.vehicle')}>
+                                <DetailRow label={t('rental.fields.vehicle', undefined, 'Armada Kendaraan')}>
                                     {rental.vehicle.name}{' '}
-                                    <span className="font-mono text-gray-500">({rental.vehicle.plate_number})</span>
+                                    <span className="font-mono text-slate-500">({rental.vehicle.plate_number})</span>
                                 </DetailRow>
-                                <DetailRow label={t('rental.fields.customer')}>{rental.partner.name}</DetailRow>
+                                <DetailRow label={t('rental.fields.customer', undefined, 'Penyewa / Pelanggan')}>{rental.partner.name}</DetailRow>
                                 {rental.driver && (
-                                    <DetailRow label={t('rental.fields.driver')}>{rental.driver.name}</DetailRow>
+                                    <DetailRow label={t('rental.fields.driver', undefined, 'Supir (Driver)')}>{rental.driver.name}</DetailRow>
                                 )}
-                                <DetailRow label={t('rental.fields.period')}>
+                                <DetailRow label={t('rental.fields.period', undefined, 'Periode Sewa')}>
                                     {rental.start_date} → {rental.end_date} ({rental.total_periods} {periodLabel})
                                 </DetailRow>
                                 {rental.actual_return_date && (
-                                    <DetailRow label={t('rental.fields.actual_return')}>{rental.actual_return_date}</DetailRow>
+                                    <DetailRow label={t('rental.fields.actual_return', undefined, 'Pengembalian Aktual')}>{rental.actual_return_date}</DetailRow>
                                 )}
                                 {locationDisplay(rental.pickup_location) && (
-                                    <DetailRow label={t('rental.fields.pickup_location')}>
+                                    <DetailRow label={t('rental.fields.pickup_location', undefined, 'Lokasi Penyerahan (Pickup)')}>
                                         {locationDisplay(rental.pickup_location)}
                                     </DetailRow>
                                 )}
                                 {locationDisplay(rental.return_location) && (
-                                    <DetailRow label={t('rental.fields.return_location')}>
+                                    <DetailRow label={t('rental.fields.return_location', undefined, 'Lokasi Pengembalian (Return)')}>
                                         {locationDisplay(rental.return_location)}
                                     </DetailRow>
                                 )}
                                 {Number(rental.one_way_fee_amount ?? 0) > 0 && (
-                                    <DetailRow label={t('rental.fields.one_way_fee')}>
+                                    <DetailRow label={t('rental.fields.one_way_fee', undefined, 'Biaya One-Way (Relokasi)')}>
                                         {formatMoney(rental.one_way_fee_amount)}
                                     </DetailRow>
                                 )}
                                 {rental.insurance_package && (
-                                    <DetailRow label={t('rental.fields.insurance_package')}>
+                                    <DetailRow label={t('rental.fields.insurance_package', undefined, 'Paket Asuransi')}>
                                         {rental.insurance_package.name}
                                     </DetailRow>
                                 )}
                                 {rental.fuel_policy_notes && (
-                                    <DetailRow label={t('rental.fields.fuel_policy_notes')}>
+                                    <DetailRow label={t('rental.fields.fuel_policy_notes', undefined, 'Kebijakan BBM')}>
                                         {rental.fuel_policy_notes}
                                     </DetailRow>
                                 )}
                             </dl>
                         </SectionCard>
 
+                        {/* AI KYC Verification Card */}
                         {aiKycEnabled && (
                             <AiKycVerificationCard
                                 assessment={rental.ai_kyc_assessment ?? null}
@@ -1124,15 +1121,16 @@ export default function Show({
                                 hasSim={Boolean(rental.passenger_sim_path)}
                                 aiScanKycUrl={aiScanKycUrl || ''}
                                 aiSyncKycPartnerUrl={aiSyncKycPartnerUrl}
-                                canUpdate={can('rental', 'update')}
+                                canUpdate={!is('cancelled') && !is('cancelled_paid')}
                             />
                         )}
 
-                        <SectionCard title={t('rental.sections.pricing_snapshot')}>
+                        {/* 2. Pricing Snapshot Card */}
+                        <SectionCard title={t('rental.sections.pricing_snapshot', undefined, 'Rincian Tarif & Potongan Harga')} icon="💳">
                             <dl>
-                                <DetailRow label={t('rental.fields.rate')}>
+                                <DetailRow label={t('rental.fields.rate', undefined, 'Tarif Pokok')}>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <span className="tabular-nums">
+                                        <span className="tabular-nums font-bold">
                                             {formatMoney(rental.rate_per_period)} / {periodLabel}
                                         </span>
                                         {(() => {
@@ -1152,7 +1150,7 @@ export default function Show({
                                                 <div className="flex flex-wrap items-center gap-1">
                                                     {pTier && (
                                                         <span
-                                                            className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-inset ring-sky-100"
+                                                            className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-inset ring-sky-100 dark:bg-sky-950 dark:text-sky-300 dark:ring-sky-900"
                                                             title={`Tier Periode Sewa: ${tierLabel(pTier)}`}
                                                         >
                                                             <span>📅</span>
@@ -1161,7 +1159,7 @@ export default function Show({
                                                     )}
                                                     {lTier && (
                                                         <span
-                                                            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-100"
+                                                            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950 dark:text-amber-300 dark:ring-amber-900"
                                                             title={`Tier Loyalty: ${tierLabel(lTier)}`}
                                                         >
                                                             <span>⭐</span>
@@ -1174,131 +1172,120 @@ export default function Show({
                                     </div>
                                 </DetailRow>
                                 {rental.km_limit_per_period && (
-                                    <DetailRow label={t('rental.fields.km_limit')}>
-                                        {t('rental.rates.km', { km: rental.km_limit_per_period })} / {periodLabel}
+                                    <DetailRow label={t('rental.fields.km_limit', undefined, 'Batas Jarak')}>
+                                        {t('rental.rates.km', { km: rental.km_limit_per_period }, `${rental.km_limit_per_period} km`)} / {periodLabel}
                                     </DetailRow>
                                 )}
                                 {rental.excess_km_rate && (
-                                    <DetailRow label={t('rental.fields.excess_km_rate')}>
+                                    <DetailRow label={t('rental.fields.excess_km_rate', undefined, 'Tarif Kelebihan Jarak')}>
                                         <span className="tabular-nums">{formatMoney(rental.excess_km_rate)} / km</span>
                                     </DetailRow>
                                 )}
                                 {rental.late_fee_per_day && (
-                                    <DetailRow label={t('rental.fields.late_fee_per_day')}>
-                                        <span className="tabular-nums">{formatMoney(rental.late_fee_per_day)} / day</span>
+                                    <DetailRow label={t('rental.fields.late_fee_per_day', undefined, 'Denda Keterlambatan')}>
+                                        <span className="tabular-nums">{formatMoney(rental.late_fee_per_day)} / hari</span>
                                     </DetailRow>
                                 )}
-                                <DetailRow label={t('rental.fields.deposit')}>
+                                <DetailRow label={t('rental.fields.deposit', undefined, 'Deposit Jaminan')}>
                                     <span className="tabular-nums">{formatMoney(rental.deposit_amount)}</span>
-                                    <span className="ml-2 text-xs font-normal text-gray-500">
-                                        {t(`rental.deposit.${rental.deposit_status}`, undefined, rental.deposit_status)}
+                                    <span className="ml-2 text-xs font-normal text-slate-500">
+                                        ({t(`rental.deposit.${rental.deposit_status}`, undefined, rental.deposit_status)})
                                     </span>
                                 </DetailRow>
                                 {rental.deposit_status === 'settled' && Number(rental.deposit_amount) > 0 && (
                                     <>
-                                        <DetailRow label={t('rental.deposit.applied')}>
+                                        <DetailRow label={t('rental.deposit.applied', undefined, 'Deposit Digunakan')}>
                                             <span className="tabular-nums">{formatMoney(rental.deposit_applied_amount)}</span>
                                         </DetailRow>
-                                        <DetailRow label={t('rental.deposit.refunded')}>
+                                        <DetailRow label={t('rental.deposit.refunded', undefined, 'Deposit Dikembalikan')}>
                                             <span className="tabular-nums">{formatMoney(rental.deposit_refunded_amount)}</span>
                                         </DetailRow>
                                     </>
                                 )}
                                 {rental.tier_discount_amount && Number(rental.tier_discount_amount) > 0 && (
                                     <DetailRow label={t('rental.fields.tier_discount', undefined, 'Potongan Tier Harga')}>
-                                        <span className="tabular-nums text-emerald-600">− {formatMoney(rental.tier_discount_amount)}</span>
+                                        <span className="tabular-nums font-bold text-emerald-600 dark:text-emerald-400">− {formatMoney(rental.tier_discount_amount)}</span>
                                     </DetailRow>
                                 )}
-                                <DetailRow label={t('rental.fields.base_amount')}>
+                                <DetailRow label={t('rental.fields.base_amount', undefined, 'Total Pokok Sewa')}>
                                     <span className="tabular-nums">{formatMoney(rental.base_amount)}</span>
                                 </DetailRow>
                                 {Number(rental.excess_amount) > 0 && (
-                                    <DetailRow label={t('rental.fields.excess_km', { km: rental.excess_km ?? 0 })}>
+                                    <DetailRow label={t('rental.fields.excess_km', { km: rental.excess_km ?? 0 }, `Kelebihan Jarak (${rental.excess_km} km)`)}>
                                         <span className="tabular-nums text-rose-600">{formatMoney(rental.excess_amount)}</span>
                                     </DetailRow>
                                 )}
                                 {Number(rental.late_fee_amount) > 0 && (
-                                    <DetailRow label={t('rental.fields.late_fee', { days: rental.overdue_days ?? 0 })}>
+                                    <DetailRow label={t('rental.fields.late_fee', { days: rental.overdue_days ?? 0 }, `Denda Terlambat (${rental.overdue_days} hari)`)}>
                                         <span className="tabular-nums text-rose-600">{formatMoney(rental.late_fee_amount)}</span>
                                     </DetailRow>
                                 )}
-                                <DetailRow label={t('rental.fields.total_amount')}>
-                                    <span className="text-base font-semibold tabular-nums">{formatMoney(rental.total_amount)}</span>
+                                <DetailRow label={t('rental.fields.total_amount', undefined, 'Total Biaya Keseluruhan')}>
+                                    <span className="text-base font-black tabular-nums text-indigo-600 dark:text-indigo-400">{formatMoney(rental.total_amount)}</span>
                                 </DetailRow>
                             </dl>
 
                             {rental.period_pricing_snapshot && rental.period_pricing_snapshot.length > 0 && (
-                                <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50/60">
+                                <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40">
                                     <details className="group" open>
-                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100/50">
+                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/60">
                                             <div className="flex items-center gap-2">
-                                                <svg className="h-4 w-4 text-gray-500 transition group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                                <svg className="h-4 w-4 text-slate-500 transition group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M9 18l6-6-6-6" />
                                                 </svg>
                                                 <span>
                                                     {t('rental.sections.period_breakdown', undefined, 'Rincian Periode & Rate Terpakai')}
                                                 </span>
-                                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-gray-500 ring-1 ring-inset ring-gray-200">
+                                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 shadow-2xs dark:bg-slate-700 dark:text-slate-300">
                                                     {rental.period_pricing_snapshot.length} periode
                                                 </span>
                                             </div>
-                                            <span className="text-[10px] font-medium text-gray-400">Klik untuk expand</span>
+                                            <span className="text-[10px] font-medium text-slate-400">Klik untuk expand</span>
                                         </summary>
-                                        <div className="border-t border-gray-100">
-                                            <div className="overflow-hidden">
-                                                <table className="min-w-full divide-y divide-gray-100">
-                                                    <thead className="bg-white/60">
+                                        <div className="border-t border-slate-100 dark:border-slate-800">
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                                                    <thead className="bg-white/60 dark:bg-slate-800/60">
                                                         <tr>
-                                                            <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">#</th>
-                                                            <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400">#</th>
+                                                            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                                                 {t('rental.fields.date_range', undefined, 'Tanggal')}
                                                             </th>
-                                                            <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                            <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                                                 {t('rental.fields.rate_applied', undefined, 'Rate Terpakai')}
                                                             </th>
-                                                            <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                                                 {t('rental.fields.tier_applied', undefined, 'Keterangan Tier')}
                                                             </th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                                    <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
                                                         {rental.period_pricing_snapshot.map((row) => (
-                                                            <tr key={row.period} className="hover:bg-indigo-50/30">
+                                                            <tr key={row.period} className="hover:bg-indigo-50/30 dark:hover:bg-slate-800/50">
                                                                 <td className="whitespace-nowrap px-3 py-2 text-xs">
-                                                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-gray-900 text-[10px] font-bold text-white">
+                                                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[10px] font-black text-white dark:bg-slate-700">
                                                                         {row.period}
                                                                     </span>
                                                                 </td>
-                                                                <td className="whitespace-nowrap px-3 py-2 text-xs text-gray-700">
-                                                                    <div className="font-medium tabular-nums">{formatDateDmY(row.from_date)}</div>
-                                                                    <div className="text-[11px] text-gray-400">s/d {formatDateDmY(row.to_date)}</div>
+                                                                <td className="whitespace-nowrap px-3 py-2 text-xs text-slate-700 dark:text-slate-300">
+                                                                    <div className="font-bold tabular-nums">{formatDateDmY(row.from_date)}</div>
+                                                                    <div className="text-[11px] text-slate-400">s/d {formatDateDmY(row.to_date)}</div>
                                                                 </td>
-                                                                <td className="whitespace-nowrap px-3 py-2 text-right text-xs font-semibold tabular-nums text-gray-900">
+                                                                <td className="whitespace-nowrap px-3 py-2 text-right text-xs font-black tabular-nums text-slate-900 dark:text-white">
                                                                     {formatMoney(row.rate_applied)}
                                                                 </td>
-                                                                <td className="px-3 py-2 text-xs text-gray-600">
+                                                                <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                                                                     {row.tier_label ? (
-                                                                        <code className="rounded bg-sky-50 px-1.5 py-0.5 text-[11px] text-sky-700 ring-1 ring-inset ring-sky-100">
+                                                                        <code className="rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700 ring-1 ring-inset ring-sky-100 dark:bg-sky-950 dark:text-sky-300 dark:ring-sky-900">
                                                                             {row.tier_label}
                                                                         </code>
                                                                     ) : (
-                                                                        <span className="text-gray-400">— (Base Rate)</span>
+                                                                        <span className="text-slate-400">— (Base Rate)</span>
                                                                     )}
                                                                 </td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
-                                                    <tfoot className="bg-gray-50/80">
-                                                        <tr>
-                                                            <td colSpan={2} className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                                                {t('rental.fields.base_amount')}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-right text-sm font-bold tabular-nums text-gray-900">
-                                                                {formatMoney(rental.base_amount)}
-                                                            </td>
-                                                            <td />
-                                                        </tr>
-                                                    </tfoot>
                                                 </table>
                                             </div>
                                         </div>
@@ -1307,9 +1294,11 @@ export default function Show({
                             )}
                         </SectionCard>
 
+                        {/* 3. Invoicing & Billing Card */}
                         {invoicingEnabled && (
                             <SectionCard
-                                title={t('rental.sections.billing')}
+                                title={t('rental.sections.billing', undefined, 'Status Tagihan & Invoicing')}
+                                icon="🧾"
                                 action={
                                     <PaymentBadge
                                         status={payment.status}
@@ -1318,133 +1307,140 @@ export default function Show({
                                 }
                             >
                                 <dl>
-                                    <DetailRow label={t('rental.fields.invoiced')}>
-                                        <span className="tabular-nums">{formatMoney(payment.total_invoiced)}</span>
+                                    <DetailRow label={t('rental.fields.invoiced', undefined, 'Total Ditagihkan')}>
+                                        <span className="tabular-nums font-bold">{formatMoney(payment.total_invoiced)}</span>
                                     </DetailRow>
-                                    <DetailRow label={t('rental.fields.paid')}>
-                                        <span className="tabular-nums">{formatMoney(payment.total_paid)}</span>
+                                    <DetailRow label={t('rental.fields.paid', undefined, 'Total Terbayar')}>
+                                        <span className="tabular-nums font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(payment.total_paid)}</span>
                                     </DetailRow>
-                                    <DetailRow label={t('rental.fields.balance_due')}>
-                                        <span className="tabular-nums">{formatMoney(payment.balance_due)}</span>
+                                    <DetailRow label={t('rental.fields.balance_due', undefined, 'Sisa Tagihan')}>
+                                        <span className="tabular-nums font-black text-amber-600 dark:text-amber-400">{formatMoney(payment.balance_due)}</span>
                                     </DetailRow>
                                 </dl>
                                 {payment.invoices.length > 0 ? (
-                                    <div className="mt-2 divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-700 dark:border-gray-700">
+                                    <div className="mt-3 divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">
                                         {payment.invoices.map((inv) => (
-                                            <div key={inv.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                                            <div key={inv.id} className="flex items-center justify-between gap-3 py-2.5 text-xs">
                                                 <div>
                                                     <Link
                                                         href={prefixedRoute('invoicing.invoices.show', inv.id)}
-                                                        className="font-mono text-indigo-600 hover:underline dark:text-indigo-400"
+                                                        className="font-mono font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                                                     >
                                                         {inv.code}
                                                     </Link>
-                                                    <span className="ml-2 text-xs text-gray-400">{inv.status}</span>
+                                                    <span className="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                        {inv.status}
+                                                    </span>
                                                     {inv.due_date && (
-                                                        <span className="ml-2 text-xs text-gray-500">
-                                                            {t('rental.fields.due_date')}: {inv.due_date}
+                                                        <span className="ml-2 text-[11px] text-slate-400">
+                                                            Jatuh tempo: {inv.due_date}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(inv.total)}</span>
+                                                <span className="tabular-nums font-black text-slate-900 dark:text-white">{formatMoney(inv.total)}</span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="mt-3">
-                                        <EmptyBlock>{t('rental.payment.none')}</EmptyBlock>
+                                        <EmptyBlock>{t('rental.payment.none', undefined, 'Belum ada faktur tagihan yang diterbitkan.')}</EmptyBlock>
                                     </div>
                                 )}
                             </SectionCard>
                         )}
 
+                        {/* 4. Handover & Inspections */}
                         {(rental.start_odometer != null || rental.end_odometer != null || rental.checkout_checklist || rental.return_checklist) && (
-                            <SectionCard title={t('rental.sections.handover')}>
+                            <SectionCard title={t('rental.sections.handover', undefined, 'Serah Terima & BAST Kendaraan')} icon="🚗">
                                 <dl>
                                     {rental.start_odometer != null && (
-                                        <DetailRow label={t('rental.fields.checkout')}>
-                                            <span className="tabular-nums">
-                                                {t('rental.rates.km', { km: rental.start_odometer.toLocaleString() })}
+                                        <DetailRow label={t('rental.fields.checkout', undefined, 'Odometer Berangkat')}>
+                                            <span className="tabular-nums font-bold">
+                                                {t('rental.rates.km', { km: rental.start_odometer.toLocaleString() }, `${rental.start_odometer.toLocaleString()} km`)}
                                             </span>
                                             {rental.start_fuel_level && (
-                                                <span className="ml-2 text-xs font-normal text-gray-500">
-                                                    BBM: {t(`rental.fuel.${rental.start_fuel_level}`, undefined, rental.start_fuel_level)}
+                                                <span className="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                    ⛽ {t(`rental.fuel.${rental.start_fuel_level}`, undefined, rental.start_fuel_level)}
                                                 </span>
                                             )}
                                         </DetailRow>
                                     )}
                                     {rental.end_odometer != null && (
-                                        <DetailRow label={t('rental.fields.return')}>
-                                            <span className="tabular-nums">
-                                                {t('rental.rates.km', { km: rental.end_odometer.toLocaleString() })}
+                                        <DetailRow label={t('rental.fields.return', undefined, 'Odometer Kembali')}>
+                                            <span className="tabular-nums font-bold">
+                                                {t('rental.rates.km', { km: rental.end_odometer.toLocaleString() }, `${rental.end_odometer.toLocaleString()} km`)}
                                             </span>
                                             {rental.end_fuel_level && (
-                                                <span className="ml-2 text-xs font-normal text-gray-500">
-                                                    BBM: {t(`rental.fuel.${rental.end_fuel_level}`, undefined, rental.end_fuel_level)}
+                                                <span className="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                    ⛽ {t(`rental.fuel.${rental.end_fuel_level}`, undefined, rental.end_fuel_level)}
                                                 </span>
                                             )}
                                         </DetailRow>
                                     )}
                                 </dl>
                                 {rental.checkout_checklist && (
-                                    <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-                                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t('rental.checklist.checkout')}</p>
-                                        <ul className="grid gap-1 sm:grid-cols-2">
+                                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                                        <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            {t('rental.checklist.checkout', undefined, 'Checklist Saat Penyerahan (Checkout)')}
+                                        </p>
+                                        <ul className="grid gap-1.5 sm:grid-cols-2">
                                             {checklistItems.map((key) => (
-                                                <li key={`out-${key}`} className="text-xs text-gray-700 dark:text-gray-300">
-                                                    <span className={rental.checkout_checklist?.[key] ? 'text-emerald-600' : 'text-rose-600'}>
+                                                <li key={`out-${key}`} className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                                                    <span className={rental.checkout_checklist?.[key] ? 'font-bold text-emerald-600' : 'font-bold text-rose-600'}>
                                                         {rental.checkout_checklist?.[key] ? '✓' : '✗'}
                                                     </span>{' '}
-                                                    {t(`rental.checklist.items.${key}`)}
+                                                    {t(`rental.checklist.items.${key}`, undefined, key)}
                                                 </li>
                                             ))}
                                         </ul>
-                                        {rental.checkout_notes && <p className="mt-2 text-xs text-gray-500">{rental.checkout_notes}</p>}
+                                        {rental.checkout_notes && <p className="mt-2 text-xs italic text-slate-500">{rental.checkout_notes}</p>}
                                         {handoverEvidence.checkout_photos.length > 0 && (
                                             <div className="mt-3 flex flex-wrap gap-2">
                                                 {handoverEvidence.checkout_photos.map((url) => (
                                                     <a key={url} href={url} target="_blank" rel="noreferrer">
-                                                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
+                                                        <img src={url} alt="" className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700" />
                                                     </a>
                                                 ))}
                                             </div>
                                         )}
                                         {handoverEvidence.checkout_signature_url && (
-                                            <img src={handoverEvidence.checkout_signature_url} alt="" className="mt-3 h-16 rounded-lg border border-gray-200 bg-white dark:border-gray-600" />
+                                            <img src={handoverEvidence.checkout_signature_url} alt="" className="mt-3 h-16 rounded-xl border border-slate-200 bg-white dark:border-slate-700" />
                                         )}
                                     </div>
                                 )}
                                 {rental.return_checklist && (
-                                    <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-                                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t('rental.checklist.return')}</p>
-                                        <ul className="grid gap-1 sm:grid-cols-2">
+                                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                                        <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            {t('rental.checklist.return', undefined, 'Checklist Saat Pengembalian (Return)')}
+                                        </p>
+                                        <ul className="grid gap-1.5 sm:grid-cols-2">
                                             {checklistItems.map((key) => (
-                                                <li key={`in-${key}`} className="text-xs text-gray-700 dark:text-gray-300">
-                                                    <span className={rental.return_checklist?.[key] ? 'text-emerald-600' : 'text-rose-600'}>
+                                                <li key={`in-${key}`} className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                                                    <span className={rental.return_checklist?.[key] ? 'font-bold text-emerald-600' : 'font-bold text-rose-600'}>
                                                         {rental.return_checklist?.[key] ? '✓' : '✗'}
                                                     </span>{' '}
-                                                    {t(`rental.checklist.items.${key}`)}
+                                                    {t(`rental.checklist.items.${key}`, undefined, key)}
                                                 </li>
                                             ))}
                                         </ul>
-                                        {rental.return_notes && <p className="mt-2 text-xs text-gray-500">{rental.return_notes}</p>}
+                                        {rental.return_notes && <p className="mt-2 text-xs italic text-slate-500">{rental.return_notes}</p>}
                                         {handoverEvidence.return_photos.length > 0 && (
                                             <div className="mt-3 flex flex-wrap gap-2">
                                                 {handoverEvidence.return_photos.map((url) => (
                                                     <a key={url} href={url} target="_blank" rel="noreferrer">
-                                                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
+                                                        <img src={url} alt="" className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700" />
                                                     </a>
                                                 ))}
                                             </div>
                                         )}
                                         {handoverEvidence.return_signature_url && (
-                                            <img src={handoverEvidence.return_signature_url} alt="" className="mt-3 h-16 rounded-lg border border-gray-200 bg-white dark:border-gray-600" />
+                                            <img src={handoverEvidence.return_signature_url} alt="" className="mt-3 h-16 rounded-xl border border-slate-200 bg-white dark:border-slate-700" />
                                         )}
                                     </div>
                                 )}
 
                                 {aiInspectionEnabled && (
-                                    <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                                    <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
                                         <AiHandoverInspectionPanel
                                             inspection={latestAiInspection}
                                             canInspect={is('active') || is('returned') || is('completed')}
@@ -1457,29 +1453,30 @@ export default function Show({
                             </SectionCard>
                         )}
 
+                        {/* 5. Extensions & Swaps */}
                         {(rental.extension_requests?.length ?? 0) > 0 && (
-                            <SectionCard title={t('rental.sections.extension_requests')}>
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.extension_requests', undefined, 'Permohonan Perpanjangan Sewa')} icon="⏱️">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {rental.extension_requests!.map((req) => (
                                         <div key={req.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                                            <div className="flex items-center justify-between gap-3 text-sm">
+                                            <div className="flex items-center justify-between gap-3 text-xs">
                                                 <div>
-                                                    <span className="text-gray-900 dark:text-white">
-                                                        → {req.requested_end_date}
+                                                    <span className="font-bold text-slate-900 dark:text-white">
+                                                        ➔ {req.requested_end_date}
                                                     </span>
-                                                    <span className="ml-2 text-gray-400">
+                                                    <span className="ml-2 font-medium text-slate-400">
                                                         (+{req.estimated_periods} {periodLabel})
                                                     </span>
                                                     {req.channel && (
-                                                        <span className="ml-2 text-xs text-gray-400">
-                                                            · {t(`rental.channel.${req.channel}`, undefined, req.channel)}
+                                                        <span className="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                            {t(`rental.channel.${req.channel}`, undefined, req.channel)}
                                                         </span>
                                                     )}
                                                     {req.notes && (
-                                                        <p className="mt-1 text-xs text-gray-500">{req.notes}</p>
+                                                        <p className="mt-1 text-xs italic text-slate-500">{req.notes}</p>
                                                     )}
                                                 </div>
-                                                <span className="tabular-nums text-gray-700 dark:text-gray-300">
+                                                <span className="tabular-nums font-black text-indigo-600 dark:text-indigo-400">
                                                     {formatMoney(req.estimated_amount)}
                                                 </span>
                                             </div>
@@ -1496,8 +1493,9 @@ export default function Show({
                                                             { preserveScroll: true },
                                                         )
                                                     }
+                                                    className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700"
                                                 >
-                                                    {t('rental.actions.approve', undefined, 'Approve')}
+                                                    {t('rental.actions.approve', undefined, 'Setujui')}
                                                 </PrimaryButton>
                                                 <SecondaryButton
                                                     type="button"
@@ -1511,8 +1509,9 @@ export default function Show({
                                                             { preserveScroll: true },
                                                         )
                                                     }
+                                                    className="text-xs font-bold text-rose-600 hover:bg-rose-50"
                                                 >
-                                                    {t('rental.actions.reject', undefined, 'Reject')}
+                                                    {t('rental.actions.reject', undefined, 'Tolak')}
                                                 </SecondaryButton>
                                             </div>
                                         </div>
@@ -1522,15 +1521,15 @@ export default function Show({
                         )}
 
                         {rental.extensions.length > 0 && (
-                            <SectionCard title={t('rental.sections.extensions')}>
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.extensions', undefined, 'Riwayat Perpanjangan')} icon="⏱️">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {rental.extensions.map((ext) => (
-                                        <div key={ext.id} className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
+                                        <div key={ext.id} className="flex items-center justify-between gap-3 py-3 text-xs first:pt-0 last:pb-0">
                                             <div>
-                                                <span className="text-gray-900 dark:text-white">{ext.original_end_date} → {ext.new_end_date}</span>
-                                                <span className="ml-2 text-gray-400">(+{ext.extended_periods} {periodLabel})</span>
+                                                <span className="font-bold text-slate-900 dark:text-white">{ext.original_end_date} → {ext.new_end_date}</span>
+                                                <span className="ml-2 text-slate-400">(+{ext.extended_periods} {periodLabel})</span>
                                             </div>
-                                            <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(ext.additional_amount)}</span>
+                                            <span className="tabular-nums font-black text-slate-900 dark:text-white">{formatMoney(ext.additional_amount)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -1538,48 +1537,49 @@ export default function Show({
                         )}
 
                         {vehicleSwaps.length > 0 && (
-                            <SectionCard title={t('rental.sections.vehicle_swaps')}>
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.vehicle_swaps', undefined, 'Riwayat Pergantian Unit (Swap)')} icon="🔄">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {vehicleSwaps.map((swap) => (
-                                        <div key={swap.id} className="py-3 text-sm first:pt-0 last:pb-0">
-                                            <p className="text-gray-900 dark:text-white">
-                                                {swap.from_vehicle} → {swap.to_vehicle}
+                                        <div key={swap.id} className="py-3 text-xs first:pt-0 last:pb-0">
+                                            <p className="font-bold text-slate-900 dark:text-white">
+                                                {swap.from_vehicle} ➔ {swap.to_vehicle}
                                             </p>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="mt-0.5 text-[11px] text-slate-400">
                                                 {swap.swapped_at}
-                                                {swap.swapped_by ? ` · ${swap.swapped_by}` : ''}
+                                                {swap.swapped_by ? ` · Petugas: ${swap.swapped_by}` : ''}
                                                 {swap.odometer_km != null ? ` · ${swap.odometer_km} km` : ''}
                                             </p>
-                                            {swap.notes && <p className="mt-1 text-gray-500">{swap.notes}</p>}
+                                            {swap.notes && <p className="mt-1 italic text-slate-500">{swap.notes}</p>}
                                         </div>
                                     ))}
                                 </div>
                             </SectionCard>
                         )}
 
+                        {/* 6. Addons & Damages */}
                         {addonCharges.length > 0 && (
-                            <SectionCard title={t('rental.sections.addons')}>
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.addons', undefined, 'Layanan Tambahan & Biaya Opsional')} icon="📦">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {addonCharges.map((charge) => (
-                                        <div key={charge.id} className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
+                                        <div key={charge.id} className="flex items-center justify-between gap-3 py-3 text-xs first:pt-0 last:pb-0">
                                             <div>
-                                                <p className="text-gray-900 dark:text-white">{charge.description}</p>
-                                                <p className="text-xs text-gray-400">
+                                                <p className="font-bold text-slate-900 dark:text-white">{charge.description}</p>
+                                                <p className="text-[11px] text-slate-400">
                                                     {charge.addon_code
                                                         ? t(`rental.addon.codes.${charge.addon_code}`, undefined, charge.addon_code)
-                                                        : t('rental.addon.codes.other')}
-                                                    {charge.is_invoiced ? ` · ${t('rental.addon.invoiced')}` : ''}
+                                                        : t('rental.addon.codes.other', undefined, 'Lainnya')}
+                                                    {charge.is_invoiced ? ` · ${t('rental.addon.invoiced', undefined, 'Sudah Diterbitkan Invoice')}` : ''}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(charge.amount)}</span>
+                                                <span className="tabular-nums font-black text-slate-900 dark:text-white">{formatMoney(charge.amount)}</span>
                                                 {charge.can_delete && (
                                                     <button
                                                         type="button"
                                                         onClick={() => router.delete(prefixedRoute('rental.addons.destroy', [rental.id, charge.id]), { preserveScroll: true })}
-                                                        className="text-xs text-gray-400 hover:text-rose-600"
+                                                        className="text-xs font-bold text-slate-400 hover:text-rose-600 transition"
                                                     >
-                                                        {t('rental.actions.remove')}
+                                                        ✕
                                                     </button>
                                                 )}
                                             </div>
@@ -1590,29 +1590,29 @@ export default function Show({
                         )}
 
                         {rental.damages.length > 0 && (
-                            <SectionCard title={t('rental.sections.damages')}>
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.damages', undefined, 'Laporan Kerusakan & Klaim')} icon="⚠️">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {rental.damages.map((dmg) => (
-                                        <div key={dmg.id} className="flex items-start justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
+                                        <div key={dmg.id} className="flex items-start justify-between gap-3 py-3 text-xs first:pt-0 last:pb-0">
                                             <div className="flex flex-1 gap-3">
                                                 {dmg.photo_path && (
                                                     <a href={dmg.photo_path} target="_blank" rel="noreferrer" className="shrink-0">
-                                                        <img src={dmg.photo_path} alt="" className="h-14 w-14 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
+                                                        <img src={dmg.photo_path} alt="" className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700" />
                                                     </a>
                                                 )}
                                                 <div className="flex-1">
-                                                    <p className="text-gray-900 dark:text-white">{dmg.description}</p>
-                                                    <p className="text-xs text-gray-400">{formatDateTimeDmYHi(dmg.reported_at)}</p>
+                                                    <p className="font-bold text-slate-900 dark:text-white">{dmg.description}</p>
+                                                    <p className="text-[11px] text-slate-400">{formatDateTimeDmYHi(dmg.reported_at)}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="tabular-nums text-rose-600">{formatMoney(dmg.amount)}</span>
+                                                <span className="tabular-nums font-black text-rose-600 dark:text-rose-400">{formatMoney(dmg.amount)}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => router.delete(prefixedRoute('rental.damages.destroy', [rental.id, dmg.id]), { preserveScroll: true })}
-                                                    className="text-xs text-gray-400 hover:text-rose-600"
+                                                    className="text-xs font-bold text-slate-400 hover:text-rose-600 transition"
                                                 >
-                                                    {t('rental.actions.remove')}
+                                                    ✕
                                                 </button>
                                             </div>
                                         </div>
@@ -1622,60 +1622,65 @@ export default function Show({
                         )}
                     </div>
 
+                    {/* Right Column (2 of 5 cols) */}
                     <div className="space-y-6 lg:col-span-2">
-                        <SectionCard title={t('rental.sections.timeline')}>
-                            <ol className="relative space-y-0 border-l border-gray-200 dark:border-gray-600">
+                        {/* Timeline */}
+                        <SectionCard title={t('rental.sections.timeline', undefined, 'Alur & Status Perjalanan')} icon="🧭">
+                            <ol className="relative space-y-0 border-l-2 border-slate-200 dark:border-slate-700 ml-2">
                                 {timelineSteps.map((step, i) => (
-                                    <li key={i} className="relative mb-5 ml-4 last:mb-0">
+                                    <li key={i} className="relative mb-6 ml-4 last:mb-0">
                                         <div
-                                            className={`absolute -left-[1.4rem] mt-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-gray-800 ${step.done ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
-                                                }`}
+                                            className={`absolute -left-[1.35rem] mt-1 h-3 w-3 rounded-full ring-4 ring-white dark:ring-slate-900 ${
+                                                step.done ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                                            }`}
                                         />
-                                        <p className={`text-sm font-medium ${step.done ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+                                        <p className={`text-xs font-black ${step.done ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
                                             {step.label}
                                         </p>
-                                        {step.date && <p className="mt-0.5 text-xs text-gray-400">{step.date}</p>}
+                                        {step.date && <p className="mt-0.5 text-[11px] font-medium text-slate-400">{step.date}</p>}
                                         {step.by && (
-                                            <p className="text-xs text-gray-400">{t('rental.timeline.by', { name: step.by })}</p>
+                                            <p className="text-[11px] text-slate-400">Oleh: <strong>{step.by}</strong></p>
                                         )}
                                     </li>
                                 ))}
                                 {(rental.status === 'cancelled' || rental.status === 'cancelled_paid') && (
                                     <li className="relative mb-0 ml-4">
-                                        <div className="absolute -left-[1.4rem] mt-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-4 ring-white dark:ring-gray-800" />
-                                        <p className="text-sm font-medium text-rose-600 dark:text-rose-400">{t('rental.timeline.cancelled')}</p>
+                                        <div className="absolute -left-[1.35rem] mt-1 h-3 w-3 rounded-full bg-rose-500 ring-4 ring-white dark:ring-slate-900" />
+                                        <p className="text-xs font-black text-rose-600 dark:text-rose-400">{t('rental.timeline.cancelled', undefined, 'Dibatalkan')}</p>
                                         {rental.cancelled_reason && (
-                                            <p className="mt-0.5 text-xs text-gray-400">{rental.cancelled_reason}</p>
+                                            <p className="mt-0.5 text-[11px] text-slate-400">Alasan: {rental.cancelled_reason}</p>
                                         )}
                                     </li>
                                 )}
                             </ol>
                         </SectionCard>
 
+                        {/* Notes */}
                         {rental.notes && (
-                            <SectionCard title={t('rental.sections.notes')}>
-                                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                            <SectionCard title={t('rental.sections.notes', undefined, 'Catatan & Instruksi Khusus')} icon="📝">
+                                <p className="whitespace-pre-wrap text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-300">
                                     {rental.notes}
                                 </p>
                             </SectionCard>
                         )}
 
-                        <SectionCard title={t('rental.sections.quick_facts')} subtitle={t('rental.sections.quick_facts_hint')}>
+                        {/* Quick Facts */}
+                        <SectionCard title={t('rental.sections.quick_facts', undefined, 'Ringkasan Cepat')} subtitle={t('rental.sections.quick_facts_hint', undefined, 'Informasi operasional')} icon="ℹ️">
                             <dl>
-                                <DetailRow label={t('rental.fields.code')}>
+                                <DetailRow label={t('rental.fields.code', undefined, 'Kode Rental')} compact>
                                     <span className="font-mono">{rental.code}</span>
                                 </DetailRow>
-                                <DetailRow label={t('rental.fields.status')}>
+                                <DetailRow label={t('rental.fields.status', undefined, 'Status')} compact>
                                     <StatusBadge
                                         status={rental.status}
                                         label={t(`rental.status.${rental.status}`, undefined, rental.status)}
                                     />
                                 </DetailRow>
                                 {rental.confirmed_by && (
-                                    <DetailRow label={t('rental.timeline.confirmed')}>{rental.confirmed_by.name}</DetailRow>
+                                    <DetailRow label={t('rental.timeline.confirmed', undefined, 'Dikonfirmasi')} compact>{rental.confirmed_by.name}</DetailRow>
                                 )}
                                 {rental.partner.phone && (
-                                    <DetailRow label={t('rental.fields.phone')}>{rental.partner.phone}</DetailRow>
+                                    <DetailRow label={t('rental.fields.phone', undefined, 'Kontak Pelanggan')} compact>{rental.partner.phone}</DetailRow>
                                 )}
                             </dl>
                         </SectionCard>
@@ -1684,537 +1689,451 @@ export default function Show({
             </div>
 
             {/* Modals */}
-            <Modal show={modal === 'cancel'} onClose={() => setModal(null)}>
-                <form onSubmit={submitCancel} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.cancel')}</h2>
-                    <InputLabel htmlFor="cancelled_reason" value={`${t('rental.fields.cancel_reason')} *`} />
-                    <textarea id="cancelled_reason" rows={3} value={cancelForm.data.cancelled_reason} onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                    <InputError message={cancelForm.errors.cancelled_reason} className="mt-1" />
-                    <label className="mt-3 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                        <input
-                            type="checkbox"
-                            className="mt-0.5 rounded border-gray-300"
-                            checked={cancelForm.data.charge_fee}
-                            onChange={(e) => cancelForm.setData('charge_fee', e.target.checked)}
+            {/* Modal: Batal Rental */}
+            <Modal show={modal === 'cancel'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitCancel} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="danger"
+                        icon="🚫"
+                        title={t('rental.modals.cancel', undefined, 'Batalkan Reservasi')}
+                        subtitle={`Booking ${rental.code} • ${rental.partner?.name || ''}`}
+                        onClose={() => setModal(null)}
+                    />
+
+                    <div className="rounded-2xl border border-rose-200/80 bg-rose-50/50 p-3.5 text-xs text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">
+                        <p className="font-semibold">⚠️ Perhatian Pembatalan</p>
+                        <p className="mt-0.5 opacity-90">
+                            Pembatalan akan menghentikan proses rental dan melepaskan unit kendaraan kembali ke jadwal ketersediaan.
+                        </p>
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="cancelled_reason" value={`${t('rental.fields.cancel_reason', undefined, 'Alasan Pembatalan')} *`} />
+                        <textarea
+                            id="cancelled_reason"
+                            rows={3}
+                            value={cancelForm.data.cancelled_reason}
+                            onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)}
+                            placeholder="Tuliskan alasan pembatalan rental ini..."
+                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            required
                         />
-                        <span>{t('rental.modals.cancel_fee_hint')}</span>
-                    </label>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('rental.nav.back')}</SecondaryButton>
-                        <DangerButton disabled={cancelForm.processing}>
-                            {cancelForm.data.charge_fee ? t('rental.actions.cancel_with_fee') : t('rental.actions.cancel_rental')}
+                        <InputError message={cancelForm.errors.cancelled_reason} className="mt-1" />
+                    </div>
+
+                    <ChecklistToggleCard
+                        label={t('rental.modals.cancel_fee_hint', undefined, 'Kenakan Biaya Pembatalan (Cancellation Fee)')}
+                        checked={cancelForm.data.charge_fee}
+                        onChange={(checked) => cancelForm.setData('charge_fee', checked)}
+                    />
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('rental.nav.back', undefined, 'Kembali')}
+                        </SecondaryButton>
+                        <DangerButton disabled={cancelForm.processing} className="rounded-xl px-4 py-2">
+                            {cancelForm.processing
+                                ? 'Memproses...'
+                                : cancelForm.data.charge_fee
+                                    ? t('rental.actions.cancel_with_fee', undefined, 'Batalkan & Kenakan Biaya')
+                                    : t('rental.actions.cancel_rental', undefined, 'Ya, Batalkan Rental')}
                         </DangerButton>
                     </div>
                 </form>
             </Modal>
 
-            <Modal show={modal === 'no_show'} onClose={() => setModal(null)}>
-                <form onSubmit={submitNoShow} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.no_show')}</h2>
-                    <InputLabel htmlFor="no_show_reason" value={t('rental.fields.cancel_reason')} />
-                    <textarea id="no_show_reason" rows={3} value={noShowForm.data.cancelled_reason} onChange={(e) => noShowForm.setData('cancelled_reason', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                    <label className="mt-3 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                        <input
-                            type="checkbox"
-                            className="mt-0.5 rounded border-gray-300"
-                            checked={noShowForm.data.charge_fee}
-                            onChange={(e) => noShowForm.setData('charge_fee', e.target.checked)}
+            {/* Modal: No-Show */}
+            <Modal show={modal === 'no_show'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitNoShow} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="amber"
+                        icon="⚠️"
+                        title={t('rental.modals.no_show', undefined, 'Tandai Sebagai No-Show')}
+                        subtitle={`Booking ${rental.code} • Pelanggan tidak hadir`}
+                        onClose={() => setModal(null)}
+                    />
+
+                    <div className="rounded-2xl border border-amber-200/80 bg-amber-50/50 p-3.5 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                        <p className="font-semibold">Informasi No-Show</p>
+                        <p className="mt-0.5 opacity-90">
+                            Tandai jika pelanggan tidak datang pada jadwal pengambilan kendaraan tanpa konfirmasi pembatalan sebelumnya.
+                        </p>
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="no_show_reason" value={t('rental.fields.cancel_reason', undefined, 'Catatan / Alasan')} />
+                        <textarea
+                            id="no_show_reason"
+                            rows={3}
+                            value={noShowForm.data.cancelled_reason}
+                            onChange={(e) => noShowForm.setData('cancelled_reason', e.target.value)}
+                            placeholder="Catatan tambahan no-show (opsional)..."
+                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-amber-500 focus:ring-amber-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
-                        <span>{t('rental.modals.no_show_fee_hint')}</span>
-                    </label>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('rental.nav.back')}</SecondaryButton>
-                        <DangerButton disabled={noShowForm.processing}>
-                            {noShowForm.data.charge_fee ? t('rental.actions.no_show_with_fee') : t('rental.actions.mark_no_show')}
+                    </div>
+
+                    <ChecklistToggleCard
+                        label={t('rental.modals.no_show_fee_hint', undefined, 'Kenakan Biaya No-Show (No-Show Fee)')}
+                        checked={noShowForm.data.charge_fee}
+                        onChange={(checked) => noShowForm.setData('charge_fee', checked)}
+                    />
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('rental.nav.back', undefined, 'Kembali')}
+                        </SecondaryButton>
+                        <DangerButton disabled={noShowForm.processing} className="rounded-xl px-4 py-2 bg-amber-600 hover:bg-amber-700 focus:ring-amber-500">
+                            {noShowForm.processing
+                                ? 'Memproses...'
+                                : noShowForm.data.charge_fee
+                                    ? t('rental.actions.no_show_with_fee', undefined, 'Tandai No-Show & Kenakan Biaya')
+                                    : t('rental.actions.mark_no_show', undefined, 'Tandai No-Show')}
                         </DangerButton>
                     </div>
                 </form>
             </Modal>
 
-            <Modal show={modal === 'checkout'} onClose={() => setModal(null)}>
-                <form onSubmit={submitCheckout} className="flex max-h-[90vh] flex-col p-6">
-                    <h2 className="mb-4 shrink-0 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.checkout')}</h2>
-                    {depositBlocksCheckout && (
-                        <div className="mb-4 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                            {t('rental.errors.checkout_deposit_required')}
+            {/* Modal: Extend */}
+            <Modal show={modal === 'extend'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitExtend} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="primary"
+                        icon="🗓️"
+                        title={t('rental.modals.extend', undefined, 'Perpanjang Masa Sewa')}
+                        subtitle={`Booking ${rental.code} • ${rental.vehicle.name}`}
+                        onClose={() => setModal(null)}
+                    />
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 text-xs dark:border-slate-700 dark:bg-slate-800/60 space-y-1.5">
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Tanggal Mulai:</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">{formatDateDmY(rental.start_date)}</span>
                         </div>
-                    )}
-                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-                        <div>
-                            <InputLabel htmlFor="start_odometer" value={t('rental.fields.start_odometer')} />
-                            <TextInput id="start_odometer" type="number" min="0" value={checkoutForm.data.start_odometer} onChange={(e) => checkoutForm.setData('start_odometer', e.target.value)} className="mt-1 w-full" />
-                            <InputError message={checkoutForm.errors.start_odometer} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="start_fuel_level" value={t('rental.fields.fuel_level')} />
-                            <select
-                                id="start_fuel_level"
-                                value={checkoutForm.data.start_fuel_level}
-                                onChange={(e) => checkoutForm.setData('start_fuel_level', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            >
-                                {fuelLevels.map((level) => (
-                                    <option key={level} value={level}>{t(`rental.fuel.${level}`, undefined, level)}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t('rental.checklist.checkout')}</p>
-                            <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
-                                {checklistItems.map((key) => (
-                                    <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                        <input
-                                            type="checkbox"
-                                            checked={!!checkoutForm.data.checkout_checklist[key]}
-                                            onChange={(e) => checkoutForm.setData('checkout_checklist', {
-                                                ...checkoutForm.data.checkout_checklist,
-                                                [key]: e.target.checked,
-                                            })}
-                                            className="rounded"
-                                        />
-                                        {t(`rental.checklist.items.${key}`)}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="checkout_notes" value={t('rental.fields.checkout_notes')} />
-                            <textarea id="checkout_notes" rows={2} value={checkoutForm.data.checkout_notes} onChange={(e) => checkoutForm.setData('checkout_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                        </div>
-                        <div>
-                            <HandoverPhotoPicker
-                                id="checkout_photos"
-                                label={t('rental.fields.checkout_photos')}
-                                value={checkoutForm.data.checkout_photos}
-                                onChange={(photos) => checkoutForm.setData('checkout_photos', photos)}
-                                error={checkoutForm.errors.checkout_photos}
-                            />
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Jadwal Selesai Saat Ini:</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">{formatDateDmY(rental.end_date)}</span>
                         </div>
                     </div>
-                    <div className="mt-4 shrink-0 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            {/* Tanda Tangan Penyewa / Pelanggan */}
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <InputLabel value="Tanda Tangan Penyewa (Pelanggan) *" />
-                                    {pickupCustomerSignatureUrl && (
-                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                                            ✓ Terverifikasi Kontrak PWA
-                                        </span>
-                                    )}
-                                </div>
-                                {pickupCustomerSignatureUrl ? (
-                                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-2.5 text-center dark:border-emerald-800 dark:bg-emerald-950/30">
-                                        <p className="text-[10px] text-emerald-800 dark:text-emerald-300 font-bold mb-1">
-                                            ✓ Tanda Tangan Digital PWA Pelanggan Terdaftar
-                                        </p>
-                                        <img
-                                            src={pickupCustomerSignatureUrl}
-                                            alt="Tanda Tangan Pelanggan"
-                                            className="h-16 max-w-full object-contain mx-auto bg-white p-1 rounded border border-emerald-100 dark:border-emerald-900"
-                                        />
-                                        <p className="text-[10px] text-slate-500 mt-1">
-                                            Otomatis digunakan. Gambar di bawah jika ingin memperbarui tanda tangan.
-                                        </p>
-                                    </div>
-                                ) : null}
-                                <SignaturePad
-                                    className="mt-1"
-                                    value={checkoutForm.data.checkout_signature || ''}
-                                    onChange={(value) => checkoutForm.setData('checkout_signature', value)}
-                                />
-                                <InputError message={checkoutForm.errors.checkout_signature} className="mt-1" />
-                            </div>
 
-                            {/* Tanda Tangan Staf / Admin (Pihak Penyerah Kendaraan) */}
-                            <div className="space-y-1.5">
-                                <InputLabel value="Tanda Tangan Staf / Admin (Penyerah Unit) *" />
-                                <SignaturePad
-                                    className="mt-1"
-                                    value={checkoutForm.data.checkout_staff_signature || ''}
-                                    onChange={(value) => checkoutForm.setData('checkout_staff_signature', value)}
-                                />
-                                <InputError message={checkoutForm.errors.checkout_staff_signature} className="mt-1" />
-                            </div>
-                        </div>
+                    <div>
+                        <InputLabel htmlFor="new_end_date" value={`${t('rental.fields.new_end_date', undefined, 'Tanggal Selesai Baru')} *`} />
+                        <TextInput
+                            id="new_end_date"
+                            type="date"
+                            min={rental.end_date}
+                            value={extendForm.data.new_end_date}
+                            onChange={(e) => extendForm.setData('new_end_date', e.target.value)}
+                            className="mt-1 w-full !rounded-xl"
+                            required
+                        />
+                        <InputError message={extendForm.errors.new_end_date} className="mt-1" />
+                    </div>
 
-                        <div className="flex justify-end gap-3">
-                            <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                            {depositBlocksCheckout ? (
-                                <PrimaryButton
-                                    type="button"
-                                    onClick={() => {
-                                        setModal(null);
-                                        action('deposit.receive');
-                                    }}
-                                >
-                                    {t('rental.actions.receive_deposit')}
-                                </PrimaryButton>
-                            ) : (
-                                <PrimaryButton disabled={checkoutForm.processing}>{t('rental.actions.checkout')}</PrimaryButton>
-                            )}
-                        </div>
+                    <div>
+                        <InputLabel htmlFor="extend_notes" value={t('rental.fields.notes', undefined, 'Catatan Perpanjangan')} />
+                        <textarea
+                            id="extend_notes"
+                            rows={2}
+                            value={extendForm.data.notes}
+                            onChange={(e) => extendForm.setData('notes', e.target.value)}
+                            placeholder="Alasan / catatan perpanjangan..."
+                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('common.cancel', undefined, 'Batal')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={extendForm.processing} className="rounded-xl px-5 py-2">
+                            {extendForm.processing ? 'Menyimpan...' : t('rental.actions.extend', undefined, 'Perpanjang Rental')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
-            <Modal show={modal === 'return'} onClose={() => setModal(null)}>
-                <form onSubmit={submitReturn} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.return')}</h2>
-                    <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
-                        <div>
-                            <InputLabel htmlFor="actual_return_date" value={`${t('rental.fields.return_date')} *`} />
-                            <TextInput id="actual_return_date" type="date" value={returnForm.data.actual_return_date} onChange={(e) => returnForm.setData('actual_return_date', e.target.value)} className="mt-1 w-full" />
-                            <InputError message={returnForm.errors.actual_return_date} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="end_odometer" value={t('rental.fields.end_odometer')} />
-                            <TextInput id="end_odometer" type="number" min="0" value={returnForm.data.end_odometer} onChange={(e) => returnForm.setData('end_odometer', e.target.value)} className="mt-1 w-full" />
-                            <InputError message={returnForm.errors.end_odometer} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="end_fuel_level" value={t('rental.fields.fuel_level')} />
-                            <select
-                                id="end_fuel_level"
-                                value={returnForm.data.end_fuel_level}
-                                onChange={(e) => returnForm.setData('end_fuel_level', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            >
-                                {fuelLevels.map((level) => (
-                                    <option key={level} value={level}>{t(`rental.fuel.${level}`, undefined, level)}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t('rental.checklist.return')}</p>
-                            <div className="space-y-1.5">
-                                {checklistItems.map((key) => (
-                                    <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                        <input
-                                            type="checkbox"
-                                            checked={!!returnForm.data.return_checklist[key]}
-                                            onChange={(e) => returnForm.setData('return_checklist', {
-                                                ...returnForm.data.return_checklist,
-                                                [key]: e.target.checked,
-                                            })}
-                                            className="rounded"
-                                        />
-                                        {t(`rental.checklist.items.${key}`)}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="return_notes" value={t('rental.fields.return_notes')} />
-                            <textarea id="return_notes" rows={2} value={returnForm.data.return_notes} onChange={(e) => returnForm.setData('return_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                        </div>
-                        <div>
-                            <HandoverPhotoPicker
-                                id="return_photos"
-                                label={t('rental.fields.return_photos')}
-                                value={returnForm.data.return_photos}
-                                onChange={(photos) => {
-                                    returnForm.setData('return_photos', photos);
-                                    setLiveAiResult(null);
-                                }}
-                                error={returnForm.errors.return_photos}
-                            />
+            {/* Modal: Swap Kendaraan */}
+            <Modal show={modal === 'swap'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitSwap} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="purple"
+                        icon="🔄"
+                        title={t('rental.modals.swap', undefined, 'Tukar Unit Kendaraan')}
+                        subtitle={`Tukar unit ${rental.vehicle.name} (${rental.vehicle.plate_number})`}
+                        onClose={() => setModal(null)}
+                    />
 
-                            {aiInspectionEnabled && returnForm.data.return_photos.length > 0 && aiInspectLiveUrl && (
-                                <div className="mt-2.5">
-                                    <button
-                                        type="button"
-                                        onClick={handleLiveAiScan}
-                                        disabled={liveScanning}
-                                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
-                                    >
-                                        {liveScanning ? (
-                                            <>
-                                                <svg className="h-4 w-4 animate-spin text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                </svg>
-                                                <span>{t('rental.ai.scanning')}</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span>✨</span>
-                                                <span>{t('rental.ai.btn_scan')}</span>
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {liveScanError && (
-                                        <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{liveScanError}</p>
-                                    )}
-
-                                    {liveAiResult && (
-                                        <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/70 p-2.5 text-xs dark:border-emerald-800 dark:bg-emerald-950/40">
-                                            <div className="flex items-center gap-1.5 font-medium text-emerald-800 dark:text-emerald-300">
-                                                <span>✅</span>
-                                                <span>{t('rental.ai.inspection_success')}</span>
-                                            </div>
-                                            <div className="mt-1 space-y-0.5 text-gray-700 dark:text-gray-300">
-                                                {liveAiResult.extracted_odometer !== null && (
-                                                    <p>• Odometer otomatis terisi: <b>{liveAiResult.extracted_odometer.toLocaleString()} km</b></p>
-                                                )}
-                                                {liveAiResult.extracted_fuel_level && (
-                                                    <p>• Level BBM otomatis terisi: <b>{liveAiResult.extracted_fuel_level}</b></p>
-                                                )}
-                                                {liveAiResult.detected_damages && liveAiResult.detected_damages.length > 0 ? (
-                                                    <p className="font-semibold text-rose-700 dark:text-rose-400">
-                                                        • ⚠️ Ditemukan {liveAiResult.detected_damages.length} kerusakan baru (klaim dapat dibuat setelah return).
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-emerald-700 dark:text-emerald-400">• Unit bersih / tidak ada kerusakan baru terdeteksi.</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <InputLabel value={`${t('rental.fields.signature')} *`} />
-                            <SignaturePad
-                                className="mt-1"
-                                value={returnForm.data.return_signature}
-                                onChange={(value) => returnForm.setData('return_signature', value)}
-                            />
-                            <InputError message={returnForm.errors.return_signature} className="mt-1" />
-                        </div>
-                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                            <input type="checkbox" checked={returnForm.data.deposit_returned} onChange={(e) => returnForm.setData('deposit_returned', e.target.checked)} className="rounded" />
-                            {t('rental.fields.deposit_returned')}
-                        </label>
+                    <div className="rounded-2xl border border-purple-200/80 bg-purple-50/50 p-3.5 text-xs text-purple-900 dark:border-purple-900/50 dark:bg-purple-950/30 dark:text-purple-200">
+                        <p className="font-semibold">Unit Saat Ini:</p>
+                        <p className="font-bold text-sm mt-0.5">{rental.vehicle.name} — {rental.vehicle.plate_number}</p>
                     </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={returnForm.processing}>{t('rental.actions.record_return')}</PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
 
-            <Modal show={modal === 'extend'} onClose={() => setModal(null)}>
-                <form onSubmit={submitExtend} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.extend')}</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="new_end_date" value={`${t('rental.fields.new_end_date')} *`} />
-                            <TextInput id="new_end_date" type="date" value={extendForm.data.new_end_date} onChange={(e) => extendForm.setData('new_end_date', e.target.value)} className="mt-1 w-full" />
-                            <InputError message={extendForm.errors.new_end_date} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="extend_notes" value={t('rental.fields.notes')} />
-                            <textarea id="extend_notes" rows={2} value={extendForm.data.notes} onChange={(e) => extendForm.setData('notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                        </div>
+                    <div>
+                        <InputLabel htmlFor="to_vehicle_id" value={`${t('rental.fields.swap_to_vehicle', undefined, 'Pilih Unit Kendaraan Pengganti')} *`} />
+                        <Select
+                            id="to_vehicle_id"
+                            options={[
+                                { value: '', label: t('rental.placeholders.select_vehicle', undefined, '-- Pilih Kendaraan Tersedia --') },
+                                ...swapVehicles.map((v) => ({
+                                    value: String(v.id),
+                                    label: `${v.name} — ${v.plate_number}`,
+                                })),
+                            ]}
+                            value={swapForm.data.to_vehicle_id}
+                            onChange={(value) => swapForm.setData('to_vehicle_id', value)}
+                            className="mt-1 w-full !rounded-xl"
+                        />
+                        <InputError message={swapForm.errors.to_vehicle_id} className="mt-1" />
                     </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={extendForm.processing}>{t('rental.actions.extend')}</PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
 
-            <Modal show={modal === 'swap'} onClose={() => setModal(null)}>
-                <form onSubmit={submitSwap} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.swap')}</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="to_vehicle_id" value={`${t('rental.fields.swap_to_vehicle')} *`} />
-                            <Select
-                                id="to_vehicle_id"
-                                options={[
-                                    { value: '', label: t('rental.placeholders.select_vehicle') },
-                                    ...swapVehicles.map((v) => ({
-                                        value: String(v.id),
-                                        label: `${v.name} — ${v.plate_number}`,
-                                    })),
-                                ]}
-                                value={swapForm.data.to_vehicle_id}
-                                onChange={(value) => swapForm.setData('to_vehicle_id', value)}
-                                className="mt-1 w-full"
-                            />
-                            <InputError message={swapForm.errors.to_vehicle_id} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="swap_odometer" value={t('rental.fields.swap_odometer')} />
+                    <div>
+                        <InputLabel htmlFor="swap_odometer" value={`${t('rental.fields.swap_odometer', undefined, 'Odometer Saat Tukar')} (KM)`} />
+                        <div className="relative mt-1">
                             <TextInput
                                 id="swap_odometer"
                                 type="number"
                                 min={0}
                                 value={swapForm.data.odometer_km}
                                 onChange={(e) => swapForm.setData('odometer_km', e.target.value)}
-                                className="mt-1 w-full"
+                                className="w-full !rounded-xl pr-12 font-mono"
+                                placeholder="0"
                             />
-                            <InputError message={swapForm.errors.odometer_km} className="mt-1" />
+                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-slate-400">
+                                KM
+                            </span>
                         </div>
-                        <div>
-                            <InputLabel htmlFor="swap_notes" value={t('rental.fields.notes')} />
-                            <textarea
-                                id="swap_notes"
-                                rows={2}
-                                value={swapForm.data.notes}
-                                onChange={(e) => swapForm.setData('notes', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
+                        <InputError message={swapForm.errors.odometer_km} className="mt-1" />
                     </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={swapForm.processing}>{t('rental.actions.swap_vehicle')}</PrimaryButton>
+
+                    <div>
+                        <InputLabel htmlFor="swap_notes" value={t('rental.fields.notes', undefined, 'Alasan Penukaran Unit')} />
+                        <textarea
+                            id="swap_notes"
+                            rows={2}
+                            value={swapForm.data.notes}
+                            onChange={(e) => swapForm.setData('notes', e.target.value)}
+                            placeholder="Contoh: Kendaraan perlu servis rutin / upgrade unit..."
+                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-purple-500 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('common.cancel', undefined, 'Batal')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={swapForm.processing} className="rounded-xl px-5 py-2 bg-purple-600 hover:bg-purple-700 focus:ring-purple-500">
+                            {swapForm.processing ? 'Memproses Tukar...' : t('rental.actions.swap_vehicle', undefined, 'Konfirmasi Tukar Unit')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
-            <Modal show={modal === 'damage'} onClose={() => setModal(null)}>
-                <form onSubmit={submitDamage} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.damage')}</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="damage_desc" value={`${t('rental.fields.description')} *`} />
-                            <textarea id="damage_desc" rows={2} value={damageForm.data.description} onChange={(e) => damageForm.setData('description', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                            <InputError message={damageForm.errors.description} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="damage_amount" value={`${t('rental.fields.repair_cost')} *`} />
-                            <MoneyInput id="damage_amount" value={damageForm.data.amount} onChange={(value) => damageForm.setData('amount', value)} className="mt-1 w-full" />
-                            <InputError message={damageForm.errors.amount} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel value={t('rental.fields.damage_photo')} />
-                            <ImageUploader
-                                value={damageForm.data.photo_path}
-                                onChange={(value) => damageForm.setData('photo_path', value)}
-                                className="mt-1"
-                            />
-                            <InputError message={damageForm.errors.photo_path} className="mt-1" />
-                        </div>
+            {/* Modal: Damage */}
+            <Modal show={modal === 'damage'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitDamage} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="danger"
+                        icon="💥"
+                        title={t('rental.modals.damage', undefined, 'Laporkan Kerusakan Kendaraan')}
+                        subtitle={`Booking ${rental.code} • ${rental.vehicle.name}`}
+                        onClose={() => setModal(null)}
+                    />
+
+                    <div>
+                        <InputLabel htmlFor="damage_desc" value={`${t('rental.fields.description', undefined, 'Deskripsi Kerusakan')} *`} />
+                        <textarea
+                            id="damage_desc"
+                            rows={2}
+                            value={damageForm.data.description}
+                            onChange={(e) => damageForm.setData('description', e.target.value)}
+                            placeholder="Contoh: Goresan pada pintu kanan belakang..."
+                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            required
+                        />
+                        <InputError message={damageForm.errors.description} className="mt-1" />
                     </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={damageForm.processing}>{t('rental.actions.save_damage')}</PrimaryButton>
+
+                    <div>
+                        <InputLabel htmlFor="damage_amount" value={`${t('rental.fields.repair_cost', undefined, 'Estimasi Biaya Perbaikan')} *`} />
+                        <MoneyInput
+                            id="damage_amount"
+                            value={damageForm.data.amount}
+                            onChange={(value) => damageForm.setData('amount', value)}
+                            className="mt-1 w-full"
+                        />
+                        <InputError message={damageForm.errors.amount} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel value={t('rental.fields.damage_photo', undefined, 'Foto Bukti Kerusakan')} />
+                        <ImageUploader
+                            value={damageForm.data.photo_path}
+                            onChange={(value) => damageForm.setData('photo_path', value)}
+                            className="mt-1"
+                        />
+                        <InputError message={damageForm.errors.photo_path} className="mt-1" />
+                    </div>
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('common.cancel', undefined, 'Batal')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={damageForm.processing} className="rounded-xl px-5 py-2 bg-rose-600 hover:bg-rose-700 focus:ring-rose-500">
+                            {damageForm.processing ? 'Menyimpan...' : t('rental.actions.save_damage', undefined, 'Simpan Kerusakan')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
-            <Modal show={modal === 'addon'} onClose={() => setModal(null)}>
-                <form onSubmit={submitAddon} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.addon')}</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="addon_code" value={`${t('rental.fields.addon_code')} *`} />
-                            <Select
-                                id="addon_code"
-                                className="mt-1 w-full"
-                                value={addonForm.data.addon_code}
-                                onChange={(value) => addonForm.setData('addon_code', value)}
-                                placeholder={t('rental.placeholders.select_addon_code')}
-                                searchable
-                                maxVisibleOptions={Math.max(addonCodes.length, 1)}
-                                options={addonCodes.map((option) => ({
-                                    value: option.value,
-                                    label: option.label || t(`rental.addon.codes.${option.value}`, undefined, option.value),
-                                }))}
-                            />
-                            <InputError message={addonForm.errors.addon_code} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="addon_amount" value={`${t('rental.fields.addon_amount')} *`} />
-                            <MoneyInput id="addon_amount" value={addonForm.data.amount} onChange={(value) => addonForm.setData('amount', value)} className="mt-1 w-full" />
-                            <InputError message={addonForm.errors.amount} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="addon_desc" value={t('rental.fields.addon_description')} />
-                            <TextInput id="addon_desc" value={addonForm.data.description} onChange={(e) => addonForm.setData('description', e.target.value)} className="mt-1 w-full" placeholder={t('rental.placeholders.addon_description')} />
-                            <InputError message={addonForm.errors.description} className="mt-1" />
-                        </div>
+            {/* Modal: Addon */}
+            <Modal show={modal === 'addon'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitAddon} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="primary"
+                        icon="➕"
+                        title={t('rental.modals.addon', undefined, 'Tambah Layanan Tambahan (Addon)')}
+                        subtitle={`Booking ${rental.code} • Layanan / Biaya Ekstra`}
+                        onClose={() => setModal(null)}
+                    />
+
+                    <div>
+                        <InputLabel htmlFor="addon_code" value={`${t('rental.fields.addon_code', undefined, 'Pilih Jenis Layanan')} *`} />
+                        <Select
+                            id="addon_code"
+                            className="mt-1 w-full !rounded-xl"
+                            value={addonForm.data.addon_code}
+                            onChange={(value) => addonForm.setData('addon_code', value)}
+                            placeholder={t('rental.placeholders.select_addon_code', undefined, '-- Pilih Layanan --')}
+                            searchable
+                            maxVisibleOptions={Math.max(addonCodes.length, 1)}
+                            options={addonCodes.map((option) => ({
+                                value: option.value,
+                                label: option.label || t(`rental.addon.codes.${option.value}`, undefined, option.value),
+                            }))}
+                        />
+                        <InputError message={addonForm.errors.addon_code} className="mt-1" />
                     </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={addonForm.processing}>{t('rental.actions.save_addon')}</PrimaryButton>
+
+                    <div>
+                        <InputLabel htmlFor="addon_amount" value={`${t('rental.fields.addon_amount', undefined, 'Nominal Biaya')} *`} />
+                        <MoneyInput
+                            id="addon_amount"
+                            value={addonForm.data.amount}
+                            onChange={(value) => addonForm.setData('amount', value)}
+                            className="mt-1 w-full"
+                        />
+                        <InputError message={addonForm.errors.amount} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="addon_desc" value={t('rental.fields.addon_description', undefined, 'Keterangan Tambahan')} />
+                        <TextInput
+                            id="addon_desc"
+                            value={addonForm.data.description}
+                            onChange={(e) => addonForm.setData('description', e.target.value)}
+                            className="mt-1 w-full !rounded-xl"
+                            placeholder={t('rental.placeholders.addon_description', undefined, 'Catatan atau detail layanan...')}
+                        />
+                        <InputError message={addonForm.errors.description} className="mt-1" />
+                    </div>
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('common.cancel', undefined, 'Batal')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={addonForm.processing} className="rounded-xl px-5 py-2">
+                            {addonForm.processing ? 'Menyimpan...' : t('rental.actions.save_addon', undefined, 'Tambahkan Layanan')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
-            <Modal show={modal === 'deposit'} onClose={() => setModal(null)}>
-                <form onSubmit={submitDeposit} className="p-6">
-                    <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.deposit')}</h2>
-                    <p className="mb-4 text-sm text-gray-500">
-                        {t('rental.fields.deposit')}: {formatMoney(rental.deposit_amount)}
-                    </p>
-                    <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="deposit_applied" value={t('rental.fields.deposit_applied')} />
-                            <MoneyInput
-                                id="deposit_applied"
-                                value={depositForm.data.deposit_applied_amount}
-                                onChange={(applied) => {
-                                    const deposit = Number(rental.deposit_amount);
-                                    const refunded = Math.max(0, deposit - Number(applied || 0));
-                                    depositForm.setData({
-                                        deposit_applied_amount: applied,
-                                        deposit_refunded_amount: String(refunded),
-                                    });
-                                }}
-                                className="mt-1 w-full"
-                            />
-                            <InputError message={depositForm.errors.deposit_applied_amount} className="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="deposit_refunded" value={t('rental.fields.deposit_refunded')} />
-                            <MoneyInput
-                                id="deposit_refunded"
-                                value={depositForm.data.deposit_refunded_amount}
-                                onChange={(value) => depositForm.setData('deposit_refunded_amount', value)}
-                                className="mt-1 w-full"
-                            />
-                            <InputError message={depositForm.errors.deposit_refunded_amount} className="mt-1" />
+            {/* Modal: Settle Deposit */}
+            <Modal show={modal === 'deposit'} onClose={() => setModal(null)} maxWidth="md">
+                <form onSubmit={submitDeposit} className="space-y-4 p-6">
+                    <ModalHeader
+                        tone="emerald"
+                        icon="💰"
+                        title={t('rental.modals.deposit', undefined, 'Penyelesaian Deposit (Settlement)')}
+                        subtitle={`Booking ${rental.code} • Total Ditahan: ${formatMoney(rental.deposit_amount)}`}
+                        onClose={() => setModal(null)}
+                    />
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 text-xs dark:border-slate-700 dark:bg-slate-800/60 space-y-2">
+                        <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                            <span>Total Deposit Ditahan:</span>
+                            <span className="font-extrabold text-sm text-slate-900 dark:text-white">{formatMoney(rental.deposit_amount)}</span>
                         </div>
                     </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={depositForm.processing}>{t('rental.actions.settle_deposit')}</PrimaryButton>
+
+                    <div>
+                        <InputLabel htmlFor="deposit_applied" value={t('rental.fields.deposit_applied', undefined, 'Dipotong untuk Tagihan / Kerusakan (Rp)')} />
+                        <MoneyInput
+                            id="deposit_applied"
+                            value={depositForm.data.deposit_applied_amount}
+                            onChange={(applied) => {
+                                const deposit = Number(rental.deposit_amount);
+                                const refunded = Math.max(0, deposit - Number(applied || 0));
+                                depositForm.setData({
+                                    deposit_applied_amount: applied,
+                                    deposit_refunded_amount: String(refunded),
+                                });
+                            }}
+                            className="mt-1 w-full"
+                        />
+                        <InputError message={depositForm.errors.deposit_applied_amount} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="deposit_refunded" value={t('rental.fields.deposit_refunded', undefined, 'Dikembalikan ke Pelanggan (Rp)')} />
+                        <MoneyInput
+                            id="deposit_refunded"
+                            value={depositForm.data.deposit_refunded_amount}
+                            onChange={(value) => depositForm.setData('deposit_refunded_amount', value)}
+                            className="mt-1 w-full"
+                        />
+                        <InputError message={depositForm.errors.deposit_refunded_amount} className="mt-1" />
+                    </div>
+
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>
+                            {t('common.cancel', undefined, 'Batal')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={depositForm.processing} className="rounded-xl px-5 py-2 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500">
+                            {depositForm.processing ? 'Menyimpan...' : t('rental.actions.settle_deposit', undefined, 'Selesaikan Deposit')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
+            {/* Modal: Approve Transfer Proof */}
             {showApproveProofModal && (
                 <Modal show onClose={() => setShowApproveProofModal(false)} maxWidth="md">
-                    <div className="p-6 space-y-5">
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                                    Konfirmasi Persetujuan Bukti Transfer
-                                </h2>
-                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                                    Apakah Anda yakin ingin menyetujui {Number(rental.deposit_amount) > 0 ? 'pembayaran deposit ini?' : 'pembayaran sewa ini?'}
-                                </p>
-                            </div>
-                        </div>
+                    <div className="p-6 space-y-4">
+                        <ModalHeader
+                            tone="emerald"
+                            icon="✅"
+                            title="Konfirmasi Persetujuan Bukti Transfer"
+                            subtitle={`Verifikasi pembayaran untuk ${rental.code}`}
+                            onClose={() => setShowApproveProofModal(false)}
+                        />
 
-                        {/* Detail Ringkasan Transfer */}
-                        <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-800/80 space-y-2 text-xs">
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
-                                <span className="text-gray-500">Kode Reservasi:</span>
-                                <span className="font-mono font-bold text-gray-900 dark:text-white">{rental.code}</span>
+                        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/80 space-y-2 text-xs">
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700">
+                                <span className="text-slate-500">Kode Reservasi:</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-white">{rental.code}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-500">Pemesan:</span>
-                                <span className="font-semibold text-gray-900 dark:text-white">{rental.partner?.name || '—'}</span>
+                                <span className="text-slate-500">Pemesan:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">{rental.partner?.name || '—'}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-500">{Number(rental.deposit_amount) > 0 ? 'Nominal Deposit:' : 'Nominal Pembayaran Sewa:'}</span>
-                                <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">{formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}</span>
+                                <span className="text-slate-500">{Number(rental.deposit_amount) > 0 ? 'Nominal Deposit:' : 'Nominal Pembayaran Sewa:'}</span>
+                                <span className="font-black text-emerald-700 dark:text-emerald-400 text-sm">{formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-500">Rekening Tujuan:</span>
-                                <span className="font-semibold text-gray-900 dark:text-white">
+                                <span className="text-slate-500">Rekening Tujuan:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">
                                     {rental.depositCompanyBankAccount
                                         ? `${rental.depositCompanyBankAccount.bank_name || ''} - ${rental.depositCompanyBankAccount.account_number || ''}`
                                         : 'Transfer Bank'}
@@ -2223,29 +2142,23 @@ export default function Show({
                         </div>
 
                         {/* List Dampak Aksi */}
-                        <div className="rounded-xl bg-emerald-50/70 p-3.5 border border-emerald-200/80 dark:bg-emerald-950/30 dark:border-emerald-800/50 space-y-1.5 text-xs text-emerald-900 dark:text-emerald-200">
+                        <div className="rounded-2xl bg-emerald-50/70 p-3.5 border border-emerald-200/80 dark:bg-emerald-950/30 dark:border-emerald-800/50 space-y-1.5 text-xs text-emerald-900 dark:text-emerald-200">
                             <p className="font-bold mb-1">Dampak setelah bukti transfer disetujui:</p>
                             <div className="flex items-center gap-2">
-                                <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
                                 <span>Status bukti transfer diubah menjadi <b>Disetujui (Approved)</b></span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                                <span>{Number(rental.deposit_amount) > 0 ? 'Pembayaran deposit otomatis dicatat ke sistem akuntansi' : 'Pembayaran sewa otomatis dicatat ke sistem akuntansi'}</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+                                <span>{Number(rental.deposit_amount) > 0 ? 'Pembayaran deposit otomatis dicatat ke sistem' : 'Pembayaran sewa otomatis dicatat ke sistem'}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                                <span>Status reservasi otomatis berubah menjadi <b>Dikonfirmasi (Confirmed)</b></span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+                                <span>Status reservasi otomatis berubah menjadi <b>Dikonfirmasi (Open)</b></span>
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-2">
+                        <div className="flex justify-end gap-2.5 pt-2">
                             <SecondaryButton type="button" onClick={() => setShowApproveProofModal(false)}>
                                 Batal
                             </SecondaryButton>
@@ -2261,15 +2174,16 @@ export default function Show({
                                         },
                                     });
                                 }}
-                                className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+                                className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
                             >
-                                {approvingProof ? 'Memproses...' : (Number(rental.deposit_amount) > 0 ? 'Ya, Setujui & Konfirmasi Deposit' : 'Ya, Setujui & Konfirmasi Pembayaran')}
+                                {approvingProof ? 'Memproses...' : (Number(rental.deposit_amount) > 0 ? 'Ya, Setujui Deposit' : 'Ya, Setujui Pembayaran')}
                             </PrimaryButton>
                         </div>
                     </div>
                 </Modal>
             )}
 
+            {/* Modal: Reject Transfer Proof */}
             {showRejectProofModal && (
                 <Modal show onClose={() => setShowRejectProofModal(false)} maxWidth="md">
                     <form
@@ -2281,26 +2195,19 @@ export default function Show({
                         }}
                         className="p-6 space-y-4"
                     >
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                                    Tolak Bukti Transfer Deposit
-                                </h2>
-                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                                    Masukkan alasan penolakan agar pemesan dapat mengunggah kembali bukti transfer yang valid.
-                                </p>
-                            </div>
-                        </div>
+                        <ModalHeader
+                            tone="danger"
+                            icon="❌"
+                            title="Tolak Bukti Transfer"
+                            subtitle={`Pembayaran untuk ${rental.code}`}
+                            onClose={() => setShowRejectProofModal(false)}
+                        />
 
                         <div>
                             <InputLabel value="Alasan Penolakan *" />
-                            <TextInput
-                                className="mt-1 block w-full"
+                            <textarea
+                                rows={3}
+                                className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                 value={rejectProofForm.data.rejected_reason}
                                 onChange={(e) => rejectProofForm.setData('rejected_reason', e.target.value)}
                                 placeholder="Contoh: Bukti transfer tidak terbaca / nominal tidak sesuai"
@@ -2308,11 +2215,11 @@ export default function Show({
                             />
                             <InputError message={rejectProofForm.errors.rejected_reason} className="mt-1" />
                         </div>
-                        <div className="flex justify-end gap-2 pt-2">
+                        <div className="flex justify-end gap-2.5 pt-2">
                             <SecondaryButton type="button" onClick={() => setShowRejectProofModal(false)}>
                                 Batal
                             </SecondaryButton>
-                            <DangerButton type="submit" disabled={rejectProofForm.processing}>
+                            <DangerButton type="submit" disabled={rejectProofForm.processing} className="rounded-xl px-4 py-2">
                                 {rejectProofForm.processing ? 'Menolak...' : 'Tolak Bukti Transfer'}
                             </DangerButton>
                         </div>

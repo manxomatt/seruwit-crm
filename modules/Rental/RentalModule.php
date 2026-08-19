@@ -159,6 +159,8 @@ class RentalModule implements ModuleContract
         Route::post('/rental', [RentalController::class, 'store'])->middleware('permission:rental,create')->name('rental.store');
         Route::get('/rental/{rental}', [RentalController::class, 'show'])->middleware('permission:rental,view')->name('rental.show');
         Route::get('/rental/{rental}/edit', [RentalController::class, 'edit'])->middleware('permission:rental,update')->name('rental.edit');
+        Route::get('/rental/{rental}/checkout', [RentalController::class, 'checkoutPage'])->middleware('permission:rental,update')->name('rental.checkout_page');
+        Route::get('/rental/{rental}/return', [RentalController::class, 'returnPage'])->middleware('permission:rental,update')->name('rental.return_page');
         Route::patch('/rental/{rental}', [RentalController::class, 'update'])->middleware('permission:rental,update')->name('rental.update');
         Route::delete('/rental/{rental}', [RentalController::class, 'destroy'])->middleware('permission:rental,delete')->name('rental.destroy');
 

@@ -170,8 +170,8 @@ return [
         'calendar' => 'Kalender',
         'rates' => 'Tarif',
         'settings' => 'Pengaturan',
-        'back_to_list' => '← Kembali ke Rental',
-        'back' => '← Kembali',
+        'back_to_list' => 'Kembali ke Rental',
+        'back' => 'Kembali',
     ],
 
     'status' => [

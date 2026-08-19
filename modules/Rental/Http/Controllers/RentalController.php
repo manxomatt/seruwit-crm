@@ -574,4 +574,81 @@ class RentalController extends Controller
             'discount_amount' => $pricing['discount_amount'],
         ];
     }
+
+    /**
+     * Render dedicated full-page for vehicle checkout / serah terima.
+     */
+    public function checkoutPage(Rental $rental): Response|RedirectResponse
+    {
+        if ($rental->status !== Rental::STATUS_CONFIRMED) {
+            return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
+                ->with('error', __('rental.errors.checkout_confirmed_only'));
+        }
+
+        $rental->load([
+            'vehicle:id,name,plate_number,type,status,photo_url,rental_class',
+            'driver:id,name,phone',
+            'partner:id,name,code,phone',
+            'depositCompanyBankAccount:id,name,bank_name,account_number,account_holder',
+        ]);
+
+        $depositBlocksCheckout = false;
+        $checkoutBlockedReason = null;
+
+        if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
+            $depositBlocksCheckout = true;
+            $checkoutBlockedReason = __('rental.errors.checkout_deposit_required');
+        }
+
+        if ((float) $rental->deposit_amount <= 0 && $rental->deposit_proof_status !== Rental::PROOF_APPROVED) {
+            $paymentSummary = $this->invoices->paymentSummary($rental);
+            if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
+                $depositBlocksCheckout = true;
+                $checkoutBlockedReason = 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.';
+            }
+        }
+
+        $pickupCustomerSignatureUrl = null;
+        if (filled($rental->pickup_customer_signature_path)) {
+            $pickupCustomerSignatureUrl = str_starts_with((string) $rental->pickup_customer_signature_path, 'data:image')
+                ? (string) $rental->pickup_customer_signature_path
+                : asset('storage/'.$rental->pickup_customer_signature_path);
+        }
+
+        return Inertia::render('Modules/Rental/Checkout', [
+            'rental' => $rental->append('is_overdue'),
+            'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
+            'checklistItems' => RentalHandoverChecklist::keys(),
+            'depositBlocksCheckout' => $depositBlocksCheckout,
+            'checkoutBlockedReason' => $checkoutBlockedReason,
+            'pickupCustomerSignatureUrl' => $pickupCustomerSignatureUrl,
+        ]);
+    }
+
+    /**
+     * Render dedicated full-page for vehicle return / pengembalian unit.
+     */
+    public function returnPage(Rental $rental): Response|RedirectResponse
+    {
+        if ($rental->status !== Rental::STATUS_ACTIVE) {
+            return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
+                ->with('error', __('rental.errors.return_active_only'));
+        }
+
+        $rental->load([
+            'vehicle:id,name,plate_number,type,status,photo_url,rental_class',
+            'driver:id,name,phone',
+            'partner:id,name,code,phone',
+        ]);
+
+        $aiInspectionEnabled = config('services.gemini.api_key') !== null || config('rental.ai.inspection_enabled', true);
+
+        return Inertia::render('Modules/Rental/Return', [
+            'rental' => $rental->append('is_overdue'),
+            'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
+            'checklistItems' => RentalHandoverChecklist::keys(),
+            'aiInspectionEnabled' => (bool) $aiInspectionEnabled,
+            'aiInspectLiveUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental),
+        ]);
+    }
 }

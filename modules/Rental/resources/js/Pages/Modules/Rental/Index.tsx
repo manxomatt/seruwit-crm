@@ -3,6 +3,8 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import Modal from '@/Components/Modal';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { formatDateDmY } from '@/utils/date';
@@ -83,31 +85,29 @@ const STATUSES = [
 function statusBadgeClass(status: string): string {
     switch (status) {
         case 'draft':
-            return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-500/20';
+            return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
         case 'pending':
-            return 'bg-slate-50 text-slate-700 ring-1 ring-inset ring-slate-500/20';
+            return 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300';
         case 'pending_reserved':
-            return 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/20';
+            return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300';
         case 'confirmed':
-            return 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-600/20';
+            return 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300';
         case 'active':
-            return 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
+            return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/30 dark:bg-emerald-950/60 dark:text-emerald-300';
         case 'returned':
-            return 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-600/20';
+            return 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300';
         case 'completed':
-            return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20';
+            return 'bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300';
         case 'cancelled':
         case 'cancelled_paid':
-            return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20';
+            return 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300';
         case 'no_show':
         case 'no_show_paid':
-            return 'bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/20';
+            return 'bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300';
         case 'overdue':
-            return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20';
-        case 'inactive':
-            return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-500/20';
+            return 'bg-rose-100 text-rose-800 font-bold dark:bg-rose-950 dark:text-rose-200';
         default:
-            return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-500/20';
+            return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
     }
 }
 
@@ -117,7 +117,7 @@ const periodUnit = (periodType: string): string =>
     periodType === 'daily' ? 'day' : periodType === 'weekly' ? 'week' : 'month';
 
 const SearchIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
     </svg>
 );
@@ -129,18 +129,15 @@ const EyeIcon = () => (
     </svg>
 );
 
-const EllipsisVerticalIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-        />
-    </svg>
-);
-
-const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+const QUICK_FILTERS = [
+    { label: 'Semua', value: '' },
+    { label: 'Aktif', value: 'active' },
+    { label: 'Dikonfirmasi', value: 'confirmed' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Returned', value: 'returned' },
+    { label: 'Selesai', value: 'completed' },
+    { label: 'Overdue', value: 'overdue' },
+];
 
 export default function Index({ rentals, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -148,6 +145,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
     const page = usePage();
     const flash = page.props.flash as { success?: string; error?: string } | undefined;
     const [search, setSearch] = useState(filters.search ?? '');
+    const [previewRental, setPreviewRental] = useState<Rental | null>(null);
     const hasActiveFilters = Boolean(filters.search || filters.status);
 
     const applyFilters = (overrides: Record<string, string>): void => {
@@ -175,249 +173,367 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <PageHeader
-                    title={t('rental.pages.index.title')}
-                    actions={<Link href={prefixedRoute('rental.create')}>
-                        <PrimaryButton>{t('rental.actions.new_rental')}</PrimaryButton>
-                    </Link>}
+                    title={t('rental.pages.index.title', undefined, 'Manajemen Rental')}
+                    subtitle="Kelola seluruh transaksi sewa kendaraan, jadwal serah terima, dan status pengembalian."
+                    actions={
+                        <Link href={prefixedRoute('rental.create')}>
+                            <PrimaryButton className="rounded-xl shadow-sm">
+                                ➕ {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
+                            </PrimaryButton>
+                        </Link>
+                    }
                 />
             }
         >
-            <Head title={t('rental.pages.index.head')} />
+            <Head title={t('rental.pages.index.head', undefined, 'Daftar Rental')} />
 
             <RentalNav />
 
             {flash?.success && (
-                <div className="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-600/20">
-                    {flash.success}
+                <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-xs font-semibold text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 shadow-2xs">
+                    ✓ {flash.success}
                 </div>
             )}
             {flash?.error && (
-                <div className="mb-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-800 ring-1 ring-inset ring-rose-600/20">
-                    {flash.error}
+                <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-xs font-semibold text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 shadow-2xs">
+                    ⚠️ {flash.error}
                 </div>
             )}
 
-            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 px-4 py-3 sm:px-5">
-                    <p className="text-sm text-gray-600">{t('rental.pages.index.total', { count: rentals.total })}</p>
-
-                    <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
-                        <div className="relative min-w-[200px] flex-1">
-                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-                                <SearchIcon />
-                            </span>
-                            <TextInput
-                                type="search"
-                                placeholder={t('rental.placeholders.search')}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-full !py-2 pl-10 text-sm"
-                            />
-                        </div>
-                        <div className="w-52 shrink-0 sm:w-56">
-                            <Select
-                                className="!py-1.5 text-sm"
-                                value={filters.status || ''}
-                                onChange={(value) => applyFilters({ status: value })}
-                                placeholder={t('rental.status.all')}
-                                options={[
-                                    { value: '', label: t('rental.status.all') },
-                                    ...STATUSES.map((status) => ({
-                                        value: status,
-                                        label: t(`rental.status.${status}`, undefined, status),
-                                    })),
-                                ]}
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                        >
-                            {t('rental.actions.search')}
-                        </button>
-                        {hasActiveFilters && (
+            <div className="space-y-4">
+                {/* Search & Filter Header Bar */}
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col gap-3">
+                        <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2.5">
+                            <div className="relative min-w-[240px] flex-1">
+                                <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400">
+                                    <SearchIcon />
+                                </span>
+                                <TextInput
+                                    type="search"
+                                    placeholder={t('rental.placeholders.search', undefined, 'Cari kode booking, nama pelanggan, atau plat nomor...')}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full !rounded-2xl !py-2.5 pl-10 text-xs shadow-2xs"
+                                />
+                            </div>
+                            <div className="w-48 shrink-0 sm:w-52">
+                                <Select
+                                    className="!rounded-2xl !py-2 text-xs shadow-2xs"
+                                    value={filters.status || ''}
+                                    onChange={(value) => applyFilters({ status: value })}
+                                    placeholder={t('rental.status.all', undefined, 'Semua Status')}
+                                    options={[
+                                        { value: '', label: t('rental.status.all', undefined, 'Semua Status') },
+                                        ...STATUSES.map((status) => ({
+                                            value: status,
+                                            label: t(`rental.status.${status}`, undefined, status),
+                                        })),
+                                    ]}
+                                />
+                            </div>
                             <button
-                                type="button"
-                                onClick={clearFilters}
-                                className="inline-flex h-9 items-center rounded-md px-2 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                type="submit"
+                                className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-slate-900 px-4 text-xs font-bold text-white shadow-2xs hover:bg-slate-800 dark:border-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white transition"
                             >
-                                {t('common.clear_filters', undefined, 'Clear filters')}
+                                {t('rental.actions.search', undefined, 'Cari')}
                             </button>
-                        )}
-                        <span className="ml-auto text-xs tabular-nums text-gray-400">
-                            {t('common.showing_results', {
-                                from: rentals.total === 0 ? 0 : (rentals.current_page - 1) * rentals.per_page + 1,
-                                to: Math.min(rentals.current_page * rentals.per_page, rentals.total),
-                                total: rentals.total,
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition"
+                                >
+                                    ✕ Reset
+                                </button>
+                            )}
+                        </form>
+
+                        {/* Quick filter chips */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                            <span className="text-[11px] font-bold text-slate-400 mr-1">Filter Cepat:</span>
+                            {QUICK_FILTERS.map((chip) => {
+                                const isActive = (filters.status || '') === chip.value;
+                                return (
+                                    <button
+                                        key={chip.value}
+                                        type="button"
+                                        onClick={() => applyFilters({ status: chip.value })}
+                                        className={`rounded-xl px-2.5 py-1 text-[11px] font-bold transition ${
+                                            isActive
+                                                ? 'bg-indigo-600 text-white shadow-2xs'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        {chip.label}
+                                    </button>
+                                );
                             })}
-                        </span>
-                    </form>
+                        </div>
+                    </div>
                 </div>
 
-                {rentals.data.length === 0 ? (
-                    <div className="px-6 py-16 text-center">
-                        <h3 className="text-sm font-medium text-gray-900">{t('rental.pages.index.empty')}</h3>
-                        <p className="mt-1 text-sm text-gray-500">{t('common.empty_hint', undefined, 'Try adjusting your filters.')}</p>
-                        {hasActiveFilters && (
-                            <button
-                                type="button"
-                                onClick={clearFilters}
-                                className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                            >
-                                {t('common.clear_filters', undefined, 'Clear filters')}
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    <>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-100">
-                                <thead>
-                                    <tr className="bg-gray-50/80">
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                            {t('rental.fields.code')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                            {t('rental.fields.partner')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                            {t('rental.fields.vehicle')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                            {t('rental.fields.period')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                            {t('rental.fields.status')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                            {t('rental.fields.amount')}
-                                        </th>
-                                        <th className="w-24 px-3 py-2.5">
-                                            <span className="sr-only">{t('common.actions')}</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {rentals.data.map((rental) => (
-                                        <tr
-                                            key={rental.id}
-                                            className="group transition-colors hover:bg-gray-50/80"
-                                        >
-                                            <td className="whitespace-nowrap px-3 py-2.5">
-                                                <div className="flex flex-wrap items-center gap-1.5">
-                                                    <Link
-                                                        href={prefixedRoute('rental.show', rental.id)}
-                                                        className="font-mono text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-                                                    >
-                                                        {rental.code}
-                                                    </Link>
-                                                    {rental.channel && rental.channel !== 'staff' && (
-                                                        <span className="inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-700 ring-1 ring-inset ring-teal-600/20">
-                                                            {t(`rental.channel.${rental.channel}`, undefined, rental.channel)}
-                                                        </span>
-                                                    )}
-                                                    {rental.is_overdue && (
-                                                        <span className="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
-                                                            {t('rental.status.overdue')}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2.5">
-                                                <div className="min-w-0">
-                                                    <div className="truncate text-sm font-medium text-gray-900">{rental.partner.name}</div>
-                                                    <div className="font-mono text-xs text-gray-500">{rental.partner.code}</div>
-                                                </div>
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2.5">
-                                                <div className="min-w-0">
-                                                    <div className="truncate text-sm font-medium text-gray-900">{rental.vehicle.name}</div>
-                                                    <div className="font-mono text-xs text-gray-500">{rental.vehicle.plate_number}</div>
-                                                </div>
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2.5 text-xs text-gray-600">
-                                                <div className="font-medium text-gray-800">
-                                                    {formatDateDmY(rental.start_date)} → {formatDateDmY(rental.end_date)}
-                                                </div>
-                                                <div className="text-gray-400">
-                                                    {rental.total_periods}{' '}
-                                                    {t(`rental.period_type.${periodUnit(rental.period_type)}`, undefined, rental.period_type)}
-                                                </div>
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2.5">
-                                                <span
-                                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(rental.status)}`}
-                                                >
-                                                    {t(`rental.status.${rental.status}`, undefined, rental.status)}
-                                                </span>
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">
-                                                {formatMoney(rental.total_amount)}
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                <Menu as="div" className="relative inline-block text-right">
-                                                    <MenuButton
-                                                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                        title={t('common.actions')}
-                                                        aria-label={t('common.actions')}
-                                                    >
-                                                        <EllipsisVerticalIcon />
-                                                    </MenuButton>
-
-                                                    <MenuItems
-                                                        transition
-                                                        anchor="bottom end"
-                                                        className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
-                                                    >
-                                                        <MenuItem>
-                                                            <Link
-                                                                href={prefixedRoute('rental.show', rental.id)}
-                                                                className={menuItemClassName}
-                                                            >
-                                                                <span className="text-gray-500"><EyeIcon /></span>
-                                                                {t('common.view', undefined, 'View')}
-                                                            </Link>
-                                                        </MenuItem>
-                                                    </MenuItems>
-                                                </Menu>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                {/* Table Container */}
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    {rentals.data.length === 0 ? (
+                        <div className="px-6 py-20 text-center">
+                            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400 dark:bg-slate-800">
+                                🚗
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                {t('rental.pages.index.empty', undefined, 'Belum ada data rental')}
+                            </h3>
+                            <p className="mt-1 text-xs text-slate-500">
+                                {t('common.empty_hint', undefined, 'Coba sesuaikan pencarian atau tambahkan rental baru.')}
+                            </p>
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="mt-3 inline-flex items-center rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 transition"
+                                >
+                                    ✕ Reset Filter
+                                </button>
+                            )}
                         </div>
+                    ) : (
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                                    <thead className="bg-slate-50/80 dark:bg-slate-850">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('rental.fields.code', undefined, 'Kode Booking')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('rental.fields.partner', undefined, 'Pelanggan')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('rental.fields.vehicle', undefined, 'Kendaraan')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('rental.fields.period', undefined, 'Periode Sewa')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('rental.fields.status', undefined, 'Status')}
+                                            </th>
+                                            <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {t('rental.fields.amount', undefined, 'Total Biaya')}
+                                            </th>
+                                            <th className="w-28 px-4 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Aksi
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {rentals.data.map((rental) => (
+                                            <tr
+                                                key={rental.id}
+                                                className="group transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
+                                            >
+                                                <td className="whitespace-nowrap px-4 py-3">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <Link
+                                                            href={prefixedRoute('rental.show', rental.id)}
+                                                            className="font-mono text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                        >
+                                                            {rental.code}
+                                                        </Link>
+                                                        {rental.channel && rental.channel !== 'staff' && (
+                                                            <span className="inline-flex w-fit rounded-lg bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                                                                {t(`rental.channel.${rental.channel}`, undefined, rental.channel)}
+                                                            </span>
+                                                        )}
+                                                        {rental.is_overdue && (
+                                                            <span className="inline-flex w-fit rounded-lg bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                                                                ⚠️ {t('rental.status.overdue', undefined, 'Overdue')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3">
+                                                    <div className="min-w-0">
+                                                        <div className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                            {rental.partner.name}
+                                                        </div>
+                                                        <div className="font-mono text-[10px] text-slate-400">
+                                                            {rental.partner.code}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3">
+                                                    <div className="min-w-0">
+                                                        <div className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                            {rental.vehicle.name}
+                                                        </div>
+                                                        <span className="inline-block rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                            {rental.vehicle.plate_number}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-xs">
+                                                    <div className="font-medium text-slate-800 dark:text-slate-200">
+                                                        {formatDateDmY(rental.start_date)} → {formatDateDmY(rental.end_date)}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-400">
+                                                        {rental.total_periods}{' '}
+                                                        {t(`rental.period_type.${periodUnit(rental.period_type)}`, undefined, rental.period_type)}
+                                                    </div>
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3">
+                                                    <span
+                                                        className={`inline-flex items-center rounded-xl px-2.5 py-1 text-[11px] font-bold ${statusBadgeClass(
+                                                            rental.status,
+                                                        )}`}
+                                                    >
+                                                        {t(`rental.status.${rental.status}`, undefined, rental.status)}
+                                                    </span>
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-xs font-black text-slate-900 dark:text-white">
+                                                    {formatMoney(rental.total_amount)}
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-center">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPreviewRental(rental)}
+                                                            className="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition"
+                                                            title="Lihat Cepat (Quick Preview)"
+                                                        >
+                                                            <EyeIcon />
+                                                        </button>
+                                                        <Link
+                                                            href={prefixedRoute('rental.show', rental.id)}
+                                                            className="rounded-xl bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 transition"
+                                                        >
+                                                            Buka
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        {rentals.last_page > 1 && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 sm:px-5">
-                                <p className="text-xs text-gray-500">
+                            {/* Pagination Footer */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3.5 sm:px-5 dark:border-slate-800">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {t('common.showing_results', {
                                         from: (rentals.current_page - 1) * rentals.per_page + 1,
                                         to: Math.min(rentals.current_page * rentals.per_page, rentals.total),
                                         total: rentals.total,
-                                    })}
+                                    }, `Menampilkan ${(rentals.current_page - 1) * rentals.per_page + 1} - ${Math.min(rentals.current_page * rentals.per_page, rentals.total)} dari ${rentals.total} data`)}
                                 </p>
-                                <div className="flex gap-1">
-                                    {rentals.links.map((link, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() => link.url && router.get(link.url)}
-                                            disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${link.active
-                                                ? 'bg-gray-900 text-white'
-                                                : link.url
-                                                    ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                    : 'cursor-not-allowed border border-gray-100 bg-gray-50 text-gray-400'
+                                {rentals.last_page > 1 && (
+                                    <div className="flex gap-1">
+                                        {rentals.links.map((link, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => link.url && router.get(link.url)}
+                                                disabled={!link.url}
+                                                className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
+                                                    link.active
+                                                        ? 'bg-indigo-600 text-white shadow-2xs'
+                                                        : link.url
+                                                            ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                            : 'cursor-not-allowed border border-slate-100 bg-slate-50 text-slate-300 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-600'
                                                 }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Quick Preview Modal */}
+            {previewRental && (
+                <Modal show onClose={() => setPreviewRental(null)} maxWidth="md">
+                    <div className="p-6 space-y-4">
+                        <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 dark:border-slate-800">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-xl text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 shadow-2xs">
+                                    🚗
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-mono text-base font-black text-slate-900 dark:text-white">
+                                            {previewRental.code}
+                                        </h3>
+                                        <span
+                                            className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(
+                                                previewRental.status,
+                                            )}`}
+                                        >
+                                            {t(`rental.status.${previewRental.status}`, undefined, previewRental.status)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {previewRental.partner.name}
+                                    </p>
                                 </div>
                             </div>
-                        )}
-                    </>
-                )}
-            </div>
+                            <button
+                                type="button"
+                                onClick={() => setPreviewRental(null)}
+                                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-850/50 space-y-2.5 text-xs">
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700">
+                                <span className="text-slate-500">Kendaraan:</span>
+                                <span className="font-bold text-slate-900 dark:text-white">
+                                    {previewRental.vehicle.name} ({previewRental.vehicle.plate_number})
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-500">Pelanggan:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">
+                                    {previewRental.partner.name} ({previewRental.partner.code})
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-500">Jadwal Sewa:</span>
+                                <span className="font-bold text-slate-800 dark:text-slate-200">
+                                    {formatDateDmY(previewRental.start_date)} → {formatDateDmY(previewRental.end_date)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-500">Durasi:</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                    {previewRental.total_periods} {t(`rental.period_type.${periodUnit(previewRental.period_type)}`, undefined, previewRental.period_type)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-slate-200/80 dark:border-slate-700">
+                                <span className="text-slate-500 font-bold">Total Biaya:</span>
+                                <span className="font-mono text-sm font-black text-indigo-600 dark:text-indigo-400">
+                                    {formatMoney(previewRental.total_amount)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2.5 pt-2">
+                            <SecondaryButton type="button" onClick={() => setPreviewRental(null)} className="rounded-xl px-4 py-2">
+                                Tutup
+                            </SecondaryButton>
+                            <Link href={prefixedRoute('rental.show', previewRental.id)}>
+                                <PrimaryButton className="rounded-xl px-5 py-2">
+                                    Buka Halaman Detail Lengkap ➔
+                                </PrimaryButton>
+                            </Link>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </DynamicLayout>
     );
 }
