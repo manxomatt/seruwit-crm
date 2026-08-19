@@ -27,10 +27,10 @@ class RentalAiInspectionController extends Controller
      */
     public function inspectLive(Request $request, Rental $rental): JsonResponse
     {
-        if (! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Visual Inspection dinonaktifkan dalam pengaturan rental.',
+                'message' => 'Fitur AI Visual Inspection dinonaktifkan oleh administrator central atau pengaturan rental.',
             ], 403);
         }
         $request->validate([
@@ -95,8 +95,8 @@ class RentalAiInspectionController extends Controller
      */
     public function inspectExisting(Request $request, Rental $rental): JsonResponse|RedirectResponse
     {
-        if (! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
-            $message = 'Fitur AI Visual Inspection dinonaktifkan dalam pengaturan rental.';
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
+            $message = 'Fitur AI Visual Inspection dinonaktifkan oleh administrator central atau pengaturan rental.';
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 403);
             }

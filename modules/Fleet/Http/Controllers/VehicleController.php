@@ -168,7 +168,7 @@ class VehicleController extends Controller
                 'suggested_odometer_source' => $recorder->suggestOdometerSource($vehicle),
             ],
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name']),
-            'aiPredictiveEnabled' => $maintenanceEnabled && class_exists(\Modules\Maintenance\Support\MaintenanceSettings::class) && \Modules\Maintenance\Support\MaintenanceSettings::aiPredictiveMaintenanceEnabled(),
+            'aiPredictiveEnabled' => \App\Support\CentralAiSettings::isEnabled() && $maintenanceEnabled && class_exists(\Modules\Maintenance\Support\MaintenanceSettings::class) && \Modules\Maintenance\Support\MaintenanceSettings::aiPredictiveMaintenanceEnabled(),
             'aiDiagnoseUrl' => $maintenanceEnabled ? route('module.maintenance.ai_predictive_vehicle', $vehicle) : null,
             'aiCreateWoUrl' => $maintenanceEnabled ? route('module.maintenance.ai_predictive_create_wo') : null,
             'can' => [

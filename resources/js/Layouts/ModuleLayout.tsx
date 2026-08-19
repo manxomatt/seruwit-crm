@@ -989,7 +989,7 @@ export default function ModuleLayout({ header, children }: Props) {
             {/* Main content */}
             <div className="lg:pl-64">
                 {/* Top navigation */}
-                <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
+                <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
                     <button
                         type="button"
                         className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-200 lg:hidden"
@@ -1007,76 +1007,105 @@ export default function ModuleLayout({ header, children }: Props) {
                             <GlobalSearch />
                         </div>
 
-                        <div className="flex items-center gap-x-4 lg:gap-x-6">
-                            {/* Notifications */}
-                            <Dropdown>
-                                <Dropdown.Trigger>
-                                    <button type="button" className="relative -m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
-                                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                                        </svg>
-                                        {!!notifications?.unread_count && (
-                                            <span className="absolute right-1 top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
-                                                {notifications.unread_count > 9 ? '9+' : notifications.unread_count}
-                                            </span>
-                                        )}
-                                    </button>
-                                </Dropdown.Trigger>
-                                <Dropdown.Content width="80" contentClasses="py-1 bg-white">
-                                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2">
-                                        <span className="text-sm font-semibold text-gray-900">Notifikasi</span>
+                        <div className="flex items-center gap-x-3 sm:gap-x-4 lg:gap-x-5">
+                            {/* Notifications Dropdown */}
+                            <Menu as="div" className="relative">
+                                <MenuButton className="relative -m-1.5 p-2 rounded-2xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                    </svg>
+                                    {!!notifications?.unread_count && (
+                                        <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-900 shadow-xs">
+                                            {notifications.unread_count > 9 ? '9+' : notifications.unread_count}
+                                        </span>
+                                    )}
+                                </MenuButton>
+
+                                <MenuItems
+                                    transition
+                                    className="absolute right-0 z-50 mt-2.5 w-80 sm:w-96 origin-top-right rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 focus:outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                >
+                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-3 py-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-slate-900 dark:text-white">Notifikasi</span>
+                                            {!!notifications?.unread_count && (
+                                                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300">
+                                                    {notifications.unread_count} Baru
+                                                </span>
+                                            )}
+                                        </div>
                                         {!!notifications?.unread_count && (
                                             <Link
                                                 href={route('module.notifications.read-all')}
                                                 method="post"
                                                 as="button"
                                                 preserveScroll
-                                                className="text-xs text-indigo-600 hover:text-indigo-900"
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition"
                                             >
                                                 {t('shell.mark_all_read')}
                                             </Link>
                                         )}
                                     </div>
-                                    <div className="max-h-80 overflow-y-auto">
+
+                                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 my-1">
                                         {!notifications?.recent?.length ? (
-                                            <p className="px-4 py-6 text-center text-sm text-gray-500">{t('shell.no_notifications')}</p>
+                                            <div className="py-8 px-4 text-center">
+                                                <span className="text-2xl">🔔</span>
+                                                <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">{t('shell.no_notifications')}</p>
+                                            </div>
                                         ) : (
                                             notifications.recent.map((item) => (
-                                                <Link
-                                                    key={item.id}
-                                                    href={item.url ?? route('module.notifications.index')}
-                                                    className={`block border-b border-gray-50 px-4 py-3 hover:bg-gray-50 ${item.read_at ? '' : 'bg-indigo-50/40'}`}
-                                                >
-                                                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                                                    <p className="text-xs text-gray-500">{item.body}</p>
-                                                    <p className="mt-0.5 text-[10px] text-gray-400">{item.created_at}</p>
-                                                </Link>
+                                                <MenuItem key={item.id}>
+                                                    <Link
+                                                        href={item.url ?? route('module.notifications.index')}
+                                                        className={`block rounded-xl px-3 py-2.5 transition ${
+                                                            item.read_at
+                                                                ? 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                                                : 'bg-indigo-50/50 hover:bg-indigo-50 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <p className="text-xs font-bold text-slate-900 dark:text-white">{item.title}</p>
+                                                            {!item.read_at && (
+                                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-600" />
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.body}</p>
+                                                        <p className="mt-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">{item.created_at}</p>
+                                                    </Link>
+                                                </MenuItem>
                                             ))
                                         )}
                                     </div>
-                                    <Link href={route('module.notifications.index')} className="block border-t border-gray-100 px-4 py-2 text-center text-sm text-indigo-600 hover:text-indigo-900">
-                                        {t('shell.view_all')}
-                                    </Link>
-                                </Dropdown.Content>
-                            </Dropdown>
+
+                                    <div className="border-t border-slate-100 dark:border-slate-800 pt-1">
+                                        <Link
+                                            href={route('module.notifications.index')}
+                                            className="block rounded-xl px-3 py-2 text-center text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50 transition"
+                                        >
+                                            {t('shell.view_all')} →
+                                        </Link>
+                                    </div>
+                                </MenuItems>
+                            </Menu>
 
                             {/* Separator */}
-                            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
+                            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:lg:bg-gray-800" />
 
                             <LanguageSwitcher compact />
 
                             {/* Separator */}
-                            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
+                            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:lg:bg-gray-800" />
 
-                            {/* Profile dropdown (kanan atas) */}
+                            {/* User Profile Dropdown */}
                             <Menu as="div" className="relative">
-                                <MenuButton className="-m-1.5 flex items-center rounded-lg p-1.5 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                                <MenuButton className="-m-1.5 flex items-center gap-2 rounded-2xl p-1.5 transition hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                                     <UserAvatar user={user} size="sm" />
                                     <span className="hidden lg:flex lg:items-center">
-                                        <span className="ml-3 text-sm font-semibold leading-6 text-gray-900">
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
                                             {user?.name || t('shell.user')}
                                         </span>
-                                        <svg className="ml-2 h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg className="ml-1.5 h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
                                         </svg>
                                     </span>
@@ -1084,27 +1113,32 @@ export default function ModuleLayout({ header, children }: Props) {
 
                                 <MenuItems
                                     transition
-                                    anchor="bottom end"
-                                    className="z-50 mt-2 w-64 origin-top-right rounded-xl border border-gray-100 bg-white p-1.5 shadow-xl outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                    className="absolute right-0 z-50 mt-2.5 w-72 origin-top-right rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl dark:border-slate-800 dark:bg-slate-900 focus:outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
                                 >
-                                    {/* Identity header */}
-                                    <div className="px-3 py-3">
-                                        <p className="truncate text-sm font-semibold text-gray-900">{user?.name || t('shell.user')}</p>
-                                        <p className="truncate text-xs text-gray-500">{user?.email || ''}</p>
+                                    {/* Identity Header */}
+                                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                                        <UserAvatar user={user} size="md" />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{user?.name || t('shell.user')}</p>
+                                                <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                    {isAdmin ? 'Admin' : isReseller ? 'Reseller' : 'User'}
+                                                </span>
+                                            </div>
+                                            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{user?.email || ''}</p>
+                                        </div>
                                     </div>
 
-                                    <div className="my-1 h-px bg-gray-100" />
+                                    <div className="my-1.5 h-px bg-slate-100 dark:bg-slate-800" />
 
                                     {/* Profile */}
                                     <MenuItem>
                                         <Link
                                             href={route('module.profile.edit')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900"
+                                            className="flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                                         >
-                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500">
-                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                                                </svg>
+                                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                                                👤
                                             </span>
                                             <span>{t('shell.profile')}</span>
                                         </Link>
@@ -1115,16 +1149,14 @@ export default function ModuleLayout({ header, children }: Props) {
                                         <MenuItem>
                                             <Link
                                                 href={route('module.subscription.index')}
-                                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900"
+                                                className="flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                                             >
-                                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-600">
-                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                                                    </svg>
+                                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400">
+                                                    💳
                                                 </span>
                                                 <span className="flex-1">Langganan</span>
                                                 {subscriptionSummary?.plan_name && (
-                                                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
+                                                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-950 dark:text-teal-300">
                                                         {subscriptionSummary.plan_name}
                                                     </span>
                                                 )}
@@ -1132,7 +1164,22 @@ export default function ModuleLayout({ header, children }: Props) {
                                         </MenuItem>
                                     )}
 
-                                    <div className="my-1 h-px bg-gray-100" />
+                                    {/* System Settings — if available */}
+                                    {routeExists('module.settings.index') && (
+                                        <MenuItem>
+                                            <Link
+                                                href={route('module.settings.index')}
+                                                className="flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                            >
+                                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                    ⚙️
+                                                </span>
+                                                <span>Pengaturan System</span>
+                                            </Link>
+                                        </MenuItem>
+                                    )}
+
+                                    <div className="my-1.5 h-px bg-slate-100 dark:bg-slate-800" />
 
                                     {/* Logout */}
                                     <MenuItem>
@@ -1140,12 +1187,10 @@ export default function ModuleLayout({ header, children }: Props) {
                                             href={route('logout')}
                                             method="post"
                                             as="button"
-                                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition"
                                         >
-                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-red-50 text-red-500">
-                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-                                                </svg>
+                                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-500 dark:bg-rose-950/60 dark:text-rose-400">
+                                                🚪
                                             </span>
                                             <span>{t('shell.log_out')}</span>
                                         </Link>

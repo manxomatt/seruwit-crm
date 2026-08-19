@@ -99,6 +99,7 @@ class HandleInertiaRequests extends Middleware
                     ]),
             ] : null,
             'settings' => $settings,
+            'aiFeaturesEnabled' => \App\Support\CentralAiSettings::isEnabled(),
             // The tenant *domain* we're currently on (null on the central domain).
             // Named distinctly so it never collides with page props that carry a
             // tenant record (e.g. the tenant management detail page).

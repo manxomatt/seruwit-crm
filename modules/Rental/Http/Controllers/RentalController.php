@@ -334,8 +334,8 @@ class RentalController extends Controller
                 ? \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms()
                 : [],
             'postConfirm' => app(RentalPostConfirmProgress::class)->for($rental),
-            'aiInspectionEnabled' => \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled'],
-            'aiKycEnabled' => \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'aiInspectionEnabled' => \App\Support\CentralAiSettings::isEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled'],
+            'aiKycEnabled' => \App\Support\CentralAiSettings::isEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
             'latestAiInspection' => $rental->latestAiInspection,
             'aiInspectLiveUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental),
             'aiInspectExistingUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_existing', $rental),

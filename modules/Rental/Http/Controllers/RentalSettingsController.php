@@ -43,6 +43,7 @@ class RentalSettingsController extends Controller
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
             'documents' => DocumentTemplateManager::all(),
+            'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
         ]);
     }
 

@@ -21,10 +21,10 @@ class MaintenanceAiPredictiveController extends Controller
      */
     public function analyze(Request $request): JsonResponse
     {
-        if (! MaintenanceSettings::aiPredictiveMaintenanceEnabled()) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! MaintenanceSettings::aiPredictiveMaintenanceEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Predictive Fleet Maintenance dinonaktifkan dalam pengaturan maintenance.',
+                'message' => 'Fitur AI Predictive Fleet Maintenance dinonaktifkan oleh administrator central atau pengaturan maintenance.',
             ], 403);
         }
 
@@ -57,10 +57,10 @@ class MaintenanceAiPredictiveController extends Controller
      */
     public function diagnoseVehicle(Request $request, Vehicle $vehicle): JsonResponse
     {
-        if (! MaintenanceSettings::aiPredictiveMaintenanceEnabled()) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! MaintenanceSettings::aiPredictiveMaintenanceEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Predictive Fleet Maintenance dinonaktifkan dalam pengaturan maintenance.',
+                'message' => 'Fitur AI Predictive Fleet Maintenance dinonaktifkan oleh administrator central atau pengaturan maintenance.',
             ], 403);
         }
 
@@ -84,10 +84,10 @@ class MaintenanceAiPredictiveController extends Controller
      */
     public function createWorkOrder(Request $request): JsonResponse
     {
-        if (! MaintenanceSettings::aiPredictiveMaintenanceEnabled()) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! MaintenanceSettings::aiPredictiveMaintenanceEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Predictive Fleet Maintenance dinonaktifkan dalam pengaturan maintenance.',
+                'message' => 'Fitur AI Predictive Fleet Maintenance dinonaktifkan oleh administrator central atau pengaturan maintenance.',
             ], 403);
         }
 

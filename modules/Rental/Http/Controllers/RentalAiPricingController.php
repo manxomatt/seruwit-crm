@@ -20,10 +20,10 @@ class RentalAiPricingController extends Controller
      */
     public function analyze(Request $request): JsonResponse
     {
-        if (! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Smart Dynamic Pricing dinonaktifkan dalam pengaturan rental.',
+                'message' => 'Fitur AI Smart Dynamic Pricing dinonaktifkan oleh administrator central atau pengaturan rental.',
             ], 403);
         }
 
@@ -56,10 +56,10 @@ class RentalAiPricingController extends Controller
      */
     public function apply(Request $request): JsonResponse
     {
-        if (! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Smart Dynamic Pricing dinonaktifkan dalam pengaturan rental.',
+                'message' => 'Fitur AI Smart Dynamic Pricing dinonaktifkan oleh administrator central atau pengaturan rental.',
             ], 403);
         }
 

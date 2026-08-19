@@ -96,6 +96,16 @@ class SettingSeeder extends Seeder
                 'is_public' => false,
                 'sort_order' => 8,
             ],
+            [
+                'key' => 'general.ai_features_enabled',
+                'group' => 'general',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Fitur AI (Artificial Intelligence)',
+                'description' => 'Master switch untuk mengaktifkan atau menonaktifkan seluruh fitur AI (Visual Handover, Smart KYC, Dynamic Pricing, Predictive Maintenance) di semua workspace tenant.',
+                'is_public' => true,
+                'sort_order' => 9,
+            ],
 
             // ==========================================
             // SITE GROUP

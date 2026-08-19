@@ -80,6 +80,7 @@ class Setting extends Model
     {
         return [
             'general.system_mode',
+            'general.ai_features_enabled',
         ];
     }
 

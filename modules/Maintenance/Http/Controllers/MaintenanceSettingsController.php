@@ -15,6 +15,7 @@ class MaintenanceSettingsController extends Controller
     {
         return Inertia::render('Modules/Maintenance/Settings/Edit', [
             'settings' => MaintenanceSettings::all(),
+            'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
         ]);
     }
 

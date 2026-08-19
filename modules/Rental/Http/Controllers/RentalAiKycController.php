@@ -22,8 +22,8 @@ class RentalAiKycController extends Controller
      */
     public function scanRentalDocuments(Request $request, Rental $rental): JsonResponse|RedirectResponse
     {
-        if (! RentalGeneralSettings::all()['ai_kyc_enabled']) {
-            $message = 'Fitur AI Smart KYC dinonaktifkan dalam pengaturan rental.';
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+            $message = 'Fitur AI Smart KYC dinonaktifkan oleh administrator central atau pengaturan rental.';
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 403);
             }
@@ -66,10 +66,10 @@ class RentalAiKycController extends Controller
      */
     public function scanSingleDocument(Request $request): JsonResponse
     {
-        if (! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Smart KYC dinonaktifkan dalam pengaturan rental.',
+                'message' => 'Fitur AI Smart KYC dinonaktifkan oleh administrator central atau pengaturan rental.',
             ], 403);
         }
 
