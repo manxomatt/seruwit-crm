@@ -504,6 +504,8 @@ return [
         'fuel_added' => 'Log BBM ditambahkan.',
         'fuel_added_anomaly' => 'Log BBM ditambahkan. Anomali terdeteksi — tinjau detail pengisian.',
         'fuel_deleted' => 'Log BBM dihapus.',
+        'limit_reached_bases' => 'Tenant telah mencapai batas maksimal :limit base armada sesuai paket langganan.',
+        'limit_reached_vehicles' => 'Tenant telah mencapai batas maksimal :limit kendaraan sesuai paket langganan.',
     ],
 
     'validation' => [
@@ -516,5 +518,7 @@ return [
         'batch_ids_required' => 'Pilih minimal satu data.',
         'vehicle_status_invalid' => 'Pilih status kendaraan yang valid.',
         'driver_status_invalid' => 'Pilih status pengemudi yang valid.',
+        'limit_reached_bases' => 'Tenant telah mencapai batas maksimal :limit base armada sesuai paket langganan.',
+        'limit_reached_vehicles' => 'Tenant telah mencapai batas maksimal :limit kendaraan sesuai paket langganan.',
     ],
 ];

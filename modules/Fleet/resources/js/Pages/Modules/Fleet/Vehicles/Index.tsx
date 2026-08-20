@@ -55,6 +55,7 @@ interface Props {
     filters: Filters;
     bases?: HomeBase[];
     can: { create: boolean; update: boolean; delete: boolean };
+    quota?: { max: number | null; current: number; reached: boolean };
 }
 
 type VehicleColumn =
@@ -192,7 +193,7 @@ function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
     }
 }
 
-export default function Index({ vehicles, filters, bases = [], can }: Props): JSX.Element {
+export default function Index({ vehicles, filters, bases = [], can, quota }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
@@ -370,6 +371,18 @@ export default function Index({ vehicles, filters, bases = [], can }: Props): JS
             <FleetNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+                {/* Quota Limit Warning Alert */}
+                {quota?.reached && (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/40 p-4 text-xs font-semibold text-amber-800 dark:text-amber-200 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm">⚠️</span>
+                            <span>
+                                <strong>Batas Kuota Paket Tercapai:</strong> Anda telah menggunakan {quota.current} dari maksimal {quota.max} armada kendaraan yang diizinkan pada paket langganan saat ini. Hubungi admin atau upgrade paket untuk menambah kendaraan.
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 {/* KPI Stats Cards */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">

@@ -20,8 +20,8 @@ export default function PartnersNav(): JSX.Element {
     const { t } = useTrans();
 
     return (
-        <div className="mb-6 overflow-x-auto pb-1">
-            <nav className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100/80 dark:bg-slate-900/90 p-1.5 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-sm">
+        <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+            <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label={t('partners.title')}>
                 {TABS.map((tab) => {
                     const active = tab.patterns.some((pattern) => isCurrentRoute(pattern));
 
@@ -29,13 +29,13 @@ export default function PartnersNav(): JSX.Element {
                         <Link
                             key={tab.route}
                             href={prefixedRoute(tab.route)}
-                            className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                            className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
                                 active
-                                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/50'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            <span className="text-sm">{tab.icon}</span>
+                            <span>{tab.icon}</span>
                             <span>{t(tab.labelKey)}</span>
                         </Link>
                     );

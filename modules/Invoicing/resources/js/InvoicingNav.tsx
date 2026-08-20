@@ -3,9 +3,9 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { labelKey: 'invoicing.nav.dashboard', route: 'invoicing.dashboard', pattern: 'invoicing.dashboard' },
-    { labelKey: 'invoicing.nav.invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*' },
-    { labelKey: 'invoicing.nav.settings', route: 'invoicing.settings.edit', pattern: 'invoicing.settings.*' },
+    { labelKey: 'invoicing.nav.dashboard', route: 'invoicing.dashboard', pattern: 'invoicing.dashboard', icon: '📊' },
+    { labelKey: 'invoicing.nav.invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*', icon: '🧾' },
+    { labelKey: 'invoicing.nav.settings', route: 'invoicing.settings.edit', pattern: 'invoicing.settings.*', icon: '⚙️' },
 ] as const;
 
 export default function InvoicingNav(): JSX.Element {
@@ -13,21 +13,22 @@ export default function InvoicingNav(): JSX.Element {
     const { t } = useTrans();
 
     return (
-        <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex gap-6">
+        <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+            <nav className="flex items-center gap-1.5 overflow-x-auto">
                 {TABS.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
                     return (
                         <Link
                             key={tab.route}
                             href={prefixedRoute(tab.route)}
-                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
+                            className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
                                 active
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            {t(tab.labelKey)}
+                            <span>{tab.icon}</span>
+                            <span>{t(tab.labelKey)}</span>
                         </Link>
                     );
                 })}

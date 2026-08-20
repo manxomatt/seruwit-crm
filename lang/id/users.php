@@ -124,6 +124,7 @@ return [
         'warehouse_head_single_site' => 'Warehouse Head hanya boleh di-assign ke satu situs.',
         'fleet_base_ids_required' => 'Assign minimal satu base armada untuk peran ini.',
         'fleet_base_head_single_base' => 'Fleet Base Head hanya boleh di-assign ke satu base.',
+        'limit_reached_users' => 'Tenant telah mencapai batas maksimal :limit pengguna sesuai paket langganan.',
     ],
 
     'messages' => [
@@ -132,5 +133,6 @@ return [
         'deleted' => 'Pengguna berhasil dihapus.',
         'invitation_sent' => 'Undangan telah dikirim ke :email.',
         'already_member' => 'Pengguna ini sudah menjadi anggota workspace.',
+        'limit_reached_users' => 'Tenant telah mencapai batas maksimal :limit pengguna sesuai paket langganan.',
     ],
 ];

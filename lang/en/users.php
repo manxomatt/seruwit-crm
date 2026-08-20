@@ -124,6 +124,7 @@ return [
         'warehouse_head_single_site' => 'A Warehouse Head can only be assigned to one site.',
         'fleet_base_ids_required' => 'Assign at least one fleet base for this role.',
         'fleet_base_head_single_base' => 'A Fleet Base Head can only be assigned to one base.',
+        'limit_reached_users' => 'Tenant has reached the maximum limit of :limit users allowed by your subscription plan.',
     ],
 
     'messages' => [
@@ -132,5 +133,6 @@ return [
         'deleted' => 'User deleted successfully.',
         'invitation_sent' => 'Invitation sent to :email.',
         'already_member' => 'This user is already a member of the workspace.',
+        'limit_reached_users' => 'Tenant has reached the maximum limit of :limit users allowed by your subscription plan.',
     ],
 ];

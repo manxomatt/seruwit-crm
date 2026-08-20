@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\FleetBase;
@@ -34,6 +36,10 @@ class UserController extends Controller
     public function index(): Response
     {
         $statusFilter = request('status');
+        $tenant = tenant();
+        $totalUsers = User::count();
+        $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_users', $totalUsers);
+        $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_users') : null;
 
         $users = User::query()
             ->with(['roles', 'profile'])
@@ -59,7 +65,7 @@ class UserController extends Controller
             ->withQueryString();
 
         $stats = [
-            'total_users' => User::count(),
+            'total_users' => $totalUsers,
             'verified_users' => User::whereNotNull('email_verified_at')->count(),
             'unverified_users' => User::whereNull('email_verified_at')->count(),
             'admin_users' => User::whereHas('roles', fn ($q) => $q->where('slug', 'admin'))->count(),
@@ -72,14 +78,30 @@ class UserController extends Controller
                 'search' => request('search'),
                 'status' => $statusFilter,
             ],
+            'can' => [
+                'create' => ! $isLimitReached,
+            ],
+            'quota' => [
+                'max' => $maxLimit !== null ? (int) $maxLimit : null,
+                'current' => $totalUsers,
+                'reached' => $isLimitReached,
+            ],
         ]);
     }
 
     /**
      * Show the form for creating a new user.
      */
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_users', User::count())) {
+            $limit = (int) $tenant->planLimit('max_users');
+
+            return redirect()->route($this->getRoutePrefix().'.users.index')
+                ->with('error', __('users.messages.limit_reached_users', ['limit' => $limit]));
+        }
+
         $roles = Role::query()->orderBy('name')->get();
 
         return Inertia::render('Modules/Users/Create', [
@@ -93,6 +115,14 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_users', User::count())) {
+            $limit = (int) $tenant->planLimit('max_users');
+            throw ValidationException::withMessages([
+                'email' => __('users.messages.limit_reached_users', ['limit' => $limit]),
+            ]);
+        }
+
         $validated = $request->validated();
         $validated['password'] = Hash::make($validated['password']);
 

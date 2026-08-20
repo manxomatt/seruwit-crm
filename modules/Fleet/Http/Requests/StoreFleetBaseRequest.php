@@ -84,6 +84,17 @@ class StoreFleetBaseRequest extends FormRequest
         ]);
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $tenant = tenant();
+            if ($tenant instanceof \App\Models\Tenant && $tenant->hasReachedLimit('max_branches', \Modules\Fleet\Models\FleetBase::count())) {
+                $limit = (int) $tenant->planLimit('max_branches');
+                $validator->errors()->add('name', __('fleet.messages.limit_reached_bases', ['limit' => $limit]));
+            }
+        });
+    }
+
     private function normalizeTime(mixed $value): ?string
     {
         if (! is_string($value) || trim($value) === '') {

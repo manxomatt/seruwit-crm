@@ -65,6 +65,15 @@ class InvitationController extends Controller
         }
 
         $tenant = $invitation->tenant;
+        $isAlreadyMember = $centralUser->tenants()->whereKey($tenant->getTenantKey())->exists();
+
+        if (! $isAlreadyMember && $tenant->hasReachedLimit('max_users', $tenant->users()->count())) {
+            $limit = (int) $tenant->planLimit('max_users');
+
+            return redirect()
+                ->route('central.workspaces.enter', $tenant)
+                ->with('error', __('users.messages.limit_reached_users', ['limit' => $limit]));
+        }
 
         $centralUser->tenants()->syncWithoutDetaching([$tenant->getTenantKey()]);
 

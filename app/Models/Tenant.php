@@ -89,6 +89,47 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     }
 
     /**
+     * Get a specific limit value from the tenant's plan.
+     */
+    public function planLimit(string $key, mixed $default = null): mixed
+    {
+        $plan = $this->planModel();
+        if (! $plan) {
+            return $default;
+        }
+
+        if ($key === 'max_branches' || $key === 'max_bases') {
+            return $plan->getLimit('max_branches', $plan->getLimit('max_bases', $default));
+        }
+
+        return $plan->getLimit($key, $default);
+    }
+
+    /**
+     * Check if a specific limit key has a finite threshold (> 0).
+     */
+    public function hasFiniteLimit(string $key): bool
+    {
+        $limit = $this->planLimit($key);
+
+        return $limit !== null && (int) $limit > 0;
+    }
+
+    /**
+     * Check if the tenant has reached or exceeded the quota for a given limit key.
+     */
+    public function hasReachedLimit(string $key, int $currentCount): bool
+    {
+        $limit = $this->planLimit($key);
+
+        if ($limit === null || (int) $limit <= 0) {
+            return false;
+        }
+
+        return $currentCount >= (int) $limit;
+    }
+
+    /**
      * The reseller who owns this tenant (null = directly owned by platform).
      *
      * @return BelongsTo<CentralUser, $this>

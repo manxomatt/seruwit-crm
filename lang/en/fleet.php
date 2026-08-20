@@ -504,6 +504,8 @@ return [
         'fuel_added' => 'Fuel log added.',
         'fuel_added_anomaly' => 'Fuel log added. Anomaly detected — review the fill details.',
         'fuel_deleted' => 'Fuel log deleted.',
+        'limit_reached_bases' => 'Tenant has reached the maximum limit of :limit fleet bases allowed by your subscription plan.',
+        'limit_reached_vehicles' => 'Tenant has reached the maximum limit of :limit vehicles allowed by your subscription plan.',
     ],
 
     'validation' => [
@@ -516,5 +518,7 @@ return [
         'batch_ids_required' => 'Select at least one item.',
         'vehicle_status_invalid' => 'Select a valid vehicle status.',
         'driver_status_invalid' => 'Select a valid driver status.',
+        'limit_reached_bases' => 'Tenant has reached the maximum limit of :limit fleet bases allowed by your subscription plan.',
+        'limit_reached_vehicles' => 'Tenant has reached the maximum limit of :limit vehicles allowed by your subscription plan.',
     ],
 ];

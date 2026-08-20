@@ -85,6 +85,12 @@ class StoreUserRequest extends FormRequest
                     array_map('intval', $this->input('fleet_base_ids', [])),
                 );
             }
+
+            $tenant = tenant();
+            if ($tenant instanceof \App\Models\Tenant && $tenant->hasReachedLimit('max_users', \App\Models\User::count())) {
+                $limit = (int) $tenant->planLimit('max_users');
+                $validator->errors()->add('email', __('users.messages.limit_reached_users', ['limit' => $limit]));
+            }
         });
     }
 }

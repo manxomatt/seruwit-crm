@@ -3,12 +3,14 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Http\Requests\BatchDeleteVehiclesRequest;
@@ -38,6 +40,10 @@ class VehicleController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
+        $tenant = tenant();
+        $totalVehicles = Vehicle::count();
+        $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $totalVehicles);
+        $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_vehicles') : null;
 
         $vehicles = Vehicle::query()
             ->with('homeBase:id,code,name')
@@ -68,9 +74,14 @@ class VehicleController extends Controller
             ],
             'bases' => $this->homeBaseOptions(),
             'can' => [
-                'create' => $user->hasPermissionFor('fleet', 'create'),
+                'create' => $user->hasPermissionFor('fleet', 'create') && ! $isLimitReached,
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),
+            ],
+            'quota' => [
+                'max' => $maxLimit !== null ? (int) $maxLimit : null,
+                'current' => $totalVehicles,
+                'reached' => $isLimitReached,
             ],
         ]);
     }
@@ -78,8 +89,16 @@ class VehicleController extends Controller
     /**
      * Show the form for creating a new vehicle.
      */
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::count())) {
+            $limit = (int) $tenant->planLimit('max_vehicles');
+
+            return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.index')
+                ->with('error', __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]));
+        }
+
         return Inertia::render('Modules/Fleet/Vehicles/Create', [
             'bases' => $this->homeBaseOptions(),
         ]);
@@ -90,6 +109,14 @@ class VehicleController extends Controller
      */
     public function store(StoreVehicleRequest $request): RedirectResponse
     {
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::count())) {
+            $limit = (int) $tenant->planLimit('max_vehicles');
+            throw ValidationException::withMessages([
+                'name' => __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]),
+            ]);
+        }
+
         $vehicle = Vehicle::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)

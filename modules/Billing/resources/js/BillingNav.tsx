@@ -3,11 +3,11 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { labelKey: 'billing.nav.dashboard', route: 'billing.dashboard', pattern: 'billing.dashboard' },
-    { labelKey: 'billing.nav.invoices', route: 'billing.invoices.create', pattern: 'billing.invoices.*' },
-    { labelKey: 'billing.nav.charges', route: 'billing.charges.index', pattern: 'billing.charges.*' },
-    { labelKey: 'billing.nav.tariffs', route: 'billing.tariffs.index', pattern: 'billing.tariffs.*' },
-    { labelKey: 'billing.nav.allowances', route: 'billing.allowances.index', pattern: 'billing.allowances.*' },
+    { labelKey: 'billing.nav.dashboard', route: 'billing.dashboard', pattern: 'billing.dashboard', icon: '📊' },
+    { labelKey: 'billing.nav.invoices', route: 'billing.invoices.create', pattern: 'billing.invoices.*', icon: '🧾' },
+    { labelKey: 'billing.nav.charges', route: 'billing.charges.index', pattern: 'billing.charges.*', icon: '⚡' },
+    { labelKey: 'billing.nav.tariffs', route: 'billing.tariffs.index', pattern: 'billing.tariffs.*', icon: '🏷️' },
+    { labelKey: 'billing.nav.allowances', route: 'billing.allowances.index', pattern: 'billing.allowances.*', icon: '💰' },
 ] as const;
 
 export default function BillingNav(): JSX.Element {
@@ -15,8 +15,8 @@ export default function BillingNav(): JSX.Element {
     const { t } = useTrans();
 
     return (
-        <div className="mb-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
-            <nav className="flex flex-wrap items-center gap-1.5" aria-label={t('billing.title')}>
+        <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+            <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label={t('billing.title')}>
                 {TABS.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
 
@@ -24,13 +24,14 @@ export default function BillingNav(): JSX.Element {
                         <Link
                             key={tab.route}
                             href={prefixedRoute(tab.route)}
-                            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                            className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
                                 active
-                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            {t(tab.labelKey)}
+                            <span>{tab.icon}</span>
+                            <span>{t(tab.labelKey)}</span>
                         </Link>
                     );
                 })}

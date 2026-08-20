@@ -3,6 +3,7 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
@@ -10,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Http\Requests\BatchDeleteFleetBasesRequest;
@@ -33,6 +35,10 @@ class FleetBaseController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
+        $tenant = tenant();
+        $totalBases = FleetBase::count();
+        $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_branches', $totalBases);
+        $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_branches') : null;
 
         $bases = AccessibleFleetBases::query()
             ->with(['manager:id,name,email'])
@@ -62,20 +68,41 @@ class FleetBaseController extends Controller
             ],
             'kinds' => FleetBaseKind::values(),
             'can' => [
-                'create' => $user->hasPermissionFor('fleet', 'create'),
+                'create' => $user->hasPermissionFor('fleet', 'create') && ! $isLimitReached,
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),
+            ],
+            'quota' => [
+                'max' => $maxLimit !== null ? (int) $maxLimit : null,
+                'current' => $totalBases,
+                'reached' => $isLimitReached,
             ],
         ]);
     }
 
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_branches', FleetBase::count())) {
+            $limit = (int) $tenant->planLimit('max_branches');
+
+            return redirect()->route($this->getRoutePrefix().'.fleet.bases.index')
+                ->with('error', __('fleet.messages.limit_reached_bases', ['limit' => $limit]));
+        }
+
         return Inertia::render('Modules/Fleet/Bases/Create', $this->formOptions());
     }
 
     public function store(StoreFleetBaseRequest $request): RedirectResponse
     {
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_branches', FleetBase::count())) {
+            $limit = (int) $tenant->planLimit('max_branches');
+            throw ValidationException::withMessages([
+                'name' => __('fleet.messages.limit_reached_bases', ['limit' => $limit]),
+            ]);
+        }
+
         $data = $request->safe()->except(['staff_ids']);
         $staffIds = $this->normalizedStaffIds(
             $request->integer('manager_id'),

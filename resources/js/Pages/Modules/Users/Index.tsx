@@ -64,9 +64,11 @@ interface Props {
     users: PaginatedUsers;
     stats: Stats;
     filters: Filters;
+    can?: { create: boolean };
+    quota?: { max: number | null; current: number; reached: boolean };
 }
 
-export default function Index({ users, stats, filters }: Props): JSX.Element {
+export default function Index({ users, stats, filters, can, quota }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -200,11 +202,13 @@ export default function Index({ users, stats, filters }: Props): JSX.Element {
                 <PageHeader
                     title={t('users.pages.index.head')}
                     actions={
-                        <Link href={prefixedRoute('users.create')}>
-                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                + {t('users.pages.index.new')}
-                            </PrimaryButton>
-                        </Link>
+                        can?.create !== false ? (
+                            <Link href={prefixedRoute('users.create')}>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                    + {t('users.pages.index.new')}
+                                </PrimaryButton>
+                            </Link>
+                        ) : undefined
                     }
                 />
             }
@@ -212,6 +216,18 @@ export default function Index({ users, stats, filters }: Props): JSX.Element {
             <Head title={t('users.pages.index.head')} />
 
             <div className="space-y-6">
+                {/* Quota Limit Warning Alert */}
+                {quota?.reached && (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/40 p-4 text-xs font-semibold text-amber-800 dark:text-amber-200 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm">⚠️</span>
+                            <span>
+                                <strong>Batas Kuota Paket Tercapai:</strong> Anda telah menggunakan {quota.current} dari maksimal {quota.max} akun pengguna yang diizinkan pada paket langganan saat ini. Hubungi admin atau upgrade paket untuk menambah pengguna.
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 {/* Top Stat Overview Grid */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">

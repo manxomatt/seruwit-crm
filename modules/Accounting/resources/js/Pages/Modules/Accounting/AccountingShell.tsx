@@ -38,11 +38,13 @@ interface NavLink {
     key: AccountingNavKey;
     href: string;
     label: string;
+    icon?: string;
 }
 
 interface NavGroup {
     id: 'reports' | 'setup';
     label: string;
+    icon: string;
     keys: AccountingNavKey[];
     items: NavLink[];
 }
@@ -73,10 +75,10 @@ function CheckIcon(): JSX.Element {
 
 function tabClass(active: boolean): string {
     return [
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-bold transition',
+        'inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0',
         active
-            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white',
+            ? 'bg-indigo-600 text-white shadow-sm'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
     ].join(' ');
 }
 
@@ -85,9 +87,9 @@ export default function AccountingShell({ active, title, headerActions, children
     const { t } = useTrans();
 
     const primary: NavLink[] = [
-        { key: 'dashboard', href: prefixedRoute('accounting.dashboard'), label: t('accounting.nav.dashboard') },
-        { key: 'journals', href: prefixedRoute('accounting.journals.index'), label: t('accounting.nav.journals') },
-        { key: 'bank', href: prefixedRoute('accounting.bank-accounts.index'), label: t('accounting.nav.bank') },
+        { key: 'dashboard', href: prefixedRoute('accounting.dashboard'), label: t('accounting.nav.dashboard'), icon: '📊' },
+        { key: 'journals', href: prefixedRoute('accounting.journals.index'), label: t('accounting.nav.journals'), icon: '📑' },
+        { key: 'bank', href: prefixedRoute('accounting.bank-accounts.index'), label: t('accounting.nav.bank'), icon: '🏦' },
     ];
 
     const reports: NavLink[] = [
@@ -116,12 +118,14 @@ export default function AccountingShell({ active, title, headerActions, children
         {
             id: 'reports',
             label: t('accounting.nav.groups.reports'),
+            icon: '📈',
             keys: reports.map((item) => item.key),
             items: reports,
         },
         {
             id: 'setup',
             label: t('accounting.nav.groups.setup'),
+            icon: '⚙️',
             keys: setup.map((item) => item.key),
             items: setup,
         },
@@ -152,13 +156,17 @@ export default function AccountingShell({ active, title, headerActions, children
             <Head title={title} />
 
             {/* Accounting Sub-Navigation Bar */}
-            <div className="mb-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
-                <nav className="flex flex-wrap items-center gap-1.5" aria-label={t('accounting.nav.aria')}>
-                    {primary.map((link) => (
-                        <Link key={link.key} href={link.href} className={tabClass(active === link.key)}>
-                            {link.label}
-                        </Link>
-                    ))}
+            <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+                <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label={t('accounting.nav.aria')}>
+                    {primary.map((link) => {
+                        const isLinkActive = active === link.key;
+                        return (
+                            <Link key={link.key} href={link.href} className={tabClass(isLinkActive)}>
+                                {link.icon && <span>{link.icon}</span>}
+                                <span>{link.label}</span>
+                            </Link>
+                        );
+                    })}
 
                     {groups.map((group) => {
                         const groupActive = group.keys.includes(active);
@@ -166,9 +174,10 @@ export default function AccountingShell({ active, title, headerActions, children
                         return (
                             <Menu key={group.id} as="div" className="relative shrink-0">
                                 <MenuButton className={tabClass(groupActive)}>
-                                    {group.label}
+                                    {group.icon && <span>{group.icon}</span>}
+                                    <span>{group.label}</span>
                                     <ChevronDownIcon
-                                        className={`h-4 w-4 ${groupActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}
+                                        className={`h-4 w-4 ${groupActive ? 'text-white/80' : 'text-slate-400'}`}
                                     />
                                 </MenuButton>
 
@@ -190,7 +199,7 @@ export default function AccountingShell({ active, title, headerActions, children
                                                 <Link
                                                     href={item.href}
                                                     className={[
-                                                        'flex items-center justify-between gap-3 rounded-xl px-2.5 py-2 text-xs transition',
+                                                        'flex items-center justify-between gap-3 rounded-xl px-2.5 py-2 text-xs font-semibold transition',
                                                         selected
                                                             ? 'bg-indigo-50 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300'
                                                             : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',

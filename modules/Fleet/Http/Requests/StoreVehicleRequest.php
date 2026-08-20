@@ -77,6 +77,12 @@ class StoreVehicleRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             AccessibleFleetBases::rejectIfDenied($validator, $this->input('home_base_id'));
+
+            $tenant = tenant();
+            if ($tenant instanceof \App\Models\Tenant && $tenant->hasReachedLimit('max_vehicles', \Modules\Fleet\Models\Vehicle::count())) {
+                $limit = (int) $tenant->planLimit('max_vehicles');
+                $validator->errors()->add('name', __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]));
+            }
         });
     }
 }

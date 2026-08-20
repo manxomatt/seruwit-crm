@@ -42,6 +42,13 @@ class UserInvitationController extends Controller
             return back()->withErrors(['email' => __('users.messages.already_member')]);
         }
 
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_users', \App\Models\User::count())) {
+            $limit = (int) $tenant->planLimit('max_users');
+
+            return back()->withErrors(['email' => __('users.messages.limit_reached_users', ['limit' => $limit])]);
+        }
+
         $invitation = Invitation::query()->updateOrCreate(
             [
                 'tenant_id' => tenant('id'),
