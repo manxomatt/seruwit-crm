@@ -1,63 +1,73 @@
-# Implementation Plan: Menghubungkan Checkout Pembayaran di Akhir Registrasi untuk Paket Berbayar Tanpa Trial (Pro)
+# Implementation Plan: Alur Pembayaran Sebelum Tenant Dibuat & Perbaikan Info Trial 7 Hari
 
-Menghubungkan alur checkout pembayaran langsung ke langkah akhir pendaftaran (*onboarding*) ketika pengguna memilih paket berbayar yang tidak memiliki masa uji coba (`trial_days = 0`, contohnya paket **Pro**).
+## Problem & Background
+
+1. **Paket Berbayar Tanpa Trial (Pro)**: Pengguna yang mendaftar paket Pro (`trial_days = 0`) seharusnya masuk ke alur pembayaran/checkout **sebelum tenant (database workspace) dibuat**, sehingga database workspace hanya dibuat setelah pembayaran dikonfirmasi.
+2. **Bug "7 Hari Tersisa di Trial"**: Pada halaman daftar workspace (`Workspaces.tsx`), muncul badge sisa trial 7 hari padahal paket Pro/Free tidak memiliki masa trial. Hal ini terjadi karena:
+   - Nilai default fallback `addDays(7)` pada kode terdahulu sempat tersimpan di kolom `trial_ends_at` tenant.
+   - Pengecekan `isOnTrial` pada `Tenant` dan `WorkspaceController` belum memeriksa apakah paket tersebut benar-benar memiliki kuota `trial_days > 0`.
+
+---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Paket Tanpa Trial (`price > 0 && trial_days = 0`)**: Workspace/tenant tetap diprovisioning secara aman dan terisolasi, namun status awal diset `is_trial_expired = true` dan sistem otomatis menerbitkan `PaymentOrder` (Pesanan Pembayaran dengan kode unik & instruksi transfer bank).
-> - **Alur Masuk (Enter Workspace)**: Setelah proses pembuatan database selesai di halaman status onboarding, pengguna akan langsung dialihkan ke halaman **Checkout & Pembayaran** (`/module/subscription/payment/{orderId}` atau `/module/subscription`) untuk menyelesaikan transfer dan upload bukti bayar sebelum dapat mengakses modul operasional lainnya.
-> - **Paket Gratis (Free) & Paket dengan Trial (Starter 30 Hari)**: Tetap berjalan normal seperti sebelumnya (langsung masuk ke dashboard tanpa tagihan di muka).
+> - **Pre-Provisioning Payment Flow**:
+>   1. Calon pengguna mengisi form pendaftaran & onboarding (Nama perusahaan, subdomain, dan memilih paket **Pro**).
+>   2. Sistem **TIDAK** langsung memproses pembuatan tenant/database, melainkan membuat `PaymentOrder` dan mengarahkan pengguna ke halaman pembayaran Central (`/onboarding/payment`).
+>   3. Pengguna melihat rincian tagihan (Paket Pro: Rp 299.xxx dengan kode unik) dan nomor rekening bank tujuan, lalu mengunggah bukti transfer.
+>   4. Setelah Admin Pusat/Reseller mengonfirmasi pembayaran di panel admin (`/module/payment-orders`), job `ProvisionSelfServeTenantJob` dijalankan untuk membuat database workspace dan langsung mengaktifkan status langganan berbayar.
+> - **Paket Gratis (Free) & Paket dengan Trial (Starter 30 Hari)**:
+>   Tetap langsung membuat workspace tanpa hambatan pembayaran di muka.
 
 ---
 
 ## Proposed Changes
 
-Grouped by component:
+### 1. Database & Migrations
 
-### 1. Backend Provisioning & Subscription Pipeline
+#### [NEW] `database/migrations/2026_08_21_000001_make_tenant_id_nullable_and_add_onboarding_session_to_payment_orders_table.php`
+- Mengubah kolom `tenant_id` pada tabel `payment_orders` menjadi `nullable` agar order dapat dibuat sebelum record tenant ada.
+- Menambahkan kolom `onboarding_session_id` (foreign key nullable ke `onboarding_sessions`).
+
+---
+
+### 2. Backend Models & Services
+
+#### [MODIFY] [`app/Models/OnboardingSession.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Models/OnboardingSession.php)
+- Menambahkan konstanta status:
+  - `STATUS_AWAITING_PAYMENT = 'awaiting_payment'`
+  - `STATUS_PAYMENT_SUBMITTED = 'payment_submitted'`
+- Menambahkan relasi `paymentOrders()` dan helper `latestPaymentOrder()`.
+
+#### [MODIFY] [`app/Models/PaymentOrder.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Models/PaymentOrder.php)
+- Menambahkan `onboarding_session_id` ke `$fillable` dan relasi `onboardingSession()`.
+
+#### [MODIFY] [`app/Services/PaymentOrderService.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Services/PaymentOrderService.php)
+- Menambahkan method `createOnboardingOrder(OnboardingSession $session, Plan $plan, string $billingInterval = 'month'): PaymentOrder`.
+- Memperbarui method `confirm()`: Jika order berasal dari onboarding (`tenant_id === null && onboarding_session_id !== null`), maka saat dikonfirmasi sistem otomatis men-dispatch `ProvisionSelfServeTenantJob` untuk mem-provisioning workspace dan mengaktifkan langganan.
 
 #### [MODIFY] [`app/Jobs/ProvisionSelfServeTenantJob.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Jobs/ProvisionSelfServeTenantJob.php)
-- Memperbaiki logika penentuan `trial_ends_at` dan `is_trial_expired`:
-  - Jika paket gratis (`price <= 0`): `trial_ends_at = null`, `is_trial_expired = false`.
-  - Jika paket berbayar dengan trial (`price > 0 && trial_days > 0`): `trial_ends_at = now()->addDays($trial_days)`, `is_trial_expired = false`.
-  - Jika paket berbayar **tanpa trial** (`price > 0 && trial_days == 0`):
-    - `trial_ends_at = null`
-    - `is_trial_expired = true`
-    - Memanggil `PaymentOrderService::createOrder($tenant, $plan, 'activate', 'month')` untuk membuat order pembayaran perdana secara otomatis.
+- Menghubungkan record `PaymentOrder` (yang dibuat saat onboarding) dengan `tenant_id` yang baru dibuat dan mengaktifkan subscription.
+
+#### [MODIFY] [`app/Models/Tenant.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Models/Tenant.php)
+- Memperbaiki accessor `getIsOnTrialAttribute()` agar memeriksa apakah paket tenant memang memiliki `trial_days > 0`. Jika paket `free` atau `trial_days <= 0`, otomatis mengembalikan `false`.
+
+---
+
+### 3. Central Controllers, Routes & Views
+
+#### [MODIFY] [`app/Http/Controllers/Central/OnboardingController.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Http/Controllers/Central/OnboardingController.php)
+- Pada `store()`:
+  - Jika paket berbayar tanpa trial (`price > 0 && trial_days == 0`): Simpan session dengan status `awaiting_payment`, buat `PaymentOrder`, dan redirect ke `central.onboarding.payment` (tanpa membuat tenant).
+  - Jika paket gratis / trial: Dispatch `ProvisionSelfServeTenantJob` dan redirect ke `central.onboarding.status`.
+- Menambahkan action `payment()` dan `submitPayment()` untuk menangani halaman transfer bank dan upload bukti bayar di domain central.
 
 #### [MODIFY] [`app/Http/Controllers/Central/WorkspaceController.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/app/Http/Controllers/Central/WorkspaceController.php)
-- Memperbaiki method `enter()`:
-  - Ketika pengguna masuk ke workspace yang `is_trial_expired = true` atau status membutuhkan aktivasi, buat impersonation token dengan target URL `/module/subscription` (atau order checkout) di domain tenant, sehingga pengguna dapat melihat instruksi bayar dan upload bukti transfer secara langsung.
+- Memperbaiki mapping `is_on_trial` dan `trial_days_left` agar hanya bernilai positif untuk paket yang valid memiliki masa trial aktif.
 
----
-
-### 2. Frontend Onboarding & Status Experience
-
-#### [MODIFY] [`resources/js/Pages/Central/Onboarding.tsx`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/resources/js/Pages/Central/Onboarding.tsx)
-- Pada **Step 3 (Pilihan Paket)**:
-  - Jika paket yang dipilih memiliki `trial_days === 0 && price > 0`:
-    - Tampilkan badge informasi: `Tanpa Trial • Bayar Langsung`.
-    - Ubah teks tombol submit menjadi: `Lanjut ke Pembayaran & Aktivasi →`.
-  - Jika paket memiliki `trial_days > 0`:
-    - Tampilkan badge `Trial {days} Hari` dan tombol `Luncurkan Workspace Gratis`.
-
-#### [MODIFY] [`resources/js/Pages/Central/OnboardingStatus.tsx`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/resources/js/Pages/Central/OnboardingStatus.tsx)
-- Menyesuaikan pesan status saat database tenant selesai dibuat:
-  - Jika paket memerlukan pembayaran langsung: Tampilkan teks "Workspace Siap! Mengalihkan ke Halaman Pembayaran..." sebelum redirect otomatis ke checkout.
-
----
-
-### 3. Automated Tests & Verification
-
-#### [NEW] [`tests/Feature/Tenancy/TenantOnboardingPaymentTest.php`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/tests/Feature/Tenancy/TenantOnboardingPaymentTest.php)
-- Menguji skenario:
-  1. Registrasi & Onboarding pada paket **Pro** (`trial_days = 0`):
-     - Memverifikasi tenant dibuat dengan `is_trial_expired = true`.
-     - Memverifikasi record `PaymentOrder` berstatus `pending` otomatis dibuat untuk tenant tersebut.
-     - Memverifikasi redirect `enter` mengarahkan ke halaman pembayaran langganan.
-  2. Registrasi pada paket **Starter** (`trial_days = 30`):
-     - Memverifikasi tenant dibuat dengan `trial_ends_at` 30 hari ke depan dan `is_trial_expired = false`.
+#### [NEW] [`resources/js/Pages/Central/OnboardingPayment.tsx`](file:///Users/meyga/DEV/LARAVEL/seruwit-crm/resources/js/Pages/Central/OnboardingPayment.tsx)
+- Halaman UI checkout & pembayaran transfer bank di domain central lengkap dengan kode unik, detail rekening, upload bukti transfer, dan status verifikasi admin.
 
 ---
 
@@ -66,9 +76,8 @@ Grouped by component:
 ### Automated Tests
 - Menjalankan test feature:
   `php artisan test --compact tests/Feature/Tenancy/TenantOnboardingPaymentTest.php`
-- Menjalankan seluruh test subscription:
+- Menjalankan seluruh test tenancy & subscription:
   `php artisan test --compact tests/Feature/SubscriptionTest.php`
 
-### Code Quality & Build
-- Menjalankan format Pint: `vendor/bin/pint --dirty --format agent`
-- Menjalankan build frontend: `npm run build`
+### Database Cleanup
+- Membersihkan nilai `trial_ends_at` lama pada tenant paket Pro / Free di database lokal.

@@ -9,7 +9,8 @@ import { useState, FormEventHandler, useMemo } from 'react';
 
 interface PaymentOrder {
     id: number;
-    tenant: { id: string; name: string };
+    tenant?: { id: string; name: string } | null;
+    onboarding_session?: { id: number; company_name: string; subdomain: string } | null;
     plan: { id: number; name: string };
     type: string;
     status: string;
@@ -374,7 +375,9 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                                                 #{order.id}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="font-bold text-slate-900 dark:text-white">{order.tenant.name}</div>
+                                                <div className="font-bold text-slate-900 dark:text-white">
+                                                    {order.tenant?.name ?? order.onboarding_session?.company_name ?? 'Calon Workspace'}
+                                                </div>
                                                 <div className="text-[11px] text-slate-400 capitalize">
                                                     {t(`payment_orders.types.${order.type}`, {}, order.type)}
                                                 </div>

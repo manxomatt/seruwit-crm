@@ -69,6 +69,8 @@ Route::domain($centralDomain)
             Route::middleware('verified')->group(function () {
                 Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
                 Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+                Route::get('/onboarding/payment', [OnboardingController::class, 'payment'])->name('onboarding.payment');
+                Route::post('/onboarding/payment', [OnboardingController::class, 'submitPayment'])->name('onboarding.payment.submit');
                 Route::get('/onboarding/status', [OnboardingController::class, 'status'])->name('onboarding.status');
             });
         });

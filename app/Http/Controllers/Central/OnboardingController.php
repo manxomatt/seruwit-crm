@@ -29,6 +29,10 @@ class OnboardingController extends Controller
 
         $session = $this->sessionFor($request);
 
+        if ($session !== null && $session->isAwaitingPayment()) {
+            return redirect()->route('central.onboarding.payment');
+        }
+
         if ($session !== null && $session->isInProgress()) {
             return redirect()->route('central.onboarding.status');
         }
@@ -127,6 +131,10 @@ class OnboardingController extends Controller
         abort_if(tenancy()->initialized, 404);
 
         $existing = $this->sessionFor($request);
+        if ($existing !== null && $existing->isAwaitingPayment()) {
+            return redirect()->route('central.onboarding.payment');
+        }
+
         if ($existing !== null && $existing->isInProgress()) {
             return redirect()->route('central.onboarding.status');
         }
@@ -136,6 +144,43 @@ class OnboardingController extends Controller
         $verticals = array_values(array_unique($request->validated('verticals')));
         $subdomain = $request->validated('subdomain');
         $planKey = $request->validated('plan_key') ?? 'free';
+
+        $plan = \App\Models\Plan::query()->firstWhere('key', $planKey);
+        $isPaidWithoutTrial = $plan && (float) $plan->price > 0 && ((int) ($plan->trial_days ?? 0) <= 0) && ! $plan->is_trial;
+
+        if ($isPaidWithoutTrial) {
+            $session = OnboardingSession::query()->updateOrCreate(
+                ['global_user_id' => $user->global_id],
+                [
+                    'company_name' => $request->validated('company_name'),
+                    'phone' => $request->validated('phone'),
+                    'city' => $request->validated('city'),
+                    'subdomain' => $subdomain,
+                    'verticals' => $verticals,
+                    'fleet_size' => $request->validated('fleet_size'),
+                    'rental_model' => $request->validated('rental_model'),
+                    'plan_key' => $planKey,
+                    'status' => OnboardingSession::STATUS_AWAITING_PAYMENT,
+                    'tenant_id' => null,
+                    'reseller_global_id' => $existing?->reseller_global_id
+                        ?? ResellerAttribution::resolveFromRequest($request),
+                    'error_message' => null,
+                ],
+            );
+
+            $order = \App\Models\PaymentOrder::on('central')
+                ->where('onboarding_session_id', $session->id)
+                ->where('plan_id', $plan->id)
+                ->whereIn('status', [\App\Models\PaymentOrder::STATUS_PENDING, \App\Models\PaymentOrder::STATUS_AWAITING_CONFIRMATION])
+                ->latest()
+                ->first();
+
+            if (! $order) {
+                app(\App\Services\PaymentOrderService::class)->createOnboardingOrder($session, $plan, 'month');
+            }
+
+            return redirect()->route('central.onboarding.payment');
+        }
 
         // Reuse a half-provisioned tenant when retrying the same subdomain so
         // pack installs can finish without orphaning the previous attempt.
@@ -158,8 +203,6 @@ class OnboardingController extends Controller
                 'plan_key' => $planKey,
                 'status' => OnboardingSession::STATUS_PENDING,
                 'tenant_id' => $reuseTenantId,
-                // Resolved here, while the request still has the referral
-                // cookie; the provisioning job runs without one.
                 'reseller_global_id' => $existing?->reseller_global_id
                     ?? ResellerAttribution::resolveFromRequest($request),
                 'error_message' => null,
@@ -169,6 +212,99 @@ class OnboardingController extends Controller
         ProvisionSelfServeTenantJob::dispatch($session->id);
 
         return redirect()->route('central.onboarding.status');
+    }
+
+    public function payment(Request $request): Response|RedirectResponse
+    {
+        abort_if(tenancy()->initialized, 404);
+
+        $session = $this->sessionFor($request);
+
+        if ($session === null) {
+            return redirect()->route('central.onboarding.show');
+        }
+
+        if ($session->status === OnboardingSession::STATUS_READY && $session->tenant_id) {
+            return redirect()->route('central.workspaces.enter', $session->tenant_id);
+        }
+
+        if (! $session->isAwaitingPayment()) {
+            return redirect()->route('central.onboarding.status');
+        }
+
+        $order = \App\Models\PaymentOrder::on('central')
+            ->where('onboarding_session_id', $session->id)
+            ->with('plan')
+            ->latest()
+            ->first();
+
+        if (! $order) {
+            $plan = \App\Models\Plan::query()->firstWhere('key', $session->plan_key) ?? \App\Models\Plan::query()->first();
+            $order = app(\App\Services\PaymentOrderService::class)->createOnboardingOrder($session, $plan, 'month');
+        }
+
+        $instructions = config('payment.manual_transfer', []);
+
+        return Inertia::render('Central/OnboardingPayment', [
+            'session' => [
+                'id' => $session->id,
+                'status' => $session->status,
+                'company_name' => $session->company_name,
+                'subdomain' => $session->subdomain,
+                'plan_key' => $session->plan_key,
+                'verticals' => $session->verticals,
+            ],
+            'order' => [
+                'id' => $order->id,
+                'status' => $order->status,
+                'amount' => (string) $order->amount,
+                'unique_code' => $order->unique_code,
+                'total_amount' => (string) $order->total_amount,
+                'currency' => $order->currency,
+                'billing_interval' => $order->billing_interval,
+                'plan' => [
+                    'id' => $order->plan->id,
+                    'name' => $order->plan->name,
+                    'price' => (string) $order->plan->price,
+                ],
+                'transfer_proof_path' => $order->transfer_proof_path,
+                'proof_url' => $order->proof_url,
+                'transfer_note' => $order->transfer_note,
+                'expires_at' => $order->expires_at?->toIso8601String(),
+            ],
+            'instructions' => $instructions,
+            'centralHost' => (string) (config('tenancy.tenant_base_domain') ?: 'localhost'),
+            'settings' => Setting::getPublic()
+                ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+                ->toArray(),
+        ]);
+    }
+
+    public function submitPayment(Request $request): RedirectResponse
+    {
+        abort_if(tenancy()->initialized, 404);
+
+        $session = $this->sessionFor($request);
+        abort_unless($session !== null, 404);
+
+        $order = \App\Models\PaymentOrder::on('central')
+            ->where('onboarding_session_id', $session->id)
+            ->whereIn('status', [\App\Models\PaymentOrder::STATUS_PENDING, \App\Models\PaymentOrder::STATUS_AWAITING_CONFIRMATION])
+            ->latest()
+            ->firstOrFail();
+
+        $request->validate([
+            'transfer_proof' => ['required', 'file', 'image', 'max:5120'],
+            'transfer_note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        app(\App\Services\PaymentOrderService::class)->submitProof(
+            $order,
+            $request->file('transfer_proof'),
+            $request->input('transfer_note')
+        );
+
+        return back()->with('success', 'Bukti transfer berhasil diunggah. Tim kami sedang memverifikasi pembayaran Anda.');
     }
 
     public function status(Request $request): Response|RedirectResponse

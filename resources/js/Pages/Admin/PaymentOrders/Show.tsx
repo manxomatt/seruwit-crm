@@ -27,12 +27,17 @@ interface PaymentOrder {
     rejected_at: string | null;
     created_at: string;
     proof_url: string | null;
-    tenant: {
+    tenant?: {
         id: string;
         name: string;
         status: string;
         trial_ends_at: string | null;
-    };
+    } | null;
+    onboarding_session?: {
+        id: number;
+        company_name: string;
+        subdomain: string;
+    } | null;
     plan: {
         id: number;
         name: string;
@@ -210,12 +215,18 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
 
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                 <span className="flex items-center gap-1.5">
-                                    🏢 <Link
-                                        href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
-                                        className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
-                                    >
-                                        {paymentOrder.tenant.name}
-                                    </Link>
+                                    🏢 {paymentOrder.tenant ? (
+                                        <Link
+                                            href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
+                                            className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                        >
+                                            {paymentOrder.tenant.name}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                                            {paymentOrder.onboarding_session?.company_name ?? 'Onboarding Registration'} ({paymentOrder.onboarding_session?.subdomain})
+                                        </span>
+                                    )}
                                 </span>
                                 <span className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
                                     📦 {paymentOrder.plan.name} / {paymentOrder.plan.interval}

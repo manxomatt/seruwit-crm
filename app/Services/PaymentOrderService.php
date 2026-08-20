@@ -76,6 +76,41 @@ class PaymentOrderService
         });
     }
 
+    public function createOnboardingOrder(\App\Models\OnboardingSession $session, Plan $plan, string $billingInterval = 'month'): PaymentOrder
+    {
+        $central = $this->centralConnection();
+        $instructions = Config::get('payment.manual_transfer', []);
+
+        return DB::connection($central)->transaction(function () use ($central, $session, $plan, $billingInterval, $instructions) {
+            $uniqueCode = PaymentOrder::generateUniqueCode();
+            $amount = $billingInterval === 'annual' && $plan->annual_price
+                ? (float) $plan->annual_price
+                : (float) ($plan->price ?? 0);
+            $totalAmount = $amount + $uniqueCode;
+
+            $order = new PaymentOrder;
+            $order->setConnection($central);
+            $order->tenant_id = null;
+            $order->onboarding_session_id = $session->id;
+            $order->plan_id = $plan->id;
+            $order->type = 'activate';
+            $order->billing_interval = $billingInterval;
+            $order->payment_method = Config::get('payment.driver', 'manual_transfer');
+            $order->status = PaymentOrder::STATUS_PENDING;
+            $order->amount = $amount;
+            $order->unique_code = $uniqueCode;
+            $order->total_amount = $totalAmount;
+            $order->currency = $plan->currency ?? 'IDR';
+            $order->bank_name = $instructions['bank_name'] ?? null;
+            $order->bank_account_number = $instructions['bank_account_number'] ?? null;
+            $order->bank_account_name = $instructions['bank_account_name'] ?? null;
+            $order->expires_at = now()->addHours(48);
+            $order->save();
+
+            return $order->fresh();
+        });
+    }
+
     public function submitProof(PaymentOrder $order, UploadedFile $proof, ?string $note = null): void
     {
         $central = $this->centralConnection();
@@ -93,23 +128,55 @@ class PaymentOrderService
             $order->status = PaymentOrder::STATUS_AWAITING_CONFIRMATION;
             $order->save();
 
+            if ($order->onboarding_session_id && $order->onboardingSession) {
+                $order->onboardingSession->update(['status' => \App\Models\OnboardingSession::STATUS_PAYMENT_SUBMITTED]);
+            }
+
             $admins = User::on($central)->whereHas('roles', function ($query) {
                 $query->where('slug', 'admin');
             })->get();
 
+            $companyName = $order->tenant?->name
+                ?? $order->onboardingSession?->company_name
+                ?? 'Calon Workspace';
+
             foreach ($admins as $admin) {
                 $admin->notify(new \App\Notifications\GenericNotification(
                     'Bukti Transfer Baru',
-                    'Bukti transfer dari '.$order->tenant->name.' untuk paket '.$order->plan->name.' menunggu konfirmasi.',
+                    'Bukti transfer dari '.$companyName.' untuk paket '.$order->plan->name.' menunggu konfirmasi.',
                     route('module.payment-orders.show', $order),
                 ));
             }
         });
     }
 
-    public function confirm(PaymentOrder $order, User $admin): Subscription
+    public function confirm(PaymentOrder $order, User $admin): ?Subscription
     {
         $central = $this->centralConnection();
+
+        if (! $order->tenant_id && $order->onboarding_session_id) {
+            $session = DB::connection($central)->transaction(function () use ($central, $order, $admin) {
+                if (! $order->isAwaitingConfirmation() && ! $order->isPending()) {
+                    throw new \RuntimeException('Cannot confirm order in status: '.$order->status);
+                }
+
+                $order->setConnection($central);
+                $order->status = PaymentOrder::STATUS_CONFIRMED;
+                $order->confirmed_at = now();
+                $order->confirmed_by = $admin->id;
+                $order->save();
+
+                $session = \App\Models\OnboardingSession::on($central)->findOrFail($order->onboarding_session_id);
+                $session->update(['status' => \App\Models\OnboardingSession::STATUS_PENDING]);
+
+                return $session;
+            });
+
+            \App\Jobs\ProvisionSelfServeTenantJob::dispatch($session->id);
+            PaymentOrderConfirmed::dispatch($order);
+
+            return null;
+        }
 
         $subscription = DB::connection($central)->transaction(function () use ($central, $order, $admin) {
             if (! $order->isAwaitingConfirmation() && ! $order->isPending()) {

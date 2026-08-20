@@ -163,14 +163,21 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             'status' => 'active',
         ]);
 
-        if ($isPaidWithoutTrial && $plan) {
-            $hasActiveOrder = \App\Models\PaymentOrder::on('central')
-                ->where('tenant_id', $tenant->getTenantKey())
-                ->active()
-                ->exists();
+        $order = \App\Models\PaymentOrder::on('central')
+            ->where('onboarding_session_id', $session->id)
+            ->latest()
+            ->first();
 
-            if (! $hasActiveOrder) {
-                app(\App\Services\PaymentOrderService::class)->createOrder($tenant, $plan, 'activate', 'month');
+        if ($order) {
+            $order->update(['tenant_id' => $tenant->getTenantKey()]);
+            if ($order->status === \App\Models\PaymentOrder::STATUS_CONFIRMED && $plan) {
+                $subscription = app(\App\Services\SubscriptionService::class)->activate(
+                    $tenant,
+                    $plan,
+                    false,
+                    $order->billing_interval ?? 'month'
+                );
+                $order->update(['subscription_id' => $subscription->id]);
             }
         }
 

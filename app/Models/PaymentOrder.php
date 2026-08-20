@@ -28,6 +28,7 @@ class PaymentOrder extends Model
 
     protected $fillable = [
         'tenant_id',
+        'onboarding_session_id',
         'plan_id',
         'type',
         'billing_interval',
@@ -68,6 +69,11 @@ class PaymentOrder extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function onboardingSession(): BelongsTo
+    {
+        return $this->belongsTo(OnboardingSession::class, 'onboarding_session_id');
     }
 
     public function plan(): BelongsTo

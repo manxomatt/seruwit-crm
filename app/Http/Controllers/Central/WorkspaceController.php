@@ -26,7 +26,8 @@ class WorkspaceController extends Controller
             ->get()
             ->map(function (Tenant $tenant): array {
                 $planModel = $tenant->planModel();
-                $trialDaysLeft = $tenant->trial_ends_at && $tenant->trial_ends_at->isFuture()
+                $isOnTrial = (bool) ($tenant->isOnTrial ?? false);
+                $trialDaysLeft = $isOnTrial && $tenant->trial_ends_at && $tenant->trial_ends_at->isFuture()
                     ? max(1, (int) ceil(now()->diffInSeconds($tenant->trial_ends_at, false) / 86400))
                     : 0;
 
@@ -38,9 +39,9 @@ class WorkspaceController extends Controller
                     'plan_name' => $planModel?->name ?? ($tenant->planKey() ?: 'Starter'),
                     'plan_badge' => $planModel?->badge,
                     'domain' => $tenant->domains->first()?->domain,
-                    'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
+                    'trial_ends_at' => $isOnTrial ? $tenant->trial_ends_at?->toIso8601String() : null,
                     'trial_days_left' => $trialDaysLeft,
-                    'is_on_trial' => $tenant->isOnTrial ?? false,
+                    'is_on_trial' => $isOnTrial,
                 ];
             });
 

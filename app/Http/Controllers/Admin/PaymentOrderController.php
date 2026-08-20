@@ -27,12 +27,16 @@ class PaymentOrderController extends Controller
     public function index(Request $request): Response
     {
         $query = PaymentOrder::query()
-            ->with(['tenant', 'plan', 'confirmedBy', 'rejectedBy'])
+            ->with(['tenant', 'onboardingSession', 'plan', 'confirmedBy', 'rejectedBy'])
             ->latest();
 
         if ($search = $request->input('search')) {
-            $query->whereHas('tenant', function ($q) use ($search): void {
-                $q->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search): void {
+                $q->whereHas('tenant', function ($t) use ($search): void {
+                    $t->where('name', 'like', "%{$search}%");
+                })->orWhereHas('onboardingSession', function ($s) use ($search): void {
+                    $s->where('company_name', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -53,7 +57,7 @@ class PaymentOrderController extends Controller
 
     public function show(PaymentOrder $paymentOrder): Response
     {
-        $paymentOrder->load(['tenant', 'plan', 'subscription', 'confirmedBy', 'rejectedBy']);
+        $paymentOrder->load(['tenant', 'onboardingSession', 'plan', 'subscription', 'confirmedBy', 'rejectedBy']);
 
         return Inertia::render('Admin/PaymentOrders/Show', [
             'paymentOrder' => $paymentOrder,
