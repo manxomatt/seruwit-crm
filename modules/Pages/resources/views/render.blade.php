@@ -134,6 +134,12 @@
             $html
         );
 
+        // Replace dynamic pricing table component
+        if (str_contains($html, '{{pricing_table}}') || str_contains($html, '{{subscription_plans}}')) {
+            $pricingTableHtml = \Modules\Pages\Support\PricingTableRenderer::render();
+            $html = str_replace(['{{pricing_table}}', '{{subscription_plans}}'], $pricingTableHtml, $html);
+        }
+
         // Replace current locale and active state indicators
         $currentLocale = app()->getLocale();
         $html = preg_replace_callback(

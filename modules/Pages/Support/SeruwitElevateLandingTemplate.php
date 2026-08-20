@@ -260,13 +260,23 @@ class SeruwitElevateLandingTemplate
     filter: brightness(1.04);
 }
 
-/* HERO SECTION */
+/* HERO SECTION: COMMAND CENTER SPLIT HERO */
 .el-hero {
     position: relative;
-    padding: 140px 0 90px 0;
-    background: var(--el-grad-glow);
-    text-align: center;
+    padding: 130px 0 80px 0;
+    background: radial-gradient(circle at 80% 20%, rgba(13, 148, 136, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 20% 60%, rgba(2, 132, 199, 0.06) 0%, transparent 50%),
+                #f8fafc;
     overflow: hidden;
+}
+.el-hero-split {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 48px;
+    align-items: center;
+}
+.el-hero-copy {
+    text-align: left;
 }
 .el-hero-badge {
     display: inline-flex;
@@ -279,7 +289,7 @@ class SeruwitElevateLandingTemplate
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--el-teal-dark);
-    margin-bottom: 22px;
+    margin-bottom: 20px;
     box-shadow: var(--el-shadow-sm);
 }
 .el-hero-dot {
@@ -290,13 +300,12 @@ class SeruwitElevateLandingTemplate
     box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
 }
 .el-hero-h1 {
-    font-size: clamp(2.4rem, 4.8vw, 3.8rem);
-    font-weight: 800;
+    font-size: clamp(2.3rem, 3.8vw, 3.4rem);
+    font-weight: 900;
     color: var(--el-text-main);
-    line-height: 1.18;
-    letter-spacing: -0.03em;
-    max-width: 920px;
-    margin: 0 auto 22px auto;
+    line-height: 1.16;
+    letter-spacing: -0.035em;
+    margin: 0 0 18px 0;
 }
 .el-hero-h1 span {
     background: linear-gradient(135deg, #0f766e 0%, #0284c7 50%, #4338ca 100%);
@@ -307,186 +316,281 @@ class SeruwitElevateLandingTemplate
     display: inline;
 }
 .el-hero-p {
-    font-size: 1.12rem;
+    font-size: 1.05rem;
     color: var(--el-text-body);
-    max-width: 660px;
-    margin: 0 auto 34px auto;
-    line-height: 1.65;
-}
-.el-hero-btns {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 48px;
-}
-.el-btn-secondary {
-    background: #ffffff;
-    border: 1px solid var(--el-border);
-    color: var(--el-text-main);
-    font-size: 0.95rem;
-    font-weight: 700;
-    text-decoration: none;
-    padding: 12px 26px;
-    border-radius: 50px;
-    transition: all 0.2s;
-    box-shadow: var(--el-shadow-sm);
-}
-.el-btn-secondary:hover {
-    background: var(--el-bg-subtle);
-    border-color: #cbd5e1;
+    line-height: 1.6;
+    margin: 0 0 28px 0;
 }
 
-/* HERO INTERACTIVE DISPLAY (STAGE) */
-.el-hero-stage {
-    max-width: 1060px;
-    margin: 0 auto;
+/* Quick Signup Action Bar */
+.el-hero-quick-form {
+    display: flex;
+    gap: 8px;
+    background: #ffffff;
+    padding: 6px;
+    border: 1.5px solid var(--el-border);
+    border-radius: 50px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    max-width: 480px;
+    margin-bottom: 22px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.el-hero-quick-form:focus-within {
+    border-color: var(--el-teal);
+    box-shadow: 0 8px 30px rgba(13, 148, 136, 0.15);
+}
+.el-hero-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 0 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--el-text-main);
+    background: transparent;
+    min-width: 0;
+}
+.el-hero-input::placeholder {
+    color: #94a3b8;
+}
+.el-hero-submit-btn {
+    border: none;
+    cursor: pointer;
+    padding: 10px 22px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* Trust Badges Grid */
+.el-hero-trust-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+}
+.el-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--el-text-sub);
+}
+.el-trust-chk {
+    color: var(--el-emerald);
+    font-weight: 900;
+    font-size: 0.9rem;
+}
+
+/* VISUAL COMMAND CENTER STAGE */
+.el-command-stage {
+    position: relative;
+    padding: 10px 0;
+}
+.el-canvas-card {
     background: #ffffff;
     border: 1px solid var(--el-border);
-    border-radius: 22px;
-    box-shadow: var(--el-shadow-card), var(--el-shadow-glow);
+    border-radius: 20px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.03);
     overflow: hidden;
-    text-align: left;
+    position: relative;
+    z-index: 2;
 }
-.el-stage-header {
+.el-canvas-header {
     background: #f8fafc;
-    padding: 13px 22px;
+    padding: 12px 18px;
     border-bottom: 1px solid var(--el-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
-.el-stage-controls {
+.el-canvas-dots {
     display: flex;
-    gap: 7px;
+    gap: 6px;
 }
-.el-stage-dot {
-    width: 10px;
-    height: 10px;
+.el-canvas-dot {
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: #cbd5e1;
 }
-.el-stage-title {
-    font-size: 0.8rem;
+.el-canvas-title {
+    font-size: 0.76rem;
     font-weight: 700;
     color: var(--el-text-body);
 }
-.el-stage-tabs {
-    display: flex;
-    gap: 8px;
-}
-.el-stage-tab {
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: #ffffff;
-    color: var(--el-text-sub);
-    border: 1px solid var(--el-border);
-}
-.el-stage-tab.active {
-    background: var(--el-teal-soft);
-    color: var(--el-teal-dark);
-    border-color: var(--el-teal-border);
-}
-
-.el-stage-body {
-    padding: 26px;
-    display: grid;
-    grid-template-columns: 1fr 1.3fr;
-    gap: 26px;
-    align-items: center;
-    background: #ffffff;
-}
-.el-stage-kpis {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-.el-kpi-box {
-    background: #f8fafc;
-    border: 1px solid var(--el-border);
-    border-radius: 14px;
-    padding: 15px;
-}
-.el-kpi-num {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--el-text-main);
-    margin-bottom: 2px;
-}
-.el-kpi-label {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--el-text-sub);
-}
-.el-kpi-trend {
+.el-canvas-status {
     font-size: 0.72rem;
+    font-weight: 800;
     color: var(--el-emerald);
-    font-weight: 700;
-    margin-top: 5px;
-    display: flex;
+    background: var(--el-emerald-soft);
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
-.el-live-radar {
-    background: #f8fafc;
-    border: 1px solid var(--el-border);
-    border-radius: 16px;
+/* Timeline Gantt Grid Matrix */
+.el-timeline-matrix {
     padding: 18px;
+    background: #ffffff;
 }
-.el-radar-head {
+.el-matrix-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--el-border);
+    border-bottom: 1px solid #f1f5f9;
 }
-.el-radar-title {
-    font-size: 0.88rem;
+.el-matrix-title {
+    font-size: 0.84rem;
     font-weight: 800;
     color: var(--el-text-main);
 }
-.el-radar-badge {
-    font-size: 0.72rem;
+.el-matrix-days {
+    display: grid;
+    grid-template-columns: 140px repeat(7, 1fr);
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--el-text-sub);
+    text-align: center;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+.el-matrix-day-label {
+    padding: 4px 2px;
+    border-radius: 4px;
+}
+.el-matrix-day-label.today {
     background: var(--el-teal-soft);
     color: var(--el-teal-dark);
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-    border: 1px solid var(--el-teal-border);
+    font-weight: 900;
 }
-.el-unit-item {
+
+.el-matrix-rows {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 10px;
+}
+.el-matrix-row {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 130px 1fr;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--el-border-light);
+    gap: 12px;
 }
-.el-unit-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-.el-unit-info h5 {
-    margin: 0 0 2px 0;
-    font-size: 0.86rem;
+.el-unit-meta h5 {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 800;
     color: var(--el-text-main);
-    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.el-unit-info span {
-    font-size: 0.75rem;
+.el-unit-meta span {
+    font-size: 0.7rem;
     color: var(--el-text-sub);
 }
-.el-unit-tag {
-    font-size: 0.74rem;
+.el-gantt-track {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+.el-gantt-bar {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.72rem;
     font-weight: 700;
-    color: var(--el-cyan);
-    background: var(--el-cyan-soft);
-    padding: 3px 8px;
-    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.el-gantt-teal {
+    background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+    color: #ffffff;
+    flex: 4;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+}
+.el-gantt-indigo {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff;
+    flex: 5;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+.el-gantt-cyan {
+    background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+    color: #ffffff;
+    flex: 7;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+}
+.el-gantt-empty {
+    border: 1px dashed #cbd5e1;
+    color: #059669;
+    background: #ecfdf5;
+    flex: 3;
+    justify-content: center;
+    font-size: 0.68rem;
+}
+
+/* Floating Overlapping Micro-Cards */
+.el-float-card {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid var(--el-border);
+    border-radius: 16px;
+    padding: 12px 18px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 4;
+    transition: transform 0.3s ease;
+}
+.el-float-card:hover {
+    transform: translateY(-2px);
+}
+.el-float-kyc {
+    top: -16px;
+    right: -12px;
+}
+.el-float-kpi {
+    bottom: -16px;
+    left: -12px;
+}
+.el-float-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--el-teal-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.el-float-info h6 {
+    margin: 0 0 2px 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--el-text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.el-float-info p {
+    margin: 0;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: var(--el-text-main);
 }
 
 /* SECTION ESSENTIALS */
@@ -895,9 +999,228 @@ class SeruwitElevateLandingTemplate
     font-size: 0.82rem;
 }
 
+/* PRICING SECTION & DYNAMIC SUBSCRIPTION PLANS */
+.el-pricing-wrapper {
+    margin-top: 36px;
+}
+.el-pricing-toggle-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+}
+.el-pricing-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid var(--el-border);
+    padding: 4px;
+    border-radius: 50px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+.el-toggle-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--el-text-sub);
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.el-toggle-btn.active {
+    background: #ffffff;
+    color: var(--el-teal-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.el-save-badge {
+    background: var(--el-emerald-soft);
+    color: var(--el-emerald);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+.el-pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    align-items: stretch;
+}
+.el-price-card {
+    background: #ffffff;
+    border: 1px solid var(--el-border);
+    border-radius: 22px;
+    padding: 36px 30px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: var(--el-shadow-sm);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.el-price-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--el-shadow-md);
+    border-color: #cbd5e1;
+}
+.el-price-card.el-price-popular {
+    background: #ffffff;
+    border: 2px solid var(--el-teal);
+    box-shadow: 0 12px 36px rgba(13, 148, 136, 0.12);
+    transform: scale(1.02);
+}
+.el-price-card.el-price-popular:hover {
+    transform: scale(1.02) translateY(-4px);
+    box-shadow: 0 16px 44px rgba(13, 148, 136, 0.18);
+}
+.el-price-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--el-grad-primary);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 5px 14px;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+    white-space: nowrap;
+}
+.el-price-header {
+    margin-bottom: 20px;
+}
+.el-price-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--el-text-main);
+    margin: 0 0 6px 0;
+}
+.el-price-desc {
+    font-size: 0.88rem;
+    color: var(--el-text-sub);
+    line-height: 1.45;
+    margin: 0;
+    min-height: 38px;
+}
+.el-price-box {
+    padding: 16px 0 20px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 24px;
+}
+.el-price-amount-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.el-price-num {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--el-text-main);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+.el-price-period {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--el-text-sub);
+}
+.el-price-subtext {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--el-emerald);
+    min-height: 18px;
+    margin-top: 6px;
+}
+.el-price-action {
+    margin-bottom: 26px;
+}
+.el-price-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 0.92rem;
+}
+.el-btn-price-outline {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    color: var(--el-text-main);
+    border: 1.5px solid var(--el-border);
+    border-radius: 50px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.el-btn-price-outline:hover {
+    background: #f8fafc;
+    border-color: var(--el-text-sub);
+}
+.el-price-features {
+    flex-grow: 1;
+}
+.el-feat-head {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--el-text-main);
+    margin-bottom: 12px;
+}
+.el-feat-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+.el-feat-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.86rem;
+    color: var(--el-text-body);
+    line-height: 1.4;
+}
+.el-feat-chk {
+    color: var(--el-teal);
+    font-weight: 900;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    margin-top: -1px;
+}
+.el-pricing-footer-note {
+    text-align: center;
+    margin-top: 36px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--el-text-sub);
+}
+
 /* RESPONSIVE MEDIA QUERIES */
 @media (max-width: 992px) {
-    .el-stage-body, .el-spotlight-grid, .el-advantages-grid, .el-eco-grid, .el-steps-grid, .el-faq-grid {
+    .el-hero-split {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    .el-hero-copy {
+        text-align: center;
+    }
+    .el-hero-quick-form {
+        margin: 0 auto 22px auto;
+    }
+    .el-hero-trust-grid {
+        justify-content: center;
+    }
+    .el-spotlight-grid, .el-advantages-grid, .el-eco-grid, .el-steps-grid, .el-faq-grid {
         grid-template-columns: 1fr;
     }
     .el-footer-grid {
@@ -927,6 +1250,22 @@ class SeruwitElevateLandingTemplate
     .el-hero {
         padding-top: 110px;
     }
+    .el-hero-quick-form {
+        flex-direction: column;
+        border-radius: 20px;
+        padding: 8px;
+    }
+    .el-hero-input {
+        padding: 10px 14px;
+    }
+    .el-matrix-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .el-float-card {
+        position: static;
+        margin-top: 14px;
+    }
     .el-footer-grid {
         grid-template-columns: 1fr;
     }
@@ -934,9 +1273,6 @@ class SeruwitElevateLandingTemplate
         flex-direction: column;
         gap: 10px;
         text-align: center;
-    }
-    .el-stage-kpis {
-        grid-template-columns: 1fr;
     }
 }
 CSS;
@@ -959,6 +1295,7 @@ CSS;
         <li><a href="#rental" class="el-nav-link">{{trans:landing_elevate.nav.rental}}</a></li>
         <li><a href="#keunggulan" class="el-nav-link">{{trans:landing_elevate.nav.advantages}}</a></li>
         <li><a href="#ekosistem" class="el-nav-link">{{trans:landing_elevate.nav.ecosystem}}</a></li>
+        <li><a href="#harga" class="el-nav-link">{{trans:landing_elevate.nav.pricing}}</a></li>
       </ul>
 
       <div class="el-nav-actions">
@@ -973,101 +1310,154 @@ CSS;
     </nav>
   </div>
 
-  <!-- HERO SECTION -->
+  <!-- HERO SECTION: COMMAND CENTER SPLIT HERO -->
   <header class="el-hero">
     <div class="el-container">
-      <div class="el-hero-badge">
-        <span class="el-hero-dot"></span> {{trans:landing_elevate.hero.badge}}
-      </div>
-      
-      <h1 class="el-hero-h1">
-        {{trans:landing_elevate.hero.title_p1}} <span>{{trans:landing_elevate.hero.title_highlight}}</span>
-      </h1>
-
-      <p class="el-hero-p">
-        {{trans:landing_elevate.hero.subtitle}}
-      </p>
-
-      <div class="el-hero-btns">
-        <a href="/register" class="el-btn-glow" style="padding: 13px 30px; font-size: 0.96rem;">
-          {{trans:landing_elevate.hero.cta_primary}}
-        </a>
-        <a href="#keunggulan" class="el-btn-secondary">
-          {{trans:landing_elevate.hero.cta_secondary}} ↓
-        </a>
-      </div>
-
-      <!-- HERO STAGE INTERACTIVE PREVIEW -->
-      <div class="el-hero-stage">
-        <div class="el-stage-header">
-          <div class="el-stage-controls">
-            <div class="el-stage-dot"></div>
-            <div class="el-stage-dot"></div>
-            <div class="el-stage-dot"></div>
+      <div class="el-hero-split">
+        
+        <!-- LEFT COLUMN: VALUE PROPOSITION & QUICK SIGNUP -->
+        <div class="el-hero-copy">
+          <div class="el-hero-badge">
+            <span class="el-hero-dot"></span> {{trans:landing_elevate.hero.badge}}
           </div>
-          <div class="el-stage-title">{{trans:landing_elevate.control_hub.title}} • Multi-Tenant Active</div>
-          <div class="el-stage-tabs">
-            <span class="el-stage-tab active">Rental &amp; Fleet</span>
-            <span class="el-stage-tab">Logistics</span>
-            <span class="el-stage-tab">Commerce</span>
-          </div>
-        </div>
+          
+          <h1 class="el-hero-h1">
+            {{trans:landing_elevate.hero.title_p1}} <span>{{trans:landing_elevate.hero.title_highlight}}</span>
+          </h1>
 
-        <div class="el-stage-body">
-          <div class="el-stage-kpis">
-            <div class="el-kpi-box">
-              <div class="el-kpi-num">48 / 52</div>
-              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.active_units}}</div>
-              <div class="el-kpi-trend">↑ 92.3% {{trans:landing_elevate.control_hub.utilization}}</div>
-            </div>
-            <div class="el-kpi-box">
-              <div class="el-kpi-num">Rp 128M</div>
-              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.revenue_today}}</div>
-              <div class="el-kpi-trend">↑ +18.5% Growth</div>
-            </div>
-            <div class="el-kpi-box">
-              <div class="el-kpi-num">24 Unit</div>
-              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.status_on_trip}}</div>
-              <div class="el-kpi-trend">✓ KYC Verified 100%</div>
-            </div>
-            <div class="el-kpi-box">
-              <div class="el-kpi-num">12 Trip</div>
-              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.status_ready}}</div>
-              <div class="el-kpi-trend">📍 {{trans:landing_elevate.control_hub.badge_gps}}</div>
-            </div>
-          </div>
+          <p class="el-hero-p">
+            {{trans:landing_elevate.hero.subtitle}}
+          </p>
 
-          <div class="el-live-radar">
-            <div class="el-radar-head">
-              <span class="el-radar-title">Real-Time Fleet Radar</span>
-              <span class="el-radar-badge">● Live GPS Tracking</span>
-            </div>
+          <!-- QUICK SIGNUP FORM -->
+          <form action="/register" method="GET" class="el-hero-quick-form">
+            <input type="text" name="company_name" placeholder="{{trans:landing_elevate.hero.input_placeholder}}" class="el-hero-input" autocomplete="off" />
+            <button type="submit" class="el-btn-glow el-hero-submit-btn">
+              {{trans:landing_elevate.hero.cta_primary}}
+            </button>
+          </form>
 
-            <div class="el-unit-item">
-              <div class="el-unit-info">
-                <h5>Toyota Innova Zenix Hybrid (B 1829 SSR)</h5>
-                <span>Self Drive • Route: Sudirman → Soetta Airport</span>
-              </div>
-              <span class="el-unit-tag">Moving (65 km/h)</span>
+          <!-- TRUST SIGNALS -->
+          <div class="el-hero-trust-grid">
+            <div class="el-trust-item">
+              <span class="el-trust-chk">✓</span>
+              <span>{{trans:landing_elevate.hero.trust_no_card}}</span>
             </div>
-
-            <div class="el-unit-item">
-              <div class="el-unit-info">
-                <h5>Toyota Fortuner 2.8 GR (B 2091 PLK)</h5>
-                <span>With Driver • Hotel Mulia Senayan</span>
-              </div>
-              <span class="el-unit-tag" style="color:#059669; background:#ecfdf5;">Standby Ready</span>
+            <div class="el-trust-item">
+              <span class="el-trust-chk">✓</span>
+              <span>{{trans:landing_elevate.hero.trust_setup}}</span>
             </div>
-
-            <div class="el-unit-item">
-              <div class="el-unit-info">
-                <h5>Toyota HiAce Premio Shuttle (D 7781 AB)</h5>
-                <span>Shuttle: Bandung Pasteur → Jakarta Semanggi</span>
-              </div>
-              <span class="el-unit-tag" style="color:#4f46e5; background:#eef2ff;">12 Seats (Full)</span>
+            <div class="el-trust-item">
+              <span class="el-trust-chk">✓</span>
+              <span>{{trans:landing_elevate.hero.trust_multi_tenant}}</span>
+            </div>
+            <div class="el-trust-item">
+              <span class="el-trust-chk">✓</span>
+              <span>{{trans:landing_elevate.hero.trust_uptime}}</span>
             </div>
           </div>
         </div>
+
+        <!-- RIGHT COLUMN: INTERACTIVE VISUAL COMMAND CENTER -->
+        <div class="el-command-stage">
+          
+          <!-- FLOATING TOP-RIGHT BADGE: INSTANT KYC -->
+          <div class="el-float-card el-float-kyc">
+            <div class="el-float-icon">🛡️</div>
+            <div class="el-float-info">
+              <h6>{{trans:landing_elevate.hero.kyc_card_title}}</h6>
+              <p>{{trans:landing_elevate.hero.kyc_card_desc}}</p>
+            </div>
+          </div>
+
+          <!-- MAIN CANVAS CARD: TIMELINE GANTT MATRIX -->
+          <div class="el-canvas-card">
+            <div class="el-canvas-header">
+              <div class="el-canvas-dots">
+                <div class="el-canvas-dot"></div>
+                <div class="el-canvas-dot"></div>
+                <div class="el-canvas-dot"></div>
+              </div>
+              <div class="el-canvas-title">{{trans:landing_elevate.hero.timeline_title}}</div>
+              <div class="el-canvas-status">● Live Telematics</div>
+            </div>
+
+            <div class="el-timeline-matrix">
+              <div class="el-matrix-head">
+                <span class="el-matrix-title">Jadwal Kalender Booking Real-Time</span>
+                <span style="font-size:0.72rem; color:var(--el-text-sub); font-weight:700;">Minggu Ini • 7 Hari</span>
+              </div>
+
+              <!-- DAYS HEADER -->
+              <div class="el-matrix-days">
+                <div style="text-align:left; padding-left:4px;">Armada / Unit</div>
+                <div class="el-matrix-day-label">Sen</div>
+                <div class="el-matrix-day-label today">Sel</div>
+                <div class="el-matrix-day-label">Rab</div>
+                <div class="el-matrix-day-label">Kam</div>
+                <div class="el-matrix-day-label">Jum</div>
+                <div class="el-matrix-day-label">Sab</div>
+                <div class="el-matrix-day-label">Min</div>
+              </div>
+
+              <!-- TIMELINE ROWS -->
+              <div class="el-matrix-rows">
+                <div class="el-matrix-row">
+                  <div class="el-unit-meta">
+                    <h5>Innova Zenix Hybrid</h5>
+                    <span>B 1829 SSR • Self Drive</span>
+                  </div>
+                  <div class="el-gantt-track">
+                    <div class="el-gantt-bar el-gantt-teal" title="Booking Active">
+                      <span>⚡ Sewa Lepas Kunci • Bandara Soetta</span>
+                    </div>
+                    <div class="el-gantt-bar el-gantt-empty">
+                      <span>✓ Ready</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="el-matrix-row">
+                  <div class="el-unit-meta">
+                    <h5>Fortuner 2.8 GR Sport</h5>
+                    <span>B 2091 PLK • With Driver</span>
+                  </div>
+                  <div class="el-gantt-track">
+                    <div class="el-gantt-bar el-gantt-empty" style="flex:2;">
+                      <span>✓ Standby</span>
+                    </div>
+                    <div class="el-gantt-bar el-gantt-indigo">
+                      <span>👔 VIP + Driver • Hotel Mulia</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="el-matrix-row">
+                  <div class="el-unit-meta">
+                    <h5>HiAce Premio Luxury</h5>
+                    <span>D 7781 AB • Shuttle</span>
+                  </div>
+                  <div class="el-gantt-track">
+                    <div class="el-gantt-bar el-gantt-cyan">
+                      <span>🚐 Shuttle Bandung → Jakarta (10/10 Kursi Penuh)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FLOATING BOTTOM-LEFT BADGE: REVENUE -->
+          <div class="el-float-card el-float-kpi">
+            <div class="el-float-icon" style="background:#ecfdf5; color:#059669;">📈</div>
+            <div class="el-float-info">
+              <h6>{{trans:landing_elevate.hero.revenue_card_title}}</h6>
+              <p>{{trans:landing_elevate.hero.revenue_card_amount}} <span style="font-size:0.75rem; color:#059669; font-weight:700;">{{trans:landing_elevate.hero.revenue_card_trend}}</span></p>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
   </header>
@@ -1353,8 +1743,21 @@ CSS;
     </div>
   </section>
 
+  <!-- PILIHAN PAKET & INVESTASI (DYNAMIC SUBSCRIPTION PLANS) -->
+  <section class="el-section el-section-white" id="harga">
+    <div class="el-container">
+      <div class="el-head-center">
+        <span class="el-tag-pill">{{trans:landing_elevate.pricing.tag}}</span>
+        <h2 class="el-title">{{trans:landing_elevate.pricing.title}}</h2>
+        <p class="el-subtitle">{{trans:landing_elevate.pricing.subtitle}}</p>
+      </div>
+
+      {{pricing_table}}
+    </div>
+  </section>
+
   <!-- FAQ -->
-  <section class="el-section el-section-white" id="faq">
+  <section class="el-section el-section-subtle" id="faq">
     <div class="el-container">
       <div class="el-head-center">
         <span class="el-tag-pill">{{trans:landing_elevate.faq.tag}}</span>
@@ -1443,6 +1846,7 @@ CSS;
         <div class="el-footer-col">
           <h5>{{trans:landing_elevate.footer.platform_title}}</h5>
           <ul class="el-footer-menu">
+            <li><a href="#harga">{{trans:landing_elevate.nav.pricing}}</a></li>
             <li><a href="/login">{{trans:landing_elevate.footer.login}}</a></li>
             <li><a href="/register">{{trans:landing_elevate.footer.register}}</a></li>
             <li><a href="/terms">{{trans:landing_elevate.footer.terms}}</a></li>
