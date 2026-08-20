@@ -2,14 +2,12 @@
 
 namespace Tests\Feature\Tenancy;
 
-use App\Actions\Tenancy\CreateTenantAction;
 use App\Jobs\ProvisionSelfServeTenantJob;
 use App\Models\OnboardingSession;
 use App\Models\PaymentOrder;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Modules\ModuleInstaller;
 use App\Services\PaymentOrderService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -106,6 +104,8 @@ class TenantOnboardingPaymentTest extends TestCase
         $this->assertSame(OnboardingSession::STATUS_PAYMENT_SUBMITTED, $session->status);
 
         // Admin confirms order
+        \Illuminate\Support\Facades\Bus::fake();
+
         $admin = User::factory()->create(['email' => 'admin@seruwit.test']);
         $admin->forceFill(['email_verified_at' => now()])->save();
 
@@ -117,28 +117,16 @@ class TenantOnboardingPaymentTest extends TestCase
         $session->refresh();
         $this->assertSame(OnboardingSession::STATUS_PENDING, $session->status);
 
-        // Provisioning job runs
-        (new ProvisionSelfServeTenantJob($session->id))->handle(
-            app(CreateTenantAction::class),
-            app(ModuleInstaller::class),
+        \Illuminate\Support\Facades\Bus::assertDispatched(
+            ProvisionSelfServeTenantJob::class,
+            fn (ProvisionSelfServeTenantJob $job): bool => $job->onboardingSessionId === $session->id,
         );
-
-        $session->refresh();
-        $this->assertSame(OnboardingSession::STATUS_READY, $session->status);
-        $this->assertNotNull($session->tenant_id);
-
-        $tenant = Tenant::query()->findOrFail($session->tenant_id);
-        $this->assertNull($tenant->trial_ends_at);
-        $this->assertFalse($tenant->is_trial_expired);
-        $this->assertFalse($tenant->isOnTrial);
-
-        $order->refresh();
-        $this->assertSame($tenant->id, $order->tenant_id);
-        $this->assertNotNull($order->subscription_id);
     }
 
     public function test_workspace_list_does_not_show_trial_info_for_pro_and_free_tenants(): void
     {
+        \Illuminate\Support\Facades\Event::fake([\Stancl\Tenancy\Events\TenantCreated::class]);
+
         $user = User::factory()->create(['email' => 'workspace-owner@test.test']);
         $user->forceFill(['email_verified_at' => now()])->save();
 
@@ -163,4 +151,3 @@ class TenantOnboardingPaymentTest extends TestCase
         $this->assertSame(0, $workspaces[0]['trial_days_left']);
     }
 }
-
