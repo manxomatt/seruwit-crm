@@ -207,7 +207,7 @@ export default function OnboardingStatus({
                                         </div>
                                     </div>
 
-                                    {trialEndsAt && (
+                                    {trialEndsAt ? (
                                         <div className="rounded-2xl border border-sky-200 bg-sky-50/90 p-4 backdrop-blur-md">
                                             <div className="flex items-start gap-3">
                                                 <span className="material-symbols-outlined text-sky-600 text-xl">new_releases</span>
@@ -224,6 +224,20 @@ export default function OnboardingStatus({
                                                 </div>
                                             </div>
                                         </div>
+                                    ) : (
+                                        <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 backdrop-blur-md">
+                                            <div className="flex items-start gap-3">
+                                                <span className="material-symbols-outlined text-amber-600 text-xl">payments</span>
+                                                <div>
+                                                    <p className="text-xs font-bold text-amber-900">
+                                                        Aktivasi Langganan & Pembayaran
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-amber-700">
+                                                        Workspace database Anda telah siap. Silakan selesaikan pembayaran untuk mengaktifkan akses penuh.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
 
                                     <button
@@ -235,7 +249,7 @@ export default function OnboardingStatus({
                                         }}
                                         className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 active:from-indigo-700 active:to-sky-700 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                                     >
-                                        <span>{t('central.onboarding.status.enter')}</span>
+                                        <span>{!trialEndsAt ? 'Lanjut ke Halaman Pembayaran' : t('central.onboarding.status.enter')}</span>
                                         <span className="material-symbols-outlined text-base">arrow_forward</span>
                                     </button>
                                 </div>

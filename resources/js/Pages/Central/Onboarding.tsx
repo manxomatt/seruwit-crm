@@ -763,9 +763,13 @@ export default function Onboarding({
                                                                                     ★ Rekomendasi
                                                                                 </span>
                                                                             )}
-                                                                            {p.trial_days !== undefined && p.trial_days !== null && Number(p.trial_days) > 0 && (
+                                                                            {p.trial_days !== undefined && p.trial_days !== null && Number(p.trial_days) > 0 ? (
                                                                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black text-emerald-800">
                                                                                     Trial {p.trial_days} Hari
+                                                                                </span>
+                                                                            ) : hasMonthly && (
+                                                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800">
+                                                                                    ⚡ Bayar Langsung
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -817,11 +821,13 @@ export default function Onboarding({
                                                 {processing ? (
                                                     <>
                                                         <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                                         </svg>
                                                         <span>{t('central.onboarding.submitting')}</span>
                                                     </>
+                                                ) : selectedPlan && Number(selectedPlan.price || 0) > 0 && (!selectedPlan.trial_days || Number(selectedPlan.trial_days) === 0) ? (
+                                                    <span>Lanjut ke Pembayaran & Aktivasi →</span>
                                                 ) : (
                                                     <span>{t('central.onboarding.submit_launch')}</span>
                                                 )}

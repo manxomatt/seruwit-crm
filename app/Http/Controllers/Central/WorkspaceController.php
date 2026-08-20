@@ -7,7 +7,6 @@ use App\Models\CentralUser;
 use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Support\WorkspaceSuspendedPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -59,26 +58,6 @@ class WorkspaceController extends Controller
      */
     public function enter(Request $request, Tenant $tenant): RedirectResponse|SymfonyResponse
     {
-        if ($tenant->status !== 'active') {
-            return WorkspaceSuspendedPage::toResponse(
-                $request,
-                $tenant->name,
-                $tenant->domains->first()?->domain,
-                $tenant->id,
-                $tenant->is_trial_expired ?? false,
-            );
-        }
-
-        if (isset($tenant->is_trial_expired) && $tenant->is_trial_expired) {
-            return WorkspaceSuspendedPage::toResponse(
-                $request,
-                $tenant->name,
-                $tenant->domains->first()?->domain,
-                $tenant->id,
-                true,
-            );
-        }
-
         $centralUser = $this->centralUser($request);
 
         $isAdmin = $request->user()->isAdmin();
@@ -111,7 +90,23 @@ class WorkspaceController extends Controller
         $domain = $tenant->domains->first()?->domain;
         abort_if($domain === null, 404, 'Workspace ini belum memiliki domain.');
 
-        $token = tenancy()->impersonate($tenant, (string) $tenantUserId, '/module/dashboard', 'web');
+        $isUnpaidOrSuspended = ($tenant->status !== 'active') || (bool) ($tenant->is_trial_expired ?? false);
+
+        if ($isUnpaidOrSuspended) {
+            $activeOrder = \App\Models\PaymentOrder::on('central')
+                ->where('tenant_id', $tenant->getTenantKey())
+                ->active()
+                ->latest()
+                ->first();
+
+            $targetPath = $activeOrder
+                ? '/module/subscription/payment/'.$activeOrder->id
+                : '/module/subscription';
+        } else {
+            $targetPath = '/module/dashboard';
+        }
+
+        $token = tenancy()->impersonate($tenant, (string) $tenantUserId, $targetPath, 'web');
 
         $port = $request->getPort();
         $portSuffix = in_array($port, [80, 443], true) ? '' : ':'.$port;

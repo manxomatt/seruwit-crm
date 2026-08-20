@@ -137,7 +137,7 @@ return [
         'features_title' => 'Features & Capacity:',
         'cta_choose' => 'Choose Plan →',
         'cta_free' => 'Start Free Now →',
-        'cta_popular' => 'Start Pro Trial ⚡',
+        'cta_popular' => 'Start Trial ⚡',
         'guarantee' => 'Upgrade or change plans anytime with zero hidden fees.',
     ],
 

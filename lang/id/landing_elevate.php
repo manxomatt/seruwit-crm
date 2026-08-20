@@ -137,7 +137,7 @@ return [
         'features_title' => 'Fitur & Kapasitas:',
         'cta_choose' => 'Pilih Paket Ini →',
         'cta_free' => 'Mulai Gratis Sekarang →',
-        'cta_popular' => 'Mulai Uji Coba Pro ⚡',
+        'cta_popular' => 'Start Trial ⚡',
         'guarantee' => 'Bebas upgrade atau ganti paket kapan saja tanpa biaya tersembunyi.',
     ],
 

@@ -84,9 +84,23 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         $planKey = $session->plan_key ?? Plan::KEY_TRIAL;
         $plan = Plan::query()->firstWhere('key', $planKey);
         $trialDays = $plan?->trial_days;
-        $trialEndsAt = ($planKey === 'free' && ! $trialDays)
-            ? null
-            : ($trialDays ? now()->addDays($trialDays) : $this->trialEndsAt());
+        $isTrialPlan = (bool) ($plan?->is_trial || $planKey === Plan::KEY_TRIAL);
+        $hasActiveTrial = $isTrialPlan || ($trialDays !== null && (int) $trialDays > 0);
+
+        $isFreePlan = ! $hasActiveTrial && (($planKey === 'free') || ($plan && (float) $plan->price <= 0));
+        $isPaidWithoutTrial = ! $hasActiveTrial && ! $isFreePlan;
+
+        if ($hasActiveTrial) {
+            $days = $trialDays ?: $this->trialDaysFallback();
+            $trialEndsAt = now()->addDays($days);
+            $isTrialExpired = false;
+        } elseif ($isPaidWithoutTrial) {
+            $trialEndsAt = null;
+            $isTrialExpired = true;
+        } else {
+            $trialEndsAt = null;
+            $isTrialExpired = false;
+        }
 
         if ($session->tenant_id) {
             $tenant = $session->tenant;
@@ -97,9 +111,20 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                 $tenant->update([
                     'plan' => $planKey,
                     'trial_ends_at' => $trialEndsAt,
-                    'is_trial_expired' => false,
+                    'is_trial_expired' => $isTrialExpired,
                     'status' => 'active',
                 ]);
+
+                if ($isPaidWithoutTrial && $plan) {
+                    $hasActiveOrder = \App\Models\PaymentOrder::on('central')
+                        ->where('tenant_id', $tenant->getTenantKey())
+                        ->active()
+                        ->exists();
+
+                    if (! $hasActiveOrder) {
+                        app(\App\Services\PaymentOrderService::class)->createOrder($tenant, $plan, 'activate', 'month');
+                    }
+                }
 
                 return [$tenant, true];
             } else {
@@ -134,9 +159,20 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         $tenant->update([
             'plan' => $planKey,
             'trial_ends_at' => $trialEndsAt,
-            'is_trial_expired' => false,
+            'is_trial_expired' => $isTrialExpired,
             'status' => 'active',
         ]);
+
+        if ($isPaidWithoutTrial && $plan) {
+            $hasActiveOrder = \App\Models\PaymentOrder::on('central')
+                ->where('tenant_id', $tenant->getTenantKey())
+                ->active()
+                ->exists();
+
+            if (! $hasActiveOrder) {
+                app(\App\Services\PaymentOrderService::class)->createOrder($tenant, $plan, 'activate', 'month');
+            }
+        }
 
         $session->update(['tenant_id' => $tenant->getTenantKey()]);
 
@@ -181,10 +217,10 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
      * gets, without a deploy. The fallback only covers a plan row that somehow
      * has no value at all.
      */
-    private function trialEndsAt(): \Illuminate\Support\Carbon
+    private function trialDaysFallback(): int
     {
         $days = Plan::query()->where('key', Plan::KEY_TRIAL)->value('trial_days');
 
-        return now()->addDays($days ?: 7);
+        return (int) ($days ?: 7);
     }
 }
