@@ -254,6 +254,11 @@ class ModuleInstaller
                     continue;
                 }
 
+                // Skip modules that the tenant is not entitled to install under their current plan.
+                if (! $tenant->isEntitledTo($module->key())) {
+                    continue;
+                }
+
                 $this->installWithinTenant($tenant, $module);
             }
 

@@ -107,10 +107,20 @@ class VerticalPackInstallTest extends TestCase
 
         $this->actingAs($owner)
             ->post('http://free-pack-co.localhost/module/modules/packs/'.VerticalPacks::RENTAL_MOBIL.'/install')
-            ->assertSessionHas('error');
+            ->assertRedirect()
+            ->assertSessionHas('success');
 
-        $this->assertFalse(
+        // Free plan includes rental, fleet, invoicing, receivables, document...
+        $this->assertTrue(
             $this->installer()->isInstalled($tenant, app(\Modules\Rental\RentalModule::class)),
+        );
+        $this->assertTrue(
+            $this->installer()->isInstalled($tenant, app(\Modules\Fleet\FleetModule::class)),
+        );
+
+        // ...but excludes tracking (Pro only), so tracking was skipped.
+        $this->assertFalse(
+            $this->installer()->isInstalled($tenant, app(\Modules\Tracking\TrackingModule::class)),
         );
     }
 

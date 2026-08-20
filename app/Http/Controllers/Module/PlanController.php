@@ -54,16 +54,7 @@ class PlanController extends Controller
                 ])
                 ->all(),
             // The registry is the menu a plan gets to sell from.
-            'availableModules' => collect(Modules::all())
-                ->map(fn (ModuleContract $module): array => [
-                    'key' => $module->key(),
-                    'label' => $module->label(),
-                    'description' => $module->description(),
-                    'tier' => $module->tier()->value,
-                    'is_enabled' => Modules::platformEnabled($module->key()),
-                ])
-                ->values()
-                ->all(),
+            'availableModules' => $this->availableModules(),
         ]);
     }
 
@@ -71,16 +62,7 @@ class PlanController extends Controller
     {
         return Inertia::render('Module/Plans/Create', [
             'nextSortOrder' => Plan::query()->max('sort_order') + 1,
-            'availableModules' => collect(Modules::all())
-                ->map(fn (ModuleContract $module): array => [
-                    'key' => $module->key(),
-                    'label' => $module->label(),
-                    'description' => $module->description(),
-                    'tier' => $module->tier()->value,
-                    'is_enabled' => Modules::platformEnabled($module->key()),
-                ])
-                ->values()
-                ->all(),
+            'availableModules' => $this->availableModules(),
         ]);
     }
 
@@ -123,16 +105,7 @@ class PlanController extends Controller
                 'trial_days' => $plan->trial_days,
                 'tenants' => $plan->tenantCount(),
             ],
-            'availableModules' => collect(Modules::all())
-                ->map(fn (ModuleContract $module): array => [
-                    'key' => $module->key(),
-                    'label' => $module->label(),
-                    'description' => $module->description(),
-                    'tier' => $module->tier()->value,
-                    'is_enabled' => Modules::platformEnabled($module->key()),
-                ])
-                ->values()
-                ->all(),
+            'availableModules' => $this->availableModules(),
         ]);
     }
 
@@ -189,5 +162,32 @@ class PlanController extends Controller
         if (! Plan::query()->where('is_default', true)->exists()) {
             $plan->forceFill(['is_default' => true])->save();
         }
+    }
+
+    /**
+     * Build the available optional modules catalog for plans.
+     *
+     * Core modules (such as partners, accounting, users, settings) ship with
+     * every tenant unconditionally and cannot be selected or omitted from plans,
+     * so requirements are filtered to only include non-core, registered modules.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function availableModules(): array
+    {
+        return collect(Modules::all())
+            ->map(fn (ModuleContract $module): array => [
+                'key' => $module->key(),
+                'label' => $module->label(),
+                'description' => $module->description(),
+                'tier' => $module->tier()->value,
+                'is_enabled' => Modules::platformEnabled($module->key()),
+                'requires' => array_values(array_filter(
+                    $module->requires(),
+                    fn (string $key): bool => Modules::has($key),
+                )),
+            ])
+            ->values()
+            ->all();
     }
 }

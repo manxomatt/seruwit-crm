@@ -82,6 +82,8 @@ return [
         'modules_allocation_subtitle' => 'Select modules that will automatically unlock for tenants on this plan.',
         'select_modules' => 'Select Included Modules',
         'modules_selected' => ':count Selected',
+        'requires_modules' => 'Requires modules',
+        'no_dependencies' => 'Standalone (No dependencies)',
     ],
 
     'preview' => [

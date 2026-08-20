@@ -82,6 +82,8 @@ return [
         'modules_allocation_subtitle' => 'Pilih modul yang akan dibuka secara otomatis untuk tenant paket ini.',
         'select_modules' => 'Pilih Modul Diberikan',
         'modules_selected' => ':count Terpilih',
+        'requires_modules' => 'Membutuhkan modul',
+        'no_dependencies' => 'Mandiri (Tanpa dependensi)',
     ],
 
     'preview' => [

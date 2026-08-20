@@ -322,4 +322,44 @@ class PlanManagementTest extends TestCase
         $this->assertTrue($tenant->fresh()->isEntitledTo('rental'));
         $this->assertTrue($tenant->fresh()->isEntitledTo('canvassing'));
     }
+
+    public function test_super_admin_can_view_create_page_with_available_modules_and_requires(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        $moduleCount = count(Modules::all());
+
+        $this->actingAs($admin)->get('/module/plans/create')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Module/Plans/Create')
+                ->has('availableModules', $moduleCount)
+                ->where('availableModules.0', fn ($module) => array_key_exists('requires', $module) && array_key_exists('key', $module))
+                // Ensure core modules like 'accounting' and 'partners' are not in requires
+                ->where('availableModules', function ($modules) {
+                    foreach ($modules as $m) {
+                        if (in_array('accounting', $m['requires'], true) || in_array('partners', $m['requires'], true)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
+            );
+    }
+
+    public function test_super_admin_can_view_edit_page_with_available_modules_and_requires(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        $pro = Plan::query()->firstWhere('key', 'pro');
+        $moduleCount = count(Modules::all());
+
+        $this->actingAs($admin)->get('/module/plans/'.$pro->id.'/edit')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Module/Plans/Edit')
+                ->has('availableModules', $moduleCount)
+                ->where('availableModules.0', fn ($module) => array_key_exists('requires', $module) && array_key_exists('key', $module))
+                ->where('plan.key', 'pro')
+            );
+    }
 }

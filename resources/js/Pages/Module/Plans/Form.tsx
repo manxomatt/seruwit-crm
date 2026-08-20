@@ -12,6 +12,7 @@ interface AvailableModule {
     description: string;
     tier: ModuleTier;
     is_enabled: boolean;
+    requires?: string[];
 }
 
 export interface PlanLimits {
@@ -179,6 +180,12 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
     };
 
     const query = moduleSearch.trim().toLowerCase();
+
+    const moduleLabelMap = useMemo(() => {
+        const map = new Map<string, string>();
+        availableModules.forEach((m) => map.set(m.key, m.label));
+        return map;
+    }, [availableModules]);
 
     const groupedModules = useMemo(() => {
         const matches = availableModules.filter(
@@ -671,6 +678,9 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                         {modules.map((module) => {
                                                             const checked = form.data.modules.includes(module.key);
                                                             const locked = !module.is_enabled;
+                                                            const validRequires = (module.requires || []).filter((reqKey) => moduleLabelMap.has(reqKey));
+                                                            const hasRequires = validRequires.length > 0;
+
                                                             return (
                                                                 <button
                                                                     type="button"
@@ -678,7 +688,7 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                                     onClick={() => !locked && toggleModule(module.key)}
                                                                     disabled={locked}
                                                                     aria-pressed={checked}
-                                                                    className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                                                                    className={`flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all ${
                                                                         locked
                                                                             ? 'cursor-not-allowed border-slate-200 bg-slate-50 dark:bg-slate-800/30 opacity-60'
                                                                             : checked
@@ -686,22 +696,23 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                                               : 'border-slate-200 dark:border-slate-800 hover:border-indigo-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                                     }`}
                                                                 >
-                                                                    <span
-                                                                        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                                                                            checked && !locked
-                                                                                ? 'border-indigo-600 bg-indigo-600 text-white'
-                                                                                : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900'
-                                                                        }`}
-                                                                    >
-                                                                        {checked && (
-                                                                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                                            </svg>
-                                                                        )}
-                                                                    </span>
-                                                                    <span className="min-w-0 text-xs">
-                                                                        <span className="flex items-center gap-2">
-                                                                            <span className={`font-bold ${locked ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                                                                    <div className="flex items-start gap-3 w-full">
+                                                                        <span
+                                                                            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                                                                                checked && !locked
+                                                                                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                                                                                    : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            {checked && (
+                                                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                                                </svg>
+                                                                            )}
+                                                                        </span>
+                                                                        <span className="min-w-0 flex-1 text-xs">
+                                                                            <span className="flex items-center justify-between gap-2">
+                                                                                <span className={`font-bold ${locked ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                                                                                 {module.label}
                                                                             </span>
                                                                             {locked && (
@@ -710,11 +721,54 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                                                 </span>
                                                                             )}
                                                                         </span>
-                                                                        <span className="mt-0.5 block text-[11px] text-slate-500 leading-tight">{module.description}</span>
+                                                                        <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                                                                            {module.description}
+                                                                        </span>
                                                                     </span>
-                                                                </button>
-                                                            );
-                                                        })}
+                                                                </div>
+
+                                                                {/* Card Footer: Required Modules Information */}
+                                                                <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/80 w-full">
+                                                                    {hasRequires ? (
+                                                                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                                                                <svg className="h-3 w-3 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                                                </svg>
+                                                                                <span>{t('plans.form.requires_modules')}:</span>
+                                                                            </span>
+                                                                            {validRequires.map((reqKey) => {
+                                                                                const reqLabel = moduleLabelMap.get(reqKey) || reqKey;
+                                                                                const isReqSelected = form.data.modules.includes(reqKey);
+                                                                                return (
+                                                                                    <span
+                                                                                        key={reqKey}
+                                                                                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+                                                                                            isReqSelected
+                                                                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80'
+                                                                                                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80'
+                                                                                        }`}
+                                                                                    >
+                                                                                        <span>{reqLabel}</span>
+                                                                                        {isReqSelected ? (
+                                                                                            <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold" title="Termasuk dalam paket">✓</span>
+                                                                                        ) : (
+                                                                                            <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold" title="Belum dipilih dalam paket">!</span>
+                                                                                        )}
+                                                                                    </span>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                                                            <span className="text-emerald-500 font-bold">✓</span>
+                                                                            <span>{t('plans.form.no_dependencies')}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
                                                     </div>
                                                 </div>
                                             ))}

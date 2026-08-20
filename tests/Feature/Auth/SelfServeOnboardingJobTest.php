@@ -118,4 +118,55 @@ class SelfServeOnboardingJobTest extends TestCase
             }
         });
     }
+
+    public function test_provision_job_creates_tenant_with_free_plan_and_installs_rental_module(): void
+    {
+        $this->seed(PlanSeeder::class);
+
+        $user = User::factory()->create([
+            'email' => 'free-owner@selfserve.test',
+        ]);
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        $session = OnboardingSession::query()->create([
+            'global_user_id' => $user->global_id,
+            'company_name' => 'Free Rental Co',
+            'subdomain' => 'free-rental-co',
+            'verticals' => ['rental'],
+            'plan_key' => 'free',
+            'status' => OnboardingSession::STATUS_PENDING,
+        ]);
+
+        (new ProvisionSelfServeTenantJob($session->id))->handle(
+            app(\App\Actions\Tenancy\CreateTenantAction::class),
+            app(\App\Modules\ModuleInstaller::class),
+        );
+
+        $session->refresh();
+        $this->assertSame(
+            OnboardingSession::STATUS_READY,
+            $session->status,
+            (string) $session->error_message,
+        );
+        $this->assertNotNull($session->tenant_id);
+
+        $tenant = Tenant::query()->findOrFail($session->tenant_id);
+        $this->assertSame('free', $tenant->planKey());
+
+        $tenant->run(function (): void {
+            // Free plan modules must all be installed
+            foreach (['pages', 'posts', 'carousels', 'fleet', 'rental', 'invoicing', 'receivables', 'document'] as $key) {
+                $this->assertTrue(
+                    InstalledModule::query()->where('key', $key)->installed()->exists(),
+                    "Expected module [{$key}] to be installed on Free plan.",
+                );
+            }
+
+            // Pro-only module must not be installed
+            $this->assertFalse(
+                InstalledModule::query()->where('key', 'tracking')->installed()->exists(),
+                'Tracking should not be installed on Free plan.',
+            );
+        });
+    }
 }

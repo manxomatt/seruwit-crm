@@ -389,9 +389,11 @@ class SeruwitElevateLandingTemplate
 }
 
 /* VISUAL COMMAND CENTER STAGE */
-.el-command-stage {
+.el-command-stage,
+.el-hero-canvas-wrap {
     position: relative;
     padding: 10px 0;
+    width: 100%;
 }
 .el-canvas-card {
     background: #ffffff;
@@ -566,13 +568,11 @@ class SeruwitElevateLandingTemplate
 .el-float-card:hover {
     transform: translateY(-2px);
 }
-.el-float-kyc {
-    top: -16px;
-    right: -12px;
-}
 .el-float-kpi {
-    bottom: -16px;
-    left: -12px;
+    bottom: -20px;
+    right: -16px;
+    left: auto;
+    z-index: 5;
 }
 .el-float-icon {
     width: 38px;
@@ -1445,7 +1445,7 @@ CSS;
             </div>
           </div>
 
-          <!-- FLOATING BOTTOM-LEFT BADGE: REVENUE -->
+          <!-- FLOATING BOTTOM-RIGHT BADGE: REVENUE -->
           <div class="el-float-card el-float-kpi">
             <div class="el-float-icon" style="background:#ecfdf5; color:#059669;">📈</div>
             <div class="el-float-info">

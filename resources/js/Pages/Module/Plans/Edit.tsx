@@ -12,6 +12,7 @@ interface AvailableModule {
     description: string;
     tier: ModuleTier;
     is_enabled: boolean;
+    requires?: string[];
 }
 
 interface Props {
