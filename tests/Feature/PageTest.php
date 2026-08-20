@@ -434,4 +434,23 @@ class PageTest extends TestCase
         $response->assertSee('Ekosistem Lengkap');
         $response->assertSee('Supply Chain &amp; Logistik', false);
     }
+
+    public function test_seruwit_elevate_landing_page_seeder_creates_page_and_renders_publicly(): void
+    {
+        $user = User::factory()->create();
+
+        $this->seed(\Database\Seeders\CreateSeruwitElevateLandingSeeder::class);
+
+        $this->assertDatabaseHas('pages', [
+            'slug' => 'seruwit-elevate',
+            'is_published' => true,
+        ]);
+
+        $response = $this->get('/p/seruwit-elevate');
+
+        $response->assertOk();
+        $response->assertSee('Elevate');
+        $response->assertSee('Zero-Conflict Booking Calendar');
+        $response->assertSee('Automated Security &amp; Deposit', false);
+    }
 }

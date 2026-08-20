@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             CreateRentalManagementLandingSeeder::class,
             CreateSeruwitBizLandingSeeder::class,
             CreateSeruwitBizAltLandingSeeder::class,
+            CreateSeruwitElevateLandingSeeder::class,
         ]);
 
         // Create admin user
