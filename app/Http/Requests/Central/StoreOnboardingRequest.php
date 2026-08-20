@@ -24,8 +24,12 @@ class StoreOnboardingRequest extends FormRequest
     {
         return [
             'company_name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'city' => ['nullable', 'string', 'max:100'],
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($this->ignoreDomainForRetry())],
             'plan_key' => ['nullable', 'string', 'max:50', Rule::exists('plans', 'key')],
+            'fleet_size' => ['nullable', 'string', 'max:50'],
+            'rental_model' => ['nullable', 'string', 'max:50'],
             'verticals' => ['required', 'array', 'min:1'],
             'verticals.*' => [
                 'required',

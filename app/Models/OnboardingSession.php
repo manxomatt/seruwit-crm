@@ -15,6 +15,8 @@ class OnboardingSession extends Model
 {
     use CentralConnection;
 
+    public const STATUS_DRAFT = 'draft';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_PROVISIONING = 'provisioning';
@@ -29,8 +31,12 @@ class OnboardingSession extends Model
     protected $fillable = [
         'global_user_id',
         'company_name',
+        'phone',
+        'city',
         'subdomain',
         'verticals',
+        'fleet_size',
+        'rental_model',
         'plan_key',
         'status',
         'tenant_id',

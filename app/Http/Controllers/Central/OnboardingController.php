@@ -65,15 +65,18 @@ class OnboardingController extends Controller
             ->all();
 
         $initialCompanyName = (string) ($request->query('company_name')
-            ?: session('onboarding_company_name', '')
-            ?: ($session?->company_name ?? ''));
+            ?: ($session?->company_name ?: session('onboarding_company_name', '')));
 
         $initialSubdomain = (string) ($request->query('subdomain')
-            ?: ($initialCompanyName ? \Illuminate\Support\Str::slug($initialCompanyName, '') : ($session?->subdomain ?? '')));
+            ?: ($session?->subdomain ?: ($initialCompanyName ? \Illuminate\Support\Str::slug($initialCompanyName, '') : '')));
 
-        $selectedPlanKey = $request->query('plan')
-            ?: (session('onboarding_plan')
-            ?: ($session?->plan_key ?: (collect($plans)->firstWhere('key', 'free')['key'] ?? 'free')));
+        $selectedPlanKey = (string) ($request->query('plan')
+            ?: ($session?->plan_key ?: (session('onboarding_plan') ?: (collect($plans)->firstWhere('key', 'free')['key'] ?? 'free'))));
+
+        $initialPhone = (string) ($session?->phone ?: session('onboarding_phone', ''));
+        $initialCity = (string) ($session?->city ?: session('onboarding_city', ''));
+        $initialFleetSize = (string) ($session?->fleet_size ?: '1-5');
+        $initialRentalModel = (string) ($session?->rental_model ?: 'both');
 
         return Inertia::render('Central/Onboarding', [
             'user' => [
@@ -88,6 +91,10 @@ class OnboardingController extends Controller
             'initialPlanKey' => $selectedPlanKey,
             'initialCompanyName' => $initialCompanyName,
             'initialSubdomain' => $initialSubdomain,
+            'initialPhone' => $initialPhone,
+            'initialCity' => $initialCity,
+            'initialFleetSize' => $initialFleetSize,
+            'initialRentalModel' => $initialRentalModel,
             'verticalOptions' => collect(SelfServeProvisioningPlan::verticals())
                 ->map(fn (string $vertical): array => [
                     'key' => $vertical,
@@ -99,8 +106,12 @@ class OnboardingController extends Controller
             'failedSession' => $session?->status === OnboardingSession::STATUS_FAILED
                 ? [
                     'company_name' => $session->company_name,
+                    'phone' => $session->phone,
+                    'city' => $session->city,
                     'subdomain' => $session->subdomain,
                     'plan_key' => $session->plan_key,
+                    'fleet_size' => $session->fleet_size,
+                    'rental_model' => $session->rental_model,
                     'verticals' => array_values(array_filter(
                         $session->verticals ?? [],
                         SelfServeProvisioningPlan::isSelectableVertical(...),
@@ -138,8 +149,12 @@ class OnboardingController extends Controller
             ['global_user_id' => $user->global_id],
             [
                 'company_name' => $request->validated('company_name'),
+                'phone' => $request->validated('phone'),
+                'city' => $request->validated('city'),
                 'subdomain' => $subdomain,
                 'verticals' => $verticals,
+                'fleet_size' => $request->validated('fleet_size'),
+                'rental_model' => $request->validated('rental_model'),
                 'plan_key' => $planKey,
                 'status' => OnboardingSession::STATUS_PENDING,
                 'tenant_id' => $reuseTenantId,

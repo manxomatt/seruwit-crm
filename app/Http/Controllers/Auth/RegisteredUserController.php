@@ -83,6 +83,30 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $companyName = $request->filled('company_name')
+            ? $request->string('company_name')->toString()
+            : session('onboarding_company_name');
+
+        $planKey = $request->filled('plan')
+            ? $request->string('plan')->toString()
+            : (session('onboarding_plan') ?: 'free');
+
+        if ($companyName) {
+            $subdomain = Str::slug($companyName, '');
+            \App\Models\OnboardingSession::query()->updateOrCreate(
+                ['global_user_id' => $user->global_id],
+                [
+                    'company_name' => $companyName,
+                    'subdomain' => $subdomain,
+                    'verticals' => ['rental'],
+                    'plan_key' => $planKey,
+                    'status' => \App\Models\OnboardingSession::STATUS_DRAFT,
+                    'reseller_global_id' => \App\Support\Reseller\ResellerAttribution::resolveFromRequest($request),
+                    'error_message' => null,
+                ]
+            );
+        }
+
         event(new Registered($user));
 
         Auth::login($user);
