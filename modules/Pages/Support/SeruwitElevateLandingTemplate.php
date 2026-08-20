@@ -968,7 +968,7 @@ CSS;
           <a href="?lang=en" class="el-lang-btn {{locale_active:en}}" title="English">EN</a>
         </div>
         <a href="/login" class="el-btn-ghost">{{trans:landing_elevate.nav.login}}</a>
-        <a href="/workspaces" class="el-btn-glow">{{trans:landing_elevate.nav.cta}}</a>
+        <a href="/register" class="el-btn-glow">{{trans:landing_elevate.nav.cta}}</a>
       </div>
     </nav>
   </div>
@@ -989,7 +989,7 @@ CSS;
       </p>
 
       <div class="el-hero-btns">
-        <a href="/workspaces" class="el-btn-glow" style="padding: 13px 30px; font-size: 0.96rem;">
+        <a href="/register" class="el-btn-glow" style="padding: 13px 30px; font-size: 0.96rem;">
           {{trans:landing_elevate.hero.cta_primary}}
         </a>
         <a href="#keunggulan" class="el-btn-secondary">
@@ -1183,7 +1183,7 @@ CSS;
               </div>
             </div>
 
-            <a href="/workspaces" class="el-btn-glow">{{trans:landing_elevate.nav.cta}}</a>
+            <a href="/register" class="el-btn-glow">{{trans:landing_elevate.nav.cta}}</a>
           </div>
 
           <!-- LIST KENDARAAN POPULER -->
@@ -1316,7 +1316,7 @@ CSS;
           </p>
         </div>
         <div>
-          <a href="/workspaces" class="el-btn-glow" style="white-space:nowrap; background:#ffffff; color:#0f172a !important;">{{trans:landing_elevate.ecosystem.market_cta}}</a>
+          <a href="/register" class="el-btn-glow" style="white-space:nowrap; background:#ffffff; color:#0f172a !important;">{{trans:landing_elevate.ecosystem.market_cta}}</a>
         </div>
       </div>
     </div>
@@ -1393,7 +1393,7 @@ CSS;
         {{trans:landing_elevate.cta_bottom.subtitle}}
       </p>
       <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
-        <a href="/workspaces" class="el-btn-white">
+        <a href="/register" class="el-btn-white">
           {{trans:landing_elevate.cta_bottom.btn_primary}} →
         </a>
         <a href="mailto:{{setting:site.contact_email}}" class="el-btn-secondary" style="background:rgba(255,255,255,0.15); color:#ffffff; border-color:rgba(255,255,255,0.3);">
@@ -1444,7 +1444,7 @@ CSS;
           <h5>{{trans:landing_elevate.footer.platform_title}}</h5>
           <ul class="el-footer-menu">
             <li><a href="/login">{{trans:landing_elevate.footer.login}}</a></li>
-            <li><a href="/workspaces">{{trans:landing_elevate.footer.register}}</a></li>
+            <li><a href="/register">{{trans:landing_elevate.footer.register}}</a></li>
             <li><a href="/terms">{{trans:landing_elevate.footer.terms}}</a></li>
             <li><a href="/privacy">{{trans:landing_elevate.footer.privacy}}</a></li>
           </ul>

@@ -12,7 +12,7 @@ return [
     ],
 
     'hero' => [
-        'badge' => 'Next-Gen SaaS Rental & Business Operating System',
+        'badge' => 'Next-Gen Rental & Business Operating System',
         'title_p1' => 'Akselerasi Bisnis Rental &',
         'title_highlight' => 'Kembangkan Ekosistem Tanpa Batas.',
         'subtitle' => 'Platform operasi modern untuk manajemen armada kendaraan, verifikasi KYC otomatis, kalender bebas konflik, dan arsitektur modular yang siap tumbuh dari rental hingga logistik & marketplace.',

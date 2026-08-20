@@ -12,7 +12,7 @@ return [
     ],
 
     'hero' => [
-        'badge' => 'Next-Gen Rental SaaS & Business Operating System',
+        'badge' => 'Next-Gen Rental & Business Operating System',
         'title_p1' => 'Accelerate Vehicle Rental &',
         'title_highlight' => 'Scale Your Modular Business Ecosystem.',
         'subtitle' => 'Modern operating platform for fleet management, automated KYC security, zero-conflict booking, and modular architecture ready to scale from rental to logistics & marketplace.',
