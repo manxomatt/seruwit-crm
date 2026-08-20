@@ -64,8 +64,16 @@ class OnboardingController extends Controller
             ])
             ->all();
 
+        $initialCompanyName = (string) ($request->query('company_name')
+            ?: session('onboarding_company_name', '')
+            ?: ($session?->company_name ?? ''));
+
+        $initialSubdomain = (string) ($request->query('subdomain')
+            ?: ($initialCompanyName ? \Illuminate\Support\Str::slug($initialCompanyName, '') : ($session?->subdomain ?? '')));
+
         $selectedPlanKey = $request->query('plan')
-            ?: ($session?->plan_key ?: (collect($plans)->firstWhere('key', 'free')['key'] ?? 'free'));
+            ?: (session('onboarding_plan')
+            ?: ($session?->plan_key ?: (collect($plans)->firstWhere('key', 'free')['key'] ?? 'free')));
 
         return Inertia::render('Central/Onboarding', [
             'user' => [
@@ -78,6 +86,8 @@ class OnboardingController extends Controller
                 ->toArray(),
             'availablePlans' => $plans,
             'initialPlanKey' => $selectedPlanKey,
+            'initialCompanyName' => $initialCompanyName,
+            'initialSubdomain' => $initialSubdomain,
             'verticalOptions' => collect(SelfServeProvisioningPlan::verticals())
                 ->map(fn (string $vertical): array => [
                     'key' => $vertical,

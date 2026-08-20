@@ -333,22 +333,29 @@ class SeruwitElevateLandingTemplate
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     max-width: 480px;
     margin-bottom: 22px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease;
 }
 .el-hero-quick-form:focus-within {
-    border-color: var(--el-teal);
-    box-shadow: 0 8px 30px rgba(13, 148, 136, 0.15);
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.1);
 }
 .el-hero-input {
     flex-grow: 1;
-    border: none;
-    outline: none;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     padding: 0 18px;
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--el-text-main);
     background: transparent;
     min-width: 0;
+}
+.el-hero-input:focus,
+.el-hero-input:focus-visible,
+.el-hero-input:active {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 .el-hero-input::placeholder {
     color: #94a3b8;

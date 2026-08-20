@@ -15,7 +15,7 @@ return [
     'hero' => [
         'badge' => 'Next-Gen Rental & Business Operating System',
         'title_p1' => 'Satu Sistem Cerdas untuk',
-        'title_highlight' => 'Kuasai Seluruh Operasi Rental.',
+        'title_highlight' => 'Mengelola Seluruh Operasi Rental.',
         'subtitle' => 'Hilangkan risiko double-booking dengan kalender visual otomatis, amankan aset berharga lewat verifikasi KYC digital instan, dan pantau posisi GPS armada real-time dalam satu ekosistem terpadu.',
         'input_placeholder' => 'Masukkan nama usaha rental Anda...',
         'cta_primary' => 'Mulai Coba Gratis ⚡',

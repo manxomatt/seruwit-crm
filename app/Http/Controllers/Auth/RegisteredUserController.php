@@ -29,9 +29,17 @@ class RegisteredUserController extends Controller
      * Workspace (tenant) provisioning happens after email verification + onboarding.
      * Users join existing workspaces through invitations instead.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         abort_if(tenancy()->initialized, 404);
+
+        if ($request->filled('company_name')) {
+            session(['onboarding_company_name' => $request->query('company_name')]);
+        }
+
+        if ($request->filled('plan')) {
+            session(['onboarding_plan' => $request->query('plan')]);
+        }
 
         $settings = Setting::getPublic()
             ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
@@ -39,6 +47,8 @@ class RegisteredUserController extends Controller
 
         return Inertia::render('Auth/Register', [
             'settings' => $settings,
+            'initialCompanyName' => $request->query('company_name', session('onboarding_company_name', '')),
+            'initialPlan' => $request->query('plan', session('onboarding_plan', '')),
         ]);
     }
 
@@ -54,7 +64,17 @@ class RegisteredUserController extends Controller
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['accepted', 'required'],
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'plan' => ['nullable', 'string', 'max:50'],
         ]);
+
+        if ($request->filled('company_name')) {
+            session(['onboarding_company_name' => $request->string('company_name')->toString()]);
+        }
+
+        if ($request->filled('plan')) {
+            session(['onboarding_plan' => $request->string('plan')->toString()]);
+        }
 
         $user = User::create([
             'global_id' => (string) Str::uuid(),

@@ -7,9 +7,11 @@ import { useState } from 'react';
 
 interface Props {
     settings?: Record<string, string>;
+    initialCompanyName?: string;
+    initialPlan?: string;
 }
 
-export default function Register({ settings }: Props) {
+export default function Register({ settings, initialCompanyName = '', initialPlan = '' }: Props) {
     const { t } = useTrans();
     const [showPassword, setShowPassword] = useState(false);
 
@@ -19,6 +21,8 @@ export default function Register({ settings }: Props) {
         password: string;
         password_confirmation: string;
         terms: boolean;
+        company_name: string;
+        plan: string;
     }
 
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
@@ -27,6 +31,8 @@ export default function Register({ settings }: Props) {
         password: '',
         password_confirmation: '',
         terms: false,
+        company_name: initialCompanyName,
+        plan: initialPlan,
     });
 
     const submit = (e: React.FormEvent) => {

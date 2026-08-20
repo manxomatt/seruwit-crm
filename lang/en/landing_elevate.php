@@ -15,7 +15,7 @@ return [
     'hero' => [
         'badge' => 'Next-Gen Rental & Business Operating System',
         'title_p1' => 'One Smart Platform to',
-        'title_highlight' => 'Master Your Fleet Rental Operations.',
+        'title_highlight' => 'Manage Your Entire Rental Operations.',
         'subtitle' => 'Eliminate double-booking with visual interactive scheduling, protect valuable vehicles with instant automated KYC verification, and track real-time fleet GPS in one unified ecosystem.',
         'input_placeholder' => 'Enter your rental business name...',
         'cta_primary' => 'Start Free Trial ⚡',

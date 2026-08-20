@@ -48,6 +48,8 @@ interface Props {
     centralHost: string;
     availablePlans?: PlanOption[];
     initialPlanKey?: string;
+    initialCompanyName?: string;
+    initialSubdomain?: string;
     verticalOptions: VerticalOption[];
     failedSession: FailedSession | null;
     settings?: Record<string, string>;
@@ -58,6 +60,8 @@ export default function Onboarding({
     centralHost,
     availablePlans = [],
     initialPlanKey = 'free',
+    initialCompanyName = '',
+    initialSubdomain = '',
     verticalOptions,
     failedSession,
     settings,
@@ -65,11 +69,31 @@ export default function Onboarding({
     const { t } = useTrans();
 
     const { data, setData, post, processing, errors } = useForm({
-        company_name: failedSession?.company_name ?? '',
-        subdomain: failedSession?.subdomain ?? '',
+        company_name: failedSession?.company_name ?? initialCompanyName ?? '',
+        subdomain: failedSession?.subdomain ?? initialSubdomain ?? '',
         plan_key: failedSession?.plan_key ?? initialPlanKey,
         verticals: failedSession?.verticals ?? (['rental'] as string[]),
     });
+
+    const slugify = (text: string): string =>
+        text
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')
+            .slice(0, 30);
+
+    const handleCompanyNameChange = (val: string): void => {
+        const prevSlug = slugify(data.company_name);
+        const newSlug = slugify(val);
+        if (!data.subdomain || data.subdomain === prevSlug) {
+            setData((prev) => ({
+                ...prev,
+                company_name: val,
+                subdomain: newSlug,
+            }));
+        } else {
+            setData('company_name', val);
+        }
+    };
 
     const toggleVertical = (key: string): void => {
         if (!verticalOptions.some((option) => option.key === key && option.available)) {
@@ -260,7 +284,7 @@ export default function Onboarding({
                                             value={data.company_name}
                                             required
                                             autoFocus
-                                            onChange={(e) => setData('company_name', e.target.value)}
+                                            onChange={(e) => handleCompanyNameChange(e.target.value)}
                                             className="block w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                             placeholder={t('central.onboarding.company_name')}
                                         />
