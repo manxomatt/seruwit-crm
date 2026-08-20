@@ -123,6 +123,27 @@
             },
             $html
         );
+
+        // Parse and replace {{trans:key}} or {{t:key}} placeholders with active locale translation
+        $html = preg_replace_callback(
+            '/\{\{(?:trans|t):([a-z0-9_\.]+)\}\}/i',
+            function ($matches) {
+                $key = $matches[1];
+                return __($key);
+            },
+            $html
+        );
+
+        // Replace current locale and active state indicators
+        $currentLocale = app()->getLocale();
+        $html = preg_replace_callback(
+            '/\{\{locale_active:([a-z_]+)\}\}/i',
+            function ($matches) use ($currentLocale) {
+                return $currentLocale === strtolower($matches[1]) ? 'active' : '';
+            },
+            $html
+        );
+        $html = str_replace('{{locale}}', $currentLocale, $html);
     @endphp
     
     {!! $html !!}

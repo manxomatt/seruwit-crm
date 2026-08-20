@@ -132,6 +132,16 @@ class CentralLandingPageTemplate
     color: var(--srw-slate-900);
     letter-spacing: -0.02em;
 }
+.srw-brand-img {
+    height: 34px;
+    max-height: 38px;
+    width: auto;
+    max-width: 150px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 6px;
+}
 .srw-brand-badge {
     width: 36px;
     height: 36px;
@@ -950,7 +960,8 @@ CSS;
     <div class="srw-container">
       <div class="srw-nav-wrap">
         <a href="/" class="srw-brand">
-          <div class="srw-brand-badge">⚡</div>
+          <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="srw-brand-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+          <div class="srw-brand-badge" style="display:none;">⚡</div>
           <span>{{setting:general.site_name}}</span>
           <span class="srw-brand-tag">Modular OS</span>
         </a>
@@ -1457,7 +1468,8 @@ CSS;
       <div class="srw-footer-grid">
         <div class="srw-footer-brand">
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-            <div class="srw-brand-badge" style="width:32px; height:32px; font-size:1rem;">⚡</div>
+            <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="srw-brand-img" style="height:28px;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+            <div class="srw-brand-badge" style="width:32px; height:32px; font-size:1rem; display:none;">⚡</div>
             <h3 style="margin:0;">{{setting:general.site_name}}</h3>
           </div>
           <p>{{setting:general.site_tagline}}</p>

@@ -5,7 +5,7 @@ namespace Modules\Pages\Support;
 class SeruwitElevateLandingTemplate
 {
     /**
-     * Build the data array for the Seruwit Elevate landing page.
+     * Build the data array for the Seruwit Elevate (Soft & Bright Edition) landing page.
      *
      * @return array{title: string, slug: string, html: string, css: string, gjs_data: null}
      */
@@ -31,40 +31,55 @@ class SeruwitElevateLandingTemplate
 :root {
     --el-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     
-    /* Elegant Dark & Light Base */
-    --el-bg: #0b0f19;
-    --el-bg-surface: #111827;
-    --el-bg-card: rgba(17, 24, 39, 0.75);
-    --el-bg-card-hover: rgba(30, 41, 59, 0.85);
-    --el-bg-glass: rgba(255, 255, 255, 0.04);
+    /* Soft & Bright Modern Palette */
+    --el-bg: #f8fafc;
+    --el-bg-surface: #ffffff;
+    --el-bg-subtle: #f1f5f9;
+    --el-bg-card: #ffffff;
+    --el-bg-card-hover: #ffffff;
     
-    --el-text-main: #f8fafc;
-    --el-text-sub: #94a3b8;
-    --el-text-muted: #64748b;
+    --el-text-main: #0f172a;
+    --el-text-body: #334155;
+    --el-text-sub: #64748b;
+    --el-text-muted: #94a3b8;
     
-    /* Accents */
-    --el-emerald: #10b981;
-    --el-emerald-glow: rgba(16, 185, 129, 0.25);
-    --el-teal: #14b8a6;
-    --el-cyan: #06b6d4;
-    --el-indigo: #6366f1;
-    --el-amber: #f59e0b;
+    /* Soft Accents & Pastels */
+    --el-teal: #0d9488;
+    --el-teal-dark: #0f766e;
+    --el-teal-soft: #f0fdfa;
+    --el-teal-border: #ccfbf1;
+    
+    --el-emerald: #059669;
+    --el-emerald-soft: #ecfdf5;
+    
+    --el-cyan: #0284c7;
+    --el-cyan-soft: #f0f9ff;
+    
+    --el-indigo: #4f46e5;
+    --el-indigo-soft: #eef2ff;
+    
+    --el-amber: #d97706;
+    --el-amber-soft: #fffbeb;
     
     /* Gradients */
-    --el-grad-primary: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-    --el-grad-text: linear-gradient(135deg, #ffffff 30%, #a7f3d0 70%, #38bdf8 100%);
-    --el-grad-glow: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.18) 0%, rgba(6, 182, 212, 0.08) 40%, transparent 70%);
+    --el-grad-primary: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+    --el-grad-text: linear-gradient(135deg, #0f766e 0%, #0284c7 50%, #4338ca 100%);
+    --el-grad-glow: radial-gradient(circle at 50% -12%, rgba(13, 148, 136, 0.12) 0%, rgba(2, 132, 199, 0.06) 45%, rgba(248, 250, 252, 0) 75%);
     
-    /* Borders & Shadows */
-    --el-border: rgba(255, 255, 255, 0.08);
-    --el-border-focus: rgba(16, 185, 129, 0.4);
-    --el-shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    --el-shadow-glow: 0 0 40px -10px rgba(16, 185, 129, 0.3);
+    /* Borders & Soft Shadows */
+    --el-border: #e2e8f0;
+    --el-border-light: #f1f5f9;
+    --el-border-focus: #99f6e4;
+    --el-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    --el-shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --el-shadow-lg: 0 14px 28px -4px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    --el-shadow-card: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    --el-shadow-glow: 0 12px 35px -8px rgba(13, 148, 136, 0.18);
 }
 
 .el-root {
     font-family: var(--el-font);
-    color: var(--el-text-main);
+    color: var(--el-text-body);
     background-color: var(--el-bg);
     line-height: 1.6;
     margin: 0;
@@ -85,123 +100,170 @@ class SeruwitElevateLandingTemplate
     padding: 0 24px;
 }
 
-/* SLEEK STICKY NAVBAR */
+/* FIXED NAVBAR WITH DYNAMIC SCROLL MORPH */
 .el-nav-wrapper {
-    position: sticky;
-    top: 16px;
-    z-index: 999;
-    padding: 0 20px;
-    margin-bottom: -72px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 16px 24px;
+    pointer-events: none;
+    transition: padding 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
 }
 .el-navbar {
-    background: rgba(15, 23, 42, 0.75);
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(226, 232, 240, 0.95);
     border-radius: 100px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    max-width: 1100px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
-    padding: 8px 12px 8px 24px;
+    padding: 10px 14px 10px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: all 0.3s ease;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Scrolled state: Morphs into Edge-to-Edge Full Width Glassmorphism Bar */
+.el-nav-wrapper.scrolled {
+    padding: 0;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+.el-nav-wrapper.scrolled .el-navbar {
+    max-width: 1200px;
+    background: transparent;
+    border-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 14px 24px;
 }
 .el-brand {
     display: flex;
     align-items: center;
     gap: 10px;
     text-decoration: none;
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     letter-spacing: -0.02em;
+    flex-shrink: 0;
 }
-.el-brand-icon {
-    width: 32px;
+.el-brand-img {
     height: 32px;
-    border-radius: 50%;
-    background: var(--el-grad-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0b0f19;
-    font-weight: 900;
-    font-size: 0.95rem;
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-}
-.el-brand-badge {
-    font-size: 0.65rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    background: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    padding: 2px 7px;
-    border-radius: 20px;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    max-height: 36px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 6px;
 }
 .el-nav-links {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 30px;
     list-style: none;
     margin: 0;
     padding: 0;
 }
 .el-nav-link {
     text-decoration: none;
-    color: var(--el-text-sub);
-    font-size: 0.88rem;
+    color: var(--el-text-body);
+    font-size: 0.86rem;
     font-weight: 600;
     transition: all 0.2s ease;
+    padding: 6px 12px;
+    border-radius: 50px;
 }
 .el-nav-link:hover {
-    color: #ffffff;
+    color: var(--el-teal-dark);
+    background: var(--el-bg-subtle);
 }
 .el-nav-actions {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
+}
+.el-lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid var(--el-border);
+    border-radius: 50px;
+    padding: 2px 4px;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+.el-lang-btn {
+    color: var(--el-text-sub);
+    text-decoration: none;
+    padding: 3px 8px;
+    border-radius: 50px;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+.el-lang-btn:hover {
+    color: var(--el-text-main);
+}
+.el-lang-btn.active {
+    background: #ffffff;
+    color: var(--el-teal-dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.el-lang-divider {
+    color: #cbd5e1;
+    font-size: 0.7rem;
+    margin: 0 1px;
 }
 .el-btn-ghost {
     background: transparent;
-    color: var(--el-text-sub);
-    font-size: 0.86rem;
+    color: var(--el-text-body);
+    font-size: 0.84rem;
     font-weight: 700;
     text-decoration: none;
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: 50px;
     transition: all 0.2s;
 }
 .el-btn-ghost:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--el-text-main);
+    background: var(--el-bg-subtle);
 }
 .el-btn-glow {
     background: var(--el-grad-primary);
-    color: #0b0f19;
-    font-size: 0.86rem;
+    color: #ffffff !important;
+    font-size: 0.84rem;
     font-weight: 800;
     text-decoration: none;
-    padding: 9px 20px;
+    padding: 8px 18px;
     border-radius: 50px;
-    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.22);
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 .el-btn-glow:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5);
-    filter: brightness(1.08);
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.35);
+    filter: brightness(1.04);
 }
 
 /* HERO SECTION */
 .el-hero {
     position: relative;
-    padding: 150px 0 100px 0;
+    padding: 140px 0 90px 0;
     background: var(--el-grad-glow);
     text-align: center;
     overflow: hidden;
@@ -210,84 +272,86 @@ class SeruwitElevateLandingTemplate
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #ffffff;
+    border: 1px solid var(--el-teal-border);
     padding: 6px 16px;
     border-radius: 50px;
     font-size: 0.82rem;
     font-weight: 700;
-    color: #34d399;
-    margin-bottom: 24px;
-    backdrop-filter: blur(10px);
+    color: var(--el-teal-dark);
+    margin-bottom: 22px;
+    box-shadow: var(--el-shadow-sm);
 }
 .el-hero-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 8px #10b981;
+    background: var(--el-teal);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
 }
 .el-hero-h1 {
-    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-size: clamp(2.4rem, 4.8vw, 3.8rem);
     font-weight: 800;
-    color: #ffffff;
-    line-height: 1.15;
+    color: var(--el-text-main);
+    line-height: 1.18;
     letter-spacing: -0.03em;
-    max-width: 900px;
-    margin: 0 auto 24px auto;
+    max-width: 920px;
+    margin: 0 auto 22px auto;
 }
 .el-hero-h1 span {
-    background: var(--el-grad-text);
+    background: linear-gradient(135deg, #0f766e 0%, #0284c7 50%, #4338ca 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #0f766e;
+    display: inline;
 }
 .el-hero-p {
-    font-size: 1.15rem;
-    color: var(--el-text-sub);
+    font-size: 1.12rem;
+    color: var(--el-text-body);
     max-width: 660px;
-    margin: 0 auto 36px auto;
+    margin: 0 auto 34px auto;
     line-height: 1.65;
 }
 .el-hero-btns {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 14px;
     flex-wrap: wrap;
-    margin-bottom: 50px;
+    margin-bottom: 48px;
 }
 .el-btn-secondary {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #ffffff;
+    background: #ffffff;
+    border: 1px solid var(--el-border);
+    color: var(--el-text-main);
     font-size: 0.95rem;
     font-weight: 700;
     text-decoration: none;
-    padding: 13px 28px;
+    padding: 12px 26px;
     border-radius: 50px;
     transition: all 0.2s;
-    backdrop-filter: blur(10px);
+    box-shadow: var(--el-shadow-sm);
 }
 .el-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--el-bg-subtle);
+    border-color: #cbd5e1;
 }
 
 /* HERO INTERACTIVE DISPLAY (STAGE) */
 .el-hero-stage {
     max-width: 1060px;
     margin: 0 auto;
-    background: var(--el-bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid var(--el-border);
+    border-radius: 22px;
     box-shadow: var(--el-shadow-card), var(--el-shadow-glow);
-    backdrop-filter: blur(24px);
     overflow: hidden;
     text-align: left;
 }
 .el-stage-header {
-    background: rgba(15, 23, 42, 0.9);
-    padding: 14px 22px;
+    background: #f8fafc;
+    padding: 13px 22px;
     border-bottom: 1px solid var(--el-border);
     display: flex;
     align-items: center;
@@ -295,18 +359,18 @@ class SeruwitElevateLandingTemplate
 }
 .el-stage-controls {
     display: flex;
-    gap: 8px;
+    gap: 7px;
 }
 .el-stage-dot {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
+    background: #cbd5e1;
 }
 .el-stage-title {
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--el-text-sub);
+    color: var(--el-text-body);
 }
 .el-stage-tabs {
     display: flex;
@@ -317,38 +381,39 @@ class SeruwitElevateLandingTemplate
     font-weight: 700;
     padding: 4px 12px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #ffffff;
     color: var(--el-text-sub);
     border: 1px solid var(--el-border);
 }
 .el-stage-tab.active {
-    background: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    border-color: rgba(16, 185, 129, 0.4);
+    background: var(--el-teal-soft);
+    color: var(--el-teal-dark);
+    border-color: var(--el-teal-border);
 }
 
 .el-stage-body {
-    padding: 28px;
+    padding: 26px;
     display: grid;
     grid-template-columns: 1fr 1.3fr;
-    gap: 28px;
+    gap: 26px;
     align-items: center;
+    background: #ffffff;
 }
 .el-stage-kpis {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: 12px;
 }
 .el-kpi-box {
-    background: rgba(255, 255, 255, 0.03);
+    background: #f8fafc;
     border: 1px solid var(--el-border);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: 14px;
+    padding: 15px;
 }
 .el-kpi-num {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     margin-bottom: 2px;
 }
 .el-kpi-label {
@@ -358,47 +423,48 @@ class SeruwitElevateLandingTemplate
 }
 .el-kpi-trend {
     font-size: 0.72rem;
-    color: #34d399;
+    color: var(--el-emerald);
     font-weight: 700;
-    margin-top: 6px;
+    margin-top: 5px;
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
 .el-live-radar {
-    background: rgba(15, 23, 42, 0.6);
+    background: #f8fafc;
     border: 1px solid var(--el-border);
-    border-radius: 18px;
-    padding: 20px;
+    border-radius: 16px;
+    padding: 18px;
 }
 .el-radar-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--el-border);
 }
 .el-radar-title {
     font-size: 0.88rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
 }
 .el-radar-badge {
     font-size: 0.72rem;
-    background: rgba(16, 185, 129, 0.2);
-    color: #34d399;
+    background: var(--el-teal-soft);
+    color: var(--el-teal-dark);
     padding: 3px 8px;
     border-radius: 4px;
     font-weight: 700;
+    border: 1px solid var(--el-teal-border);
 }
 .el-unit-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--el-border-light);
 }
 .el-unit-item:last-child {
     border-bottom: none;
@@ -407,56 +473,62 @@ class SeruwitElevateLandingTemplate
 .el-unit-info h5 {
     margin: 0 0 2px 0;
     font-size: 0.86rem;
-    color: #ffffff;
+    color: var(--el-text-main);
     font-weight: 700;
 }
 .el-unit-info span {
     font-size: 0.75rem;
-    color: var(--el-text-muted);
+    color: var(--el-text-sub);
 }
 .el-unit-tag {
     font-size: 0.74rem;
     font-weight: 700;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.1);
+    color: var(--el-cyan);
+    background: var(--el-cyan-soft);
     padding: 3px 8px;
     border-radius: 6px;
 }
 
 /* SECTION ESSENTIALS */
 .el-section {
-    padding: 100px 0;
+    padding: 90px 0;
     position: relative;
+}
+.el-section-white {
+    background: #ffffff;
+}
+.el-section-subtle {
+    background: var(--el-bg);
 }
 .el-head-center {
     text-align: center;
     max-width: 720px;
-    margin: 0 auto 60px auto;
+    margin: 0 auto 54px auto;
 }
 .el-tag-pill {
     display: inline-block;
     font-size: 0.76rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #34d399;
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    letter-spacing: 0.06em;
+    color: var(--el-teal-dark);
+    background: var(--el-teal-soft);
+    border: 1px solid var(--el-teal-border);
     padding: 5px 14px;
     border-radius: 50px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 .el-title {
-    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     letter-spacing: -0.02em;
-    line-height: 1.22;
-    margin: 0 0 16px 0;
+    line-height: 1.24;
+    margin: 0 0 14px 0;
 }
 .el-subtitle {
-    font-size: 1.08rem;
-    color: var(--el-text-sub);
+    font-size: 1.05rem;
+    color: var(--el-text-body);
     line-height: 1.65;
     margin: 0;
 }
@@ -468,12 +540,12 @@ class SeruwitElevateLandingTemplate
     gap: 24px;
 }
 .el-adv-card {
-    background: var(--el-bg-card);
+    background: #ffffff;
     border: 1px solid var(--el-border);
-    border-radius: 20px;
-    padding: 32px 28px;
+    border-radius: 18px;
+    padding: 30px 26px;
     transition: all 0.25s ease;
-    backdrop-filter: blur(16px);
+    box-shadow: var(--el-shadow-sm);
     position: relative;
     overflow: hidden;
 }
@@ -483,15 +555,15 @@ class SeruwitElevateLandingTemplate
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.6), transparent);
+    height: 3px;
+    background: linear-gradient(90deg, #0d9488, #0284c7);
     opacity: 0;
     transition: opacity 0.25s ease;
 }
 .el-adv-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(16, 185, 129, 0.35);
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4), 0 0 25px rgba(16, 185, 129, 0.15);
+    border-color: #99f6e4;
+    box-shadow: var(--el-shadow-lg);
 }
 .el-adv-card:hover::before {
     opacity: 1;
@@ -499,74 +571,74 @@ class SeruwitElevateLandingTemplate
 .el-adv-icon {
     width: 48px;
     height: 48px;
-    border-radius: 14px;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 12px;
+    background: var(--el-teal-soft);
+    border: 1px solid var(--el-teal-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 22px;
-    color: #34d399;
+    font-size: 1.45rem;
+    margin-bottom: 20px;
+    color: var(--el-teal-dark);
 }
 .el-adv-title {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     margin: 0 0 10px 0;
 }
 .el-adv-desc {
     font-size: 0.92rem;
-    color: var(--el-text-sub);
+    color: var(--el-text-body);
     line-height: 1.6;
     margin: 0;
 }
 
 /* RENTAL SPOTLIGHT HIGHLIGHTS */
 .el-spotlight-wrapper {
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 28px;
-    padding: 48px;
-    box-shadow: var(--el-shadow-card);
-    margin-bottom: 40px;
+    background: #ffffff;
+    border: 1px solid var(--el-border);
+    border-radius: 24px;
+    padding: 44px;
+    box-shadow: var(--el-shadow-md);
+    margin-bottom: 36px;
 }
 .el-spotlight-grid {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
-    gap: 48px;
+    gap: 44px;
     align-items: center;
 }
 .el-feat-pill-list {
     display: grid;
-    gap: 16px;
-    margin: 28px 0;
+    gap: 14px;
+    margin: 26px 0;
 }
 .el-feat-pill {
     display: flex;
     align-items: flex-start;
     gap: 14px;
-    background: rgba(255, 255, 255, 0.03);
+    background: #f8fafc;
     border: 1px solid var(--el-border);
     padding: 14px 18px;
     border-radius: 14px;
 }
 .el-feat-check {
-    color: #10b981;
+    color: var(--el-teal);
     font-weight: 900;
     font-size: 1.1rem;
     margin-top: 1px;
 }
 .el-feat-pill-text h4 {
     margin: 0 0 2px 0;
-    font-size: 0.96rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--el-text-main);
 }
 .el-feat-pill-text p {
     margin: 0;
-    font-size: 0.85rem;
-    color: var(--el-text-sub);
+    font-size: 0.86rem;
+    color: var(--el-text-body);
     line-height: 1.5;
 }
 
@@ -577,21 +649,22 @@ class SeruwitElevateLandingTemplate
     gap: 24px;
 }
 .el-eco-box {
-    background: var(--el-bg-card);
+    background: #ffffff;
     border: 1px solid var(--el-border);
-    border-radius: 20px;
-    padding: 30px;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: var(--el-shadow-sm);
     transition: all 0.2s ease;
 }
 .el-eco-box:hover {
-    border-color: rgba(6, 182, 212, 0.35);
-    background: var(--el-bg-card-hover);
+    border-color: #99f6e4;
+    box-shadow: var(--el-shadow-md);
 }
 .el-eco-top {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 14px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 .el-eco-icon-sm {
     font-size: 1.4rem;
@@ -599,12 +672,12 @@ class SeruwitElevateLandingTemplate
 .el-eco-name {
     font-size: 1.15rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     margin: 0;
 }
 .el-eco-summary {
-    font-size: 0.9rem;
-    color: var(--el-text-sub);
+    font-size: 0.92rem;
+    color: var(--el-text-body);
     line-height: 1.6;
     margin: 0 0 16px 0;
 }
@@ -616,39 +689,40 @@ class SeruwitElevateLandingTemplate
 .el-tag {
     font-size: 0.76rem;
     font-weight: 700;
-    background: rgba(255, 255, 255, 0.05);
-    color: #cbd5e1;
+    background: var(--el-bg-subtle);
+    color: var(--el-text-body);
     padding: 4px 10px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--el-border);
 }
 .el-tag-live {
-    background: rgba(16, 185, 129, 0.12);
-    color: #34d399;
-    border-color: rgba(16, 185, 129, 0.3);
+    background: var(--el-teal-soft);
+    color: var(--el-teal-dark);
+    border-color: var(--el-teal-border);
 }
 
 /* HORIZON MARKETPLACE CALLOUT */
 .el-market-callout {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 24px;
-    padding: 40px;
-    margin-top: 36px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 36px 40px;
+    margin-top: 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 32px;
+    gap: 28px;
+    box-shadow: var(--el-shadow-lg);
 }
 .el-market-text h3 {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 800;
     color: #ffffff;
     margin: 0 0 8px 0;
 }
 .el-market-text p {
     font-size: 0.94rem;
-    color: var(--el-text-sub);
+    color: #94a3b8;
     line-height: 1.6;
     margin: 0;
     max-width: 680px;
@@ -661,35 +735,36 @@ class SeruwitElevateLandingTemplate
     gap: 24px;
 }
 .el-step-item {
-    background: var(--el-bg-card);
+    background: #ffffff;
     border: 1px solid var(--el-border);
-    border-radius: 20px;
-    padding: 32px 26px;
+    border-radius: 18px;
+    padding: 30px 24px;
+    box-shadow: var(--el-shadow-sm);
     position: relative;
 }
 .el-step-badge {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 900;
-    color: #34d399;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #ffffff;
+    background: var(--el-grad-primary);
     width: 38px;
     height: 38px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 }
 .el-step-h {
     font-size: 1.15rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     margin: 0 0 10px 0;
 }
 .el-step-p {
-    font-size: 0.9rem;
-    color: var(--el-text-sub);
+    font-size: 0.92rem;
+    color: var(--el-text-body);
     line-height: 1.6;
     margin: 0;
 }
@@ -703,51 +778,70 @@ class SeruwitElevateLandingTemplate
     margin: 0 auto;
 }
 .el-faq-box {
-    background: var(--el-bg-card);
+    background: #ffffff;
     border: 1px solid var(--el-border);
     border-radius: 16px;
     padding: 24px;
+    box-shadow: var(--el-shadow-sm);
 }
 .el-faq-q {
-    font-size: 1.02rem;
+    font-size: 1rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--el-text-main);
     margin: 0 0 8px 0;
 }
 .el-faq-a {
-    font-size: 0.9rem;
-    color: var(--el-text-sub);
+    font-size: 0.92rem;
+    color: var(--el-text-body);
     line-height: 1.6;
     margin: 0;
 }
 
 /* CTA BANNER */
 .el-cta-section {
-    background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.2) 0%, rgba(11, 15, 25, 0.9) 70%);
-    border-top: 1px solid var(--el-border);
-    padding: 90px 0;
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #0284c7 100%);
+    color: #ffffff;
+    padding: 80px 0;
     text-align: center;
 }
 .el-cta-h2 {
-    font-size: clamp(2rem, 3.8vw, 3rem);
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
     font-weight: 800;
     color: #ffffff;
-    margin: 0 0 16px 0;
+    margin: 0 0 14px 0;
     letter-spacing: -0.02em;
 }
 .el-cta-desc {
-    font-size: 1.1rem;
-    color: var(--el-text-sub);
+    font-size: 1.08rem;
+    color: rgba(255, 255, 255, 0.92);
     max-width: 600px;
-    margin: 0 auto 36px auto;
+    margin: 0 auto 34px auto;
+    line-height: 1.6;
+}
+.el-btn-white {
+    background: #ffffff;
+    color: var(--el-teal-dark) !important;
+    font-weight: 800;
+    padding: 13px 32px;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+.el-btn-white:hover {
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
-/* MINIMALIST FOOTER */
+/* FOOTER */
 .el-footer {
-    background: #070a11;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: #0f172a;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 60px 0 30px 0;
-    color: var(--el-text-muted);
+    color: #94a3b8;
 }
 .el-footer-grid {
     display: grid;
@@ -763,7 +857,7 @@ class SeruwitElevateLandingTemplate
 }
 .el-footer-brand p {
     font-size: 0.88rem;
-    color: var(--el-text-sub);
+    color: #94a3b8;
     line-height: 1.6;
     max-width: 320px;
     margin: 0 0 16px 0;
@@ -784,16 +878,16 @@ class SeruwitElevateLandingTemplate
     gap: 10px;
 }
 .el-footer-menu li a {
-    color: var(--el-text-sub);
+    color: #cbd5e1;
     text-decoration: none;
     font-size: 0.86rem;
     transition: color 0.2s;
 }
 .el-footer-menu li a:hover {
-    color: #ffffff;
+    color: #38bdf8;
 }
 .el-footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 24px;
     display: flex;
     justify-content: space-between;
@@ -818,6 +912,21 @@ class SeruwitElevateLandingTemplate
     }
 }
 @media (max-width: 640px) {
+    .el-nav-wrapper {
+        padding: 10px 10px;
+    }
+    .el-nav-wrapper.scrolled {
+        padding: 0;
+    }
+    .el-nav-wrapper.scrolled .el-navbar {
+        padding: 8px 14px;
+    }
+    .el-navbar {
+        padding: 6px 8px 6px 14px;
+    }
+    .el-hero {
+        padding-top: 110px;
+    }
     .el-footer-grid {
         grid-template-columns: 1fr;
     }
@@ -838,26 +947,28 @@ CSS;
         return <<<'HTML'
 <div class="el-root">
 
-  <!-- SLEEK STICKY NAVBAR -->
+  <!-- SLEEK FIXED NAVBAR -->
   <div class="el-nav-wrapper">
     <nav class="el-navbar">
       <a href="/" class="el-brand">
-        <div class="el-brand-icon">⚡</div>
+        <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="el-brand-img" onerror="this.style.display='none';" />
         <span>{{setting:general.site_name}}</span>
-        <span class="el-brand-badge">Elevate</span>
       </a>
 
       <ul class="el-nav-links">
-        <li><a href="#keunggulan" class="el-nav-link">Keunggulan</a></li>
-        <li><a href="#rental" class="el-nav-link">Rental &amp; Armada</a></li>
-        <li><a href="#ekosistem" class="el-nav-link">Ekosistem Modul</a></li>
-        <li><a href="#cara-kerja" class="el-nav-link">Cara Kerja</a></li>
-        <li><a href="#faq" class="el-nav-link">FAQ</a></li>
+        <li><a href="#rental" class="el-nav-link">{{trans:landing_elevate.nav.rental}}</a></li>
+        <li><a href="#keunggulan" class="el-nav-link">{{trans:landing_elevate.nav.advantages}}</a></li>
+        <li><a href="#ekosistem" class="el-nav-link">{{trans:landing_elevate.nav.ecosystem}}</a></li>
       </ul>
 
       <div class="el-nav-actions">
-        <a href="/login" class="el-btn-ghost">Masuk</a>
-        <a href="/workspaces" class="el-btn-glow">Coba Gratis →</a>
+        <div class="el-lang-switcher">
+          <a href="?lang=id" class="el-lang-btn {{locale_active:id}}" title="Bahasa Indonesia">ID</a>
+          <span class="el-lang-divider">|</span>
+          <a href="?lang=en" class="el-lang-btn {{locale_active:en}}" title="English">EN</a>
+        </div>
+        <a href="/login" class="el-btn-ghost">{{trans:landing_elevate.nav.login}}</a>
+        <a href="/workspaces" class="el-btn-glow">{{trans:landing_elevate.nav.cta}}</a>
       </div>
     </nav>
   </div>
@@ -866,23 +977,23 @@ CSS;
   <header class="el-hero">
     <div class="el-container">
       <div class="el-hero-badge">
-        <span class="el-hero-dot"></span> Next-Gen SaaS Rental &amp; Business Operating System
+        <span class="el-hero-dot"></span> {{trans:landing_elevate.hero.badge}}
       </div>
       
       <h1 class="el-hero-h1">
-        Akselerasi Bisnis Rental &amp; <span>Kembangkan Ekosistem Tanpa Batas.</span>
+        {{trans:landing_elevate.hero.title_p1}} <span>{{trans:landing_elevate.hero.title_highlight}}</span>
       </h1>
 
       <p class="el-hero-p">
-        Dirancang khusus untuk modernisasi bisnis rental armada hari ini—lengkap dengan kalender real-time, live GPS, dan verifikasi instan—serta arsitektur modular untuk logistik, supply chain, hingga marketplace esok hari.
+        {{trans:landing_elevate.hero.subtitle}}
       </p>
 
       <div class="el-hero-btns">
-        <a href="/workspaces" class="el-btn-glow" style="padding: 14px 32px; font-size: 0.98rem;">
-          Mulai Workspace Gratis ⚡
+        <a href="/workspaces" class="el-btn-glow" style="padding: 13px 30px; font-size: 0.96rem;">
+          {{trans:landing_elevate.hero.cta_primary}}
         </a>
         <a href="#keunggulan" class="el-btn-secondary">
-          Lihat Keunggulan Produk ↓
+          {{trans:landing_elevate.hero.cta_secondary}} ↓
         </a>
       </div>
 
@@ -894,7 +1005,7 @@ CSS;
             <div class="el-stage-dot"></div>
             <div class="el-stage-dot"></div>
           </div>
-          <div class="el-stage-title">Seruwit Central Control Hub • Multi-Tenant Active</div>
+          <div class="el-stage-title">{{trans:landing_elevate.control_hub.title}} • Multi-Tenant Active</div>
           <div class="el-stage-tabs">
             <span class="el-stage-tab active">Rental &amp; Fleet</span>
             <span class="el-stage-tab">Logistics</span>
@@ -906,54 +1017,54 @@ CSS;
           <div class="el-stage-kpis">
             <div class="el-kpi-box">
               <div class="el-kpi-num">48 / 52</div>
-              <div class="el-kpi-label">Armada Aktif Operasi</div>
-              <div class="el-kpi-trend">↑ 92.3% Utilisasi Unit</div>
+              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.active_units}}</div>
+              <div class="el-kpi-trend">↑ 92.3% {{trans:landing_elevate.control_hub.utilization}}</div>
             </div>
             <div class="el-kpi-box">
-              <div class="el-kpi-num">Rp 128Jt</div>
-              <div class="el-kpi-label">Omset Rental Bulan Ini</div>
-              <div class="el-kpi-trend">↑ +18.5% Pertumbuhan</div>
+              <div class="el-kpi-num">Rp 128M</div>
+              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.revenue_today}}</div>
+              <div class="el-kpi-trend">↑ +18.5% Growth</div>
             </div>
             <div class="el-kpi-box">
               <div class="el-kpi-num">24 Unit</div>
-              <div class="el-kpi-label">Lepas Kunci Aktif</div>
-              <div class="el-kpi-trend">✓ Verifikasi KTP 100%</div>
+              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.status_on_trip}}</div>
+              <div class="el-kpi-trend">✓ KYC Verified 100%</div>
             </div>
             <div class="el-kpi-box">
               <div class="el-kpi-num">12 Trip</div>
-              <div class="el-kpi-label">Shuttle Beroperasi</div>
-              <div class="el-kpi-trend">📍 Live Telemetika GPS</div>
+              <div class="el-kpi-label">{{trans:landing_elevate.control_hub.status_ready}}</div>
+              <div class="el-kpi-trend">📍 {{trans:landing_elevate.control_hub.badge_gps}}</div>
             </div>
           </div>
 
           <div class="el-live-radar">
             <div class="el-radar-head">
-              <span class="el-radar-title">Pemantauan Armada Real-Time</span>
+              <span class="el-radar-title">Real-Time Fleet Radar</span>
               <span class="el-radar-badge">● Live GPS Tracking</span>
             </div>
 
             <div class="el-unit-item">
               <div class="el-unit-info">
                 <h5>Toyota Innova Zenix Hybrid (B 1829 SSR)</h5>
-                <span>Sewa Lepas Kunci • Rute: Sudirman → Bandara Soetta</span>
+                <span>Self Drive • Route: Sudirman → Soetta Airport</span>
               </div>
-              <span class="el-unit-tag">Bergerak (65 km/j)</span>
+              <span class="el-unit-tag">Moving (65 km/h)</span>
             </div>
 
             <div class="el-unit-item">
               <div class="el-unit-info">
                 <h5>Toyota Fortuner 2.8 GR (B 2091 PLK)</h5>
-                <span>Dengan Pengemudi • Hotel Mulia Senayan</span>
+                <span>With Driver • Hotel Mulia Senayan</span>
               </div>
-              <span class="el-unit-tag" style="color:#34d399; background:rgba(16,185,129,0.1);">Standby Menunggu</span>
+              <span class="el-unit-tag" style="color:#059669; background:#ecfdf5;">Standby Ready</span>
             </div>
 
             <div class="el-unit-item">
               <div class="el-unit-info">
                 <h5>Toyota HiAce Premio Shuttle (D 7781 AB)</h5>
-                <span>Rute Shuttle: Bandung Pasteur → Jakarta Semanggi</span>
+                <span>Shuttle: Bandung Pasteur → Jakarta Semanggi</span>
               </div>
-              <span class="el-unit-tag" style="color:#a78bfa; background:rgba(167,139,250,0.1);">12 Penumpang (Full)</span>
+              <span class="el-unit-tag" style="color:#4f46e5; background:#eef2ff;">12 Seats (Full)</span>
             </div>
           </div>
         </div>
@@ -962,62 +1073,62 @@ CSS;
   </header>
 
   <!-- KEUNGGULAN PRODUK UTAMA -->
-  <section class="el-section" id="keunggulan">
+  <section class="el-section el-section-white" id="keunggulan">
     <div class="el-container">
       <div class="el-head-center">
-        <span class="el-tag-pill">Keunggulan Solusi</span>
-        <h2 class="el-title">Mengapa Seruwit Lebih Unggul &amp; Intuitif?</h2>
+        <span class="el-tag-pill">{{trans:landing_elevate.advantages.tag}}</span>
+        <h2 class="el-title">{{trans:landing_elevate.advantages.title}}</h2>
         <p class="el-subtitle">
-          Kombinasi fleksibilitas SaaS rental generasi baru dengan skalabilitas modul bisnis yang dapat diaktifkan kapan pun Anda siap.
+          {{trans:landing_elevate.advantages.subtitle}}
         </p>
       </div>
 
       <div class="el-advantages-grid">
         <div class="el-adv-card">
           <div class="el-adv-icon">🎯</div>
-          <h3 class="el-adv-title">Zero-Conflict Booking Calendar</h3>
+          <h3 class="el-adv-title">{{trans:landing_elevate.advantages.calendar_title}}</h3>
           <p class="el-adv-desc">
-            Kalender visual interaktif yang otomatis mengunci unit armada saat terjadi pesanan, membasmi risiko double-booking pada rental lepas kunci maupun dengan supir.
+            {{trans:landing_elevate.advantages.calendar_desc}}
           </p>
         </div>
 
         <div class="el-adv-card">
           <div class="el-adv-icon">🛡️</div>
-          <h3 class="el-adv-title">Automated Security &amp; Deposit</h3>
+          <h3 class="el-adv-title">{{trans:landing_elevate.advantages.kyc_title}}</h3>
           <p class="el-adv-desc">
-            Verifikasi identitas penyewa instan (KTP, SIM, selfie) dilengkapi manajemen jaminan deposit digital untuk mengamankan aset kendaraan berharga Anda.
+            {{trans:landing_elevate.advantages.kyc_desc}}
           </p>
         </div>
 
         <div class="el-adv-card">
           <div class="el-adv-icon">📍</div>
-          <h3 class="el-adv-title">Telematika &amp; Geofencing Live</h3>
+          <h3 class="el-adv-title">{{trans:landing_elevate.advantages.gps_title}}</h3>
           <p class="el-adv-desc">
-            Koneksi langsung ke perangkat GPS armada. Pantau pergerakan kecepatan, lokasi real-time, dan batas wilayah perjalanan (geofence) secara otomatis.
+            {{trans:landing_elevate.advantages.gps_desc}}
           </p>
         </div>
 
         <div class="el-adv-card">
           <div class="el-adv-icon">🧩</div>
-          <h3 class="el-adv-title">Arsitektur Modular Terbuka</h3>
+          <h3 class="el-adv-title">{{trans:landing_elevate.advantages.modular_title}}</h3>
           <p class="el-adv-desc">
-            Tidak perlu mengganti aplikasi saat usaha Anda melebar. Tambahkan modul inventori gudang, POS kasir, maupun logistik hanya dengan satu klik di registry.
+            {{trans:landing_elevate.advantages.modular_desc}}
           </p>
         </div>
 
         <div class="el-adv-card">
           <div class="el-adv-icon">⚡</div>
-          <h3 class="el-adv-title">Multi-Tenant Terisolasi Mandiri</h3>
+          <h3 class="el-adv-title">{{trans:landing_elevate.advantages.tenant_title}}</h3>
           <p class="el-adv-desc">
-            Keamanan setara enterprise. Setiap workspace tenant memiliki basis data terisolasi, enkripsi ketat, dan dukungan custom domain profesional.
+            {{trans:landing_elevate.advantages.tenant_desc}}
           </p>
         </div>
 
         <div class="el-adv-card">
           <div class="el-adv-icon">💳</div>
-          <h3 class="el-adv-title">Faktur &amp; Payment Gateway</h3>
+          <h3 class="el-adv-title">{{trans:landing_elevate.advantages.invoice_title}}</h3>
           <p class="el-adv-desc">
-            Penerbitan invoice otomatis, tautan pembayaran online (QRIS, Virtual Account, Kartu Kredit), serta rekonsiliasi kas dan piutang otomatis.
+            {{trans:landing_elevate.advantages.invoice_desc}}
           </p>
         </div>
       </div>
@@ -1025,83 +1136,91 @@ CSS;
   </section>
 
   <!-- SPOTLIGHT: RENTAL & MOBILITAS -->
-  <section class="el-section" id="rental" style="padding-top: 20px;">
+  <section class="el-section el-section-subtle" id="rental">
     <div class="el-container">
       <div class="el-spotlight-wrapper">
         <div class="el-spotlight-grid">
           <div>
-            <span class="el-tag-pill">Fitur Unggulan Saat Ini</span>
+            <span class="el-tag-pill">{{trans:landing_elevate.rental_spotlight.tag}}</span>
             <h2 class="el-title" style="font-size: 2.3rem; margin: 10px 0 16px 0;">
-              Sistem SaaS Rental &amp; Shuttle Terlengkap
+              {{trans:landing_elevate.rental_spotlight.title}}
             </h2>
             <p class="el-subtitle" style="font-size: 1rem;">
-              Dari penerimaan order masuk, jadwal supir, cetak surat jalan, checklist serah terima kendaraan hingga laporan operasional harian.
+              {{trans:landing_elevate.rental_spotlight.subtitle}}
             </p>
 
             <div class="el-feat-pill-list">
               <div class="el-feat-pill">
                 <span class="el-feat-check">✓</span>
                 <div class="el-feat-pill-text">
-                  <h4>Sewa Harian, Mingguan &amp; Kontrak Korporat</h4>
-                  <p>Mendukung rental retail lepas kunci, rental VIP + driver, hingga sewa jangka panjang korporasi.</p>
+                  <h4>{{trans:landing_elevate.rental_spotlight.pill1_title}}</h4>
+                  <p>{{trans:landing_elevate.rental_spotlight.pill1_desc}}</p>
                 </div>
               </div>
 
               <div class="el-feat-pill">
                 <span class="el-feat-check">✓</span>
                 <div class="el-feat-pill-text">
-                  <h4>Shuttle Travel &amp; Ticketing Antar-Kota</h4>
-                  <p>Kelola manifest penumpang, pemilihan nomor kursi, tiket digital QR, dan checkpoint rute.</p>
+                  <h4>{{trans:landing_elevate.rental_spotlight.pill2_title}}</h4>
+                  <p>{{trans:landing_elevate.rental_spotlight.pill2_desc}}</p>
                 </div>
               </div>
 
               <div class="el-feat-pill">
                 <span class="el-feat-check">✓</span>
                 <div class="el-feat-pill-text">
-                  <h4>Pemeliharaan Armada &amp; Pengingat STNK/KIR</h4>
-                  <p>Jadwal servis berkala, ganti oli, serta alarm otomatis untuk masa berlaku pajak dan uji KIR kendaraan.</p>
+                  <h4>{{trans:landing_elevate.rental_spotlight.pill3_title}}</h4>
+                  <p>{{trans:landing_elevate.rental_spotlight.pill3_desc}}</p>
+                </div>
+              </div>
+
+              <div class="el-feat-pill">
+                <span class="el-feat-check">✓</span>
+                <div class="el-feat-pill-text">
+                  <h4>{{trans:landing_elevate.rental_spotlight.pill4_title}}</h4>
+                  <p>{{trans:landing_elevate.rental_spotlight.pill4_desc}}</p>
                 </div>
               </div>
             </div>
 
-            <a href="/workspaces" class="el-btn-glow">Coba Demo Rental Sekarang →</a>
+            <a href="/workspaces" class="el-btn-glow">{{trans:landing_elevate.nav.cta}}</a>
           </div>
 
-          <!-- MOCKUP LIST KENDARAAN POPULER -->
-          <div style="display: grid; gap: 16px;">
-            <div style="background:rgba(255,255,255,0.04); border:1px solid var(--el-border); border-radius:18px; padding:20px; display:flex; justify-content:space-between; align-items:center;">
+          <!-- LIST KENDARAAN POPULER -->
+          <div style="display: grid; gap: 14px;">
+            <div style="background:#ffffff; border:1px solid var(--el-border); border-radius:18px; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow: var(--el-shadow-sm);">
               <div>
-                <span style="font-size:0.72rem; color:#38bdf8; font-weight:800; text-transform:uppercase;">SUV Luxury</span>
-                <h4 style="font-size:1.1rem; font-weight:800; color:#ffffff; margin:4px 0 6px 0;">Toyota Fortuner 2.8 GR Sport</h4>
-                <div style="font-size:0.8rem; color:var(--el-text-sub);">👥 7 Kursi • ⚙️ Matik • ⛽ Diesel</div>
+                <span style="font-size:0.72rem; color:var(--el-cyan); font-weight:800; text-transform:uppercase;">SUV Luxury</span>
+                <h4 style="font-size:1.1rem; font-weight:800; color:var(--el-text-main); margin:4px 0 6px 0;">Toyota Fortuner 2.8 GR Sport</h4>
+                <div style="font-size:0.82rem; color:var(--el-text-body);">👥 7 Seats • ⚙️ Automatic • ⛽ Diesel</div>
               </div>
               <div style="text-align:right;">
-                <div style="font-size:1.15rem; font-weight:800; color:#34d399;">Rp 850rb<span style="font-size:0.75rem; color:var(--el-text-muted);">/hari</span></div>
-                <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#34d399; padding:2px 8px; border-radius:4px; font-weight:700;">Siap Sewa</span>
+                <div style="font-size:1.15rem; font-weight:800; color:var(--el-teal-dark);">Rp 850k<span style="font-size:0.75rem; color:var(--el-text-sub);">/day</span></div>
+                <span style="font-size:0.72rem; background:var(--el-emerald-soft); color:var(--el-emerald); padding:3px 8px; border-radius:4px; font-weight:700;">{{trans:landing_elevate.control_hub.status_ready}}</span>
               </div>
             </div>
 
-            <div style="background:rgba(255,255,255,0.04); border:1px solid var(--el-border); border-radius:18px; padding:20px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="background:#ffffff; border:1px solid var(--el-border); border-radius:18px; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow: var(--el-shadow-sm);">
               <div>
-                <span style="font-size:0.72rem; color:#a78bfa; font-weight:800; text-transform:uppercase;">Premium Shuttle</span>
-                <h4 style="font-size:1.1rem; font-weight:800; color:#ffffff; margin:4px 0 6px 0;">Toyota HiAce Premio Luxury</h4>
-                <div style="font-size:0.8rem; color:var(--el-text-sub);">👥 10 Kursi • 🛋️ Captain Seat • 👨‍✈️ Driver Included</div>
+                <span style="font-size:0.72rem; color:var(--el-indigo); font-weight:800; text-transform:uppercase;">Premium Shuttle</span>
+                <h4 style="font-size:1.1rem; font-weight:800; color:var(--el-text-main); margin:4px 0 6px 0;">Toyota HiAce Premio Luxury</h4>
+                <div style="font-size:0.82rem; color:var(--el-text-body);">👥 10 Seats • 🛋️ Captain Seat • 👨‍✈️ Driver Included</div>
               </div>
               <div style="text-align:right;">
-                <div style="font-size:1.15rem; font-weight:800; color:#34d399;">Rp 1.4Jt<span style="font-size:0.75rem; color:var(--el-text-muted);">/hari</span></div>
-                <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#34d399; padding:2px 8px; border-radius:4px; font-weight:700;">Siap Sewa</span>
+                <div style="font-size:1.15rem; font-weight:800; color:var(--el-teal-dark);">Rp 1.4M<span style="font-size:0.75rem; color:var(--el-text-sub);">/day</span></div>
+                <span style="font-size:0.72rem; background:var(--el-emerald-soft); color:var(--el-emerald); padding:3px 8px; border-radius:4px; font-weight:700;">{{trans:landing_elevate.control_hub.status_ready}}</span>
               </div>
             </div>
 
-            <div style="background:rgba(255,255,255,0.04); border:1px solid var(--el-border); border-radius:18px; padding:20px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="background:#ffffff; border:1px solid var(--el-border); border-radius:18px; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow: var(--el-shadow-sm);">
               <div>
-                <span style="font-size:0.72rem; color:#f59e0b; font-weight:800; text-transform:uppercase;">Family MVP</span>
-                <h4 style="font-size:1.1rem; font-weight:800; color:#ffffff; margin:4px 0 6px 0;">Toyota All New Avanza / Veloz</h4>
-                <div style="font-size:0.8rem; color:var(--el-text-sub);">👥 7 Kursi • ⚙️ Matik / Manual • ❄️ Double AC</div>
+                <span style="font-size:0.72rem; color:var(--el-amber); font-weight:800; text-transform:uppercase;">Family MPV</span>
+                <h4 style="font-size:1.1rem; font-weight:800; color:var(--el-text-main); margin:4px 0 6px 0;">Toyota All New Avanza / Veloz</h4>
+                <div style="font-size:0.82rem; color:var(--el-text-body);">👥 7 Seats • ⚙️ Auto/Manual • ❄️ Double AC</div>
               </div>
               <div style="text-align:right;">
-                <div style="font-size:1.15rem; font-weight:800; color:#34d399;">Rp 400rb<span style="font-size:0.75rem; color:var(--el-text-muted);">/hari</span></div>
-                <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#34d399; padding:2px 8px; border-radius:4px; font-weight:700;">Siap Sewa</span>
+                <div style="font-size:1.15rem; font-weight:800; color:var(--el-teal-dark);">Rp 400k<span style="font-size:0.75rem; color:var(--el-text-sub);">/day</span></div>
+                <span style="font-size:0.72rem; background:var(--el-emerald-soft); color:var(--el-emerald); padding:3px 8px; border-radius:4px; font-weight:700;">{{trans:landing_elevate.control_hub.status_ready}}</span>
               </div>
             </div>
           </div>
@@ -1111,13 +1230,13 @@ CSS;
   </section>
 
   <!-- ARSITEKTUR EKOSISTEM MASA DEPAN -->
-  <section class="el-section" id="ekosistem">
+  <section class="el-section el-section-white" id="ekosistem">
     <div class="el-container">
       <div class="el-head-center">
-        <span class="el-tag-pill">Ekosistem Terintegrasi</span>
-        <h2 class="el-title">Modul Bisnis yang Siap Tumbuh Bersama Anda</h2>
+        <span class="el-tag-pill">{{trans:landing_elevate.ecosystem.tag}}</span>
+        <h2 class="el-title">{{trans:landing_elevate.ecosystem.title}}</h2>
         <p class="el-subtitle">
-          Satu akun workspace untuk mengontrol mobilitas, rantai pasok gudang, penjualan toko, hingga pembukuan keuangan.
+          {{trans:landing_elevate.ecosystem.subtitle}}
         </p>
       </div>
 
@@ -1125,15 +1244,15 @@ CSS;
         <div class="el-eco-box">
           <div class="el-eco-top">
             <span class="el-eco-icon-sm">🚚</span>
-            <h3 class="el-eco-name">Logistik &amp; Gudang (Supply Chain)</h3>
+            <h3 class="el-eco-name">{{trans:landing_elevate.ecosystem.logistics_title}}</h3>
           </div>
           <p class="el-eco-summary">
-            Sistem manajemen inventori multi-gudang, purchase order (PO), tanda terima barang (GRN), surat jalan delivery (POD), dan kontrol stok real-time.
+            {{trans:landing_elevate.ecosystem.logistics_desc}}
           </p>
           <div class="el-eco-tags">
-            <span class="el-tag el-tag-live">Inventory Multi-Gudang</span>
+            <span class="el-tag el-tag-live">Inventory Multi-Warehouse</span>
             <span class="el-tag el-tag-live">PO &amp; Purchasing</span>
-            <span class="el-tag el-tag-live">Surat Jalan (POD)</span>
+            <span class="el-tag el-tag-live">Proof of Delivery (POD)</span>
             <span class="el-tag el-tag-live">Dispatch Outbound</span>
           </div>
         </div>
@@ -1141,13 +1260,13 @@ CSS;
         <div class="el-eco-box">
           <div class="el-eco-top">
             <span class="el-eco-icon-sm">🛍️</span>
-            <h3 class="el-eco-name">Commerce, POS &amp; Canvassing</h3>
+            <h3 class="el-eco-name">{{trans:landing_elevate.ecosystem.pos_title}}</h3>
           </div>
           <p class="el-eco-summary">
-            Kasir Point of Sale (POS) untuk cabang fisik, aplikasi sales canvassing keliling, promo perdagangan distributor, dan katalog produk digital.
+            {{trans:landing_elevate.ecosystem.pos_desc}}
           </p>
           <div class="el-eco-tags">
-            <span class="el-tag el-tag-live">POS Kasir Cabang</span>
+            <span class="el-tag el-tag-live">POS Outlets</span>
             <span class="el-tag el-tag-live">Sales Canvassing</span>
             <span class="el-tag el-tag-live">Trade Promotions</span>
             <span class="el-tag el-tag-live">Product Master</span>
@@ -1157,15 +1276,15 @@ CSS;
         <div class="el-eco-box">
           <div class="el-eco-top">
             <span class="el-eco-icon-sm">💼</span>
-            <h3 class="el-eco-name">Keuangan &amp; Akuntansi ERP</h3>
+            <h3 class="el-eco-name">{{trans:landing_elevate.ecosystem.finance_title}}</h3>
           </div>
           <p class="el-eco-summary">
-            Faktur elektronik, manajemen umur piutang (AR aging), utang usaha (AP), laporan laba rugi, buku besar akuntansi, dan matriks approval berjenjang.
+            {{trans:landing_elevate.ecosystem.finance_desc}}
           </p>
           <div class="el-eco-tags">
             <span class="el-tag el-tag-live">Automated Invoicing</span>
-            <span class="el-tag el-tag-live">Piutang &amp; Aging</span>
-            <span class="el-tag el-tag-live">Buku Besar / GL</span>
+            <span class="el-tag el-tag-live">AR / AP Aging</span>
+            <span class="el-tag el-tag-live">General Ledger (GL)</span>
             <span class="el-tag el-tag-live">Approval Matrix</span>
           </div>
         </div>
@@ -1173,13 +1292,13 @@ CSS;
         <div class="el-eco-box">
           <div class="el-eco-top">
             <span class="el-eco-icon-sm">⚡</span>
-            <h3 class="el-eco-name">Mobilitas &amp; Telematika Cerdas</h3>
+            <h3 class="el-eco-name">{{trans:landing_elevate.ecosystem.inventory_title}}</h3>
           </div>
           <p class="el-eco-summary">
-            Rental kendaraan, armada shuttle antar-kota, penilaian pengemudi (Driver Scoring), manajemen dokumen legal (STNK/KIR/SIM), dan rute otomatis.
+            {{trans:landing_elevate.ecosystem.inventory_desc}}
           </p>
           <div class="el-eco-tags">
-            <span class="el-tag el-tag-live">Rental Kendaraan</span>
+            <span class="el-tag el-tag-live">Vehicle Rental</span>
             <span class="el-tag el-tag-live">Shuttle Travel</span>
             <span class="el-tag el-tag-live">Driver Scoring</span>
             <span class="el-tag el-tag-live">Fleet Maintenance</span>
@@ -1190,85 +1309,77 @@ CSS;
       <!-- HORIZON MARKETPLACE CALLOUT -->
       <div class="el-market-callout">
         <div class="el-market-text">
-          <span style="font-size:0.75rem; color:#38bdf8; font-weight:800; text-transform:uppercase;">Ecosystem Horizon</span>
-          <h3>🌐 B2B Marketplace &amp; E-Commerce Storefront</h3>
+          <span style="font-size:0.75rem; color:#38bdf8; font-weight:800; text-transform:uppercase;">{{trans:landing_elevate.ecosystem.market_badge}}</span>
+          <h3>🌐 {{trans:landing_elevate.ecosystem.market_title}}</h3>
           <p>
-            Visi masa depan Seruwit: Membuka kolaborasi antar-tenant. Saling tukar order armada sewa saat pesanan melimpah, jual beli suku cadang terpercaya, hingga etalase digital terbuka antar mitra bisnis.
+            {{trans:landing_elevate.ecosystem.market_desc}}
           </p>
         </div>
         <div>
-          <a href="/workspaces" class="el-btn-glow" style="white-space:nowrap;">Gabung Jaringan Kami →</a>
+          <a href="/workspaces" class="el-btn-glow" style="white-space:nowrap; background:#ffffff; color:#0f172a !important;">{{trans:landing_elevate.ecosystem.market_cta}}</a>
         </div>
       </div>
     </div>
   </section>
 
   <!-- CARA KERJA -->
-  <section class="el-section" id="cara-kerja">
+  <section class="el-section el-section-subtle" id="cara-kerja">
     <div class="el-container">
       <div class="el-head-center">
-        <span class="el-tag-pill">Onboarding Instan</span>
-        <h2 class="el-title">Mulai Operasi Tanpa Setup Rumit</h2>
-        <p class="el-subtitle">Semua sistem berbasis Cloud murni—tidak perlu server fisik atau instalasi sulit.</p>
+        <span class="el-tag-pill">{{trans:landing_elevate.workflow.tag}}</span>
+        <h2 class="el-title">{{trans:landing_elevate.workflow.title}}</h2>
+        <p class="el-subtitle">{{trans:landing_elevate.workflow.subtitle}}</p>
       </div>
 
       <div class="el-steps-grid">
         <div class="el-step-item">
-          <div class="el-step-badge">1</div>
-          <h3 class="el-step-h">Buat Akun Workspace</h3>
-          <p class="el-step-p">Daftarkan perusahaan Anda dan dapatkan domain workspace mandiri yang terenkripsi dan terisolasi.</p>
+          <div class="el-step-badge">{{trans:landing_elevate.workflow.step1_num}}</div>
+          <h3 class="el-step-h">{{trans:landing_elevate.workflow.step1_title}}</h3>
+          <p class="el-step-p">{{trans:landing_elevate.workflow.step1_desc}}</p>
         </div>
 
         <div class="el-step-item">
-          <div class="el-step-badge">2</div>
-          <h3 class="el-step-h">Pilih &amp; Pasang Modul</h3>
-          <p class="el-step-p">Aktifkan modul Rental &amp; Armada sekarang, serta tambahkan modul logistik atau kasir kapan pun dibutuhkan.</p>
+          <div class="el-step-badge">{{trans:landing_elevate.workflow.step2_num}}</div>
+          <h3 class="el-step-h">{{trans:landing_elevate.workflow.step2_title}}</h3>
+          <p class="el-step-p">{{trans:landing_elevate.workflow.step2_desc}}</p>
         </div>
 
         <div class="el-step-item">
-          <div class="el-step-badge">3</div>
-          <h3 class="el-step-h">Jalankan Transaksi Harian</h3>
-          <p class="el-step-p">Kelola unit, input booking, pantau GPS posisi kendaraan, serta terbitkan invoice pembayaran secara otomatis.</p>
+          <div class="el-step-badge">{{trans:landing_elevate.workflow.step3_num}}</div>
+          <h3 class="el-step-h">{{trans:landing_elevate.workflow.step3_title}}</h3>
+          <p class="el-step-p">{{trans:landing_elevate.workflow.step3_desc}}</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="el-section" id="faq">
+  <section class="el-section el-section-white" id="faq">
     <div class="el-container">
       <div class="el-head-center">
-        <span class="el-tag-pill">FAQ</span>
-        <h2 class="el-title">Pertanyaan yang Sering Diajukan</h2>
+        <span class="el-tag-pill">{{trans:landing_elevate.faq.tag}}</span>
+        <h2 class="el-title">{{trans:landing_elevate.faq.title}}</h2>
       </div>
 
       <div class="el-faq-grid">
         <div class="el-faq-box">
-          <h4 class="el-faq-q">Apakah saya bisa fokus menggunakan modul rental kendaraan saja?</h4>
-          <p class="el-faq-a">
-            Tentu. Seruwit bersifat modular penuh. Anda dapat menggunakan modul rental secara terisolasi tanpa perlu mengaktifkan modul lainnya.
-          </p>
+          <h4 class="el-faq-q">{{trans:landing_elevate.faq.q1}}</h4>
+          <p class="el-faq-a">{{trans:landing_elevate.faq.a1}}</p>
         </div>
 
         <div class="el-faq-box">
-          <h4 class="el-faq-q">Bagaimana jika bisnis saya berkembang ke logistik atau ritel?</h4>
-          <p class="el-faq-a">
-            Anda dapat langsung menyalakan modul Inventory, Transportation, atau POS Kasir secara instan dari registry tanpa perlu migrasi data ulang.
-          </p>
+          <h4 class="el-faq-q">{{trans:landing_elevate.faq.q2}}</h4>
+          <p class="el-faq-a">{{trans:landing_elevate.faq.a2}}</p>
         </div>
 
         <div class="el-faq-box">
-          <h4 class="el-faq-q">Bagaimana keamanan data bisnis saya?</h4>
-          <p class="el-faq-a">
-            Setiap tenant berada di ruang terpisah (*Multi-Tenant Isolation*) dengan akses berbasis peran (*RBAC*), memastikan data rental Anda tidak dapat diakses tenant lain.
-          </p>
+          <h4 class="el-faq-q">{{trans:landing_elevate.faq.q3}}</h4>
+          <p class="el-faq-a">{{trans:landing_elevate.faq.a3}}</p>
         </div>
 
         <div class="el-faq-box">
-          <h4 class="el-faq-q">Bisakah diakses via HP oleh pengemudi dan pelanggan?</h4>
-          <p class="el-faq-a">
-            Ya! Aplikasi web Seruwit responsif penuh dan mendukung Progressive Web App (PWA) yang ringan dan cepat dibuka dari browser smartphone apa pun.
-          </p>
+          <h4 class="el-faq-q">{{trans:landing_elevate.faq.q4}}</h4>
+          <p class="el-faq-a">{{trans:landing_elevate.faq.a4}}</p>
         </div>
       </div>
     </div>
@@ -1277,32 +1388,32 @@ CSS;
   <!-- CTA BANNER -->
   <section class="el-cta-section">
     <div class="el-container">
-      <h2 class="el-cta-h2">Siap Membawa Bisnis Rental Anda ke Level Selanjutnya?</h2>
+      <h2 class="el-cta-h2">{{trans:landing_elevate.cta_bottom.title}}</h2>
       <p class="el-cta-desc">
-        Tingkatkan efisiensi armada, kendalikan pemesanan, dan bangun masa depan bisnis Anda bersama {{setting:general.site_name}}.
+        {{trans:landing_elevate.cta_bottom.subtitle}}
       </p>
       <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
-        <a href="/workspaces" class="el-btn-glow" style="padding: 14px 34px; font-size: 1rem;">
-          Buat Workspace Sekarang →
+        <a href="/workspaces" class="el-btn-white">
+          {{trans:landing_elevate.cta_bottom.btn_primary}} →
         </a>
-        <a href="mailto:{{setting:site.contact_email}}" class="el-btn-secondary" style="padding: 14px 28px;">
-          Hubungi Tim Kami
+        <a href="mailto:{{setting:site.contact_email}}" class="el-btn-secondary" style="background:rgba(255,255,255,0.15); color:#ffffff; border-color:rgba(255,255,255,0.3);">
+          {{trans:landing_elevate.cta_bottom.btn_sales}}
         </a>
       </div>
     </div>
   </section>
 
-  <!-- MINIMALIST FOOTER -->
+  <!-- FOOTER -->
   <footer class="el-footer">
     <div class="el-container">
       <div class="el-footer-grid">
         <div class="el-footer-brand">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-            <div class="el-brand-icon" style="width:26px; height:26px; font-size:0.8rem;">⚡</div>
+            <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="el-brand-img" style="height:26px;" onerror="this.style.display='none';" />
             <h4 style="margin:0;">{{setting:general.site_name}}</h4>
           </div>
           <p>{{setting:general.site_tagline}}</p>
-          <p style="font-size:0.8rem; color:#64748b;">
+          <p style="font-size:0.8rem; color:#94a3b8;">
             📍 {{setting:site.address}}<br>
             📞 {{setting:site.phone}}<br>
             ✉️ {{setting:site.contact_email}}
@@ -1310,42 +1421,60 @@ CSS;
         </div>
 
         <div class="el-footer-col">
-          <h5>Solusi Mobilitas</h5>
+          <h5>{{trans:landing_elevate.footer.mobility_title}}</h5>
           <ul class="el-footer-menu">
-            <li><a href="#rental">Rental Kendaraan</a></li>
-            <li><a href="#rental">Shuttle &amp; Travel</a></li>
-            <li><a href="#keunggulan">Live GPS Tracking</a></li>
-            <li><a href="#keunggulan">Driver Management</a></li>
+            <li><a href="#rental">{{trans:landing_elevate.footer.rental_car}}</a></li>
+            <li><a href="#rental">{{trans:landing_elevate.footer.shuttle}}</a></li>
+            <li><a href="#keunggulan">{{trans:landing_elevate.footer.gps_live}}</a></li>
+            <li><a href="#keunggulan">{{trans:landing_elevate.footer.driver_mgmt}}</a></li>
           </ul>
         </div>
 
         <div class="el-footer-col">
-          <h5>Ekosistem Bisnis</h5>
+          <h5>{{trans:landing_elevate.footer.eco_title}}</h5>
           <ul class="el-footer-menu">
-            <li><a href="#ekosistem">Logistik &amp; Gudang</a></li>
-            <li><a href="#ekosistem">POS &amp; Canvassing</a></li>
-            <li><a href="#ekosistem">Akuntansi &amp; Faktur</a></li>
-            <li><a href="#ekosistem">B2B Marketplace</a></li>
+            <li><a href="#ekosistem">{{trans:landing_elevate.footer.logistics_wh}}</a></li>
+            <li><a href="#ekosistem">{{trans:landing_elevate.footer.pos_field}}</a></li>
+            <li><a href="#ekosistem">{{trans:landing_elevate.footer.finance_inv}}</a></li>
+            <li><a href="#ekosistem">{{trans:landing_elevate.footer.b2b_market}}</a></li>
           </ul>
         </div>
 
         <div class="el-footer-col">
-          <h5>Platform &amp; Legal</h5>
+          <h5>{{trans:landing_elevate.footer.platform_title}}</h5>
           <ul class="el-footer-menu">
-            <li><a href="/login">Masuk Workspace</a></li>
-            <li><a href="/workspaces">Daftar Akun</a></li>
-            <li><a href="/terms">Syarat &amp; Ketentuan</a></li>
-            <li><a href="/privacy">Kebijakan Privasi</a></li>
+            <li><a href="/login">{{trans:landing_elevate.footer.login}}</a></li>
+            <li><a href="/workspaces">{{trans:landing_elevate.footer.register}}</a></li>
+            <li><a href="/terms">{{trans:landing_elevate.footer.terms}}</a></li>
+            <li><a href="/privacy">{{trans:landing_elevate.footer.privacy}}</a></li>
           </ul>
         </div>
       </div>
 
       <div class="el-footer-bottom">
         <div>{{setting:site.copyright}}</div>
-        <div style="color: #64748b;">Next-Gen Modular Mobility &amp; Business Operating System</div>
+        <div style="color: #94a3b8;">{{trans:landing_elevate.footer.subtext}}</div>
       </div>
     </div>
   </footer>
+
+  <script>
+    (function() {
+      var navWrapper = document.querySelector('.el-nav-wrapper');
+      if (!navWrapper) return;
+      
+      function onScroll() {
+        if (window.scrollY > 30) {
+          navWrapper.classList.add('scrolled');
+        } else {
+          navWrapper.classList.remove('scrolled');
+        }
+      }
+      
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+  </script>
 
 </div>
 HTML;

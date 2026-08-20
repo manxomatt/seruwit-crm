@@ -22,11 +22,22 @@ class LocaleResolver
     {
         $supported = config('localization.supported', ['en', 'id']);
 
+        $queryLang = $request->query('lang') ?? $request->query('locale');
+        if (is_string($queryLang) && in_array($queryLang, $supported, true)) {
+            $request->session()->put(config('localization.session_key', 'locale'), $queryLang);
+            if ($user = $request->user()) {
+                $user->forceFill(['locale' => $queryLang])->save();
+            }
+
+            return $queryLang;
+        }
+
         $candidates = [
             $request->user()?->locale,
             $request->session()->get(config('localization.session_key', 'locale')),
             config('localization.default'),
             config('app.locale'),
+            'id',
             'en',
         ];
 
