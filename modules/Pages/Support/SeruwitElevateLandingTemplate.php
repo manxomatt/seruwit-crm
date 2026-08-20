@@ -1366,17 +1366,8 @@ CSS;
         </div>
 
         <!-- RIGHT COLUMN: INTERACTIVE VISUAL COMMAND CENTER -->
-        <div class="el-command-stage">
+        <div class="el-hero-canvas-wrap">
           
-          <!-- FLOATING TOP-RIGHT BADGE: INSTANT KYC -->
-          <div class="el-float-card el-float-kyc">
-            <div class="el-float-icon">🛡️</div>
-            <div class="el-float-info">
-              <h6>{{trans:landing_elevate.hero.kyc_card_title}}</h6>
-              <p>{{trans:landing_elevate.hero.kyc_card_desc}}</p>
-            </div>
-          </div>
-
           <!-- MAIN CANVAS CARD: TIMELINE GANTT MATRIX -->
           <div class="el-canvas-card">
             <div class="el-canvas-header">
