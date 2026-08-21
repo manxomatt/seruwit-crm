@@ -36,6 +36,8 @@ class StorePlanRequest extends FormRequest
             'features_list' => ['nullable', 'array'],
             'features_list.*' => ['string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+                        'is_active' => ['boolean'],
+            // Pricing fields
             'is_default' => ['boolean'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'original_price' => ['nullable', 'numeric', 'min:0'],

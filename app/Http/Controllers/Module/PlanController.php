@@ -29,7 +29,8 @@ class PlanController extends Controller
     public function index(): Response
     {
         return Inertia::render('Module/Plans/Index', [
-            'plans' => Plan::query()
+                        'plans' => Plan::query()
+                ->where('is_active', true)
                 ->ordered()
                 ->get()
                 ->map(fn (Plan $plan): array => [
@@ -39,6 +40,7 @@ class PlanController extends Controller
                     'description' => $plan->description,
                     'badge' => $plan->badge,
                     'is_popular' => (bool) $plan->is_popular,
+                    'is_active' => (bool) $plan->is_active,
                     'modules' => $plan->modules ?? [],
                     'limits' => $plan->limits ?? [],
                     'features_list' => $plan->features_list ?? [],

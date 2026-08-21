@@ -81,6 +81,7 @@ class Plan extends Model
         'interval',
         'trial_days',
         'is_trial',
+        'is_active',
     ];
 
     /**
@@ -101,6 +102,7 @@ class Plan extends Model
             'annual_original_price' => 'decimal:2',
             'trial_days' => 'integer',
             'is_trial' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

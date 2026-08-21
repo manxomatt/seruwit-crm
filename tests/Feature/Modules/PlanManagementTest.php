@@ -65,6 +65,7 @@ class PlanManagementTest extends TestCase
                 ->where('plans.1.tenants', 0)
                 ->where('plans.2.key', 'basic')
                 ->where('plans.2.is_default', true)
+                ->where('plans.2.is_active', true)
                 ->where('plans.2.tenants', 1)
             );
     }

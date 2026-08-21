@@ -35,6 +35,7 @@ class UpdatePlanRequest extends FormRequest
             'limits.max_branches' => ['nullable', 'integer', 'min:0'],
             'features_list' => ['nullable', 'array'],
             'features_list.*' => ['string', 'max:255'],
+            'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_default' => ['boolean'],
             'price' => ['nullable', 'numeric', 'min:0'],
