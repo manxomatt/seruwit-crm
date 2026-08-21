@@ -223,6 +223,33 @@ export default function Onboarding({
 
     const popularCities = ['Jakarta', 'Bali (Denpasar)', 'Surabaya', 'Yogyakarta', 'Bandung', 'Medan', 'Semarang'];
 
+    const handleCityClick = (cityName: string) => {
+        const currentText = data.city ?? '';
+        const currentList = currentText
+            .split(',')
+            .map((c) => c.trim())
+            .filter(Boolean);
+
+        const existingIndex = currentList.findIndex((c) => c.toLowerCase() === cityName.toLowerCase());
+
+        if (existingIndex !== -1) {
+            currentList.splice(existingIndex, 1);
+            setData('city', currentList.join(', '));
+        } else {
+            currentList.push(cityName);
+            setData('city', currentList.join(', '));
+        }
+    };
+
+    const isCitySelected = (cityName: string) => {
+        if (!data.city) return false;
+        const currentList = data.city
+            .split(',')
+            .map((c) => c.trim().toLowerCase())
+            .filter(Boolean);
+        return currentList.includes(cityName.toLowerCase());
+    };
+
     return (
         <>
             <Head title={t('central.onboarding.title')} />
@@ -469,20 +496,24 @@ export default function Onboarding({
                                             </div>
                                             {/* Quick City Chips */}
                                             <div className="mt-2 flex flex-wrap gap-1.5">
-                                                {popularCities.map((cityName) => (
-                                                    <button
-                                                        key={cityName}
-                                                        type="button"
-                                                        onClick={() => setData('city', cityName)}
-                                                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition ${
-                                                            data.city === cityName
-                                                                ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                                                                : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
-                                                        }`}
-                                                    >
-                                                        {cityName}
-                                                    </button>
-                                                ))}
+                                                {popularCities.map((cityName) => {
+                                                    const selected = isCitySelected(cityName);
+                                                    return (
+                                                        <button
+                                                            key={cityName}
+                                                            type="button"
+                                                            onClick={() => handleCityClick(cityName)}
+                                                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition ${
+                                                                selected
+                                                                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
+                                                                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                            }`}
+                                                        >
+                                                            {selected ? '✓ ' : '+ '}
+                                                            {cityName}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                             <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.city_hint')}</p>
                                         </div>
