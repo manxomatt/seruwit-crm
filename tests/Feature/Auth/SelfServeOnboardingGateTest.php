@@ -42,6 +42,55 @@ class SelfServeOnboardingGateTest extends TestCase
             ->assertRedirect(route('verification.notice', absolute: false));
     }
 
+    public function test_inactive_plans_are_hidden_from_onboarding(): void
+    {
+        $this->seed(PlanSeeder::class);
+        Plan::query()->firstWhere('key', 'pro')->update(['is_active' => false]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('central.onboarding.show'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Central/Onboarding')
+                ->where('availablePlans', fn ($plans) => collect($plans)->every(
+                    fn ($plan): bool => $plan['key'] !== 'pro',
+                ))
+            );
+    }
+
+    public function test_an_inactive_plan_cannot_be_chosen_at_onboarding(): void
+    {
+        $this->seed(PlanSeeder::class);
+        Plan::query()->firstWhere('key', 'pro')->update(['is_active' => false]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('central.onboarding.store'), [
+                'company_name' => 'Inactive Plan Co',
+                'subdomain' => 'inactive-plan-co',
+                'plan_key' => 'pro',
+                'verticals' => ['rental'],
+            ])
+            ->assertSessionHasErrors('plan_key');
+    }
+
+    public function test_inactive_plans_are_hidden_from_the_landing_pricing_table(): void
+    {
+        $this->seed(PlanSeeder::class);
+        Plan::query()->firstWhere('key', 'pro')->update(['is_active' => false]);
+
+        $html = \Modules\Pages\Support\PricingTableRenderer::render();
+
+        $pro = Plan::query()->firstWhere('key', 'pro');
+        $basic = Plan::query()->firstWhere('key', 'basic');
+
+        $this->assertStringNotContainsString($pro->name, $html);
+        $this->assertStringContainsString($basic->name, $html);
+    }
+
     public function test_trial_plan_is_seeded_with_onboarding_entitlements(): void
     {
         $this->seed(PlanSeeder::class);

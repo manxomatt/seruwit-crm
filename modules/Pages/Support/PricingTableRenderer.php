@@ -11,7 +11,7 @@ class PricingTableRenderer
      */
     public static function render(): string
     {
-        $plans = Plan::query()->ordered()->get();
+        $plans = Plan::query()->active()->ordered()->get();
 
         if ($plans->isEmpty()) {
             return '';

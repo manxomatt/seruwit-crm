@@ -287,6 +287,35 @@ class PlanManagementTest extends TestCase
         $this->assertNull(Plan::query()->find($pro->id));
     }
 
+    public function test_an_inactive_plan_still_appears_in_plan_manager(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        Plan::query()->firstWhere('key', 'pro')->update(['is_active' => false]);
+
+        $this->actingAs($admin)->get('/module/plans')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Module/Plans/Index')
+                ->where('plans', fn ($plans) => collect($plans)->contains(
+                    fn ($plan): bool => $plan['key'] === 'pro' && $plan['is_active'] === false,
+                ))
+            );
+    }
+
+    public function test_super_admin_can_deactivate_a_plan(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        $pro = Plan::query()->firstWhere('key', 'pro');
+
+        $this->actingAs($admin)->put('/module/plans/'.$pro->id, [
+            'name' => $pro->name,
+            'modules' => $pro->modules ?? [],
+            'is_active' => false,
+        ])->assertRedirect('/module/plans');
+
+        $this->assertFalse($pro->refresh()->is_active);
+    }
+
     public function test_a_non_admin_cannot_reach_plan_management(): void
     {
         $user = User::factory()->create();
