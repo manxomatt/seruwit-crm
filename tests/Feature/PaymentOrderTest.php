@@ -10,15 +10,18 @@ use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Tests\Traits\WithRoles;
 
 class PaymentOrderTest extends TestCase
 {
     use DatabaseMigrations;
+    use WithRoles;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(PlanSeeder::class);
+        $this->setUpRoles();
     }
 
     private function createTenantRecord(array $attributes): Tenant
@@ -199,5 +202,33 @@ class PaymentOrderTest extends TestCase
         $totalCredit = (float) $entry->lines->sum('credit');
         $this->assertEqualsWithDelta($totalDebit, $totalCredit, 0.001);
         $this->assertEqualsWithDelta((float) $order->total_amount, $totalDebit, 0.001);
+    }
+
+    public function test_pending_payment_orders_count_is_shared_with_admin(): void
+    {
+        $tenant = $this->createTenantRecord(['id' => 'count-share-test']);
+        $plan = Plan::query()->where('key', 'basic')->firstOrFail();
+        $admin = $this->createAdminUser();
+
+        $service = new PaymentOrderService;
+        $order = $service->createOrder($tenant, $plan, 'activate');
+
+        // Initially pending (not awaiting confirmation)
+        $shared = app(\App\Http\Middleware\HandleInertiaRequests::class)->share(request());
+        $count = is_callable($shared['pendingPaymentOrdersCount'])
+            ? $shared['pendingPaymentOrdersCount']()
+            : $shared['pendingPaymentOrdersCount'];
+        $this->assertEquals(0, $count);
+
+        // Submit proof -> transitions to awaiting_confirmation
+        $file = \Illuminate\Http\UploadedFile::fake()->create('proof.jpg', 100);
+        $service->submitProof($order, $file);
+
+        // Should count as 1
+        $shared = app(\App\Http\Middleware\HandleInertiaRequests::class)->share(request());
+        $count = is_callable($shared['pendingPaymentOrdersCount'])
+            ? $shared['pendingPaymentOrdersCount']()
+            : $shared['pendingPaymentOrdersCount'];
+        $this->assertEquals(1, $count);
     }
 }

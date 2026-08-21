@@ -98,6 +98,9 @@ class HandleInertiaRequests extends Middleware
                         ...$notification->data,
                     ]),
             ] : null,
+            'pendingPaymentOrdersCount' => fn () => ($user && $user->isAdmin())
+                ? \App\Models\PaymentOrder::where('status', \App\Models\PaymentOrder::STATUS_AWAITING_CONFIRMATION)->count()
+                : 0,
             'settings' => $settings,
             'aiFeaturesEnabled' => \App\Support\CentralAiSettings::isEnabled(),
             // The tenant *domain* we're currently on (null on the central domain).
