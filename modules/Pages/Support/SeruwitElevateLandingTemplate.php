@@ -939,12 +939,39 @@ class SeruwitElevateLandingTemplate
     text-decoration: none;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 .el-btn-white:hover {
     background: #f8fafc;
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+.el-btn-secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    font-weight: 800;
+    padding: 13px 32px;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+.el-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    color: #ffffff !important;
 }
 
 /* FOOTER */
@@ -1797,7 +1824,7 @@ CSS;
         <a href="/register" class="el-btn-white">
           {{trans:landing_elevate.cta_bottom.btn_primary}} →
         </a>
-        <a href="mailto:{{setting:site.contact_email}}" class="el-btn-secondary" style="background:rgba(255,255,255,0.15); color:#ffffff; border-color:rgba(255,255,255,0.3);">
+        <a href="mailto:{{setting:site.contact_email}}?subject=Tanya%20Seputar%20Seruwit%20CRM%20%26%20Solusi%20Enterprise" class="el-btn-secondary">
           {{trans:landing_elevate.cta_bottom.btn_sales}}
         </a>
       </div>

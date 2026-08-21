@@ -161,17 +161,13 @@
     @endif
     
     <script>
-        // Ensure all navigation links work properly without being intercepted
+        // Ensure all navigation and action links work properly without being intercepted
         document.addEventListener('DOMContentLoaded', function() {
-            // Find all links that should navigate to other pages
-            const navigationLinks = document.querySelectorAll('a[href^="/"], a[href^="http"]');
-            navigationLinks.forEach(function(link) {
-                // Remove any existing click handlers that might prevent navigation
+            const links = document.querySelectorAll('a[href]');
+            links.forEach(function(link) {
                 link.addEventListener('click', function(e) {
                     const href = this.getAttribute('href');
-                    // Only handle links that are not anchor links
-                    if (href && !href.startsWith('#')) {
-                        // Allow default navigation behavior
+                    if (href && (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('http') || href.startsWith('/'))) {
                         return true;
                     }
                 }, true);

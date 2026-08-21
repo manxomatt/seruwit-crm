@@ -1457,7 +1457,7 @@ CSS;
       </p>
       <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
         <a href="/workspaces" class="srw-btn srw-btn-white">Daftar Workspace Gratis →</a>
-        <a href="mailto:{{setting:site.contact_email}}" class="srw-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3);">Hubungi Tim Sales</a>
+        <a href="mailto:{{setting:site.contact_email}}?subject=Tanya%20Seputar%20Seruwit%20CRM%20%26%20Solusi%20Enterprise" class="srw-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3);">Hubungi Tim Sales</a>
       </div>
     </div>
   </section>
