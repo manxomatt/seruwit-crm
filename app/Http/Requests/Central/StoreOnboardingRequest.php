@@ -27,7 +27,7 @@ class StoreOnboardingRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'city' => ['nullable', 'string', 'max:100'],
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($this->ignoreDomainForRetry())],
-            'plan_key' => ['nullable', 'string', 'max:50', Rule::exists('plans', 'key')],
+            'plan_key' => ['nullable', 'string', 'max:50', Rule::exists('plans', 'key')->where('is_active', true)],
             'fleet_size' => ['nullable', 'string', 'max:50'],
             'rental_model' => ['nullable', 'string', 'max:50'],
             'verticals' => ['required', 'array', 'min:1'],

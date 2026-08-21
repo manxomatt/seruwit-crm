@@ -46,6 +46,7 @@ class OnboardingController extends Controller
         }
 
         $plans = \App\Models\Plan::query()
+            ->active()
             ->orderBy('sort_order')
             ->get()
             ->map(fn (\App\Models\Plan $plan) => [
@@ -239,7 +240,7 @@ class OnboardingController extends Controller
             ->first();
 
         if (! $order) {
-            $plan = \App\Models\Plan::query()->firstWhere('key', $session->plan_key) ?? \App\Models\Plan::query()->first();
+            $plan = \App\Models\Plan::query()->firstWhere('key', $session->plan_key) ?? \App\Models\Plan::query()->active()->first();
             $order = app(\App\Services\PaymentOrderService::class)->createOnboardingOrder($session, $plan, 'month');
         }
 

@@ -29,6 +29,7 @@ export interface PlanFormData {
     description: string | null;
     badge?: string | null;
     is_popular?: boolean;
+    is_active?: boolean;
     modules: string[];
     limits?: PlanLimits | null;
     features_list?: string[] | null;
@@ -119,6 +120,7 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
         description: initialData.description ?? '',
         badge: initialData.badge ?? '',
         is_popular: initialData.is_popular ?? false,
+        is_active: initialData.is_active ?? true,
         modules: initialData.modules ?? [],
         limits: {
             max_vehicles: initialData.limits?.max_vehicles ?? null,
@@ -390,7 +392,38 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                     <span className="text-[11px] text-slate-400">{t('plans.fields.is_default_hint')}</span>
                                                 </span>
                                             </label>
+
+                                            {/* Active / Inactive toggle */}
+                                            <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 px-4 py-3">
+                                                <span className="text-xs text-slate-700 dark:text-slate-300">
+                                                    <span className="font-semibold block">Status Plan</span>
+                                                    <span className="text-[11px] text-slate-400">
+                                                        Plan non-aktif tidak akan ditampilkan ke tenant.
+                                                    </span>
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={form.data.is_active}
+                                                    onClick={() => form.setData('is_active', !form.data.is_active)}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                                                        form.data.is_active
+                                                            ? 'bg-emerald-500'
+                                                            : 'bg-slate-300 dark:bg-slate-600'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                            form.data.is_active ? 'translate-x-5' : 'translate-x-0'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </div>
+                                            <p className={`text-[11px] font-semibold ${form.data.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                                                {form.data.is_active ? '✓ Plan Aktif' : '— Plan Tidak Aktif'}
+                                            </p>
                                         </div>
+
                                     </div>
                                 </div>
                             )}

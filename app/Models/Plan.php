@@ -130,6 +130,19 @@ class Plan extends Model
         $query->orderBy('sort_order')->orderBy('key');
     }
 
+    /**
+     * Plans that may be shown to tenants and used for new transactions.
+     *
+     * Inactive plans stay visible in the plan manager and keep serving tenants
+     * already subscribed to them — they are only hidden from selection.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('is_active', true);
+    }
+
     public function includesModule(string $moduleKey): bool
     {
         return in_array($moduleKey, $this->modules ?? [], true);

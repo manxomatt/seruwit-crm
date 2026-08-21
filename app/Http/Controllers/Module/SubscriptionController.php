@@ -35,6 +35,7 @@ class SubscriptionController extends Controller
                 $query->where('is_trial', false)
                     ->where('key', '!=', Plan::KEY_TRIAL);
             })
+            ->active()
             ->ordered()
             ->get();
 
@@ -121,7 +122,7 @@ class SubscriptionController extends Controller
 
         $plan = Plan::on('central')->findOrFail($request->input('plan_id'));
 
-        if ($plan->is_trial) {
+        if ($plan->is_trial || ! $plan->is_active) {
             return back()->withErrors(['plan_id' => 'Invalid plan selected.']);
         }
 

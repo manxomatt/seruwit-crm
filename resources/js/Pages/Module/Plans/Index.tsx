@@ -16,6 +16,7 @@ interface PlanRow {
     description: string | null;
     badge?: string | null;
     is_popular?: boolean;
+    is_active: boolean;
     modules: string[];
     limits?: {
         max_vehicles?: number | null;
@@ -178,6 +179,8 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             <div
                                 key={plan.id}
                                 className={`relative flex flex-col justify-between rounded-3xl border p-6 transition-all duration-200 ${
+                                    !plan.is_active ? 'opacity-60 saturate-50' : ''
+                                } ${
                                     plan.is_popular
                                         ? 'border-teal-500/50 bg-white dark:bg-slate-900 shadow-lg ring-2 ring-teal-500/20'
                                         : plan.is_default
@@ -210,6 +213,11 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                         </div>
 
                                         <div className="flex flex-col items-end gap-1 shrink-0">
+                                            {!plan.is_active && (
+                                                <span className="rounded-full bg-slate-500 text-white px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase shadow-sm">
+                                                    Nonaktif
+                                                </span>
+                                            )}
                                             {plan.is_default && (
                                                 <span className="rounded-full bg-indigo-500 text-white px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase shadow-sm">
                                                     {t('plans.pages.index.default_badge')}
