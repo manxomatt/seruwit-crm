@@ -118,4 +118,46 @@ class SubscriptionTierController extends Controller
 
         return response()->json($breakdown);
     }
+
+    /**
+     * Show unified billing dashboard (Plans + Tiers).
+     */
+    public function billingDashboard(): Response
+    {
+        $tiers = SubscriptionTier::orderBy('min_vehicles')->get();
+
+        $tiersData = $tiers->map(fn ($tier) => [
+            'id' => $tier->id,
+            'name' => $tier->name,
+            'min_vehicles' => $tier->min_vehicles,
+            'max_vehicles' => $tier->max_vehicles,
+            'price_per_vehicle' => $tier->price_per_vehicle,
+            'created_at' => $tier->created_at->format('Y-m-d'),
+        ]);
+
+        // Get plans data
+        $plans = \App\Models\Plan::where('is_active', true)->orderBy('sort_order')->get();
+
+        $plansData = $plans->map(fn ($plan) => [
+            'id' => $plan->id,
+            'name' => $plan->name,
+            'description' => $plan->description,
+            'price' => $plan->price,
+            'annual_price' => $plan->annual_price,
+            'is_popular' => $plan->is_popular ?? false,
+            'modules_count' => count($plan->modules ?? []),
+            'tenants_count' => $plan->tenants_count ?? 0,
+            'trial_days' => $plan->trial_days,
+        ]);
+
+        return Inertia::render('Module/Billing/Dashboard', [
+            'tiers' => $tiersData,
+            'plans' => $plansData,
+            'stats' => [
+                'total_tiers' => $tiersData->count(),
+                'total_plans' => $plansData->count(),
+                'total_tenants_on_plans' => $plansData->sum('tenants_count'),
+            ],
+        ]);
+    }
 }

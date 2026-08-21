@@ -182,6 +182,7 @@ Route::domain($centralDomain)
     ->prefix('module')
     ->name('module.')
     ->group(function () {
+        Route::get('/billing', [SubscriptionTierController::class, 'billingDashboard'])->name('billing.dashboard');
         Route::get('/subscription-tiers', [SubscriptionTierController::class, 'index'])->name('subscription-tiers.index');
         Route::get('/subscription-tiers/create', [SubscriptionTierController::class, 'create'])->name('subscription-tiers.create');
         Route::post('/subscription-tiers', [SubscriptionTierController::class, 'store'])->name('subscription-tiers.store');

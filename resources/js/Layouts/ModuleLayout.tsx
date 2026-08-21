@@ -333,14 +333,14 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'content', tier: 'content', also: ['media'] },
     // { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
     { titleKey: 'administration', modules: ['roles', 'users', 'modules', 'settings', 'subscription'] },
-    { titleKey: 'platform', modules: ['tenants', 'plans', 'payment-orders', 'module-registry'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'payment-orders', 'module-registry'] },
 ];
 
 const CENTRAL_MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing', 'payment-orders'] },
     { titleKey: 'content', modules: ['pages', 'posts', 'carousels', 'media'] },
     { titleKey: 'administration', modules: ['users', 'roles', 'settings'] },
-    { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'module-registry'] },
 ];
 
 const CENTRAL_ALLOWED_MODULES = [
@@ -384,6 +384,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
     'settings': { route: 'module.settings.index', routePattern: 'module.settings.*' },
     'subscription': { route: 'module.subscription.index', routePattern: 'module.subscription.*' },
+    'subscription-tiers': { route: 'module.subscription-tiers.index', routePattern: 'module.subscription-tiers.*' },
     'users': { route: 'module.users.index', routePattern: 'module.users.*' },
     'roles': { route: 'module.roles.index', routePattern: 'module.roles.*' },
     'live-updates': { route: 'module.live-updates.index', routePattern: 'module.live-updates.*' },
@@ -492,9 +493,14 @@ const moduleIconMap: Record<string, ReactNode> = {
     'analytics': <AnalyticsIcon />,
     'settings': <SettingsIcon />,
     'subscription': <SubscriptionIcon />,
+    'subscription-tiers': <SubscriptionIcon />,
     'users': <UsersIcon />,
     'roles': <RolesIcon />,
     'live-updates': <LiveUpdatesIcon />,
+    'plans': <PlansIcon />,
+    'payment-orders': <PaymentOrdersIcon />,
+    'tenants': <BuildingIcon />,
+    'module-registry': <ModulesIcon />,
 };
 
 // Module display names fall back to the module key; prefer t('modules.*') in the layout.
