@@ -337,22 +337,41 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                 🏢 {t('payment_orders.show.workspace.title')}
                             </h3>
                             <div>
-                                <Row
-                                    label={t('payment_orders.show.workspace.tenant')}
-                                    value={
-                                        <Link
-                                            href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
-                                            className="text-indigo-600 dark:text-indigo-400 hover:underline"
-                                        >
-                                            {paymentOrder.tenant.name}
-                                        </Link>
-                                    }
-                                />
-                                <Row label={t('payment_orders.show.workspace.tenant_status')} value={
-                                    <span className="capitalize">{paymentOrder.tenant.status}</span>
-                                } />
-                                {paymentOrder.tenant.trial_ends_at && (
-                                    <Row label={t('payment_orders.show.workspace.trial_ends')} value={fmtDateShort(paymentOrder.tenant.trial_ends_at)} />
+                                {paymentOrder.tenant ? (
+                                    <>
+                                        <Row
+                                            label={t('payment_orders.show.workspace.tenant')}
+                                            value={
+                                                <Link
+                                                    href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
+                                                    className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                >
+                                                    {paymentOrder.tenant.name}
+                                                </Link>
+                                            }
+                                        />
+                                        <Row label={t('payment_orders.show.workspace.tenant_status')} value={
+                                            <span className="capitalize">{paymentOrder.tenant.status}</span>
+                                        } />
+                                        {paymentOrder.tenant.trial_ends_at && (
+                                            <Row label={t('payment_orders.show.workspace.trial_ends')} value={fmtDateShort(paymentOrder.tenant.trial_ends_at)} />
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Row
+                                            label={t('payment_orders.show.workspace.tenant')}
+                                            value={paymentOrder.onboarding_session?.company_name ?? 'Onboarding Registration'}
+                                        />
+                                        <Row
+                                            label="Subdomain"
+                                            value={paymentOrder.onboarding_session?.subdomain ?? '-'}
+                                        />
+                                        <Row
+                                            label={t('payment_orders.show.workspace.tenant_status')}
+                                            value={<span className="text-amber-600 dark:text-amber-400 font-bold">Awaiting Provisioning</span>}
+                                        />
+                                    </>
                                 )}
                                 <Row label={t('payment_orders.show.workspace.plan')} value={paymentOrder.plan.name} />
                                 <Row label={t('payment_orders.show.workspace.interval')} value={<span className="capitalize">{paymentOrder.plan.interval}</span>} />
@@ -511,7 +530,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                     <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 p-4 text-xs text-emerald-900 dark:text-emerald-200">
                         {t('payment_orders.show.confirm_modal.body')
                             .replace(':amount', fmt(paymentOrder.total_amount))
-                            .replace(':tenant', paymentOrder.tenant.name)
+                            .replace(':tenant', paymentOrder.tenant?.name ?? paymentOrder.onboarding_session?.company_name ?? 'Onboarding Registration')
                             .replace(':plan', paymentOrder.plan.name)}
                     </div>
                     <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
