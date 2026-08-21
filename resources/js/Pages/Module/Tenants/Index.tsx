@@ -81,7 +81,7 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
     const [selected, setSelected] = useState<string[]>([]);
     const [batchStatus, setBatchStatus] = useState('');
     const [batchProcessing, setBatchProcessing] = useState(false);
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     const pageIds = useMemo(() => tenants.data.map((t) => t.id), [tenants.data]);
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));

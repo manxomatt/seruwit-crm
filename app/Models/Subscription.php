@@ -22,21 +22,30 @@ class Subscription extends Model
         'tenant_id',
         'plan_id',
         'subscribed_vehicles',
+        'subscription_type',
+        'current_vehicle_count',
         'starts_at',
         'ends_at',
+        'renewal_date',
         'status',
         'cancelled_at',
         'ended_at',
+        'auto_renew',
+        'next_billing_date',
     ];
 
     protected function casts(): array
     {
         return [
             'subscribed_vehicles' => 'integer',
+            'current_vehicle_count' => 'integer',
+            'auto_renew' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'ended_at' => 'datetime',
+            'renewal_date' => 'date',
+            'next_billing_date' => 'datetime',
         ];
     }
 

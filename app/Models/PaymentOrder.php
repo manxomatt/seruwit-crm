@@ -30,7 +30,12 @@ class PaymentOrder extends Model
         'tenant_id',
         'onboarding_session_id',
         'plan_id',
+        'subscription_tier_id',
         'subscribed_vehicles',
+        'price_per_vehicle',
+        'total_vehicle_cost',
+        'upgrade_from_vehicles',
+        'prorated_amount',
         'type',
         'billing_interval',
         'payment_method',
@@ -62,6 +67,10 @@ class PaymentOrder extends Model
     {
         return [
             'subscribed_vehicles' => 'integer',
+            'price_per_vehicle' => 'decimal:2',
+            'total_vehicle_cost' => 'decimal:2',
+            'upgrade_from_vehicles' => 'integer',
+            'prorated_amount' => 'decimal:2',
             'amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'unique_code' => 'integer',
@@ -90,6 +99,11 @@ class PaymentOrder extends Model
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    public function subscriptionTier(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionTier::class);
     }
 
     public function confirmedBy(): BelongsTo

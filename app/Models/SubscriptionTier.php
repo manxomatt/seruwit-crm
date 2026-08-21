@@ -28,14 +28,22 @@ class SubscriptionTier extends Model
     }
 
     /**
+     * Find the tier that applies to a given vehicle count.
+     */
+    public static function tierFor(int $vehicleCount): ?self
+    {
+        return self::query()
+            ->where('min_vehicles', '<=', $vehicleCount)
+            ->where('max_vehicles', '>=', $vehicleCount)
+            ->first();
+    }
+
+    /**
      * Calculate subscription price based on vehicle count.
      */
     public static function calculatePrice(int $vehicles, string $interval = 'month'): float
     {
-        $tier = self::query()
-            ->where('min_vehicles', '<=', $vehicles)
-            ->where('max_vehicles', '>=', $vehicles)
-            ->first();
+        $tier = self::tierFor($vehicles);
 
         // Fallback price if tier not found (should not happen with proper seeding)
         $pricePerUnit = $tier ? (float) $tier->price_per_vehicle : 20000.00;
@@ -47,5 +55,35 @@ class SubscriptionTier extends Model
         }
 
         return $total;
+    }
+
+    /**
+     * Get full pricing breakdown for a given vehicle count.
+     */
+    public static function priceBreakdown(int $vehicleCount, string $interval = 'month'): array
+    {
+        $tier = self::tierFor($vehicleCount);
+
+        return [
+            'vehicle_count' => $vehicleCount,
+            'tier_id' => $tier?->id,
+            'tier_name' => $tier?->name,
+            'price_per_vehicle' => $tier?->price_per_vehicle,
+            'total_price' => self::calculatePrice($vehicleCount, $interval),
+            'discount_percent' => $tier ? self::getDiscountPercent((float) $tier->price_per_vehicle) : 0,
+        ];
+    }
+
+    /**
+     * Calculate discount percentage relative to Tier 1 price (20000).
+     */
+    private static function getDiscountPercent(float $price): float
+    {
+        $basePrice = 20000.00;
+        if ($price >= $basePrice) {
+            return 0;
+        }
+
+        return round((1 - ($price / $basePrice)) * 100, 2);
     }
 }

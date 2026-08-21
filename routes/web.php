@@ -3,6 +3,8 @@
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
 use App\Http\Controllers\Central\ResellerLandingPageController;
+use App\Http\Controllers\Central\SubscriptionController;
+use App\Http\Controllers\Central\SubscriptionTierController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
@@ -65,6 +67,16 @@ Route::domain($centralDomain)
         Route::middleware('auth')->group(function () {
             Route::get('/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
             Route::get('/workspaces/{tenant}/enter', [WorkspaceController::class, 'enter'])->name('workspaces.enter');
+
+            // Subscription management for tenants
+            Route::get('/subscriptions/{tenant}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+            Route::post('/subscriptions/{tenant}', [SubscriptionController::class, 'store'])->name('subscriptions.store');
+            Route::get('/subscriptions/{tenant}/activate', [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
+            Route::get('/subscriptions/{tenant}/upgrade', [SubscriptionController::class, 'upgrade'])->name('subscriptions.upgrade');
+            Route::post('/subscriptions/{tenant}/upgrade', [SubscriptionController::class, 'processUpgrade'])->name('subscriptions.upgrade.store');
+            Route::get('/subscriptions/{tenant}/management', [SubscriptionController::class, 'management'])->name('subscriptions.management');
+            Route::patch('/subscriptions/{tenant}/toggle-auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('subscriptions.toggle-auto-renew');
+            Route::post('/subscriptions/{tenant}/cancel', [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
 
             Route::middleware('verified')->group(function () {
                 Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
@@ -159,6 +171,24 @@ Route::domain($centralDomain)
         Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
         Route::patch('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+    });
+
+/*
+| Subscription tiers: pricing configuration for PAYG subscriptions.
+| Central only and gated to platform super admins.
+*/
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-plans'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/subscription-tiers', [SubscriptionTierController::class, 'index'])->name('subscription-tiers.index');
+        Route::get('/subscription-tiers/create', [SubscriptionTierController::class, 'create'])->name('subscription-tiers.create');
+        Route::post('/subscription-tiers', [SubscriptionTierController::class, 'store'])->name('subscription-tiers.store');
+        Route::get('/subscription-tiers/{tier}/edit', [SubscriptionTierController::class, 'edit'])->name('subscription-tiers.edit');
+        Route::patch('/subscription-tiers/{tier}', [SubscriptionTierController::class, 'update'])->name('subscription-tiers.update');
+        Route::delete('/subscription-tiers/{tier}', [SubscriptionTierController::class, 'destroy'])->name('subscription-tiers.destroy');
+        Route::get('/subscription-tiers/price-calculator', [SubscriptionTierController::class, 'priceCalculator'])->name('subscription-tiers.price-calculator');
     });
 
 /*

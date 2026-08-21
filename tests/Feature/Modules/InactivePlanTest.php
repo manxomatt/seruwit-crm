@@ -14,11 +14,13 @@ use Tests\Traits\WithTenant;
  */
 class InactivePlanTest extends TestCase
 {
-    use WithTenant;
+    use WithTenant {
+        setUpWithTenant as baseSetUpWithTenant;
+    }
 
     protected function setUpWithTenant(): void
     {
-        parent::setUpWithTenant();
+        $this->baseSetUpWithTenant();
 
         $this->withoutVite();
     }
@@ -40,6 +42,7 @@ class InactivePlanTest extends TestCase
     public function test_an_inactive_plan_is_hidden_from_the_tenant_subscription_page(): void
     {
         $tenant = $this->provisionTenant('Hidden Plan Co', 'hidden-plan-co', 'owner@hidden.test');
+        app(\App\Modules\ModuleInstaller::class)->install($tenant, app(\Modules\Fleet\FleetModule::class));
         Plan::query()->firstWhere('key', 'pro')->update(['is_active' => false]);
 
         $owner = $this->tenantUser($tenant, 'owner@hidden.test');
@@ -71,6 +74,6 @@ class InactivePlanTest extends TestCase
             ])
             ->assertSessionHasErrors('plan_id');
 
-        $this->assertDatabaseCount('payment_orders', 0);
+        $this->assertSame(0, \App\Models\PaymentOrder::on('central')->count());
     }
 }

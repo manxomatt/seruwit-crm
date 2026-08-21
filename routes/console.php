@@ -72,7 +72,13 @@ Schedule::command('subscription:expire-trials')
     ->withoutOverlapping()
     ->onOneServer();
 
-// Expire payment orders that have passed their 48-hour deadline.
+// Auto-renew subscriptions for tenants with auto_renew = true.
+Schedule::command('subscription:auto-renew')
+    ->dailyAt('00:30')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// Expire payment orders that have passed their 7-day deadline.
 Schedule::command('subscription:expire-payment-orders')
     ->dailyAt('01:00')
     ->withoutOverlapping()

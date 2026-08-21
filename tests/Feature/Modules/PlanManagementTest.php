@@ -54,7 +54,7 @@ class PlanManagementTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Plans/Index')
-                ->has('plans', 4)
+                ->has('plans', 5)
                 ->has('availableModules', $moduleCount)
                 ->where('availableModules.0.key', $moduleKeys[0])
                 ->where('availableModules.'.($moduleCount - 1).'.key', $moduleKeys[$moduleCount - 1])
@@ -307,7 +307,7 @@ class PlanManagementTest extends TestCase
         $admin = $this->makeCentralAdmin();
         $pro = Plan::query()->firstWhere('key', 'pro');
 
-        $this->actingAs($admin)->put('/module/plans/'.$pro->id, [
+        $this->actingAs($admin)->patch('/module/plans/'.$pro->id, [
             'name' => $pro->name,
             'modules' => $pro->modules ?? [],
             'is_active' => false,

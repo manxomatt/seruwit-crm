@@ -39,6 +39,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'trial_ends_at' => 'datetime',
             'is_trial_expired' => 'boolean',
             'can_install_demo_data' => 'boolean',
+            'max_vehicles_allowed' => 'integer',
             'reseller_attributed_at' => 'datetime',
             'reseller_attribution_ends_at' => 'datetime',
         ];
@@ -225,6 +226,9 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'id',
             'name',
             'status',
+            'subscription_type',
+            'max_vehicles_allowed',
+            'subscription_id',
             'reseller_global_id',
             'reseller_attributed_at',
             'reseller_attribution_ends_at',

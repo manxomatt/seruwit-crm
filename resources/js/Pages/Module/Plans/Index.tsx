@@ -67,6 +67,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
 
     const [deleting, setDeleting] = useState<PlanRow | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     const deleteForm = useForm({});
 
@@ -158,16 +159,45 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             {t('plans.header.subtitle')}
                         </p>
                     </div>
-                    <Link href={route('module.plans.create')}>
-                        <PrimaryButton className="!rounded-xl shadow-sm">
-                            + {t('plans.pages.index.new')}
-                        </PrimaryButton>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        {/* Grid / Table Switcher */}
+                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('grid')}
+                                className={`rounded-lg px-2.5 py-1.5 transition-all ${
+                                    viewMode === 'grid'
+                                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                田 Grid
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('table')}
+                                className={`rounded-lg px-2.5 py-1.5 transition-all ${
+                                    viewMode === 'table'
+                                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                ☰ Table
+                            </button>
+                        </div>
+                        <Link href={route('module.plans.create')}>
+                            <PrimaryButton className="!rounded-xl shadow-sm">
+                                + {t('plans.pages.index.new')}
+                            </PrimaryButton>
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Pricing Cards Grid */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {plans.map((plan) => {
+                {/* View Toggle - Grid or Table */}
+                {viewMode === 'grid' ? (
+                    /* Pricing Cards Grid */
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {plans.map((plan) => {
                         const hasMonthly = plan.price && Number(plan.price) > 0;
                         const hasAnnual = plan.annual_price && Number(plan.annual_price) > 0;
                         const savingsPercent =
@@ -346,7 +376,112 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             </div>
                         );
                     })}
-                </div>
+                    </div>
+                ) : (
+                    /* Table View */
+                    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                    <tr className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                        <th className="px-6 py-3 text-left">Name</th>
+                                        <th className="px-6 py-3 text-left">Key</th>
+                                        <th className="px-6 py-3 text-center">Status</th>
+                                        <th className="px-6 py-3 text-right">Price</th>
+                                        <th className="px-6 py-3 text-center">Tenants</th>
+                                        <th className="px-6 py-3 text-center">Modules</th>
+                                        <th className="px-6 py-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
+                                    {plans.map((plan) => (
+                                        <tr
+                                            key={plan.id}
+                                            className={`text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
+                                                !plan.is_active ? 'opacity-60' : ''
+                                            }`}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div>
+                                                        <div className="font-semibold text-slate-900 dark:text-white">
+                                                            {plan.name}
+                                                        </div>
+                                                        {plan.description && (
+                                                            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                                                                {plan.description}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                                                    {plan.key}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex flex-col gap-1 items-center">
+                                                    {plan.is_default && (
+                                                        <span className="rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 text-xs font-bold border border-indigo-500/20">
+                                                            Default
+                                                        </span>
+                                                    )}
+                                                    {!plan.is_active && (
+                                                        <span className="rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 text-xs font-bold border border-slate-500/20">
+                                                            Inactive
+                                                        </span>
+                                                    )}
+                                                    {plan.is_active && !plan.is_default && (
+                                                        <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-xs font-bold border border-emerald-500/20">
+                                                            Active
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                    {fmtPrice(plan.price, plan.currency)}
+                                                </div>
+                                                {plan.original_price && Number(plan.original_price) > 0 && (
+                                                    <div className="text-xs text-slate-400 line-through">
+                                                        {fmtPrice(plan.original_price, plan.currency)}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-semibold">
+                                                    {plan.tenants}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                                                    {plan.modules.length}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link href={route('module.plans.edit', plan.id)}>
+                                                        <SecondaryButton className="!rounded-lg text-xs px-3 py-1.5">
+                                                            Edit
+                                                        </SecondaryButton>
+                                                    </Link>
+                                                    <SecondaryButton
+                                                        disabled={plan.tenants > 0 || plan.is_default}
+                                                        onClick={() => setDeleting(plan)}
+                                                        className="!rounded-lg text-xs px-3 py-1.5 text-rose-600 hover:text-rose-700 dark:text-rose-400"
+                                                    >
+                                                        Delete
+                                                    </SecondaryButton>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <ConfirmDeleteDialog

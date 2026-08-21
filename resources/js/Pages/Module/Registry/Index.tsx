@@ -68,7 +68,7 @@ export default function Index({ modules }: Props): JSX.Element {
     const [processingKey, setProcessingKey] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     const totalCount = modules.length;
     const enabledCount = useMemo(() => modules.filter((m) => m.is_enabled).length, [modules]);
