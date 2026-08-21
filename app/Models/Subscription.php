@@ -21,6 +21,7 @@ class Subscription extends Model
     protected $fillable = [
         'tenant_id',
         'plan_id',
+        'subscribed_vehicles',
         'starts_at',
         'ends_at',
         'status',
@@ -31,6 +32,7 @@ class Subscription extends Model
     protected function casts(): array
     {
         return [
+            'subscribed_vehicles' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancelled_at' => 'datetime',

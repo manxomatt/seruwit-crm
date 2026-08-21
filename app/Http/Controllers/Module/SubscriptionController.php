@@ -46,6 +46,12 @@ class SubscriptionController extends Controller
             ->latest()
             ->first();
 
+        // Get count of registered vehicles in tenant's database
+        $currentVehiclesCount = \Modules\Fleet\Models\Vehicle::count();
+
+        // Get subscription tiers from central database
+        $tiers = \App\Models\SubscriptionTier::on('central')->orderBy('min_vehicles')->get();
+
         return Inertia::render('Modules/Subscription/Activate', [
             'tenant' => [
                 'id' => $tenantId,
@@ -77,6 +83,7 @@ class SubscriptionController extends Controller
                 'status' => $subscription->status,
                 'plan' => $subscription->plan?->name,
                 'plan_id' => $subscription->plan_id,
+                'subscribed_vehicles' => $subscription->subscribed_vehicles,
                 'ends_at' => $subscription->ends_at?->toIso8601String(),
             ] : null,
             'isOnTrial' => $tenant->isOnTrial ?? false,
@@ -89,6 +96,14 @@ class SubscriptionController extends Controller
                 'expires_at' => $activePaymentOrder->expires_at?->toIso8601String(),
                 'type' => $activePaymentOrder->type,
             ] : null,
+            'currentVehiclesCount' => $currentVehiclesCount,
+            'tiers' => $tiers->map(fn ($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'min_vehicles' => $t->min_vehicles,
+                'max_vehicles' => $t->max_vehicles,
+                'price_per_vehicle' => $t->price_per_vehicle,
+            ])->all(),
         ]);
     }
 
@@ -101,6 +116,7 @@ class SubscriptionController extends Controller
             'plan_id' => ['required', 'integer'],
             'type' => ['required', 'in:activate,renew'],
             'billing_interval' => ['nullable', 'in:month,annual'],
+            'subscribed_vehicles' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $plan = Plan::on('central')->findOrFail($request->input('plan_id'));
@@ -111,12 +127,13 @@ class SubscriptionController extends Controller
 
         $type = $request->input('type', 'activate');
         $billingInterval = $request->input('billing_interval', 'month');
+        $subscribedVehicles = (int) $request->input('subscribed_vehicles', 0);
 
         if ($type === 'renew' && ! $tenant->subscription) {
             $type = 'activate';
         }
 
-        $order = $this->paymentOrderService->createOrder($tenant, $plan, $type, $billingInterval);
+        $order = $this->paymentOrderService->createOrder($tenant, $plan, $type, $billingInterval, $subscribedVehicles);
 
         return redirect()->route('module.subscription.payment', $order);
     }

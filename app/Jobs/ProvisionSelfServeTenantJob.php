@@ -175,7 +175,8 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                     $tenant,
                     $plan,
                     false,
-                    $order->billing_interval ?? 'month'
+                    $order->billing_interval ?? 'month',
+                    (int) $order->subscribed_vehicles
                 );
                 $order->update(['subscription_id' => $subscription->id]);
             }

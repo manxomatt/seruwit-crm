@@ -30,6 +30,7 @@ class PaymentOrder extends Model
         'tenant_id',
         'onboarding_session_id',
         'plan_id',
+        'subscribed_vehicles',
         'type',
         'billing_interval',
         'payment_method',
@@ -60,6 +61,7 @@ class PaymentOrder extends Model
     protected function casts(): array
     {
         return [
+            'subscribed_vehicles' => 'integer',
             'amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'unique_code' => 'integer',

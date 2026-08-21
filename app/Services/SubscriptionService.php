@@ -29,13 +29,13 @@ class SubscriptionService
         return is_string($identifier) ? $identifier : (string) $identifier;
     }
 
-    public function activate(Tenant $tenant, Plan $plan, bool $renewal = false, string $billingInterval = 'month'): Subscription
+    public function activate(Tenant $tenant, Plan $plan, bool $renewal = false, string $billingInterval = 'month', int $subscribedVehicles = 0): Subscription
     {
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
         $isAnnual = $billingInterval === 'annual' || $plan->interval === 'year';
 
-        return DB::connection($central)->transaction(function () use ($tenant, $plan, $central, $tenantId, $renewal, $isAnnual) {
+        return DB::connection($central)->transaction(function () use ($tenant, $plan, $central, $tenantId, $renewal, $isAnnual, $subscribedVehicles) {
             $now = now();
 
             if ($renewal) {
@@ -50,6 +50,7 @@ class SubscriptionService
 
                     $subscription->update([
                         'plan_id' => $plan->id,
+                        'subscribed_vehicles' => $subscribedVehicles ?: $subscription->subscribed_vehicles,
                         'ends_at' => $isAnnual ? $endsAt->copy()->addYear() : $endsAt->copy()->addMonth(),
                         'status' => Subscription::STATUS_ACTIVE,
                         'cancelled_at' => null,
@@ -71,6 +72,7 @@ class SubscriptionService
                 ['tenant_id' => $tenantId],
                 [
                     'plan_id' => $plan->id,
+                    'subscribed_vehicles' => $subscribedVehicles,
                     'starts_at' => $now,
                     'ends_at' => $isAnnual ? $now->copy()->addYear() : $now->copy()->addMonth(),
                     'status' => Subscription::STATUS_ACTIVE,

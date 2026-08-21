@@ -88,11 +88,23 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return in_array($moduleKey, $this->entitledModuleKeys(), true);
     }
 
-    /**
-     * Get a specific limit value from the tenant's plan.
-     */
     public function planLimit(string $key, mixed $default = null): mixed
     {
+        if ($key === 'max_vehicles') {
+            if ($this->isOnTrial) {
+                $plan = $this->planModel();
+
+                return $plan ? $plan->getLimit('max_vehicles', 50) : 50;
+            }
+
+            $subscription = $this->subscription;
+            if ($subscription && $subscription->isActive()) {
+                return (int) $subscription->subscribed_vehicles;
+            }
+
+            return 0;
+        }
+
         $plan = $this->planModel();
         if (! $plan) {
             return $default;
@@ -184,7 +196,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function getIsOnTrialAttribute(): bool
     {
         $plan = $this->planModel();
-        if ($plan && ((float) $plan->price <= 0 || (int) ($plan->trial_days ?? 0) <= 0)) {
+        if ($plan && ! $plan->is_trial && ((float) $plan->price <= 0 || (int) ($plan->trial_days ?? 0) <= 0)) {
             return false;
         }
 

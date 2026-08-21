@@ -177,4 +177,63 @@ class SubscriptionTest extends TestCase
         $tenant = Tenant::query()->findOrFail('cmd-test');
         $this->assertSame('suspended', $tenant->status);
     }
+
+    public function test_price_tiering_calculation(): void
+    {
+        // Tier 1 (1 - 10): 20,000 per unit
+        $this->assertEquals(160000, \App\Models\SubscriptionTier::calculatePrice(8, 'month'));
+        // Tier 2 (11 - 50): 15,000 per unit
+        $this->assertEquals(375000, \App\Models\SubscriptionTier::calculatePrice(25, 'month'));
+        // Tier 3 (51+): 10,000 per unit
+        $this->assertEquals(600000, \App\Models\SubscriptionTier::calculatePrice(60, 'month'));
+
+        // Annual pricing should have a 10x multiplier (2 months free discount)
+        $this->assertEquals(1600000, \App\Models\SubscriptionTier::calculatePrice(8, 'annual'));
+    }
+
+    public function test_tenant_limit_uses_subscribed_vehicles(): void
+    {
+        $tenant = $this->createTenantRecord([
+            'id' => 'limit-test-tenant',
+            'name' => 'Limit Test Tenant',
+            'plan' => 'pay_as_you_go',
+        ]);
+
+        $plan = Plan::query()->where('key', 'pay_as_you_go')->firstOrFail();
+
+        // 1. Without active subscription, limit should be 0 (since trial expired is true by fallback)
+        $this->assertEquals(0, $tenant->planLimit('max_vehicles'));
+
+        // 2. Activate subscription with 15 vehicles
+        Subscription::create([
+            'tenant_id' => $tenant->id,
+            'plan_id' => $plan->id,
+            'subscribed_vehicles' => 15,
+            'starts_at' => now(),
+            'ends_at' => now()->addMonth(),
+            'status' => Subscription::STATUS_ACTIVE,
+        ]);
+
+        $tenant->refresh();
+        $this->assertEquals(15, $tenant->planLimit('max_vehicles'));
+    }
+
+    public function test_create_order_calculates_pay_as_you_go_amount(): void
+    {
+        $tenant = $this->createTenantRecord([
+            'id' => 'order-calc-tenant',
+            'name' => 'Order Calc Tenant',
+            'plan' => Plan::KEY_TRIAL,
+        ]);
+
+        $plan = Plan::query()->where('key', 'pay_as_you_go')->firstOrFail();
+
+        $service = new \App\Services\PaymentOrderService;
+        $order = $service->createOrder($tenant, $plan, 'activate', 'month', 12);
+
+        $this->assertEquals(12, $order->subscribed_vehicles);
+        // 12 * 15,000 = 180,000
+        $this->assertEquals(180000, (float) $order->amount);
+        $this->assertEquals(180000 + $order->unique_code, (float) $order->total_amount);
+    }
 }

@@ -17,6 +17,34 @@ class PlanSeeder extends Seeder
 {
     public function run(): void
     {
+        $tiers = [
+            [
+                'name' => 'Tier 1-10 Kendaraan',
+                'min_vehicles' => 1,
+                'max_vehicles' => 10,
+                'price_per_vehicle' => 20000,
+            ],
+            [
+                'name' => 'Tier 11-50 Kendaraan',
+                'min_vehicles' => 11,
+                'max_vehicles' => 50,
+                'price_per_vehicle' => 15000,
+            ],
+            [
+                'name' => 'Tier 51+ Kendaraan',
+                'min_vehicles' => 51,
+                'max_vehicles' => 999999,
+                'price_per_vehicle' => 10000,
+            ],
+        ];
+
+        foreach ($tiers as $tier) {
+            \App\Models\SubscriptionTier::query()->updateOrCreate(
+                ['min_vehicles' => $tier['min_vehicles']],
+                $tier
+            );
+        }
+
         $plans = [
             [
                 'key' => Plan::KEY_TRIAL,
@@ -162,6 +190,63 @@ class PlanSeeder extends Seeder
                 'original_price' => 450000,
                 'annual_price' => 2990000,
                 'annual_original_price' => 4500000,
+                'currency' => 'IDR',
+                'interval' => 'month',
+                'trial_days' => 0,
+                'is_trial' => false,
+            ],
+            [
+                'key' => 'pay_as_you_go',
+                'name' => 'Pay As You Go',
+                'description' => 'Bayar hanya untuk jumlah armada kendaraan yang Anda daftarkan. Fleksibel dan hemat untuk skala bisnis apa pun.',
+                'badge' => 'Rekomendasi',
+                'is_popular' => true,
+                'modules' => [
+                    'approvals',
+                    'billing',
+                    'bi',
+                    'canvassing',
+                    'carousels',
+                    'document',
+                    'fleet',
+                    'inventory',
+                    'invoicing',
+                    'maintenance',
+                    'orders',
+                    'outbound',
+                    'pages',
+                    'payables',
+                    'pos',
+                    'posts',
+                    'products',
+                    'promotions',
+                    'purchasing',
+                    'receivables',
+                    'rental',
+                    'routing',
+                    'sales',
+                    'scoring',
+                    'shuttle',
+                    'tracking',
+                    'transportation',
+                ],
+                'limits' => [
+                    'max_users' => 10,
+                    'max_branches' => 5,
+                ],
+                'features_list' => [
+                    'Bayar Sesuai Jumlah Armada Terdaftar',
+                    'Akses Penuh Seluruh Modul Pro',
+                    'Hingga 10 Akun Staf / Operator',
+                    'Hingga 5 Lokasi Cabang / Base',
+                    'Upgrade / Downgrade Kuota Kapan Saja',
+                ],
+                'sort_order' => 4,
+                'is_default' => false,
+                'price' => 0,
+                'original_price' => null,
+                'annual_price' => 0,
+                'annual_original_price' => null,
                 'currency' => 'IDR',
                 'interval' => 'month',
                 'trial_days' => 0,

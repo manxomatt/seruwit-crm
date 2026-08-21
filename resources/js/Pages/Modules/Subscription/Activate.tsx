@@ -34,6 +34,14 @@ interface ActivePaymentOrder {
     type: string;
 }
 
+interface SubscriptionTier {
+    id: number;
+    name: string;
+    min_vehicles: number;
+    max_vehicles: number;
+    price_per_vehicle: string;
+}
+
 interface Props {
     tenant: {
         id: string;
@@ -44,10 +52,12 @@ interface Props {
         is_on_trial: boolean;
     };
     plans: PlanOption[];
-    subscription: { id: number; status: string; plan?: string; plan_id?: number; ends_at?: string } | null;
+    subscription: { id: number; status: string; plan?: string; plan_id?: number; ends_at?: string; subscribed_vehicles?: number } | null;
     isOnTrial: boolean;
     trialEndsAt: string | null;
     activePaymentOrder: ActivePaymentOrder | null;
+    currentVehiclesCount: number;
+    tiers: SubscriptionTier[];
 }
 
 type BillingInterval = 'month' | 'annual';
@@ -242,7 +252,12 @@ function PlanCard({
 
                 {/* Price Section */}
                 <div className="my-6 rounded-2xl bg-slate-50/80 p-5 border border-slate-100">
-                    {!hasMonthly && !hasAnnual ? (
+                    {plan.key === 'pay_as_you_go' ? (
+                        <div className="py-2">
+                            <span className="text-3xl font-black text-slate-900">Pay As You Go</span>
+                            <p className="mt-1.5 text-xs text-slate-500 font-bold text-teal-700">Mulai Rp 10.000 / kendaraan / bln</p>
+                        </div>
+                    ) : !hasMonthly && !hasAnnual ? (
                         <div className="py-2">
                             <span className="text-3xl font-black text-slate-900">Gratis</span>
                             <p className="mt-1 text-xs text-slate-500">Tanpa biaya langganan</p>
@@ -410,7 +425,7 @@ function PlanCard({
     );
 }
 
-export default function SubscriptionActivate({ tenant, plans, subscription, isOnTrial, trialEndsAt, activePaymentOrder }: Props): JSX.Element {
+export default function SubscriptionActivate({ tenant, plans, subscription, isOnTrial, trialEndsAt, activePaymentOrder, currentVehiclesCount, tiers }: Props): JSX.Element {
     const { t } = useTrans();
     const { flash } = usePage().props as { flash?: { success?: string } };
 
@@ -434,16 +449,47 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
         return plans.find((p) => p.key === 'free') || plans[0];
     }, [plans, subscription, tenant?.plan]);
 
+    const defaultSubscribedVehicles = subscription?.subscribed_vehicles 
+        ? Number(subscription.subscribed_vehicles) 
+        : Math.max(1, currentVehiclesCount);
+
     const { data, setData, post, processing, errors } = useForm({
         plan_id: activePlan ? String(activePlan.id) : '',
         type: (subscription && subscription.status === 'active' ? 'renew' : 'activate') as 'activate' | 'renew',
         billing_interval: 'month' as BillingInterval,
+        subscribed_vehicles: defaultSubscribedVehicles,
     });
+
+    const getPAYGPrice = (vehicles: number, interval: BillingInterval) => {
+        const tier = tiers.find(t => vehicles >= t.min_vehicles && vehicles <= t.max_vehicles);
+        const pricePerUnit = tier ? Number(tier.price_per_vehicle) : 20000;
+        const total = vehicles * pricePerUnit;
+        if (interval === 'annual') {
+            return total * 10;
+        }
+        return total;
+    };
 
     const selectedPlan = useMemo(() => plans.find((p) => p.id === Number(data.plan_id)), [plans, data.plan_id]);
     const isPlanDifferent = activePlan && selectedPlan ? selectedPlan.id !== activePlan.id : false;
-    const isSelectedPaid = selectedPlan ? Number(billingInterval === 'annual' && selectedPlan.annual_price ? selectedPlan.annual_price : selectedPlan.price) > 0 : false;
-    const showCheckoutBar = Boolean(selectedPlan && isSelectedPaid && (isPlanDifferent || isRenewingCurrentPlan));
+    const isQuotaChanged = selectedPlan?.key === 'pay_as_you_go' && subscription && data.subscribed_vehicles > (subscription.subscribed_vehicles || 0);
+    const isSelectedPaid = selectedPlan 
+        ? selectedPlan.key === 'pay_as_you_go'
+            ? true
+            : Number(billingInterval === 'annual' && selectedPlan.annual_price ? selectedPlan.annual_price : selectedPlan.price) > 0
+        : false;
+
+    const showCheckoutBar = Boolean(selectedPlan && isSelectedPaid && (isPlanDifferent || isRenewingCurrentPlan || isQuotaChanged));
+
+    const totalAmountValue = useMemo(() => {
+        if (!selectedPlan) return 0;
+        if (selectedPlan.key === 'pay_as_you_go') {
+            return getPAYGPrice(data.subscribed_vehicles, billingInterval);
+        }
+        return billingInterval === 'annual' && selectedPlan.annual_price && Number(selectedPlan.annual_price) > 0
+            ? Number(selectedPlan.annual_price)
+            : Number(selectedPlan.price || 0);
+    }, [selectedPlan, data.subscribed_vehicles, billingInterval, tiers]);
 
     const trialDaysLeft = daysUntil(trialEndsAt);
     const paymentOrderDaysLeft = daysUntil(activePaymentOrder?.expires_at ?? null);
@@ -663,6 +709,66 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                         ))}
                     </div>
 
+                    {selectedPlan?.key === 'pay_as_you_go' && (
+                        <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+                            <h3 className="text-lg font-black text-slate-900">Konfigurasi Kuota Pay As You Go</h3>
+                            <p className="text-sm text-slate-500 mt-1">
+                                Tentukan kapasitas maksimal kendaraan yang ingin Anda daftarkan di workspace ini.
+                            </p>
+
+                            <div className="mt-6 grid gap-6 md:grid-cols-2">
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                        Jumlah Slot Kendaraan
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('subscribed_vehicles', Math.max(Math.max(1, currentVehiclesCount), data.subscribed_vehicles - 1))}
+                                            className="w-11 h-11 flex items-center justify-center bg-white border border-slate-300 text-slate-800 font-bold rounded-xl hover:bg-slate-50 active:bg-slate-100 shadow-sm"
+                                        >
+                                            -
+                                        </button>
+                                        <input
+                                            type="number"
+                                            min={Math.max(1, currentVehiclesCount)}
+                                            value={data.subscribed_vehicles}
+                                            onChange={(e) => setData('subscribed_vehicles', Math.max(Math.max(1, currentVehiclesCount), parseInt(e.target.value) || 0))}
+                                            className="w-24 text-center py-2.5 border border-slate-300 rounded-xl font-bold text-lg shadow-sm"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('subscribed_vehicles', data.subscribed_vehicles + 1)}
+                                            className="w-11 h-11 flex items-center justify-center bg-white border border-slate-300 text-slate-800 font-bold rounded-xl hover:bg-slate-50 active:bg-slate-100 shadow-sm"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-slate-500">
+                                        * Jumlah minimal slot adalah <strong>{currentVehiclesCount}</strong> unit, disesuaikan dengan armada terdaftar Anda saat ini.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-3">
+                                        Skema Harga Tiering
+                                    </label>
+                                    <div className="divide-y divide-slate-200 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                                        {tiers.map((t) => {
+                                            const isActive = data.subscribed_vehicles >= t.min_vehicles && data.subscribed_vehicles <= t.max_vehicles;
+                                            return (
+                                                <div key={t.id} className={`flex justify-between items-center p-3.5 text-sm ${isActive ? 'bg-teal-50/75 font-bold text-teal-950' : 'text-slate-600'}`}>
+                                                    <span>{t.min_vehicles} - {t.max_vehicles === 999999 ? '∞' : t.max_vehicles} Unit</span>
+                                                    <span>{fmtCurrency(t.price_per_vehicle, 'IDR')}/unit/bln</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {errors.plan_id && (
                         <div className="mt-4 rounded-xl bg-red-50 p-3 text-center text-sm font-semibold text-red-600">
                             {errors.plan_id}
@@ -675,7 +781,7 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
                                 <div>
                                     <span className="text-[11px] font-extrabold uppercase tracking-widest text-teal-600">
-                                        {isPlanDifferent ? 'Upgrade / Ganti Paket' : 'Perpanjangan Paket'}
+                                        {isQuotaChanged ? 'Upgrade Kuota Armada' : isPlanDifferent ? 'Upgrade / Ganti Paket' : 'Perpanjangan Paket'}
                                     </span>
                                     <h4 className="mt-0.5 text-xl font-black text-slate-900">
                                         Paket {selectedPlan.name}{' '}
@@ -685,9 +791,7 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                     </h4>
                                     <p className="mt-0.5 text-sm font-bold text-teal-700">
                                         Total Tagihan:{' '}
-                                        {billingInterval === 'annual' && selectedPlan.annual_price && Number(selectedPlan.annual_price) > 0
-                                            ? fmtCurrency(selectedPlan.annual_price, selectedPlan.currency)
-                                            : fmtCurrency(selectedPlan.price, selectedPlan.currency)}
+                                        {fmtCurrency(totalAmountValue, selectedPlan.currency)}
                                     </p>
                                 </div>
 
@@ -703,9 +807,11 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                                 Memproses...
                                             </>
                                         ) : (
-                                            isPlanDifferent
-                                                ? `Upgrade ke ${selectedPlan.name} →`
-                                                : 'Lanjutkan ke Pembayaran →'
+                                            isQuotaChanged
+                                                ? 'Upgrade Kuota →'
+                                                : isPlanDifferent
+                                                  ? `Upgrade ke ${selectedPlan.name} →`
+                                                  : 'Lanjutkan ke Pembayaran →'
                                         )}
                                     </button>
                                 </div>

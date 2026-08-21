@@ -36,23 +36,28 @@ class PaymentOrderService
         return is_string($identifier) ? $identifier : (string) $identifier;
     }
 
-    public function createOrder(Tenant $tenant, Plan $plan, string $type = 'activate', string $billingInterval = 'month'): PaymentOrder
+    public function createOrder(Tenant $tenant, Plan $plan, string $type = 'activate', string $billingInterval = 'month', int $subscribedVehicles = 0): PaymentOrder
     {
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
         $instructions = Config::get('payment.manual_transfer', []);
 
-        return DB::connection($central)->transaction(function () use ($central, $tenant, $plan, $type, $billingInterval, $tenantId, $instructions) {
+        return DB::connection($central)->transaction(function () use ($central, $tenant, $plan, $type, $billingInterval, $tenantId, $instructions, $subscribedVehicles) {
             $uniqueCode = PaymentOrder::generateUniqueCode();
-            $amount = $billingInterval === 'annual' && $plan->annual_price
-                ? (float) $plan->annual_price
-                : (float) ($plan->price ?? 0);
+            if ($plan->key === 'pay_as_you_go') {
+                $amount = \App\Models\SubscriptionTier::calculatePrice($subscribedVehicles, $billingInterval);
+            } else {
+                $amount = $billingInterval === 'annual' && $plan->annual_price
+                    ? (float) $plan->annual_price
+                    : (float) ($plan->price ?? 0);
+            }
             $totalAmount = $amount + $uniqueCode;
 
             $order = new PaymentOrder;
             $order->setConnection($central);
             $order->tenant_id = $tenantId;
             $order->plan_id = $plan->id;
+            $order->subscribed_vehicles = $subscribedVehicles;
             $order->type = $type;
             $order->billing_interval = $billingInterval;
             $order->payment_method = Config::get('payment.driver', 'manual_transfer');
@@ -76,16 +81,20 @@ class PaymentOrderService
         });
     }
 
-    public function createOnboardingOrder(\App\Models\OnboardingSession $session, Plan $plan, string $billingInterval = 'month'): PaymentOrder
+    public function createOnboardingOrder(\App\Models\OnboardingSession $session, Plan $plan, string $billingInterval = 'month', int $subscribedVehicles = 0): PaymentOrder
     {
         $central = $this->centralConnection();
         $instructions = Config::get('payment.manual_transfer', []);
 
-        return DB::connection($central)->transaction(function () use ($central, $session, $plan, $billingInterval, $instructions) {
+        return DB::connection($central)->transaction(function () use ($central, $session, $plan, $billingInterval, $instructions, $subscribedVehicles) {
             $uniqueCode = PaymentOrder::generateUniqueCode();
-            $amount = $billingInterval === 'annual' && $plan->annual_price
-                ? (float) $plan->annual_price
-                : (float) ($plan->price ?? 0);
+            if ($plan->key === 'pay_as_you_go') {
+                $amount = \App\Models\SubscriptionTier::calculatePrice($subscribedVehicles, $billingInterval);
+            } else {
+                $amount = $billingInterval === 'annual' && $plan->annual_price
+                    ? (float) $plan->annual_price
+                    : (float) ($plan->price ?? 0);
+            }
             $totalAmount = $amount + $uniqueCode;
 
             $order = new PaymentOrder;
@@ -93,6 +102,7 @@ class PaymentOrderService
             $order->tenant_id = null;
             $order->onboarding_session_id = $session->id;
             $order->plan_id = $plan->id;
+            $order->subscribed_vehicles = $subscribedVehicles;
             $order->type = 'activate';
             $order->billing_interval = $billingInterval;
             $order->payment_method = Config::get('payment.driver', 'manual_transfer');
@@ -193,7 +203,13 @@ class PaymentOrderService
             $plan = Plan::on($central)->findOrFail($order->plan_id);
 
             $subscriptionService = app(SubscriptionService::class);
-            $subscription = $subscriptionService->activate($tenant, $plan, $order->type === 'renew', $order->billing_interval ?? 'month');
+            $subscription = $subscriptionService->activate(
+                $tenant,
+                $plan,
+                $order->type === 'renew',
+                $order->billing_interval ?? 'month',
+                (int) $order->subscribed_vehicles
+            );
 
             $order->subscription_id = $subscription->id;
             $order->save();
