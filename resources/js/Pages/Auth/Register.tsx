@@ -14,6 +14,7 @@ interface Props {
 export default function Register({ settings, initialCompanyName = '', initialPlan = '' }: Props) {
     const { t } = useTrans();
     const [showPassword, setShowPassword] = useState(false);
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
     interface RegisterForm {
         name: string;
@@ -214,6 +215,8 @@ export default function Register({ settings, initialCompanyName = '', initialPla
                                             value={data.password}
                                             autoComplete="new-password"
                                             required
+                                            onFocus={() => setIsPasswordFocused(true)}
+                                            onBlur={() => setIsPasswordFocused(false)}
                                             onChange={(e) => setData('password', e.target.value)}
                                             className="block w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-11 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                             placeholder="••••••••"
@@ -228,25 +231,35 @@ export default function Register({ settings, initialCompanyName = '', initialPla
                                                 {showPassword ? 'visibility_off' : 'visibility'}
                                             </span>
                                         </button>
-                                    </div>
 
-                                    {/* Password Strength Indicator */}
-                                    {data.password.length > 0 && (
-                                        <div className="mt-2.5 space-y-1.5 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3">
-                                            {[
-                                                { ok: data.password.length >= 8, label: t('auth_ui.password_hint_length') },
-                                                { ok: /[a-zA-Z]/.test(data.password), label: t('auth_ui.password_hint_letters') },
-                                                { ok: /[0-9]/.test(data.password), label: t('auth_ui.password_hint_numbers') },
-                                            ].map(({ ok, label }) => (
-                                                <div key={label} className="flex items-center gap-2">
-                                                    <span className={`material-symbols-outlined text-sm ${ok ? 'text-emerald-600' : 'text-slate-300'}`}>
-                                                        {ok ? 'check_circle' : 'radio_button_unchecked'}
-                                                    </span>
-                                                    <span className={`text-[11px] font-bold ${ok ? 'text-emerald-700' : 'text-slate-400'}`}>{label}</span>
+                                        {/* Floating Password Requirements Indicator on the Right */}
+                                        {(isPasswordFocused || data.password.length > 0) && (
+                                            <div className="absolute z-30 w-64 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-xl shadow-slate-300/40 backdrop-blur-xl transition-all duration-200 top-full mt-2 left-0 sm:top-1/2 sm:-translate-y-1/2 sm:mt-0 sm:left-full sm:ml-3 sm:w-60 sm:right-auto pointer-events-none">
+                                                {/* Directional arrow pointing to the input field on desktop */}
+                                                <div className="hidden sm:block absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-l border-b border-slate-200/90 rotate-45" />
+
+                                                <div className="relative z-10 space-y-2">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                        {t('auth_ui.password_hint_title')}
+                                                    </p>
+                                                    <div className="space-y-1.5">
+                                                        {[
+                                                            { ok: data.password.length >= 8, label: t('auth_ui.password_hint_length') },
+                                                            { ok: /[a-zA-Z]/.test(data.password), label: t('auth_ui.password_hint_letters') },
+                                                            { ok: /[0-9]/.test(data.password), label: t('auth_ui.password_hint_numbers') },
+                                                        ].map(({ ok, label }) => (
+                                                            <div key={label} className="flex items-center gap-2">
+                                                                <span className={`material-symbols-outlined text-sm ${ok ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                                                    {ok ? 'check_circle' : 'radio_button_unchecked'}
+                                                                </span>
+                                                                <span className={`text-[11px] font-bold ${ok ? 'text-emerald-700' : 'text-slate-400'}`}>{label}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                            </div>
+                                        )}
+                                    </div>
                                     <InputError message={errors.password} className="mt-2" />
                                 </div>
 
