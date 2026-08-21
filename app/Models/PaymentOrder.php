@@ -53,6 +53,10 @@ class PaymentOrder extends Model
         'gateway_data',
     ];
 
+    protected $appends = [
+        'proof_url',
+    ];
+
     protected function casts(): array
     {
         return [

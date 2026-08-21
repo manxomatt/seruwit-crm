@@ -53,7 +53,7 @@ return [
         // to be.
         'payout_proofs' => [
             'driver' => 'local',
-            'root' => storage_path('app/payout-proofs'),
+            'root' => storage_path('app/public/payout-proofs'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/payout-proofs',
             'visibility' => 'public',
             'throw' => false,
@@ -62,7 +62,7 @@ return [
 
         'payment_proofs' => [
             'driver' => 'local',
-            'root' => storage_path('app/payment-proofs'),
+            'root' => storage_path('app/public/payment-proofs'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/payment-proofs',
             'visibility' => 'public',
             'throw' => false,
