@@ -3,6 +3,7 @@
 namespace Modules\Pages\Support;
 
 use App\Models\Plan;
+use App\Models\SubscriptionTier;
 
 class PricingTableRenderer
 {
@@ -36,16 +37,39 @@ class PricingTableRenderer
 
         foreach ($plans as $plan) {
             $isPopular = (bool) $plan->is_popular;
-            $isFree = ((float) $plan->price) <= 0;
-            $badge = $plan->badge ?: ($isPopular ? __('landing_elevate.pricing.popular_badge') : ($isFree ? __('landing_elevate.pricing.free_badge') : ''));
+            $isPayg = $plan->isPayg();
 
-            $monthlyPriceFormatted = $isFree ? __('landing_elevate.pricing.free_price') : 'Rp '.number_format((float) $plan->price, 0, ',', '.');
+            // PAYG plans are priced per vehicle via subscription tiers, not a flat
+            // fee, so the headline uses the entry tier's per-vehicle rate. Only a
+            // fixed plan with a zero price is genuinely "free".
+            $entryTier = $isPayg ? SubscriptionTier::query()->orderBy('min_vehicles')->first() : null;
+            $isFree = ! $isPayg && ((float) $plan->price) <= 0;
 
-            // Calculate annual price (per month equivalent or total)
-            $annualPrice = (float) ($plan->annual_price > 0 ? $plan->annual_price : ($plan->price * 12 * 0.8));
-            $annualPerMonth = $isFree ? 0 : round($annualPrice / 12);
-            $annualPriceFormatted = $isFree ? __('landing_elevate.pricing.free_price') : 'Rp '.number_format($annualPerMonth, 0, ',', '.');
-            $annualTotalFormatted = $isFree ? '' : 'Rp '.number_format($annualPrice, 0, ',', '.').__('landing_elevate.pricing.per_year');
+            $badge = $plan->badge ?: ($isPopular
+                ? __('landing_elevate.pricing.popular_badge')
+                : ($isPayg
+                    ? __('landing_elevate.pricing.payg_badge')
+                    : ($isFree ? __('landing_elevate.pricing.free_badge') : '')));
+
+            if ($isPayg && $entryTier) {
+                // Per-vehicle rate. Annual billing pays 10 months for 12, so the
+                // per-vehicle monthly equivalent under annual billing is rate × 10/12.
+                $perVehicle = (float) $entryTier->price_per_vehicle;
+                $monthlyPriceFormatted = 'Rp '.number_format($perVehicle, 0, ',', '.');
+                $annualPriceFormatted = 'Rp '.number_format(round($perVehicle * 10 / 12), 0, ',', '.');
+                $annualTotalFormatted = __('landing_elevate.pricing.billed_annually');
+            } elseif ($isFree) {
+                $monthlyPriceFormatted = __('landing_elevate.pricing.free_price');
+                $annualPriceFormatted = __('landing_elevate.pricing.free_price');
+                $annualTotalFormatted = '';
+            } else {
+                $monthlyPriceFormatted = 'Rp '.number_format((float) $plan->price, 0, ',', '.');
+
+                // Calculate annual price (per month equivalent or total)
+                $annualPrice = (float) ($plan->annual_price > 0 ? $plan->annual_price : ($plan->price * 12 * 0.8));
+                $annualPriceFormatted = 'Rp '.number_format(round($annualPrice / 12), 0, ',', '.');
+                $annualTotalFormatted = 'Rp '.number_format($annualPrice, 0, ',', '.').__('landing_elevate.pricing.per_year');
+            }
 
             $cardClass = 'el-price-card'.($isPopular ? ' el-price-popular' : '');
 
@@ -67,11 +91,16 @@ class PricingTableRenderer
             $html[] = '        <div class="el-price-amount-wrap">';
             $html[] = '          <span class="el-price-num" data-monthly="'.e($monthlyPriceFormatted).'" data-annual="'.e($annualPriceFormatted).'">'.e($monthlyPriceFormatted).'</span>';
             if (! $isFree) {
-                $html[] = '          <span class="el-price-period">'.__('landing_elevate.pricing.per_month').'</span>';
+                $periodLabel = $isPayg
+                    ? __('landing_elevate.pricing.per_vehicle_month')
+                    : __('landing_elevate.pricing.per_month');
+                $html[] = '          <span class="el-price-period">'.$periodLabel.'</span>';
             }
             $html[] = '        </div>';
 
-            if (! $isFree) {
+            if ($isPayg) {
+                $html[] = '        <div class="el-price-subtext" data-monthly="'.e(__('landing_elevate.pricing.payg_subtext')).'" data-annual="'.e($annualTotalFormatted).'">'.e(__('landing_elevate.pricing.payg_subtext')).'</div>';
+            } elseif (! $isFree) {
                 $html[] = '        <div class="el-price-subtext" data-monthly="" data-annual="'.e($annualTotalFormatted).'"></div>';
             } else {
                 $html[] = '        <div class="el-price-subtext">'.__('landing_elevate.pricing.free_badge').'</div>';
