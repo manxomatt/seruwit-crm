@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePlanRequest;
 use App\Http\Requests\UpdatePlanRequest;
 use App\Models\Plan;
+use App\Models\SubscriptionTier;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleContract;
 use App\Modules\PlanRepository;
@@ -64,6 +65,7 @@ class PlanController extends Controller
         return Inertia::render('Module/Plans/Create', [
             'nextSortOrder' => Plan::query()->max('sort_order') + 1,
             'availableModules' => $this->availableModules(),
+            'subscriptionTiers' => SubscriptionTier::orderBy('min_vehicles')->get(['id', 'name', 'min_vehicles', 'max_vehicles', 'price_per_vehicle']),
         ]);
     }
 
@@ -105,9 +107,15 @@ class PlanController extends Controller
                 'annual_original_price' => $plan->annual_original_price,
                 'currency' => $plan->currency ?? 'IDR',
                 'trial_days' => $plan->trial_days,
+                'pricing_model' => $plan->pricing_model,
+                'subscription_tier_id' => $plan->subscription_tier_id,
+                'allow_payg_upgrade' => (bool) $plan->allow_payg_upgrade,
+                'include_trial' => (bool) $plan->include_trial,
+                'trial_duration_days' => $plan->trial_duration_days,
                 'tenants' => $plan->tenantCount(),
             ],
             'availableModules' => $this->availableModules(),
+            'subscriptionTiers' => SubscriptionTier::orderBy('min_vehicles')->get(['id', 'name', 'min_vehicles', 'max_vehicles', 'price_per_vehicle']),
         ]);
     }
 

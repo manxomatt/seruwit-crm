@@ -44,6 +44,12 @@ class UpdatePlanRequest extends FormRequest
             'annual_original_price' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'size:3'],
             'trial_days' => ['nullable', 'integer', 'min:0', 'max:365'],
+            // PAYG pricing model fields
+            'pricing_model' => ['required', 'string', Rule::in(['fixed', 'payg'])],
+            'subscription_tier_id' => ['nullable', 'integer', 'exists:subscription_tiers,id'],
+            'allow_payg_upgrade' => ['boolean'],
+            'include_trial' => ['boolean'],
+            'trial_duration_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ];
     }
 

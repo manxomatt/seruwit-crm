@@ -7,6 +7,11 @@ interface Props {
         id: string
         name: string
     }
+    plan: {
+        id: number
+        name: string
+        pricing_model: 'fixed' | 'payg'
+    }
     vehicles_quota: number
     billing_interval: string
     pricing: {
@@ -16,12 +21,13 @@ interface Props {
         total_price: number
         discount_percent: number
     }
-    tier: any
+    tier?: any
 }
 
-export default function Payment({ tenant, vehicles_quota, billing_interval, pricing, tier }: Props) {
+export default function Payment({ tenant, plan, vehicles_quota, billing_interval, pricing, tier }: Props) {
     const handleConfirmPayment = () => {
         router.post(`/subscriptions/${tenant.id}`, {
+            plan_id: plan.id,
             vehicles_quota,
             billing_interval,
             payment_method: 'manual_transfer',
@@ -56,6 +62,22 @@ export default function Payment({ tenant, vehicles_quota, billing_interval, pric
                         </h2>
                         <div className="space-y-3">
                             <div className="flex justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <span className="text-gray-600 dark:text-gray-400">Plan:</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                        {plan.name}
+                                    </span>
+                                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                                        plan.pricing_model === 'payg'
+                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200'
+                                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                                    }`}>
+                                        {plan.pricing_model === 'payg' ? 'PAYG' : 'Fixed'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
                                 <span className="text-gray-600 dark:text-gray-400">Vehicle Quota:</span>
                                 <span className="font-medium text-gray-900 dark:text-white">
                                     {vehicles_quota} vehicles
@@ -72,7 +94,7 @@ export default function Payment({ tenant, vehicles_quota, billing_interval, pric
                             <div className="flex justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
                                 <span className="text-gray-600 dark:text-gray-400">Price per Vehicle:</span>
                                 <span className="font-medium text-gray-900 dark:text-white">
-                                    Rp {(pricing.price_per_vehicle / 1000).toLocaleString('id-ID')}k/month
+                                    Rp {(pricing.price_per_vehicle / 1000).toLocaleString('id-ID')}k{plan.pricing_model === 'payg' ? '/month' : ''}
                                 </span>
                             </div>
 
@@ -86,7 +108,7 @@ export default function Payment({ tenant, vehicles_quota, billing_interval, pric
                             {pricing.discount_percent > 0 && (
                                 <div className="flex justify-between rounded-lg bg-green-50 p-2 dark:bg-green-900/20">
                                     <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                                        Volume Discount:
+                                        {plan.pricing_model === 'payg' ? 'Tier Discount' : 'Volume Discount'}:
                                     </span>
                                     <span className="text-sm font-semibold text-green-700 dark:text-green-300">
                                         -{pricing.discount_percent}%
@@ -104,6 +126,11 @@ export default function Payment({ tenant, vehicles_quota, billing_interval, pric
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">
                             Rp {(pricing.total_price / 1000).toLocaleString('id-ID')}k
                         </div>
+                        {plan.pricing_model === 'payg' && (
+                            <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                                {billing_interval === 'year' ? 'Annual billing (10 months charged)' : 'Monthly billing'}
+                            </div>
+                        )}
                     </div>
                 </div>
 

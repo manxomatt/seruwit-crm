@@ -44,9 +44,18 @@ export interface PlanFormData {
     tenants?: number;
 }
 
+interface SubscriptionTier {
+    id: number;
+    name: string;
+    min_vehicles: number;
+    max_vehicles: number;
+    price_per_vehicle: number;
+}
+
 interface PlanFormProps {
     initialData: PlanFormData;
     availableModules: AvailableModule[];
+    subscriptionTiers?: SubscriptionTier[];
     isEdit?: boolean;
 }
 
@@ -108,7 +117,7 @@ function PriceInput({
     );
 }
 
-export default function PlanForm({ initialData, availableModules, isEdit = false }: PlanFormProps): JSX.Element {
+export default function PlanForm({ initialData, availableModules, subscriptionTiers = [], isEdit = false }: PlanFormProps): JSX.Element {
     const { t } = useTrans();
     const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'limits' | 'modules'>('info');
     const [moduleSearch, setModuleSearch] = useState('');
@@ -136,6 +145,11 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
         annual_original_price: initialData.annual_original_price ? String(Number(initialData.annual_original_price)) : '',
         currency: initialData.currency ?? 'IDR',
         trial_days: initialData.trial_days ?? 0,
+        pricing_model: (initialData as any).pricing_model ?? 'fixed',
+        subscription_tier_id: (initialData as any).subscription_tier_id ?? null,
+        allow_payg_upgrade: (initialData as any).allow_payg_upgrade ?? true,
+        include_trial: (initialData as any).include_trial ?? true,
+        trial_duration_days: (initialData as any).trial_duration_days ?? 30,
     });
 
     const toggleModule = (key: string): void => {
@@ -431,12 +445,48 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                             {/* Tab 2: Pricing */}
                             {activeTab === 'pricing' && (
                                 <div className="space-y-4">
+                                    {/* Pricing Model Selection */}
+                                    <div className="space-y-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5">
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pricing Model</h3>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="pricing_model"
+                                                    value="fixed"
+                                                    checked={form.data.pricing_model === 'fixed'}
+                                                    onChange={(e) => form.setData('pricing_model', e.target.value)}
+                                                    className="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-900 dark:text-white">Fixed Pricing</p>
+                                                    <p className="text-[11px] text-slate-500">Monthly/Annual flat fee</p>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="pricing_model"
+                                                    value="payg"
+                                                    checked={form.data.pricing_model === 'payg'}
+                                                    onChange={(e) => form.setData('pricing_model', e.target.value)}
+                                                    className="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-900 dark:text-white">PAYG (Vehicle-Based)</p>
+                                                    <p className="text-[11px] text-slate-500">Price per vehicle using tiers</p>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
                                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('plans.form.currency_title')}</h3>
                                         <select
                                             value={form.data.currency}
                                             onChange={(e) => form.setData('currency', e.target.value)}
-                                            className="rounded-xl border-slate-200 dark:border-slate-800 py-1.5 px-3 text-xs bg-white dark:bg-slate-900 font-semibold focus:border-indigo-500"
+                                            className="rounded-xl border border-slate-200 dark:border-slate-800 py-2.5 px-3.5 text-xs bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         >
                                             {CURRENCIES.map((c) => (
                                                 <option key={c} value={c}>{c}</option>
@@ -444,64 +494,156 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                         </select>
                                     </div>
 
-                                    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-5">
-                                        {/* Monthly */}
-                                        <div>
-                                            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-                                                {t('plans.form.monthly_section')}
-                                            </p>
-                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                                <PriceInput
-                                                    label={t('plans.form.monthly_normal')}
-                                                    hint={t('plans.form.hint_paid')}
-                                                    value={form.data.price}
-                                                    onChange={(v) => form.setData('price', v)}
-                                                    currency={form.data.currency}
-                                                    error={form.errors.price}
-                                                />
-                                                <PriceInput
-                                                    label={t('plans.form.monthly_original')}
-                                                    hint={t('plans.form.hint_original')}
-                                                    value={form.data.original_price}
-                                                    onChange={(v) => form.setData('original_price', v)}
-                                                    currency={form.data.currency}
-                                                    error={form.errors.original_price}
-                                                />
+                                    {form.data.pricing_model === 'fixed' ? (
+                                        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-5">
+                                            {/* Monthly */}
+                                            <div>
+                                                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                                                    {t('plans.form.monthly_section')}
+                                                </p>
+                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                    <PriceInput
+                                                        label={t('plans.form.monthly_normal')}
+                                                        hint={t('plans.form.hint_paid')}
+                                                        value={form.data.price}
+                                                        onChange={(v) => form.setData('price', v)}
+                                                        currency={form.data.currency}
+                                                        error={form.errors.price}
+                                                    />
+                                                    <PriceInput
+                                                        label={t('plans.form.monthly_original')}
+                                                        hint={t('plans.form.hint_original')}
+                                                        value={form.data.original_price}
+                                                        onChange={(v) => form.setData('original_price', v)}
+                                                        currency={form.data.currency}
+                                                        error={form.errors.original_price}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Annual */}
+                                            <div className="pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                                                    {t('plans.form.annual_section')}
+                                                </p>
+                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                    <PriceInput
+                                                        label={t('plans.form.annual_normal')}
+                                                        hint={t('plans.form.hint_annual_paid')}
+                                                        value={form.data.annual_price}
+                                                        onChange={(v) => form.setData('annual_price', v)}
+                                                        currency={form.data.currency}
+                                                        error={form.errors.annual_price}
+                                                    />
+                                                    <PriceInput
+                                                        label={t('plans.form.annual_original')}
+                                                        hint={t('plans.form.hint_original')}
+                                                        value={form.data.annual_original_price}
+                                                        onChange={(v) => form.setData('annual_original_price', v)}
+                                                        currency={form.data.currency}
+                                                        error={form.errors.annual_original_price}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Preview Diskon */}
+                                            {savingsPercent > 0 && (
+                                                <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-400">
+                                                    🎉 {t('plans.billing.annual_savings_note', { percent: savingsPercent })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-5">
+                                            {/* PAYG Configuration */}
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                                                    Select Subscription Tier
+                                                </label>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                                                    Choose which subscription tier this plan will use for vehicle-based pricing.
+                                                </p>
+                                                {subscriptionTiers.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {subscriptionTiers.map((tier) => (
+                                                            <label key={tier.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-white dark:hover:bg-slate-800/50">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="subscription_tier_id"
+                                                                    value={tier.id}
+                                                                    checked={form.data.subscription_tier_id === tier.id}
+                                                                    onChange={(e) => form.setData('subscription_tier_id', Number(e.target.value))}
+                                                                    className="mt-0.5 rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                                />
+                                                                <div className="flex-1 text-xs">
+                                                                    <p className="font-semibold text-slate-900 dark:text-white">{tier.name}</p>
+                                                                    <p className="text-slate-500 dark:text-slate-400">
+                                                                        {tier.min_vehicles}-{tier.max_vehicles > 100000 ? '∞' : tier.max_vehicles} vehicles @ Rp {(tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k/vehicle
+                                                                    </p>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-xl border border-amber-200 dark:border-amber-800/30 bg-amber-50 dark:bg-amber-900/20 p-4">
+                                                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                                                            ⚠️ No subscription tiers available. <a href="/module/subscription-tiers/create" className="font-semibold underline">Create one first</a>.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* PAYG Features */}
+                                            <div className="pt-4 border-t border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                                                <h4 className="text-xs font-semibold text-slate-900 dark:text-white">PAYG Features</h4>
+                                                <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                        checked={form.data.allow_payg_upgrade}
+                                                        onChange={(e) => form.setData('allow_payg_upgrade', e.target.checked)}
+                                                    />
+                                                    <span>
+                                                        <span className="font-semibold block">Allow Mid-Period Upgrades</span>
+                                                        <span className="text-[11px] text-slate-400">Tenants can upgrade vehicle quota anytime with pro-rated billing</span>
+                                                    </span>
+                                                </label>
+
+                                                <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                        checked={form.data.include_trial}
+                                                        onChange={(e) => form.setData('include_trial', e.target.checked)}
+                                                    />
+                                                    <span>
+                                                        <span className="font-semibold block">Include Trial Period</span>
+                                                        <span className="text-[11px] text-slate-400">Offer free trial with unlimited vehicles</span>
+                                                    </span>
+                                                </label>
+
+                                                {form.data.include_trial && (
+                                                    <div className="ml-6 pt-2">
+                                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                                            Trial Duration (days)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={365}
+                                                            value={form.data.trial_duration_days}
+                                                            onChange={(e) => form.setData('trial_duration_days', Number(e.target.value))}
+                                                            className={inputClass}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 px-4 py-3 text-xs text-blue-700 dark:text-blue-400">
+                                                💡 PAYG plans charge tenants based on the number of vehicles they register, using the selected subscription tier for pricing.
                                             </div>
                                         </div>
-
-                                        {/* Annual */}
-                                        <div className="pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
-                                            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-                                                {t('plans.form.annual_section')}
-                                            </p>
-                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                                <PriceInput
-                                                    label={t('plans.form.annual_normal')}
-                                                    hint={t('plans.form.hint_annual_paid')}
-                                                    value={form.data.annual_price}
-                                                    onChange={(v) => form.setData('annual_price', v)}
-                                                    currency={form.data.currency}
-                                                    error={form.errors.annual_price}
-                                                />
-                                                <PriceInput
-                                                    label={t('plans.form.annual_original')}
-                                                    hint={t('plans.form.hint_original')}
-                                                    value={form.data.annual_original_price}
-                                                    onChange={(v) => form.setData('annual_original_price', v)}
-                                                    currency={form.data.currency}
-                                                    error={form.errors.annual_original_price}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Preview Diskon */}
-                                        {savingsPercent > 0 && (
-                                            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-400">
-                                                🎉 {t('plans.billing.annual_savings_note', { percent: savingsPercent })}
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
                             )}
 

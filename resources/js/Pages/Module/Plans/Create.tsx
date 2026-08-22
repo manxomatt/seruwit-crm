@@ -15,12 +15,21 @@ interface AvailableModule {
     requires?: string[];
 }
 
+interface SubscriptionTier {
+    id: number;
+    name: string;
+    min_vehicles: number;
+    max_vehicles: number;
+    price_per_vehicle: number;
+}
+
 interface Props {
     nextSortOrder: number;
     availableModules: AvailableModule[];
+    subscriptionTiers: SubscriptionTier[];
 }
 
-export default function Create({ nextSortOrder, availableModules }: Props): JSX.Element {
+export default function Create({ nextSortOrder, availableModules, subscriptionTiers }: Props): JSX.Element {
     const { t } = useTrans();
 
     const initialData = {
@@ -36,6 +45,11 @@ export default function Create({ nextSortOrder, availableModules }: Props): JSX.
         annual_original_price: '',
         currency: 'IDR',
         trial_days: 0,
+        pricing_model: 'fixed',
+        subscription_tier_id: null,
+        allow_payg_upgrade: true,
+        include_trial: true,
+        trial_duration_days: 30,
     };
 
     return (
@@ -46,6 +60,7 @@ export default function Create({ nextSortOrder, availableModules }: Props): JSX.
                 <PlanForm
                     initialData={initialData}
                     availableModules={availableModules}
+                    subscriptionTiers={subscriptionTiers}
                     isEdit={false}
                 />
             </div>

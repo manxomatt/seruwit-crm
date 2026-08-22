@@ -110,30 +110,32 @@ class BillingModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::get('/billing', [BillingDashboardController::class, 'index'])->middleware('permission:billing,view')->name('billing.dashboard');
+        Route::prefix('module')->name('module.')->group(function () {
+            Route::get('/billing', [BillingDashboardController::class, 'index'])->middleware('permission:billing,view')->name('billing.dashboard');
 
-        // Raising an invoice from delivered orders. The document that comes out
-        // belongs to Invoicing, so these hand off to its pages once written —
-        // there is no invoice list or detail view here.
-        Route::get('/billing/invoices/create', [OrderInvoiceController::class, 'create'])->middleware('permission:billing,create')->name('billing.invoices.create');
-        Route::post('/billing/invoices', [OrderInvoiceController::class, 'store'])->middleware('permission:billing,create')->name('billing.invoices.store');
-        Route::post('/billing/invoices/{invoice}/orders', [OrderInvoiceController::class, 'attach'])->middleware('permission:billing,update')->name('billing.invoices.orders.store');
+            // Raising an invoice from delivered orders. The document that comes out
+            // belongs to Invoicing, so these hand off to its pages once written —
+            // there is no invoice list or detail view here.
+            Route::get('/billing/invoices/create', [OrderInvoiceController::class, 'create'])->middleware('permission:billing,create')->name('billing.invoices.create');
+            Route::post('/billing/invoices', [OrderInvoiceController::class, 'store'])->middleware('permission:billing,create')->name('billing.invoices.store');
+            Route::post('/billing/invoices/{invoice}/orders', [OrderInvoiceController::class, 'attach'])->middleware('permission:billing,update')->name('billing.invoices.orders.store');
 
-        Route::get('/billing/charges', [OrderChargeController::class, 'index'])->middleware('permission:billing,view')->name('billing.charges.index');
-        Route::patch('/billing/charges/{order}', [OrderChargeController::class, 'update'])->middleware('permission:billing,update')->name('billing.charges.update');
+            Route::get('/billing/charges', [OrderChargeController::class, 'index'])->middleware('permission:billing,view')->name('billing.charges.index');
+            Route::patch('/billing/charges/{order}', [OrderChargeController::class, 'update'])->middleware('permission:billing,update')->name('billing.charges.update');
 
-        Route::get('/billing/tariffs', [TariffController::class, 'index'])->middleware('permission:billing,view')->name('billing.tariffs.index');
-        Route::post('/billing/tariffs', [TariffController::class, 'store'])->middleware('permission:billing,create')->name('billing.tariffs.store');
-        Route::patch('/billing/tariffs/{tariff}', [TariffController::class, 'update'])->middleware('permission:billing,update')->name('billing.tariffs.update');
-        Route::delete('/billing/tariffs/{tariff}', [TariffController::class, 'destroy'])->middleware('permission:billing,delete')->name('billing.tariffs.destroy');
+            Route::get('/billing/tariffs', [TariffController::class, 'index'])->middleware('permission:billing,view')->name('billing.tariffs.index');
+            Route::post('/billing/tariffs', [TariffController::class, 'store'])->middleware('permission:billing,create')->name('billing.tariffs.store');
+            Route::patch('/billing/tariffs/{tariff}', [TariffController::class, 'update'])->middleware('permission:billing,update')->name('billing.tariffs.update');
+            Route::delete('/billing/tariffs/{tariff}', [TariffController::class, 'destroy'])->middleware('permission:billing,delete')->name('billing.tariffs.destroy');
 
-        Route::get('/billing/allowances', [TripAllowanceController::class, 'index'])->middleware('permission:billing,view')->name('billing.allowances.index');
-        Route::get('/billing/allowances/create', [TripAllowanceController::class, 'create'])->middleware('permission:billing,create')->name('billing.allowances.create');
-        Route::post('/billing/allowances', [TripAllowanceController::class, 'store'])->middleware('permission:billing,create')->name('billing.allowances.store');
-        Route::get('/billing/allowances/{allowance}', [TripAllowanceController::class, 'show'])->middleware('permission:billing,view')->name('billing.allowances.show');
-        Route::delete('/billing/allowances/{allowance}', [TripAllowanceController::class, 'destroy'])->middleware('permission:billing,delete')->name('billing.allowances.destroy');
-        Route::post('/billing/allowances/{allowance}/expenses', [TripAllowanceController::class, 'storeExpense'])->middleware('permission:billing,update')->name('billing.allowances.expenses.store');
-        Route::delete('/billing/allowances/{allowance}/expenses/{expense}', [TripAllowanceController::class, 'destroyExpense'])->middleware('permission:billing,update')->name('billing.allowances.expenses.destroy');
-        Route::post('/billing/allowances/{allowance}/settle', [TripAllowanceController::class, 'settle'])->middleware('permission:billing,update')->name('billing.allowances.settle');
+            Route::get('/billing/allowances', [TripAllowanceController::class, 'index'])->middleware('permission:billing,view')->name('billing.allowances.index');
+            Route::get('/billing/allowances/create', [TripAllowanceController::class, 'create'])->middleware('permission:billing,create')->name('billing.allowances.create');
+            Route::post('/billing/allowances', [TripAllowanceController::class, 'store'])->middleware('permission:billing,create')->name('billing.allowances.store');
+            Route::get('/billing/allowances/{allowance}', [TripAllowanceController::class, 'show'])->middleware('permission:billing,view')->name('billing.allowances.show');
+            Route::delete('/billing/allowances/{allowance}', [TripAllowanceController::class, 'destroy'])->middleware('permission:billing,delete')->name('billing.allowances.destroy');
+            Route::post('/billing/allowances/{allowance}/expenses', [TripAllowanceController::class, 'storeExpense'])->middleware('permission:billing,update')->name('billing.allowances.expenses.store');
+            Route::delete('/billing/allowances/{allowance}/expenses/{expense}', [TripAllowanceController::class, 'destroyExpense'])->middleware('permission:billing,update')->name('billing.allowances.expenses.destroy');
+            Route::post('/billing/allowances/{allowance}/settle', [TripAllowanceController::class, 'settle'])->middleware('permission:billing,update')->name('billing.allowances.settle');
+        });
     }
 }

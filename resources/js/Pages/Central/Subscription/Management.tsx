@@ -23,9 +23,16 @@ interface Props {
         starts_at: string
         ends_at: string
         renewal_date?: string
+        next_renewal_date?: string
         auto_renew: boolean
         subscription_type: string
         monthly_cost: number
+        skip_next_renewal?: boolean
+        renewal_attempts?: number
+        plan?: {
+            name: string
+            pricing_model: 'fixed' | 'payg'
+        }
     }
     payment_orders: PaymentOrder[]
 }
@@ -103,10 +110,21 @@ export default function Management({ tenant, subscription, payment_orders }: Pro
                     <div className="p-6">
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">Plan Type</p>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                    PAYG
-                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Plan</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                        {subscription.plan?.name || 'N/A'}
+                                    </p>
+                                    {subscription.plan && (
+                                        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                                            subscription.plan.pricing_model === 'payg'
+                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200'
+                                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                                        }`}>
+                                            {subscription.plan.pricing_model === 'payg' ? 'PAYG' : 'Fixed'}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">Vehicle Quota</p>
@@ -202,6 +220,50 @@ export default function Management({ tenant, subscription, payment_orders }: Pro
                         </div>
                     </div>
                 </div>
+
+                {/* Renewal Status */}
+                {subscription.next_renewal_date && (
+                    <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Renewal Status
+                            </h2>
+                            <Link
+                                href={`/subscriptions/${tenant.id}/renewal-history`}
+                                className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                                View Full History →
+                            </Link>
+                        </div>
+
+                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Next Renewal</p>
+                                <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
+                                    {subscription.next_renewal_date}
+                                </p>
+                            </div>
+
+                            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Renewal Attempts</p>
+                                <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
+                                    {subscription.renewal_attempts || 0}
+                                </p>
+                            </div>
+                        </div>
+
+                        {subscription.skip_next_renewal && (
+                            <div className="mt-4 rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20">
+                                <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
+                                    ⏸️ Next Renewal Skipped
+                                </p>
+                                <p className="mt-1 text-sm text-yellow-800 dark:text-yellow-300">
+                                    Your subscription will expire on {subscription.ends_at} without automatic renewal.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Payment History */}
                 <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">

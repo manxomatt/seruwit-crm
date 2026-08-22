@@ -36,7 +36,7 @@ class StorePlanRequest extends FormRequest
             'features_list' => ['nullable', 'array'],
             'features_list.*' => ['string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
-                        'is_active' => ['boolean'],
+            'is_active' => ['boolean'],
             // Pricing fields
             'is_default' => ['boolean'],
             'price' => ['nullable', 'numeric', 'min:0'],
@@ -49,6 +49,12 @@ class StorePlanRequest extends FormRequest
             // ProvisionSelfServeTenantJob and TenantController::store() —
             // rather than assuming a fixed number of days anywhere in code.
             'trial_days' => ['nullable', 'integer', 'min:0', 'max:365'],
+            // PAYG pricing model fields
+            'pricing_model' => ['required', 'string', Rule::in(['fixed', 'payg'])],
+            'subscription_tier_id' => ['nullable', 'integer', 'exists:subscription_tiers,id'],
+            'allow_payg_upgrade' => ['boolean'],
+            'include_trial' => ['boolean'],
+            'trial_duration_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ];
     }
 

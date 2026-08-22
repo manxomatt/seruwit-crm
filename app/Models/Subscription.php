@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subscription extends Model
 {
@@ -27,11 +28,16 @@ class Subscription extends Model
         'starts_at',
         'ends_at',
         'renewal_date',
+        'next_renewal_date',
         'status',
         'cancelled_at',
         'ended_at',
         'auto_renew',
         'next_billing_date',
+        'renewal_notification_sent_at',
+        'renewal_attempts',
+        'last_renewal_attempted_at',
+        'skip_next_renewal',
     ];
 
     protected function casts(): array
@@ -40,11 +46,16 @@ class Subscription extends Model
             'subscribed_vehicles' => 'integer',
             'current_vehicle_count' => 'integer',
             'auto_renew' => 'boolean',
+            'skip_next_renewal' => 'boolean',
+            'renewal_attempts' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'ended_at' => 'datetime',
             'renewal_date' => 'date',
+            'next_renewal_date' => 'datetime',
+            'renewal_notification_sent_at' => 'datetime',
+            'last_renewal_attempted_at' => 'datetime',
             'next_billing_date' => 'datetime',
         ];
     }
@@ -57,6 +68,11 @@ class Subscription extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(SubscriptionRenewal::class);
     }
 
     public function isActive(): bool

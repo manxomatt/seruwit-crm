@@ -497,10 +497,6 @@ const moduleIconMap: Record<string, ReactNode> = {
     'users': <UsersIcon />,
     'roles': <RolesIcon />,
     'live-updates': <LiveUpdatesIcon />,
-    'plans': <PlansIcon />,
-    'payment-orders': <PaymentOrdersIcon />,
-    'tenants': <BuildingIcon />,
-    'module-registry': <ModulesIcon />,
 };
 
 // Module display names fall back to the module key; prefer t('modules.*') in the layout.
@@ -741,6 +737,20 @@ export default function ModuleLayout({ header, children }: Props) {
                     route().current('central.module.plans.*') ||
                     false,
                 module: 'plans',
+            });
+        }
+
+        // Subscription tiers for PAYG pricing
+        if (isCentral && isAdmin && routeExists('module.subscription-tiers.index')) {
+            items.push({
+                name: t('shell.subscription_tiers', undefined, 'Subscription Tiers'),
+                href: route(resolveNamedRoute('module.subscription-tiers.index')),
+                icon: <SubscriptionIcon />,
+                current:
+                    route().current('module.subscription-tiers.*') ||
+                    route().current('central.module.subscription-tiers.*') ||
+                    false,
+                module: 'subscription-tiers',
             });
         }
 

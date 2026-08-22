@@ -15,12 +15,21 @@ interface AvailableModule {
     requires?: string[];
 }
 
+interface SubscriptionTier {
+    id: number;
+    name: string;
+    min_vehicles: number;
+    max_vehicles: number;
+    price_per_vehicle: number;
+}
+
 interface Props {
     plan: PlanFormData;
     availableModules: AvailableModule[];
+    subscriptionTiers: SubscriptionTier[];
 }
 
-export default function Edit({ plan, availableModules }: Props): JSX.Element {
+export default function Edit({ plan, availableModules, subscriptionTiers }: Props): JSX.Element {
     const { t } = useTrans();
 
     return (
@@ -31,6 +40,7 @@ export default function Edit({ plan, availableModules }: Props): JSX.Element {
                 <PlanForm
                     initialData={plan}
                     availableModules={availableModules}
+                    subscriptionTiers={subscriptionTiers}
                     isEdit={true}
                 />
             </div>

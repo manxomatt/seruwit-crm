@@ -82,6 +82,11 @@ class Plan extends Model
         'trial_days',
         'is_trial',
         'is_active',
+        'pricing_model',
+        'subscription_tier_id',
+        'allow_payg_upgrade',
+        'include_trial',
+        'trial_duration_days',
     ];
 
     /**
@@ -103,6 +108,9 @@ class Plan extends Model
             'trial_days' => 'integer',
             'is_trial' => 'boolean',
             'is_active' => 'boolean',
+            'allow_payg_upgrade' => 'boolean',
+            'include_trial' => 'boolean',
+            'trial_duration_days' => 'integer',
         ];
     }
 
@@ -146,6 +154,21 @@ class Plan extends Model
     public function includesModule(string $moduleKey): bool
     {
         return in_array($moduleKey, $this->modules ?? [], true);
+    }
+
+    public function subscriptionTier()
+    {
+        return $this->belongsTo(SubscriptionTier::class);
+    }
+
+    public function isPayg(): bool
+    {
+        return $this->pricing_model === 'payg';
+    }
+
+    public function isFixed(): bool
+    {
+        return $this->pricing_model === 'fixed';
     }
 
     /**

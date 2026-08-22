@@ -5,6 +5,7 @@ use App\Http\Controllers\Central\OnboardingController;
 use App\Http\Controllers\Central\ResellerLandingPageController;
 use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\SubscriptionTierController;
+use App\Http\Controllers\Central\WebhookController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
@@ -18,6 +19,17 @@ use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Webhook Routes
+|--------------------------------------------------------------------------
+|
+| Unauthenticated webhook endpoints for payment processing.
+| These must be accessible to external services (e.g., Midtrans).
+|
+*/
+Route::post('/webhooks/payment', [WebhookController::class, 'handlePaymentWebhook'])->name('webhooks.payment');
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +89,14 @@ Route::domain($centralDomain)
             Route::get('/subscriptions/{tenant}/management', [SubscriptionController::class, 'management'])->name('subscriptions.management');
             Route::patch('/subscriptions/{tenant}/toggle-auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('subscriptions.toggle-auto-renew');
             Route::post('/subscriptions/{tenant}/cancel', [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+            Route::get('/subscriptions/{tenant}/renewal-history', [SubscriptionController::class, 'renewalHistory'])->name('subscriptions.renewal-history');
+            Route::post('/subscriptions/{tenant}/renewal/process', [SubscriptionController::class, 'processRenewal'])->name('subscriptions.renewal.process');
+            Route::post('/subscriptions/{tenant}/renewal/skip', [SubscriptionController::class, 'skipRenewal'])->name('subscriptions.renewal.skip');
+            Route::post('/subscriptions/{tenant}/renewal/enable', [SubscriptionController::class, 'enableRenewal'])->name('subscriptions.renewal.enable');
+
+            Route::get('/billing-reports/{tenant}', [BillingReportController::class, 'index'])->name('billing-reports.index');
+            Route::get('/billing-reports/{tenant}/{year}/{month}', [BillingReportController::class, 'show'])->name('billing-reports.show');
+            Route::get('/billing-reports/{tenant}/export/csv', [BillingReportController::class, 'exportCsv'])->name('billing-reports.export.csv');
 
             Route::middleware('verified')->group(function () {
                 Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
@@ -153,6 +173,7 @@ Route::domain($centralDomain)
         Route::get('/payment-orders/{paymentOrder}', [PaymentOrderController::class, 'show'])->name('payment-orders.show');
         Route::post('/payment-orders/{paymentOrder}/confirm', [PaymentOrderController::class, 'confirm'])->name('payment-orders.confirm');
         Route::post('/payment-orders/{paymentOrder}/reject', [PaymentOrderController::class, 'reject'])->name('payment-orders.reject');
+        Route::post('/webhooks/payment-orders/{paymentOrder}/confirm', [WebhookController::class, 'confirmPaymentManual'])->name('webhooks.payment-orders.confirm');
     });
 
 /*
@@ -182,7 +203,7 @@ Route::domain($centralDomain)
     ->prefix('module')
     ->name('module.')
     ->group(function () {
-        Route::get('/billing', [SubscriptionTierController::class, 'billingDashboard'])->name('billing.dashboard');
+        Route::get('/billing', [SubscriptionTierController::class, 'billingDashboard'])->name('subscription-tiers.dashboard');
         Route::get('/subscription-tiers', [SubscriptionTierController::class, 'index'])->name('subscription-tiers.index');
         Route::get('/subscription-tiers/create', [SubscriptionTierController::class, 'create'])->name('subscription-tiers.create');
         Route::post('/subscription-tiers', [SubscriptionTierController::class, 'store'])->name('subscription-tiers.store');

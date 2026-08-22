@@ -1,3 +1,18 @@
+export interface Plan {
+    id: number
+    name: string
+    description?: string
+    price: number
+    currency: string
+    pricing_model: 'fixed' | 'payg'
+    subscription_tier_id?: number
+    include_trial?: boolean
+    trial_duration_days?: number
+    allow_payg_upgrade?: boolean
+    created_at: string
+    updated_at: string
+}
+
 export interface SubscriptionTier {
     id: number
     name: string

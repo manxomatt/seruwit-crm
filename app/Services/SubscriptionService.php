@@ -214,7 +214,7 @@ class SubscriptionService
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
 
-        return DB::connection($central)->transaction(function () use ($tenant, $central, $tenantId, $newVehicleCount) {
+        return DB::connection($central)->transaction(function () use ($central, $tenantId, $newVehicleCount) {
             $subscription = Subscription::on($central)
                 ->where('tenant_id', $tenantId)
                 ->where('status', Subscription::STATUS_ACTIVE)
@@ -268,7 +268,7 @@ class SubscriptionService
     {
         $central = $this->centralConnection();
 
-        return DB::connection($central)->transaction(function () use ($paymentOrder, $central) {
+        return DB::connection($central)->transaction(function () use ($paymentOrder) {
             $subscription = $paymentOrder->subscription;
 
             $subscription->update([
@@ -307,7 +307,7 @@ class SubscriptionService
                 $this->renew($subscription);
                 $renewed++;
             } catch (\Exception $e) {
-                \Log::error('Auto-renewal failed for subscription ' . $subscription->id, [
+                \Log::error('Auto-renewal failed for subscription '.$subscription->id, [
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -367,5 +367,120 @@ class SubscriptionService
     public function getPricingBreakdown(int $vehicleCount): array
     {
         return SubscriptionTier::priceBreakdown($vehicleCount, 'month');
+    }
+
+    /**
+     * Calculate PAYG pricing for a plan and vehicle count.
+     */
+    public function calculatePaygPrice(Plan $plan, int $vehicleCount, string $billingInterval = 'month'): array
+    {
+        if (! $plan->isPayg() || ! $plan->subscriptionTier) {
+            throw new \InvalidArgumentException('Plan must be PAYG with a subscription tier');
+        }
+
+        $tier = $plan->subscriptionTier;
+        $pricePerVehicle = $tier->price_per_vehicle;
+        $monthlyTotal = $vehicleCount * $pricePerVehicle;
+
+        if ($billingInterval === 'annual') {
+            $annualTotal = $monthlyTotal * 10; // 2 months discount
+        } else {
+            $annualTotal = $monthlyTotal * 12;
+        }
+
+        return [
+            'tier_id' => $tier->id,
+            'tier_name' => $tier->name,
+            'vehicle_count' => $vehicleCount,
+            'price_per_vehicle' => $pricePerVehicle,
+            'monthly_total' => $monthlyTotal,
+            'annual_total' => $annualTotal,
+            'annual_savings' => $monthlyTotal * 2, // 2 months saved
+            'discount_percent' => round((1 - ($pricePerVehicle / 20000)) * 100), // Relative to tier 1
+            'billing_interval' => $billingInterval,
+            'total_amount' => $billingInterval === 'annual' ? $annualTotal : $monthlyTotal,
+        ];
+    }
+
+    /**
+     * Create payment order for PAYG plan activation.
+     */
+    public function createPaygPaymentOrder(Tenant $tenant, Plan $plan, int $vehicleCount, string $billingInterval = 'month'): PaymentOrder
+    {
+        $central = $this->centralConnection();
+        $tenantId = $this->tenantId($tenant);
+        $pricing = $this->calculatePaygPrice($plan, $vehicleCount, $billingInterval);
+
+        return DB::connection($central)->transaction(function () use ($plan, $tenantId, $central, $vehicleCount, $billingInterval, $pricing) {
+            $paymentOrder = PaymentOrder::on($central)->create([
+                'tenant_id' => $tenantId,
+                'plan_id' => $plan->id,
+                'subscription_tier_id' => $pricing['tier_id'],
+                'subscribed_vehicles' => $vehicleCount,
+                'price_per_vehicle' => $pricing['price_per_vehicle'],
+                'total_vehicle_cost' => $pricing['total_amount'],
+                'type' => 'activate',
+                'billing_interval' => $billingInterval,
+                'payment_method' => 'manual_transfer',
+                'status' => PaymentOrder::STATUS_PENDING,
+                'amount' => $pricing['total_amount'],
+                'total_amount' => $pricing['total_amount'],
+                'currency' => 'IDR',
+                'unique_code' => PaymentOrder::generateUniqueCode(),
+                'expires_at' => now()->addDays(7),
+            ]);
+
+            return $paymentOrder;
+        });
+    }
+
+    /**
+     * Activate PAYG subscription after payment confirmation.
+     */
+    public function activatePaygSubscription(Tenant $tenant, Plan $plan, int $vehicleCount, string $billingInterval = 'month'): Subscription
+    {
+        $central = $this->centralConnection();
+        $tenantId = $this->tenantId($tenant);
+        $isAnnual = $billingInterval === 'annual';
+        $pricing = $this->calculatePaygPrice($plan, $vehicleCount, $billingInterval);
+
+        return DB::connection($central)->transaction(function () use ($tenant, $plan, $central, $tenantId, $vehicleCount, $isAnnual) {
+            $now = now();
+            $trialDays = $plan->include_trial ? ($plan->trial_duration_days ?? 30) : 0;
+            $startsAt = $trialDays > 0 ? $now : $now;
+            $trialEndsAt = $trialDays > 0 ? $now->copy()->addDays($trialDays) : null;
+            $billingStartsAt = $trialEndsAt ?? $now;
+            $endsAt = $isAnnual ? $billingStartsAt->copy()->addYear() : $billingStartsAt->copy()->addMonth();
+
+            $subscription = Subscription::on($central)->updateOrCreate(
+                ['tenant_id' => $tenantId],
+                [
+                    'plan_id' => $plan->id,
+                    'subscribed_vehicles' => $vehicleCount,
+                    'current_vehicle_count' => 0,
+                    'subscription_type' => 'payg',
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
+                    'renewal_date' => $endsAt->toDateString(),
+                    'next_billing_date' => $billingStartsAt,
+                    'auto_renew' => true,
+                    'status' => Subscription::STATUS_ACTIVE,
+                    'cancelled_at' => null,
+                    'ended_at' => null,
+                ]
+            );
+
+            $tenant->update([
+                'plan' => $plan->key,
+                'subscription_type' => 'payg',
+                'max_vehicles_allowed' => $plan->allow_payg_upgrade ? null : $vehicleCount,
+                'subscription_id' => $subscription->id,
+                'trial_ends_at' => $trialEndsAt,
+                'is_trial_expired' => false,
+                'status' => 'active',
+            ]);
+
+            return $subscription->fresh();
+        });
     }
 }
