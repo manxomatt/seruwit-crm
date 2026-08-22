@@ -7,22 +7,33 @@ use App\Models\Subscription;
 use App\Models\SubscriptionTier;
 use App\Models\Tenant;
 use App\Services\SubscriptionService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\PlanSeeder;
+use Database\Seeders\SubscriptionTierSeeder;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
 class SubscriptionPaygTest extends TestCase
 {
-    use RefreshDatabase;
+    // DatabaseMigrations (not RefreshDatabase): creating a Tenant provisions a
+    // tenant schema via DDL that must commit, which deadlocks inside the
+    // transaction RefreshDatabase wraps around each test. See Tests\Traits\WithTenant.
+    use DatabaseMigrations;
 
     private SubscriptionService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Same data and order the app ships with (DatabaseSeeder): PlanSeeder
+        // first, then SubscriptionTierSeeder, whose "Tier N - …" names win the
+        // shared min_vehicles rows.
+        $this->seed([PlanSeeder::class, SubscriptionTierSeeder::class]);
+
         $this->service = app(SubscriptionService::class);
     }
 
-    private function createTenant(string $id = null): Tenant
+    private function createTenant(?string $id = null): Tenant
     {
         return Tenant::create([
             'id' => $id ?? uniqid('tenant-'),
