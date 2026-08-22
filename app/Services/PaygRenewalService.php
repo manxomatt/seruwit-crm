@@ -66,7 +66,7 @@ class PaygRenewalService
                     'tenant_id' => $tenant->id,
                     'plan_id' => $plan->id,
                     'subscription_id' => $subscription->id,
-                    'subscription_tier_id' => $plan->subscription_tier_id,
+                    'subscription_tier_id' => $pricing['tier_id'],
                     'subscribed_vehicles' => $subscription->subscribed_vehicles,
                     'price_per_vehicle' => $pricing['price_per_vehicle'],
                     'total_vehicle_cost' => $pricing['price_per_vehicle'] * $subscription->subscribed_vehicles,

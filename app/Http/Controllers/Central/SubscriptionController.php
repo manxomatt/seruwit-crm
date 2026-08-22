@@ -119,7 +119,7 @@ class SubscriptionController extends Controller
             'vehicles_quota' => $vehicleCount,
             'billing_interval' => $validated['billing_interval'],
             'pricing' => $pricing,
-            'tier' => $plan->isPayg() ? $plan->subscriptionTier?->toArray() : SubscriptionTier::tierFor($vehicleCount)?->toArray(),
+            'tier' => SubscriptionTier::tierFor($vehicleCount)?->toArray(),
         ]);
     }
 

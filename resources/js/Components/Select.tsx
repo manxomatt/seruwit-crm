@@ -54,7 +54,7 @@ const CheckIcon = () => (
 );
 
 const triggerClassName =
-    'w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm';
+    'w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:disabled:bg-slate-800 dark:disabled:text-slate-500';
 
 const optionsPanelClassName =
     'z-[1200] mt-1 max-h-60 min-w-[var(--input-width)] w-auto max-w-md overflow-auto rounded-xl border border-slate-200 bg-white py-1 text-xs shadow-xl ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200';
@@ -63,7 +63,7 @@ const listboxPanelClassName =
     'z-[1200] mt-1 max-h-60 min-w-[var(--button-width)] w-auto max-w-md overflow-auto rounded-xl border border-slate-200 bg-white py-1 text-xs shadow-xl ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200';
 
 const optionClassName =
-    'group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400';
+    'group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400 dark:text-slate-200 dark:data-[disabled]:text-slate-500';
 
 function shouldUseSearchable(searchable: boolean | undefined, optionCount: number, limit: number): boolean {
     if (searchable === true) {
@@ -233,7 +233,7 @@ export default function Select({
         <Listbox value={value} onChange={onChange} disabled={disabled}>
             <div className={`relative ${className}`}>
                 <ListboxButton id={id} className={`relative cursor-default ${triggerClassName}`}>
-                    <span className={`block truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <span className={`block truncate ${selected ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
                         {selected ? selected.label : resolvedPlaceholder}
                     </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">

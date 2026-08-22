@@ -374,11 +374,16 @@ class SubscriptionService
      */
     public function calculatePaygPrice(Plan $plan, int $vehicleCount, string $billingInterval = 'month'): array
     {
-        if (! $plan->isPayg() || ! $plan->subscriptionTier) {
-            throw new \InvalidArgumentException('Plan must be PAYG with a subscription tier');
+        if (! $plan->isPayg()) {
+            throw new \InvalidArgumentException('Plan must use the PAYG pricing model');
         }
 
-        $tier = $plan->subscriptionTier;
+        $tier = SubscriptionTier::tierFor($vehicleCount);
+
+        if (! $tier) {
+            throw new \InvalidArgumentException("No subscription tier is defined for {$vehicleCount} vehicles");
+        }
+
         $pricePerVehicle = $tier->price_per_vehicle;
         $monthlyTotal = $vehicleCount * $pricePerVehicle;
 

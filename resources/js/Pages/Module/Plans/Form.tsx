@@ -1,5 +1,6 @@
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select, { SelectOption } from '@/Components/Select';
 import { useTrans } from '@/hooks/useTrans';
 import { Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
@@ -67,7 +68,12 @@ const TIER_BADGES: Record<ModuleTier, { bg: string; text: string }> = {
     content: { bg: 'bg-emerald-500/10 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400' },
 };
 
-const CURRENCIES = ['IDR', 'USD', 'SGD', 'MYR'];
+const CURRENCY_OPTIONS: SelectOption[] = [
+    { value: 'IDR', label: 'IDR — Rupiah' },
+    { value: 'USD', label: 'USD — US Dollar' },
+    { value: 'SGD', label: 'SGD — Singapore Dollar' },
+    { value: 'MYR', label: 'MYR — Ringgit' },
+];
 
 const inputClass =
     'mt-1 block w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 px-3.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-slate-900 dark:text-white';
@@ -483,15 +489,13 @@ export default function PlanForm({ initialData, availableModules, subscriptionTi
 
                                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('plans.form.currency_title')}</h3>
-                                        <select
+                                        <Select
                                             value={form.data.currency}
-                                            onChange={(e) => form.setData('currency', e.target.value)}
-                                            className="rounded-xl border border-slate-200 dark:border-slate-800 py-2.5 px-3.5 text-xs bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        >
-                                            {CURRENCIES.map((c) => (
-                                                <option key={c} value={c}>{c}</option>
-                                            ))}
-                                        </select>
+                                            onChange={(v) => form.setData('currency', v)}
+                                            options={CURRENCY_OPTIONS}
+                                            searchable={false}
+                                            className="w-52"
+                                        />
                                     </div>
 
                                     {form.data.pricing_model === 'fixed' ? (
@@ -555,33 +559,37 @@ export default function PlanForm({ initialData, availableModules, subscriptionTi
                                         </div>
                                     ) : (
                                         <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-5">
-                                            {/* PAYG Configuration */}
+                                            {/* PAYG Tier Reference (read-only volume ladder) */}
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                                                    Select Subscription Tier
-                                                </label>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                        Subscription Tier Pricing
+                                                    </label>
+                                                    <a
+                                                        href="/module/subscription-tiers"
+                                                        className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                    >
+                                                        Manage tiers →
+                                                    </a>
+                                                </div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                                                    Choose which subscription tier this plan will use for vehicle-based pricing.
+                                                    Price is applied automatically based on the tenant's requested vehicle quota — no tier selection needed.
                                                 </p>
                                                 {subscriptionTiers.length > 0 ? (
                                                     <div className="space-y-2">
                                                         {subscriptionTiers.map((tier) => (
-                                                            <label key={tier.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-white dark:hover:bg-slate-800/50">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="subscription_tier_id"
-                                                                    value={tier.id}
-                                                                    checked={form.data.subscription_tier_id === tier.id}
-                                                                    onChange={(e) => form.setData('subscription_tier_id', Number(e.target.value))}
-                                                                    className="mt-0.5 rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                                />
-                                                                <div className="flex-1 text-xs">
+                                                            <div key={tier.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                                                                <div className="text-xs">
                                                                     <p className="font-semibold text-slate-900 dark:text-white">{tier.name}</p>
                                                                     <p className="text-slate-500 dark:text-slate-400">
-                                                                        {tier.min_vehicles}-{tier.max_vehicles > 100000 ? '∞' : tier.max_vehicles} vehicles @ Rp {(tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k/vehicle
+                                                                        {tier.min_vehicles}-{tier.max_vehicles > 100000 ? '∞' : tier.max_vehicles} vehicles
                                                                     </p>
                                                                 </div>
-                                                            </label>
+                                                                <span className="shrink-0 rounded-md bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-300">
+                                                                    Rp {(tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k
+                                                                    <span className="font-normal text-slate-400 dark:text-slate-500"> /vehicle</span>
+                                                                </span>
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 ) : (
@@ -640,7 +648,7 @@ export default function PlanForm({ initialData, availableModules, subscriptionTi
                                             </div>
 
                                             <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 px-4 py-3 text-xs text-blue-700 dark:text-blue-400">
-                                                💡 PAYG plans charge tenants based on the number of vehicles they register, using the selected subscription tier for pricing.
+                                                💡 PAYG plans charge tenants based on the number of vehicles they register. The matching tier — and its per-vehicle price — is applied automatically from the quota.
                                             </div>
                                         </div>
                                     )}
