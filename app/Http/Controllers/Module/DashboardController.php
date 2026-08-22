@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Models\Setting;
+use App\Models\SubscriptionTier;
 use App\Modules\Facades\Modules;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -101,7 +103,72 @@ class DashboardController extends Controller
             'recentActivity' => $recentActivity,
             'recentPosts' => $recentPosts,
             'recentPages' => $recentPages,
+            'subscription' => $this->buildSubscriptionOverview(),
         ]);
+    }
+
+    /**
+     * PAYG pricing overview for the current workspace: the tier that applies to
+     * the tenant's vehicle count, the monthly estimate, and the full tier ladder
+     * so growth-driven price drops are visible. Null when there is no tenant
+     * context or no tiers are configured.
+     *
+     * @return array{
+     *     subscription_type: ?string,
+     *     vehicle_count: int,
+     *     is_billed_quota: bool,
+     *     active_tier_id: ?int,
+     *     price_per_vehicle: ?float,
+     *     monthly_estimate: ?float,
+     *     currency_symbol: string,
+     *     tiers: array<int, array{id: int, name: string, min_vehicles: int, max_vehicles: int, price_per_vehicle: float}>
+     * }|null
+     */
+    private function buildSubscriptionOverview(): ?array
+    {
+        if (! function_exists('tenancy') || ! tenancy()->initialized) {
+            return null;
+        }
+
+        $tenant = tenant();
+
+        if (! $tenant) {
+            return null;
+        }
+
+        $tiers = SubscriptionTier::query()->orderBy('min_vehicles')->get();
+
+        if ($tiers->isEmpty()) {
+            return null;
+        }
+
+        $subscription = $tenant->subscription;
+        $subscribedVehicles = (int) ($subscription?->subscribed_vehicles ?? 0);
+
+        // Basis: the billed quota when subscribed, otherwise the live registered
+        // fleet as a projection of what the tenant would pay.
+        $vehicleCount = $subscribedVehicles > 0
+            ? $subscribedVehicles
+            : (Modules::available('fleet') ? (int) Vehicle::query()->count() : 0);
+
+        $activeTier = $vehicleCount > 0 ? SubscriptionTier::tierFor($vehicleCount) : null;
+
+        return [
+            'subscription_type' => $tenant->subscription_type,
+            'vehicle_count' => $vehicleCount,
+            'is_billed_quota' => $subscribedVehicles > 0,
+            'active_tier_id' => $activeTier?->id,
+            'price_per_vehicle' => $activeTier ? (float) $activeTier->price_per_vehicle : null,
+            'monthly_estimate' => $activeTier ? $vehicleCount * (float) $activeTier->price_per_vehicle : null,
+            'currency_symbol' => (string) Setting::getValue('ecommerce.currency_symbol', 'Rp'),
+            'tiers' => $tiers->map(fn (SubscriptionTier $tier): array => [
+                'id' => $tier->id,
+                'name' => $tier->name,
+                'min_vehicles' => (int) $tier->min_vehicles,
+                'max_vehicles' => (int) $tier->max_vehicles,
+                'price_per_vehicle' => (float) $tier->price_per_vehicle,
+            ])->all(),
+        ];
     }
 
     /**

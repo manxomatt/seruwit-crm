@@ -40,9 +40,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tenants', function (Blueprint $table) {
-            $table->dropIndex(['subscription_id']);
             $table->dropIndex(['subscription_type']);
-            $table->dropForeignIdFor(\App\Models\Subscription::class);
+
+            // Dropping subscription_id also removes its foreign key and index
+            // automatically in PostgreSQL, so doing so explicitly here would
+            // double-drop and fail on migrate:rollback.
             $table->dropColumn([
                 'subscription_type',
                 'max_vehicles_allowed',

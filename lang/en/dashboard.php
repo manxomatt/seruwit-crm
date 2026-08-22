@@ -91,6 +91,20 @@ return [
         'access_permissions' => 'Your access permissions',
     ],
 
+    'subscription' => [
+        'title' => 'Plan & Price per Vehicle',
+        'subtitle' => 'PAYG pricing follows your fleet size automatically',
+        'current_tier' => 'Active Tier',
+        'per_vehicle' => '/vehicle',
+        'monthly_estimate' => 'Monthly Estimate',
+        'vehicles' => 'vehicles',
+        'billed_quota_note' => 'Based on your subscribed quota',
+        'projected_note' => 'Projected from your registered fleet',
+        'your_tier' => 'Your Tier',
+        'unlimited' => 'Unlimited',
+        'no_tier' => 'No vehicles registered yet',
+    ],
+
     'actions' => [
         'view_all' => 'View all',
         'manage' => 'Manage',

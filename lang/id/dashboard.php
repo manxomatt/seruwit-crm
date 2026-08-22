@@ -91,6 +91,20 @@ return [
         'access_permissions' => 'Izin akses Anda',
     ],
 
+    'subscription' => [
+        'title' => 'Paket & Harga per Kendaraan',
+        'subtitle' => 'Harga PAYG otomatis mengikuti jumlah armada Anda',
+        'current_tier' => 'Tier Aktif',
+        'per_vehicle' => '/kendaraan',
+        'monthly_estimate' => 'Estimasi Bulanan',
+        'vehicles' => 'kendaraan',
+        'billed_quota_note' => 'Berdasarkan kuota berlangganan Anda',
+        'projected_note' => 'Perkiraan dari jumlah armada terdaftar',
+        'your_tier' => 'Tier Anda',
+        'unlimited' => 'Tanpa batas',
+        'no_tier' => 'Belum ada armada terdaftar',
+    ],
+
     'actions' => [
         'view_all' => 'Lihat semua',
         'manage' => 'Kelola',
