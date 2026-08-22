@@ -46,6 +46,7 @@ class OnboardingController extends Controller
         }
 
         $plans = \App\Models\Plan::query()
+            ->where('is_active', true)
             ->active()
             ->orderBy('sort_order')
             ->get()

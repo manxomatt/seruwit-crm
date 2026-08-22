@@ -105,7 +105,10 @@ class SubscriptionPaygTest extends TestCase
     public function test_can_add_vehicle_during_trial(): void
     {
         $tenant = $this->createTenant();
-        $tenant->update(['trial_ends_at' => now()->addDays(7)]);
+        $tenant->update([
+            'plan' => Plan::KEY_TRIAL,
+            'trial_ends_at' => now()->addDays(7),
+        ]);
 
         // During trial, unlimited vehicles
         $canAdd = $this->service->canAddVehicle($tenant, 50);
@@ -223,7 +226,10 @@ class SubscriptionPaygTest extends TestCase
     public function test_get_max_vehicles_allowed_on_trial(): void
     {
         $tenant = $this->createTenant();
-        $tenant->update(['trial_ends_at' => now()->addDays(7)]);
+        $tenant->update([
+            'plan' => Plan::KEY_TRIAL,
+            'trial_ends_at' => now()->addDays(7),
+        ]);
 
         $max = $this->service->getMaxVehiclesAllowed($tenant);
         $this->assertNull($max); // Unlimited on trial

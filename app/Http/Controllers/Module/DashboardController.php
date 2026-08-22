@@ -104,6 +104,7 @@ class DashboardController extends Controller
             'recentPosts' => $recentPosts,
             'recentPages' => $recentPages,
             'subscription' => $this->buildSubscriptionOverview(),
+            'currencySymbol' => (string) Setting::getValue('ecommerce.currency_symbol', 'Rp'),
         ]);
     }
 

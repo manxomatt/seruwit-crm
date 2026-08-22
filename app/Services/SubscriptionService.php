@@ -240,6 +240,7 @@ class SubscriptionService
             $paymentOrder = PaymentOrder::on($central)->create([
                 'tenant_id' => $tenantId,
                 'plan_id' => $subscription->plan_id,
+                'subscription_id' => $subscription->id,
                 'subscription_tier_id' => $newTier->id,
                 'subscribed_vehicles' => $newVehicleCount,
                 'price_per_vehicle' => $newTier->price_per_vehicle,

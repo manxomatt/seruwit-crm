@@ -196,6 +196,7 @@ interface Props {
     recentPosts: Post[];
     recentPages: Page[];
     subscription: SubscriptionOverview | null;
+    currencySymbol: string;
 }
 
 function routeExists(routeName: string): boolean {
@@ -335,19 +336,17 @@ const QUICK_ACTION_ICONS: Record<string, JSX.Element> = {
     ),
 };
 
+// The workspace's configured currency symbol (ecommerce.currency_symbol), set
+// once from props at render time so the module-level formatCurrency can prefix
+// it without threading the symbol through every call site.
+let dashboardCurrencySymbol = 'Rp';
+
 function formatCurrency(value: number, localeTag: string): string {
-    try {
-        return new Intl.NumberFormat(localeTag === 'id' ? 'id-ID' : 'en-US', {
-            style: 'currency',
-            currency: localeTag === 'id' ? 'IDR' : 'USD',
-            maximumFractionDigits: 0,
-        }).format(value);
-    } catch {
-        if (value >= 1_000_000_000) return `Rp ${Math.round(value / 1_000_000_000)}M`;
-        if (value >= 1_000_000) return `Rp ${Math.round(value / 1_000_000)}jt`;
-        if (value >= 1_000) return `Rp ${Math.round(value / 1_000)}rb`;
-        return `Rp ${value}`;
-    }
+    const grouped = new Intl.NumberFormat(localeTag === 'id' ? 'id-ID' : 'en-US', {
+        maximumFractionDigits: 0,
+    }).format(value);
+
+    return `${dashboardCurrencySymbol} ${grouped}`;
 }
 
 function formatNumber(value: number, localeTag: string): string {
@@ -430,48 +429,47 @@ function KpiCard({
     accent?: 'emerald' | 'red' | 'indigo' | 'amber';
     footer?: React.ReactNode;
 }): JSX.Element {
-    const accentClasses = {
-        emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-400 dark:ring-emerald-800',
-        red: 'bg-red-50 text-red-600 ring-red-100 dark:bg-red-950/50 dark:text-red-400 dark:ring-red-800',
-        indigo: 'bg-indigo-50 text-indigo-600 ring-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-400 dark:ring-indigo-800',
-        amber: 'bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/50 dark:text-amber-400 dark:ring-amber-800',
+    const tintClasses = {
+        emerald: 'from-emerald-50/80 dark:from-emerald-950/20',
+        red: 'from-rose-50/80 dark:from-rose-950/20',
+        indigo: 'from-indigo-50/80 dark:from-indigo-950/20',
+        amber: 'from-amber-50/80 dark:from-amber-950/20',
     } as const;
-    const dotClasses = {
-        emerald: 'bg-emerald-500',
-        red: 'bg-red-500',
-        indigo: 'bg-indigo-500',
-        amber: 'bg-amber-500',
+    const iconClasses = {
+        emerald: 'bg-emerald-100/70 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300',
+        red: 'bg-rose-100/70 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300',
+        indigo: 'bg-indigo-100/70 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300',
+        amber: 'bg-amber-100/70 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
     } as const;
-    const deltaUpClasses = {
+    const accentTextClasses = {
         emerald: 'text-emerald-600 dark:text-emerald-400',
-        red: 'text-red-600 dark:text-red-400',
+        red: 'text-rose-600 dark:text-rose-400',
         indigo: 'text-indigo-600 dark:text-indigo-400',
         amber: 'text-amber-600 dark:text-amber-400',
     } as const;
 
     return (
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <div
+            className={`group relative overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-gradient-to-br ${tintClasses[accent]} to-white to-60% dark:to-slate-900 p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}
+        >
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        <span className={`h-1.5 w-1.5 rounded-full ${dotClasses[accent]}`} />
-                        <span>{label}</span>
-                    </div>
-                    <div className="mt-2 text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+                    <div className="mt-2.5 text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white">
                         {value}
                     </div>
                     {subValue && (
-                        <div className="mt-1 flex items-baseline gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-1.5 flex items-baseline gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                             {subValue}
                         </div>
                     )}
                     {footer && (
-                        <div className={`mt-3 inline-flex items-center gap-1 text-xs font-bold ${deltaUpClasses[accent]}`}>
+                        <div className={`mt-3 inline-flex items-center gap-1 text-xs font-bold ${accentTextClasses[accent]}`}>
                             {footer}
                         </div>
                     )}
                 </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1 ${accentClasses[accent]}`}>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconClasses[accent]} transition-transform duration-300 group-hover:scale-105`}>
                     {icon}
                 </div>
             </div>
@@ -522,9 +520,11 @@ export default function Dashboard({
     recentPosts,
     recentPages,
     subscription,
+    currencySymbol,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
+    dashboardCurrencySymbol = currencySymbol;
     const [activeContentTab, setActiveContentTab] = useState<'posts' | 'pages'>('posts');
 
     const hasKpis = !!(kpis.revenue || kpis.outstanding || kpis.fleet_utilization || kpis.compliance);
@@ -651,7 +651,7 @@ export default function Dashboard({
                                 label={t('dashboard.kpi.outstanding')}
                                 value={formatCurrency(kpis.outstanding.value, localeTag)}
                                 subValue={kpis.outstanding.overdue_count > 0
-                                    ? <span className="text-red-600 font-semibold">{kpis.outstanding.overdue_label}</span>
+                                    ? <span className="font-semibold text-rose-600 dark:text-rose-400">{kpis.outstanding.overdue_label}</span>
                                     : undefined}
                                 accent="red"
                                 icon={
@@ -667,7 +667,7 @@ export default function Dashboard({
                                 value={`${kpis.fleet_utilization.percent}%`}
                                 subValue={
                                     <>
-                                        <span className="font-semibold text-gray-700 tabular-nums">
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
                                             {kpis.fleet_utilization.in_use}/{kpis.fleet_utilization.total_active}
                                         </span>
                                         <span>{t('dashboard.kpi.unit_in_use', {
@@ -692,7 +692,7 @@ export default function Dashboard({
                                 label={t('dashboard.kpi.compliance')}
                                 value={kpis.compliance.action_count}
                                 subValue={
-                                    <span className="font-semibold text-amber-600">
+                                    <span className="font-semibold text-amber-600 dark:text-amber-400">
                                         {t('dashboard.kpi.action_needed', { count: kpis.compliance.action_count })}
                                     </span>
                                 }
