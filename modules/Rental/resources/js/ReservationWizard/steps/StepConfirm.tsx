@@ -7,7 +7,7 @@ import type {
     ReservationFormData,
     ServerQuote,
 } from '../types';
-import { formatMoney } from '../types';
+import { formatDateDisplay, formatMoney } from '../types';
 
 interface Props {
     data: ReservationFormData;
@@ -309,7 +309,7 @@ function DateBlock({ label, value }: { label: string; value: string }): JSX.Elem
     return (
         <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-            <p className="mt-0.5 truncate text-xs font-black text-slate-900 dark:text-white">{value || '—'}</p>
+            <p className="mt-0.5 truncate text-xs font-black text-slate-900 dark:text-white">{formatDateDisplay(value) || '—'}</p>
         </div>
     );
 }

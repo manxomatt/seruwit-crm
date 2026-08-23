@@ -178,7 +178,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                     actions={
                         <Link href={prefixedRoute('rental.create')}>
                             <PrimaryButton className="rounded-xl shadow-sm">
-                                ➕ {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
+                                {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
                             </PrimaryButton>
                         </Link>
                     }

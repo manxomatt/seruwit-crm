@@ -17,6 +17,7 @@ class VehicleRentalClassTest extends TestCase
         $this->assertContains(VehicleRentalClass::SUV, $values);
         $this->assertContains(VehicleRentalClass::VAN, $values);
         $this->assertContains(VehicleRentalClass::PREMIUM, $values);
+        $this->assertContains(VehicleRentalClass::TRUCK, $values);
         $this->assertContains(VehicleRentalClass::OTHER, $values);
         $this->assertContains('van', $values);
     }
@@ -29,6 +30,7 @@ class VehicleRentalClassTest extends TestCase
         $this->assertSame('SUV', VehicleRentalClass::label('suv'));
         $this->assertSame('Van', VehicleRentalClass::label('van'));
         $this->assertSame('Premium', VehicleRentalClass::label('premium'));
+        $this->assertSame('Truk', VehicleRentalClass::label('truck'));
         $this->assertSame('Lainnya', VehicleRentalClass::label('other'));
 
         App::setLocale('en');
@@ -37,7 +39,21 @@ class VehicleRentalClassTest extends TestCase
         $this->assertSame('SUV', VehicleRentalClass::label('suv'));
         $this->assertSame('Van', VehicleRentalClass::label('van'));
         $this->assertSame('Premium', VehicleRentalClass::label('premium'));
+        $this->assertSame('Truck', VehicleRentalClass::label('truck'));
         $this->assertSame('Other', VehicleRentalClass::label('other'));
+    }
+
+    public function test_label_falls_back_to_humanized_value_for_untranslated_classes(): void
+    {
+        foreach (['en', 'id'] as $locale) {
+            App::setLocale($locale);
+
+            // Legacy free-text classes with no translation key must never leak the
+            // raw key to the UI.
+            $this->assertSame('Limousine', VehicleRentalClass::label('limousine'));
+            $this->assertSame('Box Truck', VehicleRentalClass::label('box truck'));
+            $this->assertFalse(str_starts_with(VehicleRentalClass::label('limousine'), 'fleet.rental_class.'));
+        }
     }
 
     public function test_all_rental_class_values_have_valid_translations_in_both_locales(): void

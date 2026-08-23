@@ -595,11 +595,11 @@ export default function Show({
                                 {/* Interval Dates Bar */}
                                 <div className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                                     <span className="font-bold text-slate-900 dark:text-white">
-                                        📅 {rental.start_date}
+                                        📅 {formatDateDmY(rental.start_date)}
                                     </span>
                                     <span className="text-slate-400">➔</span>
                                     <span className="font-bold text-slate-900 dark:text-white">
-                                        {rental.end_date}
+                                        {formatDateDmY(rental.end_date)}
                                     </span>
                                     <span className="ml-1 rounded-md bg-indigo-100 px-1.5 py-0.5 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
                                         {rental.total_periods} {periodLabel}
@@ -739,7 +739,7 @@ export default function Show({
                             label={t('rental.fields.period', undefined, 'Durasi Sewa')}
                             value={`${rental.total_periods} ${periodLabel}`}
                             icon="🗓️"
-                            hint={`${rental.start_date} → ${rental.end_date}`}
+                            hint={`${formatDateDmY(rental.start_date)} → ${formatDateDmY(rental.end_date)}`}
                         />
                         {invoicingEnabled ? (
                             <StatCard
@@ -1080,10 +1080,10 @@ export default function Show({
                                     <DetailRow label={t('rental.fields.driver', undefined, 'Supir (Driver)')}>{rental.driver.name}</DetailRow>
                                 )}
                                 <DetailRow label={t('rental.fields.period', undefined, 'Periode Sewa')}>
-                                    {rental.start_date} → {rental.end_date} ({rental.total_periods} {periodLabel})
+                                    {formatDateDmY(rental.start_date)} → {formatDateDmY(rental.end_date)} ({rental.total_periods} {periodLabel})
                                 </DetailRow>
                                 {rental.actual_return_date && (
-                                    <DetailRow label={t('rental.fields.actual_return', undefined, 'Pengembalian Aktual')}>{rental.actual_return_date}</DetailRow>
+                                    <DetailRow label={t('rental.fields.actual_return', undefined, 'Pengembalian Aktual')}>{formatDateDmY(rental.actual_return_date)}</DetailRow>
                                 )}
                                 {locationDisplay(rental.pickup_location) && (
                                     <DetailRow label={t('rental.fields.pickup_location', undefined, 'Lokasi Penyerahan (Pickup)')}>
@@ -1333,7 +1333,7 @@ export default function Show({
                                                     </span>
                                                     {inv.due_date && (
                                                         <span className="ml-2 text-[11px] text-slate-400">
-                                                            Jatuh tempo: {inv.due_date}
+                                                            Jatuh tempo: {formatDateDmY(inv.due_date)}
                                                         </span>
                                                     )}
                                                 </div>
@@ -1462,7 +1462,7 @@ export default function Show({
                                             <div className="flex items-center justify-between gap-3 text-xs">
                                                 <div>
                                                     <span className="font-bold text-slate-900 dark:text-white">
-                                                        ➔ {req.requested_end_date}
+                                                        ➔ {formatDateDmY(req.requested_end_date)}
                                                     </span>
                                                     <span className="ml-2 font-medium text-slate-400">
                                                         (+{req.estimated_periods} {periodLabel})
@@ -1526,7 +1526,7 @@ export default function Show({
                                     {rental.extensions.map((ext) => (
                                         <div key={ext.id} className="flex items-center justify-between gap-3 py-3 text-xs first:pt-0 last:pb-0">
                                             <div>
-                                                <span className="font-bold text-slate-900 dark:text-white">{ext.original_end_date} → {ext.new_end_date}</span>
+                                                <span className="font-bold text-slate-900 dark:text-white">{formatDateDmY(ext.original_end_date)} → {formatDateDmY(ext.new_end_date)}</span>
                                                 <span className="ml-2 text-slate-400">(+{ext.extended_periods} {periodLabel})</span>
                                             </div>
                                             <span className="tabular-nums font-black text-slate-900 dark:text-white">{formatMoney(ext.additional_amount)}</span>
@@ -1545,7 +1545,7 @@ export default function Show({
                                                 {swap.from_vehicle} ➔ {swap.to_vehicle}
                                             </p>
                                             <p className="mt-0.5 text-[11px] text-slate-400">
-                                                {swap.swapped_at}
+                                                {formatDateTimeDmYHi(swap.swapped_at)}
                                                 {swap.swapped_by ? ` · Petugas: ${swap.swapped_by}` : ''}
                                                 {swap.odometer_km != null ? ` · ${swap.odometer_km} km` : ''}
                                             </p>

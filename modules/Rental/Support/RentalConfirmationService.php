@@ -4,6 +4,7 @@ namespace Modules\Rental\Support;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
@@ -99,6 +100,40 @@ class RentalConfirmationService
             'confirmed_by' => null,
             'deposit_collected' => false,
         ]);
+    }
+
+    /**
+     * After an online invoice payment settles in full, promote the linked pending
+     * rental to confirmed. Used for zero-deposit online orders that gate confirmation
+     * behind full upfront payment. No-op unless the invoice belongs to a rental,
+     * is fully paid, and the rental is still pending.
+     */
+    public function confirmPendingForPaidInvoice(Invoice $invoice): void
+    {
+        if ((float) $invoice->balanceDue() > 0.0) {
+            return;
+        }
+
+        $morph = (new RentalCharge)->getMorphClass();
+        $chargeId = $invoice->lines()
+            ->where('source_type', $morph)
+            ->value('source_id');
+
+        if ($chargeId === null) {
+            return;
+        }
+
+        $rentalId = RentalCharge::query()->whereKey($chargeId)->value('rental_id');
+
+        if ($rentalId === null) {
+            return;
+        }
+
+        $rental = Rental::query()->find($rentalId);
+
+        if ($rental !== null) {
+            $this->confirmAfterPaymentIfPending($rental);
+        }
     }
 
     /**

@@ -346,6 +346,12 @@ class GatewayCheckoutService
                     'amount' => $amount,
                 ]],
             ]);
+
+            // A fully-paid upfront invoice confirms a pending zero-deposit rental order.
+            if (class_exists(\Modules\Rental\Support\RentalConfirmationService::class)) {
+                app(\Modules\Rental\Support\RentalConfirmationService::class)
+                    ->confirmPendingForPaidInvoice($invoice->fresh());
+            }
         }
 
         if ($charge->purpose === GatewayCharge::PURPOSE_SHUTTLE_BOOKING) {

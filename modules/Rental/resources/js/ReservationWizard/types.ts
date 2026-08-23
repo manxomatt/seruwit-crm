@@ -132,6 +132,16 @@ export function formatDate(date: Date): string {
     return `${y}-${m}-${d}`;
 }
 
+export function formatDateDisplay(value: string | null | undefined): string {
+    if (!value) {
+        return '';
+    }
+
+    const [y, m, d] = value.split('-');
+
+    return y && m && d ? `${d}-${m}-${y}` : value;
+}
+
 export function addDays(date: Date, days: number): Date {
     const result = new Date(date);
     result.setDate(result.getDate() + days);

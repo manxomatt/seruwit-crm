@@ -22,7 +22,7 @@ import type {
     ServerQuote,
     WizardStep,
 } from './types';
-import { addDays, addMonths, csrfToken, formatDate, todayKey } from './types';
+import { addDays, csrfToken, formatDate, todayKey } from './types';
 import { clearWizardDraft, readWizardDraft, wizardStorageKey, writeWizardDraft } from './wizardDraft';
 
 interface Props {
@@ -109,9 +109,9 @@ export default function ReservationForm({
             if (current === 'daily') {
                 end = addDays(start, 0);
             } else if (current === 'weekly') {
-                end = addDays(start, 7);
+                end = addDays(start, 6);
             } else {
-                end = addMonths(start, 1);
+                end = addDays(start, 29);
             }
 
             setData((prev) => ({

@@ -179,8 +179,22 @@ export default function VehicleShow({
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        form.post(route('book.rental.bookings.store'));
+        form.post(route('book.rental.bookings.store'), {
+            preserveScroll: true,
+            onError: () => {
+                if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+        });
     };
+
+    const errorMessages = Array.from(
+        new Set([
+            ...(flash?.error ? [flash.error] : []),
+            ...(Object.values(form.errors).filter(Boolean) as string[]),
+        ]),
+    );
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans antialiased pb-28">
@@ -286,6 +300,23 @@ export default function VehicleShow({
 
                 {/* Form & Quote calculation */}
                 <form onSubmit={submit} className="space-y-5">
+                    {/* Validation / Submission Error Summary */}
+                    {errorMessages.length > 0 && (
+                        <div className="rounded-2xl border border-rose-400/60 bg-rose-500/10 p-4 text-xs text-rose-100 ring-1 ring-rose-500/30">
+                            <div className="flex items-start gap-2">
+                                <span className="text-base leading-none">⛔</span>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-white">Pemesanan gagal diproses</p>
+                                    <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                                        {errorMessages.map((message, index) => (
+                                            <li key={index}>{message}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Setup Rental Options */}
                     <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-4">
                         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b pb-2 border-slate-100">

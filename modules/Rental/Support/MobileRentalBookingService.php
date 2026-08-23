@@ -26,6 +26,7 @@ class MobileRentalBookingService
         private readonly MobilePassengerPartnerResolver $partners,
         private readonly RentalBookingPolicy $policy,
         private readonly RentalConfirmationService $confirmation,
+        private readonly RentalAccountingService $accounting,
         private readonly RentalMailer $mailer,
     ) {}
 
@@ -217,6 +218,14 @@ class MobileRentalBookingService
 
             return $rental->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
         });
+
+        // Zero-deposit online orders have no deposit to hold the reservation, so the
+        // full amount must be paid upfront before confirmation. Issue that invoice now
+        // (while pending_reserved) so the customer can settle it online; paying it in
+        // full auto-confirms the booking via RentalConfirmationService.
+        if ((float) $created->deposit_amount <= 0 && (float) $created->base_amount > 0) {
+            $this->accounting->issueDraftInvoices($created->fresh());
+        }
 
         if ($created->status === Rental::STATUS_PENDING_RESERVED) {
             $this->mailer->notify(

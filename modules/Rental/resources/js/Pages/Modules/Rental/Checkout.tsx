@@ -89,8 +89,17 @@ export default function Checkout({
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        form.post(prefixedRoute('rental.checkout', rental.id));
+        form.post(prefixedRoute('rental.checkout', rental.id), {
+            preserveScroll: true,
+            onError: () => {
+                if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+        });
     };
+
+    const errorMessages = Array.from(new Set(Object.values(form.errors).filter(Boolean))) as string[];
 
     return (
         <DynamicLayout
@@ -111,6 +120,23 @@ export default function Checkout({
             <Head title={`Checkout ${rental.code} - ${rental.vehicle.name}`} />
 
             <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+                {/* Validation / Submission Error Summary */}
+                {errorMessages.length > 0 && (
+                    <div className="rounded-2xl border border-rose-300/80 bg-rose-50/90 p-4 text-xs text-rose-900 shadow-2xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
+                        <div className="flex items-start gap-2">
+                            <span className="text-base leading-none">⛔</span>
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold">Checkout gagal diproses</p>
+                                <ul className="mt-1 list-disc space-y-0.5 pl-4 opacity-90">
+                                    {errorMessages.map((message, index) => (
+                                        <li key={index}>{message}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Warning / Deposit Alert */}
                 {depositBlocksCheckout && (
                     <div className="rounded-2xl border border-amber-300/80 bg-amber-50/90 p-4 text-xs font-semibold text-amber-900 shadow-2xs dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">

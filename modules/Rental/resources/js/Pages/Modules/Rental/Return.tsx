@@ -154,8 +154,17 @@ export default function ReturnPage({
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        form.post(prefixedRoute('rental.return', rental.id));
+        form.post(prefixedRoute('rental.return', rental.id), {
+            preserveScroll: true,
+            onError: () => {
+                if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+        });
     };
+
+    const errorMessages = Array.from(new Set(Object.values(form.errors).filter(Boolean))) as string[];
 
     return (
         <DynamicLayout
@@ -176,6 +185,23 @@ export default function ReturnPage({
             <Head title={`Pengembalian ${rental.code} - ${rental.vehicle.name}`} />
 
             <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+                {/* Validation / Submission Error Summary */}
+                {errorMessages.length > 0 && (
+                    <div className="rounded-2xl border border-rose-300/80 bg-rose-50/90 p-4 text-xs text-rose-900 shadow-2xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
+                        <div className="flex items-start gap-2">
+                            <span className="text-base leading-none">⛔</span>
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold">Pengembalian gagal diproses</p>
+                                <ul className="mt-1 list-disc space-y-0.5 pl-4 opacity-90">
+                                    {errorMessages.map((message, index) => (
+                                        <li key={index}>{message}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 2-Column Responsive Layout */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     {/* Left Column: Info, Odometer & BBM, Checklist, Notes (7 cols) */}

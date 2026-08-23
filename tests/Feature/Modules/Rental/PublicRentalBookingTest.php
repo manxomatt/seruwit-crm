@@ -267,7 +267,7 @@ class PublicRentalBookingTest extends TestCase
         $this->assertSame(0, Rental::query()->count());
     }
 
-    public function test_zero_deposit_auto_confirms(): void
+    public function test_zero_deposit_creates_upfront_invoice_and_stays_pending(): void
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         RentalRate::factory()->daily()->create([
@@ -295,7 +295,59 @@ class PublicRentalBookingTest extends TestCase
         $rental = Rental::query()->first();
         $this->assertNotNull($rental);
         $this->assertSame(Rental::CHANNEL_WEB, $rental->channel);
-        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+
+        // Zero-deposit online orders must pay the full amount upfront before confirmation,
+        // so they stay reserved and carry an unpaid upfront invoice.
+        $this->assertSame(Rental::STATUS_PENDING_RESERVED, $rental->status);
+
+        $summary = app(\Modules\Rental\Support\RentalInvoiceService::class)->paymentSummary($rental->fresh());
+        $this->assertGreaterThan(0, $summary['balance_due']);
+        $this->assertContains($summary['status'], ['unpaid', 'partial', 'draft']);
+    }
+
+    public function test_zero_deposit_confirms_after_full_upfront_payment(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'rate_per_period' => 150000,
+            'deposit_amount' => 0,
+            'is_active' => true,
+        ]);
+
+        $start = now()->addDay()->toDateString();
+        $end = now()->addDays(2)->toDateString();
+        $phone = '081298765432';
+        $otp = app(PassengerOtpService::class)->send($phone);
+
+        $this->post(route('book.rental.bookings.store'), [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => $start,
+            'end_date' => $end,
+            'period_type' => 'daily',
+            'customer_name' => 'Siti',
+            'booker_phone' => $phone,
+            'otp_code' => $otp,
+        ])->assertRedirect();
+
+        $rental = Rental::query()->first();
+        $this->assertSame(Rental::STATUS_PENDING_RESERVED, $rental->status);
+
+        $invoice = app(\Modules\Rental\Support\RentalInvoiceService::class)
+            ->invoicesFor($rental->fresh())
+            ->first();
+        $this->assertNotNull($invoice);
+
+        // Simulate the gateway settling the upfront invoice in full.
+        $invoice->update([
+            'amount_paid' => $invoice->total,
+            'status' => Invoice::STATUS_PAID,
+        ]);
+
+        app(\Modules\Rental\Support\RentalConfirmationService::class)
+            ->confirmPendingForPaidInvoice($invoice->fresh());
+
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->fresh()->status);
     }
 
     public function test_history_lists_passenger_bookings_after_otp(): void
@@ -785,7 +837,7 @@ class PublicRentalBookingTest extends TestCase
             'description' => 'Base rental charge',
         ]);
 
-        Invoice::create([
+        $invoice = Invoice::create([
             'code' => Invoice::nextCode(),
             'partner_id' => $rental->partner_id,
             'status' => Invoice::STATUS_ISSUED,
@@ -797,6 +849,16 @@ class PublicRentalBookingTest extends TestCase
             'tax_amount' => 0,
             'total' => 500_000,
             'amount_paid' => 0,
+        ]);
+
+        // Link the invoice to the rental's base charge the way invoiceBase() does,
+        // so paymentSummary() sees the outstanding upfront balance.
+        InvoiceLine::create([
+            'invoice_id' => $invoice->id,
+            'description' => 'Base rental charge',
+            'amount' => 500_000,
+            'source_type' => $charge->getMorphClass(),
+            'source_id' => $charge->id,
         ]);
 
         $phone = '08123456789';

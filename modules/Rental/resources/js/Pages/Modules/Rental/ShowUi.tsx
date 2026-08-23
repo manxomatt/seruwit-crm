@@ -368,9 +368,9 @@ export function FuelLevelPicker({
 }): JSX.Element {
     const levels = [
         { key: 'empty', label: '0%', short: 'E', color: 'text-rose-600 bg-rose-50 border-rose-300 dark:border-rose-800 dark:bg-rose-950/40' },
-        { key: 'quarter', label: '25%', short: '1/4', color: 'text-amber-600 bg-amber-50 border-amber-300 dark:border-amber-800 dark:bg-amber-950/40' },
-        { key: 'half', label: '50%', short: '1/2', color: 'text-sky-600 bg-sky-50 border-sky-300 dark:border-sky-800 dark:bg-sky-950/40' },
-        { key: 'three_quarters', label: '75%', short: '3/4', color: 'text-indigo-600 bg-indigo-50 border-indigo-300 dark:border-indigo-800 dark:bg-indigo-950/40' },
+        { key: '1/4', label: '25%', short: '1/4', color: 'text-amber-600 bg-amber-50 border-amber-300 dark:border-amber-800 dark:bg-amber-950/40' },
+        { key: '1/2', label: '50%', short: '1/2', color: 'text-sky-600 bg-sky-50 border-sky-300 dark:border-sky-800 dark:bg-sky-950/40' },
+        { key: '3/4', label: '75%', short: '3/4', color: 'text-indigo-600 bg-indigo-50 border-indigo-300 dark:border-indigo-800 dark:bg-indigo-950/40' },
         { key: 'full', label: '100%', short: 'F', color: 'text-emerald-600 bg-emerald-50 border-emerald-300 dark:border-emerald-800 dark:bg-emerald-950/40' },
     ];
 

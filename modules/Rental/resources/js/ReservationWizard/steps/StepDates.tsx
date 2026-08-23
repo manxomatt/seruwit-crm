@@ -4,7 +4,7 @@ import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { useMemo } from 'react';
 import type { ReservationFormData } from '../types';
-import { PERIOD_TYPES, addDays, addMonths, formatDate, todayKey } from '../types';
+import { PERIOD_TYPES, addDays, addMonths, formatDate, formatDateDisplay, todayKey } from '../types';
 
 type SetData = <K extends keyof ReservationFormData>(key: K, value: ReservationFormData[K]) => void;
 
@@ -175,7 +175,7 @@ export default function StepDates({
                         </span>
                     </div>
                     <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                        {data.start_date} ➔ {data.end_date}
+                        {formatDateDisplay(data.start_date)} ➔ {formatDateDisplay(data.end_date)}
                     </span>
                 </div>
             )}

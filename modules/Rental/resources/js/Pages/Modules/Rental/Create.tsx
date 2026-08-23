@@ -5,6 +5,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import RentalNav from '../../../RentalNav';
 import ReservationForm from '../../../ReservationWizard/ReservationForm';
+import { formatDateDisplay } from '../../../ReservationWizard/types';
 import type {
     DriverOption,
     InsurancePackage,
@@ -112,7 +113,7 @@ export default function Create({
                             </span>
                         </div>
                         <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">
-                            {prefill.start_date} ~ {prefill.end_date}
+                            {formatDateDisplay(prefill.start_date)} ~ {formatDateDisplay(prefill.end_date)}
                         </span>
                     </div>
                 )}

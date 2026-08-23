@@ -469,6 +469,7 @@ return [
         'suv' => 'SUV',
         'van' => 'Van',
         'premium' => 'Premium',
+        'truck' => 'Truk',
         'other' => 'Lainnya',
     ],
 
