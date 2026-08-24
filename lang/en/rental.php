@@ -573,6 +573,11 @@ return [
         'overdue_body' => ':code — :vehicle for :partner was due :date and is still out.',
     ],
 
+    'notifications' => [
+        'deposit_proof_title' => 'Transfer proof awaiting validation',
+        'deposit_proof_body' => 'Booking :code (:customer) uploaded a transfer proof. Review, then approve or reject it.',
+    ],
+
     'mail' => [
         'view_rental' => 'View rental',
         'view_booking' => 'View booking',

@@ -594,6 +594,11 @@ return [
         'overdue_body' => ':code — :vehicle untuk :partner jatuh tempo :date dan masih keluar.',
     ],
 
+    'notifications' => [
+        'deposit_proof_title' => 'Bukti transfer menunggu validasi',
+        'deposit_proof_body' => 'Pemesanan :code (:customer) mengunggah bukti transfer. Tinjau lalu setujui atau tolak.',
+    ],
+
     'mail' => [
         'view_rental' => 'Lihat sewa',
         'view_booking' => 'Lihat reservasi',

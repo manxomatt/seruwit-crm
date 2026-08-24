@@ -21,6 +21,7 @@ use Modules\Rental\Models\RentalExtensionRequest;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\RentalBookingPolicy;
+use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
@@ -335,9 +336,11 @@ class PublicRentalBookingController extends Controller
             'deposit_company_bank_account_id' => $bankAccountId,
             'deposit_proof_path' => $proofPath,
             'deposit_proof_uploaded_at' => now(),
-            'deposit_proof_status' => 'pending',
+            'deposit_proof_status' => Rental::PROOF_PENDING,
             'deposit_proof_rejected_reason' => null,
         ]);
+
+        RentalDepositProofNotifier::notifyPendingReview($rental);
 
         return back()->with('success', 'Bukti transfer deposit berhasil diunggah. Menunggu konfirmasi/approval admin.');
     }

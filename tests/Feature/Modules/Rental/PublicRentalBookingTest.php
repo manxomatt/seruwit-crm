@@ -719,6 +719,39 @@ class PublicRentalBookingTest extends TestCase
         $this->assertNotNull($rental->deposit_proof_path);
     }
 
+    public function test_uploading_deposit_proof_notifies_staff_for_validation(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->createAdminUser();
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '628123456789',
+            'public_token' => 'tokennotify'.str_repeat('a', 25),
+            'deposit_amount' => 500000,
+        ]);
+
+        $phone = '08123456789';
+        $otp = app(PassengerOtpService::class)->send($phone);
+
+        $this->post(route('book.rental.booking.upload_deposit_proof', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $otp,
+            'deposit_proof' => UploadedFile::fake()->create('proof.jpg', 500, 'image/jpeg'),
+        ])->assertSessionHas('success');
+
+        $notification = $admin->fresh()->notifications()->first();
+
+        $this->assertNotNull($notification, 'Staff should receive a validation notification.');
+        $this->assertSame('warning', $notification->data['type']);
+        $this->assertSame(
+            route('module.rental.show', $rental, absolute: false),
+            $notification->data['url'],
+        );
+    }
+
     public function test_admin_can_approve_manual_deposit_proof_and_confirm_reservation(): void
     {
         $user = $this->createAdminUser();
