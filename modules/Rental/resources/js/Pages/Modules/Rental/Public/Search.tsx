@@ -1,11 +1,15 @@
 import PublicSelect from '@/Components/PublicSelect';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FormEvent, useMemo } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 
 interface Brand {
     name: string;
     color: string;
     support_phone: string | null;
+    logo_url?: string | null;
+    hero_title?: string | null;
+    hero_subtitle?: string | null;
+    hero_image_url?: string | null;
 }
 
 interface LocationOption {
@@ -54,9 +58,6 @@ interface Props {
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
-const fieldClassName =
-    'mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 transition focus:border-[var(--brand-color)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-color)]/20';
-
 const periodOptions = [
     { value: 'daily', label: 'Harian' },
     { value: 'weekly', label: 'Mingguan' },
@@ -72,6 +73,8 @@ export default function Search({
     searched,
     hold_ttl_minutes,
 }: Props) {
+    const [selectedCategory, setSelectedCategory] = useState<string>(filters.rental_class ?? '');
+
     const form = useForm({
         start_date: filters.start_date ?? '',
         end_date: filters.end_date ?? '',
@@ -90,16 +93,8 @@ export default function Search({
         [locations],
     );
 
-    const classOptions = useMemo(
-        () => [
-            { value: '', label: 'Semua Kelas' },
-            ...classes.map((item) => ({ value: item.value, label: item.label || item.value })),
-        ],
-        [classes],
-    );
-
     const pickupOptions = useMemo(
-        () => [{ value: '', label: 'Pilih Depot Penjemputan' }, ...depotOptions],
+        () => [{ value: '', label: 'Pilih Lokasi Depot' }, ...depotOptions],
         [depotOptions],
     );
 
@@ -108,7 +103,6 @@ export default function Search({
         [depotOptions],
     );
 
-    // Calculate duration in days for display hint
     const daysDuration = useMemo(() => {
         if (!form.data.start_date || !form.data.end_date) return null;
         const start = new Date(form.data.start_date);
@@ -118,8 +112,9 @@ export default function Search({
         return diffDays >= 0 ? diffDays : null;
     }, [form.data.start_date, form.data.end_date]);
 
-    const submit = (e: FormEvent) => {
-        e.preventDefault();
+    const submit = (e?: FormEvent, classOverride?: string) => {
+        if (e) e.preventDefault();
+        const activeClass = classOverride !== undefined ? classOverride : form.data.rental_class;
         router.get(
             route('book.rental.search'),
             {
@@ -128,10 +123,16 @@ export default function Search({
                 period_type: form.data.period_type || 'daily',
                 pickup_location_id: form.data.pickup_location_id || undefined,
                 return_location_id: form.data.return_location_id || undefined,
-                rental_class: form.data.rental_class || undefined,
+                rental_class: activeClass || undefined,
             },
             { preserveState: true },
         );
+    };
+
+    const handleCategoryClick = (categoryVal: string) => {
+        setSelectedCategory(categoryVal);
+        form.setData('rental_class', categoryVal);
+        submit(undefined, categoryVal);
     };
 
     const vehicleUrl = (vehicleId: number) =>
@@ -149,295 +150,449 @@ export default function Search({
 
     return (
         <div 
-            className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800"
+            className="min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col justify-between"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`${brand.name} · Sewa Kendaraan`} />
+            <Head title={`${brand.name} · Katalog Sewa Kendaraan`} />
 
-            {/* Brand Header */}
-            <div className="sticky top-0 z-50 bg-white border-b border-slate-200/80 shadow-xs backdrop-blur-md">
-                <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div 
-                            className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm"
-                            style={{ backgroundColor: 'var(--brand-color)' }}
-                        >
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h1 className="text-base font-extrabold tracking-tight text-slate-900">{brand.name}</h1>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Sewa Kendaraan Resmi</p>
-                        </div>
-                    </div>
-
-                    <Link
-                        href={route('book.rental.history')}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 shadow-xs"
-                    >
-                        <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Riwayat Pesanan
-                    </Link>
-                </div>
-            </div>
-
-            {/* Main content wrapper (Wide layout for desktop) */}
-            <div className="mx-auto max-w-7xl px-4 py-6 pb-16 space-y-6">
-                
-                {/* Stepper progress indicator */}
-                <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-bold uppercase tracking-wider max-w-md">
-                    <div className="rounded-xl bg-white p-2.5 border-b-2 shadow-xs border-[var(--brand-color)] text-[var(--brand-color)]">
-                        1. Cari
-                    </div>
-                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">2. Pilih</div>
-                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">3. OTP</div>
-                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">4. Bayar</div>
-                </div>
-
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
-                    
-                    {/* Left Column: Search Form Card */}
-                    <div className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-[90px] z-10">
-                        <form onSubmit={submit} className="space-y-4 rounded-2xl border border-slate-200/85 bg-white p-5 shadow-xs">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Cari Ketersediaan</h2>
-                                {daysDuration !== null && (
-                                    <span 
-                                        className="rounded-full px-2.5 py-0.5 text-xs font-bold border"
-                                        style={{ 
-                                            color: 'var(--brand-color)', 
-                                            backgroundColor: 'rgba(15, 118, 110, 0.05)',
-                                            borderColor: 'rgba(15, 118, 110, 0.15)'
-                                        }}
-                                    >
-                                        {daysDuration} Hari
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className="text-xs font-bold text-slate-700">
-                                    Tanggal Mulai
-                                    <input
-                                        type="date"
-                                        className={fieldClassName}
-                                        value={form.data.start_date}
-                                        onChange={(e) => form.setData('start_date', e.target.value)}
-                                        required
-                                    />
-                                </label>
-                                <label className="text-xs font-bold text-slate-700">
-                                    Tanggal Selesai
-                                    <input
-                                        type="date"
-                                        className={fieldClassName}
-                                        value={form.data.end_date}
-                                        onChange={(e) => form.setData('end_date', e.target.value)}
-                                        required
-                                    />
-                                </label>
-                            </div>
-
-                            <div>
-                                <label className="mb-1 block text-xs font-bold text-slate-700">Periode Tarif</label>
-                                <PublicSelect
-                                    value={form.data.period_type}
-                                    onChange={(value) => form.setData('period_type', value || 'daily')}
-                                    options={periodOptions}
-                                    placeholder="Pilih Periode"
+            <div>
+                {/* Modern Crisp Glass Navbar */}
+                <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3.5 flex items-center justify-between">
+                        <Link href={route('book.rental.search')} className="flex items-center gap-3 group">
+                            {brand.logo_url ? (
+                                <img
+                                    src={brand.logo_url}
+                                    alt={brand.name}
+                                    className="h-10 w-10 rounded-xl object-contain transition-transform duration-200 group-hover:scale-105"
                                 />
-                            </div>
-
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="mb-1 block text-xs font-bold text-slate-700">Depot Penjemputan</label>
-                                    <PublicSelect
-                                        value={form.data.pickup_location_id}
-                                        onChange={(value) => {
-                                            form.setData({
-                                                ...form.data,
-                                                pickup_location_id: value,
-                                                return_location_id: form.data.return_location_id || value,
-                                            });
-                                        }}
-                                        options={pickupOptions}
-                                        placeholder="Pilih Depot"
-                                        emptyText="Belum ada depot aktif"
-                                    />
-                                    {locations.length === 0 && (
-                                        <p className="mt-1 text-xs text-amber-600 font-medium">Belum ada depot aktif di sistem.</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-xs font-bold text-slate-700">Depot Pengembalian</label>
-                                    <PublicSelect
-                                        value={form.data.return_location_id}
-                                        onChange={(value) => form.setData('return_location_id', value)}
-                                        options={returnOptions}
-                                        placeholder="Sama dengan lokasi jemput"
-                                        emptyText="Belum ada depot aktif"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="mb-1 block text-xs font-bold text-slate-700">Kelas Kendaraan</label>
-                                <PublicSelect
-                                    value={form.data.rental_class}
-                                    onChange={(value) => form.setData('rental_class', value)}
-                                    options={classOptions}
-                                    placeholder="Semua Kelas Kendaraan"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-extrabold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
-                                style={{ backgroundColor: 'var(--brand-color)' }}
-                            >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                Cari Kendaraan
-                            </button>
-
-                            <div className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500 pt-1">
-                                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--brand-color)' }}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Hold unit hingga <b>{hold_ttl_minutes} menit</b> untuk bayar.</span>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* Right Column: Vehicle Catalog Grid */}
-                    <div className="flex-1 w-full">
-                        {!searched && (
-                            <div className="rounded-2xl bg-white p-12 text-center border border-slate-200/80 shadow-xs">
-                                <svg className="mx-auto h-16 w-16 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <h3 className="mt-4 text-base font-bold text-slate-900">Temukan Kendaraan Anda</h3>
-                                <p className="mt-1.5 text-sm text-slate-500 max-w-sm mx-auto font-medium">Pilih tanggal sewa dan lokasi depot di panel samping untuk memulai pencarian armada aktif.</p>
-                            </div>
-                        )}
-
-                        {searched && vehicles.length === 0 && (
-                            <div className="rounded-2xl bg-white p-12 text-center border border-slate-200/80 shadow-xs">
-                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-500 border border-amber-200">
-                                    <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            ) : (
+                                <div
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-xs transition-transform duration-200 group-hover:scale-105"
+                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <h3 className="mt-4 text-base font-bold text-slate-900">Tidak Ada Kendaraan Tersedia</h3>
-                                <p className="mt-1.5 text-xs text-slate-500 leading-relaxed max-w-sm mx-auto font-medium">
-                                    Armada kami mungkin sedang fully-booked atau tidak cocok dengan filter Anda. Silakan coba sesuaikan tanggal sewa atau kelas kendaraan lain.
-                                </p>
+                            )}
+                            <div>
+                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">Showroom & Rental Resmi</span>
+                            </div>
+                        </Link>
+
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href={route('book.rental.history')}
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-250 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
+                            >
+                                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Cek Riwayat</span>
+                            </Link>
+
+                            {brand.support_phone && (
+                                <a
+                                    href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="hidden sm:inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 transition hover:bg-emerald-100 shadow-2xs"
+                                >
+                                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                                    WhatsApp CS
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                {/* Hero Showcase Section */}
+                <section className="bg-white border-b border-slate-200/80 py-10 sm:py-12">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6">
+                        <div className="text-center max-w-3xl mx-auto space-y-3.5">
+                            <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                Pilihan Armada Siap Pakai & Terawat
+                            </div>
+                            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                                {brand.hero_title || 'Temukan Kendaraan Nyaman Untuk Setiap Perjalanan Anda'}
+                            </h2>
+                            <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed max-w-2xl mx-auto">
+                                {brand.hero_subtitle || 'Proses sewa mobil cepat dan transparan. Seluruh unit kami dirawat berkala, bersih, dan bergaransi resmi.'}
+                            </p>
+
+                            {/* Trust Markers */}
+                            <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-bold text-slate-600">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> Unit Bersih & Higienis
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> Booking Cepat WhatsApp OTP
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> Serah Terima Depot Resmi
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> Dukungan CS 24 Jam
+                                </div>
+                            </div>
+                        </div>
+
+                        {brand.hero_image_url && (
+                            <div className="mt-8 max-w-5xl mx-auto overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+                                <img
+                                    src={brand.hero_image_url}
+                                    alt={brand.hero_title || brand.name}
+                                    className="h-48 w-full object-cover sm:h-64"
+                                />
                             </div>
                         )}
 
-                        {searched && vehicles.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {vehicles.map((vehicle) => (
-                                    <Link
-                                        key={vehicle.id}
-                                        href={vehicleUrl(vehicle.id)}
-                                        className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-200/85 hover:border-[var(--brand-color)] hover:shadow-md transition-all duration-200"
-                                    >
-                                        <div>
-                                            {/* Photo Container */}
-                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-50 border-b border-slate-100">
-                                                {vehicle.photo_url ? (
-                                                    <img
-                                                        src={vehicle.photo_url}
-                                                        alt={vehicle.name}
-                                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-103"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
-                                                        <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">Tanpa Foto</span>
-                                                    </div>
-                                                )}
+                        {/* Interactive Search Bar Widget */}
+                        <div className="mt-8 max-w-5xl mx-auto">
+                            <form 
+                                onSubmit={submit} 
+                                className="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4"
+                            >
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Pickup Date */}
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                                            Tanggal Mulai
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={form.data.start_date}
+                                            onChange={(e) => form.setData('start_date', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 transition focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                                            required
+                                        />
+                                    </div>
 
-                                                {vehicle.rental_class_label && (
-                                                    <span 
-                                                        className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
-                                                        style={{ backgroundColor: 'var(--brand-color)' }}
-                                                    >
-                                                        {vehicle.rental_class_label}
-                                                    </span>
-                                                )}
-                                            </div>
+                                    {/* Return Date */}
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                                                Tanggal Selesai
+                                            </label>
+                                            {daysDuration !== null && (
+                                                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                                                    {daysDuration} Hari
+                                                </span>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="date"
+                                            value={form.data.end_date}
+                                            onChange={(e) => form.setData('end_date', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 transition focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                                            required
+                                        />
+                                    </div>
 
-                                            {/* Info Body */}
-                                            <div className="p-4 space-y-3">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <h3 className="text-base font-bold text-slate-900 group-hover:text-[var(--brand-color)] transition-colors line-clamp-1">
+                                    {/* Pickup Depot */}
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                                            Lokasi Penjemputan
+                                        </label>
+                                        <PublicSelect
+                                            value={form.data.pickup_location_id}
+                                            onChange={(val) => {
+                                                form.setData({
+                                                    ...form.data,
+                                                    pickup_location_id: val,
+                                                    return_location_id: form.data.return_location_id || val,
+                                                });
+                                            }}
+                                            options={pickupOptions}
+                                            placeholder="Pilih Lokasi Depot"
+                                        />
+                                    </div>
+
+                                    {/* Submit Button */}
+                                    <div className="space-y-1 flex flex-col justify-end">
+                                        <button
+                                            type="submit"
+                                            className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:opacity-95 active:scale-[0.98]"
+                                            style={{ backgroundColor: 'var(--brand-color)' }}
+                                        >
+                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                            Cari Ketersediaan
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs text-slate-500 font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-bold uppercase text-slate-400">Periode:</span>
+                                        <div className="flex gap-1.5">
+                                            {periodOptions.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => form.setData('period_type', opt.value)}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${form.data.period_type === opt.value ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="text-[11px] text-slate-400">
+                                        Unit ditahan aman hingga <b className="text-slate-700 font-bold">{hold_ttl_minutes} menit</b> setelah dipesan.
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Main Vehicle Catalog List */}
+                <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10 space-y-8">
+                    
+                    {/* Category Filter Pills */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Katalog Kendaraan Tersedia</h3>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">Pilih armada yang paling sesuai dengan kebutuhan mobilitas Anda.</p>
+                        </div>
+
+                        {/* Category Pills */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+                            <button
+                                type="button"
+                                onClick={() => handleCategoryClick('')}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 ${!selectedCategory ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                            >
+                                Semua Kelas
+                            </button>
+                            {classes.map((cls) => (
+                                <button
+                                    key={cls.value}
+                                    type="button"
+                                    onClick={() => handleCategoryClick(cls.value)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 ${selectedCategory === cls.value ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    {cls.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Results Display */}
+                    {!searched && (
+                        <div className="rounded-2xl bg-white p-14 text-center border border-slate-200 shadow-xs">
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+                                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h3 className="mt-4 text-base font-black text-slate-900">Mulai Pencarian Kendaraan</h3>
+                            <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto font-medium leading-relaxed">
+                                Tentukan tanggal sewa dan lokasi depot di atas untuk menampilkan seluruh unit mobil yang siap disewa.
+                            </p>
+                        </div>
+                    )}
+
+                    {searched && vehicles.length === 0 && (
+                        <div className="rounded-2xl bg-white p-14 text-center border border-slate-200 shadow-xs">
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+                                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 className="mt-4 text-base font-black text-slate-900">Unit Tidak Ditemukan</h3>
+                            <p className="mt-1 text-xs text-slate-500 leading-relaxed max-w-md mx-auto font-medium">
+                                Tidak ada armada yang tersedia untuk kriteria dan tanggal yang Anda pilih. Silakan ganti jadwal sewa atau pilih kelas lainnya.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Showroom Cards Grid */}
+                    {searched && vehicles.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {vehicles.map((vehicle) => (
+                                <Link
+                                    key={vehicle.id}
+                                    href={vehicleUrl(vehicle.id)}
+                                    className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all duration-200"
+                                >
+                                    <div>
+                                        {/* Showcase Photo Container */}
+                                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 border-b border-slate-100">
+                                            {vehicle.photo_url ? (
+                                                <img
+                                                    src={vehicle.photo_url}
+                                                    alt={vehicle.name}
+                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-103"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
+                                                    <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">Foto Unit Menyusul</span>
+                                                </div>
+                                            )}
+
+                                            {/* Floating Class Pill */}
+                                            {vehicle.rental_class_label && (
+                                                <span 
+                                                    className="absolute left-3.5 top-3.5 rounded-lg px-2.5 py-1 text-[10px] font-black text-white shadow-xs"
+                                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                                >
+                                                    {vehicle.rental_class_label}
+                                                </span>
+                                            )}
+
+                                            {/* Ready Badge */}
+                                            <span className="absolute right-3.5 top-3.5 rounded-lg bg-white/95 px-2.5 py-1 text-[10px] font-black text-emerald-800 shadow-2xs border border-slate-200 flex items-center gap-1.5">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                Tersedia
+                                            </span>
+                                        </div>
+
+                                        {/* Card Body */}
+                                        <div className="p-5 space-y-3.5">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <h4 className="text-base font-black text-slate-900 group-hover:text-slate-950 transition-colors line-clamp-1">
                                                         {vehicle.name}
-                                                    </h3>
-                                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[9px] font-bold text-slate-600 border border-slate-200 shrink-0">
+                                                    </h4>
+                                                    <span className="font-mono text-[10px] font-bold text-slate-400 mt-0.5 block">
                                                         {vehicle.plate_number}
                                                     </span>
                                                 </div>
-
-                                                {/* Specifications badges */}
-                                                <div className="flex flex-wrap gap-1.5 text-xs">
-                                                    {vehicle.capacity_seats && (
-                                                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 border border-slate-200/50">
-                                                            <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                            </svg>
-                                                            {vehicle.capacity_seats} Kursi
-                                                        </span>
-                                                    )}
-                                                    {vehicle.model_year && (
-                                                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 border border-slate-200/50">
-                                                            Th {vehicle.model_year}
-                                                        </span>
-                                                    )}
-                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Price & CTA Footer */}
-                                        <div className="border-t border-slate-100 p-4 pt-3 flex items-center justify-between bg-slate-50/50">
-                                            <div>
-                                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tarif Sewa</div>
-                                                {vehicle.from_price != null ? (
-                                                    <div className="text-sm font-extrabold text-[var(--brand-color)]">
-                                                        {money(vehicle.from_price)}
-                                                        <span className="text-[10px] font-normal text-slate-500">/{vehicle.rental_class === 'daily' ? 'hari' : 'periode'}</span>
+                                            {/* Feature Grid Badges */}
+                                            <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-600">
+                                                {vehicle.capacity_seats && (
+                                                    <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 border border-slate-200/60">
+                                                        <svg className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                        <span>{vehicle.capacity_seats} Kursi</span>
                                                     </div>
-                                                ) : (
-                                                    <div className="text-xs text-slate-450 font-bold">Call CS</div>
+                                                )}
+                                                {vehicle.model_year && (
+                                                    <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 border border-slate-200/60">
+                                                        <svg className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                        <span>Th {vehicle.model_year}</span>
+                                                    </div>
                                                 )}
                                             </div>
-
-                                            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200 hover:border-[var(--brand-color)] px-3 py-1.5 text-xs font-bold text-[var(--brand-color)] group-hover:bg-[var(--brand-color)] group-hover:text-white transition-all shadow-xs">
-                                                Pilih
-                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                                </svg>
-                                            </span>
                                         </div>
-                                    </Link>
-                                ))}
+                                    </div>
+
+                                    {/* Card Footer Price & Action */}
+                                    <div className="border-t border-slate-100 p-5 flex items-center justify-between bg-slate-50/50">
+                                        <div>
+                                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Mulai Dari</div>
+                                            {vehicle.from_price != null ? (
+                                                <div className="text-base font-black text-slate-900">
+                                                    {money(vehicle.from_price)}
+                                                    <span className="text-[10px] font-normal text-slate-500"> / {form.data.period_type === 'daily' ? 'hari' : 'periode'}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-slate-400 font-bold">Hubungi CS</div>
+                                            )}
+                                        </div>
+
+                                        <span 
+                                            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black text-white shadow-2xs transition-all group-hover:scale-102"
+                                            style={{ backgroundColor: 'var(--brand-color)' }}
+                                        >
+                                            Pesan Unit
+                                            <svg className="h-3 w-3 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            {/* Grounded Deep Slate Footer */}
+            <footer className="mt-16 bg-slate-900 text-slate-400 border-t border-slate-800">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+                        {/* Column 1: Brand Info */}
+                        <div className="md:col-span-5 space-y-4">
+                            <div className="flex items-center gap-2.5">
+                                <span 
+                                    className="block h-3 w-3 rounded-full shadow-xs"
+                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                />
+                                <span className="font-black text-white tracking-tight text-sm">{brand.name}</span>
                             </div>
-                        )}
+                            <p className="text-xs font-normal text-slate-400 leading-relaxed max-w-sm">
+                                Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.
+                            </p>
+                        </div>
+
+                        {/* Column 2: Quick Links */}
+                        <div className="md:col-span-3 space-y-3.5">
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Navigasi Cepat</h4>
+                            <ul className="space-y-2 text-xs font-medium text-slate-400">
+                                <li>
+                                    <Link href={route('book.rental.search')} className="hover:text-white transition-colors">
+                                        Katalog Kendaraan
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href={route('book.rental.history')} className="hover:text-white transition-colors">
+                                        Riwayat & Cek Status
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Column 3: Contact/Support */}
+                        <div className="md:col-span-4 space-y-3.5">
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Pusat Bantuan</h4>
+                            <div className="text-xs font-medium text-slate-400 space-y-2.5">
+                                <p className="leading-relaxed">
+                                    Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:
+                                </p>
+                                {brand.support_phone ? (
+                                    <a
+                                        href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-emerald-400 font-bold text-xs hover:underline"
+                                    >
+                                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                        WhatsApp Hotline: {brand.support_phone} ↗
+                                    </a>
+                                ) : (
+                                    <span className="font-bold text-slate-300">Silakan hubungi cabang terdekat.</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
+                        <div>
+                            © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                        </div>
+                        <div className="flex gap-4">
+                            <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>
+                            <span className="hover:text-slate-300 cursor-pointer">Kebijakan Privasi</span>
+                        </div>
                     </div>
                 </div>
-
-                <p className="text-center text-xs text-slate-400 font-medium pt-4">
-                    Sewa Kendaraan Resmi dari {brand.name}. Pengambilan & pengembalian dilakukan di cabang depot resmi.
-                </p>
-            </div>
+            </footer>
         </div>
     );
 }

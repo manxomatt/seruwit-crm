@@ -13,15 +13,17 @@ use Inertia\Response as InertiaResponse;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\UpdateDocumentTemplateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
+use Modules\Rental\Http\Requests\UpdateRentalStorefrontSettingsRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Support\DocumentTemplateManager;
 use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverChecklist;
+use Modules\Rental\Support\RentalStorefrontSettings;
 
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'documents'];
+    public const TABS = ['general', 'storefront', 'documents'];
 
     protected function getRoutePrefix(): string
     {
@@ -42,6 +44,7 @@ class RentalSettingsController extends Controller
         return Inertia::render('Modules/Rental/Settings/Index', [
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
+            'storefront' => RentalStorefrontSettings::all(),
             'documents' => DocumentTemplateManager::all(),
             'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
         ]);
@@ -54,6 +57,13 @@ class RentalSettingsController extends Controller
         $data['calendar_click_to_book'] = $request->boolean('calendar_click_to_book');
 
         RentalGeneralSettings::update($data);
+
+        return back()->with('success', __('rental.messages.settings_updated'));
+    }
+
+    public function updateStorefront(UpdateRentalStorefrontSettingsRequest $request): RedirectResponse
+    {
+        RentalStorefrontSettings::update($request->validated());
 
         return back()->with('success', __('rental.messages.settings_updated'));
     }

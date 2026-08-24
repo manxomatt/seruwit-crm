@@ -99,6 +99,7 @@ return [
         'title' => 'Pengaturan rental',
         'tab_general' => 'Umum',
         'tab_rates' => 'Tarif',
+        'tab_storefront' => 'Tampilan Storefront',
         'tab_documents' => 'Template Dokumen',
         'save' => 'Simpan pengaturan',
         'pricing_section' => 'Harga',
@@ -872,6 +873,7 @@ return [
     ],
 
     'validation' => [
+        'storefront_color_invalid' => 'Warna harus berupa kode heksadesimal 6 digit, mis. #0f766e.',
         'vehicle_not_active' => 'Kendaraan :name berstatus :status, bukan aktif.',
         'vehicle_rental_overlap' => 'Kendaraan :name sudah memiliki rental pada periode ini.',
         'vehicle_stnk_expired' => 'Kendaraan :name memiliki STNK kedaluwarsa.',

@@ -61,6 +61,14 @@
             flex-direction: column;
             flex-grow: 1;
         }
+        @if(\App\Modules\Facades\Modules::available('rental'))
+        @php($rentalStorefront = \Modules\Rental\Support\RentalStorefrontSettings::all())
+        /* Storefront Theme Layer — inherited by GrapesJS pages and Bridge Blocks. */
+        :root {
+            --brand-primary: {{ $rentalStorefront['primary_color'] }};
+            --brand-secondary: {{ $rentalStorefront['secondary_color'] }};
+        }
+        @endif
         {!! $page->css !!}
     </style>
     

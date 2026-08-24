@@ -99,6 +99,7 @@ return [
         'title' => 'Rental Settings',
         'tab_general' => 'General',
         'tab_rates' => 'Rates',
+        'tab_storefront' => 'Storefront',
         'tab_documents' => 'Document Templates',
         'save' => 'Save Settings',
         'pricing_section' => 'Pricing',
@@ -851,6 +852,7 @@ return [
     ],
 
     'validation' => [
+        'storefront_color_invalid' => 'Color must be a 6-digit hex code, e.g. #0f766e.',
         'vehicle_not_active' => 'Vehicle :name is :status, not active.',
         'vehicle_rental_overlap' => 'Vehicle :name already has a rental in this period.',
         'vehicle_stnk_expired' => 'Vehicle :name has an expired STNK.',

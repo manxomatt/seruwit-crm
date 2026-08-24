@@ -117,6 +117,9 @@ class RentalModule implements ModuleContract
         Route::patch('/rental/settings/general', [RentalSettingsController::class, 'updateGeneral'])
             ->middleware('permission:rental,update')
             ->name('rental.settings.general.update');
+        Route::patch('/rental/settings/storefront', [RentalSettingsController::class, 'updateStorefront'])
+            ->middleware('permission:rental,update')
+            ->name('rental.settings.storefront.update');
         Route::patch('/rental/settings/documents/{code}', [RentalSettingsController::class, 'updateDocument'])
             ->middleware('permission:rental,update')
             ->name('rental.settings.documents.update');

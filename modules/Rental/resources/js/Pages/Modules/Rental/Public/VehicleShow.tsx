@@ -7,6 +7,7 @@ interface Brand {
     name: string;
     color: string;
     support_phone: string | null;
+    logo_url?: string | null;
 }
 
 interface Vehicle {
@@ -73,7 +74,7 @@ interface Props {
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
 const fieldClassName =
-    'mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 transition focus:border-[var(--brand-color)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-color)]/20';
+    'mt-1 w-full rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 transition focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10';
 
 export default function VehicleShow({
     brand,
@@ -213,457 +214,491 @@ export default function VehicleShow({
 
     return (
         <div 
-            className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800 pb-28"
+            className="min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col justify-between"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`${vehicle.name} · Detail & Reservasi`} />
+            <Head title={`${vehicle.name} · Detail & Reservasi Unit`} />
 
-            {/* Brand Header */}
-            <div className="sticky top-0 z-50 bg-white border-b border-slate-200/80 shadow-xs backdrop-blur-md">
-                <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-                    <Link
-                        href={route('book.rental.search')}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                        Kembali ke Catalog
-                    </Link>
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--brand-color)]">{brand.name}</span>
-                </div>
-            </div>
-
-            {/* Main Content Layout */}
-            <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
-                
-                {/* Stepper progress indicator */}
-                <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-bold uppercase tracking-wider max-w-md">
-                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">1. Cari</div>
-                    <div className="rounded-xl bg-white p-2.5 border-b-2 shadow-xs border-[var(--brand-color)] text-[var(--brand-color)]">
-                        2. Pilih & Detail
-                    </div>
-                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">3. OTP</div>
-                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">4. Bayar</div>
-                </div>
-
-                {/* Flash Notifications */}
-                {(flash?.error || flash?.success) && (
-                    <div className={`rounded-xl p-4 text-sm font-medium shadow-md ${flash.error ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}`}>
-                        {flash.error || flash.success}
-                    </div>
-                )}
-
-                {/* Validation / Submission Error Summary */}
-                {errorMessages.length > 0 && (
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 max-w-3xl">
-                        <div className="flex items-start gap-2">
-                            <span className="text-base leading-none">⛔</span>
-                            <div className="min-w-0">
-                                <p className="text-sm font-bold text-rose-900">Pemesanan gagal diproses</p>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-rose-800">
-                                    {errorMessages.map((message, index) => (
-                                        <li key={index}>{message}</li>
-                                    ))}
-                                </ul>
+            <div>
+                {/* Modern Crisp Glass Navbar */}
+                <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3.5 flex items-center justify-between">
+                        <Link href={route('book.rental.search')} className="flex items-center gap-3 group">
+                            {brand.logo_url ? (
+                                <img
+                                    src={brand.logo_url}
+                                    alt={brand.name}
+                                    className="h-10 w-10 rounded-xl object-contain transition-transform duration-200 group-hover:scale-105"
+                                />
+                            ) : (
+                                <div
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-xs transition-transform duration-200 group-hover:scale-105"
+                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            )}
+                            <div>
+                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">Showroom & Rental Resmi</span>
                             </div>
+                        </Link>
+
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href={route('book.rental.search')}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
+                            >
+                                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                                <span>Kembali ke Katalog</span>
+                            </Link>
+
+                            {brand.support_phone && (
+                                <a
+                                    href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="hidden sm:inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 transition hover:bg-emerald-100 shadow-2xs"
+                                >
+                                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                                    WhatsApp CS
+                                </a>
+                            )}
                         </div>
                     </div>
-                )}
+                </header>
 
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                {/* Main Showcase & Checkout Container */}
+                <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
                     
-                    {/* Left Column: Vehicle Details Showcase */}
-                    <div className="flex-1 w-full space-y-6">
-                        {/* Vehicle Card */}
-                        <div className="overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-                            <div className="relative aspect-[16/9] w-full bg-slate-50 border-b border-slate-100">
-                                {vehicle.photo_url ? (
-                                    <img src={vehicle.photo_url} alt={vehicle.name} className="h-full w-full object-cover" />
-                                ) : (
-                                    <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
-                                        <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span className="mt-1 text-xs font-bold uppercase tracking-wider text-slate-400">Tidak ada foto</span>
-                                    </div>
-                                )}
-                                {vehicle.rental_class_label && (
-                                    <span 
-                                        className="absolute left-4 top-4 rounded-md px-3 py-1.5 text-xs font-bold text-white shadow-sm"
-                                        style={{ backgroundColor: 'var(--brand-color)' }}
-                                    >
-                                        {vehicle.rental_class_label}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">{vehicle.name}</h1>
-                                    <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-wider">
-                                        Plat Nomor: <span className="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{vehicle.plate_number}</span>
-                                    </p>
-                                </div>
-
-                                <div className="border-t border-slate-100 pt-4">
-                                    <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3">Spesifikasi Kendaraan</h3>
-                                    {/* Specifications Grid */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-bold text-slate-700">
-                                        {vehicle.capacity_seats && (
-                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 shadow-xs">
-                                                <span className="block text-[9px] uppercase tracking-wider text-slate-450 mb-1">Kapasitas</span>
-                                                {vehicle.capacity_seats} Kursi
-                                            </div>
-                                        )}
-                                        {vehicle.fuel_type && (
-                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 shadow-xs">
-                                                <span className="block text-[9px] uppercase tracking-wider text-slate-450 mb-1">Bahan Bakar</span>
-                                                {vehicle.fuel_type}
-                                            </div>
-                                        )}
-                                        {vehicle.model_year && (
-                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 shadow-xs">
-                                                <span className="block text-[9px] uppercase tracking-wider text-slate-450 mb-1">Tahun Rilis</span>
-                                                {vehicle.model_year}
-                                            </div>
-                                        )}
-                                        {vehicle.color && (
-                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 shadow-xs">
-                                                <span className="block text-[9px] uppercase tracking-wider text-slate-450 mb-1">Warna</span>
-                                                {vehicle.color}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* General Terms Alert */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-2">
-                            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-900">Ketentuan & Syarat Umum</h3>
-                            <ul className="list-disc list-inside text-xs font-medium text-slate-500 space-y-1.5 leading-relaxed">
-                                <li>Pengambilan & pengembalian kendaraan wajib dilakukan di depot cabang yang telah dipilih.</li>
-                                <li>Penyewa diwajibkan mengunggah dokumen KTP & SIM A yang valid saat serah terima.</li>
-                                <li>Deposit wajib dibayarkan saat hold unit untuk menjamin unit kendaraan tidak dilepas.</li>
-                            </ul>
-                        </div>
+                    {/* Breadcrumbs */}
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                        <Link href={route('book.rental.search')} className="hover:text-slate-900">Katalog Kendaraan</Link>
+                        <span>/</span>
+                        <span className="text-slate-700">{vehicle.name}</span>
                     </div>
 
-                    {/* Right Column: Checkout & Quote Panel */}
-                    <div className="w-full lg:w-[440px] shrink-0 space-y-6">
-                        
-                        <form onSubmit={submit} className="space-y-6">
-                            
-                            {/* Setup Rental Options */}
-                            <div className="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-xs space-y-4">
-                                <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 border-b pb-2 border-slate-100">
-                                    Konfigurasi Sewa
-                                </h2>
+                    {/* Flash Notifications */}
+                    {(flash?.error || flash?.success) && (
+                        <div className={`rounded-2xl p-4 text-sm font-bold shadow-sm ${flash.error ? 'bg-rose-50 border border-rose-200 text-rose-800' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'}`}>
+                            {flash.error || flash.success}
+                        </div>
+                    )}
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <label className="text-xs font-bold text-slate-700">
-                                        Tanggal Mulai
-                                        <input
-                                            type="date"
-                                            className={fieldClassName}
-                                            value={form.data.start_date}
-                                            onChange={(e) => {
-                                                form.setData('start_date', e.target.value);
-                                                void refreshQuote({ start_date: e.target.value });
-                                            }}
-                                            required
-                                        />
-                                    </label>
-                                    <label className="text-xs font-bold text-slate-700">
-                                        Tanggal Selesai
-                                        <input
-                                            type="date"
-                                            className={fieldClassName}
-                                            value={form.data.end_date}
-                                            onChange={(e) => {
-                                                form.setData('end_date', e.target.value);
-                                                void refreshQuote({ end_date: e.target.value });
-                                            }}
-                                            required
-                                        />
-                                    </label>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div>
-                                        <label className="mb-1 block text-xs font-bold text-slate-700">Depot Jemput</label>
-                                        <PublicSelect
-                                            value={form.data.pickup_location_id}
-                                            onChange={(value) => {
-                                                const newReturn = form.data.return_location_id || value;
-                                                form.setData({
-                                                    ...form.data,
-                                                    pickup_location_id: value,
-                                                    return_location_id: newReturn,
-                                                });
-                                                void refreshQuote({
-                                                    pickup_location_id: value,
-                                                    return_location_id: newReturn,
-                                                });
-                                            }}
-                                            options={pickupOptions}
-                                            placeholder="Pilih Depot"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block text-xs font-bold text-slate-700">Depot Kembali</label>
-                                        <PublicSelect
-                                            value={form.data.return_location_id}
-                                            onChange={(value) => {
-                                                form.setData('return_location_id', value);
-                                                void refreshQuote({ return_location_id: value });
-                                            }}
-                                            options={returnOptions}
-                                            placeholder="Sama dengan lokasi jemput"
-                                        />
-                                    </div>
-                                </div>
-
+                    {/* Validation Errors */}
+                    {errorMessages.length > 0 && (
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 shadow-xs">
+                            <div className="flex items-start gap-2.5">
+                                <span className="text-base leading-none">⛔</span>
                                 <div>
-                                    <label className="mb-1 block text-xs font-bold text-slate-700">Paket Asuransi Tambahan</label>
-                                    <PublicSelect
-                                        value={form.data.insurance_package_id}
-                                        onChange={(value) => {
-                                            form.setData('insurance_package_id', value);
-                                            void refreshQuote({ insurance_package_id: value });
-                                        }}
-                                        options={insuranceOptions}
-                                        placeholder="Tanpa Asuransi Tambahan"
-                                    />
+                                    <p className="text-xs font-bold text-rose-950 uppercase tracking-wider">Pemesanan Belum Dapat Diproses</p>
+                                    <ul className="mt-1 list-disc list-inside space-y-0.5 text-rose-850">
+                                        {errorMessages.map((msg, idx) => (
+                                            <li key={idx}>{msg}</li>
+                                        ))}
+                                    </ul>
                                 </div>
                             </div>
+                        </div>
+                    )}
 
-                            {/* Live Quote Breakdown Card */}
-                            <div className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-xs overflow-hidden">
-                                {quoting && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-xs z-10">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-[var(--brand-color)]">
-                                            <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    {/* Split Layout: Showcase Left + Checkout Right */}
+                    <div className="flex flex-col lg:flex-row gap-8 items-start">
+                        
+                        {/* Left Column: Showcase & Specs */}
+                        <div className="flex-1 w-full space-y-6">
+                            
+                            {/* Showcase Card */}
+                            <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-xs">
+                                <div className="relative aspect-[16/9] w-full bg-slate-100 border-b border-slate-100">
+                                    {vehicle.photo_url ? (
+                                        <img src={vehicle.photo_url} alt={vehicle.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
+                                            <svg className="h-16 w-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            Menghitung...
+                                            <span className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Foto Unit Menyesuaikan</span>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Rincian Estimasi Biaya</h3>
-                                    <span 
-                                        className="rounded-full px-2.5 py-0.5 text-xs font-bold border"
-                                        style={{ 
-                                            color: 'var(--brand-color)', 
-                                            backgroundColor: 'rgba(15, 118, 110, 0.05)',
-                                            borderColor: 'rgba(15, 118, 110, 0.15)'
-                                        }}
-                                    >
-                                        {quote.total_periods} Periode
+                                    {vehicle.rental_class_label && (
+                                        <span 
+                                            className="absolute left-4 top-4 rounded-lg px-3 py-1 text-xs font-black text-white shadow-xs"
+                                            style={{ backgroundColor: 'var(--brand-color)' }}
+                                        >
+                                            {vehicle.rental_class_label}
+                                        </span>
+                                    )}
+
+                                    <span className="absolute right-4 top-4 rounded-lg bg-white/95 px-3 py-1 text-xs font-black text-emerald-800 shadow-2xs border border-slate-200 flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                        Unit Siap Pakai
                                     </span>
                                 </div>
 
-                                {!quote.available ? (
-                                    <div className="mt-4 rounded-xl bg-amber-50 p-3.5 text-xs text-amber-900 border border-amber-200">
-                                        {quote.reasons[0] || 'Kendaraan tidak dapat dipesan untuk periode ini.'}
-                                    </div>
-                                ) : (
-                                    <div className="mt-4 space-y-3 text-xs">
-                                        <div className="flex justify-between text-slate-600 font-medium">
-                                            <span>Sewa Dasar ({quote.total_periods} hari)</span>
-                                            <span className="font-bold text-slate-900">{quote.base_amount ? money(quote.base_amount) : '—'}</span>
-                                        </div>
-
-                                        {quote.one_way_fee_amount != null && quote.one_way_fee_amount > 0 && (
-                                            <div className="flex justify-between text-slate-600 font-medium">
-                                                <span>Biaya Beda Depot (One-Way)</span>
-                                                <span className="font-bold text-slate-900">{money(quote.one_way_fee_amount)}</span>
-                                            </div>
-                                        )}
-
-                                        {quote.insurance_amount != null && quote.insurance_amount > 0 && (
-                                            <div className="flex justify-between text-slate-600 font-medium">
-                                                <span>Asuransi Tambahan</span>
-                                                <span className="font-bold text-slate-900">{money(quote.insurance_amount)}</span>
-                                            </div>
-                                        )}
-
-                                        <div className="border-t border-slate-100 pt-3 flex justify-between items-center text-sm font-extrabold text-slate-900">
-                                            <span>Total Estimasi Sewa</span>
-                                            <span className="text-base text-[var(--brand-color)]">{quote.total_amount ? money(quote.total_amount) : '—'}</span>
-                                        </div>
-
-                                        <div className="rounded-xl bg-slate-50 p-3.5 mt-3 border border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-                                            <div>
-                                                <div className="font-bold text-slate-950">Deposit Hold Unit</div>
-                                                <div className="text-[10px] text-slate-550">Batas bayar {hold_ttl_minutes} menit</div>
-                                            </div>
-                                            <div className="text-sm font-extrabold text-[var(--brand-color)]">
-                                                {quote.deposit_amount ? money(quote.deposit_amount) : 'Rp 0'}
+                                <div className="p-6 sm:p-7 space-y-6">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{vehicle.name}</h2>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plat Nomor:</span>
+                                                <span className="font-mono text-xs font-black text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                                                    {vehicle.plate_number}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                )}
+
+                                    {/* 4-column Specification Grid */}
+                                    <div className="pt-2">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Spesifikasi Unit</h3>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-bold text-slate-700">
+                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Kapasitas</span>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.capacity_seats ? `${vehicle.capacity_seats} Kursi` : '—'}</div>
+                                            </div>
+                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Bahan Bakar</span>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.fuel_type || 'Bensin / Hybrid'}</div>
+                                            </div>
+                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Tahun Rilis</span>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.model_year ? `Tahun ${vehicle.model_year}` : '—'}</div>
+                                            </div>
+                                            <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Warna</span>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.color || 'Standar'}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Booker Details & OTP Section */}
-                            <div className="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-xs space-y-4">
-                                <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 border-b pb-2 border-slate-100">
-                                    Identitas Pemesan & Verifikasi
-                                </h2>
+                            {/* Inclusions & Guarantees Card */}
+                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-3.5">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Jaminan Standar Kenyamanan Kami</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 font-medium">
+                                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                                        <span className="text-emerald-600 font-black">✓</span>
+                                        <div>
+                                            <div className="font-bold text-slate-900">Kondisi Bersih & Terawat</div>
+                                            <div className="text-[11px] text-slate-500 mt-0.5">Disinfeksi dan cuci menyeluruh sebelum diserahterimakan.</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                                        <span className="text-emerald-600 font-black">✓</span>
+                                        <div>
+                                            <div className="font-bold text-slate-900">Bantuan Darurat 24 Jam</div>
+                                            <div className="text-[11px] text-slate-500 mt-0.5">Dukungan teknis sigap kapan pun Anda membutuhkan.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                                <div>
-                                    <label className="text-xs font-bold text-slate-700">
-                                        Nama Lengkap Pemesan <span className="text-rose-500">*</span>
-                                        <input
-                                            type="text"
-                                            className={fieldClassName}
-                                            placeholder="Nama lengkap Anda..."
-                                            value={form.data.customer_name}
-                                            onChange={(e) => form.setData('customer_name', e.target.value)}
-                                            required
-                                        />
-                                    </label>
-                                    {errors.customer_name && <p className="mt-1 text-xs text-rose-600 font-bold">{errors.customer_name}</p>}
+                        {/* Right Column: Checkout & Live Quote Panel */}
+                        <div className="w-full lg:w-[420px] shrink-0 space-y-6 lg:sticky lg:top-[90px]">
+                            
+                            <form onSubmit={submit} className="rounded-2xl bg-white p-6 shadow-md border border-slate-200 space-y-5">
+                                
+                                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Formulir Reservasi</h3>
+                                    <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-full">
+                                        Booking Instan
+                                    </span>
                                 </div>
 
+                                {/* Date & Depot Section */}
                                 <div className="space-y-3">
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-700">
-                                            Nomor Telepon (WhatsApp) <span className="text-rose-500">*</span>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className="text-[11px] font-bold text-slate-700">
+                                            Mulai Sewa
                                             <input
-                                                type="tel"
+                                                type="date"
                                                 className={fieldClassName}
-                                                placeholder="Contoh: 081234567890"
-                                                value={form.data.booker_phone}
+                                                value={form.data.start_date}
                                                 onChange={(e) => {
-                                                    form.setData('booker_phone', e.target.value);
-                                                    setPhoneVerified(false);
-                                                    setOtpHint(null);
+                                                    form.setData('start_date', e.target.value);
+                                                    void refreshQuote({ start_date: e.target.value });
                                                 }}
                                                 required
                                             />
                                         </label>
-                                        {errors.booker_phone && <p className="mt-1 text-xs text-rose-600 font-bold">{errors.booker_phone}</p>}
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-700">
-                                            Email (Opsional)
+                                        <label className="text-[11px] font-bold text-slate-700">
+                                            Selesai Sewa
                                             <input
-                                                type="email"
+                                                type="date"
                                                 className={fieldClassName}
-                                                placeholder="nama@email.com"
-                                                value={form.data.customer_email}
-                                                onChange={(e) => form.setData('customer_email', e.target.value)}
+                                                value={form.data.end_date}
+                                                onChange={(e) => {
+                                                    form.setData('end_date', e.target.value);
+                                                    void refreshQuote({ end_date: e.target.value });
+                                                }}
+                                                required
                                             />
                                         </label>
                                     </div>
-                                </div>
 
-                                {/* OTP Verification Block */}
-                                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-xs font-bold text-slate-850">
-                                            Kode OTP Verifikasi <span className="text-rose-500">*</span>
-                                        </label>
-                                        {!phoneVerified && (
-                                            <button
-                                                type="button"
-                                                onClick={() => void sendOtp()}
-                                                disabled={sendingOtp || !form.data.booker_phone}
-                                                className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-50"
-                                            >
-                                                {sendingOtp ? 'Mengirim...' : 'Kirim OTP'}
-                                            </button>
-                                        )}
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Lokasi Jemput</label>
+                                        <PublicSelect
+                                            value={form.data.pickup_location_id}
+                                            onChange={(val) => {
+                                                const newReturn = form.data.return_location_id || val;
+                                                form.setData({
+                                                    ...form.data,
+                                                    pickup_location_id: val,
+                                                    return_location_id: newReturn,
+                                                });
+                                                void refreshQuote({
+                                                    pickup_location_id: val,
+                                                    return_location_id: newReturn,
+                                                });
+                                            }}
+                                            options={pickupOptions}
+                                            placeholder="Pilih Lokasi Depot"
+                                        />
                                     </div>
 
-                                    {phoneVerified ? (
-                                        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800 flex items-center gap-2">
-                                            <svg className="h-5 w-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Terverifikasi ✓ (OTP tidak diperlukan)
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Paket Asuransi Tambahan</label>
+                                        <PublicSelect
+                                            value={form.data.insurance_package_id}
+                                            onChange={(val) => {
+                                                form.setData('insurance_package_id', val);
+                                                void refreshQuote({ insurance_package_id: val });
+                                            }}
+                                            options={insuranceOptions}
+                                            placeholder="Tanpa Asuransi Tambahan"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Live Quote Breakdown Card */}
+                                <div className="relative rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-2.5">
+                                    {quoting && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-xs rounded-xl z-10">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                                                <svg className="h-4 w-4 animate-spin text-slate-800" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                </svg>
+                                                Kalkulasi tarif...
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between text-xs font-extrabold text-slate-900 border-b border-slate-200 pb-2">
+                                        <span>Rincian Estimasi Biaya</span>
+                                        <span className="text-[11px] text-slate-700 font-bold">{quote.total_periods} Hari Sewa</span>
+                                    </div>
+
+                                    {!quote.available ? (
+                                        <div className="text-xs text-rose-700 font-bold p-2 bg-rose-50 rounded-lg">
+                                            {quote.reasons[0] || 'Unit tidak tersedia untuk jadwal ini.'}
                                         </div>
                                     ) : (
+                                        <div className="space-y-2 text-xs">
+                                            <div className="flex justify-between text-slate-600 font-medium">
+                                                <span>Sewa Dasar</span>
+                                                <span className="font-bold text-slate-900">{quote.base_amount ? money(quote.base_amount) : '—'}</span>
+                                            </div>
+
+                                            {quote.insurance_amount != null && quote.insurance_amount > 0 && (
+                                                <div className="flex justify-between text-slate-600 font-medium">
+                                                    <span>Proteksi Asuransi</span>
+                                                    <span className="font-bold text-slate-900">{money(quote.insurance_amount)}</span>
+                                                </div>
+                                            )}
+
+                                            <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-xs font-extrabold text-slate-900">
+                                                <span>Total Estimasi Sewa</span>
+                                                <span className="text-sm text-slate-900 font-black">{quote.total_amount ? money(quote.total_amount) : '—'}</span>
+                                            </div>
+
+                                            <div className="rounded-lg bg-white p-3 border border-slate-200 flex items-center justify-between text-xs font-bold mt-1 shadow-2xs">
+                                                <div>
+                                                    <div className="text-slate-900 font-black">Deposit Penahanan Unit</div>
+                                                    <div className="text-[9px] text-slate-400 font-normal">Batas bayar {hold_ttl_minutes} menit</div>
+                                                </div>
+                                                <div className="text-sm font-black text-slate-900">
+                                                    {quote.deposit_amount ? money(quote.deposit_amount) : 'Rp 0'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Booker Identity Section */}
+                                <div className="space-y-3 pt-1 border-t border-slate-100">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block">
+                                            Nama Lengkap <span className="text-rose-500">*</span>
+                                        </label>
                                         <input
                                             type="text"
-                                            className={`${fieldClassName} tracking-widest text-center text-base font-extrabold bg-white`}
-                                            placeholder="0 0 0 0 0 0"
-                                            maxLength={6}
-                                            value={form.data.otp_code}
-                                            onChange={(e) => form.setData('otp_code', e.target.value)}
+                                            className={fieldClassName}
+                                            placeholder="Contoh: Budi Pratama"
+                                            value={form.data.customer_name}
+                                            onChange={(e) => form.setData('customer_name', e.target.value)}
                                             required
                                         />
-                                    )}
+                                        {errors.customer_name && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.customer_name}</p>}
+                                    </div>
 
-                                    {otpHint && !phoneVerified && (
-                                        <p className="rounded-lg bg-teal-50 p-2.5 text-xs font-medium text-teal-800 border border-teal-200">
-                                            {otpHint}
-                                        </p>
-                                    )}
-
-                                    {errors.otp_code && <p className="text-xs text-rose-600 font-bold">{errors.otp_code}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-bold text-slate-700">
-                                        Catatan Tambahan (Opsional)
-                                        <textarea
-                                            className={`${fieldClassName} h-20 resize-none`}
-                                            placeholder="Tulis permintaan khusus..."
-                                            value={form.data.notes}
-                                            onChange={(e) => form.setData('notes', e.target.value)}
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block">
+                                            Nomor WhatsApp <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            className={fieldClassName}
+                                            placeholder="081234567890"
+                                            value={form.data.booker_phone}
+                                            onChange={(e) => {
+                                                form.setData('booker_phone', e.target.value);
+                                                setPhoneVerified(false);
+                                                setOtpHint(null);
+                                            }}
+                                            required
                                         />
-                                    </label>
+                                        {errors.booker_phone && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.booker_phone}</p>}
+                                    </div>
+
+                                    {/* OTP Verification Block */}
+                                    <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] font-extrabold text-slate-800">Verifikasi Kode OTP *</span>
+                                            {!phoneVerified && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void sendOtp()}
+                                                    disabled={sendingOtp || !form.data.booker_phone}
+                                                    className="rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                                                >
+                                                    {sendingOtp ? 'Mengirim...' : 'Kirim OTP'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {phoneVerified ? (
+                                            <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-bold text-emerald-800 flex items-center gap-2">
+                                                <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Terverifikasi ✓ (OTP tidak diperlukan)
+                                            </div>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                className={`${fieldClassName} tracking-widest text-center text-sm font-black bg-white`}
+                                                placeholder="0 0 0 0 0 0"
+                                                maxLength={6}
+                                                value={form.data.otp_code}
+                                                onChange={(e) => form.setData('otp_code', e.target.value)}
+                                                required
+                                            />
+                                        )}
+
+                                        {otpHint && !phoneVerified && (
+                                            <p className="rounded-lg bg-teal-50 p-2 text-xs font-medium text-teal-800 border border-teal-200">
+                                                {otpHint}
+                                            </p>
+                                        )}
+                                        {errors.otp_code && <p className="text-[10px] text-rose-600 font-bold">{errors.otp_code}</p>}
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={form.processing || !quote.available}
-                                className="w-full rounded-xl py-3.5 text-sm font-extrabold text-white shadow-md transition hover:opacity-95 disabled:opacity-50"
-                                style={{ backgroundColor: 'var(--brand-color)' }}
-                            >
-                                {form.processing ? 'Memproses Reservasi...' : 'Konfirmasi & Pesan Unit'}
-                            </button>
-                        </form>
+                                {/* Booking CTA Button */}
+                                <button
+                                    type="submit"
+                                    disabled={form.processing || !quote.available}
+                                    className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:opacity-95 disabled:opacity-50"
+                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                >
+                                    {form.processing ? 'Memproses Pesanan...' : 'Konfirmasi & Pesan Sekarang'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
-
-                </div>
+                </main>
             </div>
 
-            {/* Mobile Fixed Bottom Sticky Bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 border-t border-slate-200 p-4 shadow-lg backdrop-blur-md">
-                <div className="mx-auto max-w-xl flex items-center justify-between gap-3">
-                    <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">Deposit Hold</div>
-                        <div className="text-base font-extrabold text-[var(--brand-color)]">
-                            {quote.deposit_amount ? money(quote.deposit_amount) : 'Rp 0'}
+            {/* Grounded Deep Slate Footer */}
+            <footer className="mt-16 bg-slate-900 text-slate-400 border-t border-slate-800">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+                        {/* Column 1: Brand Info */}
+                        <div className="md:col-span-5 space-y-4">
+                            <div className="flex items-center gap-2.5">
+                                <span 
+                                    className="block h-3 w-3 rounded-full shadow-xs"
+                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                />
+                                <span className="font-black text-white tracking-tight text-sm">{brand.name}</span>
+                            </div>
+                            <p className="text-xs font-normal text-slate-400 leading-relaxed max-w-sm">
+                                Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.
+                            </p>
+                        </div>
+
+                        {/* Column 2: Quick Links */}
+                        <div className="md:col-span-3 space-y-3.5">
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Navigasi Cepat</h4>
+                            <ul className="space-y-2 text-xs font-medium text-slate-400">
+                                <li>
+                                    <Link href={route('book.rental.search')} className="hover:text-white transition-colors">
+                                        Katalog Kendaraan
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href={route('book.rental.history')} className="hover:text-white transition-colors">
+                                        Riwayat & Cek Status
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Column 3: Contact/Support */}
+                        <div className="md:col-span-4 space-y-3.5">
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Pusat Bantuan</h4>
+                            <div className="text-xs font-medium text-slate-400 space-y-2.5">
+                                <p className="leading-relaxed">
+                                    Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:
+                                </p>
+                                {brand.support_phone ? (
+                                    <a
+                                        href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-emerald-400 font-bold text-xs hover:underline"
+                                    >
+                                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                        WhatsApp Hotline: {brand.support_phone} ↗
+                                    </a>
+                                ) : (
+                                    <span className="font-bold text-slate-300">Silakan hubungi cabang terdekat.</span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <button
-                        onClick={(e) => {
-                            // Programmatically trigger checkout form submit
-                            const btn = document.querySelector('form button[type="submit"]') as HTMLButtonElement;
-                            if (btn) btn.click();
-                        }}
-                        disabled={form.processing || !quote.available}
-                        className="flex-1 rounded-xl py-3 px-4 text-xs font-extrabold text-white transition hover:opacity-95 disabled:opacity-50 text-center"
-                        style={{ backgroundColor: 'var(--brand-color)' }}
-                    >
-                        {form.processing ? 'Memproses...' : 'Pesan Unit'}
-                    </button>
+                    <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
+                        <div>
+                            © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                        </div>
+                        <div className="flex gap-4">
+                            <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>
+                            <span className="hover:text-slate-300 cursor-pointer">Kebijakan Privasi</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </footer>
         </div>
     );
 }

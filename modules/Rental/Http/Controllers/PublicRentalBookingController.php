@@ -411,20 +411,9 @@ class PublicRentalBookingController extends Controller
 
         $rental = $this->findPassengerBooking($token);
         $data = $request->validated();
-        $bookerPhone = $data['booker_phone'] ?? $rental->booker_phone;
-        $otpCode = $data['otp_code'] ?? '';
 
-        if ($bookerPhone === null) {
-            return back()->with('error', __('rental.public.forbidden'));
-        }
-
-        if (! $this->assertOtp($otp, $bookerPhone, $otpCode)) {
-            return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
-        }
-
-        $phone = $otp->normalize($bookerPhone);
-        if ($rental->booker_phone !== null && $rental->booker_phone !== $phone) {
-            return back()->with('error', __('rental.public.forbidden'));
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
+            return $error;
         }
 
         try {
@@ -667,14 +656,42 @@ class PublicRentalBookingController extends Controller
     }
 
     /**
-     * @return array{name: string, color: string, support_phone: string|null}
+     * @return array{
+     *     name: string,
+     *     color: string,
+     *     secondary_color: string,
+     *     support_phone: string|null,
+     *     logo_url: string|null,
+     *     hero_title: string|null,
+     *     hero_subtitle: string|null,
+     *     hero_image_url: string|null,
+     *     social: array{instagram: string|null, facebook: string|null, tiktok: string|null},
+     *     business_hours: string|null
+     * }
      */
     private function brand(): array
     {
+        $storefront = \Modules\Rental\Support\RentalStorefrontSettings::all();
+
+        $nullable = static fn (string $value): ?string => $value !== '' ? $value : null;
+
         return [
-            'name' => (string) config('app.name', 'Rental'),
-            'color' => '#0f766e',
-            'support_phone' => null,
+            'name' => $storefront['brand_name'] !== ''
+                ? $storefront['brand_name']
+                : (string) \App\Models\Setting::getValue('general.site_name', config('app.name', 'Rental')),
+            'color' => $storefront['primary_color'],
+            'secondary_color' => $storefront['secondary_color'],
+            'support_phone' => $nullable($storefront['support_phone']),
+            'logo_url' => $nullable($storefront['logo_url']),
+            'hero_title' => $nullable($storefront['hero_title']),
+            'hero_subtitle' => $nullable($storefront['hero_subtitle']),
+            'hero_image_url' => $nullable($storefront['hero_image_url']),
+            'social' => [
+                'instagram' => $nullable($storefront['social_instagram']),
+                'facebook' => $nullable($storefront['social_facebook']),
+                'tiktok' => $nullable($storefront['social_tiktok']),
+            ],
+            'business_hours' => $nullable($storefront['business_hours']),
         ];
     }
 
@@ -684,10 +701,14 @@ class PublicRentalBookingController extends Controller
             && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable();
     }
 
-    private function assertOtp(PassengerOtpService $otp, string $phone, string $code): bool
+    private function assertOtp(PassengerOtpService $otp, string $phone, ?string $code): bool
     {
         if ($otp->isVerified($phone)) {
             return true;
+        }
+
+        if ($code === null || $code === '') {
+            return false;
         }
 
         return $otp->verify($phone, $code);
@@ -696,14 +717,19 @@ class PublicRentalBookingController extends Controller
     private function guardBooker(
         PassengerOtpService $otp,
         Rental $rental,
-        string $phone,
-        string $code,
+        ?string $phone,
+        ?string $code,
     ): ?RedirectResponse {
-        if (! $this->assertOtp($otp, $phone, $code)) {
+        $effectivePhone = $phone ?: $rental->booker_phone;
+        if ($effectivePhone === null) {
+            return back()->with('error', __('rental.public.forbidden'));
+        }
+
+        if (! $this->assertOtp($otp, $effectivePhone, $code)) {
             return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
         }
 
-        $normalized = $otp->normalize($phone);
+        $normalized = $otp->normalize($effectivePhone);
         if ($rental->booker_phone !== null && $rental->booker_phone !== $normalized) {
             return back()->with('error', __('rental.public.forbidden'));
         }

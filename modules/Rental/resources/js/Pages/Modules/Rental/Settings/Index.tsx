@@ -13,6 +13,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import RentalNav from '../../../../RentalNav';
 import DocumentsPanel from './DocumentsPanel';
+import StorefrontPanel, { DEFAULT_STOREFRONT, StorefrontSettings } from './StorefrontPanel';
 
 interface GeneralSettings {
     default_one_way_fee: string;
@@ -38,8 +39,9 @@ interface DocumentTemplate {
 }
 
 interface Props {
-    tab: 'general' | 'rates' | 'documents';
+    tab: 'general' | 'storefront' | 'rates' | 'documents';
     general?: GeneralSettings;
+    storefront?: StorefrontSettings;
     documents?: Record<string, DocumentTemplate>;
     centralAiEnabled?: boolean;
 }
@@ -574,6 +576,7 @@ function GeneralPanel({
 export default function Index({
     tab,
     general = DEFAULT_GENERAL,
+    storefront = DEFAULT_STOREFRONT,
     documents = DEFAULT_DOCUMENTS,
     centralAiEnabled = true,
 }: Props): JSX.Element {
@@ -582,6 +585,7 @@ export default function Index({
 
     const tabs = [
         { key: 'general' as const, label: t('rental.settings.tab_general', undefined, 'Umum') },
+        { key: 'storefront' as const, label: t('rental.settings.tab_storefront', undefined, 'Tampilan Storefront') },
         { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Template Dokumen') },
     ];
 
@@ -609,6 +613,8 @@ export default function Index({
             </div>
 
             {tab === 'general' && <GeneralPanel general={general} centralAiEnabled={centralAiEnabled} />}
+
+            {tab === 'storefront' && <StorefrontPanel storefront={storefront} />}
 
             {tab === 'documents' && (
                 <DocumentsPanel documents={documents} prefixedRoute={prefixedRoute} />

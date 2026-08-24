@@ -719,6 +719,38 @@ class PublicRentalBookingTest extends TestCase
         $this->assertNotNull($rental->deposit_proof_path);
     }
 
+    public function test_customer_can_upload_deposit_proof_when_phone_already_verified_without_otp(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '628123456789',
+            'public_token' => 'tokenproofver'.str_repeat('a', 23),
+            'deposit_amount' => 500000,
+        ]);
+
+        $phone = '08123456789';
+        $otpService = app(PassengerOtpService::class);
+        $otp = $otpService->send($phone);
+        $otpService->verify($phone, $otp);
+
+        $file = UploadedFile::fake()->create('proof.jpg', 500, 'image/jpeg');
+
+        $this->from(route('book.rental.booking.show', $rental->public_token))
+            ->post(route('book.rental.booking.upload_deposit_proof', $rental->public_token), [
+                'deposit_proof' => $file,
+            ])
+            ->assertRedirect(route('book.rental.booking.show', $rental->public_token))
+            ->assertSessionHas('success');
+
+        $rental->refresh();
+        $this->assertSame('transfer', $rental->deposit_payment_method);
+        $this->assertSame('pending', $rental->deposit_proof_status);
+        $this->assertNotNull($rental->deposit_proof_path);
+    }
+
     public function test_uploading_deposit_proof_notifies_staff_for_validation(): void
     {
         Storage::fake('public');
