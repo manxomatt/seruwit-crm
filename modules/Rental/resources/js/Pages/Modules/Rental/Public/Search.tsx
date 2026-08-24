@@ -1,4 +1,6 @@
+import LanguageToggle from '@/Components/LanguageToggle';
 import PublicSelect from '@/Components/PublicSelect';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 
@@ -58,12 +60,6 @@ interface Props {
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
-const periodOptions = [
-    { value: 'daily', label: 'Harian' },
-    { value: 'weekly', label: 'Mingguan' },
-    { value: 'monthly', label: 'Bulanan' },
-];
-
 export default function Search({
     brand,
     filters,
@@ -73,7 +69,14 @@ export default function Search({
     searched,
     hold_ttl_minutes,
 }: Props) {
+    const { t } = useTrans();
     const [selectedCategory, setSelectedCategory] = useState<string>(filters.rental_class ?? '');
+
+    const periodOptions = [
+        { value: 'daily', label: t('rental.storefront_ui.period_daily', undefined, 'Harian') },
+        { value: 'weekly', label: t('rental.storefront_ui.period_weekly', undefined, 'Mingguan') },
+        { value: 'monthly', label: t('rental.storefront_ui.period_monthly', undefined, 'Bulanan') },
+    ];
 
     const form = useForm({
         start_date: filters.start_date ?? '',
@@ -94,8 +97,8 @@ export default function Search({
     );
 
     const pickupOptions = useMemo(
-        () => [{ value: '', label: 'Pilih Lokasi Depot' }, ...depotOptions],
-        [depotOptions],
+        () => [{ value: '', label: t('rental.storefront_ui.pickup_placeholder', undefined, 'Pilih Lokasi Depot') }, ...depotOptions],
+        [depotOptions, t],
     );
 
     const returnOptions = useMemo(
@@ -178,11 +181,12 @@ export default function Search({
                             )}
                             <div>
                                 <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">Showroom & Rental Resmi</span>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{t('rental.storefront_ui.tagline', undefined, 'Showroom & Rental Resmi')}</span>
                             </div>
                         </Link>
 
                         <div className="flex items-center gap-3">
+                            <LanguageToggle />
                             <Link
                                 href={route('book.rental.history')}
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-250 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
@@ -190,7 +194,7 @@ export default function Search({
                                 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span>Cek Riwayat</span>
+                                <span>{t('rental.storefront_ui.check_history', undefined, 'Cek Riwayat')}</span>
                             </Link>
 
                             {brand.support_phone && (
@@ -201,7 +205,7 @@ export default function Search({
                                     className="hidden sm:inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 transition hover:bg-emerald-100 shadow-2xs"
                                 >
                                     <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                                    WhatsApp CS
+                                    {t('rental.storefront_ui.whatsapp_cs', undefined, 'WhatsApp CS')}
                                 </a>
                             )}
                         </div>
@@ -214,28 +218,28 @@ export default function Search({
                         <div className="text-center max-w-3xl mx-auto space-y-3.5">
                             <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                Pilihan Armada Siap Pakai & Terawat
+                                {t('rental.storefront_ui.hero_badge', undefined, 'Pilihan Armada Siap Pakai & Terawat')}
                             </div>
                             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                                {brand.hero_title || 'Temukan Kendaraan Nyaman Untuk Setiap Perjalanan Anda'}
+                                {brand.hero_title || t('rental.storefront_ui.hero_title', undefined, 'Temukan Kendaraan Nyaman Untuk Setiap Perjalanan Anda')}
                             </h2>
                             <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed max-w-2xl mx-auto">
-                                {brand.hero_subtitle || 'Proses sewa mobil cepat dan transparan. Seluruh unit kami dirawat berkala, bersih, dan bergaransi resmi.'}
+                                {brand.hero_subtitle || t('rental.storefront_ui.hero_subtitle', undefined, 'Proses sewa mobil cepat dan transparan. Seluruh unit kami dirawat berkala, bersih, dan bergaransi resmi.')}
                             </p>
 
                             {/* Trust Markers */}
                             <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-bold text-slate-600">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-emerald-600 text-sm font-black">✓</span> Unit Bersih & Higienis
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_clean', undefined, 'Unit Bersih & Higienis')}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-emerald-600 text-sm font-black">✓</span> Booking Cepat WhatsApp OTP
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_otp', undefined, 'Booking Cepat WhatsApp OTP')}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-emerald-600 text-sm font-black">✓</span> Serah Terima Depot Resmi
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_depot', undefined, 'Serah Terima Depot Resmi')}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-emerald-600 text-sm font-black">✓</span> Dukungan CS 24 Jam
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_cs', undefined, 'Dukungan CS 24 Jam')}
                                 </div>
                             </div>
                         </div>
@@ -260,7 +264,7 @@ export default function Search({
                                     {/* Pickup Date */}
                                     <div className="space-y-1">
                                         <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                                            Tanggal Mulai
+                                            {t('rental.storefront_ui.start_date', undefined, 'Tanggal Mulai')}
                                         </label>
                                         <input
                                             type="date"
@@ -275,11 +279,11 @@ export default function Search({
                                     <div className="space-y-1">
                                         <div className="flex items-center justify-between">
                                             <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                                                Tanggal Selesai
+                                                {t('rental.storefront_ui.end_date', undefined, 'Tanggal Selesai')}
                                             </label>
                                             {daysDuration !== null && (
                                                 <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                                                    {daysDuration} Hari
+                                                    {t('rental.storefront_ui.duration_days', { count: daysDuration }, `${daysDuration} Hari`)}
                                                 </span>
                                             )}
                                         </div>
@@ -295,7 +299,7 @@ export default function Search({
                                     {/* Pickup Depot */}
                                     <div className="space-y-1">
                                         <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                                            Lokasi Penjemputan
+                                            {t('rental.storefront_ui.pickup_location', undefined, 'Lokasi Penjemputan')}
                                         </label>
                                         <PublicSelect
                                             value={form.data.pickup_location_id}
@@ -321,14 +325,14 @@ export default function Search({
                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                             </svg>
-                                            Cari Ketersediaan
+                                            {t('rental.storefront_ui.search_availability', undefined, 'Cari Ketersediaan')}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs text-slate-500 font-medium">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[11px] font-bold uppercase text-slate-400">Periode:</span>
+                                        <span className="text-[11px] font-bold uppercase text-slate-400">{t('rental.storefront_ui.period_label', undefined, 'Periode:')}</span>
                                         <div className="flex gap-1.5">
                                             {periodOptions.map((opt) => (
                                                 <button
@@ -344,7 +348,7 @@ export default function Search({
                                     </div>
 
                                     <div className="text-[11px] text-slate-400">
-                                        Unit ditahan aman hingga <b className="text-slate-700 font-bold">{hold_ttl_minutes} menit</b> setelah dipesan.
+                                        {t('rental.storefront_ui.hold_notice_before', undefined, 'Unit ditahan aman hingga')} <b className="text-slate-700 font-bold">{hold_ttl_minutes} {t('rental.storefront_ui.minutes', undefined, 'menit')}</b> {t('rental.storefront_ui.hold_notice_after', undefined, 'setelah dipesan.')}
                                     </div>
                                 </div>
                             </form>
@@ -358,8 +362,8 @@ export default function Search({
                     {/* Category Filter Pills */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
                         <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Katalog Kendaraan Tersedia</h3>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Pilih armada yang paling sesuai dengan kebutuhan mobilitas Anda.</p>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">{t('rental.storefront_ui.catalog_title', undefined, 'Katalog Kendaraan Tersedia')}</h3>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('rental.storefront_ui.catalog_subtitle', undefined, 'Pilih armada yang paling sesuai dengan kebutuhan mobilitas Anda.')}</p>
                         </div>
 
                         {/* Category Pills */}
@@ -369,7 +373,7 @@ export default function Search({
                                 onClick={() => handleCategoryClick('')}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 ${!selectedCategory ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                             >
-                                Semua Kelas
+                                {t('rental.storefront_ui.all_classes', undefined, 'Semua Kelas')}
                             </button>
                             {classes.map((cls) => (
                                 <button
@@ -392,9 +396,9 @@ export default function Search({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 text-base font-black text-slate-900">Mulai Pencarian Kendaraan</h3>
+                            <h3 className="mt-4 text-base font-black text-slate-900">{t('rental.storefront_ui.empty_start_title', undefined, 'Mulai Pencarian Kendaraan')}</h3>
                             <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto font-medium leading-relaxed">
-                                Tentukan tanggal sewa dan lokasi depot di atas untuk menampilkan seluruh unit mobil yang siap disewa.
+                                {t('rental.storefront_ui.empty_start_body', undefined, 'Tentukan tanggal sewa dan lokasi depot di atas untuk menampilkan seluruh unit mobil yang siap disewa.')}
                             </p>
                         </div>
                     )}
@@ -406,9 +410,9 @@ export default function Search({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 text-base font-black text-slate-900">Unit Tidak Ditemukan</h3>
+                            <h3 className="mt-4 text-base font-black text-slate-900">{t('rental.storefront_ui.empty_none_title', undefined, 'Unit Tidak Ditemukan')}</h3>
                             <p className="mt-1 text-xs text-slate-500 leading-relaxed max-w-md mx-auto font-medium">
-                                Tidak ada armada yang tersedia untuk kriteria dan tanggal yang Anda pilih. Silakan ganti jadwal sewa atau pilih kelas lainnya.
+                                {t('rental.storefront_ui.empty_none_body', undefined, 'Tidak ada armada yang tersedia untuk kriteria dan tanggal yang Anda pilih. Silakan ganti jadwal sewa atau pilih kelas lainnya.')}
                             </p>
                         </div>
                     )}
@@ -436,7 +440,7 @@ export default function Search({
                                                     <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">Foto Unit Menyusul</span>
+                                                    <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">{t('rental.storefront_ui.card_photo_soon', undefined, 'Foto Unit Menyusul')}</span>
                                                 </div>
                                             )}
 
@@ -453,7 +457,7 @@ export default function Search({
                                             {/* Ready Badge */}
                                             <span className="absolute right-3.5 top-3.5 rounded-lg bg-white/95 px-2.5 py-1 text-[10px] font-black text-emerald-800 shadow-2xs border border-slate-200 flex items-center gap-1.5">
                                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                                Tersedia
+                                                {t('rental.storefront_ui.card_available', undefined, 'Tersedia')}
                                             </span>
                                         </div>
 
@@ -477,7 +481,7 @@ export default function Search({
                                                         <svg className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                                         </svg>
-                                                        <span>{vehicle.capacity_seats} Kursi</span>
+                                                        <span>{t('rental.storefront_ui.card_seats', { count: vehicle.capacity_seats }, `${vehicle.capacity_seats} Kursi`)}</span>
                                                     </div>
                                                 )}
                                                 {vehicle.model_year && (
@@ -485,7 +489,7 @@ export default function Search({
                                                         <svg className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
-                                                        <span>Th {vehicle.model_year}</span>
+                                                        <span>{t('rental.storefront_ui.card_year', { year: vehicle.model_year }, `Th ${vehicle.model_year}`)}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -495,14 +499,14 @@ export default function Search({
                                     {/* Card Footer Price & Action */}
                                     <div className="border-t border-slate-100 p-5 flex items-center justify-between bg-slate-50/50">
                                         <div>
-                                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Mulai Dari</div>
+                                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t('rental.storefront_ui.card_from', undefined, 'Mulai Dari')}</div>
                                             {vehicle.from_price != null ? (
                                                 <div className="text-base font-black text-slate-900">
                                                     {money(vehicle.from_price)}
-                                                    <span className="text-[10px] font-normal text-slate-500"> / {form.data.period_type === 'daily' ? 'hari' : 'periode'}</span>
+                                                    <span className="text-[10px] font-normal text-slate-500"> / {form.data.period_type === 'daily' ? t('rental.storefront_ui.card_per_day', undefined, 'hari') : t('rental.storefront_ui.card_per_period', undefined, 'periode')}</span>
                                                 </div>
                                             ) : (
-                                                <div className="text-xs text-slate-400 font-bold">Hubungi CS</div>
+                                                <div className="text-xs text-slate-400 font-bold">{t('rental.storefront_ui.card_contact_cs', undefined, 'Hubungi CS')}</div>
                                             )}
                                         </div>
 
@@ -510,7 +514,7 @@ export default function Search({
                                             className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black text-white shadow-2xs transition-all group-hover:scale-102"
                                             style={{ backgroundColor: 'var(--brand-color)' }}
                                         >
-                                            Pesan Unit
+                                            {t('rental.storefront_ui.card_order', undefined, 'Pesan Unit')}
                                             <svg className="h-3 w-3 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                             </svg>
@@ -537,22 +541,22 @@ export default function Search({
                                 <span className="font-black text-white tracking-tight text-sm">{brand.name}</span>
                             </div>
                             <p className="text-xs font-normal text-slate-400 leading-relaxed max-w-sm">
-                                Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.
+                                {t('rental.storefront_ui.footer_desc', undefined, 'Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.')}
                             </p>
                         </div>
 
                         {/* Column 2: Quick Links */}
                         <div className="md:col-span-3 space-y-3.5">
-                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Navigasi Cepat</h4>
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">{t('rental.storefront_ui.footer_quick_nav', undefined, 'Navigasi Cepat')}</h4>
                             <ul className="space-y-2 text-xs font-medium text-slate-400">
                                 <li>
                                     <Link href={route('book.rental.search')} className="hover:text-white transition-colors">
-                                        Katalog Kendaraan
+                                        {t('rental.storefront_ui.footer_catalog', undefined, 'Katalog Kendaraan')}
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href={route('book.rental.history')} className="hover:text-white transition-colors">
-                                        Riwayat & Cek Status
+                                        {t('rental.storefront_ui.footer_history', undefined, 'Riwayat & Cek Status')}
                                     </Link>
                                 </li>
                             </ul>
@@ -560,10 +564,10 @@ export default function Search({
 
                         {/* Column 3: Contact/Support */}
                         <div className="md:col-span-4 space-y-3.5">
-                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Pusat Bantuan</h4>
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">{t('rental.storefront_ui.footer_help_title', undefined, 'Pusat Bantuan')}</h4>
                             <div className="text-xs font-medium text-slate-400 space-y-2.5">
                                 <p className="leading-relaxed">
-                                    Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:
+                                    {t('rental.storefront_ui.footer_help_body', undefined, 'Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:')}
                                 </p>
                                 {brand.support_phone ? (
                                     <a
@@ -573,10 +577,10 @@ export default function Search({
                                         className="inline-flex items-center gap-2 text-emerald-400 font-bold text-xs hover:underline"
                                     >
                                         <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                                        WhatsApp Hotline: {brand.support_phone} ↗
+                                        {t('rental.storefront_ui.footer_hotline', undefined, 'WhatsApp Hotline:')} {brand.support_phone} ↗
                                     </a>
                                 ) : (
-                                    <span className="font-bold text-slate-300">Silakan hubungi cabang terdekat.</span>
+                                    <span className="font-bold text-slate-300">{t('rental.storefront_ui.footer_no_phone', undefined, 'Silakan hubungi cabang terdekat.')}</span>
                                 )}
                             </div>
                         </div>
@@ -584,7 +588,7 @@ export default function Search({
 
                     <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
                         <div>
-                            © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                            © 2026 {brand.name}. {t('rental.storefront_ui.rights', undefined, 'Seluruh Hak Cipta Dilindungi.')}
                         </div>
                         <div className="flex gap-4">
                             <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>

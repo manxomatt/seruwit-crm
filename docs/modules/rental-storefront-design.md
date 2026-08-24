@@ -8,7 +8,7 @@ Dokumen ini menjawab tiga pertanyaan strategis untuk front-end publik tenant ren
 
 > **Ditelaah dari kode aktual:** rute publik `book.rental.*` di `routes/app.php`, `Modules\Rental\Http\Controllers\PublicRentalBookingController`, halaman `Public/*.tsx` (Search, VehicleShow, Booking, History), modul GrapesJS `Pages` dengan render `pages::render`, dan tenancy per-domain (Stancl Tenancy).
 
-> **Status implementasi (per 2026-08-24): Fase 1–3 sudah diimplementasikan; Fase 4 belum.** Rincian per fase ada di [Roadmap Bertahap](#4-roadmap-bertahap). Catatan: `brand()` kini **dinamis** (bukan lagi `#0f766e` hardcoded) — lihat Fase 1. Test untuk fase-fase ini sudah ditulis; jalankan `php artisan test --compact --filter='RentalStorefront|RentalVehicleSeo|RentalPaymentResult|RentalTestimonials'`.
+> **Status implementasi (per 2026-08-25): Fase 1–3 selesai; Fase 4 sebagian** (template landing ✅, i18n storefront ◑, custom domain/SSR/analytics belum). Rincian per fase ada di [Roadmap Bertahap](#4-roadmap-bertahap). Catatan: `brand()` kini **dinamis** (bukan lagi `#0f766e` hardcoded) — lihat Fase 1. Test untuk Fase 1–3 sudah ditulis; jalankan `php artisan test --compact --filter='RentalStorefront|RentalVehicleSeo|RentalPaymentResult|RentalTestimonials'`.
 
 ---
 
@@ -223,8 +223,12 @@ Blok **Cari Kendaraan** (form statis) + **Armada Unggulan** (penanda `<rental-fl
 
 **Kemenangan:** Naikkan trafik organik dan tingkat konversi booking.
 
-### ⬜ Fase 4 — Skala & polish *(belum)*
+### ◑ Fase 4 — Skala & polish *(sebagian)*
 
-Custom domain per tenant, SSR/meta server-side untuk scraper non-JS, i18n storefront (id/en), template landing siap-clone, analytics storefront.
+- **Template landing siap-pakai** — ✅ blok `Rental: Landing Lengkap` di `Editor.tsx` (hero + pencarian + armada + ulasan + CTA dalam satu drop)
+- **i18n storefront (id/en)** — ◑ sebagian: komponen `LanguageToggle` (persist via `locale.update`) + `Search.tsx` & `PaymentResult.tsx` dikonversi penuh ke `t('rental.storefront_ui.*')` dengan kunci id+en. Terverifikasi live (halaman render en/id sesuai toggle). *Belum: `VehicleShow.tsx`, `Booking.tsx`, `History.tsx` (masih hardcoded ID; degrade rapi karena tiap `t()` punya fallback).*
+- **Custom domain per tenant** — ⬜ belum (infra tenancy/central; tunggu bisa diuji)
+- **SSR / meta server-side** untuk scraper non-JS — ⬜ belum (infra build/runtime; tunggu bisa diuji)
+- **Analytics storefront** — ⬜ belum
 
 **Kemenangan:** Onboarding tenant baru dalam hitungan menit, bukan hari.

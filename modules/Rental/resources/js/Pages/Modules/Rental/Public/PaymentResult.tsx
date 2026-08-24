@@ -1,3 +1,5 @@
+import LanguageToggle from '@/Components/LanguageToggle';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 
 interface Brand {
@@ -20,31 +22,23 @@ interface Props {
     booking_url: string;
 }
 
-const COPY: Record<Status, { title: string; body: string; icon: string; tone: string }> = {
-    success: {
-        title: 'Pembayaran Berhasil',
-        body: 'Terima kasih! Pembayaran Anda telah kami terima. Detail terbaru tersedia di halaman reservasi.',
-        icon: '✓',
-        tone: '#16a34a',
-    },
-    pending: {
-        title: 'Menunggu Konfirmasi',
-        body: 'Pembayaran Anda sedang diproses. Status akan diperbarui otomatis begitu pembayaran terkonfirmasi — biasanya beberapa saat.',
-        icon: '⏳',
-        tone: '#d97706',
-    },
-    failed: {
-        title: 'Pembayaran Belum Selesai',
-        body: 'Pembayaran belum berhasil atau dibatalkan. Anda dapat mencoba lagi dari halaman reservasi.',
-        icon: '!',
-        tone: '#dc2626',
-    },
+const TONE: Record<Status, { icon: string; tone: string }> = {
+    success: { icon: '✓', tone: '#16a34a' },
+    pending: { icon: '⏳', tone: '#d97706' },
+    failed: { icon: '!', tone: '#dc2626' },
 };
 
 export default function PaymentResult({ brand, status, intent, booking, booking_url }: Props) {
+    const { t } = useTrans();
     const brandColor = brand.color || '#0f766e';
-    const copy = COPY[status];
-    const intentLabel = intent === 'invoice' ? 'Pembayaran tagihan' : 'Pembayaran deposit';
+    const copy = {
+        ...TONE[status],
+        title: t(`rental.storefront_ui.pay_${status}_title`, undefined, TONE[status].icon),
+        body: t(`rental.storefront_ui.pay_${status}_body`, undefined, ''),
+    };
+    const intentLabel = intent === 'invoice'
+        ? t('rental.storefront_ui.pay_intent_invoice', undefined, 'Pembayaran tagihan')
+        : t('rental.storefront_ui.pay_intent_deposit', undefined, 'Pembayaran deposit');
 
     return (
         <div
@@ -68,6 +62,9 @@ export default function PaymentResult({ brand, status, intent, booking, booking_
                         </div>
                     )}
                     <h1 className="text-base font-black tracking-tight text-slate-900">{brand.name}</h1>
+                    <div className="ml-auto">
+                        <LanguageToggle />
+                    </div>
                 </div>
             </header>
 
@@ -91,7 +88,7 @@ export default function PaymentResult({ brand, status, intent, booking, booking_
                             className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >
-                            Lihat Detail Reservasi
+                            {t('rental.storefront_ui.pay_view_booking', undefined, 'Lihat Detail Reservasi')}
                         </Link>
                         {brand.support_phone && (
                             <a
@@ -101,7 +98,7 @@ export default function PaymentResult({ brand, status, intent, booking, booking_
                                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100"
                             >
                                 <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                                Hubungi CS via WhatsApp
+                                {t('rental.storefront_ui.pay_contact_wa', undefined, 'Hubungi CS via WhatsApp')}
                             </a>
                         )}
                     </div>
@@ -109,7 +106,7 @@ export default function PaymentResult({ brand, status, intent, booking, booking_
             </main>
 
             <footer className="py-6 text-center text-xs text-slate-400">
-                © {new Date().getFullYear()} {brand.name}. Seluruh Hak Cipta Dilindungi.
+                © {new Date().getFullYear()} {brand.name}. {t('rental.storefront_ui.rights', undefined, 'Seluruh Hak Cipta Dilindungi.')}
             </footer>
         </div>
     );
