@@ -221,6 +221,163 @@ export default function Editor({ page, customBlocks = [] }: Props): JSX.Element 
             },
         });
 
+        // Rental Bridge Block: featured fleet. Stores only a <rental-fleet>
+        // marker; the live grid is rendered server-side (see render.blade.php),
+        // mirroring the Carousel block above.
+        gjsEditor.DomComponents.addType('rental-fleet-component', {
+            isComponent: (el: HTMLElement) => el.tagName === 'DIV' && el.classList.contains('rental-fleet-block'),
+            model: {
+                defaults: {
+                    tagName: 'div',
+                    droppable: false,
+                    attributes: { class: 'rental-fleet-block', limit: '6', fleetclass: '' },
+                    traits: [
+                        {
+                            type: 'number',
+                            name: 'limit',
+                            label: 'Jumlah kartu',
+                            min: 1,
+                            max: 12,
+                        },
+                        {
+                            type: 'select',
+                            name: 'fleetclass',
+                            label: 'Kelas kendaraan',
+                            options: [
+                                { id: '', name: 'Semua kelas' },
+                                { id: 'economy', name: 'Economy' },
+                                { id: 'mpv', name: 'MPV' },
+                                { id: 'suv', name: 'SUV' },
+                                { id: 'van', name: 'Van' },
+                                { id: 'premium', name: 'Premium' },
+                                { id: 'truck', name: 'Truck' },
+                                { id: 'other', name: 'Lainnya' },
+                            ],
+                        },
+                    ],
+                },
+                init() {
+                    this.on('change:attributes:limit change:attributes:fleetclass', this.updateFleetMarker);
+                    this.updateFleetMarker();
+                },
+                updateFleetMarker() {
+                    const attrs = this.getAttributes();
+                    const limit = attrs.limit || '6';
+                    const fleetClass = attrs.fleetclass || '';
+                    const classAttr = fleetClass ? ` data-fleet-class="${fleetClass}"` : '';
+                    this.components(`<rental-fleet type="featured" limit="${limit}"${classAttr}></rental-fleet>`);
+                },
+            },
+            view: {
+                onRender() {
+                    const attrs = this.model.getAttributes();
+                    const limit = attrs.limit || '6';
+                    const fleetClass = attrs.fleetclass || '';
+                    const scope = fleetClass ? `kelas ${fleetClass.toUpperCase()}` : 'semua kelas';
+                    this.el.innerHTML = `
+                        <div style="border: 2px dashed #99f6e4; background: #f0fdfa; border-radius: 12px; padding: 32px; text-align: center; color: #0f766e;">
+                            <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">🚗 Armada Rental (${scope})</div>
+                            <div style="font-size: 12px; opacity: 0.75;">Menampilkan ${limit} kendaraan siap sewa · dirender otomatis di halaman publik</div>
+                        </div>
+                    `;
+                },
+            },
+        });
+
+        // Rental Bridge Block: curated testimonials. Stores a <rental-reviews>
+        // marker; rendered server-side from the tenant's saved testimonials.
+        gjsEditor.DomComponents.addType('rental-reviews-component', {
+            isComponent: (el: HTMLElement) => el.tagName === 'DIV' && el.classList.contains('rental-reviews-block'),
+            model: {
+                defaults: {
+                    tagName: 'div',
+                    droppable: false,
+                    attributes: { class: 'rental-reviews-block', limit: '6' },
+                    traits: [
+                        { type: 'number', name: 'limit', label: 'Jumlah ulasan', min: 1, max: 12 },
+                    ],
+                },
+                init() {
+                    this.on('change:attributes:limit', this.updateReviewsMarker);
+                    this.updateReviewsMarker();
+                },
+                updateReviewsMarker() {
+                    const limit = this.getAttributes().limit || '6';
+                    this.components(`<rental-reviews limit="${limit}"></rental-reviews>`);
+                },
+            },
+            view: {
+                onRender() {
+                    const limit = this.model.getAttributes().limit || '6';
+                    this.el.innerHTML = `
+                        <div style="border: 2px dashed #fcd34d; background: #fffbeb; border-radius: 12px; padding: 32px; text-align: center; color: #b45309;">
+                            <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">★ Ulasan Pelanggan (Rental)</div>
+                            <div style="font-size: 12px; opacity: 0.75;">Menampilkan hingga ${limit} testimoni · dikelola di Rental → Settings → Testimoni</div>
+                        </div>
+                    `;
+                },
+            },
+        });
+
+        const rentalBlockManager = gjsEditor.BlockManager;
+        rentalBlockManager.add('rental-landing-template', {
+            label: 'Rental: Landing Lengkap',
+            category: 'Rental',
+            content: `<div class="rental-landing">
+    <section style="background: linear-gradient(160deg, var(--brand-primary, #0f766e), var(--brand-secondary, #0f172a)); color: #ffffff; padding: 64px 16px;">
+        <div style="max-width: 960px; margin: 0 auto; text-align: center;">
+            <span style="display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85;">Sewa Kendaraan Terpercaya</span>
+            <h1 style="margin: 12px 0 10px; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em;">Perjalanan Nyaman Dimulai Dari Sini</h1>
+            <p style="margin: 0 auto 28px; max-width: 560px; font-size: 16px; line-height: 1.6; opacity: 0.9;">Armada terawat, harga transparan, dan booking online cepat dengan verifikasi WhatsApp.</p>
+            <form action="/book/rental" method="GET" style="max-width: 720px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; text-align: left;">
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Mulai
+                    <input type="date" name="start_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Selesai
+                    <input type="date" name="end_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+                </label>
+                <button type="submit" style="background: var(--brand-primary, #0f766e); color: #ffffff; border: none; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer;">Cari Kendaraan</button>
+            </form>
+        </div>
+    </section>
+    <div class="rental-fleet-block" limit="6"><rental-fleet type="featured" limit="6"></rental-fleet></div>
+    <div class="rental-reviews-block" limit="6"><rental-reviews limit="6"></rental-reviews></div>
+    <section style="background: var(--brand-secondary, #0f172a); color: #ffffff; padding: 48px 16px; text-align: center;">
+        <h2 style="margin: 0 0 10px; font-size: 26px; font-weight: 800;">Siap Berangkat?</h2>
+        <p style="margin: 0 0 20px; opacity: 0.85;">Pesan kendaraan Anda sekarang, prosesnya hanya beberapa menit.</p>
+        <a href="/book/rental" style="display: inline-block; background: var(--brand-primary, #0f766e); color: #ffffff; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Mulai Pesan</a>
+    </section>
+</div>`,
+        });
+        rentalBlockManager.add('rental-featured-fleet', {
+            label: 'Rental: Armada Unggulan',
+            category: 'Rental',
+            content: '<div class="rental-fleet-block" limit="6"><rental-fleet type="featured" limit="6"></rental-fleet></div>',
+        });
+        rentalBlockManager.add('rental-fleet-by-class', {
+            label: 'Rental: Armada per Kelas',
+            category: 'Rental',
+            content: '<div class="rental-fleet-block" limit="6" fleetclass="suv"><rental-fleet type="featured" limit="6" data-fleet-class="suv"></rental-fleet></div>',
+        });
+        rentalBlockManager.add('rental-reviews', {
+            label: 'Rental: Ulasan Pelanggan',
+            category: 'Rental',
+            content: '<div class="rental-reviews-block" limit="6"><rental-reviews limit="6"></rental-reviews></div>',
+        });
+        rentalBlockManager.add('rental-search-widget', {
+            label: 'Rental: Cari Kendaraan',
+            category: 'Rental',
+            content: `<form action="/book/rental" method="GET" style="max-width: 720px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Mulai
+        <input type="date" name="start_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+    </label>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Selesai
+        <input type="date" name="end_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+    </label>
+    <button type="submit" style="background: var(--brand-primary, #0f766e); color: #ffffff; border: none; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer;">Cari Kendaraan</button>
+</form>`,
+        });
+
         setEditor(gjsEditor);
 
         return () => {

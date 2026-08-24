@@ -6,7 +6,9 @@ Dokumen ini menjawab tiga pertanyaan strategis untuk front-end publik tenant ren
 2. Apakah cukup memakai satu modul page builder (GrapesJS/`Pages`) atau perlu membuat modul template baru untuk landing page, store catalog, dan online reservation.
 3. Cetak biru (arsitektur) terbaik sebelum implementasi.
 
-> **Ditelaah dari kode aktual:** rute publik `book.rental.*` di `routes/app.php`, `Modules\Rental\Http\Controllers\PublicRentalBookingController`, halaman `Public/*.tsx` (Search, VehicleShow, Booking, History), modul GrapesJS `Pages` dengan render `pages::render`, dan tenancy per-domain (Stancl Tenancy). Method `brand()` saat ini mengembalikan warna tetap `#0f766e` — inilah titik awal Fase 1.
+> **Ditelaah dari kode aktual:** rute publik `book.rental.*` di `routes/app.php`, `Modules\Rental\Http\Controllers\PublicRentalBookingController`, halaman `Public/*.tsx` (Search, VehicleShow, Booking, History), modul GrapesJS `Pages` dengan render `pages::render`, dan tenancy per-domain (Stancl Tenancy).
+
+> **Status implementasi (per 2026-08-24): Fase 1–3 sudah diimplementasikan; Fase 4 belum.** Rincian per fase ada di [Roadmap Bertahap](#4-roadmap-bertahap). Catatan: `brand()` kini **dinamis** (bukan lagi `#0f766e` hardcoded) — lihat Fase 1. Test untuk fase-fase ini sudah ditulis; jalankan `php artisan test --compact --filter='RentalStorefront|RentalVehicleSeo|RentalPaymentResult|RentalTestimonials'`.
 
 ---
 
@@ -59,10 +61,11 @@ Peta lengkap front-end publik sebuah tenant rental, dikelompokkan menurut sistem
 
 | Halaman / Kapabilitas | Fungsi | Pemilik sistem | Status |
 | --- | --- | --- | --- |
-| **Storefront Theme & Settings** | Logo, warna, kontak/WA, hero, sosial, jam buka, custom domain — kini `brand()` masih hardcoded `#0f766e` | Layer baru | Gap |
-| **Ulasan / Testimoni** | Social proof di landing & detail kendaraan | Blok dinamis | Gap |
-| **SEO per-kendaraan** | Meta, Open Graph, JSON-LD structured data agar terindeks Google | Rental Public | Gap |
-| **Storefront multi-bahasa** | Copy publik id/en; locale sudah ada tapi teks storefront banyak hardcoded ID | i18n | Parsial |
+| **Storefront Theme & Settings** | Logo, warna, kontak/WA, hero, sosial, jam buka | Layer baru | ✅ Ada (Fase 1) — `RentalStorefrontSettings` + tab Settings. *Custom domain menyusul (Fase 4).* |
+| **Ulasan / Testimoni** | Social proof di landing & detail kendaraan | Blok dinamis | ✅ Ada (Fase 3) — testimoni terkurasi + blok `<rental-reviews>` |
+| **SEO per-kendaraan** | Meta, Open Graph, JSON-LD structured data agar terindeks Google | Rental Public | ✅ Ada (Fase 3) — meta/OG/JSON-LD via `<Head>`. *SSR untuk scraper non-JS = Fase 4.* |
+| **Halaman hasil pembayaran** | Sukses/pending/gagal setelah redirect Midtrans | Rental Public | ✅ Ada (Fase 3) — `PaymentResult` |
+| **Storefront multi-bahasa** | Copy publik id/en; locale sudah ada tapi teks storefront banyak hardcoded ID | i18n | Parsial — belum dikerjakan (Fase 4) |
 
 ---
 
@@ -153,14 +156,16 @@ Perlu dipisah dua hal: **(a) cara blok muncul di panel editor**, dan **(b) apa y
 
 **Peta konkret per blok:**
 
-| Blok | Cara daftar | Yang disimpan di `Page.html` | Render |
-| --- | --- | --- | --- |
-| **Search widget** | `page_components` (tabel, sama persis dgn sekarang) | `<form action="/book/rental" method="GET">…</form>` statis | Tidak perlu hydration |
-| **CTA booking / WhatsApp** | `page_components` | HTML tombol statis | Nomor WA di-inject dari Theme Layer saat render |
-| **Armada unggulan** | `addType` + trait (pola Carousel) | penanda `<rental-fleet type="featured" limit="6">` | Handler baru di `render.blade.php` → view live |
-| **Fleet grid per kelas** | `addType` + trait `kelas` | penanda `<rental-fleet class="suv">` | Handler baru → view live |
+| Blok | Cara daftar (implementasi) | Yang disimpan di `Page.html` | Render | Status |
+| --- | --- | --- | --- | --- |
+| **Search widget** | `BlockManager.add` di `Editor.tsx` | `<form action="/book/rental" method="GET">…</form>` statis | Tidak perlu hydration | ✅ Fase 2 |
+| **Armada unggulan** | `addType` + trait `limit` (pola Carousel) | penanda `<rental-fleet type="featured" limit="6">` | Handler `render.blade.php` → `RentalStorefrontBlocks::renderFleet` | ✅ Fase 2 |
+| **Fleet grid per kelas** | `addType` + trait `limit` & `fleetclass` | penanda `<rental-fleet … data-fleet-class="suv">` | Handler `render.blade.php` → view live | ✅ Fase 3 |
+| **Ulasan pelanggan** | `addType` + trait `limit` | penanda `<rental-reviews limit="6">` | Handler `render.blade.php` → `RentalStorefrontBlocks::renderReviews` | ✅ Fase 3 |
 
-**Aturan singkat:** blok tanpa parameter & statis → cukup tabel `page_components` (cara yang sama dengan sekarang). Blok berparameter/data-live → pakai pola `addType` + penanda + handler render (persis Carousel), karena butuh trait di editor dan rendering server yang tak bisa diberikan `content` statis di tabel.
+> **Catatan implementasi (menyimpang dari draf awal):** semua Bridge Block didaftarkan di **`Editor.tsx`** (BlockManager + `addType`), **bukan** tabel `page_components`. Alasannya lebih robust: blok ikut ter-*ship* bersama kode dan otomatis tersedia untuk semua tenant tanpa perlu menjalankan seeder. Blok fleet-per-kelas memakai atribut **`data-fleet-class`** (bukan `class`) agar tidak berbenturan dengan penanganan class khusus di GrapesJS.
+
+**Aturan singkat:** blok tanpa parameter & statis → HTML statis. Blok berparameter/data-live → pola `addType` + penanda + handler render (persis Carousel), karena butuh trait di editor dan rendering server.
 
 ### Batas transaksi — apa yang tetap di engine
 
@@ -186,28 +191,40 @@ Bridge Blocks hanya *menampilkan* dan *mengarahkan*. Seluruh proses transaksi te
 
 ## 4. Roadmap Bertahap
 
-Diurutkan menurut dampak per usaha. Fase 1 memberi kemenangan nyata secepatnya tanpa menyentuh mesin transaksi yang sudah stabil.
+Diurutkan menurut dampak per usaha. **Fase 1–3 sudah diimplementasikan (per 2026-08-24); Fase 4 belum.**
 
-### Fase 1 — Storefront Theme Layer (~1 sprint)
+### ✅ Fase 1 — Storefront Theme Layer *(implemented)*
 
-Grup setting `rental.storefront.*` + panel admin; sambungkan ke `brand()` dan inject CSS variables ke `render.blade.php`.
+Grup setting `rental.storefront.*` + panel admin; `brand()` dinamis + inject CSS variables ke `render.blade.php`.
 
-**Kemenangan:** Branding konsisten seketika; tanpa risiko — tidak menyentuh alur booking.
+- `modules/Rental/Support/RentalStorefrontSettings.php` — manager 12 field (nama, warna primer/sekunder, logo, WA, hero, sosial, jam operasional)
+- Tab **Storefront** di `Settings/Index.tsx` + `StorefrontPanel.tsx`; route `rental.settings.storefront.update`
+- `brand()` (`PublicRentalBookingController`) tidak lagi hardcoded; logo & hero dipakai di halaman `Public/*.tsx`
+- `render.blade.php` inject `--brand-primary` / `--brand-secondary`
 
-### Fase 2 — Bridge Blocks inti (~1–2 sprint)
+**Kemenangan:** Branding konsisten seketika; tidak menyentuh alur booking.
 
-Search widget (blok `page_components` statis) + Armada unggulan (pola `addType` + penanda + handler render server di `render.blade.php`, mengikuti preseden Carousel). Blok central-shared, otomatis tersedia untuk semua tenant.
+### ✅ Fase 2 — Bridge Blocks inti *(implemented)*
 
-**Kemenangan:** Tenant bisa merakit landing page nyata yang menyalurkan pengunjung ke reservation engine.
+Blok **Cari Kendaraan** (form statis) + **Armada Unggulan** (penanda `<rental-fleet>` + handler render server, pola Carousel). Didaftarkan di `Editor.tsx` (central via kode).
 
-### Fase 3 — Konversi & SEO (~1–2 sprint)
+- `modules/Rental/Support/RentalStorefrontBlocks.php` + partial `rental::storefront.fleet`
+- Handler `<rental-fleet>` di `render.blade.php`; blok + component-type di `Editor.tsx`
 
-Fleet grid block, blok ulasan/testimoni, SEO per-kendaraan (meta/OG/JSON-LD), halaman hasil pembayaran, i18n storefront.
+**Kemenangan:** Tenant merakit landing page yang menyalurkan pengunjung ke reservation engine.
+
+### ✅ Fase 3 — Konversi & SEO *(implemented, kecuali i18n)*
+
+- **Fleet grid per kelas** — trait `fleetclass` + blok "Armada per Kelas" (`data-fleet-class`)
+- **SEO per-kendaraan** — `vehicleSeo()` → meta/OG/Twitter + JSON-LD `Car`+`Offer` di `VehicleShow.tsx`
+- **Halaman hasil pembayaran** — `PaymentResult.tsx` + route `book.rental.booking.result`; `finishPath` deposit/invoice diarahkan ke sini
+- **Ulasan/testimoni** — `RentalTestimonials` (JSON di setting) + tab **Testimoni** + blok `<rental-reviews>`
+- **i18n storefront** — *belum; dipindah ke Fase 4*
 
 **Kemenangan:** Naikkan trafik organik dan tingkat konversi booking.
 
-### Fase 4 — Skala & polish (opsional)
+### ⬜ Fase 4 — Skala & polish *(belum)*
 
-Custom domain per tenant, template landing siap-pakai yang bisa di-clone tenant, analytics storefront.
+Custom domain per tenant, SSR/meta server-side untuk scraper non-JS, i18n storefront (id/en), template landing siap-clone, analytics storefront.
 
 **Kemenangan:** Onboarding tenant baru dalam hitungan menit, bukan hari.

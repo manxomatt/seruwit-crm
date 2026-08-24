@@ -100,6 +100,7 @@ return [
         'tab_general' => 'Umum',
         'tab_rates' => 'Tarif',
         'tab_storefront' => 'Tampilan Storefront',
+        'tab_testimonials' => 'Testimoni',
         'tab_documents' => 'Template Dokumen',
         'save' => 'Simpan pengaturan',
         'pricing_section' => 'Harga',

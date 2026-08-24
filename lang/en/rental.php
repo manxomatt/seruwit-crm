@@ -100,6 +100,7 @@ return [
         'tab_general' => 'General',
         'tab_rates' => 'Rates',
         'tab_storefront' => 'Storefront',
+        'tab_testimonials' => 'Testimonials',
         'tab_documents' => 'Document Templates',
         'save' => 'Save Settings',
         'pricing_section' => 'Pricing',

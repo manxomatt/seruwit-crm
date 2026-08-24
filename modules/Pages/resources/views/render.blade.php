@@ -62,7 +62,9 @@
             flex-grow: 1;
         }
         @if(\App\Modules\Facades\Modules::available('rental'))
-        @php($rentalStorefront = \Modules\Rental\Support\RentalStorefrontSettings::all())
+        @php
+            $rentalStorefront = \Modules\Rental\Support\RentalStorefrontSettings::all();
+        @endphp
         /* Storefront Theme Layer — inherited by GrapesJS pages and Bridge Blocks. */
         :root {
             --brand-primary: {{ $rentalStorefront['primary_color'] }};
@@ -122,6 +124,35 @@
             $html
         );
         
+        // Rental "Bridge Blocks": replace <rental-fleet …> markers with the live
+        // fleet grid. Fails closed inside the renderer, and is gated on the
+        // rental module + self-booking being enabled — same contract as the
+        // Carousel block above.
+        if (\App\Modules\Facades\Modules::available('rental')) {
+            $html = preg_replace_callback(
+                '/<rental-fleet\b([^>]*?)\/?>(?:\s*<\/rental-fleet>)?/i',
+                function ($matches): string {
+                    $attrs = $matches[1];
+                    $type = preg_match('/\btype=["\']([^"\']*)["\']/i', $attrs, $m) ? $m[1] : 'featured';
+                    $limit = preg_match('/\blimit=["\']?(\d+)["\']?/i', $attrs, $m) ? (int) $m[1] : 6;
+                    $class = preg_match('/\bdata-fleet-class=["\']([a-z0-9_-]+)["\']/i', $attrs, $m) ? $m[1] : null;
+
+                    return \Modules\Rental\Support\RentalStorefrontBlocks::renderFleet($type, $limit, $class);
+                },
+                $html
+            );
+
+            $html = preg_replace_callback(
+                '/<rental-reviews\b([^>]*?)\/?>(?:\s*<\/rental-reviews>)?/i',
+                function ($matches): string {
+                    $limit = preg_match('/\blimit=["\']?(\d+)["\']?/i', $matches[1], $m) ? (int) $m[1] : 6;
+
+                    return \Modules\Rental\Support\RentalStorefrontBlocks::renderReviews($limit);
+                },
+                $html
+            );
+        }
+
         // Parse and replace {{setting:key}} placeholders with actual setting values
         $html = preg_replace_callback(
             '/\{\{setting:([a-z0-9_\.]+)\}\}/i',

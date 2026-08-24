@@ -131,6 +131,7 @@ class PublicRentalBookingController extends Controller
         return Inertia::render('Modules/Rental/Public/VehicleShow', [
             'brand' => $this->brand(),
             'vehicle' => $this->vehicleDetail($vehicle),
+            'seo' => $this->vehicleSeo($request, $vehicle, $quote),
             'filters' => [
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'],
@@ -266,6 +267,40 @@ class PublicRentalBookingController extends Controller
         ]);
     }
 
+    /**
+     * Landing page after returning from the payment gateway (Midtrans "finish"
+     * redirect). Display-only: the authoritative status change happens via the
+     * webhook, so the query-string hint here only shapes the message. Server
+     * state (deposit received) wins when it already confirms success.
+     */
+    public function paymentResult(Request $request, string $token, string $intent = 'deposit'): Response
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+        $intent = in_array($intent, ['deposit', 'invoice'], true) ? $intent : 'deposit';
+        $txn = (string) $request->query('transaction_status', '');
+
+        $status = match (true) {
+            in_array($txn, ['settlement', 'capture'], true) => 'success',
+            $intent === 'deposit' && $rental->isDepositReceived() => 'success',
+            $txn === 'pending' => 'pending',
+            in_array($txn, ['deny', 'cancel', 'expire', 'failure'], true) => 'failed',
+            default => 'pending',
+        };
+
+        return Inertia::render('Modules/Rental/Public/PaymentResult', [
+            'brand' => $this->brand(),
+            'status' => $status,
+            'intent' => $intent,
+            'booking' => [
+                'code' => $rental->code,
+                'public_token' => $rental->public_token,
+            ],
+            'booking_url' => route('book.rental.booking.show', $rental->public_token),
+        ]);
+    }
+
     public function verifyOtp(Request $request, string $token, PassengerOtpService $otp): JsonResponse
     {
         $this->ensureAvailable();
@@ -345,7 +380,7 @@ class PublicRentalBookingController extends Controller
             $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
                 ->createRentalDepositCharge(
                     $rental->loadMissing('partner'),
-                    '/book/rental/booking/'.$rental->public_token,
+                    '/book/rental/booking/'.$rental->public_token.'/finish/deposit',
                 );
 
             return redirect()->away($charge->redirect_url);
@@ -460,7 +495,7 @@ class PublicRentalBookingController extends Controller
 
         try {
             $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
-                ->createInvoiceCharge($invoice, '/book/rental/booking/'.$rental->public_token);
+                ->createInvoiceCharge($invoice, '/book/rental/booking/'.$rental->public_token.'/finish/invoice');
 
             return redirect()->away($charge->redirect_url);
         } catch (Throwable $e) {
@@ -780,6 +815,59 @@ class PublicRentalBookingController extends Controller
             'photo_url' => $vehicle->photo_url,
             'from_price' => $rate ? (float) $rate->rate_per_period : null,
             'deposit_amount' => $rate && $rate->deposit_amount !== null ? (float) $rate->deposit_amount : null,
+        ];
+    }
+
+    /**
+     * Per-vehicle SEO payload (meta + Open Graph + JSON-LD) for the public
+     * detail page, so listings are indexable and share previews render.
+     *
+     * @param  array<string, mixed>  $quote
+     * @return array<string, mixed>
+     */
+    private function vehicleSeo(Request $request, Vehicle $vehicle, array $quote): array
+    {
+        $brand = $this->brand();
+        $price = $quote['rate_per_period'] ?? null;
+        $classLabel = $vehicle->rental_class
+            ? VehicleRentalClass::label((string) $vehicle->rental_class)
+            : null;
+
+        $facts = array_filter([
+            $classLabel,
+            $vehicle->capacity_seats ? $vehicle->capacity_seats.' kursi' : null,
+            $vehicle->fuel_type,
+            $price !== null ? 'mulai Rp '.number_format((float) $price, 0, ',', '.').'/hari' : null,
+        ]);
+
+        $description = 'Sewa '.$vehicle->name.' di '.$brand['name'].'. '
+            .implode(' · ', $facts)
+            .'. Booking online cepat dengan verifikasi WhatsApp.';
+
+        $jsonLd = array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'Car',
+            'name' => $vehicle->name,
+            'image' => $vehicle->photo_url ? [$vehicle->photo_url] : null,
+            'description' => $description,
+            'vehicleSeatingCapacity' => $vehicle->capacity_seats,
+            'modelDate' => $vehicle->model_year,
+            'brand' => $vehicle->brand ? ['@type' => 'Brand', 'name' => $vehicle->brand] : null,
+            'offers' => $price !== null ? [
+                '@type' => 'Offer',
+                'price' => (string) (int) $price,
+                'priceCurrency' => 'IDR',
+                'availability' => 'https://schema.org/InStock',
+                'url' => $request->fullUrl(),
+            ] : null,
+        ], fn ($value): bool => $value !== null);
+
+        return [
+            'title' => $vehicle->name.' — Sewa di '.$brand['name'],
+            'description' => $description,
+            'image' => $vehicle->photo_url,
+            'url' => $request->fullUrl(),
+            'json_ld' => $jsonLd,
         ];
     }
 

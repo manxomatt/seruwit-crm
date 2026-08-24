@@ -14,6 +14,7 @@ import { FormEventHandler } from 'react';
 import RentalNav from '../../../../RentalNav';
 import DocumentsPanel from './DocumentsPanel';
 import StorefrontPanel, { DEFAULT_STOREFRONT, StorefrontSettings } from './StorefrontPanel';
+import TestimonialsPanel, { TestimonialItem } from './TestimonialsPanel';
 
 interface GeneralSettings {
     default_one_way_fee: string;
@@ -39,9 +40,10 @@ interface DocumentTemplate {
 }
 
 interface Props {
-    tab: 'general' | 'storefront' | 'rates' | 'documents';
+    tab: 'general' | 'storefront' | 'testimonials' | 'rates' | 'documents';
     general?: GeneralSettings;
     storefront?: StorefrontSettings;
+    testimonials?: TestimonialItem[];
     documents?: Record<string, DocumentTemplate>;
     centralAiEnabled?: boolean;
 }
@@ -577,6 +579,7 @@ export default function Index({
     tab,
     general = DEFAULT_GENERAL,
     storefront = DEFAULT_STOREFRONT,
+    testimonials = [],
     documents = DEFAULT_DOCUMENTS,
     centralAiEnabled = true,
 }: Props): JSX.Element {
@@ -586,6 +589,7 @@ export default function Index({
     const tabs = [
         { key: 'general' as const, label: t('rental.settings.tab_general', undefined, 'Umum') },
         { key: 'storefront' as const, label: t('rental.settings.tab_storefront', undefined, 'Tampilan Storefront') },
+        { key: 'testimonials' as const, label: t('rental.settings.tab_testimonials', undefined, 'Testimoni') },
         { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Template Dokumen') },
     ];
 
@@ -615,6 +619,8 @@ export default function Index({
             {tab === 'general' && <GeneralPanel general={general} centralAiEnabled={centralAiEnabled} />}
 
             {tab === 'storefront' && <StorefrontPanel storefront={storefront} />}
+
+            {tab === 'testimonials' && <TestimonialsPanel testimonials={testimonials} />}
 
             {tab === 'documents' && (
                 <DocumentsPanel documents={documents} prefixedRoute={prefixedRoute} />

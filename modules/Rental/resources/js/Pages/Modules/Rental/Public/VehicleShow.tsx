@@ -53,9 +53,18 @@ interface LocationOption {
     city: string | null;
 }
 
+interface Seo {
+    title: string;
+    description: string;
+    image: string | null;
+    url: string;
+    json_ld: Record<string, unknown>;
+}
+
 interface Props {
     brand: Brand;
     vehicle: Vehicle;
+    seo: Seo;
     filters: {
         start_date: string;
         end_date: string;
@@ -79,6 +88,7 @@ const fieldClassName =
 export default function VehicleShow({
     brand,
     vehicle,
+    seo,
     filters,
     quote: initialQuote,
     locations,
@@ -217,7 +227,22 @@ export default function VehicleShow({
             className="min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col justify-between"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`${vehicle.name} · Detail & Reservasi Unit`} />
+            <Head title={seo.title}>
+                <meta name="description" content={seo.description} head-key="description" />
+                <meta property="og:type" content="product" head-key="og:type" />
+                <meta property="og:title" content={seo.title} head-key="og:title" />
+                <meta property="og:description" content={seo.description} head-key="og:description" />
+                <meta property="og:url" content={seo.url} head-key="og:url" />
+                {seo.image && <meta property="og:image" content={seo.image} head-key="og:image" />}
+                <meta name="twitter:card" content={seo.image ? 'summary_large_image' : 'summary'} head-key="twitter:card" />
+                <meta name="twitter:title" content={seo.title} head-key="twitter:title" />
+                <meta name="twitter:description" content={seo.description} head-key="twitter:description" />
+                {seo.image && <meta name="twitter:image" content={seo.image} head-key="twitter:image" />}
+            </Head>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(seo.json_ld).replace(/</g, '\\u003c') }}
+            />
 
             <div>
                 {/* Modern Crisp Glass Navbar */}

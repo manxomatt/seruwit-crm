@@ -14,16 +14,18 @@ use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\UpdateDocumentTemplateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
 use Modules\Rental\Http\Requests\UpdateRentalStorefrontSettingsRequest;
+use Modules\Rental\Http\Requests\UpdateRentalTestimonialsRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Support\DocumentTemplateManager;
 use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalStorefrontSettings;
+use Modules\Rental\Support\RentalTestimonials;
 
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'storefront', 'documents'];
+    public const TABS = ['general', 'storefront', 'testimonials', 'documents'];
 
     protected function getRoutePrefix(): string
     {
@@ -45,6 +47,7 @@ class RentalSettingsController extends Controller
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
             'storefront' => RentalStorefrontSettings::all(),
+            'testimonials' => RentalTestimonials::all(),
             'documents' => DocumentTemplateManager::all(),
             'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
         ]);
@@ -64,6 +67,13 @@ class RentalSettingsController extends Controller
     public function updateStorefront(UpdateRentalStorefrontSettingsRequest $request): RedirectResponse
     {
         RentalStorefrontSettings::update($request->validated());
+
+        return back()->with('success', __('rental.messages.settings_updated'));
+    }
+
+    public function updateTestimonials(UpdateRentalTestimonialsRequest $request): RedirectResponse
+    {
+        RentalTestimonials::save($request->validated()['testimonials'] ?? []);
 
         return back()->with('success', __('rental.messages.settings_updated'));
     }
