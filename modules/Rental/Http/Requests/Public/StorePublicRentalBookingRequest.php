@@ -17,6 +17,9 @@ class StorePublicRentalBookingRequest extends FormRequest
      */
     public function rules(): array
     {
+        $phone = $this->input('booker_phone') ?? '';
+        $isVerified = $phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone);
+
         return [
             'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
             'start_date' => ['required', 'date', 'after_or_equal:today'],
@@ -25,7 +28,7 @@ class StorePublicRentalBookingRequest extends FormRequest
             'customer_name' => ['required', 'string', 'max:120'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'pickup_location_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
             'return_location_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
             'pickup_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),

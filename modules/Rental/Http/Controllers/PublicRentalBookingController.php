@@ -217,6 +217,21 @@ class PublicRentalBookingController extends Controller
             'booker_phone' => ['required', 'string', 'max:32'],
         ]);
 
+        $phone = $otp->normalize($data['booker_phone']);
+        $alreadyVerified = $otp->isVerified($phone);
+
+        if ($alreadyVerified) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => true,
+                    'already_verified' => true,
+                    'message' => 'Nomor WhatsApp Anda sudah terverifikasi.',
+                ]);
+            }
+
+            return back()->with('success', 'Nomor WhatsApp Anda sudah terverifikasi.')->with('already_verified', true);
+        }
+
         $code = $otp->send($data['booker_phone']);
 
         if ($request->wantsJson()) {
@@ -251,7 +266,7 @@ class PublicRentalBookingController extends Controller
         ]);
     }
 
-    public function payDeposit(Request $request, string $token, PassengerOtpService $otp): RedirectResponse
+    public function verifyOtp(Request $request, string $token, PassengerOtpService $otp): JsonResponse
     {
         $this->ensureAvailable();
 
@@ -262,12 +277,50 @@ class PublicRentalBookingController extends Controller
             'otp_code' => ['required', 'string', 'size:6'],
         ]);
 
-        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
+        if (! $otp->verify($data['booker_phone'], $data['otp_code'])) {
+            return response()->json([
+                'ok' => false,
+                'message' => __('rental.public.otp_invalid'),
+            ], 422);
+        }
+
+        $normalized = $otp->normalize($data['booker_phone']);
+        if ($rental->booker_phone !== null && $rental->booker_phone !== $normalized) {
+            return response()->json([
+                'ok' => false,
+                'message' => __('rental.public.forbidden'),
+            ], 403);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Nomor WhatsApp berhasil diverifikasi.',
+        ]);
+    }
+
+    public function payDeposit(Request $request, string $token, PassengerOtpService $otp): RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
+        $data = $request->validate([
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
+        ]);
+
+        $bookerPhone = $data['booker_phone'] ?? $phone;
+        $otpCode = $data['otp_code'] ?? '';
+
+        if (! $this->assertOtp($otp, $bookerPhone, $otpCode)) {
             return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
         }
 
-        $phone = $otp->normalize($data['booker_phone']);
-        if ($rental->booker_phone !== null && $rental->booker_phone !== $phone) {
+        $normalized = $otp->normalize($bookerPhone);
+        if ($rental->booker_phone !== null && $rental->booker_phone !== $normalized) {
             return back()->with('error', __('rental.public.forbidden'));
         }
 
@@ -311,14 +364,17 @@ class PublicRentalBookingController extends Controller
 
         $rental = $this->findPassengerBooking($token);
 
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
         $data = $request->validate([
-            'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'company_bank_account_id' => ['nullable'],
             'deposit_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
         ]);
 
-        if ($guardResponse = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+        if ($guardResponse = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
             return $guardResponse;
         }
 
@@ -355,12 +411,18 @@ class PublicRentalBookingController extends Controller
 
         $rental = $this->findPassengerBooking($token);
         $data = $request->validated();
+        $bookerPhone = $data['booker_phone'] ?? $rental->booker_phone;
+        $otpCode = $data['otp_code'] ?? '';
 
-        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
+        if ($bookerPhone === null) {
+            return back()->with('error', __('rental.public.forbidden'));
+        }
+
+        if (! $this->assertOtp($otp, $bookerPhone, $otpCode)) {
             return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
         }
 
-        $phone = $otp->normalize($data['booker_phone']);
+        $phone = $otp->normalize($bookerPhone);
         if ($rental->booker_phone !== null && $rental->booker_phone !== $phone) {
             return back()->with('error', __('rental.public.forbidden'));
         }
@@ -381,13 +443,17 @@ class PublicRentalBookingController extends Controller
         $this->ensureAvailable();
 
         $rental = $this->findPassengerBooking($token);
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
         $data = $request->validate([
-            'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'invoice_id' => ['required', 'integer'],
         ]);
 
-        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
             return $error;
         }
 
@@ -422,14 +488,18 @@ class PublicRentalBookingController extends Controller
         $this->ensureAvailable();
 
         $rental = $this->findPassengerBooking($token);
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
         $data = $request->validate([
-            'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'new_end_date' => ['required', 'date', 'after:'.$rental->end_date?->toDateString()],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
             return $error;
         }
 
@@ -462,14 +532,18 @@ class PublicRentalBookingController extends Controller
         $this->ensureAvailable();
 
         $rental = $this->findPassengerBooking($token);
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
         $data = $request->validate([
-            'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
         ]);
 
-        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
             return $error;
         }
 
@@ -519,15 +593,18 @@ class PublicRentalBookingController extends Controller
             }
         }
 
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
         $data = $request->validate([
-            'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'terms_agreed' => ['required', 'boolean', 'accepted'],
             'customer_signature' => ['required', 'string', 'starts_with:data:image/'],
             'pickup_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
             return $error;
         }
 
@@ -744,12 +821,18 @@ class PublicRentalBookingController extends Controller
             ? $rental->isDepositReceived()
             : ($rental->deposit_proof_status === Rental::PROOF_APPROVED || ($paymentPayload['balance_due'] <= 0 && ! in_array($paymentPayload['status'], ['unpaid', 'partial', 'draft'], true)));
 
+        $phoneVerified = false;
+        if ($rental->booker_phone !== null) {
+            $phoneVerified = app(PassengerOtpService::class)->isVerified($rental->booker_phone);
+        }
+
         return [
             'code' => $rental->code,
             'public_token' => $rental->public_token,
             'status' => $rental->status,
             'channel' => $rental->channel,
             'booker_phone' => $rental->booker_phone,
+            'booker_phone_verified' => $phoneVerified,
             'start_date' => $rental->start_date?->toDateString(),
             'end_date' => $rental->end_date?->toDateString(),
             'period_type' => $rental->period_type,

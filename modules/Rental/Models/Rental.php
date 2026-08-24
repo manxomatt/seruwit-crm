@@ -534,6 +534,17 @@ class Rental extends Model
     }
 
     /**
+     * Reservations with a manual transfer proof uploaded that is still awaiting
+     * a staff approve/reject decision — the work behind the sidebar badge.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeAwaitingApproval(Builder $query): void
+    {
+        $query->where('deposit_proof_status', self::PROOF_PENDING);
+    }
+
+    /**
      * Active rentals ending within the next $days (inclusive of today).
      *
      * @param  Builder<self>  $query

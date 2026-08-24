@@ -101,6 +101,11 @@ class HandleInertiaRequests extends Middleware
             'pendingPaymentOrdersCount' => fn () => ($user && $user->isAdmin())
                 ? \App\Models\PaymentOrder::where('status', \App\Models\PaymentOrder::STATUS_AWAITING_CONFIRMATION)->count()
                 : 0,
+            // Reservations whose uploaded transfer proof still needs a staff
+            // approve/reject decision — drives the badge on the Reservasi menu.
+            // Lazy so only a partial reload that asks for it (the sidebar poll)
+            // or the initial full load pays for the query.
+            'pendingRentalApprovalsCount' => fn () => $this->resolvePendingRentalApprovalsCount($user),
             'settings' => $settings,
             'aiFeaturesEnabled' => \App\Support\CentralAiSettings::isEnabled(),
             // The tenant *domain* we're currently on (null on the central domain).
@@ -172,6 +177,26 @@ class HandleInertiaRequests extends Middleware
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Count rentals awaiting a manual transfer-proof approval, for staff who can
+     * actually act on them. Zero when the rental module is unavailable (e.g. the
+     * central domain), before its table exists, or for users without the
+     * permission — so the badge only appears where the work and the authority
+     * both exist. Gated exactly like PublicRentalBookingController::ensureAvailable.
+     */
+    private function resolvePendingRentalApprovalsCount(?\App\Models\User $user): int
+    {
+        if (! $user || ! Modules::available('rental') || ! \Illuminate\Support\Facades\Schema::hasTable('rentals')) {
+            return 0;
+        }
+
+        if (! $user->hasPermissionFor('rental', 'approve')) {
+            return 0;
+        }
+
+        return \Modules\Rental\Models\Rental::query()->awaitingApproval()->count();
     }
 
     /**

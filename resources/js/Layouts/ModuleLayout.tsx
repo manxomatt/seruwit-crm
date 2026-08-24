@@ -587,7 +587,7 @@ export default function ModuleLayout({ header, children }: Props) {
 
     // Keep the bell and payment orders count fresh without a full navigation. Only the specified
     // props are re-fetched, so this is cheap.
-    usePoll(60000, { only: ['notificationCenter', 'pendingPaymentOrdersCount'] });
+    usePoll(60000, { only: ['notificationCenter', 'pendingPaymentOrdersCount', 'pendingRentalApprovalsCount'] });
 
     // No current-tenant domain context means we are on the central domain (the SaaS control plane).
     const isCentral = !pageProps.currentTenant;
@@ -904,6 +904,11 @@ export default function ModuleLayout({ header, children }: Props) {
             {item.module === 'payment-orders' && pageProps.pendingPaymentOrdersCount > 0 && (
                 <span className="ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-sm ring-1 ring-white/10 animate-pulse">
                     {pageProps.pendingPaymentOrdersCount}
+                </span>
+            )}
+            {item.module === 'rental-reservation' && pageProps.pendingRentalApprovalsCount > 0 && (
+                <span className="ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-sm ring-1 ring-white/10 animate-pulse">
+                    {pageProps.pendingRentalApprovalsCount}
                 </span>
             )}
         </Link>

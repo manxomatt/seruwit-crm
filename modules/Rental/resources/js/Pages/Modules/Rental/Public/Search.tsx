@@ -55,7 +55,7 @@ interface Props {
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
 const fieldClassName =
-    'mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-800 transition focus:border-teal-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20';
+    'mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 transition focus:border-[var(--brand-color)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-color)]/20';
 
 const periodOptions = [
     { value: 'daily', label: 'Harian' },
@@ -145,275 +145,297 @@ export default function Search({
             ...(form.data.return_location_id ? { return_location_id: form.data.return_location_id } : {}),
         }).toString();
 
+    const brandColor = brand.color || '#0f766e';
+
     return (
-        <div className="min-h-screen bg-slate-900 font-sans antialiased">
+        <div 
+            className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800"
+            style={{ ['--brand-color' as string]: brandColor }}
+        >
             <Head title={`${brand.name} · Sewa Kendaraan`} />
 
-            {/* Header section with brand accent */}
-            <div className="relative overflow-hidden bg-gradient-to-b from-slate-800 to-slate-900 pb-12 pt-8 text-white shadow-xl">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.15),transparent_50%)] pointer-events-none" />
-                <div className="mx-auto max-w-xl px-4 relative z-10">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/20 text-teal-400 ring-1 ring-teal-500/40">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold tracking-tight text-white">{brand.name}</h1>
-                                <p className="text-xs text-slate-400">Layanan Sewa Kendaraan Online</p>
-                            </div>
-                        </div>
-
-                        <Link
-                            href={route('book.rental.history')}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-800/80 px-3.5 py-1.5 text-xs font-medium text-teal-300 backdrop-blur-sm transition hover:bg-slate-700 hover:text-teal-200 ring-1 ring-slate-700"
+            {/* Brand Header */}
+            <div className="sticky top-0 z-50 bg-white border-b border-slate-200/80 shadow-xs backdrop-blur-md">
+                <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div 
+                            className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm"
+                            style={{ backgroundColor: 'var(--brand-color)' }}
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Riwayat Pesanan
-                        </Link>
+                        </div>
+                        <div>
+                            <h1 className="text-base font-extrabold tracking-tight text-slate-900">{brand.name}</h1>
+                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Sewa Kendaraan Resmi</p>
+                        </div>
                     </div>
 
-                    {/* Step indicator */}
-                    <div className="mt-8 grid grid-cols-4 gap-1 rounded-xl bg-slate-800/60 p-1.5 text-center text-xs backdrop-blur-md ring-1 ring-white/10">
-                        <div className="rounded-lg bg-teal-500/20 py-1.5 font-semibold text-teal-300 ring-1 ring-teal-500/30">
-                            1. Cari
-                        </div>
-                        <div className="py-1.5 text-slate-400">2. Pilih Unit</div>
-                        <div className="py-1.5 text-slate-400">3. OTP</div>
-                        <div className="py-1.5 text-slate-400">4. Bayar</div>
-                    </div>
+                    <Link
+                        href={route('book.rental.history')}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 shadow-xs"
+                    >
+                        <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Riwayat Pesanan
+                    </Link>
                 </div>
             </div>
 
-            {/* Main content wrapper */}
-            <div className="mx-auto max-w-xl px-4 -mt-6 pb-12 relative z-20">
-                {/* Search Form Card */}
-                <form onSubmit={submit} className="space-y-4 rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-slate-200/60">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700">Pencarian Ketersediaan</h2>
-                        {daysDuration !== null && (
-                            <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
-                                Durasi: {daysDuration} Hari
-                            </span>
-                        )}
+            {/* Main content wrapper (Wide layout for desktop) */}
+            <div className="mx-auto max-w-7xl px-4 py-6 pb-16 space-y-6">
+                
+                {/* Stepper progress indicator */}
+                <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-bold uppercase tracking-wider max-w-md">
+                    <div className="rounded-xl bg-white p-2.5 border-b-2 shadow-xs border-[var(--brand-color)] text-[var(--brand-color)]">
+                        1. Cari
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <label className="text-xs font-semibold text-slate-700">
-                            Mulai Sewa
-                            <input
-                                type="date"
-                                className={fieldClassName}
-                                value={form.data.start_date}
-                                onChange={(e) => form.setData('start_date', e.target.value)}
-                                required
-                            />
-                        </label>
-                        <label className="text-xs font-semibold text-slate-700">
-                            Selesai Sewa
-                            <input
-                                type="date"
-                                className={fieldClassName}
-                                value={form.data.end_date}
-                                onChange={(e) => form.setData('end_date', e.target.value)}
-                                required
-                            />
-                        </label>
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700">Periode Tarif</label>
-                        <PublicSelect
-                            value={form.data.period_type}
-                            onChange={(value) => form.setData('period_type', value || 'daily')}
-                            options={periodOptions}
-                            placeholder="Pilih Periode"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
-                            <label className="mb-1 block text-xs font-semibold text-slate-700">Depot Penjemputan</label>
-                            <PublicSelect
-                                value={form.data.pickup_location_id}
-                                onChange={(value) => {
-                                    form.setData({
-                                        ...form.data,
-                                        pickup_location_id: value,
-                                        return_location_id: form.data.return_location_id || value,
-                                    });
-                                }}
-                                options={pickupOptions}
-                                placeholder="Pilih Depot"
-                                emptyText="Belum ada depot aktif"
-                            />
-                            {locations.length === 0 && (
-                                <p className="mt-1 text-xs text-amber-600">Belum ada depot aktif di sistem.</p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-semibold text-slate-700">Depot Pengembalian</label>
-                            <PublicSelect
-                                value={form.data.return_location_id}
-                                onChange={(value) => form.setData('return_location_id', value)}
-                                options={returnOptions}
-                                placeholder="Sama dengan lokasi jemput"
-                                emptyText="Belum ada depot aktif"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700">Kelas Kendaraan</label>
-                        <PublicSelect
-                            value={form.data.rental_class}
-                            onChange={(value) => form.setData('rental_class', value)}
-                            options={classOptions}
-                            placeholder="Semua Kelas Kendaraan"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white shadow-lg shadow-teal-600/30 transition hover:bg-teal-700 active:scale-[0.99]"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Cari Kendaraan Tersedia
-                    </button>
-
-                    <div className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500 pt-1">
-                        <svg className="h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Pemesanan menahan unit hingga <b>{hold_ttl_minutes} menit</b> untuk bayar deposit.</span>
-                    </div>
-                </form>
-
-                {/* Results Section */}
-                <div className="mt-6 space-y-4">
-                    {!searched && (
-                        <div className="rounded-2xl bg-slate-800/60 p-8 text-center backdrop-blur-sm ring-1 ring-white/10">
-                            <svg className="mx-auto h-12 w-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <p className="mt-3 text-sm font-medium text-slate-300">Pilih tanggal sewa di atas untuk mencari kendaraan.</p>
-                        </div>
-                    )}
-
-                    {searched && vehicles.length === 0 && (
-                        <div className="rounded-2xl bg-slate-800/80 p-8 text-center backdrop-blur-sm ring-1 ring-white/10">
-                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <h3 className="mt-3 text-sm font-bold text-white">Tidak Ada Kendaraan Tersedia</h3>
-                            <p className="mt-1 text-xs text-slate-400">
-                                Coba sesuaikan tanggal sewa, periode tarif, atau kelas kendaraan yang Anda cari.
-                            </p>
-                        </div>
-                    )}
-
-                    {vehicles.map((vehicle) => (
-                        <Link
-                            key={vehicle.id}
-                            href={vehicleUrl(vehicle.id)}
-                            className="group relative flex flex-col sm:flex-row gap-4 overflow-hidden rounded-2xl bg-white p-4 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ring-1 ring-slate-200/80"
-                        >
-                            {/* Photo Container */}
-                            <div className="relative h-44 sm:h-32 sm:w-40 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                                {vehicle.photo_url ? (
-                                    <img
-                                        src={vehicle.photo_url}
-                                        alt={vehicle.name}
-                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                    />
-                                ) : (
-                                    <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 text-slate-400">
-                                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span className="mt-1 text-[10px] font-medium uppercase tracking-wider">Tanpa Foto</span>
-                                    </div>
-                                )}
-
-                                {vehicle.rental_class_label && (
-                                    <span className="absolute left-2.5 top-2.5 rounded-md bg-slate-900/80 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
-                                        {vehicle.rental_class_label}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Info Container */}
-                            <div className="flex flex-1 flex-col justify-between">
-                                <div>
-                                    <div className="flex items-start justify-between gap-2">
-                                        <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-600 transition-colors">
-                                            {vehicle.name}
-                                        </h3>
-                                        <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-600">
-                                            {vehicle.plate_number}
-                                        </span>
-                                    </div>
-
-                                    {/* Specifications badges */}
-                                    <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-slate-600">
-                                        {vehicle.capacity_seats && (
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                                                <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                                {vehicle.capacity_seats} Kursi
-                                            </span>
-                                        )}
-                                        {vehicle.model_year && (
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                                                Tahun {vehicle.model_year}
-                                            </span>
-                                        )}
-                                        {vehicle.color && (
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                                                {vehicle.color}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Price tag & action footer */}
-                                <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-3">
-                                    <div>
-                                        <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Mulai Dari</div>
-                                        {vehicle.from_price != null ? (
-                                            <div className="text-base font-extrabold text-teal-600">
-                                                {money(vehicle.from_price)}
-                                                <span className="text-xs font-normal text-slate-500"> / periode</span>
-                                            </div>
-                                        ) : (
-                                            <div className="text-xs text-slate-400">Hubungi CS</div>
-                                        )}
-                                    </div>
-
-                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-600 group-hover:translate-x-0.5 transition-transform">
-                                        Pilih Unit
-                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
+                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">2. Pilih</div>
+                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">3. OTP</div>
+                    <div className="rounded-xl bg-white p-2.5 text-slate-400 border border-slate-200/60 shadow-xs">4. Bayar</div>
                 </div>
 
-                <p className="mt-8 text-center text-xs text-slate-400">
-                    Sewa Kendaraan Resmi dari {brand.name}. Pengambilan & pengembalian di cabang depot terpilih.
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    
+                    {/* Left Column: Search Form Card */}
+                    <div className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-[90px] z-10">
+                        <form onSubmit={submit} className="space-y-4 rounded-2xl border border-slate-200/85 bg-white p-5 shadow-xs">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Cari Ketersediaan</h2>
+                                {daysDuration !== null && (
+                                    <span 
+                                        className="rounded-full px-2.5 py-0.5 text-xs font-bold border"
+                                        style={{ 
+                                            color: 'var(--brand-color)', 
+                                            backgroundColor: 'rgba(15, 118, 110, 0.05)',
+                                            borderColor: 'rgba(15, 118, 110, 0.15)'
+                                        }}
+                                    >
+                                        {daysDuration} Hari
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="text-xs font-bold text-slate-700">
+                                    Tanggal Mulai
+                                    <input
+                                        type="date"
+                                        className={fieldClassName}
+                                        value={form.data.start_date}
+                                        onChange={(e) => form.setData('start_date', e.target.value)}
+                                        required
+                                    />
+                                </label>
+                                <label className="text-xs font-bold text-slate-700">
+                                    Tanggal Selesai
+                                    <input
+                                        type="date"
+                                        className={fieldClassName}
+                                        value={form.data.end_date}
+                                        onChange={(e) => form.setData('end_date', e.target.value)}
+                                        required
+                                    />
+                                </label>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-700">Periode Tarif</label>
+                                <PublicSelect
+                                    value={form.data.period_type}
+                                    onChange={(value) => form.setData('period_type', value || 'daily')}
+                                    options={periodOptions}
+                                    placeholder="Pilih Periode"
+                                />
+                            </div>
+
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="mb-1 block text-xs font-bold text-slate-700">Depot Penjemputan</label>
+                                    <PublicSelect
+                                        value={form.data.pickup_location_id}
+                                        onChange={(value) => {
+                                            form.setData({
+                                                ...form.data,
+                                                pickup_location_id: value,
+                                                return_location_id: form.data.return_location_id || value,
+                                            });
+                                        }}
+                                        options={pickupOptions}
+                                        placeholder="Pilih Depot"
+                                        emptyText="Belum ada depot aktif"
+                                    />
+                                    {locations.length === 0 && (
+                                        <p className="mt-1 text-xs text-amber-600 font-medium">Belum ada depot aktif di sistem.</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-xs font-bold text-slate-700">Depot Pengembalian</label>
+                                    <PublicSelect
+                                        value={form.data.return_location_id}
+                                        onChange={(value) => form.setData('return_location_id', value)}
+                                        options={returnOptions}
+                                        placeholder="Sama dengan lokasi jemput"
+                                        emptyText="Belum ada depot aktif"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-700">Kelas Kendaraan</label>
+                                <PublicSelect
+                                    value={form.data.rental_class}
+                                    onChange={(value) => form.setData('rental_class', value)}
+                                    options={classOptions}
+                                    placeholder="Semua Kelas Kendaraan"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-extrabold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
+                                style={{ backgroundColor: 'var(--brand-color)' }}
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                Cari Kendaraan
+                            </button>
+
+                            <div className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500 pt-1">
+                                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--brand-color)' }}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Hold unit hingga <b>{hold_ttl_minutes} menit</b> untuk bayar.</span>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Right Column: Vehicle Catalog Grid */}
+                    <div className="flex-1 w-full">
+                        {!searched && (
+                            <div className="rounded-2xl bg-white p-12 text-center border border-slate-200/80 shadow-xs">
+                                <svg className="mx-auto h-16 w-16 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <h3 className="mt-4 text-base font-bold text-slate-900">Temukan Kendaraan Anda</h3>
+                                <p className="mt-1.5 text-sm text-slate-500 max-w-sm mx-auto font-medium">Pilih tanggal sewa dan lokasi depot di panel samping untuk memulai pencarian armada aktif.</p>
+                            </div>
+                        )}
+
+                        {searched && vehicles.length === 0 && (
+                            <div className="rounded-2xl bg-white p-12 text-center border border-slate-200/80 shadow-xs">
+                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-500 border border-amber-200">
+                                    <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <h3 className="mt-4 text-base font-bold text-slate-900">Tidak Ada Kendaraan Tersedia</h3>
+                                <p className="mt-1.5 text-xs text-slate-500 leading-relaxed max-w-sm mx-auto font-medium">
+                                    Armada kami mungkin sedang fully-booked atau tidak cocok dengan filter Anda. Silakan coba sesuaikan tanggal sewa atau kelas kendaraan lain.
+                                </p>
+                            </div>
+                        )}
+
+                        {searched && vehicles.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {vehicles.map((vehicle) => (
+                                    <Link
+                                        key={vehicle.id}
+                                        href={vehicleUrl(vehicle.id)}
+                                        className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-200/85 hover:border-[var(--brand-color)] hover:shadow-md transition-all duration-200"
+                                    >
+                                        <div>
+                                            {/* Photo Container */}
+                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-50 border-b border-slate-100">
+                                                {vehicle.photo_url ? (
+                                                    <img
+                                                        src={vehicle.photo_url}
+                                                        alt={vehicle.name}
+                                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-103"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
+                                                        <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">Tanpa Foto</span>
+                                                    </div>
+                                                )}
+
+                                                {vehicle.rental_class_label && (
+                                                    <span 
+                                                        className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                                                        style={{ backgroundColor: 'var(--brand-color)' }}
+                                                    >
+                                                        {vehicle.rental_class_label}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Info Body */}
+                                            <div className="p-4 space-y-3">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className="text-base font-bold text-slate-900 group-hover:text-[var(--brand-color)] transition-colors line-clamp-1">
+                                                        {vehicle.name}
+                                                    </h3>
+                                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[9px] font-bold text-slate-600 border border-slate-200 shrink-0">
+                                                        {vehicle.plate_number}
+                                                    </span>
+                                                </div>
+
+                                                {/* Specifications badges */}
+                                                <div className="flex flex-wrap gap-1.5 text-xs">
+                                                    {vehicle.capacity_seats && (
+                                                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 border border-slate-200/50">
+                                                            <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                            {vehicle.capacity_seats} Kursi
+                                                        </span>
+                                                    )}
+                                                    {vehicle.model_year && (
+                                                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 border border-slate-200/50">
+                                                            Th {vehicle.model_year}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Price & CTA Footer */}
+                                        <div className="border-t border-slate-100 p-4 pt-3 flex items-center justify-between bg-slate-50/50">
+                                            <div>
+                                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tarif Sewa</div>
+                                                {vehicle.from_price != null ? (
+                                                    <div className="text-sm font-extrabold text-[var(--brand-color)]">
+                                                        {money(vehicle.from_price)}
+                                                        <span className="text-[10px] font-normal text-slate-500">/{vehicle.rental_class === 'daily' ? 'hari' : 'periode'}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-xs text-slate-450 font-bold">Call CS</div>
+                                                )}
+                                            </div>
+
+                                            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200 hover:border-[var(--brand-color)] px-3 py-1.5 text-xs font-bold text-[var(--brand-color)] group-hover:bg-[var(--brand-color)] group-hover:text-white transition-all shadow-xs">
+                                                Pilih
+                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <p className="text-center text-xs text-slate-400 font-medium pt-4">
+                    Sewa Kendaraan Resmi dari {brand.name}. Pengambilan & pengembalian dilakukan di cabang depot resmi.
                 </p>
             </div>
         </div>

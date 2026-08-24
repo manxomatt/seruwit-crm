@@ -16,9 +16,14 @@ class CancelPublicRentalBookingRequest extends FormRequest
      */
     public function rules(): array
     {
+        $token = $this->route('token');
+        $rental = \Modules\Rental\Models\Rental::where('public_token', $token)->first();
+        $phone = $this->input('booker_phone') ?: ($rental?->booker_phone ?? '');
+        $isVerified = $phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone);
+
         return [
-            'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => ['required', 'string', 'size:6'],
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'cancelled_reason' => ['required', 'string', 'max:500'],
         ];
     }

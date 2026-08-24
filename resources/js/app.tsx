@@ -7,6 +7,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+let currentSiteName = appName;
 
 function settingsFromPageProps(pageProps: unknown): Record<string, string> | undefined {
     if (!pageProps || typeof pageProps !== 'object') {
@@ -21,8 +22,15 @@ function settingsFromPageProps(pageProps: unknown): Record<string, string> | und
     return settings as Record<string, string>;
 }
 
+function updateSiteName(pageProps: unknown) {
+    const settings = settingsFromPageProps(pageProps);
+    if (settings && settings['general.site_name']) {
+        currentSiteName = settings['general.site_name'];
+    }
+}
+
 createInertiaApp({
-    title: (title: string) => `${title} - ${appName}`,
+    title: (title: string) => `${title} - ${currentSiteName}`,
     resolve: (name: string) => {
         const pages = {
             ...(import.meta.glob('./Pages/**/*.tsx') as Record<string, () => Promise<any>>),
@@ -46,10 +54,12 @@ createInertiaApp({
         return resolvePageComponent(candidates, pages as any);
     },
     setup({ el, App, props }) {
+        updateSiteName(props.initialPage.props);
         applyAppearance(settingsFromPageProps(props.initialPage.props));
 
         // Keep theme in sync after Inertia navigations / partial reloads.
         router.on('success', (event) => {
+            updateSiteName(event.detail.page.props);
             applyAppearance(settingsFromPageProps(event.detail.page.props));
         });
 
