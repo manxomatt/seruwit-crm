@@ -262,10 +262,106 @@ Abstraksi `InstallState` memudahkan fake status installed/uninstalled di test.
 ## 14. Fase implementasi
 
 1. **Gerbang & state** — `InstallState`, middleware, `routes/install.php`, redirect
-   (belum ada UI).
-2. **Refactor seeder** — `PlatformInstallSeeder` + `DevAccountsSeeder`.
+   (belum ada UI). ✅ **Selesai** (2026-08-25).
+2. **Refactor seeder** — `PlatformInstallSeeder` + `DevAccountsSeeder`. ✅ **Selesai** (2026-08-25).
 3. **Backend langkah** — requirements → database → migrate → platform → admin →
-   finalize (+ Form Requests, Actions).
-4. **CLI** — `app:install`, `app:install-token`.
-5. **Frontend** — wizard Inertia + i18n.
-6. **Test** — feature + unit sesuai §11.
+   finalize (+ Form Requests, Actions). ✅ **Selesai** (2026-08-25).
+4. **CLI** — `app:install`, `app:install-token`. ✅ **Selesai** (2026-08-25).
+5. **Frontend** — wizard Inertia + i18n. ✅ **Selesai** (2026-08-25).
+6. **Test** — feature + unit sesuai §11. ✅ **Selesai** (dikerjakan per-fase).
+
+### Catatan Fase 1 (implemented, 2026-08-25)
+
+- `App\Support\Installer\InstallState` — lock file `storage/framework/installed`;
+  cek DB-free. Override `config('app.installed')` (env `APP_INSTALLED`) menang atas
+  lock file bila di-set (skip installer di deploy manual; melewatkan test suite).
+- `App\Http\Middleware\EnsureApplicationInstalled` — di-prepend ke web group **dan**
+  diurutkan sebelum `StartSession` di priority list, sehingga deploy fresh (session
+  driver = database) redirect ke `/install` alih-alih fatal di tabel `sessions`.
+- `routes/install.php` — grup middleware `install` yang ramping (hanya gerbang, tanpa
+  web group), didaftarkan via `then:` di `bootstrap/app.php`; **tak** dibatasi domain
+  central (APP_URL bisa belum terisi saat boot pertama). Fase 1 hanya route landing
+  `install.index` (placeholder HTML polos, bukan Inertia — hindari Vite manifest trap).
+- Test: `tests/Feature/Install/InstallationGateTest.php` (5 lolos, DB-free). Suite lama
+  lolos gerbang via `APP_INSTALLED=true` di `phpunit.xml`.
+
+### Catatan Fase 2 (implemented, 2026-08-25)
+
+- `Database\Seeders\PlatformInstallSeeder` — bootstrap aman-produksi (Permission,
+  ModuleRegistry, Role, Menu, Setting, Plan, SubscriptionTier, 6 landing page). Persis
+  daftar seeder lama `DatabaseSeeder`, **tanpa** pembuatan akun. Inilah yang dipanggil
+  installer (Fase 3, `CentralMigrator`).
+- `Database\Seeders\DevAccountsSeeder` — `admin@domain.com` (role admin) +
+  `test@domain.com` (role user). Hanya untuk lokal/test; installer tak pernah
+  menjalankannya.
+- `Database\Seeders\DatabaseSeeder` — kini hanya `call([PlatformInstallSeeder,
+  DevAccountsSeeder])`. Perilaku `db:seed` lokal/test tak berubah. Muting event
+  dipertahankan (`WithoutModelEvents` di ketiganya; `Model::withoutEvents` nested aman).
+- Test: `tests/Feature/Install/SeederSplitTest.php` (1 lolos) — bootstrap platform = 0
+  akun; `DevAccountsSeeder` menanam admin+test dengan role benar.
+
+### Catatan Fase 3 (implemented, 2026-08-25)
+
+- Services `app/Support/Installer/`: `RequirementsChecker` (DB-free — PHP/ekstensi/driver
+  PDO/APP_KEY/izin tulis), `EnvironmentWriter` (update-in-place/append `.env`, quoting,
+  tak echo secret), `DatabaseConnectionTester` (PDO throwaway pgsql/mysql/sqlite sebelum
+  tulis `.env`).
+- Actions `app/Actions/Install/`: `CentralMigrator` (`migrate --force` + `PlatformInstallSeeder`,
+  **central-only**, tanpa tenant/modul), `CreateCentralAdminAction` (admin dari input
+  operator, email terverifikasi, role `admin`; error bila role belum di-bootstrap),
+  `InstallationFinalizer` (`InstallState::markInstalled()` + `config:cache` opsional; **tanpa**
+  `route:cache` karena app punya closure route yang tak bisa diserialisasi).
+- Form Requests `app/Http/Requests/Install/`: `DatabaseConnectionRequest`,
+  `PlatformProfileRequest` (profil development/production → `CENTRAL_SERVES_APP` + `SystemMode`),
+  `AdminAccountRequest`.
+- Controller tipis `app/Http/Controllers/Install/`: Requirement (JSON), Database (test/store),
+  Migration, Platform, AdminAccount, Finalize. Route di `routes/install.php`.
+- Grup `install` diperluas: `ConfigureInstallerEnvironment` (paksa session/cache = **file**)
+  → cookies → StartSession → CSRF → SubstituteBindings → gate. Keduanya (gate +
+  ConfigureInstallerEnvironment) diurutkan sebelum `StartSession` di priority list.
+- Test: `RequirementsCheckerTest`, `EnvironmentWriterTest`, `InstallEndpointsTest` (ringan,
+  DB-free — termasuk uji koneksi PDO valid/invalid), `InstallStepsTest` (RefreshDatabase —
+  migrator bootstrap tanpa akun, admin endpoint→admin terverifikasi, finalizer→lock+audit).
+  Semua lolos.
+
+### Catatan Fase 4 (implemented, 2026-08-25)
+
+- `App\Support\Installer\InstallToken` — token anti-hijack (file `storage/framework/install-token`;
+  override env `APP_INSTALL_TOKEN` menang). `config('app.install_token')` ditambah. *Enforcement*
+  di alur web menyusul (Fase 5, langkah Welcome); CLI tak butuh token (shell terpercaya).
+- `app/Console/Commands/AppInstall.php` (`app:install`) — kembaran headless installer web,
+  berbagi Service/Action Fase 3. Interaktif default; `--no-interaction` baca dari options
+  (`--db-*`, `--app-name/url`, `--tenant-base-domain`, `--profile`, `--ai-features`,
+  `--admin-*`, `--optimize`, `--force`, `--skip-database`). Menjalankan requirements → (opsional
+  konfig DB: uji + tulis `.env` + reconfigure runtime `DB::purge`) → key:generate bila kosong →
+  `CentralMigrator` → profil platform (`.env` + `PlatformSetting`) → `CreateCentralAdminAction`
+  → `InstallationFinalizer`. **Central-only** — tak menyentuh tenant/modul.
+- `app/Console/Commands/AppInstallToken.php` (`app:install-token`) — cetak token (mint bila
+  belum ada); `--rotate` regenerasi.
+- Test: `AppInstallTokenTest` (2 lolos, DB-free), `AppInstallCommandTest` (2 lolos — tolak bila
+  sudah terinstal; install penuh via CLI dengan `EnvironmentWriter` di-rebind ke file temp
+  sehingga `.env` proyek tak tersentuh). Tak ada residu lock/token/config-cache.
+
+### Catatan Fase 5 (implemented, 2026-08-25)
+
+- **Root view DB-free** `resources/views/install.blade.php` — tanpa `Appearance::resolve()`
+  / `Modules::pageEntrypoint` (keduanya query DB); default `--color-primary-rgb`. Dipakai
+  `HandleInstallerInertiaRequests` (`$rootView = 'install'`).
+- **Middleware Inertia ramping** `HandleInstallerInertiaRequests` — hanya share `errors`,
+  `translations.install`, `locale`, `availableLocales`, `flash.status` (tanpa menu/auth/settings
+  DB-berat). Ditambah ke grup `install`.
+- **Token gate web** `EnsureInstallerUnlocked` — bila token dikonfigurasi, langkah mutasi butuh
+  sesi ter-unlock; inert bila tak ada token. `UnlockController` (`POST /install/unlock`) verifikasi
+  token → sesi `installer_unlocked`.
+- **Halaman** `resources/js/Pages/Install/Wizard.tsx` — stepper client-side (Welcome→Requirements
+  →Database→Migrate→Platform→Admin→Complete), `useForm` + `preserveState` agar step bertahan
+  melewati redirect Inertia; `useTrans('install.*')`; toggle bahasa EN/ID. `WelcomeController`
+  kini render `Install/Wizard`.
+- **i18n** `lang/{en,id}/install.php`. Butuh `npm run build` (Vite manifest untuk halaman baru).
+- **Gerbang jadi aktif di dev:** tanpa lock/`APP_INSTALLED`, seluruh app redirect ke `/install`.
+  Marker `storage/framework/installed` (+`install-token`) ditambah ke `storage/framework/.gitignore`
+  agar tak ke-commit (kalau ke-commit, tiap clone/deploy salah dianggap terinstal).
+- **Verifikasi visual (Herd):** Welcome, Requirements (semua cek hijau), dan toggle ID semua
+  render benar; gerbang redirect `/` → `/install`.
+- Test: `InstallWizardTest` (2 lolos — render Inertia + token gate), `InstallationGateTest`
+  landing diperbarui ke assert komponen `Install/Wizard`.

@@ -31,6 +31,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Installation State Override
+    |--------------------------------------------------------------------------
+    |
+    | The first-run installer decides whether the application is installed from
+    | a lock file (App\Support\Installer\InstallState), so the check works even
+    | before the database is migrated. This env is an explicit override: leave it
+    | unset (null) to defer to the lock file, set it to skip the installer on a
+    | manually provisioned deployment, or to keep the test suite past the gate.
+    |
+    */
+
+    'installed' => env('APP_INSTALLED'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Installer Token
+    |--------------------------------------------------------------------------
+    |
+    | Optional anti-hijack secret for the first-run web installer. When set, it
+    | takes precedence over the rotatable token file managed by app:install-token.
+    | Leave unset to use the file (or no token on a trusted, non-public first boot).
+    |
+    */
+
+    'install_token' => env('APP_INSTALL_TOKEN'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
