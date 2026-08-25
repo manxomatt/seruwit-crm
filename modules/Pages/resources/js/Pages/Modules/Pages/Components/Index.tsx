@@ -39,6 +39,7 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [componentToDelete, setComponentToDelete] = useState<ComponentItem | null>(null);
@@ -108,7 +109,7 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                             {can.create && (
                                 <Link href={prefixedRoute('pages.components.create')}>
                                     <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                        ➕ Add Component
+                                        Add Component
                                     </PrimaryButton>
                                 </Link>
                             )}
@@ -160,7 +161,7 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                 </div>
 
                 {/* Filter and Search Bar */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
                     <div className="relative flex-1">
                         <TextInput
                             type="text"
@@ -172,7 +173,25 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Category Filter */}
+                        {categories && categories.length > 0 && (
+                            <div className="relative">
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 py-1.5 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:ring-0"
+                                >
+                                    <option value="all">All Categories</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            📁 {cat}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
                         {/* Status Filter */}
                         <div className="flex rounded-2xl border border-slate-200 dark:border-slate-800 p-1 bg-slate-50 dark:bg-slate-800/50">
                             <button
@@ -209,10 +228,40 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                                 Inactive
                             </button>
                         </div>
+
+                        {/* View Mode Switcher */}
+                        <div className="flex items-center gap-1 rounded-2xl border border-slate-200 dark:border-slate-800 p-1 bg-slate-50 dark:bg-slate-800/50 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('table')}
+                                className={`rounded-xl px-2.5 py-1 text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    viewMode === 'table'
+                                        ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-white'
+                                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                }`}
+                                title="Table View"
+                            >
+                                <span>📄</span>
+                                <span className="hidden md:inline">Table</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('grid')}
+                                className={`rounded-xl px-2.5 py-1 text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    viewMode === 'grid'
+                                        ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-white'
+                                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                }`}
+                                title="Grid View"
+                            >
+                                <span>🎴</span>
+                                <span className="hidden md:inline">Grid</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Components Grid */}
+                {/* Components Content */}
                 {filteredComponents.length === 0 ? (
                     <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-sm">
                         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 dark:bg-slate-800 text-3xl">
@@ -222,8 +271,133 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                         <p className="mt-1 text-xs text-slate-500">
                             Try adjusting your search query or add a new component.
                         </p>
+                        {can.create && (
+                            <div className="mt-5">
+                                <Link href={prefixedRoute('pages.components.create')}>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                        Add Component
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                ) : viewMode === 'table' ? (
+                    /* Table View */
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/30">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            Component
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            Key
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            Category & Module
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-center font-bold uppercase tracking-wider text-slate-400">
+                                            Order
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            Status
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
+                                    {filteredComponents.map((comp) => (
+                                        <tr key={comp.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-sm font-bold">
+                                                        🧩
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                            {comp.label}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    {comp.key}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="inline-flex items-center gap-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400">
+                                                        📁 {comp.category || 'Sections'}
+                                                    </span>
+                                                    {comp.module ? (
+                                                        <span className="inline-flex items-center gap-1 rounded-xl bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-teal-600 dark:text-teal-400" title="Only shown to tenants with this module installed">
+                                                            🧩 {comp.module}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold text-slate-500 dark:text-slate-400" title="Visible to all tenants">
+                                                            🌐 Universal
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center font-mono text-[11px] text-slate-600 dark:text-slate-300">
+                                                {comp.sort_order}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleActive(comp)}
+                                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                        comp.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                                    }`}
+                                                    title={comp.is_active ? 'Click to disable' : 'Click to enable'}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                            comp.is_active ? 'translate-x-5' : 'translate-x-0'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {can.update && (
+                                                        <Link href={prefixedRoute('pages.components.edit', comp.id)}>
+                                                            <button
+                                                                type="button"
+                                                                className="rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950 dark:hover:text-indigo-400 transition"
+                                                            >
+                                                                ✏️ Edit
+                                                            </button>
+                                                        </Link>
+                                                    )}
+                                                    {can.delete && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setComponentToDelete(comp);
+                                                                setShowDeleteModal(true);
+                                                            }}
+                                                            className="rounded-xl bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition"
+                                                            title="Delete"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 ) : (
+                    /* Grid View */
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {filteredComponents.map((comp) => (
                             <div
@@ -323,7 +497,7 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                 show={showDeleteModal}
                 title="Delete Page Component"
                 message={`Are you sure you want to delete "${componentToDelete?.label}" (${componentToDelete?.key})? This component will no longer appear in the GrapesJS Editor block manager.`}
-                confirmButtonText="Delete Component"
+                confirmText="Delete Component"
                 onConfirm={handleDelete}
                 onClose={() => {
                     setShowDeleteModal(false);

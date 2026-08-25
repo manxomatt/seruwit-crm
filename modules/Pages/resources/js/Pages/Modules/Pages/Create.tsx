@@ -97,7 +97,7 @@ export default function Create(): JSX.Element {
                                 </SecondaryButton>
                             </Link>
                             <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
-                                ➕ {processing ? t('pages.create.creating') : t('pages.create.submit')}
+                                {processing ? t('pages.create.creating') : t('pages.create.submit')}
                             </PrimaryButton>
                         </div>
                     </form>
