@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSettingRequest;
 use App\Http\Requests\UpdateSettingRequest;
 use App\Models\MailConfig;
+use App\Models\PlatformSetting;
 use App\Models\Setting;
 use App\Models\Tenant;
 use App\Support\SystemMode;
@@ -188,6 +189,12 @@ class SettingController extends Controller
             }
 
             $setting->update(['value' => $value]);
+
+            // Platform-global keys are authoritative in platform_settings (read by
+            // CentralAiSettings / SystemMode). Mirror the central-admin edit there.
+            if (in_array($setting->key, Setting::centralOnlyKeys(), true)) {
+                PlatformSetting::setValue($setting->key, (string) $value);
+            }
         }
 
         if (tenancy()->initialized && $data['group'] === 'email') {

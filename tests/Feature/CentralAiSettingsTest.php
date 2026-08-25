@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Setting;
+use App\Models\PlatformSetting;
 use App\Support\CentralAiSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
@@ -29,17 +29,7 @@ class CentralAiSettingsTest extends TestCase
 
     public function test_disabling_central_ai_setting_returns_false_and_blocks_endpoints(): void
     {
-        Setting::query()->updateOrCreate(
-            ['key' => CentralAiSettings::KEY],
-            [
-                'group' => 'general',
-                'value' => '0',
-                'type' => 'boolean',
-                'label' => 'Fitur AI',
-                'is_public' => true,
-                'sort_order' => 9,
-            ]
-        );
+        PlatformSetting::setValue(CentralAiSettings::KEY, '0');
 
         $this->assertFalse(CentralAiSettings::isEnabled());
 

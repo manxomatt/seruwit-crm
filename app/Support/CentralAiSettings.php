@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\Setting;
+use App\Models\PlatformSetting;
 use Throwable;
 
 final class CentralAiSettings
@@ -24,16 +24,12 @@ final class CentralAiSettings
     }
 
     /**
-     * Read the central setting value from the central database connection.
+     * Read the platform-global value from the central platform_settings table.
      */
     private static function storedValue(): ?string
     {
         try {
-            $connection = config('tenancy.database.central_connection');
-
-            $query = $connection ? Setting::on($connection) : Setting::query();
-
-            $value = $query->where('key', self::KEY)->value('value');
+            $value = PlatformSetting::getValue(self::KEY);
 
             return is_string($value) ? $value : null;
         } catch (Throwable) {

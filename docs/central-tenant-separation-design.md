@@ -185,10 +185,10 @@ Ada **tiga** mekanisme yang tumpang tindih:
 | --- | --- | --- | --- |
 | A.0 | Gating auto-load migrasi modul pada `CENTRAL_SERVES_APP` | Rendah | ✅ **Selesai** (2026-08-25) |
 | A.3 | Ramping migrasi central (pindah tabel domain `database/migrations/` → `tenant/`) | Sedang | ⬜ Belum — butuh `CENTRAL_SERVES_APP=false` + test hijau |
-| B1 | `PlatformSetting` + tabel `platform_settings` + pindah data | Rendah–sedang | ⬜ Belum |
+| B1 | `PlatformSetting` + tabel `platform_settings` + salin data global | Rendah–sedang | ✅ **Selesai** (2026-08-25) |
 | B2 | Ganti `Setting::on(central)` → `PlatformSetting`; `Setting` jadi tenant-only | Sedang | ⬜ Belum |
 | B3 | Panel & gating platform settings | Rendah | ⬜ Belum |
 
-**Urutan disarankan:** A.0 (✅) → B1 → B2 → B3 → A.3 (settings dulu karena aditif & berisiko rendah; ramping folder migrasi central paling akhir karena butuh keputusan `CENTRAL_SERVES_APP` + verifikasi penuh). User (poin 3 review) sudah benar dan tidak diubah.
+**Urutan disarankan:** A.0 (✅) → B1 (✅) → B2 → B3 → A.3 (settings dulu karena aditif & berisiko rendah; ramping folder migrasi central paling akhir karena butuh keputusan `CENTRAL_SERVES_APP` + verifikasi penuh). User (poin 3 review) sudah benar dan tidak diubah.
 
 **Untuk mengaktifkan central ramping di environment nyata:** set `CENTRAL_SERVES_APP=false` → gating A.0 langsung menghilangkan tabel modul dari central. Prasyarat: domain tenant tersedia untuk dev (central tak lagi melayani UI CRM) + modul di-install per tenant. Kerjakan A.3 bila ingin menghapus juga duplikasi domain di `database/migrations/`.

@@ -2,14 +2,14 @@
 
 namespace App\Support;
 
-use App\Models\Setting;
+use App\Models\PlatformSetting;
 use Throwable;
 
 /**
  * Platform-wide development vs production behaviour.
  *
- * Stored only in the central settings table so tenant context (OTP, mail) always
- * reads the same toggle. Development disables outbound mail, surfaces OTP /
+ * Stored in the central platform_settings table so tenant context (OTP, mail)
+ * always reads the same toggle. Development disables outbound mail, surfaces OTP /
  * email-verification secrets on screen, and auto-allows demo data install on
  * newly provisioned workspaces.
  */
@@ -65,11 +65,7 @@ final class SystemMode
     private static function storedValue(): ?string
     {
         try {
-            $connection = config('tenancy.database.central_connection');
-
-            $value = Setting::on($connection)
-                ->where('key', self::KEY)
-                ->value('value');
+            $value = PlatformSetting::getValue(self::KEY);
 
             return is_string($value) ? $value : null;
         } catch (Throwable) {
