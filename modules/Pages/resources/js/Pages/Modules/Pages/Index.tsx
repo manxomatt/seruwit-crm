@@ -25,9 +25,15 @@ interface Page {
 
 interface Props {
     pages: Page[];
+    can?: {
+        create: boolean;
+        update: boolean;
+        delete: boolean;
+        manageComponents: boolean;
+    };
 }
 
-export default function Index({ pages }: Props): JSX.Element {
+export default function Index({ pages, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -156,11 +162,20 @@ export default function Index({ pages }: Props): JSX.Element {
                 <PageHeader
                     title={t('pages.title')}
                     actions={
-                        <Link href={prefixedRoute('pages.create')}>
-                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                ➕ {t('pages.create_page')}
-                            </PrimaryButton>
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            {can?.manageComponents && (
+                                <Link href={prefixedRoute('pages.components.index')}>
+                                    <SecondaryButton className="!rounded-xl text-xs shadow-sm">
+                                        🧩 {t('pages.manage_components')}
+                                    </SecondaryButton>
+                                </Link>
+                            )}
+                            <Link href={prefixedRoute('pages.create')}>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                    {t('pages.create_page')}
+                                </PrimaryButton>
+                            </Link>
+                        </div>
                     }
                 />
             }
@@ -269,7 +284,7 @@ export default function Index({ pages }: Props): JSX.Element {
                             <div className="mt-5">
                                 <Link href={prefixedRoute('pages.create')}>
                                     <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                        ➕ {t('pages.index.create')}
+                                        {t('pages.index.create')}
                                     </PrimaryButton>
                                 </Link>
                             </div>

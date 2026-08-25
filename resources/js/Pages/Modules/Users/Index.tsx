@@ -205,7 +205,7 @@ export default function Index({ users, stats, filters, can, quota }: Props): JSX
                         can?.create !== false ? (
                             <Link href={prefixedRoute('users.create')}>
                                 <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                    + {t('users.pages.index.new')}
+                                    {t('users.pages.index.new')}
                                 </PrimaryButton>
                             </Link>
                         ) : undefined
@@ -398,7 +398,7 @@ export default function Index({ users, stats, filters, can, quota }: Props): JSX
                         <div className="mt-6">
                             <Link href={prefixedRoute('users.create')}>
                                 <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                    + {t('users.pages.index.new')}
+                                    {t('users.pages.index.new')}
                                 </PrimaryButton>
                             </Link>
                         </div>

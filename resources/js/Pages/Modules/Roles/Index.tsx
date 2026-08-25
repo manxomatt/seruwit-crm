@@ -187,7 +187,7 @@ export default function Index({ roles, stats, filters }: Props): JSX.Element {
                     title={t('roles.pages.index.head')}
                     actions={
                         <Link href={prefixedRoute('roles.create')}>
-                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">+ {t('roles.pages.index.new')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('roles.pages.index.new')}</PrimaryButton>
                         </Link>
                     }
                 />
@@ -385,7 +385,7 @@ export default function Index({ roles, stats, filters }: Props): JSX.Element {
                         <div className="mt-6">
                             <Link href={prefixedRoute('roles.create')}>
                                 <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                    + {t('roles.pages.index.new')}
+                                    {t('roles.pages.index.new')}
                                 </PrimaryButton>
                             </Link>
                         </div>

@@ -3,6 +3,7 @@
 return [
     'title' => 'Pages',
     'create_page' => 'Create Page',
+    'manage_components' => 'Manage Widgets',
     'empty_title' => 'No pages yet',
     'empty_hint' => 'Get started by creating your first page.',
     'homepage_badge' => 'Homepage',

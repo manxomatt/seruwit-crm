@@ -322,7 +322,7 @@ export default function Group({
                         canManageStructure ? (
                             <Link href={`${prefixedRoute('settings.create')}?group=${currentGroup}`}>
                                 <PrimaryButton type="button" className="!rounded-xl text-xs shadow-sm">
-                                    + {t('settings.pages.group.add_setting')}
+                                    {t('settings.pages.group.add_setting')}
                                 </PrimaryButton>
                             </Link>
                         ) : undefined

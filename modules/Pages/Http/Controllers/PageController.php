@@ -39,6 +39,10 @@ class PageController extends Controller
                 'create' => $user->hasPermissionFor('pages', 'create'),
                 'update' => $user->hasPermissionFor('pages', 'update'),
                 'delete' => $user->hasPermissionFor('pages', 'delete'),
+                // The component library is a central-admin surface only, mirroring
+                // PageComponentController::authorizeCentralAdmin(), so the entry
+                // point is hidden from tenant workspaces where it would 403.
+                'manageComponents' => ! tenancy()->initialized && $user->isAdmin(),
             ],
         ]);
     }

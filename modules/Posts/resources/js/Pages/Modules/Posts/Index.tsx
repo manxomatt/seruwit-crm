@@ -108,7 +108,7 @@ export default function Index({ posts }: Props): JSX.Element {
                     actions={
                         <Link href={prefixedRoute('posts.create')}>
                             <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                ➕ {t('posts.index.create')}
+                                {t('posts.index.create')}
                             </PrimaryButton>
                         </Link>
                     }
@@ -207,7 +207,7 @@ export default function Index({ posts }: Props): JSX.Element {
                             <div className="mt-5">
                                 <Link href={prefixedRoute('posts.create')}>
                                     <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                        ➕ {t('posts.index.create')}
+                                        {t('posts.index.create')}
                                     </PrimaryButton>
                                 </Link>
                             </div>

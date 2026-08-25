@@ -23,11 +23,7 @@ interface Props {
     };
 }
 
-const PlusIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-);
+
 
 const PencilIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -104,8 +100,7 @@ export default function Index({ posts, can }: Props): JSX.Element {
                             href={route('module.posts.create')}
                             className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
-                            <PlusIcon />
-                            <span className="ml-2">Create Post</span>
+                            <span>Create Post</span>
                         </Link>
                     )}
                 </div>
@@ -127,8 +122,7 @@ export default function Index({ posts, can }: Props): JSX.Element {
                                     href={route('module.posts.create')}
                                     className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                 >
-                                    <PlusIcon />
-                                    <span className="ml-2">Create Post</span>
+                                    <span>Create Post</span>
                                 </Link>
                             </div>
                         )}

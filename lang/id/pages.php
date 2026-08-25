@@ -3,6 +3,7 @@
 return [
     'title' => 'Halaman',
     'create_page' => 'Buat Halaman',
+    'manage_components' => 'Kelola Widget',
     'empty_title' => 'Belum ada halaman',
     'empty_hint' => 'Mulai dengan membuat halaman pertama Anda.',
     'homepage_badge' => 'Homepage',

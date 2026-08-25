@@ -111,7 +111,7 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                     actions={canCreate && (
                         <Link href={prefixedRoute('carousels.create')}>
                             <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                ➕ {t('carousels.create')}
+                                {t('carousels.create')}
                             </PrimaryButton>
                         </Link>
                     )}
@@ -223,7 +223,7 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                                 <div className="mt-5">
                                     <Link href={prefixedRoute('carousels.create')}>
                                         <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                            ➕ {t('carousels.create')}
+                                            {t('carousels.create')}
                                         </PrimaryButton>
                                     </Link>
                                 </div>
