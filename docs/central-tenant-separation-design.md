@@ -7,11 +7,40 @@ Dokumen ini menjawab dua kebutuhan review arsitektur:
 
 > **Konteks:** Tenancy Stancl multi-database (schema PostgreSQL per tenant). `database/migrations/` dijalankan di **central**; `database/migrations/tenant/` dijalankan per **tenant**. Flag `CENTRAL_SERVES_APP` (default `true` di dev) membuat domain central menjalankan seluruh CRM — itulah alasan central kini memuat banyak tabel domain-tenant. Di produksi disetel `false` → central hanya landing/auth/workspace/admin.
 
-> **Status:** dokumen desain (belum diimplementasikan). Angka per 2026-08-25: central 95 migrasi, tenant 56; **40 tabel terduplikasi** di kedua schema.
+> **Status:** dokumen desain. Angka per 2026-08-25: central 95 migrasi (`database/migrations/`), tenant 56 (`database/migrations/tenant/`), **171 migrasi modul** (`modules/*/Database/Migrations/`); **40 tabel terduplikasi** antara central & tenant.
+>
+> **Sudah diimplementasikan (2026-08-25):** gating auto-load migrasi modul pada `CENTRAL_SERVES_APP` — lihat [A.0](#a0-sumber-ketiga-auto-load-migrasi-modul-implemented). Sisa Part A (pindah tabel domain `database/migrations/` → `tenant/`) dan seluruh Part B belum.
 
 ---
 
 ## Bagian A — Audit Migrasi Central
+
+### A.0 Sumber ketiga: auto-load migrasi modul *(implemented)*
+
+Penyebab **terbesar** "central gemuk" bukan folder `database/migrations/`, melainkan **migrasi modul** (`modules/*/Database/Migrations/`, 171 file). `ModuleServiceProvider::boot()` memanggil `loadMigrationsFrom()` untuk setiap modul opsional, sehingga `php artisan migrate` / `migrate:fresh` — yang menyasar koneksi **central/default** — membuat seluruh tabel modul (`products`, `canvassing_*`, `maintenance_*`, `vehicles`, `rentals`, `inventory_*`, `sales_*`, …) di schema central.
+
+Tenant **tidak** mendapat tabel modul dari sini: `tenants:migrate` hanya menjalankan `database/migrations/tenant/`, dan tabel modul masuk ke schema tenant **on-demand** saat modul di-install via `ModuleInstaller` (`Artisan::call('migrate', ['--path' => $module->migrationsPath()])`).
+
+**Gating yang diterapkan** ([`app/Providers/ModuleServiceProvider.php`](../../app/Providers/ModuleServiceProvider.php)): pendaftaran `loadMigrationsFrom` migrasi modul kini bergantung pada `config('app.central_serves_app')`.
+
+```php
+$loadModuleMigrations = (bool) config('app.central_serves_app');
+foreach (Modules::all() as $module) {
+    $this->bootModule($module, loadMigrations: $loadModuleMigrations);
+}
+```
+
+- **`true` (default)** → perilaku lama; central & test tetap dapat semua tabel modul.
+- **`false`** → migrasi modul tak didaftarkan ke migrator default → central migrate tanpa tabel modul. Tenant tak terpengaruh (tetap via `--path` saat install).
+
+**Bukti (migrate:fresh nyata di DB testing):**
+
+| Flag | Migrasi jalan | Total tabel | Tabel modul (products/canvassing/vehicles/rentals/…) |
+| --- | --- | --- | --- |
+| `true` | 266 | 207 | ada |
+| `false` | 95 | **67** | **absent** |
+
+> **Catatan:** 67 tabel sisa (saat `false`) **masih** memuat duplikasi domain dari `database/migrations/` (`partners`, `locations`, `media`, `menus`, `settings`, dll) — itu pekerjaan **A.3** di bawah, terpisah dari gating ini. Mengaktifkan `false` di environment nyata butuh: domain tenant untuk dev (central tak lagi melayani UI CRM) + install modul per tenant.
 
 ### Prinsip klasifikasi
 
@@ -152,11 +181,14 @@ Ada **tiga** mekanisme yang tumpang tindih:
 
 ## Ringkasan aksi
 
-| # | Pekerjaan | Risiko | Prasyarat |
+| # | Pekerjaan | Risiko | Status |
 | --- | --- | --- | --- |
-| A | Ramping migrasi central (hapus A.3 dari central) | Sedang | `CENTRAL_SERVES_APP=false` + test hijau |
-| B1 | `PlatformSetting` + tabel `platform_settings` + pindah data | Rendah–sedang | — |
-| B2 | Ganti `Setting::on(central)` → `PlatformSetting`; `Setting` jadi tenant-only | Sedang | B1 selesai |
-| B3 | Panel & gating platform settings | Rendah | B1 |
+| A.0 | Gating auto-load migrasi modul pada `CENTRAL_SERVES_APP` | Rendah | ✅ **Selesai** (2026-08-25) |
+| A.3 | Ramping migrasi central (pindah tabel domain `database/migrations/` → `tenant/`) | Sedang | ⬜ Belum — butuh `CENTRAL_SERVES_APP=false` + test hijau |
+| B1 | `PlatformSetting` + tabel `platform_settings` + pindah data | Rendah–sedang | ⬜ Belum |
+| B2 | Ganti `Setting::on(central)` → `PlatformSetting`; `Setting` jadi tenant-only | Sedang | ⬜ Belum |
+| B3 | Panel & gating platform settings | Rendah | ⬜ Belum |
 
-**Urutan disarankan:** B1 → B2 → B3 → A (settings dulu karena aditif & berisiko rendah; migrasi central paling akhir karena butuh keputusan `CENTRAL_SERVES_APP` + verifikasi penuh). User (poin 3 review) sudah benar dan tidak diubah.
+**Urutan disarankan:** A.0 (✅) → B1 → B2 → B3 → A.3 (settings dulu karena aditif & berisiko rendah; ramping folder migrasi central paling akhir karena butuh keputusan `CENTRAL_SERVES_APP` + verifikasi penuh). User (poin 3 review) sudah benar dan tidak diubah.
+
+**Untuk mengaktifkan central ramping di environment nyata:** set `CENTRAL_SERVES_APP=false` → gating A.0 langsung menghilangkan tabel modul dari central. Prasyarat: domain tenant tersedia untuk dev (central tak lagi melayani UI CRM) + modul di-install per tenant. Kerjakan A.3 bila ingin menghapus juga duplikasi domain di `database/migrations/`.

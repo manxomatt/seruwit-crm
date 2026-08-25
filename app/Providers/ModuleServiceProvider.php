@@ -28,15 +28,23 @@ class ModuleServiceProvider extends ServiceProvider
             $this->bootModule($module, loadMigrations: false);
         }
 
+        /**
+         * When central serves the full app (CENTRAL_SERVES_APP=true), it runs
+         * every optional module, so their tables come from plain
+         * `php artisan migrate` on the central schema. When central is a thin
+         * control plane (false), these module migrations must NOT be registered
+         * on the default migrator — otherwise `migrate`/`migrate:fresh` would
+         * still create module tables (products, canvassing, maintenance, …) in
+         * the central schema. Tenants get module tables regardless, on demand,
+         * via ModuleInstaller's explicit `--path` at install time.
+         *
+         * Core finance migrations live under database/migrations(+ /tenant) and
+         * are unaffected by this flag.
+         */
+        $loadModuleMigrations = (bool) config('app.central_serves_app');
+
         foreach (Modules::all() as $module) {
-            /**
-             * Central runs every optional module, so its tables come from plain
-             * `php artisan migrate`. Tenants get them only via an explicit
-             * --path at install time, which suppresses these paths entirely.
-             *
-             * Core finance migrations live under database/migrations(+ /tenant).
-             */
-            $this->bootModule($module, loadMigrations: true);
+            $this->bootModule($module, loadMigrations: $loadModuleMigrations);
         }
     }
 
