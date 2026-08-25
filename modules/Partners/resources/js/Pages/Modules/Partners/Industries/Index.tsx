@@ -179,7 +179,7 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
                     title={t('partners.industries.head')}
                     actions={
                         can.create ? (
-                            <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">+ {t('partners.industries.new')}</PrimaryButton>
+                            <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">{t('partners.industries.new')}</PrimaryButton>
                         ) : undefined
                     }
                 />

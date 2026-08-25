@@ -409,7 +409,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                             )}
                             {can.create && (
                                 <Link href={prefixedRoute('partners.create')}>
-                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">+ {t('partners.index.new')}</PrimaryButton>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('partners.index.new')}</PrimaryButton>
                                 </Link>
                             )}
                         </div>

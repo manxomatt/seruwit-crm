@@ -179,7 +179,7 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
             header={
                 <PageHeader
                     title={t('partners.locations.head')}
-                    actions={can.create ? <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">+ {t('partners.locations.new')}</PrimaryButton> : undefined}
+                    actions={can.create ? <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">{t('partners.locations.new')}</PrimaryButton> : undefined}
                 />
             }
         >

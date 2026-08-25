@@ -174,7 +174,7 @@ export default function Index({ types, filters, can }: Props): JSX.Element {
                     title={t('partners.types.head')}
                     actions={
                         can.create ? (
-                            <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">+ {t('partners.types.new')}</PrimaryButton>
+                            <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">{t('partners.types.new')}</PrimaryButton>
                         ) : undefined
                     }
                 />
