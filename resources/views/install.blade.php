@@ -13,10 +13,15 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600|plus-jakarta-sans:500,600,700,800&display=swap" rel="stylesheet" />
 
+        <!-- Material Symbols -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
         <style>
             :root {
                 --color-primary-rgb: 79 70 229;
                 --color-primary: #4f46e5;
+                --color-secondary-rgb: 16 185 129;
+                --color-secondary: #10b981;
             }
         </style>
 
