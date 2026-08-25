@@ -13,6 +13,7 @@ return [
     'no_results' => 'Tidak ada hasil untuk ":query"',
     'manage_tenants' => 'Kelola Tenant',
     'plans' => 'Paket',
+    'platform_settings' => 'Pengaturan Platform',
     'reseller_portal' => 'Pendapatan Saya',
     'reseller_commissions' => 'Komisi Saya',
     'resellers' => 'Reseller',

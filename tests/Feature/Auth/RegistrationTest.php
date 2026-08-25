@@ -29,17 +29,7 @@ class RegistrationTest extends TestCase
     {
         Notification::fake();
 
-        \App\Models\Setting::query()->updateOrCreate(
-            ['key' => \App\Support\SystemMode::KEY],
-            [
-                'group' => 'general',
-                'value' => \App\Support\SystemMode::PRODUCTION,
-                'type' => 'select',
-                'label' => 'System Mode',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-        );
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
 
         $response = $this->post('/register', [
             'name' => 'Test User',

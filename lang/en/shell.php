@@ -13,6 +13,7 @@ return [
     'no_results' => 'No results found for ":query"',
     'manage_tenants' => 'Manage Tenants',
     'plans' => 'Plans',
+    'platform_settings' => 'Platform Settings',
     'reseller_portal' => 'My Earnings',
     'reseller_commissions' => 'My Commissions',
     'resellers' => 'Resellers',

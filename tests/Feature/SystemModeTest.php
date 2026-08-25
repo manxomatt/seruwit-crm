@@ -21,17 +21,7 @@ class SystemModeTest extends TestCase
 
     public function test_reads_central_setting_value(): void
     {
-        Setting::query()->updateOrCreate(
-            ['key' => SystemMode::KEY],
-            [
-                'group' => 'general',
-                'value' => SystemMode::PRODUCTION,
-                'type' => 'select',
-                'label' => 'System Mode',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-        );
+        \App\Models\PlatformSetting::setValue(SystemMode::KEY, SystemMode::PRODUCTION);
 
         $this->assertSame(SystemMode::PRODUCTION, SystemMode::current());
         $this->assertTrue(SystemMode::shouldSendMail());

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\Setting;
 use App\Models\User;
 use App\Support\SystemMode;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -56,17 +55,7 @@ class PasswordResetTest extends TestCase
 
     private function setProductionMode(): void
     {
-        Setting::query()->updateOrCreate(
-            ['key' => SystemMode::KEY],
-            [
-                'group' => 'general',
-                'value' => SystemMode::PRODUCTION,
-                'type' => 'select',
-                'label' => 'System Mode',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-        );
+        \App\Models\PlatformSetting::setValue(SystemMode::KEY, SystemMode::PRODUCTION);
     }
 
     public function test_production_mode_sends_reset_notification(): void

@@ -740,6 +740,20 @@ export default function ModuleLayout({ header, children }: Props) {
             });
         }
 
+        // Platform-global settings (AI master switch, system mode) — central admin only.
+        if (isCentral && isAdmin && routeExists('module.platform-settings.index')) {
+            items.push({
+                name: t('shell.platform_settings', undefined, 'Platform Settings'),
+                href: route(resolveNamedRoute('module.platform-settings.index')),
+                icon: <SettingsIcon />,
+                current:
+                    route().current('module.platform-settings.*') ||
+                    route().current('central.module.platform-settings.*') ||
+                    false,
+                module: 'platform-settings',
+            });
+        }
+
         // Subscription tiers for PAYG pricing
         if (isCentral && isAdmin && routeExists('module.subscription-tiers.index')) {
             items.push({

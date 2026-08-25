@@ -55,17 +55,7 @@ class DemoDataInstallTest extends TestCase
 
     public function test_development_system_mode_grants_demo_data_on_new_tenants(): void
     {
-        \App\Models\Setting::query()->updateOrCreate(
-            ['key' => \App\Support\SystemMode::KEY],
-            [
-                'group' => 'general',
-                'value' => \App\Support\SystemMode::DEVELOPMENT,
-                'type' => 'select',
-                'label' => 'System Mode',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-        );
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::DEVELOPMENT);
 
         $tenant = $this->provisionTenant('Dev Demo Co', 'dev-demo-co', 'owner@dev-demo.test');
 
@@ -74,17 +64,7 @@ class DemoDataInstallTest extends TestCase
 
     public function test_production_system_mode_does_not_grant_demo_data_on_new_tenants(): void
     {
-        \App\Models\Setting::query()->updateOrCreate(
-            ['key' => \App\Support\SystemMode::KEY],
-            [
-                'group' => 'general',
-                'value' => \App\Support\SystemMode::PRODUCTION,
-                'type' => 'select',
-                'label' => 'System Mode',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-        );
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
 
         $tenant = $this->provisionTenant('Prod Demo Co', 'prod-demo-co', 'owner@prod-demo.test');
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
 use App\Http\Controllers\Module\PlanController;
+use App\Http\Controllers\Module\PlatformSettingController;
 use App\Http\Controllers\Module\ResellerCommissionController;
 use App\Http\Controllers\Module\ResellerCommissionRuleController;
 use App\Http\Controllers\Module\ResellerController;
@@ -71,6 +72,17 @@ Route::domain($centralDomain)
         Route::get('/settings/{setting}/edit', [ModuleSettingController::class, 'edit'])->name('settings.edit');
         Route::patch('/settings/{setting}', [ModuleSettingController::class, 'update'])->name('settings.update');
         Route::delete('/settings/{setting}', [ModuleSettingController::class, 'destroy'])->name('settings.destroy');
+    });
+
+// Platform-global settings (platform_settings) — central admin only. Distinct
+// from tenant settings; managed via a dedicated panel, never the tenant UI.
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-platform-settings'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/platform-settings', [PlatformSettingController::class, 'index'])->name('platform-settings.index');
+        Route::patch('/platform-settings', [PlatformSettingController::class, 'update'])->name('platform-settings.update');
     });
 
 Route::domain($centralDomain)

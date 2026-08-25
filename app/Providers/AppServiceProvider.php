@@ -86,6 +86,9 @@ class AppServiceProvider extends ServiceProvider
         // Settings are a platform-wide definition, edited by platform staff only —
         // a tenant may still view them, but not add or change them.
         Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());
+
+        // Platform-global settings (platform_settings) — central admin only.
+        Gate::define('manage-platform-settings', fn (User $user): bool => $user->isAdmin());
     }
 
     /**

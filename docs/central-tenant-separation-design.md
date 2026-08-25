@@ -101,14 +101,14 @@ Setelah cleanup, central hanya memuat: **framework** (users/cache/jobs) · **ide
 
 ### A.6 Strategi cleanup & risiko
 
-Karena folder migrasi sudah terpisah, "MOVE → TENANT" = **hapus file dari `database/migrations/`** (tetap ada di `database/migrations/tenant/`).
-
-1. **Prasyarat keputusan:** jadikan `CENTRAL_SERVES_APP=false` sebagai norma (termasuk dev pakai tenant). Selama `true`, central *butuh* tabel-tabel A.3 → jangan hapus. **Ini trade-off utama.**
-2. **Install baru:** hapus migrasi A.3 dari central → central langsung ramping.
-3. **Central DB existing:** buat satu migrasi central `drop`-only opsional untuk membuang tabel domain (setelah pastikan tak ada data platform di sana), atau biarkan (tidak berbahaya, hanya beban mati).
-4. **Verifikasi wajib:** cek referensi central ke tabel A.3 (mis. controller central yang query `partners`/`locations`) sebelum menghapus. Jalankan test suite (⚠️ saat ini terblokir DB testing).
-
-**Risiko: sedang.** Menyentuh apa yang jalan di central; harus diverifikasi menyeluruh. Rekomendasi: kerjakan setelah test bisa dijalankan.
+> **⚠️ Temuan (2026-08-25): A.3 sebagai "pemindahan file" TIDAK layak — dibatalkan.** Analisis dependensi menunjukkan:
+> - **`accounting_tables` (tetap central untuk buku platform) punya FK `partner_id` → `partners`.** Jadi `partners` **wajib** ada di central; memindahkannya memutus skema akuntansi central.
+> - Tabel domain membentuk **graf FK terkopel** (partners ← accounting ← invoices ← rentals ← …); **14+ migrasi modul** FK ke `partners`.
+> - **Test single-DB** (mayoritas feature test tanpa init tenancy) bergantung pada central menyediakan tabel domain ini — menghapusnya menggagalkan seluruh suite.
+>
+> **Tujuan A.3 sudah sebagian besar dicapai oleh A.0:** dengan `CENTRAL_SERVES_APP=false`, seluruh tabel **modul** hilang dari central (terbukti **207 → 67** tabel). Sisa 67 tabel = fondasi `database/migrations/` yang terkopel (partners dibutuhkan akuntansi). Membuangnya butuh refaktor jauh lebih besar (test berbasis konteks tenant + dekopling accounting↔partners) yang **tidak sepadan**.
+>
+> **Rekomendasi: A.3 ditutup.** Slimming central dilakukan secara **operasional** via `CENTRAL_SERVES_APP=false` (A.0), bukan menghapus file migrasi. Tabel foundation yang tersisa di central tidak berbahaya (tak dipakai saat central = thin control plane).
 
 ---
 
@@ -184,11 +184,17 @@ Ada **tiga** mekanisme yang tumpang tindih:
 | # | Pekerjaan | Risiko | Status |
 | --- | --- | --- | --- |
 | A.0 | Gating auto-load migrasi modul pada `CENTRAL_SERVES_APP` | Rendah | ✅ **Selesai** (2026-08-25) |
-| A.3 | Ramping migrasi central (pindah tabel domain `database/migrations/` → `tenant/`) | Sedang | ⬜ Belum — butuh `CENTRAL_SERVES_APP=false` + test hijau |
+| A.3 | Ramping migrasi central (pindah tabel domain `database/migrations/` → `tenant/`) | Tinggi | ❌ **Ditutup** — tak layak (FK `accounting → partners` + test single-DB). Slimming dicapai operasional via A.0 (`CENTRAL_SERVES_APP=false`, 207→67 tabel). |
 | B1 | `PlatformSetting` + tabel `platform_settings` + salin data global | Rendah–sedang | ✅ **Selesai** (2026-08-25) |
-| B2 | Ganti `Setting::on(central)` → `PlatformSetting`; `Setting` jadi tenant-only | Sedang | ⬜ Belum |
-| B3 | Panel & gating platform settings | Rendah | ⬜ Belum |
+| B2 | Reader (`CentralAiSettings`/`SystemMode`) baca `PlatformSetting`; writer admin mirror ke `PlatformSetting` | Sedang | ✅ **Selesai** (2026-08-25) |
+| B3 | Panel platform settings central + gating + hapus baris shadow (`Setting` jadi tenant-only) | Rendah | ✅ **Selesai** (2026-08-25) |
 
-**Urutan disarankan:** A.0 (✅) → B1 (✅) → B2 → B3 → A.3 (settings dulu karena aditif & berisiko rendah; ramping folder migrasi central paling akhir karena butuh keputusan `CENTRAL_SERVES_APP` + verifikasi penuh). User (poin 3 review) sudah benar dan tidak diubah.
+**Status akhir:** A.0 (✅) · B1 (✅) · B2 (✅) · B3 (✅) · A.3 (❌ ditutup — lihat A.6).
+
+> **Bagian B (pemisahan settings global/lokal) selesai.** Platform settings kini eksklusif di `platform_settings` (central, panel admin `module.platform-settings`), `Setting` tenant-only.
+>
+> **Bagian A (ramping central):** dicapai lewat **A.0** — gating auto-load migrasi modul pada `CENTRAL_SERVES_APP`. A.3 (pemindahan file tabel domain) **ditutup** karena FK terkopel (`accounting → partners`) + test single-DB; slimming nyata (207→67 tabel) sudah didapat operasional dengan `CENTRAL_SERVES_APP=false`.
+
+> **Catatan B2:** dilakukan non-destruktif. Baris global di central `settings` + scope `Setting::centralOnlyKeys()` **dipertahankan** (UI settings admin lama tetap berfungsi, di-mirror ke `platform_settings`). Penghapusan baris shadow + panel platform khusus + `Setting` benar-benar tenant-only = **B3**. (settings dulu karena aditif & berisiko rendah; ramping folder migrasi central paling akhir karena butuh keputusan `CENTRAL_SERVES_APP` + verifikasi penuh). User (poin 3 review) sudah benar dan tidak diubah.
 
 **Untuk mengaktifkan central ramping di environment nyata:** set `CENTRAL_SERVES_APP=false` → gating A.0 langsung menghilangkan tabel modul dari central. Prasyarat: domain tenant tersedia untuk dev (central tak lagi melayani UI CRM) + modul di-install per tenant. Kerjakan A.3 bila ingin menghapus juga duplikasi domain di `database/migrations/`.

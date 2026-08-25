@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\Setting;
 use App\Models\User;
 use App\Support\SystemMode;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -17,17 +16,7 @@ class DevelopmentVerificationTest extends TestCase
 
     private function seedSystemMode(string $mode): void
     {
-        Setting::query()->updateOrCreate(
-            ['key' => SystemMode::KEY],
-            [
-                'group' => 'general',
-                'value' => $mode,
-                'type' => 'select',
-                'label' => 'System Mode',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-        );
+        \App\Models\PlatformSetting::setValue(SystemMode::KEY, $mode);
     }
 
     public function test_development_registration_shows_verification_url_without_sending_mail(): void

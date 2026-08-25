@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\PlatformSetting;
+use App\Models\Setting;
 use App\Support\CentralAiSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
