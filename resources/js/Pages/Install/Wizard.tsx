@@ -32,7 +32,7 @@ interface LocaleOption {
 
 export default function Wizard(props: Props) {
     const { t, locale: currentLocale } = useTrans();
-    const page = usePage<{ availableLocales?: LocaleOption[]; appName?: string; flash?: { status?: string } }>();
+    const page = usePage<{ availableLocales?: LocaleOption[]; appName?: string; flash?: { status?: string }; errors?: Record<string, string> }>();
     const availableLocales = page.props.availableLocales ?? [];
 
     const locked = props.tokenRequired && !props.unlocked;
@@ -201,31 +201,31 @@ export default function Wizard(props: Props) {
         <>
             <Head title={t('install.title', undefined, 'Seruwit CRM Installation')} />
 
-            <div className="relative min-h-screen bg-slate-950 font-sans text-slate-100 selection:bg-indigo-500 selection:text-white">
-                {/* Background Ambient Glowing Orbs */}
+            <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/50 to-indigo-50/70 font-sans text-slate-800 selection:bg-indigo-500 selection:text-white">
+                {/* Background Ambient Soft Pastel Glows */}
                 <div className="pointer-events-none fixed inset-0 overflow-hidden">
-                    <div className="absolute -left-32 -top-32 h-[550px] w-[550px] rounded-full bg-indigo-600/15 blur-[140px]" />
-                    <div className="absolute -right-32 top-1/4 h-[550px] w-[550px] rounded-full bg-sky-500/15 blur-[140px]" />
-                    <div className="absolute -bottom-32 left-1/3 h-[550px] w-[550px] rounded-full bg-emerald-500/10 blur-[160px]" />
+                    <div className="absolute -left-28 -top-28 h-[500px] w-[500px] rounded-full bg-sky-200/40 blur-[130px]" />
+                    <div className="absolute -right-28 top-1/4 h-[500px] w-[500px] rounded-full bg-indigo-200/40 blur-[130px]" />
+                    <div className="absolute -bottom-28 left-1/3 h-[500px] w-[500px] rounded-full bg-emerald-200/30 blur-[150px]" />
                     {/* Subtle grid pattern overlay */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e125_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e125_1px,transparent_1px)] bg-[size:4rem_4rem]" />
                 </div>
 
                 <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-8 sm:px-6 lg:px-8">
                     {/* Top Header Bar */}
-                    <header className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4 shadow-xl backdrop-blur-xl">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/80 shadow-md">
+                    <header className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/80 p-4 sm:px-6 shadow-lg shadow-slate-200/40 backdrop-blur-xl">
+                        <div className="flex items-center gap-3.5">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200/90 bg-white p-2 shadow-sm">
                                 <ApplicationLogo showText={false} className="h-8 w-8" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-lg font-black tracking-tight text-white">SERUWIT <span className="text-sky-400">BIZ</span></span>
-                                    <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-400">
-                                        Installer
+                                    <span className="text-lg font-black tracking-tight text-slate-900">SERUWIT <span className="text-indigo-600">BIZ</span></span>
+                                    <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                                        Setup Wizard
                                     </span>
                                 </div>
-                                <p className="text-xs font-medium text-slate-400">
+                                <p className="text-xs font-medium text-slate-500">
                                     {t('install.subtitle', undefined, 'First-time platform setup')}
                                 </p>
                             </div>
@@ -233,7 +233,7 @@ export default function Wizard(props: Props) {
 
                         {/* Top Right Language Selector & System Status */}
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center rounded-xl border border-slate-700/60 bg-slate-800/60 p-1 backdrop-blur-md">
+                            <div className="flex items-center rounded-2xl border border-slate-200/80 bg-slate-100/90 p-1 shadow-inner backdrop-blur-md">
                                 {availableLocales.length > 0 ? (
                                     availableLocales.map((locale) => {
                                         const isSelected = currentLocale === locale.code;
@@ -242,10 +242,10 @@ export default function Wizard(props: Props) {
                                                 key={locale.code}
                                                 type="button"
                                                 onClick={() => router.get('/install', { lang: locale.code }, { preserveState: false })}
-                                                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                                                className={`rounded-xl px-3 py-1 text-xs font-bold transition-all ${
                                                     isSelected
-                                                        ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md'
-                                                        : 'text-slate-400 hover:text-slate-200'
+                                                        ? 'bg-white text-indigo-600 shadow-sm'
+                                                        : 'text-slate-600 hover:text-slate-900'
                                                 }`}
                                             >
                                                 {locale.code.toUpperCase()}
@@ -257,10 +257,10 @@ export default function Wizard(props: Props) {
                                         <button
                                             type="button"
                                             onClick={() => router.get('/install', { lang: 'id' }, { preserveState: false })}
-                                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                                            className={`rounded-xl px-3 py-1 text-xs font-bold transition-all ${
                                                 currentLocale === 'id'
-                                                    ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md'
-                                                    : 'text-slate-400 hover:text-slate-200'
+                                                    ? 'bg-white text-indigo-600 shadow-sm'
+                                                    : 'text-slate-600 hover:text-slate-900'
                                             }`}
                                         >
                                             ID
@@ -268,10 +268,10 @@ export default function Wizard(props: Props) {
                                         <button
                                             type="button"
                                             onClick={() => router.get('/install', { lang: 'en' }, { preserveState: false })}
-                                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                                            className={`rounded-xl px-3 py-1 text-xs font-bold transition-all ${
                                                 currentLocale === 'en'
-                                                    ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md'
-                                                    : 'text-slate-400 hover:text-slate-200'
+                                                    ? 'bg-white text-indigo-600 shadow-sm'
+                                                    : 'text-slate-600 hover:text-slate-900'
                                             }`}
                                         >
                                             EN
@@ -284,24 +284,24 @@ export default function Wizard(props: Props) {
 
                     {/* Mobile Stepper Header (< lg) */}
                     <div className="mb-6 lg:hidden">
-                        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4 shadow-xl backdrop-blur-xl">
-                            <div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-400">
+                        <div className="rounded-3xl border border-slate-200/80 bg-white/85 p-4 shadow-lg shadow-slate-200/40 backdrop-blur-xl">
+                            <div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-500">
                                 <span>
                                     {t('install.step_counter', { current: step + 1, total: STEPS.length }, `Step ${step + 1} of ${STEPS.length}`)}
                                 </span>
-                                <span className="font-mono text-sky-400">{progressPercentage}%</span>
+                                <span className="font-mono text-indigo-600 font-bold">{progressPercentage}%</span>
                             </div>
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                                 <div
-                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 transition-all duration-500 ease-out"
+                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 transition-all duration-500 ease-out"
                                     style={{ width: `${progressPercentage}%` }}
                                 />
                             </div>
                             <div className="mt-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-base text-sky-400">
+                                <span className="material-symbols-outlined text-base text-indigo-600">
                                     {stepIcons[currentKey]}
                                 </span>
-                                <span className="text-sm font-bold text-white">
+                                <span className="text-sm font-bold text-slate-900">
                                     {t(`install.steps.${currentKey}`, undefined, currentKey)}
                                 </span>
                             </div>
@@ -309,27 +309,27 @@ export default function Wizard(props: Props) {
                     </div>
 
                     {/* Main Layout Grid */}
-                    <div className="grid flex-1 items-start gap-8 lg:grid-cols-[280px_1fr]">
+                    <div className="grid flex-1 items-start gap-8 lg:grid-cols-[300px_1fr]">
                         {/* Desktop Stepper Sidebar */}
                         <aside className="sticky top-8 hidden lg:block">
-                            <div className="rounded-3xl border border-slate-800/90 bg-slate-900/70 p-6 shadow-2xl backdrop-blur-2xl">
+                            <div className="rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-xl shadow-slate-200/50 backdrop-blur-2xl">
                                 <div className="mb-6">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                             {t('install.welcome.roadmap_title', undefined, 'Setup Progress')}
                                         </h3>
-                                        <span className="font-mono text-xs font-bold text-sky-400">{progressPercentage}%</span>
+                                        <span className="font-mono text-xs font-bold text-indigo-600">{progressPercentage}%</span>
                                     </div>
-                                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                                         <div
-                                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 transition-all duration-500 ease-out"
+                                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 transition-all duration-500 ease-out"
                                             style={{ width: `${progressPercentage}%` }}
                                         />
                                     </div>
                                 </div>
 
                                 <nav aria-label="steps" className="relative">
-                                    <ol className="space-y-3">
+                                    <ol className="space-y-2.5">
                                         {STEPS.map((key, index) => {
                                             const active = index === step;
                                             const done = index < step;
@@ -343,9 +343,9 @@ export default function Wizard(props: Props) {
                                                         onClick={() => isClickable && go(key)}
                                                         className={`group relative flex w-full items-center gap-3.5 rounded-2xl p-3 text-left transition-all ${
                                                             active
-                                                                ? 'border border-indigo-500/40 bg-gradient-to-r from-indigo-950/60 to-slate-900 shadow-lg shadow-indigo-950/40 ring-1 ring-indigo-500/30'
+                                                                ? 'border border-indigo-200/90 bg-indigo-50/90 shadow-sm ring-1 ring-indigo-500/20'
                                                                 : done
-                                                                  ? 'cursor-pointer hover:border-slate-700 hover:bg-slate-800/40'
+                                                                  ? 'cursor-pointer hover:border-slate-200 hover:bg-slate-50/80'
                                                                   : 'cursor-default opacity-50'
                                                         }`}
                                                     >
@@ -353,10 +353,10 @@ export default function Wizard(props: Props) {
                                                         <div
                                                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-mono text-xs font-bold transition-all ${
                                                                 active
-                                                                    ? 'bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-md shadow-indigo-500/30 ring-2 ring-indigo-400/50'
+                                                                    ? 'bg-gradient-to-br from-indigo-600 to-sky-600 text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-300/50'
                                                                     : done
-                                                                      ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                                                                      : 'border border-slate-800 bg-slate-800/70 text-slate-500'
+                                                                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-600 font-bold'
+                                                                      : 'border border-slate-200 bg-slate-100 text-slate-400'
                                                             }`}
                                                         >
                                                             {done ? (
@@ -371,21 +371,21 @@ export default function Wizard(props: Props) {
                                                             <p
                                                                 className={`truncate text-xs font-bold ${
                                                                     active
-                                                                        ? 'text-white'
+                                                                        ? 'text-indigo-950'
                                                                         : done
-                                                                          ? 'text-slate-300 group-hover:text-white'
-                                                                          : 'text-slate-500'
+                                                                          ? 'text-slate-700 group-hover:text-slate-900'
+                                                                          : 'text-slate-400'
                                                                 }`}
                                                             >
                                                                 {t(`install.steps.${key}`, undefined, key)}
                                                             </p>
-                                                            <p className="truncate text-[10px] text-slate-500">
+                                                            <p className={`truncate text-[10px] ${active ? 'text-indigo-600/80 font-medium' : 'text-slate-400'}`}>
                                                                 {t(`install.step_desc.${key}`, undefined, '')}
                                                             </p>
                                                         </div>
 
                                                         {active && (
-                                                            <span className="h-2 w-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8] animate-pulse" />
+                                                            <span className="h-2 w-2 rounded-full bg-indigo-600 shadow-[0_0_8px_#6366f1] animate-pulse" />
                                                         )}
                                                     </button>
                                                 </li>
@@ -397,31 +397,31 @@ export default function Wizard(props: Props) {
                         </aside>
 
                         {/* Main Step Content Container */}
-                        <main className="rounded-3xl border border-slate-800/90 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-2xl sm:p-10">
+                        <main className="rounded-3xl border border-slate-200/90 bg-white/90 p-6 sm:p-10 shadow-2xl shadow-slate-200/70 backdrop-blur-2xl">
                             {locked ? (
                                 /* STEP 0: Token Unlock Gate */
                                 <div className="mx-auto max-w-lg space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400 shadow-lg shadow-amber-500/10">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600 shadow-md shadow-amber-500/10">
                                             <span className="material-symbols-outlined text-2xl">shield_lock</span>
                                         </div>
                                         <div>
-                                            <h2 className="text-xl font-black text-white">{t('install.token.heading', undefined, 'Token Protected Access')}</h2>
-                                            <p className="text-xs text-slate-400">{t('install.token.hint', undefined, 'This deployment requires a secret token to proceed.')}</p>
+                                            <h2 className="text-xl font-extrabold text-slate-900">{t('install.token.heading', undefined, 'Token Protected Access')}</h2>
+                                            <p className="text-xs text-slate-500">{t('install.token.hint', undefined, 'This deployment requires a secret token to proceed.')}</p>
                                         </div>
                                     </div>
 
                                     {/* Terminal Command Snippet Box */}
-                                    <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                                    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-inner">
                                         <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                                            <span className="flex items-center gap-1.5">
-                                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                            <span className="flex items-center gap-1.5 font-bold">
+                                                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                                                 Terminal Command
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={copyTokenCommand}
-                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-200 transition hover:bg-slate-700 hover:text-white"
                                             >
                                                 <span className="material-symbols-outlined text-sm">
                                                     {copiedTokenCmd ? 'check' : 'content_copy'}
@@ -438,14 +438,14 @@ export default function Wizard(props: Props) {
 
                                     <form onSubmit={submitUnlock} className="space-y-4">
                                         <div>
-                                            <InputLabel htmlFor="token" value={t('install.token.label', undefined, 'Installer Token')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                            <InputLabel htmlFor="token" value={t('install.token.label', undefined, 'Installer Token')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                             <div className="relative mt-1">
-                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                     <span className="material-symbols-outlined text-lg">key</span>
                                                 </div>
                                                 <TextInput
                                                     id="token"
-                                                    className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-3 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-3 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                     value={unlockForm.data.token}
                                                     onChange={(e) => unlockForm.setData('token', e.target.value)}
                                                     placeholder={t('install.token.placeholder', undefined, 'Paste installer token here...')}
@@ -458,7 +458,7 @@ export default function Wizard(props: Props) {
                                         <button
                                             type="submit"
                                             disabled={unlockForm.processing || !unlockForm.data.token}
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-6 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-6 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {unlockForm.processing ? (
                                                 <>
@@ -480,66 +480,66 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'welcome' && (
                                         <section className="space-y-8">
                                             <div>
-                                                <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/30 bg-sky-500/10 px-3.5 py-1 text-xs font-bold text-sky-400">
+                                                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/90 px-3.5 py-1 text-xs font-bold text-indigo-700 shadow-sm">
                                                     <span className="material-symbols-outlined text-sm">rocket_launch</span>
                                                     {t('install.welcome.estimated_time', undefined, 'Estimated time: ~2 mins')}
                                                 </div>
-                                                <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                                                <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl leading-tight">
                                                     {t('install.welcome.heading', undefined, 'Welcome to Seruwit CRM')}
                                                 </h2>
-                                                <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                                                <p className="mt-2 text-sm font-medium text-slate-600 leading-relaxed">
                                                     {t('install.welcome.intro', undefined, 'This wizard will guide you through setting up the platform control plane, database, and primary administrator.')}
                                                 </p>
                                             </div>
 
                                             {/* Roadmap Feature Grid */}
-                                            <div className="grid gap-3 sm:grid-cols-2">
-                                                <div className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 transition hover:border-slate-700">
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
-                                                        <span className="material-symbols-outlined text-lg">verified</span>
+                                            <div className="grid gap-3.5 sm:grid-cols-2">
+                                                <div className="flex items-start gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:border-indigo-200 hover:shadow-sm">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600">
+                                                        <span className="material-symbols-outlined text-xl">verified</span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-xs font-bold text-slate-200">1. {t('install.steps.requirements', undefined, 'Requirements')}</h4>
-                                                        <p className="mt-0.5 text-[11px] text-slate-400 leading-normal">{t('install.welcome.item_req', undefined, 'Server compatibility & PHP 8.4+ validation')}</p>
+                                                        <h4 className="text-xs font-bold text-slate-800">1. {t('install.steps.requirements', undefined, 'Requirements')}</h4>
+                                                        <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">{t('install.welcome.item_req', undefined, 'Server compatibility & PHP 8.4+ validation')}</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 transition hover:border-slate-700">
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sky-500/20 bg-sky-500/10 text-sky-400">
-                                                        <span className="material-symbols-outlined text-lg">database</span>
+                                                <div className="flex items-start gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:border-sky-200 hover:shadow-sm">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-100 bg-sky-50 text-sky-600">
+                                                        <span className="material-symbols-outlined text-xl">database</span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-xs font-bold text-slate-200">2. {t('install.steps.database', undefined, 'Database')}</h4>
-                                                        <p className="mt-0.5 text-[11px] text-slate-400 leading-normal">{t('install.welcome.item_db', undefined, 'Central database connection setup & live test')}</p>
+                                                        <h4 className="text-xs font-bold text-slate-800">2. {t('install.steps.database', undefined, 'Database')}</h4>
+                                                        <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">{t('install.welcome.item_db', undefined, 'Central database connection setup & live test')}</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 transition hover:border-slate-700">
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-400">
-                                                        <span className="material-symbols-outlined text-lg">schema</span>
+                                                <div className="flex items-start gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:border-violet-200 hover:shadow-sm">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 text-violet-600">
+                                                        <span className="material-symbols-outlined text-xl">schema</span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-xs font-bold text-slate-200">3. {t('install.steps.migrate', undefined, 'Migrate')}</h4>
-                                                        <p className="mt-0.5 text-[11px] text-slate-400 leading-normal">{t('install.welcome.item_mig', undefined, 'Database schema migration, roles & permissions')}</p>
+                                                        <h4 className="text-xs font-bold text-slate-800">3. {t('install.steps.migrate', undefined, 'Migrate')}</h4>
+                                                        <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">{t('install.welcome.item_mig', undefined, 'Database schema migration, roles & permissions')}</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 transition hover:border-slate-700">
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-                                                        <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                                                <div className="flex items-start gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:border-emerald-200 hover:shadow-sm">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-600">
+                                                        <span className="material-symbols-outlined text-xl">admin_panel_settings</span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-xs font-bold text-slate-200">4. {t('install.steps.admin', undefined, 'Admin')}</h4>
-                                                        <p className="mt-0.5 text-[11px] text-slate-400 leading-normal">{t('install.welcome.item_admin', undefined, 'Initial Super Administrator account creation')}</p>
+                                                        <h4 className="text-xs font-bold text-slate-800">4. {t('install.steps.admin', undefined, 'Admin')}</h4>
+                                                        <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">{t('install.welcome.item_admin', undefined, 'Initial Super Administrator account creation')}</p>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-end pt-4 border-t border-slate-800">
+                                            <div className="flex items-center justify-end pt-4 border-t border-slate-100">
                                                 <button
                                                     type="button"
                                                     onClick={() => go('requirements')}
-                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500"
+                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all"
                                                 >
                                                     <span>{t('install.welcome.start', undefined, 'Start Installation')}</span>
                                                     <span className="material-symbols-outlined text-base">arrow_forward</span>
@@ -552,20 +552,20 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'requirements' && (
                                         <section className="space-y-6">
                                             <div>
-                                                <h2 className="text-xl font-black text-white sm:text-2xl">
+                                                <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                                                     {t('install.requirements.heading', undefined, 'Server Requirements')}
                                                 </h2>
-                                                <p className="mt-1 text-xs text-slate-400">
+                                                <p className="mt-1 text-xs text-slate-500">
                                                     {t('install.requirements.intro', undefined, 'Please ensure all server environment requirements below are satisfied before proceeding.')}
                                                 </p>
                                             </div>
 
                                             {/* Overall Status Banner */}
                                             <div
-                                                className={`flex items-center gap-3 rounded-2xl border p-4 backdrop-blur-md ${
+                                                className={`flex items-center gap-3.5 rounded-2xl border p-4 shadow-sm backdrop-blur-md ${
                                                     props.requirementsPass
-                                                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                                                        : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                                                        ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800'
+                                                        : 'border-rose-200 bg-rose-50/90 text-rose-800'
                                                 }`}
                                             >
                                                 <span className="material-symbols-outlined text-2xl shrink-0">
@@ -579,28 +579,28 @@ export default function Wizard(props: Props) {
                                             </div>
 
                                             {/* Requirements List */}
-                                            <div className="divide-y divide-slate-800/80 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
+                                            <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                                 {props.requirements.map((check) => (
                                                     <div
                                                         key={check.name}
-                                                        className="flex items-center justify-between p-3.5 text-xs transition hover:bg-slate-900/40"
+                                                        className="flex items-center justify-between p-3.5 text-xs transition hover:bg-slate-50/70"
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             <span
                                                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
                                                                     check.passed
-                                                                        ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                                                                        : 'border border-rose-500/30 bg-rose-500/10 text-rose-400'
+                                                                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-600'
+                                                                        : 'border border-rose-200 bg-rose-50 text-rose-600'
                                                                 }`}
                                                             >
-                                                                <span className="material-symbols-outlined text-sm">
+                                                                <span className="material-symbols-outlined text-sm font-bold">
                                                                     {check.passed ? 'check' : 'close'}
                                                                 </span>
                                                             </span>
                                                             <div>
-                                                                <span className="font-bold text-slate-200">{check.name}</span>
+                                                                <span className="font-bold text-slate-800">{check.name}</span>
                                                                 {check.hint && (
-                                                                    <span className="ml-2 font-mono text-[11px] text-slate-500">
+                                                                    <span className="ml-2 font-mono text-[11px] text-slate-400">
                                                                         ({check.hint})
                                                                     </span>
                                                                 )}
@@ -609,8 +609,8 @@ export default function Wizard(props: Props) {
                                                         <span
                                                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                                                 check.passed
-                                                                    ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                                                                    : 'border border-rose-500/30 bg-rose-500/10 text-rose-400'
+                                                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                                    : 'border border-rose-200 bg-rose-50 text-rose-700'
                                                             }`}
                                                         >
                                                             {check.passed
@@ -622,12 +622,12 @@ export default function Wizard(props: Props) {
                                             </div>
 
                                             {/* Action Buttons */}
-                                            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                                                 <button
                                                     type="button"
                                                     onClick={handleRecheck}
                                                     disabled={isRechecking}
-                                                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                                                 >
                                                     <span className={`material-symbols-outlined text-base ${isRechecking ? 'animate-spin' : ''}`}>
                                                         refresh
@@ -639,7 +639,7 @@ export default function Wizard(props: Props) {
                                                     type="button"
                                                     onClick={() => go('database')}
                                                     disabled={!props.requirementsPass}
-                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     <span>{t('install.actions.next', undefined, 'Next')}</span>
                                                     <span className="material-symbols-outlined text-base">arrow_forward</span>
@@ -652,17 +652,17 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'database' && (
                                         <form onSubmit={submitDatabase} className="space-y-6">
                                             <div>
-                                                <h2 className="text-xl font-black text-white sm:text-2xl">
+                                                <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                                                     {t('install.database.heading', undefined, 'Database Configuration')}
                                                 </h2>
-                                                <p className="mt-1 text-xs text-slate-400">
+                                                <p className="mt-1 text-xs text-slate-500">
                                                     {t('install.database.intro', undefined, 'Choose your database engine and enter central connection credentials.')}
                                                 </p>
                                             </div>
 
                                             {/* Database Driver Selector Cards */}
                                             <div>
-                                                <InputLabel value={t('install.database.driver', undefined, 'Database Engine')} className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                <InputLabel value={t('install.database.driver', undefined, 'Database Engine')} className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                 <div className="grid gap-3 sm:grid-cols-3">
                                                     {props.drivers.map((driver) => {
                                                         const isSelected = dbForm.data.driver === driver;
@@ -684,14 +684,14 @@ export default function Wizard(props: Props) {
                                                                 onClick={() => handleDriverChange(driver)}
                                                                 className={`flex flex-col items-start rounded-2xl border p-4 text-left transition-all ${
                                                                     isSelected
-                                                                        ? 'border-indigo-500 bg-gradient-to-br from-indigo-950/60 to-slate-900 shadow-lg shadow-indigo-950/40 ring-2 ring-indigo-500/30'
-                                                                        : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                                                                        ? 'border-indigo-300 bg-indigo-50/80 shadow-md ring-2 ring-indigo-500/20'
+                                                                        : 'border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 shadow-sm'
                                                                 }`}
                                                             >
                                                                 <div className="flex w-full items-center justify-between">
                                                                     <div
                                                                         className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-                                                                            isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'
+                                                                            isSelected ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-500'
                                                                         }`}
                                                                     >
                                                                         <span className="material-symbols-outlined text-lg">
@@ -699,15 +699,15 @@ export default function Wizard(props: Props) {
                                                                         </span>
                                                                     </div>
                                                                     {isSelected && (
-                                                                        <span className="material-symbols-outlined text-sky-400 text-lg">
+                                                                        <span className="material-symbols-outlined text-indigo-600 text-lg">
                                                                             check_circle
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <span className="mt-3 text-xs font-bold text-white">
+                                                                <span className="mt-3 text-xs font-bold text-slate-900">
                                                                     {driverTitles[driver] || driver}
                                                                 </span>
-                                                                <span className="mt-1 text-[10px] text-slate-400 leading-snug">
+                                                                <span className="mt-1 text-[10px] text-slate-500 leading-snug">
                                                                     {t(`install.database.driver_${driver}_desc`, undefined, '')}
                                                                 </span>
                                                             </button>
@@ -722,14 +722,14 @@ export default function Wizard(props: Props) {
                                                 <div className="space-y-4">
                                                     <div className="grid gap-4 sm:grid-cols-3">
                                                         <div className="sm:col-span-2">
-                                                            <InputLabel htmlFor="host" value={t('install.database.host', undefined, 'Host')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                            <InputLabel htmlFor="host" value={t('install.database.host', undefined, 'Host')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                             <div className="relative mt-1">
-                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                     <span className="material-symbols-outlined text-base">router</span>
                                                                 </div>
                                                                 <TextInput
                                                                     id="host"
-                                                                    className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                    className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                     value={dbForm.data.host}
                                                                     onChange={(e) => dbForm.setData('host', e.target.value)}
                                                                 />
@@ -738,15 +738,15 @@ export default function Wizard(props: Props) {
                                                         </div>
 
                                                         <div>
-                                                            <InputLabel htmlFor="port" value={t('install.database.port', undefined, 'Port')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                            <InputLabel htmlFor="port" value={t('install.database.port', undefined, 'Port')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                             <div className="relative mt-1">
-                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                     <span className="material-symbols-outlined text-base">tag</span>
                                                                 </div>
                                                                 <TextInput
                                                                     id="port"
                                                                     type="number"
-                                                                    className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                    className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                     value={dbForm.data.port}
                                                                     onChange={(e) => dbForm.setData('port', Number(e.target.value))}
                                                                 />
@@ -756,14 +756,14 @@ export default function Wizard(props: Props) {
                                                     </div>
 
                                                     <div>
-                                                        <InputLabel htmlFor="database" value={t('install.database.database', undefined, 'Database Name')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                        <InputLabel htmlFor="database" value={t('install.database.database', undefined, 'Database Name')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                         <div className="relative mt-1">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                 <span className="material-symbols-outlined text-base">folder_open</span>
                                                             </div>
                                                             <TextInput
                                                                 id="database"
-                                                                className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                 value={dbForm.data.database}
                                                                 onChange={(e) => dbForm.setData('database', e.target.value)}
                                                             />
@@ -773,14 +773,14 @@ export default function Wizard(props: Props) {
 
                                                     <div className="grid gap-4 sm:grid-cols-2">
                                                         <div>
-                                                            <InputLabel htmlFor="username" value={t('install.database.username', undefined, 'Username')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                            <InputLabel htmlFor="username" value={t('install.database.username', undefined, 'Username')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                             <div className="relative mt-1">
-                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                     <span className="material-symbols-outlined text-base">person</span>
                                                                 </div>
                                                                 <TextInput
                                                                     id="username"
-                                                                    className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                    className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                     value={dbForm.data.username}
                                                                     onChange={(e) => dbForm.setData('username', e.target.value)}
                                                                 />
@@ -789,22 +789,22 @@ export default function Wizard(props: Props) {
                                                         </div>
 
                                                         <div>
-                                                            <InputLabel htmlFor="password" value={t('install.database.password', undefined, 'Password')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                            <InputLabel htmlFor="password" value={t('install.database.password', undefined, 'Password')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                             <div className="relative mt-1">
-                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                     <span className="material-symbols-outlined text-base">lock</span>
                                                                 </div>
                                                                 <TextInput
                                                                     id="password"
                                                                     type={showDbPassword ? 'text' : 'password'}
-                                                                    className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-10 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                    className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-10 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                     value={dbForm.data.password}
                                                                     onChange={(e) => dbForm.setData('password', e.target.value)}
                                                                 />
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setShowDbPassword(!showDbPassword)}
-                                                                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-200"
+                                                                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
                                                                 >
                                                                     <span className="material-symbols-outlined text-base">
                                                                         {showDbPassword ? 'visibility_off' : 'visibility'}
@@ -817,14 +817,14 @@ export default function Wizard(props: Props) {
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <InputLabel htmlFor="database" value={t('install.database.sqlite_path', undefined, 'SQLite File Path')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel htmlFor="database" value={t('install.database.sqlite_path', undefined, 'SQLite File Path')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                             <span className="material-symbols-outlined text-base">description</span>
                                                         </div>
                                                         <TextInput
                                                             id="database"
-                                                            className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                             value={dbForm.data.database}
                                                             onChange={(e) => dbForm.setData('database', e.target.value)}
                                                             placeholder="database/database.sqlite"
@@ -837,12 +837,12 @@ export default function Wizard(props: Props) {
                                             {/* Live Connection Test Banner */}
                                             {dbTestStatus !== 'idle' && (
                                                 <div
-                                                    className={`flex items-start gap-3 rounded-2xl border p-4 text-xs font-bold backdrop-blur-md ${
+                                                    className={`flex items-start gap-3 rounded-2xl border p-4 text-xs font-bold shadow-sm backdrop-blur-md ${
                                                         dbTestStatus === 'testing'
-                                                            ? 'border-sky-500/30 bg-sky-500/10 text-sky-300'
+                                                            ? 'border-sky-200 bg-sky-50 text-sky-800'
                                                             : dbTestStatus === 'success'
-                                                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                                                              : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                                                              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                                              : 'border-rose-200 bg-rose-50 text-rose-800'
                                                     }`}
                                                 >
                                                     <span className="material-symbols-outlined text-lg shrink-0">
@@ -860,12 +860,12 @@ export default function Wizard(props: Props) {
                                             )}
 
                                             {/* Action Buttons */}
-                                            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800">
+                                            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
                                                 <div className="flex gap-2">
                                                     <button
                                                         type="button"
                                                         onClick={() => go('requirements')}
-                                                        className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                                        className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                                                     >
                                                         <span className="material-symbols-outlined text-base">arrow_back</span>
                                                         <span>{t('install.actions.back', undefined, 'Back')}</span>
@@ -875,7 +875,7 @@ export default function Wizard(props: Props) {
                                                         type="button"
                                                         onClick={testDbConnection}
                                                         disabled={dbTestStatus === 'testing'}
-                                                        className="inline-flex items-center gap-1.5 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-5 py-3 text-xs font-bold text-sky-300 transition hover:bg-sky-500/20"
+                                                        className="inline-flex items-center gap-1.5 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-3 text-xs font-bold text-sky-700 shadow-sm transition hover:bg-sky-100"
                                                     >
                                                         <span className={`material-symbols-outlined text-base ${dbTestStatus === 'testing' ? 'animate-spin' : ''}`}>
                                                             bolt
@@ -887,7 +887,7 @@ export default function Wizard(props: Props) {
                                                 <button
                                                     type="submit"
                                                     disabled={dbForm.processing}
-                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     {dbForm.processing ? (
                                                         <>
@@ -909,66 +909,66 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'migrate' && (
                                         <section className="space-y-6">
                                             <div>
-                                                <h2 className="text-xl font-black text-white sm:text-2xl">
+                                                <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                                                     {t('install.migrate.heading', undefined, 'Schema Migrations & Seeders')}
                                                 </h2>
-                                                <p className="mt-1 text-xs text-slate-400">
+                                                <p className="mt-1 text-xs text-slate-500">
                                                     {t('install.migrate.intro', undefined, 'The system will build all central tables and register default roles, permissions, and modules.')}
                                                 </p>
                                             </div>
 
                                             {/* Details Checklist Card */}
-                                            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5 space-y-3">
-                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 space-y-3 shadow-inner">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                                                     {t('install.migrate.details_title', undefined, 'Actions to be performed:')}
                                                 </h4>
                                                 <div className="space-y-2.5">
-                                                    <div className="flex items-center gap-3 text-xs text-slate-300">
-                                                        <span className="material-symbols-outlined text-base text-indigo-400">table_rows</span>
+                                                    <div className="flex items-center gap-3 text-xs text-slate-700">
+                                                        <span className="material-symbols-outlined text-base text-indigo-600">table_rows</span>
                                                         <span>{t('install.migrate.detail_1', undefined, 'Executing central database schema migrations')}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-xs text-slate-300">
-                                                        <span className="material-symbols-outlined text-base text-sky-400">shield_person</span>
+                                                    <div className="flex items-center gap-3 text-xs text-slate-700">
+                                                        <span className="material-symbols-outlined text-base text-sky-600">shield_person</span>
                                                         <span>{t('install.migrate.detail_2', undefined, 'Bootstrapping system roles and permission matrix')}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-xs text-slate-300">
-                                                        <span className="material-symbols-outlined text-base text-emerald-400">extension</span>
+                                                    <div className="flex items-center gap-3 text-xs text-slate-700">
+                                                        <span className="material-symbols-outlined text-base text-emerald-600">extension</span>
                                                         <span>{t('install.migrate.detail_3', undefined, 'Registering platform module catalog and system settings')}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {migrateForm.errors.migrate && (
-                                                <div className="flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-bold text-rose-300">
+                                            {(migrateForm.errors.migrate || page.props.errors?.migrate) && (
+                                                <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-800 shadow-sm">
                                                     <span className="material-symbols-outlined text-lg shrink-0">error</span>
-                                                    <div>{migrateForm.errors.migrate}</div>
+                                                    <div>{migrateForm.errors.migrate || page.props.errors?.migrate}</div>
                                                 </div>
                                             )}
 
                                             {/* Migration Action Area */}
-                                            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 p-8 text-center">
+                                            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-indigo-200 bg-gradient-to-b from-slate-50/60 to-indigo-50/40 p-8 text-center shadow-sm">
                                                 {migrateForm.processing ? (
                                                     <div className="space-y-4">
-                                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-indigo-500/30 border-t-indigo-400 animate-spin" />
+                                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
                                                         <div>
-                                                            <h4 className="text-sm font-bold text-white">{t('install.migrate.running', undefined, 'Running Migrations & Seeders…')}</h4>
-                                                            <p className="mt-1 text-xs text-slate-400">{t('install.migrate.note', undefined, 'This process runs automatically and typically takes a few seconds.')}</p>
+                                                            <h4 className="text-sm font-bold text-slate-900">{t('install.migrate.running', undefined, 'Running Migrations & Seeders…')}</h4>
+                                                            <p className="mt-1 text-xs text-slate-500">{t('install.migrate.note', undefined, 'This process runs automatically and typically takes a few seconds.')}</p>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-4">
-                                                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
+                                                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm">
                                                             <span className="material-symbols-outlined text-3xl">play_circle</span>
                                                         </div>
                                                         <div>
-                                                            <h4 className="text-sm font-bold text-white">{t('install.migrate.heading', undefined, 'Ready to build database')}</h4>
-                                                            <p className="mt-1 text-xs text-slate-400">{t('install.migrate.note', undefined, 'Click the button below to start.')}</p>
+                                                            <h4 className="text-sm font-extrabold text-slate-900">{t('install.migrate.heading', undefined, 'Ready to build database')}</h4>
+                                                            <p className="mt-1 text-xs text-slate-500">{t('install.migrate.note', undefined, 'Click the button below to start.')}</p>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={runMigrate}
                                                             disabled={migrateForm.processing}
-                                                            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500"
+                                                            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all"
                                                         >
                                                             <span className="material-symbols-outlined text-base">bolt</span>
                                                             <span>{t('install.migrate.run', undefined, 'Run Schema Migrations')}</span>
@@ -977,11 +977,11 @@ export default function Wizard(props: Props) {
                                                 )}
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                                                 <button
                                                     type="button"
                                                     onClick={() => go('database')}
-                                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                                                 >
                                                     <span className="material-symbols-outlined text-base">arrow_back</span>
                                                     <span>{t('install.actions.back', undefined, 'Back')}</span>
@@ -994,24 +994,24 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'platform' && (
                                         <form onSubmit={submitPlatform} className="space-y-6">
                                             <div>
-                                                <h2 className="text-xl font-black text-white sm:text-2xl">
+                                                <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                                                     {t('install.platform.heading', undefined, 'Platform Profile & Settings')}
                                                 </h2>
-                                                <p className="mt-1 text-xs text-slate-400">
+                                                <p className="mt-1 text-xs text-slate-500">
                                                     {t('install.platform.intro', undefined, 'Define the platform branding identity, access URLs, and deployment profile preferences.')}
                                                 </p>
                                             </div>
 
                                             <div className="space-y-4">
                                                 <div>
-                                                    <InputLabel htmlFor="app_name" value={t('install.platform.app_name', undefined, 'Application Name')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel htmlFor="app_name" value={t('install.platform.app_name', undefined, 'Application Name')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                             <span className="material-symbols-outlined text-base">badge</span>
                                                         </div>
                                                         <TextInput
                                                             id="app_name"
-                                                            className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 text-xs font-bold text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 text-xs font-bold text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                             value={platformForm.data.app_name}
                                                             onChange={(e) => platformForm.setData('app_name', e.target.value)}
                                                         />
@@ -1020,14 +1020,14 @@ export default function Wizard(props: Props) {
                                                 </div>
 
                                                 <div>
-                                                    <InputLabel htmlFor="app_url" value={t('install.platform.app_url', undefined, 'Primary Application URL')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel htmlFor="app_url" value={t('install.platform.app_url', undefined, 'Primary Application URL')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                             <span className="material-symbols-outlined text-base">link</span>
                                                         </div>
                                                         <TextInput
                                                             id="app_url"
-                                                            className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                             value={platformForm.data.app_url}
                                                             onChange={(e) => platformForm.setData('app_url', e.target.value)}
                                                         />
@@ -1036,14 +1036,14 @@ export default function Wizard(props: Props) {
                                                 </div>
 
                                                 <div>
-                                                    <InputLabel htmlFor="tenant_base_domain" value={t('install.platform.tenant_base_domain', undefined, 'Tenant Base Domain (Optional)')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel htmlFor="tenant_base_domain" value={t('install.platform.tenant_base_domain', undefined, 'Tenant Base Domain (Optional)')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                             <span className="material-symbols-outlined text-base">domain</span>
                                                         </div>
                                                         <TextInput
                                                             id="tenant_base_domain"
-                                                            className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                             value={platformForm.data.tenant_base_domain}
                                                             onChange={(e) => platformForm.setData('tenant_base_domain', e.target.value)}
                                                             placeholder="e.g. yourdomain.com"
@@ -1057,7 +1057,7 @@ export default function Wizard(props: Props) {
 
                                                 {/* Deployment Profile Radio Cards */}
                                                 <div>
-                                                    <InputLabel value={t('install.platform.profile', undefined, 'Deployment Profile')} className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel value={t('install.platform.profile', undefined, 'Deployment Profile')} className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="grid gap-3 sm:grid-cols-2">
                                                         {props.profiles.map((prof) => {
                                                             const isSelected = platformForm.data.profile === prof;
@@ -1068,13 +1068,13 @@ export default function Wizard(props: Props) {
                                                                     onClick={() => platformForm.setData('profile', prof)}
                                                                     className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition-all ${
                                                                         isSelected
-                                                                            ? 'border-indigo-500 bg-gradient-to-br from-indigo-950/60 to-slate-900 shadow-md ring-2 ring-indigo-500/30'
-                                                                            : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                                                                            ? 'border-indigo-300 bg-indigo-50/80 shadow-sm ring-2 ring-indigo-500/20'
+                                                                            : 'border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 shadow-sm'
                                                                     }`}
                                                                 >
                                                                     <div
                                                                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                                                                            isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'
+                                                                            isSelected ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-500'
                                                                         }`}
                                                                     >
                                                                         <span className="material-symbols-outlined text-base">
@@ -1082,8 +1082,8 @@ export default function Wizard(props: Props) {
                                                                         </span>
                                                                     </div>
                                                                     <div>
-                                                                        <span className="text-xs font-bold text-white capitalize">{prof}</span>
-                                                                        <p className="mt-0.5 text-[11px] text-slate-400 leading-snug">
+                                                                        <span className="text-xs font-bold text-slate-900 capitalize">{prof}</span>
+                                                                        <p className="mt-0.5 text-[11px] text-slate-500 leading-snug">
                                                                             {t(`install.platform.profile_${prof}`, undefined, prof)}
                                                                         </p>
                                                                     </div>
@@ -1095,20 +1095,20 @@ export default function Wizard(props: Props) {
                                                 </div>
 
                                                 {/* AI Features Toggle Switch */}
-                                                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                                                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 shadow-sm">
                                                     <label className="flex cursor-pointer items-start justify-between gap-4">
                                                         <div className="flex items-start gap-3">
-                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 border border-violet-200">
                                                                 <span className="material-symbols-outlined text-lg">psychology</span>
                                                             </div>
                                                             <div>
-                                                                <span className="text-xs font-bold text-white">{t('install.platform.ai_features', undefined, 'Enable AI Platform Features')}</span>
-                                                                <p className="text-[11px] text-slate-400 mt-0.5">{t('install.platform.ai_features_hint', undefined, 'Enable AI capabilities for smart CRM analytics and automated assistance.')}</p>
+                                                                <span className="text-xs font-bold text-slate-900">{t('install.platform.ai_features', undefined, 'Enable AI Platform Features')}</span>
+                                                                <p className="text-[11px] text-slate-500 mt-0.5">{t('install.platform.ai_features_hint', undefined, 'Enable AI capabilities for smart CRM analytics and automated assistance.')}</p>
                                                             </div>
                                                         </div>
                                                         <input
                                                             type="checkbox"
-                                                            className="h-5 w-5 rounded-md border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500/30"
+                                                            className="h-5 w-5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500/30"
                                                             checked={platformForm.data.ai_features_enabled}
                                                             onChange={(e) => platformForm.setData('ai_features_enabled', e.target.checked)}
                                                         />
@@ -1116,11 +1116,11 @@ export default function Wizard(props: Props) {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                                                 <button
                                                     type="button"
                                                     onClick={() => go('migrate')}
-                                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                                                 >
                                                     <span className="material-symbols-outlined text-base">arrow_back</span>
                                                     <span>{t('install.actions.back', undefined, 'Back')}</span>
@@ -1129,7 +1129,7 @@ export default function Wizard(props: Props) {
                                                 <button
                                                     type="submit"
                                                     disabled={platformForm.processing}
-                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     {platformForm.processing ? (
                                                         <>
@@ -1151,30 +1151,30 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'admin' && (
                                         <form onSubmit={submitAdmin} className="space-y-6">
                                             <div>
-                                                <h2 className="text-xl font-black text-white sm:text-2xl">
+                                                <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                                                     {t('install.admin.heading', undefined, 'Super Administrator Account')}
                                                 </h2>
-                                                <p className="mt-1 text-xs text-slate-400">
+                                                <p className="mt-1 text-xs text-slate-500">
                                                     {t('install.admin.intro', undefined, 'Create the initial root administrator account to manage the entire platform.')}
                                                 </p>
                                             </div>
 
                                             {/* Role Privilege Notice */}
-                                            <div className="flex items-start gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-xs text-indigo-300">
-                                                <span className="material-symbols-outlined text-lg shrink-0">admin_panel_settings</span>
+                                            <div className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/80 p-4 text-xs text-indigo-800 shadow-sm">
+                                                <span className="material-symbols-outlined text-lg shrink-0 text-indigo-600">admin_panel_settings</span>
                                                 <div>{t('install.admin.role_notice', undefined, 'This account will have highest administrative privileges (Super Admin) to manage platform settings, users, and workspaces.')}</div>
                                             </div>
 
                                             <div className="space-y-4">
                                                 <div>
-                                                    <InputLabel htmlFor="name" value={t('install.admin.name', undefined, 'Full Name')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel htmlFor="name" value={t('install.admin.name', undefined, 'Full Name')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                             <span className="material-symbols-outlined text-base">person</span>
                                                         </div>
                                                         <TextInput
                                                             id="name"
-                                                            className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 text-xs font-bold text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 text-xs font-bold text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                             value={adminForm.data.name}
                                                             onChange={(e) => adminForm.setData('name', e.target.value)}
                                                             placeholder="John Doe"
@@ -1185,15 +1185,15 @@ export default function Wizard(props: Props) {
                                                 </div>
 
                                                 <div>
-                                                    <InputLabel htmlFor="email" value={t('install.admin.email', undefined, 'Email Address')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                    <InputLabel htmlFor="email" value={t('install.admin.email', undefined, 'Email Address')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                     <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                             <span className="material-symbols-outlined text-base">mail</span>
                                                         </div>
                                                         <TextInput
                                                             id="email"
                                                             type="email"
-                                                            className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-4 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                             value={adminForm.data.email}
                                                             onChange={(e) => adminForm.setData('email', e.target.value)}
                                                             placeholder="admin@example.com"
@@ -1204,15 +1204,15 @@ export default function Wizard(props: Props) {
 
                                                 <div className="grid gap-4 sm:grid-cols-2">
                                                     <div>
-                                                        <InputLabel htmlFor="password" value={t('install.admin.password', undefined, 'Password')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                        <InputLabel htmlFor="password" value={t('install.admin.password', undefined, 'Password')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                         <div className="relative mt-1">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                 <span className="material-symbols-outlined text-base">lock</span>
                                                             </div>
                                                             <TextInput
                                                                 id="password"
                                                                 type={showAdminPassword ? 'text' : 'password'}
-                                                                className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-10 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-10 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                 value={adminForm.data.password}
                                                                 onChange={(e) => adminForm.setData('password', e.target.value)}
                                                                 placeholder="••••••••"
@@ -1220,7 +1220,7 @@ export default function Wizard(props: Props) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowAdminPassword(!showAdminPassword)}
-                                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-200"
+                                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
                                                             >
                                                                 <span className="material-symbols-outlined text-base">
                                                                     {showAdminPassword ? 'visibility_off' : 'visibility'}
@@ -1231,15 +1231,15 @@ export default function Wizard(props: Props) {
                                                     </div>
 
                                                     <div>
-                                                        <InputLabel htmlFor="password_confirmation" value={t('install.admin.password_confirmation', undefined, 'Confirm Password')} className="text-xs font-bold uppercase tracking-wider text-slate-300" />
+                                                        <InputLabel htmlFor="password_confirmation" value={t('install.admin.password_confirmation', undefined, 'Confirm Password')} className="text-xs font-bold uppercase tracking-wider text-slate-700" />
                                                         <div className="relative mt-1">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                                                                 <span className="material-symbols-outlined text-base">lock_reset</span>
                                                             </div>
                                                             <TextInput
                                                                 id="password_confirmation"
                                                                 type={showAdminPasswordConfirm ? 'text' : 'password'}
-                                                                className="block w-full rounded-2xl border-slate-700 bg-slate-950/80 py-2.5 pl-10 pr-10 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                className="block w-full rounded-2xl border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-10 font-mono text-xs text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                                                                 value={adminForm.data.password_confirmation}
                                                                 onChange={(e) => adminForm.setData('password_confirmation', e.target.value)}
                                                                 placeholder="••••••••"
@@ -1247,7 +1247,7 @@ export default function Wizard(props: Props) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowAdminPasswordConfirm(!showAdminPasswordConfirm)}
-                                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-200"
+                                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
                                                             >
                                                                 <span className="material-symbols-outlined text-base">
                                                                     {showAdminPasswordConfirm ? 'visibility_off' : 'visibility'}
@@ -1259,11 +1259,11 @@ export default function Wizard(props: Props) {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                                                 <button
                                                     type="button"
                                                     onClick={() => go('platform')}
-                                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                                                 >
                                                     <span className="material-symbols-outlined text-base">arrow_back</span>
                                                     <span>{t('install.actions.back', undefined, 'Back')}</span>
@@ -1272,7 +1272,7 @@ export default function Wizard(props: Props) {
                                                 <button
                                                     type="submit"
                                                     disabled={adminForm.processing}
-                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all hover:from-indigo-500 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-8 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     {adminForm.processing ? (
                                                         <>
@@ -1294,45 +1294,45 @@ export default function Wizard(props: Props) {
                                     {currentKey === 'complete' && (
                                         <section className="space-y-6">
                                             <div className="text-center">
-                                                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-xl shadow-emerald-500/20">
+                                                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-xl shadow-emerald-200/50">
                                                     <span className="material-symbols-outlined text-5xl">celebration</span>
                                                 </div>
-                                                <h2 className="text-2xl font-black text-white sm:text-3xl">
+                                                <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
                                                     {t('install.complete.heading', undefined, 'Installation Complete & Ready!')}
                                                 </h2>
-                                                <p className="mx-auto mt-2 max-w-md text-xs text-slate-400">
+                                                <p className="mx-auto mt-2 max-w-md text-xs font-medium text-slate-500">
                                                     {t('install.complete.intro', undefined, 'All fundamental configurations for Seruwit CRM have been successfully initialized.')}
                                                 </p>
                                             </div>
 
                                             {/* Configuration Summary Card */}
-                                            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5 space-y-3">
-                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 space-y-3 shadow-inner">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                                                     {t('install.complete.summary_title', undefined, 'Configuration Summary')}
                                                 </h4>
                                                 <div className="grid gap-2 text-xs sm:grid-cols-2">
-                                                    <div className="flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/60 p-2.5">
-                                                        <span className="text-slate-400">{t('install.complete.summary_app', undefined, 'Platform Name')}</span>
-                                                        <span className="font-bold text-white">{platformForm.data.app_name}</span>
+                                                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                                        <span className="text-slate-500">{t('install.complete.summary_app', undefined, 'Platform Name')}</span>
+                                                        <span className="font-bold text-slate-900">{platformForm.data.app_name}</span>
                                                     </div>
-                                                    <div className="flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/60 p-2.5">
-                                                        <span className="text-slate-400">{t('install.complete.summary_url', undefined, 'System URL')}</span>
-                                                        <span className="font-mono font-bold text-sky-400">{platformForm.data.app_url}</span>
+                                                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                                        <span className="text-slate-500">{t('install.complete.summary_url', undefined, 'System URL')}</span>
+                                                        <span className="font-mono font-bold text-indigo-600">{platformForm.data.app_url}</span>
                                                     </div>
-                                                    <div className="flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/60 p-2.5">
-                                                        <span className="text-slate-400">{t('install.complete.summary_driver', undefined, 'Database')}</span>
-                                                        <span className="font-mono font-bold text-emerald-400 uppercase">{dbForm.data.driver}</span>
+                                                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                                        <span className="text-slate-500">{t('install.complete.summary_driver', undefined, 'Database')}</span>
+                                                        <span className="font-mono font-bold text-emerald-600 uppercase">{dbForm.data.driver}</span>
                                                     </div>
-                                                    <div className="flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/60 p-2.5">
-                                                        <span className="text-slate-400">{t('install.complete.summary_admin', undefined, 'Super Admin')}</span>
-                                                        <span className="font-mono font-bold text-slate-200">{adminForm.data.email || 'admin'}</span>
+                                                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                                        <span className="text-slate-500">{t('install.complete.summary_admin', undefined, 'Super Admin')}</span>
+                                                        <span className="font-mono font-bold text-slate-800">{adminForm.data.email || 'admin'}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Security Notice */}
-                                            <div className="flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-xs text-amber-300">
-                                                <span className="material-symbols-outlined text-lg shrink-0">lock</span>
+                                            <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-800 shadow-sm">
+                                                <span className="material-symbols-outlined text-lg shrink-0 text-amber-600">lock</span>
                                                 <div>{t('install.complete.security_notice', undefined, 'For security reasons, the installer will be permanently sealed once you click launch.')}</div>
                                             </div>
 
@@ -1341,7 +1341,7 @@ export default function Wizard(props: Props) {
                                                     type="button"
                                                     onClick={finish}
                                                     disabled={finalizeForm.processing}
-                                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 px-10 py-4 text-sm font-black text-white shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 px-10 py-4 text-sm font-black text-white shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     {finalizeForm.processing ? (
                                                         <>
@@ -1364,7 +1364,7 @@ export default function Wizard(props: Props) {
                     </div>
 
                     {/* Footer Branding */}
-                    <footer className="mt-8 text-center text-xs text-slate-500">
+                    <footer className="mt-8 text-center text-xs font-medium text-slate-400">
                         &copy; {new Date().getFullYear()} Seruwit BIZ. Integrated Business Systems.
                     </footer>
                 </div>
@@ -1372,4 +1372,5 @@ export default function Wizard(props: Props) {
         </>
     );
 }
+
 
