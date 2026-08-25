@@ -302,7 +302,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                     actions={
                         can.create ? (
                             <Link href={prefixedRoute('invoicing.invoices.create')}>
-                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('invoicing.index.new')}</PrimaryButton>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('invoicing.index.new')}</PrimaryButton>
                             </Link>
                         ) : undefined
                     }

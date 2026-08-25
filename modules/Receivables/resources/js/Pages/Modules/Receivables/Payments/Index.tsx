@@ -96,7 +96,7 @@ export default function Index({ payments, alerts, summary, filters, can }: Props
                     title={t('receivables.payments.index.title')}
                     actions={can.create && (
                         <Link href={prefixedRoute('receivables.payments.create')}>
-                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('receivables.payments.index.record')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('receivables.payments.index.record')}</PrimaryButton>
                         </Link>
                     )}
                 />

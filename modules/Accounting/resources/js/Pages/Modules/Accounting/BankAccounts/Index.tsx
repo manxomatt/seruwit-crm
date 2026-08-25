@@ -89,7 +89,7 @@ export default function Index({ accounts, methods, maps, can }: Props): JSX.Elem
                             </SecondaryButton>
                         </Link>
                         <Link href={prefixedRoute('accounting.bank-accounts.create')}>
-                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('accounting.bank.create')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('accounting.bank.create')}</PrimaryButton>
                         </Link>
                     </div>
                 ) : (

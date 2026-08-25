@@ -92,7 +92,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                     title={t('invoicing.title')}
                     actions={can.create && (
                         <Link href={prefixedRoute('invoicing.invoices.create')}>
-                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('invoicing.index.new')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('invoicing.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 />

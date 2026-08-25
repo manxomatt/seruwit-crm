@@ -73,7 +73,7 @@ export default function Index({ accounts, filters, types, can }: Props): JSX.Ele
             headerActions={
                 can.manage_coa ? (
                     <Link href={prefixedRoute('accounting.accounts.create')}>
-                        <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('accounting.accounts.create')}</PrimaryButton>
+                        <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('accounting.accounts.create')}</PrimaryButton>
                     </Link>
                 ) : undefined
             }

@@ -298,7 +298,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                     actions={
                         can.create ? (
                             <Link href={prefixedRoute('receivables.payments.create')}>
-                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('receivables.payments.index.record')}</PrimaryButton>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('receivables.payments.index.record')}</PrimaryButton>
                             </Link>
                         ) : undefined
                     }

@@ -64,7 +64,7 @@ export default function Index({ journals, filters, periods, can }: Props): JSX.E
             headerActions={
                 can.journal ? (
                     <Link href={prefixedRoute('accounting.journals.create')}>
-                        <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('accounting.journals.create')}</PrimaryButton>
+                        <PrimaryButton className="!rounded-xl text-xs shadow-sm">{t('accounting.journals.create')}</PrimaryButton>
                     </Link>
                 ) : undefined
             }
