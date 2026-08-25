@@ -13,6 +13,7 @@ interface ComponentItem {
     key: string;
     label: string;
     category: string;
+    module?: string | null;
     content: string;
     media?: string;
     attributes?: Record<string, unknown>;
@@ -236,9 +237,20 @@ export default function Index({ components, categories, can }: Props): JSX.Eleme
                                 <div>
                                     <div className="flex items-start justify-between gap-3 mb-3">
                                         <div>
-                                            <span className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 mb-2">
-                                                📁 {comp.category || 'Sections'}
-                                            </span>
+                                            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                                                <span className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400">
+                                                    📁 {comp.category || 'Sections'}
+                                                </span>
+                                                {comp.module ? (
+                                                    <span className="inline-flex items-center gap-1 rounded-xl bg-teal-50 dark:bg-teal-950/60 px-2.5 py-1 text-[10px] font-extrabold text-teal-600 dark:text-teal-400" title="Only shown to tenants with this module installed">
+                                                        🧩 {comp.module}
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400" title="Visible to all tenants">
+                                                        🌐 Universal
+                                                    </span>
+                                                )}
+                                            </div>
                                             <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                                 {comp.label}
                                             </h3>

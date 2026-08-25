@@ -62,4 +62,37 @@ class PageComponentTest extends TestCase
         $this->assertEquals('active-comp-1', $components->first()->key);
         $this->assertEquals('active-comp-2', $components->last()->key);
     }
+
+    public function test_universal_component_is_always_available(): void
+    {
+        $component = PageComponent::create([
+            'key' => 'universal-hero',
+            'label' => 'Universal Hero',
+            'category' => 'Sections',
+            'module' => null,
+            'content' => '<section>Hero</section>',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($component->isAvailableInCurrentContext());
+    }
+
+    public function test_module_bound_component_is_available_in_central_context(): void
+    {
+        $component = PageComponent::create([
+            'key' => 'rental-widget',
+            'label' => 'Rental Widget',
+            'category' => 'Rental',
+            'module' => 'rental',
+            'content' => '<div class="rental-fleet-block"></div>',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        // No tenant is initialized in this context, so the central admin sees
+        // every module's widgets regardless of any tenant's install state.
+        $this->assertFalse(tenancy()->initialized);
+        $this->assertTrue($component->isAvailableInCurrentContext());
+    }
 }

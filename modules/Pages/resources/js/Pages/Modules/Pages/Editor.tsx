@@ -19,18 +19,159 @@ interface Page {
     updated_at: string;
 }
 
+interface ComponentTypeTrait {
+    type: 'number' | 'select' | 'text';
+    name: string;
+    label?: string;
+    min?: number;
+    max?: number;
+    default?: string;
+    /** Marker attribute name; defaults to the trait `name` when omitted. */
+    attr?: string;
+    options?: Array<{ id: string; name: string }>;
+}
+
+/**
+ * Declarative definition of an interactive "Bridge Block" — a component whose
+ * traits are edited in GrapesJS but whose live output is a lightweight marker
+ * (e.g. <rental-fleet …>) rendered server-side. Stored per component in the
+ * central `page_components.attributes` JSON, so a module's dynamic widgets are
+ * defined as data, not hard-coded here.
+ */
+interface ComponentTypeDef {
+    name: string;
+    selectorClass: string;
+    markerTag: string;
+    staticAttrs?: Record<string, string>;
+    traits: ComponentTypeTrait[];
+    preview?: string;
+    previewNote?: string;
+    accent?: 'teal' | 'amber' | 'indigo';
+}
+
+interface BlockAttributes {
+    componentType?: ComponentTypeDef;
+    blockAttributes?: Record<string, unknown>;
+}
+
 interface CustomBlock {
     key: string;
     label: string;
     category?: string;
+    module?: string | null;
     content: string;
     media?: string | null;
-    attributes?: Record<string, unknown> | null;
+    attributes?: BlockAttributes | null;
 }
 
 interface Props {
     page: Page;
     customBlocks?: CustomBlock[];
+}
+
+const PREVIEW_ACCENTS: Record<NonNullable<ComponentTypeDef['accent']>, { border: string; bg: string; text: string }> = {
+    teal: { border: '#99f6e4', bg: '#f0fdfa', text: '#0f766e' },
+    amber: { border: '#fcd34d', bg: '#fffbeb', text: '#b45309' },
+    indigo: { border: '#c7d2fe', bg: '#eef2ff', text: '#4338ca' },
+};
+
+/**
+ * Resolve a `{{trait}}` template against the component's current attributes.
+ * Select traits resolve to their option label (so an empty value can read
+ * "Semua kelas"); other traits resolve to the raw value or their default.
+ */
+function interpolateTemplate(template: string, def: ComponentTypeDef, attrs: Record<string, unknown>): string {
+    return template.replace(/\{\{(\w+)\}\}/g, (_match, token: string) => {
+        const trait = def.traits.find((t) => t.name === token);
+        const raw = (attrs[token] as string | undefined) ?? trait?.default ?? '';
+
+        if (trait?.type === 'select' && trait.options) {
+            const option = trait.options.find((o) => o.id === String(raw));
+            return option ? option.name : String(raw);
+        }
+
+        return String(raw);
+    });
+}
+
+/** Build the server-rendered marker string from the component's traits. */
+function buildMarker(def: ComponentTypeDef, attrs: Record<string, unknown>): string {
+    const parts: string[] = [];
+
+    for (const [key, value] of Object.entries(def.staticAttrs || {})) {
+        parts.push(`${key}="${value}"`);
+    }
+
+    for (const trait of def.traits) {
+        const value = attrs[trait.name];
+
+        if (value === undefined || value === null || value === '') {
+            continue;
+        }
+
+        parts.push(`${trait.attr ?? trait.name}="${value}"`);
+    }
+
+    const attrString = parts.length > 0 ? ' ' + parts.join(' ') : '';
+
+    return `<${def.markerTag}${attrString}></${def.markerTag}>`;
+}
+
+/**
+ * Register a data-driven GrapesJS component type. Replaces what used to be a
+ * per-widget hand-written `addType` block: one generic factory driven by a
+ * ComponentTypeDef, so every module's interactive widget flows through here.
+ */
+function registerDynamicType(editor: GrapesEditor, def: ComponentTypeDef): void {
+    const accent = PREVIEW_ACCENTS[def.accent ?? 'indigo'];
+
+    const defaultAttributes: Record<string, string> = { class: def.selectorClass };
+    for (const trait of def.traits) {
+        defaultAttributes[trait.name] = trait.default ?? '';
+    }
+
+    editor.DomComponents.addType(def.name, {
+        isComponent: (el: HTMLElement) =>
+            el.tagName === 'DIV' && el.classList.contains(def.selectorClass),
+        model: {
+            defaults: {
+                tagName: 'div',
+                droppable: false,
+                attributes: defaultAttributes,
+                traits: def.traits.map((trait) => ({
+                    type: trait.type,
+                    name: trait.name,
+                    label: trait.label ?? trait.name,
+                    ...(trait.min !== undefined ? { min: trait.min } : {}),
+                    ...(trait.max !== undefined ? { max: trait.max } : {}),
+                    ...(trait.options ? { options: trait.options } : {}),
+                })),
+            },
+            init(this: any) {
+                def.traits.forEach((trait) => {
+                    this.on(`change:attributes:${trait.name}`, this.updateMarker);
+                });
+                this.updateMarker();
+            },
+            updateMarker(this: any) {
+                this.components(buildMarker(def, this.getAttributes()));
+            },
+        },
+        view: {
+            onRender(this: any) {
+                const attrs = this.model.getAttributes();
+                const title = def.preview ? interpolateTemplate(def.preview, def, attrs) : def.markerTag;
+                const note = def.previewNote ? interpolateTemplate(def.previewNote, def, attrs) : '';
+
+                this.el.innerHTML = `
+                    <div style="border: 2px dashed ${accent.border}; background: ${accent.bg}; border-radius: 12px; padding: 32px; text-align: center; color: ${accent.text};">
+                        <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">${title}</div>
+                        ${note ? `<div style="font-size: 12px; opacity: 0.75;">${note}</div>` : ''}
+                    </div>
+                `;
+            },
+        },
+    });
 }
 
 export default function Editor({ page, customBlocks = [] }: Props): JSX.Element {
@@ -159,17 +300,27 @@ export default function Editor({ page, customBlocks = [] }: Props): JSX.Element 
             }
         }
 
-        // Add custom blocks dynamically from database
+        // Add custom blocks dynamically from the central component library. Each
+        // block may declare an interactive component type (traits + server-marker)
+        // in its attributes; those flow through the generic factory. Blocks are
+        // pre-filtered server-side by module availability, so a tenant only ever
+        // receives widgets for modules it has installed.
         const blockManager = gjsEditor.BlockManager;
 
         if (customBlocks && customBlocks.length > 0) {
             customBlocks.forEach((block) => {
+                const componentType = block.attributes?.componentType;
+
+                if (componentType) {
+                    registerDynamicType(gjsEditor, componentType);
+                }
+
                 blockManager.add(block.key, {
                     label: block.label,
                     category: block.category || 'Sections',
                     content: block.content,
                     media: block.media || undefined,
-                    attributes: (block.attributes as Record<string, unknown>) || {},
+                    attributes: block.attributes?.blockAttributes || {},
                 });
             });
         }
@@ -219,163 +370,6 @@ export default function Editor({ page, customBlocks = [] }: Props): JSX.Element 
                     `;
                 },
             },
-        });
-
-        // Rental Bridge Block: featured fleet. Stores only a <rental-fleet>
-        // marker; the live grid is rendered server-side (see render.blade.php),
-        // mirroring the Carousel block above.
-        gjsEditor.DomComponents.addType('rental-fleet-component', {
-            isComponent: (el: HTMLElement) => el.tagName === 'DIV' && el.classList.contains('rental-fleet-block'),
-            model: {
-                defaults: {
-                    tagName: 'div',
-                    droppable: false,
-                    attributes: { class: 'rental-fleet-block', limit: '6', fleetclass: '' },
-                    traits: [
-                        {
-                            type: 'number',
-                            name: 'limit',
-                            label: 'Jumlah kartu',
-                            min: 1,
-                            max: 12,
-                        },
-                        {
-                            type: 'select',
-                            name: 'fleetclass',
-                            label: 'Kelas kendaraan',
-                            options: [
-                                { id: '', name: 'Semua kelas' },
-                                { id: 'economy', name: 'Economy' },
-                                { id: 'mpv', name: 'MPV' },
-                                { id: 'suv', name: 'SUV' },
-                                { id: 'van', name: 'Van' },
-                                { id: 'premium', name: 'Premium' },
-                                { id: 'truck', name: 'Truck' },
-                                { id: 'other', name: 'Lainnya' },
-                            ],
-                        },
-                    ],
-                },
-                init() {
-                    this.on('change:attributes:limit change:attributes:fleetclass', this.updateFleetMarker);
-                    this.updateFleetMarker();
-                },
-                updateFleetMarker() {
-                    const attrs = this.getAttributes();
-                    const limit = attrs.limit || '6';
-                    const fleetClass = attrs.fleetclass || '';
-                    const classAttr = fleetClass ? ` data-fleet-class="${fleetClass}"` : '';
-                    this.components(`<rental-fleet type="featured" limit="${limit}"${classAttr}></rental-fleet>`);
-                },
-            },
-            view: {
-                onRender() {
-                    const attrs = this.model.getAttributes();
-                    const limit = attrs.limit || '6';
-                    const fleetClass = attrs.fleetclass || '';
-                    const scope = fleetClass ? `kelas ${fleetClass.toUpperCase()}` : 'semua kelas';
-                    this.el.innerHTML = `
-                        <div style="border: 2px dashed #99f6e4; background: #f0fdfa; border-radius: 12px; padding: 32px; text-align: center; color: #0f766e;">
-                            <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">🚗 Armada Rental (${scope})</div>
-                            <div style="font-size: 12px; opacity: 0.75;">Menampilkan ${limit} kendaraan siap sewa · dirender otomatis di halaman publik</div>
-                        </div>
-                    `;
-                },
-            },
-        });
-
-        // Rental Bridge Block: curated testimonials. Stores a <rental-reviews>
-        // marker; rendered server-side from the tenant's saved testimonials.
-        gjsEditor.DomComponents.addType('rental-reviews-component', {
-            isComponent: (el: HTMLElement) => el.tagName === 'DIV' && el.classList.contains('rental-reviews-block'),
-            model: {
-                defaults: {
-                    tagName: 'div',
-                    droppable: false,
-                    attributes: { class: 'rental-reviews-block', limit: '6' },
-                    traits: [
-                        { type: 'number', name: 'limit', label: 'Jumlah ulasan', min: 1, max: 12 },
-                    ],
-                },
-                init() {
-                    this.on('change:attributes:limit', this.updateReviewsMarker);
-                    this.updateReviewsMarker();
-                },
-                updateReviewsMarker() {
-                    const limit = this.getAttributes().limit || '6';
-                    this.components(`<rental-reviews limit="${limit}"></rental-reviews>`);
-                },
-            },
-            view: {
-                onRender() {
-                    const limit = this.model.getAttributes().limit || '6';
-                    this.el.innerHTML = `
-                        <div style="border: 2px dashed #fcd34d; background: #fffbeb; border-radius: 12px; padding: 32px; text-align: center; color: #b45309;">
-                            <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">★ Ulasan Pelanggan (Rental)</div>
-                            <div style="font-size: 12px; opacity: 0.75;">Menampilkan hingga ${limit} testimoni · dikelola di Rental → Settings → Testimoni</div>
-                        </div>
-                    `;
-                },
-            },
-        });
-
-        const rentalBlockManager = gjsEditor.BlockManager;
-        rentalBlockManager.add('rental-landing-template', {
-            label: 'Rental: Landing Lengkap',
-            category: 'Rental',
-            content: `<div class="rental-landing">
-    <section style="background: linear-gradient(160deg, var(--brand-primary, #0f766e), var(--brand-secondary, #0f172a)); color: #ffffff; padding: 64px 16px;">
-        <div style="max-width: 960px; margin: 0 auto; text-align: center;">
-            <span style="display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85;">Sewa Kendaraan Terpercaya</span>
-            <h1 style="margin: 12px 0 10px; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em;">Perjalanan Nyaman Dimulai Dari Sini</h1>
-            <p style="margin: 0 auto 28px; max-width: 560px; font-size: 16px; line-height: 1.6; opacity: 0.9;">Armada terawat, harga transparan, dan booking online cepat dengan verifikasi WhatsApp.</p>
-            <form action="/book/rental" method="GET" style="max-width: 720px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; text-align: left;">
-                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Mulai
-                    <input type="date" name="start_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
-                </label>
-                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Selesai
-                    <input type="date" name="end_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
-                </label>
-                <button type="submit" style="background: var(--brand-primary, #0f766e); color: #ffffff; border: none; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer;">Cari Kendaraan</button>
-            </form>
-        </div>
-    </section>
-    <div class="rental-fleet-block" limit="6"><rental-fleet type="featured" limit="6"></rental-fleet></div>
-    <div class="rental-reviews-block" limit="6"><rental-reviews limit="6"></rental-reviews></div>
-    <section style="background: var(--brand-secondary, #0f172a); color: #ffffff; padding: 48px 16px; text-align: center;">
-        <h2 style="margin: 0 0 10px; font-size: 26px; font-weight: 800;">Siap Berangkat?</h2>
-        <p style="margin: 0 0 20px; opacity: 0.85;">Pesan kendaraan Anda sekarang, prosesnya hanya beberapa menit.</p>
-        <a href="/book/rental" style="display: inline-block; background: var(--brand-primary, #0f766e); color: #ffffff; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Mulai Pesan</a>
-    </section>
-</div>`,
-        });
-        rentalBlockManager.add('rental-featured-fleet', {
-            label: 'Rental: Armada Unggulan',
-            category: 'Rental',
-            content: '<div class="rental-fleet-block" limit="6"><rental-fleet type="featured" limit="6"></rental-fleet></div>',
-        });
-        rentalBlockManager.add('rental-fleet-by-class', {
-            label: 'Rental: Armada per Kelas',
-            category: 'Rental',
-            content: '<div class="rental-fleet-block" limit="6" fleetclass="suv"><rental-fleet type="featured" limit="6" data-fleet-class="suv"></rental-fleet></div>',
-        });
-        rentalBlockManager.add('rental-reviews', {
-            label: 'Rental: Ulasan Pelanggan',
-            category: 'Rental',
-            content: '<div class="rental-reviews-block" limit="6"><rental-reviews limit="6"></rental-reviews></div>',
-        });
-        rentalBlockManager.add('rental-search-widget', {
-            label: 'Rental: Cari Kendaraan',
-            category: 'Rental',
-            content: `<form action="/book/rental" method="GET" style="max-width: 720px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
-    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Mulai
-        <input type="date" name="start_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
-    </label>
-    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Selesai
-        <input type="date" name="end_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
-    </label>
-    <button type="submit" style="background: var(--brand-primary, #0f766e); color: #ffffff; border: none; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer;">Cari Kendaraan</button>
-</form>`,
         });
 
         setEditor(gjsEditor);

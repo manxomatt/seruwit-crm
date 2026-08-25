@@ -14,6 +14,7 @@ interface ComponentItem {
     key: string;
     label: string;
     category: string;
+    module?: string | null;
     content: string;
     media?: string;
     attributes?: Record<string, unknown>;
@@ -21,11 +22,17 @@ interface ComponentItem {
     is_active: boolean;
 }
 
-interface Props {
-    component?: ComponentItem;
+interface ModuleOption {
+    key: string;
+    label: string;
 }
 
-export default function Form({ component }: Props): JSX.Element {
+interface Props {
+    component?: ComponentItem;
+    modules?: ModuleOption[];
+}
+
+export default function Form({ component, modules = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const isEditing = Boolean(component);
 
@@ -33,6 +40,7 @@ export default function Form({ component }: Props): JSX.Element {
         key: component?.key || '',
         label: component?.label || '',
         category: component?.category || 'Sections',
+        module: component?.module || '',
         content: component?.content || '<section class="py-12 bg-white">\n  <div class="container mx-auto px-4">\n    <h2 class="text-2xl font-bold text-slate-900">New Section</h2>\n  </div>\n</section>',
         sort_order: component?.sort_order ?? 1,
         is_active: component?.is_active ?? true,
@@ -127,6 +135,28 @@ export default function Form({ component }: Props): JSX.Element {
                                 className="mt-1 block w-full text-xs !rounded-2xl border-slate-200 dark:border-slate-800"
                             />
                             <InputError message={form.errors.category} className="mt-1" />
+                        </div>
+
+                        {/* Bound Module */}
+                        <div>
+                            <InputLabel htmlFor="module" value="Bound Module" />
+                            <select
+                                id="module"
+                                value={form.data.module}
+                                onChange={(e) => form.setData('module', e.target.value)}
+                                className="mt-1 block w-full text-xs rounded-2xl border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500"
+                            >
+                                <option value="">Universal (all tenants)</option>
+                                {modules.map((mod) => (
+                                    <option key={mod.key} value={mod.key}>
+                                        {mod.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                                Bound widgets only appear in a tenant&apos;s editor when that module is installed. Always visible in central admin.
+                            </p>
+                            <InputError message={form.errors.module} className="mt-1" />
                         </div>
 
                         {/* Sort Order & Active */}

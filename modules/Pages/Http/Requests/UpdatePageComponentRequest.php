@@ -27,6 +27,7 @@ class UpdatePageComponentRequest extends FormRequest
             'key' => ['required', 'string', 'max:255', 'unique:page_components,key,'.$componentId],
             'label' => ['required', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:100'],
+            'module' => ['nullable', 'string', 'max:100'],
             'content' => ['required', 'string'],
             'media' => ['nullable', 'string'],
             'sort_order' => ['nullable', 'integer'],

@@ -105,7 +105,9 @@ class PageController extends Controller
         $customBlocks = PageComponent::query()
             ->active()
             ->ordered()
-            ->get(['key', 'label', 'category', 'content', 'media', 'attributes']);
+            ->get(['key', 'label', 'category', 'module', 'content', 'media', 'attributes'])
+            ->filter(fn (PageComponent $component): bool => $component->isAvailableInCurrentContext())
+            ->values();
 
         return Inertia::render('Modules/Pages/Editor', [
             'page' => $page,

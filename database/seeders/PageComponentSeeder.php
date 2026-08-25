@@ -206,11 +206,141 @@ HTML,
             ],
         ];
 
-        foreach ($components as $data) {
+        foreach (array_merge($components, $this->rentalComponents()) as $data) {
             PageComponent::query()->updateOrCreate(
                 ['key' => $data['key']],
                 $data
             );
         }
+    }
+
+    /**
+     * Rental storefront widgets, bound to the `rental` module so they only appear
+     * in a tenant's page editor when Rental is installed. The two interactive
+     * widgets (fleet grid, reviews) declare a `componentType` in `attributes`,
+     * which the editor's generic factory turns into a trait-editable block that
+     * emits a server-rendered marker.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function rentalComponents(): array
+    {
+        $fleetClassOptions = [
+            ['id' => '', 'name' => 'Semua kelas'],
+            ['id' => 'economy', 'name' => 'Economy'],
+            ['id' => 'mpv', 'name' => 'MPV'],
+            ['id' => 'suv', 'name' => 'SUV'],
+            ['id' => 'van', 'name' => 'Van'],
+            ['id' => 'premium', 'name' => 'Premium'],
+            ['id' => 'truck', 'name' => 'Truck'],
+            ['id' => 'other', 'name' => 'Lainnya'],
+        ];
+
+        return [
+            [
+                'key' => 'rental-landing-template',
+                'label' => 'Rental: Landing Lengkap',
+                'category' => 'Rental',
+                'module' => 'rental',
+                'sort_order' => 20,
+                'content' => <<<'HTML'
+<div class="rental-landing">
+    <section style="background: linear-gradient(160deg, var(--brand-primary, #0f766e), var(--brand-secondary, #0f172a)); color: #ffffff; padding: 64px 16px;">
+        <div style="max-width: 960px; margin: 0 auto; text-align: center;">
+            <span style="display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85;">Sewa Kendaraan Terpercaya</span>
+            <h1 style="margin: 12px 0 10px; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em;">Perjalanan Nyaman Dimulai Dari Sini</h1>
+            <p style="margin: 0 auto 28px; max-width: 560px; font-size: 16px; line-height: 1.6; opacity: 0.9;">Armada terawat, harga transparan, dan booking online cepat dengan verifikasi WhatsApp.</p>
+            <form action="/book/rental" method="GET" style="max-width: 720px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; text-align: left;">
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Mulai
+                    <input type="date" name="start_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Selesai
+                    <input type="date" name="end_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+                </label>
+                <button type="submit" style="background: var(--brand-primary, #0f766e); color: #ffffff; border: none; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer;">Cari Kendaraan</button>
+            </form>
+        </div>
+    </section>
+    <div class="rental-fleet-block" limit="6"><rental-fleet type="featured" limit="6"></rental-fleet></div>
+    <div class="rental-reviews-block" limit="6"><rental-reviews limit="6"></rental-reviews></div>
+    <section style="background: var(--brand-secondary, #0f172a); color: #ffffff; padding: 48px 16px; text-align: center;">
+        <h2 style="margin: 0 0 10px; font-size: 26px; font-weight: 800;">Siap Berangkat?</h2>
+        <p style="margin: 0 0 20px; opacity: 0.85;">Pesan kendaraan Anda sekarang, prosesnya hanya beberapa menit.</p>
+        <a href="/book/rental" style="display: inline-block; background: var(--brand-primary, #0f766e); color: #ffffff; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Mulai Pesan</a>
+    </section>
+</div>
+HTML,
+            ],
+            [
+                'key' => 'rental-featured-fleet',
+                'label' => 'Rental: Armada Unggulan',
+                'category' => 'Rental',
+                'module' => 'rental',
+                'sort_order' => 21,
+                'content' => '<div class="rental-fleet-block" limit="6"><rental-fleet type="featured" limit="6"></rental-fleet></div>',
+                'attributes' => [
+                    'componentType' => [
+                        'name' => 'rental-fleet-component',
+                        'selectorClass' => 'rental-fleet-block',
+                        'markerTag' => 'rental-fleet',
+                        'accent' => 'teal',
+                        'staticAttrs' => ['type' => 'featured'],
+                        'traits' => [
+                            ['type' => 'number', 'name' => 'limit', 'label' => 'Jumlah kartu', 'min' => 1, 'max' => 12, 'default' => '6'],
+                            ['type' => 'select', 'name' => 'fleetclass', 'label' => 'Kelas kendaraan', 'attr' => 'data-fleet-class', 'default' => '', 'options' => $fleetClassOptions],
+                        ],
+                        'preview' => '🚗 Armada Rental ({{fleetclass}})',
+                        'previewNote' => 'Menampilkan {{limit}} kendaraan siap sewa · dirender otomatis di halaman publik',
+                    ],
+                ],
+            ],
+            [
+                'key' => 'rental-fleet-by-class',
+                'label' => 'Rental: Armada per Kelas',
+                'category' => 'Rental',
+                'module' => 'rental',
+                'sort_order' => 22,
+                'content' => '<div class="rental-fleet-block" limit="6" fleetclass="suv"><rental-fleet type="featured" limit="6" data-fleet-class="suv"></rental-fleet></div>',
+            ],
+            [
+                'key' => 'rental-reviews',
+                'label' => 'Rental: Ulasan Pelanggan',
+                'category' => 'Rental',
+                'module' => 'rental',
+                'sort_order' => 23,
+                'content' => '<div class="rental-reviews-block" limit="6"><rental-reviews limit="6"></rental-reviews></div>',
+                'attributes' => [
+                    'componentType' => [
+                        'name' => 'rental-reviews-component',
+                        'selectorClass' => 'rental-reviews-block',
+                        'markerTag' => 'rental-reviews',
+                        'accent' => 'amber',
+                        'traits' => [
+                            ['type' => 'number', 'name' => 'limit', 'label' => 'Jumlah ulasan', 'min' => 1, 'max' => 12, 'default' => '6'],
+                        ],
+                        'preview' => '★ Ulasan Pelanggan (Rental)',
+                        'previewNote' => 'Menampilkan hingga {{limit}} testimoni · dikelola di Rental → Settings → Testimoni',
+                    ],
+                ],
+            ],
+            [
+                'key' => 'rental-search-widget',
+                'label' => 'Rental: Cari Kendaraan',
+                'category' => 'Rental',
+                'module' => 'rental',
+                'sort_order' => 24,
+                'content' => <<<'HTML'
+<form action="/book/rental" method="GET" style="max-width: 720px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Mulai
+        <input type="date" name="start_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+    </label>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;">Tanggal Selesai
+        <input type="date" name="end_date" style="border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 14px;" />
+    </label>
+    <button type="submit" style="background: var(--brand-primary, #0f766e); color: #ffffff; border: none; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer;">Cari Kendaraan</button>
+</form>
+HTML,
+            ],
+        ];
     }
 }

@@ -112,6 +112,56 @@ class PageComponentManagementTest extends TestCase
         ]);
     }
 
+    public function test_central_admin_can_bind_a_component_to_a_module(): void
+    {
+        $storeResponse = $this->actingAs($this->adminUser)
+            ->post('/module/pages/components', [
+                'key' => 'rental-fleet-block-new',
+                'label' => 'Rental Fleet',
+                'category' => 'Rental',
+                'module' => 'rental',
+                'content' => '<div class="rental-fleet-block"></div>',
+                'sort_order' => 5,
+                'is_active' => true,
+            ]);
+
+        $storeResponse->assertRedirect('/module/pages/components');
+
+        $this->assertDatabaseHas('page_components', [
+            'key' => 'rental-fleet-block-new',
+            'module' => 'rental',
+        ]);
+    }
+
+    public function test_module_binding_persists_on_update(): void
+    {
+        $component = PageComponent::create([
+            'key' => 'bind-me',
+            'label' => 'Bind Me',
+            'category' => 'Sections',
+            'content' => '<section>Bind</section>',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->adminUser)
+            ->put("/module/pages/components/{$component->id}", [
+                'key' => 'bind-me',
+                'label' => 'Bind Me',
+                'category' => 'Sections',
+                'module' => 'rental',
+                'content' => '<section>Bind</section>',
+                'sort_order' => 1,
+                'is_active' => true,
+            ])
+            ->assertRedirect('/module/pages/components');
+
+        $this->assertDatabaseHas('page_components', [
+            'id' => $component->id,
+            'module' => 'rental',
+        ]);
+    }
+
     public function test_central_admin_can_toggle_active_status(): void
     {
         $component = PageComponent::create([

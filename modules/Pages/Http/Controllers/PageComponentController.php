@@ -3,6 +3,7 @@
 namespace Modules\Pages\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -32,6 +33,22 @@ class PageComponentController extends Controller
     protected function getRoutePrefix(): string
     {
         return 'module';
+    }
+
+    /**
+     * The optional modules a component can be bound to, for the management UI's
+     * "bound module" selector. A component tagged with a module only appears in a
+     * tenant's page editor when that tenant has the module installed.
+     *
+     * @return list<array{key: string, label: string}>
+     */
+    protected function bindableModules(): array
+    {
+        return collect(Modules::all())
+            ->map(fn ($module): array => ['key' => $module->key(), 'label' => $module->label()])
+            ->sortBy('label')
+            ->values()
+            ->all();
     }
 
     /**
@@ -71,7 +88,9 @@ class PageComponentController extends Controller
     {
         $this->authorizeCentralAdmin();
 
-        return Inertia::render('Modules/Pages/Components/Form');
+        return Inertia::render('Modules/Pages/Components/Form', [
+            'modules' => $this->bindableModules(),
+        ]);
     }
 
     /**
@@ -97,6 +116,7 @@ class PageComponentController extends Controller
 
         return Inertia::render('Modules/Pages/Components/Form', [
             'component' => $component,
+            'modules' => $this->bindableModules(),
         ]);
     }
 
