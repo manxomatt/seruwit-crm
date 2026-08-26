@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlatformInstallSeeder::class,
             DevAccountsSeeder::class,
+            // Landing pages are owned content, so they run after the accounts exist.
+            CentralLandingPagesSeeder::class,
         ]);
     }
 }

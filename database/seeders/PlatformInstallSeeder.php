@@ -9,10 +9,11 @@ use Illuminate\Database\Seeder;
  * Production-safe platform bootstrap: everything the central control plane needs
  * to run, and nothing operator-specific.
  *
- * The first-run installer calls this directly (App\Actions\Install\CentralMigrator),
- * so it must never plant default accounts or demo data — the real admin comes from
- * the installer's Create Admin step. DatabaseSeeder pairs it with DevAccountsSeeder
- * for local/test convenience.
+ * User-independent only — it never plants accounts, demo data, or owned content.
+ * Landing pages need an owner, so they are NOT seeded here (they would run before
+ * the admin exists during install and violate the pages.user_id foreign key);
+ * CentralLandingPagesSeeder handles them once a user exists. The first-run
+ * installer calls this directly (App\Actions\Install\CentralMigrator).
  */
 class PlatformInstallSeeder extends Seeder
 {
@@ -33,12 +34,6 @@ class PlatformInstallSeeder extends Seeder
             // carry nothing but the plan key.
             PlanSeeder::class,
             SubscriptionTierSeeder::class,
-            CreateCentralLandingPageSeeder::class,
-            CreateCentralLandingPageBrightSeeder::class,
-            CreateRentalManagementLandingSeeder::class,
-            CreateSeruwitBizLandingSeeder::class,
-            CreateSeruwitBizAltLandingSeeder::class,
-            CreateSeruwitElevateLandingSeeder::class,
         ]);
     }
 }

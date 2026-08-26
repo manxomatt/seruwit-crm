@@ -24,7 +24,12 @@ class CreateCentralLandingPageSeeder extends Seeder
         }
 
         $user = User::query()->first();
-        $userId = $user?->id ?? 1;
+
+        if ($user === null) {
+            return;
+        }
+
+        $userId = $user->id;
 
         $template = CentralLandingPageTemplate::build();
 
