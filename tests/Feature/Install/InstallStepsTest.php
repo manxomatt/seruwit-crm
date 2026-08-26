@@ -15,6 +15,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -30,12 +31,21 @@ class InstallStepsTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_central_migrator_bootstraps_platform_without_accounts(): void
+    public function test_central_migrator_bootstraps_platform_and_central_module_tables(): void
     {
+        // The base test schema does not auto-load registered-module migrations, so
+        // the central-facing content tables are absent until the migrator adds them.
+        $this->assertFalse(Schema::hasTable('pages'));
+
         (new CentralMigrator)->run();
 
         $this->assertNotNull(Role::query()->where('slug', 'admin')->first());
         $this->assertSame(0, User::query()->count(), 'The migrator bootstraps the platform but never an account.');
+
+        // Central content-module tables are migrated regardless of deployment profile.
+        $this->assertTrue(Schema::hasTable('pages'));
+        $this->assertTrue(Schema::hasTable('posts'));
+        $this->assertTrue(Schema::hasTable('carousels'));
     }
 
     public function test_admin_endpoint_creates_a_verified_admin_with_the_admin_role(): void

@@ -342,6 +342,23 @@ Abstraksi `InstallState` memudahkan fake status installed/uninstalled di test.
   sudah terinstal; install penuh via CLI dengan `EnvironmentWriter` di-rebind ke file temp
   sehingga `.env` proyek tak tersentuh). Tak ada residu lock/token/config-cache.
 
+### Catatan: tabel modul central (fix, 2026-08-26)
+
+- **Masalah:** tabel `pages` (dan `posts`/`carousels`/`document`) adalah **migrasi modul
+  registered**, yang auto-load-nya di-gate `CENTRAL_SERVES_APP`. Pada profil **production**
+  (`false`) tabel-tabel ini tak terbuat, padahal homepage central (`PageController@homepage`)
+  membaca `pages` saat `Modules::available('pages')` → **500 `relation "pages" does not exist`**.
+- **Fix (opsi B):** `CentralMigrator::migrateCentralModules()` memigrasi path setiap modul
+  **registered** yang ada di `config('modules.central_modules')` (Contents: pages/posts/carousels/
+  document) via `migrate --path --force`, **apa pun profilnya**. Idempoten (dev = no-op), dan
+  aman — FK modul-modul ini hanya menunjuk tabel sendiri atau tabel core central (`users`,
+  `media`) yang sudah dibuat migrasi utama. Modul **core** (Partners/Accounting) tabelnya sudah
+  dari `database/migrations/`; pseudo-modul (settings/tenants/plans/…) ter-skip via `Modules::has()`.
+- Landing pages (owned content) tetap di-seed di `InstallationFinalizer` **setelah** admin ada,
+  ke tabel `pages` yang kini pasti tersedia.
+- Test: `InstallStepsTest::test_central_migrator_bootstraps_platform_and_central_module_tables`
+  (`pages` absen sebelum → `pages/posts/carousels` ada setelah), plus end-to-end `AppInstallCommandTest`.
+
 ### Catatan Fase 5 (implemented, 2026-08-25)
 
 - **Root view DB-free** `resources/views/install.blade.php` — tanpa `Appearance::resolve()`
