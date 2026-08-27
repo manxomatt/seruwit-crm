@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
 use App\Http\Controllers\Central\ResellerLandingPageController;
@@ -7,6 +8,8 @@ use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\SubscriptionTierController;
 use App\Http\Controllers\Central\WebhookController;
 use App\Http\Controllers\Central\WorkspaceController;
+use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
+use App\Http\Controllers\Module\MediaController as ModuleMediaController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
 use App\Http\Controllers\Module\PlanController;
@@ -19,6 +22,7 @@ use App\Http\Controllers\Module\ResellerPortalController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
+use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -147,6 +151,43 @@ Route::domain($centralDomain)
             require __DIR__.'/app.php';
         } else {
             Route::get('/', [PageController::class, 'homepage'])->name('home');
+
+            // Public blog for the central marketing site (posts module).
+            Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+            Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+
+            // Thin control plane still needs the admin dashboard plus content
+            // management (pages, posts, carousels, media) for the landing/marketing
+            // site. app.php is not loaded here, so register these explicitly —
+            // otherwise their menus 404. module.dashboard delegates to
+            // CentralDashboardController for platform staff (see
+            // Module\DashboardController::index).
+            Route::middleware(['auth', 'verified'])
+                ->get('/dashboard', [ModuleDashboardController::class, 'index'])
+                ->name('dashboard');
+            Route::middleware('auth')
+                ->prefix('module')
+                ->name('module.')
+                ->group(function () {
+                    Route::get('/dashboard', [ModuleDashboardController::class, 'index'])->name('dashboard');
+
+                    // Core content modules manage the public site.
+                    Modules::find('pages')?->routes();
+                    Modules::find('posts')?->routes();
+                    Modules::find('carousels')?->routes();
+
+                    // Media library (not a module) — mirrors app.php's media routes.
+                    Route::get('/media', [ModuleMediaController::class, 'index'])->middleware('permission:media,view')->name('media.index');
+                    Route::get('/media/create', [ModuleMediaController::class, 'create'])->middleware('permission:media,create')->name('media.create');
+                    Route::post('/media', [ModuleMediaController::class, 'store'])->middleware('permission:media,create')->name('media.store');
+                    Route::post('/media/upload', [ModuleMediaController::class, 'upload'])->middleware('permission:media,create')->name('media.upload');
+                    Route::get('/media/picker', [ModuleMediaController::class, 'picker'])->middleware('permission:media,view')->name('media.picker');
+                    Route::post('/media/bulk-destroy', [ModuleMediaController::class, 'bulkDestroy'])->middleware('permission:media,delete')->name('media.bulk-destroy');
+                    Route::get('/media/{medium}', [ModuleMediaController::class, 'show'])->middleware('permission:media,view')->name('media.show');
+                    Route::get('/media/{medium}/edit', [ModuleMediaController::class, 'edit'])->middleware('permission:media,update')->name('media.edit');
+                    Route::patch('/media/{medium}', [ModuleMediaController::class, 'update'])->middleware('permission:media,update')->name('media.update');
+                    Route::delete('/media/{medium}', [ModuleMediaController::class, 'destroy'])->middleware('permission:media,delete')->name('media.destroy');
+                });
 
             require __DIR__.'/auth.php';
         }
