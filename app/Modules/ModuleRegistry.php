@@ -95,6 +95,36 @@ class ModuleRegistry
     }
 
     /**
+     * Optional modules the super admin may install onto the central dashboard,
+     * the single source of truth for the marketplace, its routes and the sidebar.
+     *
+     * config('modules.central_installable') is either the string 'all' — every
+     * registered module, so central mirrors what a tenant can install — or an
+     * explicit array of keys to curate. The always-on central modules are always
+     * excluded: they are provisioned already and need no install.
+     *
+     * @return list<string>
+     */
+    public function centralInstallable(): array
+    {
+        $configured = config('modules.central_installable', 'all');
+
+        $keys = $configured === 'all'
+            ? array_keys($this->all())
+            : array_values(array_intersect((array) $configured, array_keys($this->all())));
+
+        return array_values(array_diff($keys, $this->centralModules()));
+    }
+
+    /**
+     * Whether $key names a module the super admin may install onto central.
+     */
+    public function isCentralInstallable(string $key): bool
+    {
+        return in_array($key, $this->centralInstallable(), true);
+    }
+
+    /**
      * Whether $key names a registered, optional module. Core features such as
      * users or settings are deliberately absent from the registry.
      */

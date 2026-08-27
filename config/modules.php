@@ -122,20 +122,26 @@ return [
     | Central-Installable Optional Modules
     |--------------------------------------------------------------------------
     |
-    | Optional modules (from `registered` above) the super admin may install onto
-    | the Central Admin dashboard itself, à la carte, from the central module
-    | marketplace. Unlike `central_modules` — which are always on and provisioned
-    | by CentralMigrator — these are installed and uninstalled on demand, tracked
-    | in the central `installed_modules` table exactly like a tenant install.
+    | Optional modules the super admin may install onto the Central Admin
+    | dashboard itself, à la carte, from the central module marketplace. Unlike
+    | `central_modules` — which are always on and provisioned by CentralMigrator —
+    | these are installed and uninstalled on demand, tracked in the central
+    | `installed_modules` table exactly like a tenant install.
     |
-    | This is a curated allowlist, not the whole `registered` list, because a
-    | module is only safe to install on central when its migrations reference only
-    | its own tables or core central tables (users, media, partners) — never a
-    | tenant-only table. Verify that before adding a key here.
+    | 'all' (the default) makes every `registered` module above installable on
+    | central, so the marketplace mirrors what a tenant can install. Replace it
+    | with an explicit array of keys to curate the list instead. Either way the
+    | always-on `central_modules` are excluded — they need no install.
+    |
+    | Caveat: a module only installs cleanly on central when its migrations touch
+    | only its own tables or core central tables (users, media, partners). One
+    | that references a tenant-only table fails the install with a flash error
+    | rather than crashing; curate it out here if that happens.
+    |
+    | Resolved through App\Modules\ModuleRegistry::centralInstallable(), the single
+    | source of truth read by the catalog, routes, controller and sidebar.
     |
     */
-    'central_installable' => [
-        'fleet',
-    ],
+    'central_installable' => 'all',
 
 ];

@@ -881,12 +881,20 @@ export default function ModuleLayout({ header, children }: Props) {
         // Surface optional modules installed onto the central dashboard under the
         // same group titles they carry on a tenant, driven by the server
         // allowlist — so a new central-installable module needs no frontend edit.
+        // Skip any module a CENTRAL_MENU_GROUPS group already lists, so a module
+        // that is both central-installable and already central-grouped (the
+        // finance modules) is not duplicated under two headers.
+        const centralGroupedKeys = new Set(
+            CENTRAL_MENU_GROUPS.flatMap((group) => ('modules' in group ? group.modules : [])),
+        );
         const centralInstalledGroups: MenuGroup[] = isCentral
             ? MENU_GROUPS
                 .filter((group): group is { titleKey: string; modules: string[] } => 'modules' in group)
                 .map((group) => ({
                     titleKey: group.titleKey,
-                    modules: group.modules.filter((module) => centralInstallable.includes(module)),
+                    modules: group.modules.filter(
+                        (module) => centralInstallable.includes(module) && !centralGroupedKeys.has(module),
+                    ),
                 }))
                 .filter((group) => group.modules.length > 0)
             : [];

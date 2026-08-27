@@ -69,7 +69,7 @@ class CentralModuleController extends Controller
      */
     private function allowedModule(string $key): ModuleContract
     {
-        abort_unless(in_array($key, config('modules.central_installable', []), true), 404);
+        abort_unless(Modules::isCentralInstallable($key), 404);
 
         $module = Modules::find($key);
 

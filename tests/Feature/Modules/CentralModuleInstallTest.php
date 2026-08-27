@@ -47,35 +47,48 @@ class CentralModuleInstallTest extends TestCase
         return $admin;
     }
 
-    public function test_the_marketplace_lists_allowlisted_modules_for_a_super_admin(): void
+    public function test_the_marketplace_lists_the_installable_modules_for_a_super_admin(): void
     {
         $admin = $this->makeCentralAdmin();
 
+        // Every registered optional module is installable on central by default,
+        // so the marketplace mirrors what a tenant can install — fleet included,
+        // available and not yet installed.
         $this->actingAs($admin)->get('/module/marketplace')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Module/CentralModules/Index')
-                ->where('modules.0.key', 'fleet')
-                ->where('modules.0.installed', false)
-                ->where('modules.0.state', 'available')
+                ->where('modules', fn ($modules) => collect($modules)->count() > 1
+                    && collect($modules)->firstWhere('key', 'fleet')['installed'] === false
+                    && collect($modules)->firstWhere('key', 'fleet')['state'] === 'available')
             );
     }
 
     public function test_a_non_admin_cannot_reach_the_central_marketplace(): void
     {
-        $user = User::factory()->create();
+        // A role (any non-admin one) keeps the user past workspace onboarding so
+        // the request reaches the manage-central-modules gate rather than being
+        // bounced to /onboarding first.
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'staff'],
+            ['name' => 'Staff', 'description' => 'Non-admin staff', 'is_system' => false, 'dashboard_path' => '/module/dashboard'],
+        );
+        $user = User::factory()->create(['email' => 'staff@platform.test']);
+        $user->assignRole($role);
 
         $this->actingAs($user)->get('/module/marketplace')->assertForbidden();
         $this->actingAs($user)->post('/module/marketplace/fleet/install')->assertForbidden();
         $this->actingAs($user)->delete('/module/marketplace/fleet')->assertForbidden();
     }
 
-    public function test_a_module_absent_from_the_allowlist_cannot_be_installed_on_central(): void
+    public function test_an_always_on_central_module_cannot_be_installed_via_the_marketplace(): void
     {
         $admin = $this->makeCentralAdmin();
 
-        // Inventory is a registered optional module, but not central-installable.
-        $this->actingAs($admin)->post('/module/marketplace/inventory/install')->assertNotFound();
+        // Document is a registered module, but it is an always-on central module
+        // (config('modules.central_modules')), so it is excluded from the
+        // marketplace and cannot be installed there.
+        $this->actingAs($admin)->post('/module/marketplace/document/install')->assertNotFound();
     }
 
     public function test_an_uninstalled_module_route_404s_on_central(): void
@@ -105,13 +118,16 @@ class CentralModuleInstallTest extends TestCase
 
         $this->assertDatabaseHas('installed_modules', ['key' => 'fleet', 'uninstalled_at' => null]);
 
-        // Now reachable on the central dashboard, and surfaced to the sidebar.
+        // Now reachable on the central dashboard.
         $this->actingAs($admin)->get('/module/fleet')->assertOk();
 
-        $this->actingAs($admin)->get('/module/dashboard')
+        // The install granted the admin fleet permissions and the sidebar has the
+        // data it needs to surface the module (shared on every central page).
+        $this->actingAs($admin)->get('/module/marketplace')
             ->assertInertia(fn ($page) => $page
                 ->has('auth.user.permissions.fleet')
-                ->where('centralInstallableModules', ['fleet'])
+                ->where('centralInstallableModules', fn ($keys) => collect($keys)->contains('fleet'))
+                ->where('modules', fn ($modules) => collect($modules)->firstWhere('key', 'fleet')['installed'] === true)
             );
     }
 

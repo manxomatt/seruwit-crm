@@ -196,7 +196,7 @@ Route::domain($centralDomain)
                     // 404s. app.php (central_serves_app=true) registers every
                     // module via Modules::registerRoutes() instead, so this branch
                     // only runs for the thin control plane.
-                    foreach (config('modules.central_installable', []) as $centralModuleKey) {
+                    foreach (Modules::centralInstallable() as $centralModuleKey) {
                         if ($centralModule = Modules::find($centralModuleKey)) {
                             Route::middleware('requires-module:'.$centralModuleKey)
                                 ->group(fn () => $centralModule->routes());

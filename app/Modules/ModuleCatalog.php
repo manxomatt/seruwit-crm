@@ -86,7 +86,7 @@ class ModuleCatalog
 
         $catalog = [];
 
-        foreach (config('modules.central_installable', []) as $key) {
+        foreach (Modules::centralInstallable() as $key) {
             $module = Modules::find($key);
 
             if ($module === null || ! Modules::has($key)) {

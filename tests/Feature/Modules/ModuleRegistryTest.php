@@ -58,7 +58,15 @@ class ModuleRegistryTest extends TestCase
 
     public function test_a_non_admin_cannot_access_or_toggle_the_registry(): void
     {
+        // A role (any non-admin one) keeps the user past workspace onboarding so
+        // the request reaches the manage-module-registry gate rather than being
+        // bounced to /onboarding first.
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'staff'],
+            ['name' => 'Staff', 'description' => 'Non-admin staff', 'is_system' => false, 'dashboard_path' => '/module/dashboard'],
+        );
         $user = User::factory()->create();
+        $user->assignRole($role);
 
         $this->actingAs($user)->get('/module/registry')->assertForbidden();
         $this->actingAs($user)->patch('/module/registry/fleet/status')->assertForbidden();
