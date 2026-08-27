@@ -20,11 +20,16 @@ return [
     'core' => [
         Modules\Partners\PartnersModule::class,
         Modules\Accounting\AccountingModule::class,
+        // Content/CMS modules every workspace (central + tenant) gets automatically.
+        // Their migrations live in database/migrations(+ /tenant), like the other
+        // core modules — never in modules/*/Database/Migrations.
+        Modules\Pages\PagesModule::class,
+        Modules\Posts\PostsModule::class,
+        Modules\Carousels\CarouselsModule::class,
     ],
 
     'registered' => [
         Modules\Billing\BillingModule::class,
-        Modules\Carousels\CarouselsModule::class,
         Modules\Document\DocumentModule::class,
         Modules\Fleet\FleetModule::class,
         Modules\Inventory\InventoryModule::class,
@@ -42,8 +47,6 @@ return [
         Modules\Routing\RoutingModule::class,
         Modules\Maintenance\MaintenanceModule::class,
         Modules\Orders\OrdersModule::class,
-        Modules\Pages\PagesModule::class,
-        Modules\Posts\PostsModule::class,
         Modules\Product\ProductModule::class,
         Modules\Tracking\TrackingModule::class,
         Modules\TransportationManagement\TransportationManagementModule::class,
@@ -103,10 +106,8 @@ return [
         'accounting',
         'payment-orders',
 
-        // Contents
-        'pages',
-        'posts',
-        'carousels',
+        // Contents (pages/posts/carousels are now core → migrated by the base
+        // central migration, so they no longer need an explicit central install)
         'document',
 
         // Platform
