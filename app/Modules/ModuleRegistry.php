@@ -30,6 +30,14 @@ class ModuleRegistry
     private ?array $disabledKeys = null;
 
     /**
+     * Installed module keys on the central schema, memoized for the request.
+     * Separate from the per-tenant map since central is not a tenant.
+     *
+     * @var list<string>|null
+     */
+    private ?array $centralInstalledKeys = null;
+
+    /**
      * Every registered module, keyed by module key.
      *
      * @return array<string, ModuleContract>
@@ -116,13 +124,13 @@ class ModuleRegistry
     }
 
     /**
-     * Whether the module's tables exist in the current tenant's schema.
+     * Whether the module's tables exist in the current schema.
      *
-     * Fails open by design. Anything that is not a registered module is core and
+     * Fails open for core features: anything not a registered module is core and
      * always present — that is what keeps the guards correct while modules are
-     * still being extracted one by one. The central domain runs every module, and
-     * a schema without the installed_modules table yet (mid-migration) is treated
-     * as having everything, so a half-migrated deploy never dark-fires a guard.
+     * still being extracted one by one. Off the tenant connection the answer comes
+     * from central install state (see installedOnCentral), so the central admin
+     * can carry an optional module à la carte without every module dark-firing.
      */
     public function installed(string $key): bool
     {
@@ -131,10 +139,33 @@ class ModuleRegistry
         }
 
         if (! tenancy()->initialized) {
-            return true;
+            return $this->installedOnCentral($key);
         }
 
         return in_array($key, $this->installedKeysForCurrentTenant(), true);
+    }
+
+    /**
+     * Whether $key is present on the central schema.
+     *
+     * When central serves the whole app (dev), every module's tables come from a
+     * plain migrate, so treat all as present. Always-on central modules
+     * (config('modules.central_modules')) are provisioned by CentralMigrator
+     * without an installed_modules row, so they are present too. Everything else
+     * is an optional module the super admin installs on demand, tracked in the
+     * central installed_modules table exactly like a tenant install.
+     */
+    private function installedOnCentral(string $key): bool
+    {
+        if (config('app.central_serves_app')) {
+            return true;
+        }
+
+        if ($this->isCentralModule($key)) {
+            return true;
+        }
+
+        return in_array($key, $this->installedKeysForCentral(), true);
     }
 
     /**
@@ -198,12 +229,37 @@ class ModuleRegistry
     }
 
     /**
+     * Installed optional-module keys on the central schema, memoized for the
+     * request. Fails closed when the table is absent (mid-migration) so a not-yet
+     * provisioned central never dark-fires an optional module as present — the
+     * always-on central modules are already short-circuited before this runs.
+     *
+     * @return list<string>
+     */
+    private function installedKeysForCentral(): array
+    {
+        if ($this->centralInstalledKeys !== null) {
+            return $this->centralInstalledKeys;
+        }
+
+        if (! Schema::hasTable('installed_modules')) {
+            return $this->centralInstalledKeys = [];
+        }
+
+        return $this->centralInstalledKeys = InstalledModule::query()
+            ->installed()
+            ->pluck('key')
+            ->all();
+    }
+
+    /**
      * Drop the memoized install state. Install and uninstall mutate the table
      * underneath a long-lived registry singleton, so they must call this.
      */
     public function flushInstalledState(): void
     {
         $this->installedKeys = [];
+        $this->centralInstalledKeys = null;
     }
 
     /**

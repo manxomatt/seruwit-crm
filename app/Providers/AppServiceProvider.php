@@ -76,6 +76,12 @@ class AppServiceProvider extends ServiceProvider
         // manage-modules (a workspace admin's own install/uninstall).
         Gate::define('manage-module-registry', fn (User $user): bool => $user->isAdmin());
 
+        // Installing an optional module onto the central dashboard itself reshapes
+        // the platform's own workspace — central admin only, distinct from
+        // manage-modules (a tenant admin's own install) and manage-module-registry
+        // (the platform-wide kill switch).
+        Gate::define('manage-central-modules', fn (User $user): bool => $user->isAdmin());
+
         // The reseller programme itself — rates, partner status, payouts — is
         // platform staff's to run. A reseller may read their own earnings but
         // never the rules that produce them.

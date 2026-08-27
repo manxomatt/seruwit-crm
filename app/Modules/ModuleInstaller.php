@@ -32,16 +32,29 @@ class ModuleInstaller
     public function install(Tenant $tenant, ModuleContract $module): void
     {
         $tenant->run(function () use ($tenant, $module): void {
-            $this->installWithinTenant($tenant, $module);
+            $this->performInstall($module, $tenant);
         });
     }
 
     /**
-     * Does the actual install work, assuming tenant context is already active.
-     * Recursion for a missing requirement calls back into this directly rather
-     * than through install(), since Tenant::run() is not meant to be re-entered.
+     * Install $module onto the central schema itself, à la carte, for the super
+     * admin's central dashboard. Central is not bound by a plan, so entitlement
+     * does not apply — this runs the same table/permission/menu work as a tenant
+     * install, but in the current (central) context and without Tenant::run().
      */
-    private function installWithinTenant(Tenant $tenant, ModuleContract $module): void
+    public function installOnCentral(ModuleContract $module): void
+    {
+        $this->performInstall($module, null);
+    }
+
+    /**
+     * Does the actual install work, assuming the target schema is already active
+     * (a tenant's under Tenant::run(), or the central schema when $tenant is
+     * null). Recursion for a missing requirement calls back into this directly
+     * rather than through install(), since Tenant::run() is not meant to be
+     * re-entered. A null $tenant skips the entitlement gate — central has no plan.
+     */
+    private function performInstall(ModuleContract $module, ?Tenant $tenant): void
     {
         if (! Modules::has($module->key())) {
             throw new RuntimeException(
@@ -55,7 +68,7 @@ class ModuleInstaller
             );
         }
 
-        if (! $tenant->isEntitledTo($module->key())) {
+        if ($tenant !== null && ! $tenant->isEntitledTo($module->key())) {
             throw new RuntimeException(
                 "Plan [{$tenant->planKey()}] does not include module [{$module->key()}].",
             );
@@ -63,7 +76,7 @@ class ModuleInstaller
 
         foreach ($module->requires() as $requiredKey) {
             // Unregistered dependencies are core features that ship with every
-            // tenant, so only registered ones need installing.
+            // workspace, so only registered ones need installing.
             if (! Modules::has($requiredKey)) {
                 continue;
             }
@@ -74,7 +87,7 @@ class ModuleInstaller
                 ->exists();
 
             if (! $satisfied) {
-                $this->installWithinTenant($tenant, Modules::find($requiredKey));
+                $this->performInstall(Modules::find($requiredKey), $tenant);
             }
         }
 
@@ -112,6 +125,24 @@ class ModuleInstaller
         $tenant->run(function () use ($module): void {
             $this->uninstallWithinTenant($module);
         });
+    }
+
+    /**
+     * Withdraw $module from the central schema, mirror of uninstall() for the
+     * super admin's central dashboard. Non-destructive: tables and data survive
+     * the grace period so a reinstall restores everything.
+     *
+     * @throws RuntimeException when another installed module depends on this one
+     */
+    public function uninstallOnCentral(ModuleContract $module): void
+    {
+        if (! Modules::has($module->key())) {
+            throw new RuntimeException(
+                "Module [{$module->key()}] is a core feature and cannot be uninstalled.",
+            );
+        }
+
+        $this->uninstallWithinTenant($module);
     }
 
     /**
@@ -259,7 +290,7 @@ class ModuleInstaller
                     continue;
                 }
 
-                $this->installWithinTenant($tenant, $module);
+                $this->performInstall($module, $tenant);
             }
 
             if (! $withDemoSeeders) {

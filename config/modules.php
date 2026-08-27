@@ -117,4 +117,25 @@ return [
         'settings',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Central-Installable Optional Modules
+    |--------------------------------------------------------------------------
+    |
+    | Optional modules (from `registered` above) the super admin may install onto
+    | the Central Admin dashboard itself, à la carte, from the central module
+    | marketplace. Unlike `central_modules` — which are always on and provisioned
+    | by CentralMigrator — these are installed and uninstalled on demand, tracked
+    | in the central `installed_modules` table exactly like a tenant install.
+    |
+    | This is a curated allowlist, not the whole `registered` list, because a
+    | module is only safe to install on central when its migrations reference only
+    | its own tables or core central tables (users, media, partners) — never a
+    | tenant-only table. Verify that before adding a key here.
+    |
+    */
+    'central_installable' => [
+        'fleet',
+    ],
+
 ];

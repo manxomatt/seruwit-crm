@@ -70,6 +70,53 @@ class ModuleCatalog
     }
 
     /**
+     * Every central-installable optional module with its state on the central
+     * schema, for the super admin's central module marketplace.
+     *
+     * Runs in central context (no tenancy), so entitlement does not apply — a
+     * module reads as installed, uninstalled (data still held during the grace
+     * period), disabled (platform kill switch), or available.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function forCentral(): array
+    {
+        $graceDays = config('modules.purge_after_days');
+        $states = InstalledModule::query()->get()->keyBy('key');
+
+        $catalog = [];
+
+        foreach (config('modules.central_installable', []) as $key) {
+            $module = Modules::find($key);
+
+            if ($module === null || ! Modules::has($key)) {
+                continue;
+            }
+
+            $record = $states->get($key);
+            $platformEnabled = Modules::platformEnabled($key);
+            $installed = $record !== null && $record->isInstalled();
+
+            $catalog[] = [
+                'key' => $key,
+                'label' => $module->label(),
+                'description' => $module->description(),
+                'requires' => $module->requires(),
+                'platform_enabled' => $platformEnabled,
+                'entitled' => true,
+                'installed' => $installed,
+                'state' => $this->resolveState($platformEnabled, true, $installed, $record),
+                'purges_at' => $record?->uninstalled_at
+                    ?->addDays($graceDays)
+                    ->toDateString(),
+                'plans_offering' => [],
+            ];
+        }
+
+        return $catalog;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function currentPlan(): array

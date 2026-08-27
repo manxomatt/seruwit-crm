@@ -22,6 +22,7 @@ return [
     'payout_desk' => 'Pembayaran Komisi',
     'payment_orders' => 'Pesanan Pembayaran',
     'platform_modules' => 'Modul Platform',
+    'central_modules' => 'Modul Central',
     'modules' => 'Modul',
     'user' => 'Pengguna',
     'search' => [

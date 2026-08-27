@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -64,6 +65,43 @@ class ModulesPurgeExpired extends Command
                     $purged++;
                 } catch (Throwable $e) {
                     $this->error("  {$tenant->id}: purging [{$key}] failed — {$e->getMessage()}");
+                    $failed++;
+                }
+            }
+        }
+
+        // Central schema: optional modules the super admin installed onto the
+        // central dashboard. Not a tenant, so it runs on the default connection.
+        // Skipped when --tenant scopes the run to one workspace.
+        if (! $this->option('tenant') && Schema::hasTable('installed_modules')) {
+            $centralExpired = InstalledModule::query()
+                ->uninstalled()
+                ->where('uninstalled_at', '<', $cutoff)
+                ->pluck('key')
+                ->all();
+
+            foreach ($centralExpired as $key) {
+                $module = Modules::find($key);
+
+                if (! $module) {
+                    $this->warn("  central: [{$key}] is no longer registered, skipping.");
+
+                    continue;
+                }
+
+                if ($this->option('pretend')) {
+                    $this->line("  central: would purge [{$key}]");
+                    $purged++;
+
+                    continue;
+                }
+
+                try {
+                    $installer->purge($module);
+                    $this->line("  central: purged [{$key}]");
+                    $purged++;
+                } catch (Throwable $e) {
+                    $this->error("  central: purging [{$key}] failed — {$e->getMessage()}");
                     $failed++;
                 }
             }

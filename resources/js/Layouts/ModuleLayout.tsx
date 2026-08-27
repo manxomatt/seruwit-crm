@@ -340,7 +340,7 @@ const CENTRAL_MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing', 'payment-orders'] },
     { titleKey: 'content', modules: ['pages', 'posts', 'carousels', 'media'] },
     { titleKey: 'administration', modules: ['users', 'roles', 'settings'] },
-    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'module-registry'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'module-registry', 'central-modules'] },
 ];
 
 const CENTRAL_ALLOWED_MODULES = [
@@ -582,6 +582,8 @@ export default function ModuleLayout({ header, children }: Props) {
     } | null;
     // Each registered module's declared tier, ordered by its menu sort_order.
     const moduleTiers = (pageProps.moduleTiers ?? []) as { key: string; tier: ModuleTier }[];
+    // Optional modules the super admin may install onto the central dashboard.
+    const centralInstallable = (pageProps.centralInstallableModules ?? []) as string[];
     const subscriptionSummary = pageProps.subscriptionSummary as { plan_name: string | null; status: string } | null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -632,8 +634,10 @@ export default function ModuleLayout({ header, children }: Props) {
                 return;
             }
 
-            // Central Admin only allows Central modules (Dashboard, Finance, Contents, Platform)
-            if (isCentral && !CENTRAL_ALLOWED_MODULES.includes(module)) {
+            // Central Admin only allows Central modules (Dashboard, Finance,
+            // Contents, Platform) plus any optional module installed onto the
+            // central dashboard from the marketplace.
+            if (isCentral && !CENTRAL_ALLOWED_MODULES.includes(module) && !centralInstallable.includes(module)) {
                 return;
             }
 
@@ -835,6 +839,22 @@ export default function ModuleLayout({ header, children }: Props) {
             });
         }
 
+        // The central module marketplace: install optional modules onto the
+        // central dashboard itself. Distinct from the kill switch above (every
+        // tenant) and the workspace catalog below (one tenant's plan).
+        if (isCentral && isAdmin && routeExists('module.marketplace.index')) {
+            items.push({
+                name: t('shell.central_modules', undefined, 'Central Modules'),
+                href: route(resolveNamedRoute('module.marketplace.index')),
+                icon: <ModulesIcon />,
+                current:
+                    route().current('module.marketplace.*') ||
+                    route().current('central.module.marketplace.*') ||
+                    false,
+                module: 'central-modules',
+            });
+        }
+
         // Inside a workspace, its admin picks which modules the plan covers.
         // Gated by an ability rather than a permission, so it is injected here
         // instead of being seeded as a menu row.
@@ -852,13 +872,26 @@ export default function ModuleLayout({ header, children }: Props) {
         }
 
         return items;
-    }, [user, isCentral, isAdmin, isReseller, t, locale]);
+    }, [user, isCentral, isAdmin, isReseller, centralInstallable, t, locale]);
 
     // Split the flat navigation into the standalone Dashboard plus collapsible
     // groups, preserving the module order defined in MENU_GROUPS.
     const dashboardItem = navigation.find((item) => item.module === 'dashboard');
     const menuGroups = useMemo(() => {
-        const groupsToUse = isCentral ? CENTRAL_MENU_GROUPS : MENU_GROUPS;
+        // Surface optional modules installed onto the central dashboard under the
+        // same group titles they carry on a tenant, driven by the server
+        // allowlist — so a new central-installable module needs no frontend edit.
+        const centralInstalledGroups: MenuGroup[] = isCentral
+            ? MENU_GROUPS
+                .filter((group): group is { titleKey: string; modules: string[] } => 'modules' in group)
+                .map((group) => ({
+                    titleKey: group.titleKey,
+                    modules: group.modules.filter((module) => centralInstallable.includes(module)),
+                }))
+                .filter((group) => group.modules.length > 0)
+            : [];
+
+        const groupsToUse = isCentral ? [...CENTRAL_MENU_GROUPS, ...centralInstalledGroups] : MENU_GROUPS;
 
         // Tier-derived groups take their members — and their order — from what the
         // modules themselves declare on the server; fixed groups list core
@@ -877,7 +910,7 @@ export default function ModuleLayout({ header, children }: Props) {
                 .map((module) => navigation.find((item) => item.module === module))
                 .filter((item): item is MenuItem => Boolean(item)),
         })).filter((group) => group.items.length > 0);
-    }, [navigation, moduleTiers, isCentral, t, locale]);
+    }, [navigation, moduleTiers, centralInstallable, isCentral, t, locale]);
 
     // Collapsible group state, persisted so it survives page navigations.
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {

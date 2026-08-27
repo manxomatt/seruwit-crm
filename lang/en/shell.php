@@ -22,6 +22,7 @@ return [
     'payout_desk' => 'Commission Payouts',
     'payment_orders' => 'Payment Orders',
     'platform_modules' => 'Platform Modules',
+    'central_modules' => 'Central Modules',
     'modules' => 'Modules',
     'user' => 'User',
     'search' => [

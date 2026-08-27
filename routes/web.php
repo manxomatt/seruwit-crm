@@ -8,6 +8,7 @@ use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\SubscriptionTierController;
 use App\Http\Controllers\Central\WebhookController;
 use App\Http\Controllers\Central\WorkspaceController;
+use App\Http\Controllers\Module\CentralModuleController;
 use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
 use App\Http\Controllers\Module\MediaController as ModuleMediaController;
 use App\Http\Controllers\Module\ModuleRegistryController;
@@ -187,6 +188,20 @@ Route::domain($centralDomain)
                     Route::get('/media/{medium}/edit', [ModuleMediaController::class, 'edit'])->middleware('permission:media,update')->name('media.edit');
                     Route::patch('/media/{medium}', [ModuleMediaController::class, 'update'])->middleware('permission:media,update')->name('media.update');
                     Route::delete('/media/{medium}', [ModuleMediaController::class, 'destroy'])->middleware('permission:media,delete')->name('media.destroy');
+
+                    // Optional modules the super admin has installed onto the
+                    // central dashboard (config('modules.central_installable')).
+                    // Registered unconditionally behind requires-module, which on
+                    // central consults central install state — an uninstalled one
+                    // 404s. app.php (central_serves_app=true) registers every
+                    // module via Modules::registerRoutes() instead, so this branch
+                    // only runs for the thin control plane.
+                    foreach (config('modules.central_installable', []) as $centralModuleKey) {
+                        if ($centralModule = Modules::find($centralModuleKey)) {
+                            Route::middleware('requires-module:'.$centralModuleKey)
+                                ->group(fn () => $centralModule->routes());
+                        }
+                    }
                 });
 
             require __DIR__.'/auth.php';
@@ -326,4 +341,22 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/registry', [ModuleRegistryController::class, 'index'])->name('registry.index');
         Route::patch('/registry/{key}/status', [ModuleRegistryController::class, 'toggleStatus'])->name('registry.toggle-status');
+    });
+
+/*
+| Central module marketplace: the super admin installs optional modules
+| (config('modules.central_installable')) onto the central dashboard itself,
+| à la carte. Central only and gated to platform staff — distinct from
+| module.registry.* (the platform-wide kill switch) and module.modules.* (a
+| tenant admin's own install/uninstall). The installed modules' own routes are
+| registered separately (see below / Modules::registerRoutes()).
+*/
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-central-modules'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/marketplace', [CentralModuleController::class, 'index'])->name('marketplace.index');
+        Route::post('/marketplace/{module}/install', [CentralModuleController::class, 'install'])->name('marketplace.install');
+        Route::delete('/marketplace/{module}', [CentralModuleController::class, 'uninstall'])->name('marketplace.uninstall');
     });
