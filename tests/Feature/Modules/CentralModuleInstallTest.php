@@ -131,6 +131,27 @@ class CentralModuleInstallTest extends TestCase
             );
     }
 
+    public function test_the_central_admin_dashboard_renders_and_aggregates_installed_modules(): void
+    {
+        $admin = $this->makeCentralAdmin();
+
+        // Empty installed_modules table: the "top installed" widget must not error
+        // (the query is guarded by hasTable, which is now always true on central).
+        $this->actingAs($admin)->get('/module/dashboard')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Central/AdminDashboard'));
+
+        // With a module installed on central, it is aggregated by its `key`.
+        $this->installer()->installOnCentral($this->fleet());
+
+        $this->actingAs($admin)->get('/module/dashboard')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Central/AdminDashboard')
+                ->where('topInstalled', fn ($rows) => collect($rows)->firstWhere('key', 'fleet')['count'] === 1)
+            );
+    }
+
     public function test_uninstalling_fleet_on_central_404s_the_route_but_keeps_data(): void
     {
         $admin = $this->makeCentralAdmin();

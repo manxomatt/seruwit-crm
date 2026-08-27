@@ -119,20 +119,23 @@ class CentralDashboardController extends Controller
         $disabledModulesCount = \App\Models\ModuleSetting::query()->where('is_enabled', false)->count();
         $activeModulesCount = $totalModulesCount - $disabledModulesCount;
 
-        // Top Installed Modules across tenants (safely check if table exists in current DB connection)
+        // Top installed modules on the central schema (guarded: the table only
+        // exists once the central installed_modules migration has run). The
+        // column is `key`, matching the installed_modules migration.
         $topInstalledModules = \Illuminate\Support\Facades\Schema::hasTable('installed_modules')
             ? InstalledModule::query()
-                ->select('module_key', DB::raw('count(*) as install_count'))
-                ->groupBy('module_key')
+                ->installed()
+                ->select('key', DB::raw('count(*) as install_count'))
+                ->groupBy('key')
                 ->orderByDesc('install_count')
                 ->limit(5)
                 ->get()
                 ->map(function ($item) use ($catalog) {
-                    $moduleObj = $catalog[$item->module_key] ?? null;
+                    $moduleObj = $catalog[$item->key] ?? null;
 
                     return [
-                        'key' => $item->module_key,
-                        'label' => $moduleObj ? $moduleObj->label() : ucfirst($item->module_key),
+                        'key' => $item->key,
+                        'label' => $moduleObj ? $moduleObj->label() : ucfirst($item->key),
                         'count' => (int) $item->install_count,
                     ];
                 })
