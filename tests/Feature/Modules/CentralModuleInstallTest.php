@@ -148,7 +148,7 @@ class CentralModuleInstallTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Central/AdminDashboard')
-                ->where('topInstalled', fn ($rows) => collect($rows)->firstWhere('key', 'fleet')['count'] === 1)
+                ->where('moduleStats.topInstalled', fn ($rows) => collect($rows)->firstWhere('key', 'fleet')['count'] === 1)
             );
     }
 
