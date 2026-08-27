@@ -27,7 +27,7 @@ return [
     |
     */
 
-    'central_serves_app' => (bool) env('CENTRAL_SERVES_APP', true),
+    'central_serves_app' => (bool) env('CENTRAL_SERVES_APP', false),
 
     /*
     |--------------------------------------------------------------------------
