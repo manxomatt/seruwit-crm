@@ -138,7 +138,7 @@ export default function Index({ modules, graceDays }: Props): JSX.Element {
     const [statusFilter, setStatusFilter] = useState<
         'all' | 'installed' | 'available' | 'uninstalled' | 'disabled'
     >('all');
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     const totalCount = modules.length;
     const installedCount = useMemo(
