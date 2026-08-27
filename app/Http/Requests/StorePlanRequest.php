@@ -28,7 +28,9 @@ class StorePlanRequest extends FormRequest
             'badge' => ['nullable', 'string', 'max:100'],
             'is_popular' => ['boolean'],
             'modules' => ['present', 'array'],
-            'modules.*' => ['string', Rule::in(array_keys(Modules::all()))],
+            // Core modules are always available but may still appear in a plan's
+            // module list, so accept them alongside the registered/optional ones.
+            'modules.*' => ['string', Rule::in([...array_keys(Modules::all()), ...array_keys(Modules::core())])],
             'limits' => ['nullable', 'array'],
             'limits.max_vehicles' => ['nullable', 'integer', 'min:0'],
             'limits.max_users' => ['nullable', 'integer', 'min:0'],

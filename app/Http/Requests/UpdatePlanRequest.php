@@ -28,7 +28,11 @@ class UpdatePlanRequest extends FormRequest
             'badge' => ['nullable', 'string', 'max:100'],
             'is_popular' => ['boolean'],
             'modules' => ['present', 'array'],
-            'modules.*' => ['string', Rule::in(array_keys(Modules::all()))],
+            // Core modules (pages/posts/carousels/…) are always available and may
+            // still appear in a plan's module list, so accept them alongside the
+            // registered/optional modules — otherwise editing any plan that lists
+            // a core module fails validation and silently refuses to save.
+            'modules.*' => ['string', Rule::in([...array_keys(Modules::all()), ...array_keys(Modules::core())])],
             'limits' => ['nullable', 'array'],
             'limits.max_vehicles' => ['nullable', 'integer', 'min:0'],
             'limits.max_users' => ['nullable', 'integer', 'min:0'],
