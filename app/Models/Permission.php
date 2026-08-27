@@ -35,6 +35,9 @@ class Permission extends Model
      */
     public const MODULES = [
         'media' => 'Media',
+        'pages' => 'Pages',
+        'posts' => 'Posts',
+        'carousels' => 'Carousels',
         'users' => 'Users',
         'settings' => 'Settings',
         'roles' => 'Roles',
