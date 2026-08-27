@@ -544,6 +544,12 @@ const ModulesIcon = () => (
     </svg>
 );
 
+const MarketplaceIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009 9.35c.66 0 1.284-.213 1.792-.576A3.001 3.001 0 0014.25 9.35a2.993 2.993 0 002.458-.576 3.002 3.002 0 003.792.576V9.35M3.75 9.35L5.47 3.513A1.5 1.5 0 016.91 2.25h10.18a1.5 1.5 0 011.44 1.263L20.25 9.35" />
+    </svg>
+);
+
 // Helper function to get dashboard route based on user role
 const getDashboardRoute = (user: User | null): string => {
     if (user?.dashboard_path) {
@@ -846,7 +852,7 @@ export default function ModuleLayout({ header, children }: Props) {
             items.push({
                 name: t('shell.central_modules', undefined, 'Central Modules'),
                 href: route(resolveNamedRoute('module.marketplace.index')),
-                icon: <ModulesIcon />,
+                icon: <MarketplaceIcon />,
                 current:
                     route().current('module.marketplace.*') ||
                     route().current('central.module.marketplace.*') ||
