@@ -19,7 +19,7 @@ class PlanUpdateTest extends TestCase
         $this->setUpRoles();
     }
 
-    public function test_toggling_is_active_off_persists(): void
+    public function test_toggling_is_active_off_persists_with_core_modules(): void
     {
         $plan = Plan::create([
             'key' => 'basic',
@@ -27,7 +27,10 @@ class PlanUpdateTest extends TestCase
             'is_active' => true,
             'is_default' => false,
             'pricing_model' => 'fixed',
-            'modules' => [],
+            // A plan that lists core content modules (pages) alongside optional
+            // ones (fleet) — the exact shape that used to fail validation and
+            // silently refuse to save after pages/posts/carousels became core.
+            'modules' => ['pages', 'fleet'],
             'sort_order' => 1,
             'currency' => 'IDR',
             'price' => 0,
@@ -38,7 +41,7 @@ class PlanUpdateTest extends TestCase
         $response = $this->actingAs($this->createAdminUser())
             ->patch(route('module.plans.update', $plan->id), [
                 'name' => 'Basic',
-                'modules' => [],
+                'modules' => ['pages', 'posts', 'carousels', 'fleet'],
                 'is_active' => false,
                 'is_default' => false,
                 'pricing_model' => 'fixed',
@@ -46,6 +49,7 @@ class PlanUpdateTest extends TestCase
             ]);
 
         $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
 
         $this->assertFalse(
             $plan->fresh()->is_active,
