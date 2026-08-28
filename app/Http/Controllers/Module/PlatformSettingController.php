@@ -44,6 +44,7 @@ class PlatformSettingController extends Controller
 
         PlatformSetting::setValue(CentralAiSettings::KEY, $data['ai_features_enabled'] ? '1' : '0');
         PlatformSetting::setValue(SystemMode::KEY, $data['system_mode']);
+        \App\Models\Setting::query()->where('key', SystemMode::KEY)->update(['value' => $data['system_mode']]);
 
         return back()->with('success', __('settings.messages.bulk_updated'));
     }

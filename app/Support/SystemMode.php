@@ -67,7 +67,18 @@ final class SystemMode
         try {
             $value = PlatformSetting::getValue(self::KEY);
 
-            return is_string($value) ? $value : null;
+            if (is_string($value) && in_array($value, self::values(), true)) {
+                return $value;
+            }
+
+            if (class_exists(Setting::class)) {
+                $settingValue = Setting::query()->where('key', self::KEY)->value('value');
+                if (is_string($settingValue) && in_array($settingValue, self::values(), true)) {
+                    return $settingValue;
+                }
+            }
+
+            return null;
         } catch (Throwable) {
             return null;
         }

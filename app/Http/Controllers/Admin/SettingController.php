@@ -185,6 +185,7 @@ class SettingController extends Controller
                 request()->validate([
                     "settings.{$index}.value" => ['required', Rule::in(SystemMode::values())],
                 ]);
+                \App\Models\PlatformSetting::setValue(SystemMode::KEY, $value);
             }
 
             $setting->update(['value' => $value]);
