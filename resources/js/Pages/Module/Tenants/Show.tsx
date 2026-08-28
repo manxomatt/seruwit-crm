@@ -156,6 +156,24 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
         notes: tenant.notes ?? '',
     });
 
+    const planOptions = useMemo(() => {
+        const list = plans.map((plan) => ({
+            value: plan.key,
+            label: plan.description ? `${plan.label} (${plan.key}) — ${plan.description}` : `${plan.label} (${plan.key})`,
+        }));
+
+        if (data.plan && !list.some((opt) => opt.value === data.plan)) {
+            list.unshift({
+                value: data.plan,
+                label: `${data.plan} (Paket saat ini)`,
+            });
+        }
+
+        return list;
+    }, [plans, data.plan]);
+
+    const selectedPlan = plans.find((p) => p.key === data.plan);
+
     const deleteForm = useForm({ confirm_name: '' });
 
     const installModule = (key: string): void => {
@@ -413,11 +431,21 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
                                         {t('tenants.fields.plan')}
                                     </label>
                                     <Select
-                                        className="w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                        className="w-full"
                                         value={data.plan}
                                         onChange={(value) => setData('plan', value)}
-                                        options={plans.map((plan) => ({ value: plan.key, label: `${plan.label} — ${plan.description}` }))}
+                                        options={planOptions}
+                                        placeholder={t('tenants.fields.select_plan', undefined, 'Pilih paket langganan...')}
                                     />
+                                    {errors.plan && <p className="mt-1 text-xs text-rose-500">{errors.plan}</p>}
+                                    {selectedPlan && (
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                            <span className="rounded-md bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60">
+                                                {selectedPlan.modules.length} modul aktif
+                                            </span>
+                                            {selectedPlan.description && <span>{selectedPlan.description}</span>}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="sm:col-span-2">
