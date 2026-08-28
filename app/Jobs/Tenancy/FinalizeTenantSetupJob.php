@@ -78,13 +78,20 @@ class FinalizeTenantSetupJob implements ShouldQueue
             }
         });
 
-        // Install core content modules (pages, posts) first. Their tables and
-        // menus must exist before the page seeders run, and they must be ready
+        // Install default modules (pages, posts, fleet, rental, document) first. Their tables
+        // and menus must exist before the page seeders run, and they must be ready
         // before any vertical pack is installed.
-        foreach (['pages', 'posts'] as $coreContentKey) {
-            $contentModule = Modules::find($coreContentKey);
-            if ($contentModule !== null) {
-                $installer->install($this->tenant, $contentModule);
+        foreach (['pages', 'posts', 'fleet', 'rental', 'document'] as $defaultModuleKey) {
+            $module = Modules::find($defaultModuleKey);
+            if ($module !== null) {
+                try {
+                    $installer->install($this->tenant, $module);
+                } catch (Throwable $e) {
+                    Log::warning("FinalizeTenantSetupJob: module [{$defaultModuleKey}] installation skipped.", [
+                        'tenant_id' => $this->tenant->getTenantKey(),
+                        'reason' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
@@ -93,9 +100,9 @@ class FinalizeTenantSetupJob implements ShouldQueue
             app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
         });
 
-        // Install remaining content modules (pages and posts already handled above).
+        // Install remaining content modules (already handled defaults skipped).
         foreach ($moduleKeys as $moduleKey) {
-            if (in_array($moduleKey, ['pages', 'posts'], true)) {
+            if (in_array($moduleKey, ['pages', 'posts', 'fleet', 'rental', 'document'], true)) {
                 continue;
             }
             $module = Modules::find($moduleKey);
