@@ -41,6 +41,7 @@ class Plan extends Model
             'posts',
             'receivables',
             'rental',
+            'scoring',
             'shuttle',
             'tracking',
         ];

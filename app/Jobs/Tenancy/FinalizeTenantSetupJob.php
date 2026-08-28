@@ -78,10 +78,21 @@ class FinalizeTenantSetupJob implements ShouldQueue
             }
         });
 
-        // Install default modules (pages, posts, fleet, rental, document) first. Their tables
-        // and menus must exist before the page seeders run, and they must be ready
+        // Install default modules (pages, posts, carousels, fleet, rental, document, maintenance, scoring) first.
+        // Their tables and menus must exist before the page seeders run, and they must be ready
         // before any vertical pack is installed.
-        foreach (['pages', 'posts', 'fleet', 'rental', 'document'] as $defaultModuleKey) {
+        $defaultModules = [
+            'pages',
+            'posts',
+            'carousels',
+            'fleet',
+            'rental',
+            'document',
+            'maintenance',
+            'scoring',
+        ];
+
+        foreach ($defaultModules as $defaultModuleKey) {
             $module = Modules::find($defaultModuleKey);
             if ($module !== null) {
                 try {
@@ -102,7 +113,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
 
         // Install remaining content modules (already handled defaults skipped).
         foreach ($moduleKeys as $moduleKey) {
-            if (in_array($moduleKey, ['pages', 'posts', 'fleet', 'rental', 'document'], true)) {
+            if (in_array($moduleKey, $defaultModules, true)) {
                 continue;
             }
             $module = Modules::find($moduleKey);

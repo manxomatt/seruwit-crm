@@ -20,15 +20,12 @@ return [
     'core' => [
         Modules\Partners\PartnersModule::class,
         Modules\Accounting\AccountingModule::class,
-        // Content/CMS modules every workspace (central + tenant) gets automatically.
-        // Their migrations live in database/migrations(+ /tenant), like the other
-        // core modules — never in modules/*/Database/Migrations.
-        Modules\Pages\PagesModule::class,
-        Modules\Posts\PostsModule::class,
-        Modules\Carousels\CarouselsModule::class,
     ],
 
     'registered' => [
+        Modules\Pages\PagesModule::class,
+        Modules\Posts\PostsModule::class,
+        Modules\Carousels\CarouselsModule::class,
         Modules\Billing\BillingModule::class,
         Modules\Document\DocumentModule::class,
         Modules\Fleet\FleetModule::class,
