@@ -588,8 +588,9 @@ export default function ModuleLayout({ header, children }: Props) {
     } | null;
     // Each registered module's declared tier, ordered by its menu sort_order.
     const moduleTiers = (pageProps.moduleTiers ?? []) as { key: string; tier: ModuleTier }[];
-    // Optional modules the super admin may install onto the central dashboard.
-    const centralInstallable = (pageProps.centralInstallableModules ?? []) as string[];
+    // Modules actually installed on the central dashboard (central modules +
+    // marketplace installs). Drives which module menus the central sidebar shows.
+    const centralInstalled = (pageProps.centralInstalledModules ?? []) as string[];
     const subscriptionSummary = pageProps.subscriptionSummary as { plan_name: string | null; status: string } | null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -641,9 +642,10 @@ export default function ModuleLayout({ header, children }: Props) {
             }
 
             // Central Admin only allows Central modules (Dashboard, Finance,
-            // Contents, Platform) plus any optional module installed onto the
-            // central dashboard from the marketplace.
-            if (isCentral && !CENTRAL_ALLOWED_MODULES.includes(module) && !centralInstallable.includes(module)) {
+            // Contents, Platform) plus any optional module actually installed
+            // onto the central dashboard from the marketplace — not the whole
+            // installable catalogue.
+            if (isCentral && !CENTRAL_ALLOWED_MODULES.includes(module) && !centralInstalled.includes(module)) {
                 return;
             }
 
@@ -878,18 +880,18 @@ export default function ModuleLayout({ header, children }: Props) {
         }
 
         return items;
-    }, [user, isCentral, isAdmin, isReseller, centralInstallable, t, locale]);
+    }, [user, isCentral, isAdmin, isReseller, centralInstalled, t, locale]);
 
     // Split the flat navigation into the standalone Dashboard plus collapsible
     // groups, preserving the module order defined in MENU_GROUPS.
     const dashboardItem = navigation.find((item) => item.module === 'dashboard');
     const menuGroups = useMemo(() => {
         // Surface optional modules installed onto the central dashboard under the
-        // same group titles they carry on a tenant, driven by the server
-        // allowlist — so a new central-installable module needs no frontend edit.
-        // Skip any module a CENTRAL_MENU_GROUPS group already lists, so a module
-        // that is both central-installable and already central-grouped (the
-        // finance modules) is not duplicated under two headers.
+        // same group titles they carry on a tenant, driven by the server's
+        // installed-on-central list — so a newly installed module needs no
+        // frontend edit. Skip any module a CENTRAL_MENU_GROUPS group already
+        // lists, so a module that is both installed and already central-grouped
+        // (the finance modules) is not duplicated under two headers.
         const centralGroupedKeys = new Set(
             CENTRAL_MENU_GROUPS.flatMap((group) => ('modules' in group ? group.modules : [])),
         );
@@ -899,7 +901,7 @@ export default function ModuleLayout({ header, children }: Props) {
                 .map((group) => ({
                     titleKey: group.titleKey,
                     modules: group.modules.filter(
-                        (module) => centralInstallable.includes(module) && !centralGroupedKeys.has(module),
+                        (module) => centralInstalled.includes(module) && !centralGroupedKeys.has(module),
                     ),
                 }))
                 .filter((group) => group.modules.length > 0)
@@ -924,7 +926,7 @@ export default function ModuleLayout({ header, children }: Props) {
                 .map((module) => navigation.find((item) => item.module === module))
                 .filter((item): item is MenuItem => Boolean(item)),
         })).filter((group) => group.items.length > 0);
-    }, [navigation, moduleTiers, centralInstallable, isCentral, t, locale]);
+    }, [navigation, moduleTiers, centralInstalled, isCentral, t, locale]);
 
     // Collapsible group state, persisted so it survives page navigations.
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {

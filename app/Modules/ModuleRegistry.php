@@ -125,6 +125,25 @@ class ModuleRegistry
     }
 
     /**
+     * Modules actually installed on (or built into) the central dashboard right
+     * now: the always-on central modules plus whatever the super admin has
+     * installed from the marketplace. This is what the central sidebar lists,
+     * as opposed to centralInstallable() — the full catalogue of what *may* be
+     * installed. Deliberately independent of central_serves_app: menu curation
+     * follows real install state even when that dev flag makes every module
+     * route reachable.
+     *
+     * @return list<string>
+     */
+    public function centralInstalled(): array
+    {
+        return array_values(array_unique([
+            ...$this->centralModules(),
+            ...$this->installedKeysForCentral(),
+        ]));
+    }
+
+    /**
      * Whether $key names a registered, optional module. Core features such as
      * users or settings are deliberately absent from the registry.
      */

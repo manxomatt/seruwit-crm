@@ -92,4 +92,25 @@ class InstallStepsTest extends TestCase
         $this->assertTrue(InstallState::isInstalled());
         $this->assertNotNull(PlatformSetting::getValue(InstallState::INSTALLED_AT_KEY));
     }
+
+    public function test_finalize_endpoint_drives_a_full_page_visit_home_for_inertia_clients(): void
+    {
+        config(['app.installed' => false]);
+        InstallState::forget();
+
+        // Swap the finalizer so hitting the endpoint never writes a real config
+        // cache or install lock the suite would otherwise have to undo.
+        $this->mock(InstallationFinalizer::class)
+            ->shouldReceive('finalize')
+            ->once();
+
+        $response = $this->withHeader('X-Inertia', 'true')
+            ->post('/install/finalize');
+
+        // The wizard posts via Inertia and the homepage is a Blade response, so a
+        // plain redirect would be swallowed and rendered inside Inertia's iframe.
+        // The 409 + location header forces a real browser navigation home instead.
+        $response->assertStatus(409);
+        $response->assertHeader('X-Inertia-Location', '/');
+    }
 }

@@ -83,10 +83,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'menus' => $this->getMenus($user, $routePrefix),
             'moduleTiers' => $this->getModuleTiers(),
-            // Optional modules the super admin may install onto the central
-            // dashboard, so the central sidebar can surface an installed one and
-            // its marketplace link without a hand-maintained frontend list.
-            'centralInstallableModules' => \App\Modules\Facades\Modules::centralInstallable(),
+            // Modules actually installed on the central dashboard (central
+            // modules + marketplace installs), so the central sidebar lists only
+            // what is installed rather than the whole installable catalogue.
+            'centralInstalledModules' => \App\Modules\Facades\Modules::centralInstalled(),
             // The bell dropdown's data — the unread badge needs it on every
             // load, and the recent list is small, so both resolve eagerly for
             // an authenticated user (guests get null and pay nothing). Named
