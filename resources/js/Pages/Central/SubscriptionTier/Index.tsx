@@ -120,11 +120,8 @@ export default function Index({ tiers }: Props): JSX.Element {
                     actions={
                         <Link
                             href={route('module.subscription-tiers.create')}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                            className="inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
                             <span>Tambah Tier Baru</span>
                         </Link>
                     }
@@ -400,11 +397,8 @@ export default function Index({ tiers }: Props): JSX.Element {
 
                         <Link
                             href={route('module.subscription-tiers.create')}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                            className="inline-flex items-center rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
                             <span>Buat Tier</span>
                         </Link>
                     </div>
@@ -437,9 +431,9 @@ export default function Index({ tiers }: Props): JSX.Element {
                         ) : (
                             <Link
                                 href={route('module.subscription-tiers.create')}
-                                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
+                                className="mt-4 inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
                             >
-                                + Buat Tier Pertama
+                                <span>Buat Tier Pertama</span>
                             </Link>
                         )}
                     </div>
