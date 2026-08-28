@@ -2,7 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import Select from '@/Components/Select';
+import Select, { SelectOption } from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
@@ -156,16 +156,20 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
         notes: tenant.notes ?? '',
     });
 
-    const planOptions = useMemo(() => {
-        const list = plans.map((plan) => ({
+    const planOptions = useMemo<SelectOption[]>(() => {
+        const list: SelectOption[] = plans.map((plan) => ({
             value: plan.key,
-            label: plan.description ? `${plan.label} (${plan.key}) — ${plan.description}` : `${plan.label} (${plan.key})`,
+            label: plan.label,
+            badge: plan.key.toUpperCase(),
+            description: plan.description || `${plan.modules.length} modul disertakan`,
         }));
 
         if (data.plan && !list.some((opt) => opt.value === data.plan)) {
             list.unshift({
                 value: data.plan,
-                label: `${data.plan} (Paket saat ini)`,
+                label: data.plan,
+                badge: 'AKTIF',
+                description: 'Paket langganan saat ini pada workspace',
             });
         }
 
