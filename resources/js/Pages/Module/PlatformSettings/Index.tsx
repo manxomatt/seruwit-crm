@@ -31,6 +31,11 @@ export default function Index({ settings, systemModes }: Props): JSX.Element {
     const modeOptions = systemModes.map((mode) => ({
         value: mode,
         label: mode.charAt(0).toUpperCase() + mode.slice(1),
+        badge: mode === 'production' ? 'PROD' : 'DEV',
+        description:
+            mode === 'production'
+                ? 'Mode produksi live (email nyata & keamanan aktif)'
+                : 'Mode pengembangan (debug, simulasi email & OTP)',
     }));
 
     return (

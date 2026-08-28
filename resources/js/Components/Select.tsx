@@ -170,28 +170,66 @@ function SearchableSelect({
                                     key={option.value}
                                     value={option.value}
                                     disabled={option.disabled}
-                                    className={optionClassName}
+                                    className={({ focus, selected }) =>
+                                        `group relative cursor-pointer select-none rounded-xl px-3 py-2 text-xs transition-colors ${
+                                            focus
+                                                ? 'bg-indigo-600 text-white shadow-sm'
+                                                : selected
+                                                  ? 'bg-indigo-50 text-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-200'
+                                                  : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60'
+                                        } ${option.disabled ? 'cursor-not-allowed opacity-40' : ''}`
+                                    }
                                 >
-                                    <div className="flex flex-col gap-0.5 pr-6">
-                                        <div className="flex items-center gap-2">
-                                            <span className="block font-bold text-xs text-slate-900 group-data-[focus]:text-white group-data-[selected]:text-indigo-600 dark:text-white dark:group-data-[selected]:text-indigo-400">
-                                                {option.label}
-                                            </span>
-                                            {option.badge && (
-                                                <span className="rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 group-data-[focus]:bg-white/20 group-data-[focus]:text-white group-data-[focus]:border-white/30">
-                                                    {option.badge}
+                                    {({ focus, selected }) => (
+                                        <div className="flex flex-col gap-0.5 pr-6">
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`block font-bold text-xs ${
+                                                        focus
+                                                            ? '!text-white'
+                                                            : selected
+                                                              ? 'text-indigo-600 dark:text-indigo-400'
+                                                              : 'text-slate-900 dark:text-white'
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                </span>
+                                                {option.badge && (
+                                                    <span
+                                                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border transition-colors ${
+                                                            focus
+                                                                ? 'bg-white/20 !text-white border-white/30'
+                                                                : selected
+                                                                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/60 dark:text-indigo-300 dark:border-indigo-700/60'
+                                                                  : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                                        }`}
+                                                    >
+                                                        {option.badge}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {option.description && (
+                                                <span
+                                                    className={`block text-[11px] leading-snug ${
+                                                        focus
+                                                            ? '!text-indigo-100'
+                                                            : 'text-slate-500 dark:text-slate-400'
+                                                    }`}
+                                                >
+                                                    {option.description}
+                                                </span>
+                                            )}
+                                            {selected && (
+                                                <span
+                                                    className={`absolute inset-y-0 right-0 flex items-center pr-3 ${
+                                                        focus ? '!text-white' : 'text-indigo-600 dark:text-indigo-400'
+                                                    }`}
+                                                >
+                                                    <CheckIcon />
                                                 </span>
                                             )}
                                         </div>
-                                        {option.description && (
-                                            <span className="block text-[11px] text-slate-500 group-data-[focus]:text-white/80 dark:text-slate-400 leading-snug">
-                                                {option.description}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-indigo-600 group-data-[focus]:text-white group-data-[selected]:flex">
-                                        <CheckIcon />
-                                    </span>
+                                    )}
                                 </ComboboxOption>
                             ))}
                             {visible.hiddenCount > 0 && (
@@ -292,28 +330,66 @@ export default function Select({
                             key={option.value}
                             value={option.value}
                             disabled={option.disabled}
-                            className={optionClassName}
+                            className={({ focus, selected }) =>
+                                `group relative cursor-pointer select-none rounded-xl px-3 py-2 text-xs transition-colors ${
+                                    focus
+                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                        : selected
+                                          ? 'bg-indigo-50 text-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-200'
+                                          : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60'
+                                } ${option.disabled ? 'cursor-not-allowed opacity-40' : ''}`
+                            }
                         >
-                            <div className="flex flex-col gap-0.5 pr-6">
-                                <div className="flex items-center gap-2">
-                                    <span className="block font-bold text-xs text-slate-900 group-data-[focus]:text-white group-data-[selected]:text-indigo-600 dark:text-white dark:group-data-[selected]:text-indigo-400">
-                                        {option.label}
-                                    </span>
-                                    {option.badge && (
-                                        <span className="rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 group-data-[focus]:bg-white/20 group-data-[focus]:text-white group-data-[focus]:border-white/30">
-                                            {option.badge}
+                            {({ focus, selected }) => (
+                                <div className="flex flex-col gap-0.5 pr-6">
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className={`block font-bold text-xs ${
+                                                focus
+                                                    ? '!text-white'
+                                                    : selected
+                                                      ? 'text-indigo-600 dark:text-indigo-400'
+                                                      : 'text-slate-900 dark:text-white'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </span>
+                                        {option.badge && (
+                                            <span
+                                                className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border transition-colors ${
+                                                    focus
+                                                        ? 'bg-white/20 !text-white border-white/30'
+                                                        : selected
+                                                          ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/60 dark:text-indigo-300 dark:border-indigo-700/60'
+                                                          : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                                }`}
+                                            >
+                                                {option.badge}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {option.description && (
+                                        <span
+                                            className={`block text-[11px] leading-snug ${
+                                                focus
+                                                    ? '!text-indigo-100'
+                                                    : 'text-slate-500 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            {option.description}
+                                        </span>
+                                    )}
+                                    {selected && (
+                                        <span
+                                            className={`absolute inset-y-0 right-0 flex items-center pr-3 ${
+                                                focus ? '!text-white' : 'text-indigo-600 dark:text-indigo-400'
+                                            }`}
+                                        >
+                                            <CheckIcon />
                                         </span>
                                     )}
                                 </div>
-                                {option.description && (
-                                    <span className="block text-[11px] text-slate-500 group-data-[focus]:text-white/80 dark:text-slate-400 leading-snug">
-                                        {option.description}
-                                    </span>
-                                )}
-                            </div>
-                            <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-indigo-600 group-data-[focus]:text-white group-data-[selected]:flex">
-                                <CheckIcon />
-                            </span>
+                            )}
                         </ListboxOption>
                     ))}
                 </ListboxOptions>

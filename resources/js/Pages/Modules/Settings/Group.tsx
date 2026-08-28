@@ -57,10 +57,20 @@ const GROUP_ICONS: Record<string, string> = {
     maintenance: '🛠️',
 };
 
-const SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
+const SELECT_OPTIONS: Record<string, { value: string; label: string; badge?: string; description?: string }[]> = {
     'general.system_mode': [
-        { value: 'development', label: 'Development' },
-        { value: 'production', label: 'Production' },
+        {
+            value: 'development',
+            label: 'Development',
+            badge: 'DEV',
+            description: 'Mode pengembangan (debug aktif, simulasi email & OTP)',
+        },
+        {
+            value: 'production',
+            label: 'Production',
+            badge: 'LIVE',
+            description: 'Mode produksi (email nyata & sistem keamanan penuh)',
+        },
     ],
 };
 
@@ -504,7 +514,7 @@ export default function Group({
                                                 ) : setting.type === 'select' && setting.key in SELECT_OPTIONS ? (
                                                     <Select
                                                         id={`value-${setting.id}`}
-                                                        className="w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                                        className="w-full"
                                                         value={data.settings[index].value}
                                                         onChange={(value) => updateValue(index, value)}
                                                         options={SELECT_OPTIONS[setting.key]}
