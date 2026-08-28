@@ -26,6 +26,65 @@ class Vehicle extends Model
 
     public const STATUS_INACTIVE = 'inactive';
 
+    public const STATUS_RETIRED = 'retired';
+
+    public const STATUS_OUT_OF_SERVICE = 'out_of_service';
+
+    /**
+     * Vehicle statuses that consume a subscription vehicle slot.
+     *
+     * @return list<string>
+     */
+    public static function billableStatuses(): array
+    {
+        return [
+            self::STATUS_ACTIVE,
+            self::STATUS_MAINTENANCE,
+        ];
+    }
+
+    /**
+     * Vehicle statuses that do not consume a subscription vehicle slot.
+     *
+     * @return list<string>
+     */
+    public static function nonBillableStatuses(): array
+    {
+        return [
+            self::STATUS_INACTIVE,
+            self::STATUS_RETIRED,
+            self::STATUS_OUT_OF_SERVICE,
+        ];
+    }
+
+    /**
+     * Check if this vehicle consumes a subscription quota slot.
+     */
+    public function isBillable(): bool
+    {
+        return in_array($this->status, self::billableStatuses(), true);
+    }
+
+    /**
+     * Scope query to vehicles that count towards subscription quota.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Vehicle>  $query
+     */
+    public function scopeBillable($query): void
+    {
+        $query->whereIn('status', self::billableStatuses());
+    }
+
+    /**
+     * Scope query to vehicles that do not count towards subscription quota.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Vehicle>  $query
+     */
+    public function scopeNonBillable($query): void
+    {
+        $query->whereNotIn('status', self::billableStatuses());
+    }
+
     /**
      * Factory resolution assumes App\Models, so a module's models must point at
      * their own factory explicitly.

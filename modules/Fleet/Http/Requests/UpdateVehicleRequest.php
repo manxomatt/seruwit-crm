@@ -84,6 +84,28 @@ class UpdateVehicleRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             AccessibleFleetBases::rejectIfDenied($validator, $this->input('home_base_id'));
+
+            if ($this->has('status')) {
+                $newStatus = $this->input('status');
+                $isBecomingBillable = in_array($newStatus, \Modules\Fleet\Models\Vehicle::billableStatuses(), true);
+
+                if ($isBecomingBillable) {
+                    $vehicleParam = $this->route('vehicle');
+                    $vehicle = $vehicleParam instanceof \Modules\Fleet\Models\Vehicle
+                        ? $vehicleParam
+                        : \Modules\Fleet\Models\Vehicle::find($vehicleParam);
+
+                    $wasBillable = $vehicle?->isBillable() ?? false;
+
+                    if (! $wasBillable) {
+                        $tenant = tenant();
+                        if ($tenant instanceof \App\Models\Tenant && $tenant->hasReachedLimit('max_vehicles', \Modules\Fleet\Models\Vehicle::billable()->count())) {
+                            $limit = (int) $tenant->planLimit('max_vehicles');
+                            $validator->errors()->add('status', __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]));
+                        }
+                    }
+                }
+            }
         });
     }
 }

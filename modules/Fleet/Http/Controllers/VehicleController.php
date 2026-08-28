@@ -42,7 +42,8 @@ class VehicleController extends Controller
         $user = Auth::user();
         $tenant = tenant();
         $totalVehicles = Vehicle::count();
-        $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $totalVehicles);
+        $billableVehicles = Vehicle::billable()->count();
+        $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $billableVehicles);
         $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_vehicles') : null;
 
         $vehicles = Vehicle::query()
@@ -80,7 +81,8 @@ class VehicleController extends Controller
             ],
             'quota' => [
                 'max' => $maxLimit !== null ? (int) $maxLimit : null,
-                'current' => $totalVehicles,
+                'current' => $billableVehicles,
+                'total' => $totalVehicles,
                 'reached' => $isLimitReached,
             ],
         ]);
@@ -92,7 +94,7 @@ class VehicleController extends Controller
     public function create(): Response|RedirectResponse
     {
         $tenant = tenant();
-        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::count())) {
+        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
             $limit = (int) $tenant->planLimit('max_vehicles');
 
             return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.index')
@@ -109,12 +111,15 @@ class VehicleController extends Controller
      */
     public function store(StoreVehicleRequest $request): RedirectResponse
     {
-        $tenant = tenant();
-        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::count())) {
-            $limit = (int) $tenant->planLimit('max_vehicles');
-            throw ValidationException::withMessages([
-                'name' => __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]),
-            ]);
+        $status = $request->input('status', Vehicle::STATUS_ACTIVE);
+        if (in_array($status, Vehicle::billableStatuses(), true)) {
+            $tenant = tenant();
+            if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
+                $limit = (int) $tenant->planLimit('max_vehicles');
+                throw ValidationException::withMessages([
+                    'name' => __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]),
+                ]);
+            }
         }
 
         $vehicle = Vehicle::create($request->validated());

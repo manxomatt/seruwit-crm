@@ -23,6 +23,33 @@ class BatchUpdateVehicleStatusRequest extends FormRequest
         ];
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            if ($validator->failed()) {
+                return;
+            }
+
+            $status = $this->input('status');
+            if (in_array($status, \Modules\Fleet\Models\Vehicle::billableStatuses(), true)) {
+                $tenant = tenant();
+                if ($tenant instanceof \App\Models\Tenant && $tenant->hasFiniteLimit('max_vehicles')) {
+                    $limit = (int) $tenant->planLimit('max_vehicles');
+                    $ids = array_map('intval', (array) $this->input('ids', []));
+
+                    $currentBillable = \Modules\Fleet\Models\Vehicle::billable()->count();
+                    $newlyBillable = \Modules\Fleet\Models\Vehicle::whereIn('id', $ids)
+                        ->whereNotIn('status', \Modules\Fleet\Models\Vehicle::billableStatuses())
+                        ->count();
+
+                    if (($currentBillable + $newlyBillable) > $limit) {
+                        $validator->errors()->add('status', __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]));
+                    }
+                }
+            }
+        });
+    }
+
     /**
      * @return array<string, string>
      */

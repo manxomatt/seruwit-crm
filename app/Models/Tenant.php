@@ -103,6 +103,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
                 return (int) $subscription->subscribed_vehicles;
             }
 
+            $plan = $this->planModel();
+            if ($plan) {
+                return $plan->getLimit('max_vehicles', $default);
+            }
+
             return 0;
         }
 
