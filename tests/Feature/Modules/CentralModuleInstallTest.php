@@ -85,10 +85,9 @@ class CentralModuleInstallTest extends TestCase
     {
         $admin = $this->makeCentralAdmin();
 
-        // Invoicing is a registered module, but it is an always-on central module
-        // (config('modules.central_modules')), so it is excluded from the
-        // marketplace and cannot be installed there.
-        $this->actingAs($admin)->post('/module/marketplace/invoicing/install')->assertNotFound();
+        // Accounting is an always-on central module (config('modules.central_modules')),
+        // so it is excluded from the marketplace and cannot be installed there.
+        $this->actingAs($admin)->post('/module/marketplace/accounting/install')->assertNotFound();
     }
 
     public function test_an_uninstalled_module_route_404s_on_central(): void

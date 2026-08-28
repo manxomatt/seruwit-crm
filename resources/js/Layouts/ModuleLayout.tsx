@@ -337,14 +337,14 @@ const MENU_GROUPS: MenuGroup[] = [
 ];
 
 const CENTRAL_MENU_GROUPS: MenuGroup[] = [
-    { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing', 'payment-orders'] },
+    { titleKey: 'finance', modules: ['accounting', 'payment-orders'] },
     { titleKey: 'content', modules: ['pages', 'posts', 'carousels', 'media'] },
     { titleKey: 'administration', modules: ['users', 'roles', 'settings'] },
     { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'module-registry', 'central-modules'] },
 ];
 
 const CENTRAL_ALLOWED_MODULES = [
-    'accounting', 'invoicing', 'receivables', 'payables', 'billing', 'payment-orders', 'pages', 'posts',
+    'accounting', 'payment-orders', 'pages', 'posts',
     'carousels', 'media', 'tenants', 'plans',
     'module-registry', 'settings', 'users', 'roles',
 ];

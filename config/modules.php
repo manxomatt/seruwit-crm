@@ -101,10 +101,6 @@ return [
     'central_modules' => [
         // Finance
         'accounting',
-        'invoicing',
-        'receivables',
-        'payables',
-        'billing',
         'payment-orders',
 
         // Administration
