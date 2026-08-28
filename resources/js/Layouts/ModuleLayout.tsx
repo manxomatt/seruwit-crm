@@ -344,7 +344,7 @@ const CENTRAL_MENU_GROUPS: MenuGroup[] = [
 ];
 
 const CENTRAL_ALLOWED_MODULES = [
-    'bi', 'accounting', 'invoicing', 'receivables', 'payables', 'billing', 'payment-orders', 'pages', 'posts',
+    'accounting', 'invoicing', 'receivables', 'payables', 'billing', 'payment-orders', 'pages', 'posts',
     'carousels', 'media', 'tenants', 'plans',
     'module-registry', 'settings', 'users', 'roles',
 ];

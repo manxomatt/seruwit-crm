@@ -99,9 +99,6 @@ return [
     |
     */
     'central_modules' => [
-        // Dashboard
-        'bi',
-
         // Finance
         'accounting',
         'invoicing',
@@ -109,10 +106,6 @@ return [
         'payables',
         'billing',
         'payment-orders',
-
-        // Contents (pages/posts/carousels are now core → migrated by the base
-        // central migration, so they no longer need an explicit central install)
-        'document',
 
         // Administration
         'users',

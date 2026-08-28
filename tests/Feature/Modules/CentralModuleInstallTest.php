@@ -85,10 +85,10 @@ class CentralModuleInstallTest extends TestCase
     {
         $admin = $this->makeCentralAdmin();
 
-        // Document is a registered module, but it is an always-on central module
+        // Invoicing is a registered module, but it is an always-on central module
         // (config('modules.central_modules')), so it is excluded from the
         // marketplace and cannot be installed there.
-        $this->actingAs($admin)->post('/module/marketplace/document/install')->assertNotFound();
+        $this->actingAs($admin)->post('/module/marketplace/invoicing/install')->assertNotFound();
     }
 
     public function test_an_uninstalled_module_route_404s_on_central(): void
@@ -184,5 +184,21 @@ class CentralModuleInstallTest extends TestCase
 
         $this->actingAs($admin)->get('/module/fleet')->assertOk();
         $this->assertDatabaseHas('installed_modules', ['key' => 'fleet', 'uninstalled_at' => null]);
+    }
+
+    public function test_document_and_bi_are_optional_and_installable_via_the_marketplace(): void
+    {
+        $admin = $this->makeCentralAdmin();
+
+        $this->actingAs($admin)->get('/module/marketplace')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('modules', fn ($modules) => collect($modules)->firstWhere('key', 'document')['installed'] === false
+                    && collect($modules)->firstWhere('key', 'bi')['installed'] === false)
+            );
+
+        // Initially unreachable (404)
+        $this->actingAs($admin)->get('/module/documents')->assertNotFound();
+        $this->actingAs($admin)->get('/module/bi')->assertNotFound();
     }
 }
