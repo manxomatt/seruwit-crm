@@ -15,6 +15,12 @@ use Illuminate\Support\Facades\Artisan;
  * Only config is cached — not routes — because the app registers closure routes
  * that route:cache cannot serialize. $optimize is skipped in tests so the suite
  * never writes a real config cache or lock side effects it must undo.
+ *
+ * Caching is further limited to production: on a local/dev install a baked config
+ * cache silently freezes the current .env (any later edit is ignored until
+ * config:clear) and, if written while APP_KEY is momentarily absent, boots the app
+ * straight into a MissingAppKeyException. Dev boxes gain nothing from the cache, so
+ * we never write one there.
  */
 class InstallationFinalizer
 {
@@ -27,7 +33,7 @@ class InstallationFinalizer
 
         InstallState::markInstalled();
 
-        if ($optimize) {
+        if ($optimize && app()->isProduction()) {
             Artisan::call('config:cache');
         }
     }

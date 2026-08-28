@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\Central\BillingReportController;
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
 use App\Http\Controllers\Central\ResellerLandingPageController;

@@ -23,10 +23,33 @@ class InstallStepsTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * The install lock lives at storage_path('framework/installed'), which is NOT
+     * environment-isolated, so a developer's real lock is the same file this suite
+     * writes and forgets. Snapshot it up front and restore it verbatim afterwards
+     * so running these tests never un-installs the local app.
+     */
+    private ?string $lockSnapshot = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->lockSnapshot = File::exists(InstallState::lockPath())
+            ? File::get(InstallState::lockPath())
+            : null;
+    }
+
     protected function tearDown(): void
     {
-        // The lock file lives outside the database transaction, so undo it here.
-        InstallState::forget();
+        // The lock file lives outside the database transaction, so restore whatever
+        // state the developer's environment had before this test touched it.
+        if ($this->lockSnapshot === null) {
+            InstallState::forget();
+        } else {
+            File::ensureDirectoryExists(dirname(InstallState::lockPath()));
+            File::put(InstallState::lockPath(), $this->lockSnapshot);
+        }
 
         parent::tearDown();
     }
@@ -91,6 +114,21 @@ class InstallStepsTest extends TestCase
         $this->assertTrue(File::exists(InstallState::lockPath()));
         $this->assertTrue(InstallState::isInstalled());
         $this->assertNotNull(PlatformSetting::getValue(InstallState::INSTALLED_AT_KEY));
+    }
+
+    public function test_finalizer_never_writes_a_config_cache_outside_production(): void
+    {
+        config(['app.installed' => null]);
+        InstallState::forget();
+        $configCache = $this->app->getCachedConfigPath();
+        File::delete($configCache);
+
+        // optimize defaults to true, but the test environment is not production, so
+        // the finalizer must still refuse to bake a config cache (the dev footgun
+        // behind the post-install MissingAppKeyException).
+        (new InstallationFinalizer)->finalize();
+
+        $this->assertFalse(File::exists($configCache));
     }
 
     public function test_finalize_endpoint_drives_a_full_page_visit_home_for_inertia_clients(): void
