@@ -31,12 +31,18 @@ class EmailVerificationPromptController extends Controller
             ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
             ->toArray();
 
+        $isDevelopment = SystemMode::isDevelopment();
+        $devUrl = session('dev_verification_url');
+
+        $verificationUrl = ($isDevelopment || $devUrl)
+            ? ($devUrl ?: EmailVerificationUrl::for($request->user()))
+            : null;
+
         return Inertia::render('Auth/VerifyEmail', [
             'status' => session('status'),
             'settings' => $settings,
-            'verificationUrl' => SystemMode::isDevelopment()
-                ? (session('dev_verification_url') ?: EmailVerificationUrl::for($request->user()))
-                : null,
+            'verificationUrl' => $verificationUrl,
+            'isDevelopment' => $isDevelopment,
         ]);
     }
 }

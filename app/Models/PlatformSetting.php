@@ -38,7 +38,13 @@ class PlatformSetting extends Model
      */
     public function getConnectionName(): ?string
     {
-        return config('tenancy.database.central_connection');
+        $connection = config('tenancy.database.central_connection');
+
+        if ($connection && config("database.connections.{$connection}")) {
+            return $connection;
+        }
+
+        return config('database.default', 'pgsql');
     }
 
     /**

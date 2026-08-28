@@ -34,8 +34,11 @@ final class SystemMode
     {
         $value = self::storedValue();
 
-        if (in_array($value, self::values(), true)) {
-            return $value;
+        if (is_string($value)) {
+            $normalized = strtolower(trim($value));
+            if (in_array($normalized, self::values(), true)) {
+                return $normalized;
+            }
         }
 
         return app()->environment('production')
@@ -66,22 +69,38 @@ final class SystemMode
     private static function storedValue(): ?string
     {
         try {
-            $value = PlatformSetting::getValue(self::KEY);
-
-            if (is_string($value) && in_array($value, self::values(), true)) {
-                return $value;
-            }
-
-            if (class_exists(Setting::class)) {
-                $settingValue = Setting::query()->where('key', self::KEY)->value('value');
-                if (is_string($settingValue) && in_array($settingValue, self::values(), true)) {
-                    return $settingValue;
+            if (class_exists(PlatformSetting::class)) {
+                $value = PlatformSetting::getValue(self::KEY);
+                if (is_string($value) && in_array(strtolower(trim($value)), self::values(), true)) {
+                    return strtolower(trim($value));
                 }
             }
-
-            return null;
         } catch (Throwable) {
-            return null;
+            // Fall through to Setting query
         }
+
+        try {
+            if (class_exists(Setting::class)) {
+                $settingValue = Setting::query()->where('key', self::KEY)->value('value');
+                if (is_string($settingValue) && in_array(strtolower(trim($settingValue)), self::values(), true)) {
+                    return strtolower(trim($settingValue));
+                }
+            }
+        } catch (Throwable) {
+            // Fall through to DB fallback
+        }
+
+        try {
+            $dbVal = \Illuminate\Support\Facades\DB::table('platform_settings')->where('key', self::KEY)->value('value')
+                ?? \Illuminate\Support\Facades\DB::table('settings')->where('key', self::KEY)->value('value');
+
+            if (is_string($dbVal) && in_array(strtolower(trim($dbVal)), self::values(), true)) {
+                return strtolower(trim($dbVal));
+            }
+        } catch (Throwable) {
+            // Ignore
+        }
+
+        return null;
     }
 }

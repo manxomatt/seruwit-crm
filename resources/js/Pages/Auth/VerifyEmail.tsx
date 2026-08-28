@@ -7,9 +7,10 @@ interface Props {
     status?: string;
     settings?: Record<string, string>;
     verificationUrl?: string | null;
+    isDevelopment?: boolean;
 }
 
-export default function VerifyEmail({ status, settings, verificationUrl }: Props) {
+export default function VerifyEmail({ status, settings, verificationUrl, isDevelopment }: Props) {
     const { t } = useTrans();
     const { post, processing } = useForm<Record<string, never>>({});
 
@@ -132,17 +133,29 @@ export default function VerifyEmail({ status, settings, verificationUrl }: Props
 
                             {/* Dev Mode Banner */}
                             {verificationUrl && (
-                                <div className="mb-6 space-y-2 rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 text-xs">
+                                <div className="mb-6 space-y-3 rounded-2xl border border-amber-200 bg-amber-50/95 p-4 text-xs shadow-sm">
                                     <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-amber-600 text-base">developer_mode</span>
-                                        <span className="font-bold text-amber-900">{t('auth_ui.verify_dev_banner')}</span>
+                                        <span className="material-symbols-outlined text-amber-600 text-lg">developer_mode</span>
+                                        <span className="font-bold text-amber-900">{t('auth_ui.verify_dev_banner', undefined, 'Mode Development: Verifikasi Instan')}</span>
                                     </div>
+                                    <p className="text-[11px] text-amber-800/80 leading-relaxed">
+                                        Email dinonaktifkan di mode development. Klik tombol di bawah untuk langsung memverifikasi akun Anda.
+                                    </p>
                                     <a
                                         href={verificationUrl}
-                                        className="block break-all font-mono font-bold text-indigo-600 underline hover:text-indigo-700"
+                                        className="flex items-center justify-center gap-2 w-full rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 py-2.5 px-4 text-xs font-bold text-white shadow-md shadow-amber-600/25 transition-all"
                                     >
-                                        {verificationUrl}
+                                        <span className="material-symbols-outlined text-base">verified</span>
+                                        <span>Verifikasi Akun Sekarang</span>
                                     </a>
+                                    <div className="pt-2 border-t border-amber-200/60">
+                                        <a
+                                            href={verificationUrl}
+                                            className="block break-all font-mono text-[10px] text-amber-700 hover:underline"
+                                        >
+                                            {verificationUrl}
+                                        </a>
+                                    </div>
                                 </div>
                             )}
 
