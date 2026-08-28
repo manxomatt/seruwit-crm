@@ -6,7 +6,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface Member {
     id: number;
