@@ -45,11 +45,19 @@ class TenantDefaultPageSeeder extends Seeder
             return;
         }
 
+        // A landing page must belong to a real workspace user. During the tenant
+        // seed step no user exists yet — the owner is synced in afterwards — so
+        // skip here rather than attributing the page to a non-existent user id.
+        // FinalizeTenantSetupJob and ProvisionSelfServeTenantJob re-run this seeder
+        // once the owner is present, which is when the page actually gets created.
         $user = User::query()->first();
-        $userId = $user?->id ?? 1;
+
+        if ($user === null) {
+            return;
+        }
 
         Page::query()->create([
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'title' => $template['title'],
             'slug' => $template['slug'],
             'html' => $template['html'],

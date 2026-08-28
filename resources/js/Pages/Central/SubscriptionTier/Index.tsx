@@ -1,147 +1,660 @@
-import { Link, router } from '@inertiajs/react'
-import DynamicLayout from '@/Layouts/DynamicLayout'
-import PageHeader from '@/Components/PageHeader'
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useTrans } from '@/hooks/useTrans';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
 interface Tier {
-    id: number
-    name: string
-    min_vehicles: number
-    max_vehicles: number
-    price_per_vehicle: number
-    created_at: string
+    id: number;
+    name: string;
+    min_vehicles: number;
+    max_vehicles: number;
+    price_per_vehicle: number;
+    created_at: string;
 }
 
 interface Props {
-    tiers: Tier[]
+    tiers: Tier[];
 }
 
-export default function Index({ tiers }: Props) {
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this tier?')) {
-            router.delete(`/module/subscription-tiers/${id}`)
-        }
-    }
+const formatRupiah = (amount: number): string => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(amount);
+};
+
+export default function Index({ tiers }: Props): JSX.Element {
+    const { t } = useTrans();
+    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
+
+    const [deletingTier, setDeletingTier] = useState<Tier | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [search, setSearch] = useState('');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+    // Interactive simulator state
+    const [simVehicles, setSimVehicles] = useState<number>(20);
+    const [simInterval, setSimInterval] = useState<'month' | 'annual'>('month');
+
+    const totalTiers = tiers.length;
+
+    const sortedTiers = useMemo(() => {
+        return [...tiers].sort((a, b) => a.min_vehicles - b.min_vehicles);
+    }, [tiers]);
+
+    const basePrice = useMemo(() => {
+        return sortedTiers[0]?.price_per_vehicle || 20000;
+    }, [sortedTiers]);
+
+    const lowestPrice = useMemo(() => {
+        if (sortedTiers.length === 0) return 0;
+        return Math.min(...sortedTiers.map((t) => t.price_per_vehicle));
+    }, [sortedTiers]);
+
+    const maxCoveredVehicles = useMemo(() => {
+        if (sortedTiers.length === 0) return 0;
+        const highest = Math.max(...sortedTiers.map((t) => t.max_vehicles));
+        return highest > 100000 ? '∞' : highest;
+    }, [sortedTiers]);
+
+    const filteredTiers = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return sortedTiers;
+
+        return sortedTiers.filter((tier) => {
+            return (
+                tier.name.toLowerCase().includes(q) ||
+                tier.min_vehicles.toString().includes(q) ||
+                tier.max_vehicles.toString().includes(q) ||
+                tier.price_per_vehicle.toString().includes(q)
+            );
+        });
+    }, [sortedTiers, search]);
+
+    // Simulator calculation
+    const matchedTier = useMemo(() => {
+        return sortedTiers.find(
+            (t) => simVehicles >= t.min_vehicles && simVehicles <= t.max_vehicles,
+        ) || sortedTiers[sortedTiers.length - 1];
+    }, [sortedTiers, simVehicles]);
+
+    const simUnitRate = matchedTier ? matchedTier.price_per_vehicle : basePrice;
+    const simMonthlyTotal = simVehicles * simUnitRate;
+    const simAnnualTotal = simMonthlyTotal * 10; // Pay 10 months for annual (2 months discount)
+    const simFinalTotal = simInterval === 'annual' ? simAnnualTotal : simMonthlyTotal;
+    const simDiscountVsBase = basePrice > simUnitRate ? Math.round((1 - simUnitRate / basePrice) * 100) : 0;
+
+    const getDiscount = (price: number) => {
+        if (basePrice <= price) return 0;
+        return Math.round((1 - price / basePrice) * 100);
+    };
+
+    const confirmDelete = (tier: Tier): void => {
+        setDeletingTier(tier);
+    };
+
+    const handleDelete = (): void => {
+        if (!deletingTier) return;
+        setIsDeleting(true);
+        router.delete(route('module.subscription-tiers.destroy', deletingTier.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setIsDeleting(false);
+                setDeletingTier(null);
+            },
+        });
+    };
 
     return (
-        <DynamicLayout header={<PageHeader title="Subscription Tiers" />}>
-            <div className="mx-auto max-w-5xl px-4 py-12">
-                {/* Header */}
-                <div className="mb-8 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Subscription Tiers
-                        </h1>
-                        <p className="mt-2 text-gray-600 dark:text-gray-400">
-                            Configure pricing tiers for vehicle-based subscription
-                        </p>
-                    </div>
-                    <Link
-                        href="/module/subscription-tiers/create"
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-                    >
-                        + New Tier
-                    </Link>
-                </div>
-
-                {/* Tiers Grid */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {tiers.map(tier => (
-                        <div key={tier.id} className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                            {/* Header */}
-                            <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                            {tier.name}
-                                        </h3>
-                                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                            {tier.min_vehicles}-{tier.max_vehicles > 100000 ? '∞' : tier.max_vehicles} vehicles
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="px-6 py-4">
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">Price per Vehicle</p>
-                                        <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                                            Rp {(tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k
-                                        </p>
-                                    </div>
-
-                                    {/* Discount Badge */}
-                                    {tier.price_per_vehicle < 20000 && (
-                                        <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-                                            <p className="text-sm font-medium text-green-700 dark:text-green-300">
-                                                {Math.round((1 - (tier.price_per_vehicle / 20000)) * 100)}% discount vs Tier 1
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Price Examples */}
-                                    <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
-                                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Price Examples:</p>
-                                        <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                                            <p>• 5 units: Rp {(5 * tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k</p>
-                                            <p>• 20 units: Rp {(20 * tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k</p>
-                                            <p>• 50 units: Rp {(50 * tier.price_per_vehicle / 1000).toLocaleString('id-ID')}k</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Footer - Actions */}
-                            <div className="border-t border-gray-200 px-6 py-4 dark:border-gray-700">
-                                <div className="flex gap-2">
-                                    <Link
-                                        href={`/module/subscription-tiers/${tier.id}/edit`}
-                                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                                    >
-                                        Edit
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDelete(tier.id)}
-                                        className="flex-1 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/20"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Empty State */}
-                {tiers.length === 0 && (
-                    <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-12 py-16 text-center dark:border-gray-600 dark:bg-gray-900">
-                        <p className="text-gray-600 dark:text-gray-400">
-                            No subscription tiers configured yet.
-                        </p>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title="Subscription Tiers"
+                    description="Kelola skema harga bertingkat berbasis kapasitas unit armada untuk tenant"
+                    actions={
                         <Link
-                            href="/module/subscription-tiers/create"
-                            className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                            href={route('module.subscription-tiers.create')}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
                         >
-                            Create First Tier
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <span>Tambah Tier Baru</span>
                         </Link>
+                    }
+                />
+            }
+        >
+            <Head title="Subscription Tiers" />
+
+            <div className="space-y-6">
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <div className="flex items-center justify-between rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-700 dark:text-emerald-300 backdrop-blur-sm shadow-sm animate-fade-in">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">
+                                ✓
+                            </span>
+                            <span>{flash.success}</span>
+                        </div>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="flex items-center justify-between rounded-2xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-700 dark:text-rose-300 backdrop-blur-sm shadow-sm animate-fade-in">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold">
+                                !
+                            </span>
+                            <span>{flash.error}</span>
+                        </div>
                     </div>
                 )}
 
-                {/* Info Box */}
-                <div className="mt-12 rounded-lg bg-blue-50 p-6 dark:bg-blue-900/20">
-                    <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
-                        How Tier Pricing Works
-                    </h3>
-                    <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
-                        <li>• Tenants select how many vehicles they want to manage</li>
-                        <li>• The applicable tier is auto-selected based on vehicle count</li>
-                        <li>• Price is calculated as: vehicle_count × price_per_vehicle</li>
-                        <li>• Tiers can be configured with any min/max range</li>
-                        <li>• Changes apply to new subscriptions immediately</li>
+                {/* Hero Stat Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent p-5 border border-indigo-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                            Total Tier Dikonfigurasi
+                        </div>
+                        <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            {totalTiers}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            Skema bertingkat aktif
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-transparent p-5 border border-sky-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                            Harga Dasar (Tier 1)
+                        </div>
+                        <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            {formatRupiah(basePrice)}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            per unit kendaraan / bulan
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-5 border border-emerald-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                            Harga Unit Terbaik
+                        </div>
+                        <div className="mt-2 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+                            {formatRupiah(lowestPrice)}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            Volume diskon maksimal {getDiscount(lowestPrice)}%
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-5 border border-amber-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                            Cakupan Kapasitas
+                        </div>
+                        <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            1 – {maxCoveredVehicles} Unit
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            Skala armada tenant yang didukung
+                        </p>
+                    </div>
+                </div>
+
+                {/* Live Pricing Simulator Widget */}
+                {sortedTiers.length > 0 && (
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-7 shadow-lg relative overflow-hidden">
+                        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+                        
+                        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+                            {/* Simulator Inputs */}
+                            <div className="flex-1 w-full space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 3h.008v.008H8.25v-.008zm0 3h.008v.008H8.25v-.008zm3-6h.008v.008H11.25v-.008zm0 3h.008v.008H11.25v-.008zm0 3h.008v.008H11.25v-.008zm3-6h.008v.008H14.25v-.008zm0 3h.008v.008H14.25v-.008zM4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v10.5A2.25 2.25 0 004.5 19.5z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold tracking-tight text-white">
+                                                Simulator & Kalkulator Harga Tier
+                                            </h3>
+                                            <p className="text-xs text-indigo-200/70">
+                                                Simulasi kalkulasi biaya langganan otomatis berdasarkan jumlah unit
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Interval Toggle */}
+                                    <div className="flex items-center rounded-xl bg-white/10 p-1 border border-white/10 text-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSimInterval('month')}
+                                            className={`rounded-lg px-3 py-1 font-medium transition-all ${
+                                                simInterval === 'month'
+                                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                                    : 'text-indigo-200 hover:text-white'
+                                            }`}
+                                        >
+                                            Bulanan
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSimInterval('annual')}
+                                            className={`rounded-lg px-3 py-1 font-medium transition-all flex items-center gap-1 ${
+                                                simInterval === 'annual'
+                                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                                    : 'text-indigo-200 hover:text-white'
+                                            }`}
+                                        >
+                                            <span>Tahunan</span>
+                                            <span className="rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] px-1 py-0.2 border border-emerald-400/30">
+                                                Hemat 2 bln
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Slider & Input Control */}
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-indigo-200/80">Jumlah Kendaraan / Armada:</span>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={500}
+                                                value={simVehicles}
+                                                onChange={(e) => setSimVehicles(Math.max(1, parseInt(e.target.value) || 1))}
+                                                className="w-20 rounded-lg bg-white/10 border border-white/20 px-2.5 py-1 text-right text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                            />
+                                            <span className="text-xs text-indigo-300">Unit</span>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min={1}
+                                        max={200}
+                                        value={simVehicles}
+                                        onChange={(e) => setSimVehicles(parseInt(e.target.value))}
+                                        className="w-full accent-indigo-500 h-2 bg-white/20 rounded-lg cursor-pointer"
+                                    />
+                                    <div className="flex justify-between text-[10px] text-indigo-300/60">
+                                        <span>1 Unit</span>
+                                        <span>50 Unit</span>
+                                        <span>100 Unit</span>
+                                        <span>150 Unit</span>
+                                        <span>200+ Unit</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Simulator Result Card */}
+                            <div className="w-full lg:w-80 rounded-2xl bg-white/10 border border-white/15 p-5 backdrop-blur-md flex flex-col justify-between">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-medium text-indigo-200 uppercase tracking-wider">
+                                            Tier Terpilih
+                                        </span>
+                                        {matchedTier && (
+                                            <span className="rounded-full bg-indigo-500/30 border border-indigo-400/30 px-2.5 py-0.5 text-xs font-bold text-indigo-200">
+                                                {matchedTier.name}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-2">
+                                        <div className="text-xs text-indigo-200/80">Total Tagihan ({simInterval === 'annual' ? 'Per Tahun' : 'Per Bulan'}):</div>
+                                        <div className="text-2xl font-extrabold text-white mt-0.5">
+                                            {formatRupiah(simFinalTotal)}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-1 flex items-center justify-between text-xs border-t border-white/10 text-indigo-200/90">
+                                        <span>Tarif per unit:</span>
+                                        <span className="font-semibold text-white">
+                                            {formatRupiah(simUnitRate)} / unit
+                                        </span>
+                                    </div>
+
+                                    {simDiscountVsBase > 0 && (
+                                        <div className="flex items-center justify-between text-xs text-emerald-400">
+                                            <span>Hemat volume:</span>
+                                            <span className="font-bold">
+                                                {simDiscountVsBase}% lebih hemat
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Toolbar: Search, View Switcher & Action */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                    {/* Search Bar */}
+                    <div className="relative min-w-[280px] sm:min-w-[340px] flex-1">
+                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                            </svg>
+                        </span>
+                        <TextInput
+                            type="search"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Cari nama tier atau rentang kapasitas..."
+                            className="w-full pl-9 pr-8 py-1.5 text-sm rounded-xl border-slate-200 dark:border-slate-800"
+                        />
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch('')}
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {/* View Switcher */}
+                        <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('table')}
+                                title="Table View"
+                                className={`rounded-lg p-1.5 transition-all ${
+                                    viewMode === 'table'
+                                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5m-16.5-7.5h16.5" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('grid')}
+                                title="Grid View"
+                                className={`rounded-lg p-1.5 transition-all ${
+                                    viewMode === 'grid'
+                                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <Link
+                            href={route('module.subscription-tiers.create')}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <span>Buat Tier</span>
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Content Area */}
+                {filteredTiers.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-slate-900 p-12 text-center border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 mb-3">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                            Tidak ada tier yang ditemukan
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {search
+                                ? 'Coba sesuaikan kata kunci pencarian Anda.'
+                                : 'Belum ada tier langganan yang dibuat. Buat tier pertama Anda.'}
+                        </p>
+                        {search ? (
+                            <button
+                                type="button"
+                                onClick={() => setSearch('')}
+                                className="mt-4 inline-flex items-center text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                                Reset Pencarian
+                            </button>
+                        ) : (
+                            <Link
+                                href={route('module.subscription-tiers.create')}
+                                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
+                            >
+                                + Buat Tier Pertama
+                            </Link>
+                        )}
+                    </div>
+                ) : viewMode === 'table' ? (
+                    /* Modern Table View */
+                    <div className="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800">
+                                <tr>
+                                    <th className="py-3.5 px-5">Nama Tier</th>
+                                    <th className="py-3.5 px-5">Rentang Kapasitas</th>
+                                    <th className="py-3.5 px-5">Harga per Unit</th>
+                                    <th className="py-3.5 px-5">Diskon Volume</th>
+                                    <th className="py-3.5 px-5">Contoh Biaya (Bulanan)</th>
+                                    <th className="py-3.5 px-5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {filteredTiers.map((tier) => {
+                                    const discount = getDiscount(tier.price_per_vehicle);
+                                    const sampleMin = tier.min_vehicles * tier.price_per_vehicle;
+                                    const sampleMax =
+                                        tier.max_vehicles <= 100000
+                                            ? tier.max_vehicles * tier.price_per_vehicle
+                                            : null;
+
+                                    return (
+                                        <tr key={tier.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                                                        #{tier.id}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-bold text-slate-900 dark:text-white">
+                                                            {tier.name}
+                                                        </span>
+                                                        <div className="text-[11px] text-slate-400">
+                                                            Dibuat: {tier.created_at}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-5">
+                                                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 font-mono">
+                                                    {tier.min_vehicles} – {tier.max_vehicles > 100000 ? '∞' : tier.max_vehicles} Unit
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-5">
+                                                <div className="font-bold text-slate-900 dark:text-white">
+                                                    {formatRupiah(tier.price_per_vehicle)}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400">per kendaraan / bln</div>
+                                            </td>
+                                            <td className="py-4 px-5">
+                                                {discount > 0 ? (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 text-xs font-bold border border-emerald-500/20">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                        Hemat {discount}%
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">Tarif Standar</span>
+                                                )}
+                                            </td>
+                                            <td className="py-4 px-5 text-xs text-slate-600 dark:text-slate-400">
+                                                <div>
+                                                    <strong>{tier.min_vehicles} unit:</strong> {formatRupiah(sampleMin)}
+                                                </div>
+                                                {sampleMax && (
+                                                    <div className="text-slate-400">
+                                                        <strong>{tier.max_vehicles} unit:</strong> {formatRupiah(sampleMax)}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="py-4 px-5 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link
+                                                        href={route('module.subscription-tiers.edit', tier.id)}
+                                                        className="rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => confirmDelete(tier)}
+                                                        className="rounded-lg border border-rose-200 dark:border-rose-900/40 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                                    >
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    /* Modern Grid View */
+                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        {filteredTiers.map((tier) => {
+                            const discount = getDiscount(tier.price_per_vehicle);
+
+                            return (
+                                <div
+                                    key={tier.id}
+                                    className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200"
+                                >
+                                    <div>
+                                        {/* Card Header */}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                                                        {tier.name}
+                                                    </h3>
+                                                </div>
+                                                <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300 font-mono">
+                                                    {tier.min_vehicles} – {tier.max_vehicles > 100000 ? '∞' : tier.max_vehicles} Unit
+                                                </div>
+                                            </div>
+
+                                            {discount > 0 && (
+                                                <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 text-xs font-bold border border-emerald-500/20">
+                                                    Hemat {discount}%
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Pricing Block */}
+                                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                Tarif per Kendaraan:
+                                            </div>
+                                            <div className="mt-1 flex items-baseline gap-1">
+                                                <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                                    {formatRupiah(tier.price_per_vehicle)}
+                                                </span>
+                                                <span className="text-xs text-slate-400">/ bulan</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Calculation Preview */}
+                                        <div className="mt-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                                            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                                                Simulasi Biaya Cepat:
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>• {tier.min_vehicles} unit:</span>
+                                                <span className="font-semibold text-slate-900 dark:text-white">
+                                                    {formatRupiah(tier.min_vehicles * tier.price_per_vehicle)}
+                                                </span>
+                                            </div>
+                                            {tier.max_vehicles <= 100000 && (
+                                                <div className="flex justify-between">
+                                                    <span>• {tier.max_vehicles} unit:</span>
+                                                    <span className="font-semibold text-slate-900 dark:text-white">
+                                                        {formatRupiah(tier.max_vehicles * tier.price_per_vehicle)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Footer */}
+                                    <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2">
+                                        <Link
+                                            href={route('module.subscription-tiers.edit', tier.id)}
+                                            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 py-2 text-center text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                        >
+                                            Edit
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => confirmDelete(tier)}
+                                            className="flex-1 rounded-xl border border-rose-200 dark:border-rose-900/40 py-2 text-center text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                        >
+                                            Hapus
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Explanation Card */}
+                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20 p-5 text-xs text-indigo-900 dark:text-indigo-200">
+                    <div className="flex items-center gap-2 font-bold mb-2">
+                        <svg className="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        <span>Cara Kerja Penetapan Harga Tier Armada (Pay-As-You-Grow)</span>
+                    </div>
+                    <ul className="space-y-1.5 pl-6 list-disc text-indigo-800/80 dark:text-indigo-300/80">
+                        <li>Tenant memilih kuota armada yang ingin dikelola dalam workspace mereka.</li>
+                        <li>Sistem secara otomatis mendeteksi tier yang sesuai dengan rentang jumlah kendaraan.</li>
+                        <li>Formula tagihan: <code className="bg-indigo-100 dark:bg-indigo-900/60 px-1.5 py-0.5 rounded font-mono font-bold">Jumlah Unit × Tarif per Unit</code>.</li>
+                        <li>Untuk interval tahunan, tagihan dikalikan 10 bulan (diskon 2 bulan gratis).</li>
+                        <li>Perubahan tarif tier akan langsung berlaku untuk aktivasi atau perpanjangan langganan baru.</li>
                     </ul>
                 </div>
             </div>
+
+            {/* Confirm Delete Dialog */}
+            <ConfirmDeleteDialog
+                show={deletingTier !== null}
+                onClose={() => setDeletingTier(null)}
+                onConfirm={handleDelete}
+                title={`Hapus Tier "${deletingTier?.name ?? ''}"?`}
+                message="Tier ini akan dihapus dari daftar skema harga. Konfigurasi tenant yang sudah aktif sebelumnya tidak akan terpengaruh."
+                confirmText="Hapus Tier"
+                processing={isDeleting}
+            />
         </DynamicLayout>
-    )
+    );
 }
+

@@ -191,26 +191,24 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
     {
         $vertical = $session->verticals[0] ?? 'rental';
 
-        // Install pages first — core content module, must exist before seeding.
-        $pagesModule = Modules::find('pages');
-        if ($pagesModule !== null) {
-            $installer->install($tenant, $pagesModule);
-        }
-
+        // Content modules (pages/posts/carousels) are core features: their tables
+        // ship with every workspace via tenant migrations, so there is nothing to
+        // install — seed the default landing pages directly.
         $tenant->run(function () use ($vertical): void {
             app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical);
             app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
         });
 
-        // Install remaining content modules (pages already handled above).
+        // Install any remaining *registered* content modules; core features are
+        // always available and are skipped (install() rejects them by design,
+        // same guard installPack() uses).
         foreach (SelfServeProvisioningPlan::defaultContentModules() as $moduleKey) {
-            if ($moduleKey === 'pages') {
-                continue;
-            }
             $module = Modules::find($moduleKey);
-            if ($module === null) {
+
+            if ($module === null || ! Modules::has($module->key())) {
                 continue;
             }
+
             $installer->install($tenant, $module);
         }
 
