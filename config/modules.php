@@ -104,11 +104,19 @@ return [
 
         // Finance
         'accounting',
+        'invoicing',
+        'receivables',
+        'payables',
+        'billing',
         'payment-orders',
 
         // Contents (pages/posts/carousels are now core → migrated by the base
         // central migration, so they no longer need an explicit central install)
         'document',
+
+        // Administration
+        'users',
+        'roles',
 
         // Platform
         'tenants',

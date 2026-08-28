@@ -37,7 +37,7 @@ class CreateVehicleRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            if (!$validator->failed()) {
+            if (! $validator->failed()) {
                 $this->validateVehicleQuota($validator);
             }
         });
@@ -50,14 +50,14 @@ class CreateVehicleRequest extends FormRequest
     {
         $tenant = tenancy()->tenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             return;
         }
 
         $subscriptionService = app(SubscriptionService::class);
         $currentVehicleCount = $tenant->vehicles()->count();
 
-        if (!$subscriptionService->canAddVehicle($tenant, $currentVehicleCount)) {
+        if (! $subscriptionService->canAddVehicle($tenant, $currentVehicleCount)) {
             $validator->errors()->add('quota_exceeded', 'You have reached your vehicle quota. Please upgrade your subscription to add more vehicles.');
         }
     }

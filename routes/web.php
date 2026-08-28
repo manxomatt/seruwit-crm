@@ -9,8 +9,14 @@ use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\SubscriptionTierController;
 use App\Http\Controllers\Central\WebhookController;
 use App\Http\Controllers\Central\WorkspaceController;
+use App\Http\Controllers\GeocodeController;
+use App\Http\Controllers\LiveUpdateController;
+use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController;
 use App\Http\Controllers\Module\CentralModuleController;
 use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
+use App\Http\Controllers\Module\GlobalSearchController as ModuleGlobalSearchController;
+use App\Http\Controllers\Module\MailConfigController as ModuleMailConfigController;
 use App\Http\Controllers\Module\MediaController as ModuleMediaController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
@@ -21,9 +27,15 @@ use App\Http\Controllers\Module\ResellerCommissionRuleController;
 use App\Http\Controllers\Module\ResellerController;
 use App\Http\Controllers\Module\ResellerPayoutController;
 use App\Http\Controllers\Module\ResellerPortalController;
+use App\Http\Controllers\Module\RoleController as ModuleRoleController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\TenantController;
+use App\Http\Controllers\Module\UserController as ModuleUserController;
+use App\Http\Controllers\Module\UserInvitationController as ModuleUserInvitationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TodoController;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
 
@@ -154,29 +166,43 @@ Route::domain($centralDomain)
         } else {
             Route::get('/', [PageController::class, 'homepage'])->name('home');
 
+            // Legacy absolute redirects from module Route::redirect() dropped the /module
+            // prefix (e.g. /rental/dashboard). Keep these bookmarks working.
+            Route::redirect('/rental/dashboard', '/module/rental/dashboard');
+            Route::redirect('/shuttle/dashboard', '/module/shuttle/dashboard');
+
             // Public blog for the central marketing site (posts module).
             Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
             Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
-            // Thin control plane still needs the admin dashboard plus content
-            // management (pages, posts, carousels, media) for the landing/marketing
-            // site. app.php is not loaded here, so register these explicitly —
-            // otherwise their menus 404. module.dashboard delegates to
-            // CentralDashboardController for platform staff (see
-            // Module\DashboardController::index).
+            Route::patch('/locale', [LocaleController::class, 'update'])->name('locale.update');
+
+            // Thin control plane admin dashboard plus content management,
+            // administration, platform management, and central-enabled modules.
+            // module.dashboard delegates to CentralDashboardController for platform staff.
             Route::middleware(['auth', 'verified'])
                 ->get('/dashboard', [ModuleDashboardController::class, 'index'])
                 ->name('dashboard');
+
             Route::middleware('auth')
                 ->prefix('module')
                 ->name('module.')
                 ->group(function () {
                     Route::get('/dashboard', [ModuleDashboardController::class, 'index'])->name('dashboard');
 
-                    // Core content modules manage the public site.
-                    Modules::find('pages')?->routes();
-                    Modules::find('posts')?->routes();
-                    Modules::find('carousels')?->routes();
+                    // Global Search
+                    Route::get('/search', [ModuleGlobalSearchController::class, 'search'])->name('search');
+
+                    // Reverse geocode — shared map-pin helper (auth only, no module gate).
+                    Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->name('geocode.reverse');
+
+                    // Notifications — every authenticated user reads their own, no gate.
+                    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+                    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+                    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+                    Route::post('/notifications/{notification}/unread', [NotificationController::class, 'markAsUnread'])->name('notifications.unread');
+                    Route::delete('/notifications/destroy-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+                    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
                     // Media library (not a module) — mirrors app.php's media routes.
                     Route::get('/media', [ModuleMediaController::class, 'index'])->middleware('permission:media,view')->name('media.index');
@@ -190,20 +216,69 @@ Route::domain($centralDomain)
                     Route::patch('/media/{medium}', [ModuleMediaController::class, 'update'])->middleware('permission:media,update')->name('media.update');
                     Route::delete('/media/{medium}', [ModuleMediaController::class, 'destroy'])->middleware('permission:media,delete')->name('media.destroy');
 
-                    // Optional modules the super admin has installed onto the
-                    // central dashboard (config('modules.central_installable')).
-                    // Registered unconditionally behind requires-module, which on
-                    // central consults central install state — an uninstalled one
-                    // 404s. app.php (central_serves_app=true) registers every
-                    // module via Modules::registerRoutes() instead, so this branch
-                    // only runs for the thin control plane.
-                    foreach (Modules::centralInstallable() as $centralModuleKey) {
-                        if ($centralModule = Modules::find($centralModuleKey)) {
-                            Route::middleware('requires-module:'.$centralModuleKey)
-                                ->group(fn () => $centralModule->routes());
-                        }
-                    }
+                    // Module Analytics Routes
+                    Route::get('/analytics', [ModuleAnalyticsController::class, 'index'])->middleware('permission:analytics,view')->name('analytics.index');
+
+                    // Module Settings Routes
+                    Route::get('/settings', [ModuleSettingController::class, 'index'])->middleware('permission:settings,view')->name('settings.index');
+                    Route::post('/settings/bulk-update', [ModuleSettingController::class, 'bulkUpdate'])->middleware('permission:settings,update')->name('settings.bulk-update');
+                    Route::post('/settings/appearance/reset', [ModuleSettingController::class, 'resetAppearance'])->middleware('permission:settings,update')->name('settings.appearance.reset');
+                    Route::patch('/settings/mail', [ModuleMailConfigController::class, 'update'])->middleware('permission:settings,update')->name('settings.mail.update');
+                    Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
+
+                    // Module User Management Routes
+                    Route::post('/users/invite', [ModuleUserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');
+                    Route::get('/users', [ModuleUserController::class, 'index'])->middleware('permission:users,view')->name('users.index');
+                    Route::get('/users/create', [ModuleUserController::class, 'create'])->middleware('permission:users,create')->name('users.create');
+                    Route::post('/users', [ModuleUserController::class, 'store'])->middleware('permission:users,create')->name('users.store');
+                    Route::get('/users/{user}', [ModuleUserController::class, 'show'])->middleware('permission:users,view')->name('users.show');
+                    Route::get('/users/{user}/edit', [ModuleUserController::class, 'edit'])->middleware('permission:users,update')->name('users.edit');
+                    Route::patch('/users/{user}', [ModuleUserController::class, 'update'])->middleware('permission:users,update')->name('users.update');
+                    Route::delete('/users/{user}', [ModuleUserController::class, 'destroy'])->middleware('permission:users,delete')->name('users.destroy');
+
+                    // Module Role Management Routes
+                    Route::get('/roles', [ModuleRoleController::class, 'index'])->middleware('permission:roles,view')->name('roles.index');
+                    Route::get('/roles/create', [ModuleRoleController::class, 'create'])->middleware('permission:roles,create')->name('roles.create');
+                    Route::post('/roles', [ModuleRoleController::class, 'store'])->middleware('permission:roles,create')->name('roles.store');
+                    Route::get('/roles/{role}', [ModuleRoleController::class, 'show'])->middleware('permission:roles,view')->name('roles.show');
+                    Route::get('/roles/{role}/edit', [ModuleRoleController::class, 'edit'])->middleware('permission:roles,update')->name('roles.edit');
+                    Route::patch('/roles/{role}', [ModuleRoleController::class, 'update'])->middleware('permission:roles,update')->name('roles.update');
+                    Route::delete('/roles/{role}', [ModuleRoleController::class, 'destroy'])->middleware('permission:roles,delete')->name('roles.destroy');
+
+                    // Core & Registered Modules Routes
+                    Modules::registerRoutes();
                 });
+
+            Route::redirect('/profile', '/module/profile');
+
+            Route::middleware('auth')
+                ->prefix('module')
+                ->name('module.')
+                ->group(function () {
+                    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+                    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+                    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
+                    Route::delete('/profile/avatar', [ProfileController::class, 'destroyAvatar'])->name('profile.avatar.destroy');
+                    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+                });
+
+            Route::middleware('auth')->group(function () {
+                Route::get('/todos', [TodoController::class, 'index'])->name('todos.index');
+                Route::post('/todos', [TodoController::class, 'store'])->name('todos.store');
+                Route::patch('/todos/{todo}', [TodoController::class, 'update'])->name('todos.update');
+                Route::delete('/todos/{todo}', [TodoController::class, 'destroy'])->name('todos.destroy');
+
+                Route::get('/live-updates', [LiveUpdateController::class, 'index'])->middleware('permission:live-updates,view')->name('live-updates.index');
+                Route::get('/live-updates/create', [LiveUpdateController::class, 'create'])->middleware('permission:live-updates,create')->name('live-updates.create');
+                Route::post('/live-updates', [LiveUpdateController::class, 'store'])->middleware('permission:live-updates,create')->name('live-updates.store');
+                Route::get('/live-updates/{liveUpdate}', [LiveUpdateController::class, 'show'])->middleware('permission:live-updates,view')->name('live-updates.show');
+                Route::get('/live-updates/{liveUpdate}/edit', [LiveUpdateController::class, 'edit'])->middleware('permission:live-updates,update')->name('live-updates.edit');
+                Route::patch('/live-updates/{liveUpdate}', [LiveUpdateController::class, 'update'])->middleware('permission:live-updates,update')->name('live-updates.update');
+                Route::delete('/live-updates/{liveUpdate}', [LiveUpdateController::class, 'destroy'])->middleware('permission:live-updates,delete')->name('live-updates.destroy');
+            });
+
+            // Public page rendering route
+            Route::get('/p/{slug}', [PageController::class, 'render'])->name('pages.render');
 
             require __DIR__.'/auth.php';
         }
