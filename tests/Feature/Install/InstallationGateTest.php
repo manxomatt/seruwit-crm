@@ -65,4 +65,22 @@ class InstallationGateTest extends TestCase
         InstallState::forget();
         $this->assertFalse(InstallState::isInstalled());
     }
+
+    public function test_tenant_domain_does_not_redirect_to_installer_and_cannot_access_installer(): void
+    {
+        config([
+            'app.installed' => false,
+            'tenancy.central_domains' => ['seruwit.com', 'localhost'],
+        ]);
+        $this->probeRoute();
+
+        // Visiting a route on a tenant subdomain does not redirect to /install
+        $this->get('http://cahayatransport.seruwit.com/__gate_probe')
+            ->assertOk()
+            ->assertSee('ok');
+
+        // Visiting /install on a tenant subdomain returns 404
+        $this->get('http://cahayatransport.seruwit.com/install')
+            ->assertNotFound();
+    }
 }

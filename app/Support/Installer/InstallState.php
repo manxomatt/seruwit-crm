@@ -27,7 +27,7 @@ final class InstallState
      */
     public static function lockPath(): string
     {
-        return storage_path('framework/installed');
+        return base_path('storage/framework/installed');
     }
 
     public static function isInstalled(): bool

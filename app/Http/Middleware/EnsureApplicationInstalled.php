@@ -32,10 +32,29 @@ class EnsureApplicationInstalled
             return $next($request);
         }
 
+        // The installer is only available for central / main domains.
+        // Tenant requests must never be redirected to /install, and accessing
+        // /install on a tenant domain 404s.
+        if (tenancy()->initialized || ! $this->isCentralDomain($request)) {
+            if ($onInstaller) {
+                abort(404);
+            }
+
+            return $next($request);
+        }
+
         if ($onInstaller) {
             return $next($request);
         }
 
         return redirect()->route('install.index');
+    }
+
+    private function isCentralDomain(Request $request): bool
+    {
+        $host = $request->getHost();
+        $centralDomains = config('tenancy.central_domains', []);
+
+        return in_array($host, $centralDomains, true);
     }
 }

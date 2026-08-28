@@ -17,7 +17,7 @@ final class InstallToken
 {
     public static function path(): string
     {
-        return storage_path('framework/install-token');
+        return base_path('storage/framework/install-token');
     }
 
     public static function current(): ?string
