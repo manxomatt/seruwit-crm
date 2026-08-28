@@ -122,7 +122,17 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
             return;
         }
 
-        $this->notify(new VerifyEmail);
+        try {
+            $this->notify(new VerifyEmail);
+        } catch (\Throwable $e) {
+            if (SystemMode::isDevelopment() || ! app()->environment('production')) {
+                session()->flash('dev_verification_url', EmailVerificationUrl::for($this));
+
+                return;
+            }
+
+            throw $e;
+        }
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\PlatformSetting;
+use App\Models\Setting;
 use Throwable;
 
 /**
