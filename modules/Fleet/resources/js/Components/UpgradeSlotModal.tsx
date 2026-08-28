@@ -62,18 +62,19 @@ export default function UpgradeSlotModal({
                 'X-Requested-With': 'XMLHttpRequest',
             },
         })
-            .then((res) => {
+            .then(async (res) => {
+                const json = await res.json().catch(() => null);
                 if (!res.ok) {
-                    throw new Error('Gagal menghitung kalkulasi prorata.');
+                    throw new Error(json?.message || 'Gagal menghitung kalkulasi prorata.');
                 }
-                return res.json();
+                return json;
             })
             .then((json) => {
                 if (isMounted) {
-                    if (json.success && json.data) {
+                    if (json?.success && json.data) {
                         setPreview(json.data);
                     } else {
-                        setError(json.message || 'Gagal memuat preview.');
+                        setError(json?.message || 'Gagal memuat preview.');
                     }
                     setLoading(false);
                 }

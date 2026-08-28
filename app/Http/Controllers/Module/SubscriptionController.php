@@ -129,7 +129,7 @@ class SubscriptionController extends Controller
                 'success' => true,
                 'data' => $calculation,
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

@@ -238,20 +238,58 @@ class SubscriptionService
         $subscription = Subscription::on($central)
             ->where('tenant_id', $tenantId)
             ->where('status', Subscription::STATUS_ACTIVE)
-            ->firstOrFail();
+            ->first();
 
-        if ($newVehicleCount <= $subscription->subscribed_vehicles) {
-            throw new \InvalidArgumentException('New vehicle count must be greater than current quota');
+        $newTier = SubscriptionTier::tierFor($newVehicleCount);
+        if (! $newTier) {
+            throw new \InvalidArgumentException("Tier langganan tidak ditemukan untuk {$newVehicleCount} kendaraan");
+        }
+
+        $newPricePerVehicle = (float) $newTier->price_per_vehicle;
+        $newMonthlyTotal = $newVehicleCount * $newPricePerVehicle;
+
+        // If no active subscription exists yet (e.g. workspace is on Free Trial)
+        if (! $subscription) {
+            $oldCount = (int) ($tenant->max_vehicles_allowed ?? 0);
+            $totalDays = 30;
+            $daysRemaining = 30;
+            $oldPricePerVehicle = 0.00;
+            $oldMonthlyTotal = 0.00;
+            $oldDailyRate = 0.00;
+            $newDailyRate = $newMonthlyTotal / $totalDays;
+            $dailyDiff = $newDailyRate;
+            $proratedAmount = $newMonthlyTotal;
+
+            return [
+                'current_vehicles' => $oldCount,
+                'new_vehicles' => $newVehicleCount,
+                'additional_vehicles' => max(0, $newVehicleCount - $oldCount),
+                'days_remaining' => $daysRemaining,
+                'total_days' => $totalDays,
+                'old_tier_id' => null,
+                'old_tier_name' => 'Trial (Gratis)',
+                'new_tier_id' => $newTier->id,
+                'new_tier_name' => $newTier->name,
+                'old_price_per_vehicle' => $oldPricePerVehicle,
+                'new_price_per_vehicle' => $newPricePerVehicle,
+                'old_monthly_total' => $oldMonthlyTotal,
+                'new_monthly_total' => $newMonthlyTotal,
+                'old_daily_rate' => $oldDailyRate,
+                'new_daily_rate' => $newDailyRate,
+                'daily_difference' => $dailyDiff,
+                'prorated_amount' => $proratedAmount,
+                'subscription_id' => null,
+                'is_new_subscription' => true,
+            ];
+        }
+
+        $oldCount = (int) $subscription->subscribed_vehicles;
+        if ($newVehicleCount <= $oldCount) {
+            throw new \InvalidArgumentException("Jumlah kuota baru ({$newVehicleCount}) harus lebih besar dari kuota saat ini ({$oldCount})");
         }
 
         $now = now();
-        $oldCount = (int) $subscription->subscribed_vehicles;
         $oldTier = SubscriptionTier::tierFor($oldCount);
-        $newTier = SubscriptionTier::tierFor($newVehicleCount);
-
-        if (! $newTier) {
-            throw new \InvalidArgumentException("No subscription tier defined for {$newVehicleCount} vehicles");
-        }
 
         $totalDays = ($subscription->starts_at && $subscription->ends_at)
             ? max(1, (int) $subscription->starts_at->diffInDays($subscription->ends_at))
@@ -262,10 +300,8 @@ class SubscriptionService
             : 1;
 
         $oldPricePerVehicle = $oldTier ? (float) $oldTier->price_per_vehicle : 20000.00;
-        $newPricePerVehicle = (float) $newTier->price_per_vehicle;
 
         $oldMonthlyTotal = $oldCount * $oldPricePerVehicle;
-        $newMonthlyTotal = $newVehicleCount * $newPricePerVehicle;
 
         $oldDailyRate = $oldMonthlyTotal / $totalDays;
         $newDailyRate = $newMonthlyTotal / $totalDays;
@@ -292,6 +328,7 @@ class SubscriptionService
             'daily_difference' => $dailyDiff,
             'prorated_amount' => $proratedAmount,
             'subscription_id' => $subscription->id,
+            'is_new_subscription' => false,
         ];
     }
 
@@ -305,7 +342,23 @@ class SubscriptionService
         $calculation = $this->calculateProratedUpgrade($tenant, $newVehicleCount);
 
         return DB::connection($central)->transaction(function () use ($central, $tenantId, $newVehicleCount, $paymentMethod, $calculation) {
-            $subscription = Subscription::on($central)->findOrFail($calculation['subscription_id']);
+            $plan = null;
+            if ($calculation['subscription_id']) {
+                $subscription = Subscription::on($central)->find($calculation['subscription_id']);
+                $plan = $subscription?->plan;
+            }
+
+            if (! $plan) {
+                $plan = Plan::on($central)
+                    ->where(function ($q): void {
+                        $q->where('key', 'pay_as_you_go')
+                            ->orWhere('key', 'starter');
+                    })
+                    ->first()
+                    ?? Plan::on($central)->where('is_trial', false)->first()
+                    ?? Plan::on($central)->firstOrFail();
+            }
+
             $uniqueCode = PaymentOrder::generateUniqueCode();
             $proratedAmount = $calculation['prorated_amount'];
             $totalAmount = $proratedAmount + $uniqueCode;
@@ -313,15 +366,15 @@ class SubscriptionService
 
             $paymentOrder = PaymentOrder::on($central)->create([
                 'tenant_id' => $tenantId,
-                'plan_id' => $subscription->plan_id,
-                'subscription_id' => $subscription->id,
+                'plan_id' => $plan->id,
+                'subscription_id' => $calculation['subscription_id'],
                 'subscription_tier_id' => $calculation['new_tier_id'],
                 'subscribed_vehicles' => $newVehicleCount,
                 'price_per_vehicle' => $calculation['new_price_per_vehicle'],
                 'total_vehicle_cost' => $calculation['new_monthly_total'],
                 'upgrade_from_vehicles' => $calculation['current_vehicles'],
                 'prorated_amount' => $proratedAmount,
-                'type' => 'upgrade',
+                'type' => $calculation['subscription_id'] ? 'upgrade' : 'activate',
                 'billing_interval' => 'month',
                 'payment_method' => $paymentMethod,
                 'status' => PaymentOrder::STATUS_PENDING,
