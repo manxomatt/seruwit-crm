@@ -48,7 +48,8 @@ class SubscriptionController extends Controller
             ->first();
 
         // Get count of registered vehicles in tenant's database
-        $currentVehiclesCount = \Modules\Fleet\Models\Vehicle::count();
+        $currentVehiclesCount = \Modules\Fleet\Models\Vehicle::billable()->count();
+        $totalVehiclesCount = \Modules\Fleet\Models\Vehicle::count();
 
         // Get subscription tiers from central database
         $tiers = \App\Models\SubscriptionTier::on('central')->orderBy('min_vehicles')->get();
@@ -98,6 +99,7 @@ class SubscriptionController extends Controller
                 'type' => $activePaymentOrder->type,
             ] : null,
             'currentVehiclesCount' => $currentVehiclesCount,
+            'totalVehiclesCount' => $totalVehiclesCount,
             'tiers' => $tiers->map(fn ($t) => [
                 'id' => $t->id,
                 'name' => $t->name,
@@ -108,17 +110,57 @@ class SubscriptionController extends Controller
         ]);
     }
 
+    public function previewUpgrade(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $tenant = tenant();
+        abort_unless($tenant instanceof Tenant, 404);
+
+        $validated = $request->validate([
+            'new_vehicle_quota' => 'required|integer|min:1|max:999999',
+        ]);
+
+        try {
+            $calculation = $this->service->calculateProratedUpgrade(
+                $tenant,
+                $validated['new_vehicle_quota']
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $calculation,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
     public function createOrder(Request $request): RedirectResponse
     {
         $tenant = tenant();
         abort_unless($tenant instanceof Tenant, 404);
 
         $request->validate([
-            'plan_id' => ['required', 'integer'],
-            'type' => ['required', 'in:activate,renew'],
+            'plan_id' => ['nullable', 'integer'],
+            'type' => ['required', 'in:activate,renew,upgrade'],
             'billing_interval' => ['nullable', 'in:month,annual'],
-            'subscribed_vehicles' => ['nullable', 'integer', 'min:0'],
+            'subscribed_vehicles' => ['required_if:type,upgrade', 'nullable', 'integer', 'min:1'],
         ]);
+
+        $type = $request->input('type', 'activate');
+        $subscribedVehicles = (int) $request->input('subscribed_vehicles', 0);
+
+        if ($type === 'upgrade') {
+            try {
+                $order = $this->service->upgrade($tenant, $subscribedVehicles);
+
+                return redirect()->route('module.subscription.payment', $order);
+            } catch (\InvalidArgumentException $e) {
+                return back()->withErrors(['subscribed_vehicles' => $e->getMessage()]);
+            }
+        }
 
         $plan = Plan::on('central')->findOrFail($request->input('plan_id'));
 
@@ -126,9 +168,7 @@ class SubscriptionController extends Controller
             return back()->withErrors(['plan_id' => 'Invalid plan selected.']);
         }
 
-        $type = $request->input('type', 'activate');
         $billingInterval = $request->input('billing_interval', 'month');
-        $subscribedVehicles = (int) $request->input('subscribed_vehicles', 0);
 
         if ($type === 'renew' && ! $tenant->subscription) {
             $type = 'activate';

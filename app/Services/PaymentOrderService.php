@@ -203,13 +203,18 @@ class PaymentOrderService
             $plan = Plan::on($central)->findOrFail($order->plan_id);
 
             $subscriptionService = app(SubscriptionService::class);
-            $subscription = $subscriptionService->activate(
-                $tenant,
-                $plan,
-                $order->type === 'renew',
-                $order->billing_interval ?? 'month',
-                (int) $order->subscribed_vehicles
-            );
+            if ($order->type === 'upgrade') {
+                $subscription = $subscriptionService->confirmUpgrade($order);
+            } else {
+                $isRenewal = in_array($order->type, ['renew', 'renewal'], true);
+                $subscription = $subscriptionService->activate(
+                    $tenant,
+                    $plan,
+                    $isRenewal,
+                    $order->billing_interval ?? 'month',
+                    (int) $order->subscribed_vehicles
+                );
+            }
 
             $order->subscription_id = $subscription->id;
             $order->save();

@@ -11,6 +11,8 @@ import { useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
+import UpgradeSlotModal from '../../../../Components/UpgradeSlotModal';
+import VehicleQuotaGauge from '../../../../Components/VehicleQuotaGauge';
 import FleetNav from '../../../../FleetNav';
 
 interface HomeBase {
@@ -202,6 +204,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
     const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
     const [processing, setProcessing] = useState(false);
     const [selected, setSelected] = useState<number[]>([]);
 
@@ -355,14 +358,35 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                     title="Manajemen Unit Kendaraan & Armada"
                     subtitle="Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan."
                     actions={
-                        can.create && (
-                            <Link
-                                href={prefixedRoute('fleet.vehicles.create')}
-                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
-                            >
-                                <span>Tambah Kendaraan Baru</span>
-                            </Link>
-                        )
+                        <div className="flex items-center gap-2.5">
+                            {quota && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowUpgradeModal(true)}
+                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50/80 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 active:scale-95"
+                                >
+                                    <span>⚡ + Tambah Slot</span>
+                                </button>
+                            )}
+                            {quota?.reached ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowUpgradeModal(true)}
+                                    className="inline-flex items-center gap-2 rounded-2xl bg-amber-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-amber-600/20 transition hover:bg-amber-700 active:scale-95"
+                                >
+                                    <span>⚠️ Kuota Penuh (Upgrade)</span>
+                                </button>
+                            ) : (
+                                can.create && (
+                                    <Link
+                                        href={prefixedRoute('fleet.vehicles.create')}
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                                    >
+                                        <span>Tambah Kendaraan Baru</span>
+                                    </Link>
+                                )
+                            )}
+                        </div>
                     }
                 />
             }
@@ -371,16 +395,15 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
             <FleetNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
-                {/* Quota Limit Warning Alert */}
-                {quota?.reached && (
-                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/40 p-4 text-xs font-semibold text-amber-800 dark:text-amber-200 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm">⚠️</span>
-                            <span>
-                                <strong>Batas Kuota Paket Tercapai:</strong> Anda telah menggunakan {quota.current} dari maksimal {quota.max} armada kendaraan yang diizinkan pada paket langganan saat ini. Hubungi admin atau upgrade paket untuk menambah kendaraan.
-                            </span>
-                        </div>
-                    </div>
+                {/* Vehicle Quota Gauge */}
+                {quota && (
+                    <VehicleQuotaGauge
+                        current={quota.current}
+                        max={quota.max}
+                        total={quota.total ?? totalVehicles}
+                        reached={quota.reached}
+                        onOpenUpgrade={() => setShowUpgradeModal(true)}
+                    />
                 )}
 
                 {/* KPI Stats Cards */}
@@ -1097,6 +1120,16 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                     processing={processing}
                     message={`Anda akan menghapus ${selected.length} kendaraan sekaligus.`}
                 />
+
+                {/* Upgrade Slot Modal */}
+                {quota && (
+                    <UpgradeSlotModal
+                        isOpen={showUpgradeModal}
+                        onClose={() => setShowUpgradeModal(false)}
+                        currentQuota={quota.max || quota.current || 0}
+                        currentUsed={quota.current || 0}
+                    />
+                )}
             </div>
         </DynamicLayout>
     );

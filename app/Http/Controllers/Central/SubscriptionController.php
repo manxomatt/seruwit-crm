@@ -218,6 +218,33 @@ class SubscriptionController extends Controller
     }
 
     /**
+     * Get pro-rated preview calculation for upgrading vehicle quota.
+     */
+    public function previewUpgrade(Request $request, Tenant $tenant): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'new_vehicle_quota' => 'required|integer|min:1|max:999999',
+        ]);
+
+        try {
+            $calculation = $this->subscriptionService->calculateProratedUpgrade(
+                $tenant,
+                $validated['new_vehicle_quota']
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $calculation,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
      * Process upgrade.
      */
     public function processUpgrade(Request $request, Tenant $tenant): RedirectResponse

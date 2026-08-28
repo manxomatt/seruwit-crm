@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
 
         // Subscription activation — available even during trial/suspended state.
         Route::get('/subscription', [ModuleSubscriptionController::class, 'index'])->middleware('permission:subscription,view')->name('subscription.index');
+        Route::get('/subscription/upgrade/preview', [ModuleSubscriptionController::class, 'previewUpgrade'])->middleware('permission:subscription,view')->name('subscription.upgrade.preview');
         Route::post('/subscription/order', [ModuleSubscriptionController::class, 'createOrder'])->middleware('permission:subscription,update')->name('subscription.order');
         Route::get('/subscription/payment/{order}', [ModuleSubscriptionController::class, 'payment'])->middleware('permission:subscription,view')->name('subscription.payment');
         Route::post('/subscription/payment/{order}/proof', [ModuleSubscriptionController::class, 'submitProof'])->middleware('permission:subscription,update')->name('subscription.proof');

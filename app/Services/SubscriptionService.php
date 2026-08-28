@@ -207,55 +207,132 @@ class SubscriptionService
     }
 
     /**
-     * Upgrade subscription vehicle quota mid-period with pro-rated billing.
+     * Calculate pro-rated upgrade pricing and breakdown for a tenant.
+     *
+     * @return array{
+     *     current_vehicles: int,
+     *     new_vehicles: int,
+     *     additional_vehicles: int,
+     *     days_remaining: int,
+     *     total_days: int,
+     *     old_tier_id: int|null,
+     *     old_tier_name: string|null,
+     *     new_tier_id: int|null,
+     *     new_tier_name: string|null,
+     *     old_price_per_vehicle: float,
+     *     new_price_per_vehicle: float,
+     *     old_monthly_total: float,
+     *     new_monthly_total: float,
+     *     old_daily_rate: float,
+     *     new_daily_rate: float,
+     *     daily_difference: float,
+     *     prorated_amount: float,
+     *     subscription_id: int
+     * }
      */
-    public function upgrade(Tenant $tenant, int $newVehicleCount): PaymentOrder
+    public function calculateProratedUpgrade(Tenant $tenant, int $newVehicleCount): array
     {
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
 
-        return DB::connection($central)->transaction(function () use ($central, $tenantId, $newVehicleCount) {
-            $subscription = Subscription::on($central)
-                ->where('tenant_id', $tenantId)
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->firstOrFail();
+        $subscription = Subscription::on($central)
+            ->where('tenant_id', $tenantId)
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->firstOrFail();
 
-            if ($newVehicleCount <= $subscription->subscribed_vehicles) {
-                throw new \InvalidArgumentException('New vehicle count must be greater than current');
-            }
+        if ($newVehicleCount <= $subscription->subscribed_vehicles) {
+            throw new \InvalidArgumentException('New vehicle count must be greater than current quota');
+        }
 
-            $now = now();
-            $oldCount = $subscription->subscribed_vehicles;
-            $oldTier = SubscriptionTier::tierFor($oldCount);
-            $newTier = SubscriptionTier::tierFor($newVehicleCount);
+        $now = now();
+        $oldCount = (int) $subscription->subscribed_vehicles;
+        $oldTier = SubscriptionTier::tierFor($oldCount);
+        $newTier = SubscriptionTier::tierFor($newVehicleCount);
 
-            // Calculate pro-rated amount
-            $daysRemaining = max(1, $now->diffInDays($subscription->ends_at));
-            $totalDays = 30; // assume monthly billing
-            $oldDailyRate = (($oldCount * $oldTier->price_per_vehicle) ?? 0) / $totalDays;
-            $newDailyRate = ($newVehicleCount * $newTier->price_per_vehicle) / $totalDays;
-            $proratedAmount = ($newDailyRate - $oldDailyRate) * $daysRemaining;
+        if (! $newTier) {
+            throw new \InvalidArgumentException("No subscription tier defined for {$newVehicleCount} vehicles");
+        }
 
-            // Create upgrade payment order
+        $totalDays = ($subscription->starts_at && $subscription->ends_at)
+            ? max(1, (int) $subscription->starts_at->diffInDays($subscription->ends_at))
+            : 30;
+
+        $daysRemaining = ($subscription->ends_at && $subscription->ends_at->isFuture())
+            ? max(1, (int) $now->diffInDays($subscription->ends_at))
+            : 1;
+
+        $oldPricePerVehicle = $oldTier ? (float) $oldTier->price_per_vehicle : 20000.00;
+        $newPricePerVehicle = (float) $newTier->price_per_vehicle;
+
+        $oldMonthlyTotal = $oldCount * $oldPricePerVehicle;
+        $newMonthlyTotal = $newVehicleCount * $newPricePerVehicle;
+
+        $oldDailyRate = $oldMonthlyTotal / $totalDays;
+        $newDailyRate = $newMonthlyTotal / $totalDays;
+        $dailyDiff = max(0, $newDailyRate - $oldDailyRate);
+
+        $proratedAmount = round($dailyDiff * $daysRemaining, 2);
+
+        return [
+            'current_vehicles' => $oldCount,
+            'new_vehicles' => $newVehicleCount,
+            'additional_vehicles' => $newVehicleCount - $oldCount,
+            'days_remaining' => $daysRemaining,
+            'total_days' => $totalDays,
+            'old_tier_id' => $oldTier?->id,
+            'old_tier_name' => $oldTier?->name,
+            'new_tier_id' => $newTier->id,
+            'new_tier_name' => $newTier->name,
+            'old_price_per_vehicle' => $oldPricePerVehicle,
+            'new_price_per_vehicle' => $newPricePerVehicle,
+            'old_monthly_total' => $oldMonthlyTotal,
+            'new_monthly_total' => $newMonthlyTotal,
+            'old_daily_rate' => $oldDailyRate,
+            'new_daily_rate' => $newDailyRate,
+            'daily_difference' => $dailyDiff,
+            'prorated_amount' => $proratedAmount,
+            'subscription_id' => $subscription->id,
+        ];
+    }
+
+    /**
+     * Upgrade subscription vehicle quota mid-period with pro-rated billing.
+     */
+    public function upgrade(Tenant $tenant, int $newVehicleCount, string $paymentMethod = 'manual_transfer'): PaymentOrder
+    {
+        $central = $this->centralConnection();
+        $tenantId = $this->tenantId($tenant);
+        $calculation = $this->calculateProratedUpgrade($tenant, $newVehicleCount);
+
+        return DB::connection($central)->transaction(function () use ($central, $tenantId, $newVehicleCount, $paymentMethod, $calculation) {
+            $subscription = Subscription::on($central)->findOrFail($calculation['subscription_id']);
+            $uniqueCode = PaymentOrder::generateUniqueCode();
+            $proratedAmount = $calculation['prorated_amount'];
+            $totalAmount = $proratedAmount + $uniqueCode;
+            $instructions = Config::get('payment.manual_transfer', []);
+
             $paymentOrder = PaymentOrder::on($central)->create([
                 'tenant_id' => $tenantId,
                 'plan_id' => $subscription->plan_id,
                 'subscription_id' => $subscription->id,
-                'subscription_tier_id' => $newTier->id,
+                'subscription_tier_id' => $calculation['new_tier_id'],
                 'subscribed_vehicles' => $newVehicleCount,
-                'price_per_vehicle' => $newTier->price_per_vehicle,
-                'total_vehicle_cost' => $newVehicleCount * $newTier->price_per_vehicle,
-                'upgrade_from_vehicles' => $oldCount,
+                'price_per_vehicle' => $calculation['new_price_per_vehicle'],
+                'total_vehicle_cost' => $calculation['new_monthly_total'],
+                'upgrade_from_vehicles' => $calculation['current_vehicles'],
                 'prorated_amount' => $proratedAmount,
                 'type' => 'upgrade',
                 'billing_interval' => 'month',
-                'payment_method' => 'manual_transfer',
+                'payment_method' => $paymentMethod,
                 'status' => PaymentOrder::STATUS_PENDING,
                 'amount' => $proratedAmount,
-                'total_amount' => $proratedAmount,
+                'unique_code' => $uniqueCode,
+                'total_amount' => $totalAmount,
                 'currency' => 'IDR',
-                'unique_code' => PaymentOrder::generateUniqueCode(),
-                'expires_at' => $now->addDays(7),
+                'bank_name' => $instructions['bank_name'] ?? null,
+                'bank_account_number' => $instructions['bank_account_number'] ?? null,
+                'bank_account_name' => $instructions['bank_account_name'] ?? null,
+                'expires_at' => now()->addDays(7),
             ]);
 
             return $paymentOrder;
@@ -263,21 +340,20 @@ class SubscriptionService
     }
 
     /**
-     * Confirm upgrade and update subscription.
+     * Confirm upgrade and update subscription without resetting period dates.
      */
     public function confirmUpgrade(PaymentOrder $paymentOrder): Subscription
     {
         $central = $this->centralConnection();
 
-        return DB::connection($central)->transaction(function () use ($paymentOrder) {
-            $subscription = $paymentOrder->subscription;
+        return DB::connection($central)->transaction(function () use ($paymentOrder, $central) {
+            $subscription = Subscription::on($central)->findOrFail($paymentOrder->subscription_id);
 
             $subscription->update([
                 'subscribed_vehicles' => $paymentOrder->subscribed_vehicles,
-                'current_vehicle_count' => $paymentOrder->subscribed_vehicles,
             ]);
 
-            $tenant = $subscription->tenant;
+            $tenant = Tenant::on($central)->whereKey($paymentOrder->tenant_id)->firstOrFail();
             $tenant->update([
                 'max_vehicles_allowed' => $paymentOrder->subscribed_vehicles,
             ]);
@@ -287,23 +363,44 @@ class SubscriptionService
     }
 
     /**
-     * Auto-renew subscription (scheduled job).
+     * Auto-renew subscription: generate renewal orders H-7 for active subscriptions.
      */
-    public function autoRenew(): int
+    public function autoRenew(int $daysInAdvance = 7): int
     {
         $central = $this->centralConnection();
         $now = now();
+        $targetDate = $now->copy()->addDays($daysInAdvance)->toDateString();
 
         $subscriptions = Subscription::on($central)
             ->where('auto_renew', true)
             ->where('status', Subscription::STATUS_ACTIVE)
-            ->where('renewal_date', '<=', $now->toDateString())
-            ->where('renewal_date', '>', $now->copy()->subDays(1)->toDateString())
+            ->where(function ($query) use ($targetDate): void {
+                $query->whereDate('renewal_date', '<=', $targetDate)
+                    ->orWhere(function ($q) use ($targetDate): void {
+                        $q->whereNotNull('ends_at')
+                            ->whereDate('ends_at', '<=', $targetDate);
+                    });
+            })
+            ->where('skip_next_renewal', false)
             ->get();
 
         $renewed = 0;
 
         foreach ($subscriptions as $subscription) {
+            // Check if there is already an active/pending renewal order
+            $hasActiveRenewalOrder = PaymentOrder::on($central)
+                ->where('subscription_id', $subscription->id)
+                ->where('type', 'renewal')
+                ->whereIn('status', [
+                    PaymentOrder::STATUS_PENDING,
+                    PaymentOrder::STATUS_AWAITING_CONFIRMATION,
+                ])
+                ->exists();
+
+            if ($hasActiveRenewalOrder) {
+                continue;
+            }
+
             try {
                 $this->renew($subscription);
                 $renewed++;
@@ -318,6 +415,40 @@ class SubscriptionService
     }
 
     /**
+     * Process overdue subscriptions past the grace period (suspend unpaid accounts).
+     */
+    public function processOverdueSubscriptions(int $gracePeriodDays = 3): int
+    {
+        $central = $this->centralConnection();
+        $cutoffDate = now()->subDays($gracePeriodDays);
+
+        $expiredSubscriptions = Subscription::on($central)
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->whereNotNull('ends_at')
+            ->where('ends_at', '<', $cutoffDate)
+            ->get();
+
+        $suspendedCount = 0;
+
+        foreach ($expiredSubscriptions as $subscription) {
+            DB::connection($central)->transaction(function () use ($subscription, $central) {
+                $subscription->update([
+                    'status' => Subscription::STATUS_EXPIRED,
+                    'ended_at' => now(),
+                ]);
+
+                Tenant::on($central)->whereKey($subscription->tenant_id)->update([
+                    'status' => 'suspended',
+                ]);
+            });
+
+            $suspendedCount++;
+        }
+
+        return $suspendedCount;
+    }
+
+    /**
      * Renew subscription (create payment order for next period).
      */
     public function renew(Subscription $subscription): PaymentOrder
@@ -329,21 +460,33 @@ class SubscriptionService
             $plan = $subscription->plan;
             $tier = SubscriptionTier::tierFor($subscription->subscribed_vehicles);
 
+            if (! $tier) {
+                throw new \InvalidArgumentException("No tier defined for {$subscription->subscribed_vehicles} vehicles");
+            }
+
+            $uniqueCode = PaymentOrder::generateUniqueCode();
+            $baseAmount = $subscription->subscribed_vehicles * $tier->price_per_vehicle;
+            $totalAmount = $baseAmount + $uniqueCode;
+            $instructions = Config::get('payment.manual_transfer', []);
+
             $paymentOrder = PaymentOrder::on($central)->create([
                 'tenant_id' => $subscription->tenant_id,
                 'plan_id' => $subscription->plan_id,
                 'subscription_tier_id' => $tier->id,
                 'subscribed_vehicles' => $subscription->subscribed_vehicles,
                 'price_per_vehicle' => $tier->price_per_vehicle,
-                'total_vehicle_cost' => $subscription->subscribed_vehicles * $tier->price_per_vehicle,
+                'total_vehicle_cost' => $baseAmount,
                 'type' => 'renewal',
                 'billing_interval' => 'month',
                 'payment_method' => 'manual_transfer',
                 'status' => PaymentOrder::STATUS_PENDING,
-                'amount' => $subscription->subscribed_vehicles * $tier->price_per_vehicle,
-                'total_amount' => $subscription->subscribed_vehicles * $tier->price_per_vehicle,
+                'amount' => $baseAmount,
+                'unique_code' => $uniqueCode,
+                'total_amount' => $totalAmount,
                 'currency' => 'IDR',
-                'unique_code' => PaymentOrder::generateUniqueCode(),
+                'bank_name' => $instructions['bank_name'] ?? null,
+                'bank_account_number' => $instructions['bank_account_number'] ?? null,
+                'bank_account_name' => $instructions['bank_account_name'] ?? null,
                 'subscription_id' => $subscription->id,
                 'expires_at' => now()->addDays(7),
             ]);

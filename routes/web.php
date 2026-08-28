@@ -115,6 +115,7 @@ Route::domain($centralDomain)
             Route::post('/subscriptions/{tenant}', [SubscriptionController::class, 'store'])->name('subscriptions.store');
             Route::get('/subscriptions/{tenant}/activate', [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
             Route::get('/subscriptions/{tenant}/upgrade', [SubscriptionController::class, 'upgrade'])->name('subscriptions.upgrade');
+            Route::get('/subscriptions/{tenant}/upgrade/preview', [SubscriptionController::class, 'previewUpgrade'])->name('subscriptions.upgrade.preview');
             Route::post('/subscriptions/{tenant}/upgrade', [SubscriptionController::class, 'processUpgrade'])->name('subscriptions.upgrade.store');
             Route::get('/subscriptions/{tenant}/management', [SubscriptionController::class, 'management'])->name('subscriptions.management');
             Route::patch('/subscriptions/{tenant}/toggle-auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('subscriptions.toggle-auto-renew');
