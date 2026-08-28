@@ -55,7 +55,7 @@ class SubscriptionTierController extends Controller
         SubscriptionTier::create($validated);
 
         return redirect()
-            ->route('central.subscription-tiers.index')
+            ->route('module.subscription-tiers.index')
             ->with('success', 'Subscription tier created successfully.');
     }
 
@@ -90,7 +90,7 @@ class SubscriptionTierController extends Controller
         $tier->update($validated);
 
         return redirect()
-            ->route('central.subscription-tiers.index')
+            ->route('module.subscription-tiers.index')
             ->with('success', 'Subscription tier updated successfully.');
     }
 
@@ -102,7 +102,7 @@ class SubscriptionTierController extends Controller
         $tier->delete();
 
         return redirect()
-            ->route('central.subscription-tiers.index')
+            ->route('module.subscription-tiers.index')
             ->with('success', 'Subscription tier deleted successfully.');
     }
 

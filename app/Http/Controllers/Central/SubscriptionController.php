@@ -178,7 +178,7 @@ class SubscriptionController extends Controller
         }
 
         return redirect()
-            ->route('central.payment-orders.show', $paymentOrder)
+            ->route('module.payment-orders.show', $paymentOrder)
             ->with('success', 'Payment order created. Please complete the payment.');
     }
 
@@ -229,7 +229,7 @@ class SubscriptionController extends Controller
         $paymentOrder = $this->subscriptionService->upgrade($tenant, $validated['new_vehicle_quota']);
 
         return redirect()
-            ->route('central.payment-orders.show', $paymentOrder)
+            ->route('module.payment-orders.show', $paymentOrder)
             ->with('success', 'Upgrade offer created. Please complete the payment.');
     }
 
@@ -370,7 +370,7 @@ class SubscriptionController extends Controller
             $paymentOrder = $this->renewalService->createRenewalPaymentOrder($subscription);
 
             return redirect()
-                ->route('central.payment-orders.show', $paymentOrder)
+                ->route('module.payment-orders.show', $paymentOrder)
                 ->with('success', 'Renewal payment order created. Please complete the payment.');
         } catch (\Exception $e) {
             return back()->withErrors('Failed to create renewal: '.$e->getMessage());
