@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import DashboardOnboardingCTA, { type OnboardingOverview } from '@/Components/DashboardOnboardingCTA';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -197,6 +198,7 @@ interface Props {
     recentPages: Page[];
     subscription: SubscriptionOverview | null;
     currencySymbol: string;
+    onboarding?: OnboardingOverview;
 }
 
 function routeExists(routeName: string): boolean {
@@ -521,6 +523,7 @@ export default function Dashboard({
     recentPages,
     subscription,
     currencySymbol,
+    onboarding,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -623,6 +626,8 @@ export default function Dashboard({
                         )}
                     </div>
                 </div>
+
+                <DashboardOnboardingCTA onboarding={onboarding} />
 
                 {hasKpis && (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -21,6 +21,7 @@ use Modules\Invoicing\Models\Invoice;
 use Modules\Maintenance\Models\WorkOrder;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Pages\Models\Page;
+use Modules\Partners\Models\Partner;
 use Modules\Posts\Models\Post;
 use Modules\Rental\Models\Rental;
 use Modules\Shuttle\Models\ShuttleDeparture;
@@ -103,9 +104,41 @@ class DashboardController extends Controller
             'recentActivity' => $recentActivity,
             'recentPosts' => $recentPosts,
             'recentPages' => $recentPages,
+            'onboarding' => $this->buildOnboardingOverview($user),
             'subscription' => $this->buildSubscriptionOverview(),
             'currencySymbol' => (string) Setting::getValue('ecommerce.currency_symbol', 'Rp'),
         ]);
+    }
+
+    /**
+     * Core onboarding overview: fleet vehicles and contact records readiness.
+     *
+     * @param  \App\Models\User  $user
+     * @return array{
+     *     has_fleet: bool,
+     *     has_partners: bool,
+     *     vehicles_count: int,
+     *     partners_count: int,
+     *     can_create_vehicle: bool,
+     *     can_create_partner: bool
+     * }
+     */
+    private function buildOnboardingOverview($user): array
+    {
+        $hasFleet = Modules::available('fleet');
+        $hasPartners = Modules::available('partners');
+
+        $vehiclesCount = $hasFleet ? (int) Vehicle::query()->count() : 0;
+        $partnersCount = $hasPartners ? (int) Partner::query()->count() : 0;
+
+        return [
+            'has_fleet' => $hasFleet,
+            'has_partners' => $hasPartners,
+            'vehicles_count' => $vehiclesCount,
+            'partners_count' => $partnersCount,
+            'can_create_vehicle' => $user->hasPermissionFor('fleet', 'create'),
+            'can_create_partner' => $user->hasPermissionFor('partners', 'create'),
+        ];
     }
 
     /**
