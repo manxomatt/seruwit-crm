@@ -61,7 +61,7 @@ interface Props {
     };
 }
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'table' | 'grid';
 
 export default function Index({ media, stats, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -79,9 +79,9 @@ export default function Index({ media, stats, filters, can }: Props): JSX.Elemen
     const [processing, setProcessing] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         if (typeof window !== 'undefined') {
-            return (localStorage.getItem('mediaViewMode') as ViewMode) || 'grid';
+            return (localStorage.getItem('mediaViewMode') as ViewMode) || 'table';
         }
-        return 'grid';
+        return 'table';
     });
 
     const EyeIcon = () => (
@@ -389,28 +389,38 @@ export default function Index({ media, stats, filters, can }: Props): JSX.Elemen
                                 </label>
                             )}
 
-                            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                            <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1">
                                 <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                                        viewMode === 'grid'
-                                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    type="button"
+                                    onClick={() => setViewMode('table')}
+                                    title={t('media.pages.index.view_modes.table', undefined, 'Tampilan Tabel')}
+                                    className={`rounded-lg p-1.5 transition-all ${
+                                        viewMode === 'table'
+                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                     }`}
-                                    title={t('media.pages.index.grid_view')}
                                 >
-                                    🎴 {t('media.pages.index.grid_view')}
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5m-16.5-7.5h16.5" />
+                                    </svg>
                                 </button>
                                 <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                                        viewMode === 'list'
-                                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    type="button"
+                                    onClick={() => setViewMode('grid')}
+                                    title={t('media.pages.index.view_modes.grid', undefined, 'Tampilan Kartu')}
+                                    className={`rounded-lg p-1.5 transition-all ${
+                                        viewMode === 'grid'
+                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                     }`}
-                                    title={t('media.pages.index.list_view')}
                                 >
-                                    📄 {t('media.pages.index.list_view')}
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+                                        />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -548,8 +558,8 @@ export default function Index({ media, stats, filters, can }: Props): JSX.Elemen
                                 </div>
                             )}
 
-                            {/* List View */}
-                            {viewMode === 'list' && (
+                            {/* Table / List View */}
+                            {viewMode === 'table' && (
                                 <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800">
                                     <table className="w-full text-left border-collapse">
                                         <thead>

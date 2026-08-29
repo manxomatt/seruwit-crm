@@ -55,6 +55,10 @@ return [
             'clear_selection' => 'Clear selection',
             'grid_view' => 'Grid View',
             'list_view' => 'List View',
+            'view_modes' => [
+                'grid' => 'Grid View',
+                'table' => 'Table View',
+            ],
             'columns' => [
                 'select' => 'Select',
                 'preview' => 'Preview',

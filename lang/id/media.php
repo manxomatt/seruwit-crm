@@ -55,6 +55,10 @@ return [
             'clear_selection' => 'Batalkan pilihan',
             'grid_view' => 'Tampilan Grid',
             'list_view' => 'Tampilan Daftar',
+            'view_modes' => [
+                'grid' => 'Tampilan Kartu',
+                'table' => 'Tampilan Tabel',
+            ],
             'columns' => [
                 'select' => 'Pilih',
                 'preview' => 'Pratinjau',
