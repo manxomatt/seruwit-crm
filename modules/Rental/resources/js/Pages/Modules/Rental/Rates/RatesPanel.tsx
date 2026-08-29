@@ -112,6 +112,7 @@ export default function RatesIndex({
     const totalCount = rates.total;
     const activeCount = rates.data.filter((r) => r.is_active).length;
     const tieredCount = rates.data.filter((r) => (r.tiers ?? []).length > 0).length;
+    const hasAiPanel = Boolean(aiPricingOptimizerEnabled && aiPricingAnalyzeUrl && aiPricingApplyUrl);
 
     const openDeleteDialog = (rate: Rate): void => {
         setRateToDelete(rate);
@@ -210,14 +211,6 @@ export default function RatesIndex({
 
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
-            {aiPricingOptimizerEnabled && aiPricingAnalyzeUrl && aiPricingApplyUrl && (
-                <AiDynamicPricingPanel
-                    analyzeUrl={aiPricingAnalyzeUrl}
-                    applyUrl={aiPricingApplyUrl}
-                    canUpdate={true}
-                />
-            )}
-
             {/* KPI Stats & Header */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
@@ -385,346 +378,363 @@ export default function RatesIndex({
                 </div>
             )}
 
-            {/* Main Table Card */}
-            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                {filteredRates.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                        <span className="text-4xl mb-3">🏷️</span>
-                        <h3 className="text-base font-black text-slate-900 dark:text-white">
-                            {rates.data.length === 0 ? 'Belum Ada Skema Tarif Rental' : 'Tidak Ditemukan Tarif yang Cocok'}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-500 max-w-md">
-                            {rates.data.length === 0
-                                ? 'Buat konfigurasi tarif dasar sewa untuk armada harian, mingguan, atau bulanan dengan diskon bertingkat.'
-                                : 'Coba ubah kata kunci pencarian atau sesuaikan filter periode dan status di atas.'}
-                        </p>
-                        {rates.data.length === 0 && (
-                            <Link
-                                href={prefixedRoute('rental.rates.create')}
-                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
-                            >
-                                Buat Tarif Pertama
-                            </Link>
-                        )}
-                    </div>
-                ) : (
-                    <>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
-                                <thead>
-                                    <tr className="bg-slate-50/80 dark:bg-slate-850/80">
-                                        <th className="w-10 px-4 py-3.5">
-                                            <input
-                                                type="checkbox"
-                                                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                checked={allPageSelected}
-                                                ref={(input) => {
-                                                    if (input) {
-                                                        input.indeterminate = somePageSelected && !allPageSelected;
-                                                    }
-                                                }}
-                                                onChange={toggleAllOnPage}
-                                                aria-label={t('common.select_all')}
-                                            />
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Nama Tarif & Diskon
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Cakupan Kendaraan
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Periode
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Harga Sewa
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Jarak & Denda
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Deposit
-                                        </th>
-                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Status
-                                        </th>
-                                        <th className="w-24 px-4 py-3.5 text-right font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Aksi
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                                    {filteredRates.map((rate) => {
-                                        const tiers = rate.tiers ?? [];
-                                        const activeTiers = tiers.filter((t) => t.is_active);
-                                        const periodTiersCount = activeTiers.filter((t) => t.tier_type === 'period_volume').length;
-                                        const loyaltyTiersCount = activeTiers.filter((t) => t.tier_type === 'loyalty_count').length;
-
-                                        return (
-                                            <tr
-                                                key={rate.id}
-                                                className={`group transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-850/50 ${
-                                                    selected.includes(rate.id) ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
-                                                }`}
-                                            >
-                                                {/* Checkbox */}
-                                                <td className="w-10 px-4 py-3.5">
+            {/* Main 2-Column Grid Body: Left Rates Table (8 cols) & Right Sticky AI Optimizer Panel (4 cols) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                {/* Left Column: Rates Table */}
+                <div className={`${hasAiPanel ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-4`}>
+                    {/* Main Table Card */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        {filteredRates.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                                <span className="text-4xl mb-3">🏷️</span>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    {rates.data.length === 0 ? 'Belum Ada Skema Tarif Rental' : 'Tidak Ditemukan Tarif yang Cocok'}
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500 max-w-md">
+                                    {rates.data.length === 0
+                                        ? 'Buat konfigurasi tarif dasar sewa untuk armada harian, mingguan, atau bulanan dengan diskon bertingkat.'
+                                        : 'Coba ubah kata kunci pencarian atau sesuaikan filter periode dan status di atas.'}
+                                </p>
+                                {rates.data.length === 0 && (
+                                    <Link
+                                        href={prefixedRoute('rental.rates.create')}
+                                        className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
+                                    >
+                                        Buat Tarif Pertama
+                                    </Link>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
+                                        <thead>
+                                            <tr className="bg-slate-50/80 dark:bg-slate-850/80">
+                                                <th className="w-10 px-4 py-3.5">
                                                     <input
                                                         type="checkbox"
                                                         className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                        checked={selected.includes(rate.id)}
-                                                        onChange={() => toggleRow(rate.id)}
-                                                        aria-label={t('common.select')}
+                                                        checked={allPageSelected}
+                                                        ref={(input) => {
+                                                            if (input) {
+                                                                input.indeterminate = somePageSelected && !allPageSelected;
+                                                            }
+                                                        }}
+                                                        onChange={toggleAllOnPage}
+                                                        aria-label={t('common.select_all')}
                                                     />
-                                                </td>
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Nama Tarif & Diskon
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Cakupan Kendaraan
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Periode
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Harga Sewa
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Jarak & Denda
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Deposit
+                                                </th>
+                                                <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Status
+                                                </th>
+                                                <th className="w-24 px-4 py-3.5 text-right font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    Aksi
+                                                </th>
+                                            </tr>
+                                        </thead>
 
-                                                {/* Nama Tarif & Tier Diskon */}
-                                                <td className="px-4 py-3.5">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <Link
-                                                                href={prefixedRoute('rental.rates.edit', { rate: rate.id })}
-                                                                className="font-black text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
-                                                            >
-                                                                {rate.name}
-                                                            </Link>
-                                                            {Number(rate.priority) > 0 && (
-                                                                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300" title="Prioritas Overlap">
-                                                                    P:{rate.priority}
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                            {filteredRates.map((rate) => {
+                                                const tiers = rate.tiers ?? [];
+                                                const activeTiers = tiers.filter((t) => t.is_active);
+                                                const periodTiersCount = activeTiers.filter((t) => t.tier_type === 'period_volume').length;
+                                                const loyaltyTiersCount = activeTiers.filter((t) => t.tier_type === 'loyalty_count').length;
 
-                                                        {/* Tier Badges */}
-                                                        {tiers.length > 0 ? (
-                                                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                                                {periodTiersCount > 0 && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setPreviewTierRate(rate)}
-                                                                        className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700 ring-1 ring-sky-200/60 hover:bg-sky-100 transition dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-800"
-                                                                        title="Lihat rincian Tier Periode Sewa"
+                                                return (
+                                                    <tr
+                                                        key={rate.id}
+                                                        className={`group transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-850/50 ${
+                                                            selected.includes(rate.id) ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
+                                                        }`}
+                                                    >
+                                                        {/* Checkbox */}
+                                                        <td className="w-10 px-4 py-3.5">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                                checked={selected.includes(rate.id)}
+                                                                onChange={() => toggleRow(rate.id)}
+                                                                aria-label={t('common.select')}
+                                                            />
+                                                        </td>
+
+                                                        {/* Nama Tarif & Tier Diskon */}
+                                                        <td className="px-4 py-3.5">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Link
+                                                                        href={prefixedRoute('rental.rates.edit', { rate: rate.id })}
+                                                                        className="font-black text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
                                                                     >
-                                                                        <span>📅</span>
-                                                                        <span>{periodTiersCount} Tier Durasi</span>
-                                                                    </button>
-                                                                )}
-                                                                {loyaltyTiersCount > 0 && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setPreviewTierRate(rate)}
-                                                                        className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200/60 hover:bg-amber-100 transition dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800"
-                                                                        title="Lihat rincian Tier Pelanggan Loyal"
-                                                                    >
-                                                                        <span>⭐</span>
-                                                                        <span>{loyaltyTiersCount} Tier Loyalty</span>
-                                                                    </button>
-                                                                )}
-                                                                {activeTiers.length === 0 && (
-                                                                    <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800">
-                                                                        {tiers.length} tier nonaktif
-                                                                    </span>
+                                                                        {rate.name}
+                                                                    </Link>
+                                                                    {Number(rate.priority) > 0 && (
+                                                                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300" title="Prioritas Overlap">
+                                                                            P:{rate.priority}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Tier Badges */}
+                                                                {tiers.length > 0 ? (
+                                                                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                                                        {periodTiersCount > 0 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setPreviewTierRate(rate)}
+                                                                                className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700 ring-1 ring-sky-200/60 hover:bg-sky-100 transition dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-800"
+                                                                                title="Lihat rincian Tier Periode Sewa"
+                                                                            >
+                                                                                <span>📅</span>
+                                                                                <span>{periodTiersCount} Tier Durasi</span>
+                                                                            </button>
+                                                                        )}
+                                                                        {loyaltyTiersCount > 0 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setPreviewTierRate(rate)}
+                                                                                className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200/60 hover:bg-amber-100 transition dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800"
+                                                                                title="Lihat rincian Tier Pelanggan Loyal"
+                                                                            >
+                                                                                <span>⭐</span>
+                                                                                <span>{loyaltyTiersCount} Tier Loyalty</span>
+                                                                            </button>
+                                                                        )}
+                                                                        {activeTiers.length === 0 && (
+                                                                            <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800">
+                                                                                {tiers.length} tier nonaktif
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-[11px] text-slate-400">Tarif Flat (Tanpa Diskon Bertingkat)</p>
                                                                 )}
                                                             </div>
-                                                        ) : (
-                                                            <p className="text-[11px] text-slate-400">Tarif Flat (Tanpa Diskon Bertingkat)</p>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                                        </td>
 
-                                                {/* Cakupan Kendaraan */}
-                                                <td className="whitespace-nowrap px-4 py-3.5">
-                                                    {rate.vehicle ? (
-                                                        <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
-                                                            <span>🚗</span>
-                                                            <span>{rate.vehicle.name}</span>
-                                                            <span className="font-mono text-[10px] opacity-75">({rate.vehicle.plate_number})</span>
-                                                        </div>
-                                                    ) : rate.rental_class ? (
-                                                        <div className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/60 px-2.5 py-1 text-xs font-bold text-purple-800 dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-300">
-                                                            <span>🏷️</span>
-                                                            <span>Kelas {rate.rental_class}</span>
-                                                        </div>
-                                                    ) : rate.vehicle_type ? (
-                                                        <div className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/60 px-2.5 py-1 text-xs font-bold text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300">
-                                                            <span>🚙</span>
-                                                            <span>Tipe {rate.vehicle_type}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                            <span>🌐</span>
-                                                            <span>Semua Armada (Global)</span>
-                                                        </div>
-                                                    )}
-                                                </td>
+                                                        {/* Cakupan Kendaraan */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5">
+                                                            {rate.vehicle ? (
+                                                                <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                                                    <span>🚗</span>
+                                                                    <span>{rate.vehicle.name}</span>
+                                                                    <span className="font-mono text-[10px] opacity-75">({rate.vehicle.plate_number})</span>
+                                                                </div>
+                                                            ) : rate.rental_class ? (
+                                                                <div className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/60 px-2.5 py-1 text-xs font-bold text-purple-800 dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-300">
+                                                                    <span>🏷️</span>
+                                                                    <span>Kelas {rate.rental_class}</span>
+                                                                </div>
+                                                            ) : rate.vehicle_type ? (
+                                                                <div className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/60 px-2.5 py-1 text-xs font-bold text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300">
+                                                                    <span>🚙</span>
+                                                                    <span>Tipe {rate.vehicle_type}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                                    <span>🌐</span>
+                                                                    <span>Semua Armada (Global)</span>
+                                                                </div>
+                                                            )}
+                                                        </td>
 
-                                                {/* Periode */}
-                                                <td className="whitespace-nowrap px-4 py-3.5">
-                                                    <span
-                                                        className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold ${
-                                                            rate.period_type === 'daily'
-                                                                ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-200/60 dark:bg-amber-950/40 dark:text-amber-300'
-                                                                : rate.period_type === 'weekly'
-                                                                    ? 'bg-sky-50 text-sky-800 ring-1 ring-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300'
-                                                                    : 'bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-300'
-                                                        }`}
-                                                    >
-                                                        {rate.period_type === 'daily' ? '📅 Harian' : rate.period_type === 'weekly' ? '📆 Mingguan' : '🗓️ Bulanan'}
-                                                    </span>
-                                                </td>
-
-                                                {/* Harga Sewa */}
-                                                <td className="whitespace-nowrap px-4 py-3.5">
-                                                    <div className="font-mono text-sm font-black text-slate-900 dark:text-white">
-                                                        {formatMoney(rate.rate_per_period)}
-                                                    </div>
-                                                    <span className="text-[10px] text-slate-400">
-                                                        per {rate.period_type === 'daily' ? 'hari' : rate.period_type === 'weekly' ? 'minggu' : 'bulan'}
-                                                    </span>
-                                                </td>
-
-                                                {/* Jarak & Denda */}
-                                                <td className="whitespace-nowrap px-4 py-3.5">
-                                                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                        {rate.km_limit_per_period ? `${rate.km_limit_per_period} KM / periode` : 'Unlimited KM'}
-                                                    </div>
-                                                    {Number(rate.excess_km_rate) > 0 && (
-                                                        <div className="text-[10px] text-slate-400">
-                                                            Kelebihan: {formatMoney(rate.excess_km_rate)}/KM
-                                                        </div>
-                                                    )}
-                                                </td>
-
-                                                {/* Deposit */}
-                                                <td className="whitespace-nowrap px-4 py-3.5">
-                                                    {Number(rate.deposit_amount) > 0 ? (
-                                                        <span className="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-2.5 py-1 font-mono text-xs font-black text-sky-700 ring-1 ring-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300">
-                                                            🛡️ {formatMoney(rate.deposit_amount)}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-xs text-slate-400">
-                                                            Tanpa Deposit
-                                                        </span>
-                                                    )}
-                                                </td>
-
-                                                {/* Status Toggle */}
-                                                <td className="whitespace-nowrap px-4 py-3.5">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleSingleStatus(rate)}
-                                                        disabled={processing}
-                                                        className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-black transition ${
-                                                            rate.is_active
-                                                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
-                                                        }`}
-                                                        title="Klik untuk mengubah status aktif"
-                                                    >
-                                                        <span className={`h-2 w-2 rounded-full ${rate.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                                                        <span>{rate.is_active ? 'Aktif' : 'Non Aktif'}</span>
-                                                    </button>
-                                                </td>
-
-                                                {/* Aksi */}
-                                                <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        <Link
-                                                            href={prefixedRoute('rental.rates.edit', { rate: rate.id })}
-                                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                                            title="Edit Tarif"
-                                                        >
-                                                            <PencilIcon />
-                                                            <span>Edit</span>
-                                                        </Link>
-
-                                                        <Menu as="div" className="relative inline-block text-left">
-                                                            <MenuButton
-                                                                className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                                                                title="Menu Aksi Lainnya"
+                                                        {/* Periode */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5">
+                                                            <span
+                                                                className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold ${
+                                                                    rate.period_type === 'daily'
+                                                                        ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-200/60 dark:bg-amber-950/40 dark:text-amber-300'
+                                                                        : rate.period_type === 'weekly'
+                                                                            ? 'bg-sky-50 text-sky-800 ring-1 ring-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300'
+                                                                            : 'bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-300'
+                                                                }`}
                                                             >
-                                                                <EllipsisVerticalIcon />
-                                                            </MenuButton>
+                                                                {rate.period_type === 'daily' ? '📅 Harian' : rate.period_type === 'weekly' ? '📆 Mingguan' : '🗓️ Bulanan'}
+                                                            </span>
+                                                        </td>
 
-                                                            <MenuItems
-                                                                anchor="bottom end"
-                                                                className="z-30 w-44 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                        {/* Harga Sewa */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5">
+                                                            <div className="font-mono text-sm font-black text-slate-900 dark:text-white">
+                                                                {formatMoney(rate.rate_per_period)}
+                                                            </div>
+                                                            <span className="text-[10px] text-slate-400">
+                                                                per {rate.period_type === 'daily' ? 'hari' : rate.period_type === 'weekly' ? 'minggu' : 'bulan'}
+                                                            </span>
+                                                        </td>
+
+                                                        {/* Jarak & Denda */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5">
+                                                            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                                {rate.km_limit_per_period ? `${rate.km_limit_per_period} KM / periode` : 'Unlimited KM'}
+                                                            </div>
+                                                            {Number(rate.excess_km_rate) > 0 && (
+                                                                <div className="text-[10px] text-slate-400">
+                                                                    Kelebihan: {formatMoney(rate.excess_km_rate)}/KM
+                                                                </div>
+                                                            )}
+                                                        </td>
+
+                                                        {/* Deposit */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5">
+                                                            {Number(rate.deposit_amount) > 0 ? (
+                                                                <span className="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-2.5 py-1 font-mono text-xs font-black text-sky-700 ring-1 ring-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300">
+                                                                    🛡️ {formatMoney(rate.deposit_amount)}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-slate-400">
+                                                                    Tanpa Deposit
+                                                                </span>
+                                                            )}
+                                                        </td>
+
+                                                        {/* Status Toggle */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleSingleStatus(rate)}
+                                                                disabled={processing}
+                                                                className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-black transition ${
+                                                                    rate.is_active
+                                                                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                                                                }`}
+                                                                title="Klik untuk mengubah status aktif"
                                                             >
-                                                                {tiers.length > 0 && (
-                                                                    <MenuItem>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setPreviewTierRate(rate)}
-                                                                            className={menuItemClassName}
-                                                                        >
-                                                                            <span>⭐</span>
-                                                                            <span>Rincian Tier Diskon</span>
-                                                                        </button>
-                                                                    </MenuItem>
-                                                                )}
-                                                                <MenuItem>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => toggleSingleStatus(rate)}
-                                                                        className={menuItemClassName}
-                                                                    >
-                                                                        <span>{rate.is_active ? '⏸ Nonaktifkan' : '✓ Aktifkan'}</span>
-                                                                    </button>
-                                                                </MenuItem>
-                                                                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-                                                                <MenuItem>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => openDeleteDialog(rate)}
-                                                                        className={menuItemDangerClassName}
-                                                                    >
-                                                                        <TrashIcon />
-                                                                        <span>{t('common.delete', undefined, 'Hapus Tarif')}</span>
-                                                                    </button>
-                                                                </MenuItem>
-                                                            </MenuItems>
-                                                        </Menu>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                                <span className={`h-2 w-2 rounded-full ${rate.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                                                <span>{rate.is_active ? 'Aktif' : 'Non Aktif'}</span>
+                                                            </button>
+                                                        </td>
 
-                        {/* Pagination */}
-                        {rates.last_page > 1 && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('common.showing_results', {
-                                        from: (rates.current_page - 1) * rates.per_page + 1,
-                                        to: Math.min(rates.current_page * rates.per_page, rates.total),
-                                        total: rates.total,
-                                    })}
-                                </p>
-                                <div className="flex gap-1.5">
-                                    {rates.links.map((link, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() => link.url && router.get(link.url, {}, { preserveScroll: true })}
-                                            disabled={!link.url}
-                                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                                                link.active
-                                                    ? 'bg-indigo-600 text-white shadow-2xs'
-                                                    : link.url
-                                                        ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                                                        : 'cursor-not-allowed text-slate-300 dark:text-slate-600'
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
+                                                        {/* Aksi */}
+                                                        <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <Link
+                                                                    href={prefixedRoute('rental.rates.edit', { rate: rate.id })}
+                                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                                    title="Edit Tarif"
+                                                                >
+                                                                    <PencilIcon />
+                                                                    <span>Edit</span>
+                                                                </Link>
+
+                                                                <Menu as="div" className="relative inline-block text-left">
+                                                                    <MenuButton
+                                                                        className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                                        title="Menu Aksi Lainnya"
+                                                                    >
+                                                                        <EllipsisVerticalIcon />
+                                                                    </MenuButton>
+
+                                                                    <MenuItems
+                                                                        anchor="bottom end"
+                                                                        className="z-30 w-44 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                                    >
+                                                                        {tiers.length > 0 && (
+                                                                            <MenuItem>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setPreviewTierRate(rate)}
+                                                                                    className={menuItemClassName}
+                                                                                >
+                                                                                    <span>⭐</span>
+                                                                                    <span>Rincian Tier Diskon</span>
+                                                                                </button>
+                                                                            </MenuItem>
+                                                                        )}
+                                                                        <MenuItem>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => toggleSingleStatus(rate)}
+                                                                                className={menuItemClassName}
+                                                                            >
+                                                                                <span>{rate.is_active ? '⏸ Nonaktifkan' : '✓ Aktifkan'}</span>
+                                                                            </button>
+                                                                        </MenuItem>
+                                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                        <MenuItem>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => openDeleteDialog(rate)}
+                                                                                className={menuItemDangerClassName}
+                                                                            >
+                                                                                <TrashIcon />
+                                                                                <span>{t('common.delete', undefined, 'Hapus Tarif')}</span>
+                                                                            </button>
+                                                                        </MenuItem>
+                                                                    </MenuItems>
+                                                                </Menu>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </div>
+
+                                {/* Pagination */}
+                                {rates.last_page > 1 && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            {t('common.showing_results', {
+                                                from: (rates.current_page - 1) * rates.per_page + 1,
+                                                to: Math.min(rates.current_page * rates.per_page, rates.total),
+                                                total: rates.total,
+                                            })}
+                                        </p>
+                                        <div className="flex gap-1.5">
+                                            {rates.links.map((link, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => link.url && router.get(link.url, {}, { preserveScroll: true })}
+                                                    disabled={!link.url}
+                                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                                                        link.active
+                                                            ? 'bg-indigo-600 text-white shadow-2xs'
+                                                            : link.url
+                                                                ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                                : 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                                                    }`}
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
-                    </>
+                    </div>
+                </div>
+
+                {/* Right Column: AI Smart Dynamic Pricing & Fleet Optimizer Panel */}
+                {hasAiPanel && (
+                    <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4">
+                        <AiDynamicPricingPanel
+                            analyzeUrl={aiPricingAnalyzeUrl!}
+                            applyUrl={aiPricingApplyUrl!}
+                            canUpdate={true}
+                        />
+                    </div>
                 )}
             </div>
 
