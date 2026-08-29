@@ -49,7 +49,7 @@ class VehicleDocumentController extends Controller
         ]);
     }
 
-    public function create(Vehicle $vehicle): Response
+    public function create(Request $request, Vehicle $vehicle): Response
     {
         $types = DocumentType::query()
             ->where('entity_type', DocumentType::ENTITY_VEHICLE)
@@ -59,6 +59,7 @@ class VehicleDocumentController extends Controller
         return Inertia::render('Modules/Document/Vehicle/Create', [
             'vehicle' => $vehicle,
             'types' => $types,
+            'preselectedTypeId' => $request->query('type') ? (int) $request->query('type') : null,
         ]);
     }
 

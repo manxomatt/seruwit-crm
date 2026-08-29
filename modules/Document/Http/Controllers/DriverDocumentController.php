@@ -48,7 +48,7 @@ class DriverDocumentController extends Controller
         ]);
     }
 
-    public function create(Driver $driver): Response
+    public function create(Request $request, Driver $driver): Response
     {
         $types = DocumentType::query()
             ->where('entity_type', DocumentType::ENTITY_DRIVER)
@@ -58,6 +58,7 @@ class DriverDocumentController extends Controller
         return Inertia::render('Modules/Document/Driver/Create', [
             'driver' => $driver,
             'types' => $types,
+            'preselectedTypeId' => $request->query('type') ? (int) $request->query('type') : null,
         ]);
     }
 

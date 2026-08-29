@@ -30,8 +30,14 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
+    const initialTypeId = preselectedTypeId
+        ? String(preselectedTypeId)
+        : typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('type') || ''
+          : '';
+
     const form = useForm({
-        document_type_id: preselectedTypeId ? String(preselectedTypeId) : '',
+        document_type_id: initialTypeId,
         document_number: '',
         issued_at: '',
         expires_at: '',

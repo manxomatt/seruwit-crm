@@ -182,6 +182,22 @@ class DocumentCrudTest extends TestCase
             );
     }
 
+    public function test_admin_can_view_vehicle_document_create_form_with_preselected_type(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $type = DocumentType::factory()->forVehicle()->create();
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.documents.create', $vehicle).'?type='.$type->id)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Document/Vehicle/Create')
+                ->has('vehicle')
+                ->has('types')
+                ->where('preselectedTypeId', $type->id)
+            );
+    }
+
     public function test_admin_can_create_vehicle_document(): void
     {
         $user = $this->createAdminUser();
@@ -319,6 +335,24 @@ class DocumentCrudTest extends TestCase
         $document->refresh();
         $this->assertTrue($document->isVerified());
         $this->assertEquals($user->id, $document->verified_by);
+    }
+
+    // ── Driver Documents CRUD ───────────────────────────────────────────────
+
+    public function test_admin_can_view_driver_document_create_form_with_preselected_type(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $type = DocumentType::factory()->forDriver()->create();
+
+        $this->actingAs($user)->get(route('module.fleet.drivers.documents.create', $driver).'?type='.$type->id)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Document/Driver/Create')
+                ->has('driver')
+                ->has('types')
+                ->where('preselectedTypeId', $type->id)
+            );
     }
 
     // ── Media attachment ───────────────────────────────────────────────────

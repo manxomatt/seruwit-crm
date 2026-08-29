@@ -22,8 +22,8 @@ export default function TrackingNav(): JSX.Element {
     });
 
     return (
-        <div className="mb-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-1.5 shadow-sm overflow-x-auto">
-            <nav className="flex items-center gap-1.5 min-w-max">
+        <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+            <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label={t('tracking.nav.aria', undefined, 'Navigasi Tracking')}>
                 {tabs.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
                     const label = t(tab.labelKey, undefined, tab.fallbackLabel);
@@ -32,13 +32,13 @@ export default function TrackingNav(): JSX.Element {
                         <Link
                             key={tab.route}
                             href={prefixedRoute(tab.route)}
-                            className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
+                            className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
                                 active
-                                    ? 'bg-slate-900 text-white dark:bg-indigo-600 dark:text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            <span className="text-sm">{tab.icon}</span>
+                            <span>{tab.icon}</span>
                             <span>{label}</span>
                         </Link>
                     );
