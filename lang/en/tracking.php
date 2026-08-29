@@ -153,8 +153,8 @@ return [
         'is_active' => 'Active',
         'centre' => 'Centre point',
         'source' => 'GPS source',
-        'all_sources' => 'All sources',
-        'source_name' => 'Source name',
+        'all_sources' => 'All GPS sources',
+        'source_name' => 'GPS source name',
     ],
 
     'placeholders' => [
@@ -173,7 +173,7 @@ return [
         'play_playback' => 'Play',
         'pause_playback' => 'Pause',
         'add_geofence' => 'Add geofence',
-        'add_source' => 'Add source',
+        'add_source' => 'Add GPS source',
     ],
 
     'geofence' => [
