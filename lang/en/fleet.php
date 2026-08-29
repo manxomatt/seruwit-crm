@@ -117,6 +117,10 @@ return [
 
     'vehicles' => [
         'title' => 'Vehicles',
+        'index_title' => 'Vehicle & Fleet Unit Management',
+        'index_subtitle' => 'Monitor fleet availability, maintenance status, license plates, home base pools, and vehicle operational history.',
+        'add_new' => 'Add New Vehicle',
+        'head_title' => 'Fleet Vehicles',
         'add' => 'Add Vehicle',
         'edit' => 'Edit Vehicle',
         'show' => 'Vehicle Detail',
@@ -134,6 +138,10 @@ return [
         'columns_menu' => 'Columns',
         'columns_required_hint' => 'Name and plate number are always shown.',
         'columns_showing' => 'Showing :count columns',
+        'view_modes' => [
+            'grid' => 'Card Grid View',
+            'table' => 'Table View',
+        ],
         'columns' => [
             'photo' => 'Photo',
             'name' => 'Name',
@@ -279,6 +287,10 @@ return [
             'manager' => 'Manager',
             'vehicles' => 'Vehicles',
             'status' => 'Status',
+        ],
+        'view_modes' => [
+            'grid' => 'Card Grid View',
+            'table' => 'Table View',
         ],
         'clear_filters' => 'Clear filters',
         'batch_selected' => ':count selected',

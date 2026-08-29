@@ -117,6 +117,10 @@ return [
 
     'vehicles' => [
         'title' => 'Kendaraan',
+        'index_title' => 'Manajemen Unit Kendaraan & Armada',
+        'index_subtitle' => 'Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan.',
+        'add_new' => 'Tambah Kendaraan Baru',
+        'head_title' => 'Armada Kendaraan (Vehicles)',
         'add' => 'Tambah Kendaraan',
         'edit' => 'Ubah Kendaraan',
         'show' => 'Detail Kendaraan',
@@ -134,6 +138,10 @@ return [
         'columns_menu' => 'Kolom',
         'columns_required_hint' => 'Nama dan nomor polisi selalu ditampilkan.',
         'columns_showing' => 'Menampilkan :count kolom',
+        'view_modes' => [
+            'grid' => 'Tampilan Grid Kartu',
+            'table' => 'Tampilan Tabel',
+        ],
         'columns' => [
             'photo' => 'Foto',
             'name' => 'Nama',
@@ -279,6 +287,10 @@ return [
             'manager' => 'Manager',
             'vehicles' => 'Kendaraan',
             'status' => 'Status',
+        ],
+        'view_modes' => [
+            'grid' => 'Tampilan Grid Kartu',
+            'table' => 'Tampilan Tabel',
         ],
         'clear_filters' => 'Hapus filter',
         'batch_selected' => ':count dipilih',

@@ -355,8 +355,8 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
         <DynamicLayout
             header={
                 <PageHeader
-                    title="Manajemen Unit Kendaraan & Armada"
-                    subtitle="Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan."
+                    title={t('fleet.vehicles.index_title', undefined, 'Manajemen Unit Kendaraan & Armada')}
+                    subtitle={t('fleet.vehicles.index_subtitle', undefined, 'Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan.')}
                     actions={
                         <div className="flex items-center gap-2.5">
                             {quota && (
@@ -382,7 +382,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                                         href={prefixedRoute('fleet.vehicles.create')}
                                         className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                                     >
-                                        <span>Tambah Kendaraan Baru</span>
+                                        <span>{t('fleet.vehicles.add_new', undefined, 'Tambah Kendaraan Baru')}</span>
                                     </Link>
                                 )
                             )}
@@ -391,7 +391,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                 />
             }
         >
-            <Head title="Armada Kendaraan (Vehicles)" />
+            <Head title={t('fleet.vehicles.head_title', undefined, 'Armada Kendaraan (Vehicles)')} />
             <FleetNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
@@ -555,31 +555,35 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
 
                         {/* View Switcher & Column Menu */}
                         <div className="flex items-center gap-2">
-                            {/* View Switcher */}
-                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                            {/* View Mode Switcher */}
+                            <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1">
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('table')}
-                                    className={`rounded-xl p-1.5 text-xs font-bold transition ${
+                                    title={t('fleet.vehicles.view_modes.table', undefined, 'Tampilan Tabel')}
+                                    className={`rounded-lg p-1.5 transition-all ${
                                         viewMode === 'table'
-                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
-                                            : 'text-slate-400 hover:text-slate-600'
+                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                     }`}
-                                    title="Tampilan Tabel"
                                 >
-                                    📋
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5m-16.5-7.5h16.5" />
+                                    </svg>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('grid')}
-                                    className={`rounded-xl p-1.5 text-xs font-bold transition ${
+                                    title={t('fleet.vehicles.view_modes.grid', undefined, 'Tampilan Grid Kartu')}
+                                    className={`rounded-lg p-1.5 transition-all ${
                                         viewMode === 'grid'
-                                            ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-800 dark:text-indigo-300'
-                                            : 'text-slate-400 hover:text-slate-600'
+                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                     }`}
-                                    title="Tampilan Grid Kartu"
                                 >
-                                    🗂️
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                    </svg>
                                 </button>
                             </div>
 
