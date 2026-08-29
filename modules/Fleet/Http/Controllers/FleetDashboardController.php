@@ -12,8 +12,15 @@ class FleetDashboardController extends Controller
 {
     public function index(Request $request, FleetStatusBoard $board): Response
     {
+        $user = $request->user();
+
         return Inertia::render('Modules/Fleet/Dashboard/Index', [
             'board' => $board->build($request),
+            'can' => [
+                'create_base' => $user?->hasPermissionFor('fleet', 'create') ?? true,
+                'create_vehicle' => $user?->hasPermissionFor('fleet', 'create') ?? true,
+                'create_driver' => $user?->hasPermissionFor('fleet', 'create') ?? true,
+            ],
         ]);
     }
 }

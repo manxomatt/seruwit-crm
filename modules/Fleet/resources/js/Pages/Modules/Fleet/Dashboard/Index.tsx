@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
 import PageHeader from '@/Components/PageHeader';
+import FleetOnboardingHero, { FleetSetupCounts, FleetSetupPermissions } from '../../../../Components/FleetOnboardingHero';
 
 interface VehicleRow {
     id: number;
@@ -30,6 +31,7 @@ interface PaginatedVehicles {
 }
 
 interface Board {
+    bases?: { active: number; inactive: number; total: number };
     counts: { active: number; maintenance: number; inactive: number; total: number };
     drivers: { available: number; on_leave: number; inactive: number; total: number };
     expiring_docs: { expired: number; expiring_30: number; available: boolean };
@@ -38,6 +40,7 @@ interface Board {
 
 interface Props {
     board: Board;
+    can?: FleetSetupPermissions;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
@@ -182,141 +185,193 @@ function StatCard({
     );
 }
 
-export default function Index({ board }: Props): JSX.Element {
+export default function Index({ board, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const { counts, drivers, expiring_docs, vehicles } = board;
+    const { bases, counts, drivers, expiring_docs, vehicles } = board;
+
+    const setupCounts: FleetSetupCounts = {
+        bases: bases?.total ?? 0,
+        vehicles: counts.total,
+        drivers: drivers.total,
+    };
+
+    const isZeroState = setupCounts.bases === 0 && setupCounts.vehicles === 0 && setupCounts.drivers === 0;
+    const isPartialSetup = !isZeroState && (setupCounts.bases === 0 || setupCounts.vehicles === 0 || setupCounts.drivers === 0);
 
     return (
         <DynamicLayout
-            header={<PageHeader title={t('fleet.title', undefined, 'Fleet Management')} subtitle={t('fleet.dashboard.subtitle', undefined, 'Vehicle status board and operational overview')} />}
+            header={
+                <PageHeader
+                    title={t('fleet.title', undefined, 'Fleet Management')}
+                    subtitle={t('fleet.dashboard.subtitle', undefined, 'Vehicle status board and operational overview')}
+                    actions={
+                        !isZeroState && can?.create_vehicle !== false ? (
+                            <Link
+                                href={prefixedRoute('fleet.vehicles.create')}
+                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
+                            >
+                                <span>+</span>
+                                <span>{t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}</span>
+                            </Link>
+                        ) : undefined
+                    }
+                />
+            }
         >
             <Head title={t('fleet.dashboard.title', undefined, 'Fleet Dashboard')} />
 
             <FleetNav />
 
             <div className="space-y-6">
-                {/* Stat Grid */}
-                <div className={`grid gap-4 sm:grid-cols-2 ${expiring_docs.available ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
-                    <StatCard
-                        label={t('fleet.dashboard.active', undefined, 'Active')}
-                        value={counts.active}
-                        hint={t('fleet.dashboard.of_vehicles', { total: counts.total }, `${counts.active} of ${counts.total} vehicles`)}
-                        tone="emerald"
-                        icon="🚗"
-                        progress={sharePercent(counts.active, counts.total)}
-                        progressLabel={t('fleet.dashboard.share_label', undefined, 'Active Share')}
-                    />
-                    <StatCard
-                        label={t('fleet.dashboard.maintenance', undefined, 'Maintenance')}
-                        value={counts.maintenance}
-                        hint={
-                            counts.maintenance > 0
-                                ? t('fleet.dashboard.maintenance_hint', undefined, 'Needs service attention')
-                                : t('fleet.dashboard.maintenance_clear', undefined, 'All units operational')
-                        }
-                        tone="amber"
-                        icon="🛠️"
-                        progress={sharePercent(counts.maintenance, counts.total)}
-                        progressLabel={t('fleet.dashboard.share_label', undefined, 'In Maintenance')}
-                    />
-                    <StatCard
-                        label={t('fleet.dashboard.inactive', undefined, 'Inactive')}
-                        value={counts.inactive}
-                        hint={t('fleet.dashboard.inactive_hint', undefined, 'Parked or unassigned')}
-                        tone="slate"
-                        icon="⏸️"
-                        progress={sharePercent(counts.inactive, counts.total)}
-                        progressLabel={t('fleet.dashboard.share_label', undefined, 'Inactive Share')}
-                    />
-                    <StatCard
-                        label={t('fleet.dashboard.drivers_available', undefined, 'Drivers Ready')}
-                        value={drivers.available}
-                        hint={t('fleet.dashboard.of_drivers', { total: drivers.total }, `${drivers.available} of ${drivers.total} drivers`)}
-                        tone="sky"
-                        icon="👨‍✈️"
-                        progress={sharePercent(drivers.available, drivers.total)}
-                        progressLabel={t('fleet.dashboard.drivers_ready', undefined, 'Ready Rate')}
-                        meta={[
-                            { label: t('fleet.dashboard.on_leave', undefined, 'On Leave'), value: drivers.on_leave },
-                            { label: t('fleet.dashboard.drivers_inactive', undefined, 'Inactive'), value: drivers.inactive },
-                        ]}
-                    />
-                    {expiring_docs.available && (
-                        <StatCard
-                            label={t('fleet.dashboard.docs_compliance', undefined, 'Docs Expiring')}
-                            value={expiring_docs.expired + expiring_docs.expiring_30}
-                            hint={
-                                expiring_docs.expired + expiring_docs.expiring_30 === 0
-                                    ? t('fleet.dashboard.docs_clear', undefined, 'All docs valid')
-                                    : t('fleet.dashboard.docs_attention', undefined, 'Requires renewal')
-                            }
-                            tone={expiring_docs.expired > 0 ? 'rose' : expiring_docs.expiring_30 > 0 ? 'amber' : 'emerald'}
-                            icon="📜"
-                            meta={[
-                                { label: t('fleet.dashboard.docs_expired', undefined, 'Expired'), value: expiring_docs.expired },
-                                { label: t('fleet.dashboard.docs_expiring', undefined, 'In 30 Days'), value: expiring_docs.expiring_30 },
-                            ]}
-                        />
-                    )}
-                </div>
+                {isZeroState ? (
+                    <FleetOnboardingHero counts={setupCounts} can={can} mode="full" />
+                ) : (
+                    <>
+                        {isPartialSetup && (
+                            <FleetOnboardingHero counts={setupCounts} can={can} mode="banner" />
+                        )}
 
-                {/* Expiry Alert Banner */}
-                {expiring_docs.available && (expiring_docs.expired > 0 || expiring_docs.expiring_30 > 0) && (
-                    <div className="flex items-center justify-between gap-4 rounded-3xl border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/50 p-4 text-xs font-semibold text-amber-900 dark:text-amber-200 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xl">⚠️</span>
-                            <span>
-                                {t('fleet.dashboard.docs_alert', {
-                                    expired: expiring_docs.expired,
-                                    expiring: expiring_docs.expiring_30,
-                                }, `${expiring_docs.expired} expired and ${expiring_docs.expiring_30} expiring soon`)}
-                            </span>
+                        {/* Stat Grid */}
+                        <div className={`grid gap-4 sm:grid-cols-2 ${expiring_docs.available ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
+                            <StatCard
+                                label={t('fleet.dashboard.active', undefined, 'Active')}
+                                value={counts.active}
+                                hint={t('fleet.dashboard.of_vehicles', { total: counts.total }, `${counts.active} of ${counts.total} vehicles`)}
+                                tone="emerald"
+                                icon="🚗"
+                                progress={sharePercent(counts.active, counts.total)}
+                                progressLabel={t('fleet.dashboard.share_label', undefined, 'Active Share')}
+                            />
+                            <StatCard
+                                label={t('fleet.dashboard.maintenance', undefined, 'Maintenance')}
+                                value={counts.maintenance}
+                                hint={
+                                    counts.maintenance > 0
+                                        ? t('fleet.dashboard.maintenance_hint', undefined, 'Needs service attention')
+                                        : t('fleet.dashboard.maintenance_clear', undefined, 'All units operational')
+                                }
+                                tone="amber"
+                                icon="🛠️"
+                                progress={sharePercent(counts.maintenance, counts.total)}
+                                progressLabel={t('fleet.dashboard.share_label', undefined, 'In Maintenance')}
+                            />
+                            <StatCard
+                                label={t('fleet.dashboard.inactive', undefined, 'Inactive')}
+                                value={counts.inactive}
+                                hint={t('fleet.dashboard.inactive_hint', undefined, 'Parked or unassigned')}
+                                tone="slate"
+                                icon="⏸️"
+                                progress={sharePercent(counts.inactive, counts.total)}
+                                progressLabel={t('fleet.dashboard.share_label', undefined, 'Inactive Share')}
+                            />
+                            <StatCard
+                                label={t('fleet.dashboard.drivers_available', undefined, 'Drivers Ready')}
+                                value={drivers.available}
+                                hint={t('fleet.dashboard.of_drivers', { total: drivers.total }, `${drivers.available} of ${drivers.total} drivers`)}
+                                tone="sky"
+                                icon="👨‍✈️"
+                                progress={sharePercent(drivers.available, drivers.total)}
+                                progressLabel={t('fleet.dashboard.drivers_ready', undefined, 'Ready Rate')}
+                                meta={[
+                                    { label: t('fleet.dashboard.on_leave', undefined, 'On Leave'), value: drivers.on_leave },
+                                    { label: t('fleet.dashboard.drivers_inactive', undefined, 'Inactive'), value: drivers.inactive },
+                                ]}
+                            />
+                            {expiring_docs.available && (
+                                <StatCard
+                                    label={t('fleet.dashboard.docs_compliance', undefined, 'Docs Expiring')}
+                                    value={expiring_docs.expired + expiring_docs.expiring_30}
+                                    hint={
+                                        expiring_docs.expired + expiring_docs.expiring_30 === 0
+                                            ? t('fleet.dashboard.docs_clear', undefined, 'All docs valid')
+                                            : t('fleet.dashboard.docs_attention', undefined, 'Requires renewal')
+                                    }
+                                    tone={expiring_docs.expired > 0 ? 'rose' : expiring_docs.expiring_30 > 0 ? 'amber' : 'emerald'}
+                                    icon="📜"
+                                    meta={[
+                                        { label: t('fleet.dashboard.docs_expired', undefined, 'Expired'), value: expiring_docs.expired },
+                                        { label: t('fleet.dashboard.docs_expiring', undefined, 'In 30 Days'), value: expiring_docs.expiring_30 },
+                                    ]}
+                                />
+                            )}
                         </div>
-                        <Link
-                            href={prefixedRoute('documents.index')}
-                            className="inline-flex items-center gap-1 rounded-xl bg-amber-600 text-white px-3 py-1.5 font-bold hover:bg-amber-700 transition"
-                        >
-                            {t('fleet.dashboard.open_documents', undefined, 'Manage Docs')} ➔
-                        </Link>
-                    </div>
-                )}
 
-                {/* Fleet Overview Table */}
-                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-5">
-                        <div>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">Armada & Vehicle Status Board</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">Real-time status, odometer, fuel logs, and STNK/KIR compliance</p>
-                        </div>
-                        <Link
-                            href={prefixedRoute('fleet.vehicles.index')}
-                            className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
-                        >
-                            View All Vehicles ➔
-                        </Link>
-                    </div>
+                        {/* Expiry Alert Banner */}
+                        {expiring_docs.available && (expiring_docs.expired > 0 || expiring_docs.expiring_30 > 0) && (
+                            <div className="flex items-center justify-between gap-4 rounded-3xl border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/50 p-4 text-xs font-semibold text-amber-900 dark:text-amber-200 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl">⚠️</span>
+                                    <span>
+                                        {t('fleet.dashboard.docs_alert', {
+                                            expired: expiring_docs.expired,
+                                            expiring: expiring_docs.expiring_30,
+                                        }, `${expiring_docs.expired} expired and ${expiring_docs.expiring_30} expiring soon`)}
+                                    </span>
+                                </div>
+                                <Link
+                                    href={prefixedRoute('documents.index')}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-amber-600 text-white px-3 py-1.5 font-bold hover:bg-amber-700 transition"
+                                >
+                                    {t('fleet.dashboard.open_documents', undefined, 'Manage Docs')} ➔
+                                </Link>
+                            </div>
+                        )}
 
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                            <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-400 font-bold uppercase tracking-wider">
-                                <tr>
-                                    <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.vehicle', undefined, 'Vehicle')}</th>
-                                    <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.status', undefined, 'Status')}</th>
-                                    <th className="px-5 py-3.5 text-right">{t('fleet.dashboard.odometer', undefined, 'Odometer')}</th>
-                                    <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.last_fuel', undefined, 'Last Fuel Refuel')}</th>
-                                    <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.stnk', undefined, 'STNK Date')}</th>
-                                    <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.kir', undefined, 'KIR Date')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                                {vehicles.data.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
-                                            {t('fleet.dashboard.empty', undefined, 'No vehicles recorded yet.')}
-                                        </td>
-                                    </tr>
-                                ) : (
+                        {/* Fleet Overview Table */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-5">
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Armada & Vehicle Status Board</h3>
+                                    <p className="text-xs text-slate-400 mt-0.5">Real-time status, odometer, fuel logs, and STNK/KIR compliance</p>
+                                </div>
+                                <Link
+                                    href={prefixedRoute('fleet.vehicles.index')}
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                >
+                                    View All Vehicles ➔
+                                </Link>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-400 font-bold uppercase tracking-wider">
+                                        <tr>
+                                            <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.vehicle', undefined, 'Vehicle')}</th>
+                                            <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.status', undefined, 'Status')}</th>
+                                            <th className="px-5 py-3.5 text-right">{t('fleet.dashboard.odometer', undefined, 'Odometer')}</th>
+                                            <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.last_fuel', undefined, 'Last Fuel Refuel')}</th>
+                                            <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.stnk', undefined, 'STNK Date')}</th>
+                                            <th className="px-5 py-3.5 text-left">{t('fleet.dashboard.kir', undefined, 'KIR Date')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                                        {vehicles.data.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="px-5 py-16 text-center">
+                                                    <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-2xl text-indigo-600 dark:text-indigo-400 mb-3 shadow-2xs">
+                                                            🚗
+                                                        </div>
+                                                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                                            {t('fleet.dashboard.empty', undefined, 'Belum ada unit kendaraan terdaftar.')}
+                                                        </h4>
+                                                        <p className="mt-1 text-xs text-slate-400">
+                                                            Daftarkan unit kendaraan armada Anda untuk mulai memantau status operasional, odometer, dan kepatuhan dokumen STNK/KIR.
+                                                        </p>
+                                                        {can?.create_vehicle !== false && (
+                                                            <Link
+                                                                href={prefixedRoute('fleet.vehicles.create')}
+                                                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
+                                                            >
+                                                                <span>+</span>
+                                                                <span>{t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}</span>
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
                                     vehicles.data.map((vehicle) => {
                                         const statusCfg = STATUS_CONFIG[vehicle.status] || STATUS_CONFIG.inactive;
                                         const stnkCfg = EXPIRY_CONFIG[vehicle.stnk_status] || EXPIRY_CONFIG.unknown;
@@ -431,6 +486,8 @@ export default function Index({ board }: Props): JSX.Element {
                         </div>
                     )}
                 </div>
+                </>
+                )}
             </div>
         </DynamicLayout>
     );

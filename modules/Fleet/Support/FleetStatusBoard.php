@@ -7,6 +7,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\FleetBase;
 use Modules\Fleet\Models\FuelLog;
 use Modules\Fleet\Models\Vehicle;
 
@@ -21,6 +22,11 @@ class FleetStatusBoard
      */
     public function build(?Request $request = null, int $perPage = 15): array
     {
+        $basesByStatus = FleetBase::query()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
         $byStatus = Vehicle::query()
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
@@ -72,6 +78,11 @@ class FleetStatusBoard
         });
 
         return [
+            'bases' => [
+                'active' => (int) ($basesByStatus[FleetBase::STATUS_ACTIVE] ?? 0),
+                'inactive' => (int) ($basesByStatus[FleetBase::STATUS_INACTIVE] ?? 0),
+                'total' => (int) ($basesByStatus->sum()),
+            ],
             'counts' => [
                 'active' => (int) ($byStatus[Vehicle::STATUS_ACTIVE] ?? 0),
                 'maintenance' => (int) ($byStatus[Vehicle::STATUS_MAINTENANCE] ?? 0),
