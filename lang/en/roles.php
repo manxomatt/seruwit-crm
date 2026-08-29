@@ -15,6 +15,7 @@ return [
         'search' => 'Search roles by name or description…',
         'name' => 'e.g., Editor, Moderator',
         'description' => 'Describe what this role can do…',
+        'search_permissions' => 'Search module or permission name (e.g., fleet, view, rental, delete)...',
     ],
 
     'type' => [
@@ -23,6 +24,11 @@ return [
     ],
 
     'permissions_selected' => 'Selected: :count permission(s)',
+    'total_permissions_selected' => 'Total Permissions Selected:',
+    'selected_count' => ':count / :total selected',
+    'permissions_subtitle' => 'Configure access permissions for each system module',
+    'role_information' => 'Role Information',
+    'no_permissions_found' => 'No permissions matched your search ":query".',
 
     'pages' => [
         'index' => [
@@ -95,6 +101,8 @@ return [
         'select_all' => 'Select All',
         'clear_all' => 'Clear All',
         'clear_extras' => 'Clear Extras',
+        'expand_all' => 'Expand All',
+        'collapse_all' => 'Collapse All',
         'edit_role' => 'Edit Role',
         'back_to_roles' => 'Back to Roles',
     ],

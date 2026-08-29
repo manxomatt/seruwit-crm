@@ -93,19 +93,13 @@ export default function Edit({
     // Search query state
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Collapsible states per module (all expanded by default)
-    const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(() => {
-        const initial: Record<string, boolean> = {};
-        Object.keys(permissions).forEach((mod) => {
-            initial[mod] = true;
-        });
-        return initial;
-    });
+    // Collapsible states per module (closed / collapsed by default)
+    const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
     const toggleExpand = (mod: string) => {
         setExpandedModules((prev) => ({
             ...prev,
-            [mod]: !prev[mod],
+            [mod]: !(prev[mod] ?? false),
         }));
     };
 
@@ -254,7 +248,7 @@ export default function Edit({
                         <div className="lg:col-span-5 space-y-5 lg:sticky lg:top-6">
                             <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5 space-y-4 dark:border-slate-800/80 dark:bg-slate-800/30">
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                                    Informasi Peran (Role)
+                                    {t('roles.role_information', undefined, 'Informasi Peran (Role)')}
                                 </h3>
 
                                 <div>
@@ -304,7 +298,7 @@ export default function Edit({
                                 <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 dark:border-indigo-900/40 dark:bg-indigo-950/30">
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="font-semibold text-indigo-900 dark:text-indigo-200">
-                                            Total Hak Akses Dipilih:
+                                            {t('roles.total_permissions_selected', undefined, 'Total Hak Akses Dipilih:')}
                                         </span>
                                         <span className="rounded-lg bg-indigo-600 px-2.5 py-0.5 font-mono text-xs font-black text-white shadow-2xs">
                                             {data.permissions.length} / {totalPermissionsCount}
@@ -323,7 +317,7 @@ export default function Edit({
                                         {t('roles.fields.permissions')}
                                     </h3>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                        Atur izin akses untuk setiap modul sistem
+                                        {t('roles.permissions_subtitle', undefined, 'Atur izin akses untuk setiap modul sistem')}
                                     </p>
                                 </div>
 
@@ -334,17 +328,17 @@ export default function Edit({
                                             type="button"
                                             onClick={expandAll}
                                             className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition"
-                                            title="Buka semua accordion modul"
+                                            title={t('roles.actions.expand_all', undefined, 'Buka Semua')}
                                         >
-                                            Buka Semua
+                                            {t('roles.actions.expand_all', undefined, 'Buka Semua')}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={collapseAll}
                                             className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition"
-                                            title="Tutup semua accordion modul"
+                                            title={t('roles.actions.collapse_all', undefined, 'Tutup Semua')}
                                         >
-                                            Tutup Semua
+                                            {t('roles.actions.collapse_all', undefined, 'Tutup Semua')}
                                         </button>
                                     </div>
 
@@ -380,7 +374,7 @@ export default function Edit({
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Cari modul atau nama hak akses (contoh: fleet, view, rental, delete)..."
+                                    placeholder={t('roles.placeholders.search_permissions', undefined, 'Cari modul atau nama hak akses (contoh: fleet, view, rental, delete)...')}
                                     className="block w-full rounded-2xl border border-slate-200/80 bg-slate-50/60 pl-9 pr-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800/60 dark:text-white"
                                 />
                                 {searchQuery && (
@@ -399,7 +393,7 @@ export default function Edit({
                                 {Object.keys(filteredPermissions).length === 0 ? (
                                     <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
                                         <p className="text-xs font-semibold text-slate-400">
-                                            Tidak ada hak akses yang cocok dengan pencarian "{searchQuery}".
+                                            {t('roles.no_permissions_found', { query: searchQuery }, `Tidak ada hak akses yang cocok dengan pencarian "${searchQuery}".`)}
                                         </p>
                                     </div>
                                 ) : (
@@ -409,7 +403,8 @@ export default function Edit({
                                         const selectedCount = modulePermissionIds.filter((id) => data.permissions.includes(id)).length;
                                         const allSelected = modulePermissionIds.length > 0 && selectedCount === modulePermissionIds.length;
                                         const someSelected = selectedCount > 0 && !allSelected;
-                                        const isExpanded = expandedModules[module] ?? true;
+                                        // Default is collapsed unless user searched or expanded manually
+                                        const isExpanded = searchQuery.trim() ? true : (expandedModules[module] ?? false);
                                         const moduleToggleDisabled = unlockedIds.length === 0;
                                         const icon = getModuleIcon(module);
 
@@ -469,7 +464,7 @@ export default function Edit({
                                                                         : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                                                             }`}
                                                         >
-                                                            {selectedCount} / {modulePermissionIds.length} dipilih
+                                                            {t('roles.selected_count', { count: selectedCount, total: modulePermissionIds.length }, `${selectedCount} / ${modulePermissionIds.length} dipilih`)}
                                                         </span>
 
                                                         <div

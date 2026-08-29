@@ -15,6 +15,7 @@ return [
         'search' => 'Cari peran berdasarkan nama atau deskripsi…',
         'name' => 'Misal: Editor, Moderator',
         'description' => 'Jelaskan apa yang bisa dilakukan peran ini…',
+        'search_permissions' => 'Cari modul atau nama hak akses (contoh: fleet, view, rental, delete)...',
     ],
 
     'type' => [
@@ -23,6 +24,11 @@ return [
     ],
 
     'permissions_selected' => 'Dipilih: :count hak akses',
+    'total_permissions_selected' => 'Total Hak Akses Dipilih:',
+    'selected_count' => ':count / :total dipilih',
+    'permissions_subtitle' => 'Atur izin akses untuk setiap modul sistem',
+    'role_information' => 'Informasi Peran (Role)',
+    'no_permissions_found' => 'Tidak ada hak akses yang cocok dengan pencarian ":query".',
 
     'pages' => [
         'index' => [
@@ -95,6 +101,8 @@ return [
         'select_all' => 'Pilih Semua',
         'clear_all' => 'Hapus Semua',
         'clear_extras' => 'Hapus Tambahan',
+        'expand_all' => 'Buka Semua',
+        'collapse_all' => 'Tutup Semua',
         'edit_role' => 'Ubah Peran',
         'back_to_roles' => 'Kembali ke Peran',
     ],
