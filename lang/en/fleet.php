@@ -403,6 +403,10 @@ return [
         'notes' => 'Notes',
         'columns_menu' => 'Columns',
         'columns_required_hint' => 'Required columns stay visible.',
+        'view_modes' => [
+            'grid' => 'Card Grid View',
+            'table' => 'Table View',
+        ],
         'columns' => [
             'photo' => 'Photo',
             'name' => 'Name',

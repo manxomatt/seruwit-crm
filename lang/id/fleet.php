@@ -403,6 +403,10 @@ return [
         'notes' => 'Catatan',
         'columns_menu' => 'Kolom',
         'columns_required_hint' => 'Kolom wajib tetap tampil.',
+        'view_modes' => [
+            'grid' => 'Tampilan Grid Kartu',
+            'table' => 'Tampilan Tabel',
+        ],
         'columns' => [
             'photo' => 'Foto',
             'name' => 'Nama',
