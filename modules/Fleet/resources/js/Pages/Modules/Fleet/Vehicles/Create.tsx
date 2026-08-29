@@ -146,18 +146,18 @@ export default function Create({ bases = [] }: Props): JSX.Element {
                     <span className="font-bold text-slate-800 dark:text-slate-200">Tambah Unit Baru</span>
                 </nav>
 
-                {/* AI Smart Quick-Fill Assistant */}
-                <VehicleAiGeneratePanel bases={bases} onApply={handleApplyAiData} />
-
-                <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">
-                    {/* 1. Identitas & Foto Kendaraan */}
-                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
-                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-100 text-base font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                1
-                            </span>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 items-start">
+                    {/* Kolom Kiri: Form Utama */}
+                    <div className="lg:col-span-8 space-y-6">
+                        <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">
+                            {/* 1. Identitas & Foto Kendaraan */}
+                            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                                <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-100 text-base font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        1
+                                    </span>
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-900 dark:text-white">
                                     Identitas, Foto & Tipe Kendaraan
                                 </h3>
                                 <p className="text-xs text-slate-500">
@@ -581,6 +581,13 @@ export default function Create({ bases = [] }: Props): JSX.Element {
                     </div>
                 </form>
             </div>
-        </DynamicLayout>
+
+            {/* Kolom Kanan: Panel AI Asisten (Sticky) */}
+            <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
+                <VehicleAiGeneratePanel bases={bases} onApply={handleApplyAiData} />
+            </div>
+        </div>
+    </div>
+</DynamicLayout>
     );
 }
