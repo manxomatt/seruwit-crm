@@ -1,5 +1,6 @@
 import Modal from '@/Components/Modal';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -38,6 +39,7 @@ export default function UpgradeSlotModal({
     currentUsed,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [addition, setAddition] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(false);
     const [preview, setPreview] = useState<UpgradePreviewData | null>(null);
@@ -129,10 +131,10 @@ export default function UpgradeSlotModal({
                         </div>
                         <div>
                             <h2 className="text-base font-black text-slate-900 dark:text-white">
-                                Tambah Kapasitas Slot Armada
+                                {t('fleet.quota.modal_title', undefined, 'Tambah Kapasitas Unit Armada')}
                             </h2>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Upgrade kuota slot kendaraan dengan perhitungan prorata otomatis.
+                                {t('fleet.quota.modal_subtitle', undefined, 'Upgrade kuota kapasitas unit kendaraan dengan perhitungan prorata otomatis.')}
                             </p>
                         </div>
                     </div>
@@ -148,18 +150,18 @@ export default function UpgradeSlotModal({
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 border border-slate-200/60 dark:border-slate-700/60">
                     <div>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                            Kuota Saat Ini
+                            {t('fleet.quota.current_capacity', undefined, 'Kapasitas Saat Ini')}
                         </p>
                         <p className="text-sm font-black text-slate-800 dark:text-slate-200">
-                            {currentQuota} Slot ({currentUsed} Terpakai)
+                            {t('fleet.quota.current_capacity_value', { quota: currentQuota, used: currentUsed }, `${currentQuota} Unit (${currentUsed} Terpakai)`)}
                         </p>
                     </div>
                     <div className="text-right">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                            Target Kuota Baru
+                            {t('fleet.quota.target_capacity', undefined, 'Target Kapasitas Baru')}
                         </p>
                         <p className="text-base font-black text-indigo-600 dark:text-indigo-400">
-                            {targetQuota} Slot (+{addition})
+                            {t('fleet.quota.target_capacity_value', { quota: targetQuota, addition }, `${targetQuota} Unit (+${addition})`)}
                         </p>
                     </div>
                 </div>
@@ -167,7 +169,7 @@ export default function UpgradeSlotModal({
                 {/* Preset Options */}
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Pilih Tambahan Slot:
+                        {t('fleet.quota.select_addition', undefined, 'Pilih Tambahan Kapasitas Unit:')}
                     </label>
                     <div className="grid grid-cols-4 gap-2">
                         {PRESET_OPTIONS.map((opt) => (
@@ -181,7 +183,7 @@ export default function UpgradeSlotModal({
                                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
                                 }`}
                             >
-                                +{opt} Slot
+                                {t('fleet.quota.add_units_btn', { count: opt }, `+${opt} Unit`)}
                             </button>
                         ))}
                     </div>
@@ -190,14 +192,18 @@ export default function UpgradeSlotModal({
                 {/* Calculation Breakdown Card */}
                 <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 dark:border-indigo-900/40 dark:bg-indigo-950/20 p-4 space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-slate-600 dark:text-slate-400">Sisa Masa Aktif Periode Ini:</span>
+                        <span className="font-medium text-slate-600 dark:text-slate-400">
+                            {t('fleet.quota.days_remaining', undefined, 'Sisa Masa Aktif Periode Ini:')}
+                        </span>
                         <span className="font-bold text-slate-900 dark:text-white">
-                            {preview ? `${preview.days_remaining} Hari Tersisa` : '...'}
+                            {preview ? t('fleet.quota.days_remaining_val', { days: preview.days_remaining }, `${preview.days_remaining} Hari Tersisa`) : '...'}
                         </span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-slate-600 dark:text-slate-400">Tier Tarif Armada:</span>
+                        <span className="font-medium text-slate-600 dark:text-slate-400">
+                            {t('fleet.quota.tier_rate', undefined, 'Tier Tarif Armada:')}
+                        </span>
                         <span className="font-bold text-slate-900 dark:text-white">
                             {preview ? `${preview.new_tier_name} (${formatCurrency(preview.new_price_per_vehicle)}/unit)` : '...'}
                         </span>
@@ -206,14 +212,14 @@ export default function UpgradeSlotModal({
                     <div className="border-t border-indigo-100/80 dark:border-indigo-900/40 pt-2 flex items-center justify-between">
                         <div>
                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                Total Biaya Prorata:
+                                {t('fleet.quota.total_prorated', undefined, 'Total Biaya Prorata:')}
                             </span>
                             <p className="text-[10px] text-slate-400">
-                                Hanya bayar selisih sisa hari
+                                {t('fleet.quota.prorated_hint', undefined, 'Hanya bayar selisih sisa hari')}
                             </p>
                         </div>
                         <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">
-                            {loading ? 'Menghitung...' : preview ? formatCurrency(preview.prorated_amount) : '-'}
+                            {loading ? t('fleet.quota.calculating', undefined, 'Menghitung...') : preview ? formatCurrency(preview.prorated_amount) : '-'}
                         </span>
                     </div>
                 </div>
@@ -231,7 +237,7 @@ export default function UpgradeSlotModal({
                         onClick={onClose}
                         className="rounded-2xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
                     >
-                        Batal
+                        {t('common.cancel', undefined, 'Batal')}
                     </button>
                     <button
                         type="button"
@@ -239,7 +245,7 @@ export default function UpgradeSlotModal({
                         disabled={loading || submitting || !preview}
                         className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
                     >
-                        {submitting ? 'Memproses...' : 'Lanjut ke Pembayaran →'}
+                        {submitting ? t('common.processing', undefined, 'Memproses...') : t('fleet.quota.proceed_payment', undefined, 'Lanjut ke Pembayaran →')}
                     </button>
                 </div>
             </div>

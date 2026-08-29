@@ -365,7 +365,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                                     onClick={() => setShowUpgradeModal(true)}
                                     className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50/80 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 active:scale-95"
                                 >
-                                    <span>⚡ + Tambah Slot</span>
+                                    <span>⚡ {t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}</span>
                                 </button>
                             )}
                             {quota?.reached ? (
@@ -374,7 +374,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                                     onClick={() => setShowUpgradeModal(true)}
                                     className="inline-flex items-center gap-2 rounded-2xl bg-amber-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-amber-600/20 transition hover:bg-amber-700 active:scale-95"
                                 >
-                                    <span>⚠️ Kuota Penuh (Upgrade)</span>
+                                    <span>⚠️ {t('fleet.quota.full_btn', undefined, 'Kapasitas Penuh (Upgrade)')}</span>
                                 </button>
                             ) : (
                                 can.create && (

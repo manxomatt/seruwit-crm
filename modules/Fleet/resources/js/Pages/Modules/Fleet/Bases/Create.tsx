@@ -476,7 +476,7 @@ export default function Create({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="vehicle_capacity" value="Kapasitas Parkir Unit (Slot)" />
+                                <InputLabel htmlFor="vehicle_capacity" value={t('fleet.bases.vehicle_capacity', undefined, 'Kapasitas Unit Kendaraan')} />
                                 <TextInput
                                     id="vehicle_capacity"
                                     type="number"

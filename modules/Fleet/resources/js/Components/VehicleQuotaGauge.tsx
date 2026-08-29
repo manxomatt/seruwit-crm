@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import { useMemo } from 'react';
 
 interface Props {
@@ -15,6 +16,7 @@ export default function VehicleQuotaGauge({
     reached = false,
     onOpenUpgrade,
 }: Props): JSX.Element {
+    const { t } = useTrans();
     const isUnlimited = max === null || max <= 0;
     const inactiveCount = Math.max(0, total - current);
 
@@ -47,10 +49,12 @@ export default function VehicleQuotaGauge({
                             📊
                         </span>
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Kapasitas Slot Kendaraan Aktif
+                            {t('fleet.quota.title', undefined, 'Kapasitas Unit Kendaraan Aktif')}
                         </h3>
                         <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${badgeColor}`}>
-                            {isUnlimited ? 'Unlimited (Trial)' : `${percentage}% Terpakai`}
+                            {isUnlimited
+                                ? t('fleet.quota.unlimited', undefined, 'Unlimited (Trial)')
+                                : t('fleet.quota.used_percent', { percent: percentage }, `${percentage}% Terpakai`)}
                         </span>
                     </div>
 
@@ -59,11 +63,13 @@ export default function VehicleQuotaGauge({
                             {current}
                         </span>
                         <span className="text-sm font-bold text-slate-400">
-                            / {isUnlimited ? '∞' : max} Slot Aktif
+                            {isUnlimited
+                                ? t('fleet.quota.unlimited_active', undefined, '/ ∞ Kapasitas Unit Aktif')
+                                : t('fleet.quota.active_units', { max }, `/ ${max} Kapasitas Unit Aktif`)}
                         </span>
                         {inactiveCount > 0 && (
                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                ({inactiveCount} unit non-aktif / arsip)
+                                {t('fleet.quota.inactive_units', { count: inactiveCount }, `(${inactiveCount} unit non-aktif / arsip)`)}
                             </span>
                         )}
                     </div>
@@ -77,7 +83,7 @@ export default function VehicleQuotaGauge({
                         className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-95"
                     >
                         <span>⚡</span>
-                        <span>+ Tambah Slot Armada</span>
+                        <span>{t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}</span>
                     </button>
                 </div>
             </div>
@@ -92,8 +98,16 @@ export default function VehicleQuotaGauge({
                         />
                     </div>
                     <div className="flex justify-between text-[11px] font-semibold text-slate-400">
-                        <span>{current} unit aktif saat ini</span>
-                        <span>Sisa {Math.max(0, (max || 0) - current)} slot tersedia</span>
+                        <span>
+                            {t('fleet.quota.currently_active', { count: current }, `${current} unit aktif saat ini`)}
+                        </span>
+                        <span>
+                            {t(
+                                'fleet.quota.remaining_available',
+                                { count: Math.max(0, (max || 0) - current) },
+                                `Sisa ${Math.max(0, (max || 0) - current)} kapasitas unit tersedia`,
+                            )}
+                        </span>
                     </div>
                 </div>
             )}
