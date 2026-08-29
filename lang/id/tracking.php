@@ -266,6 +266,18 @@ return [
             'configured' => 'Terkonfigurasi',
             'not_configured' => 'Belum dikonfigurasi',
             'source_devices' => ':total perangkat · :paired ter-pair',
+            'modal' => [
+                'create_title' => 'Hubungkan Sumber GPS Baru',
+                'edit_title' => 'Edit Konfigurasi Sumber GPS',
+                'subtitle' => 'Tentukan provider GPS, alamat server, dan kredensial akses untuk sinkronisasi data armada.',
+                'provider_select_label' => 'Pilih Platform / Provider GPS',
+                'traccar_desc' => 'Traccar Server (Cloud / Self-Hosted)',
+                'sky_track_desc' => 'API Gateway Sky Track',
+                'gps_server_desc' => 'GPS-Server / gsi-tracking API',
+                'connection_details' => 'Koneksi Server & Kredensial Akses',
+                'poll_title' => 'Polling Otomatis Setiap Menit',
+                'poll_desc' => 'Tarik posisi koordinat dan kecepatan GPS secara berkala di background.',
+            ],
         ],
     ],
 

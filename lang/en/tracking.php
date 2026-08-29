@@ -266,6 +266,18 @@ return [
             'configured' => 'Configured',
             'not_configured' => 'Not configured',
             'source_devices' => ':total device(s) · :paired paired',
+            'modal' => [
+                'create_title' => 'Connect New GPS Source',
+                'edit_title' => 'Edit GPS Source Configuration',
+                'subtitle' => 'Select a GPS provider, server address, and access credentials to synchronize fleet telemetry.',
+                'provider_select_label' => 'Select GPS Platform / Provider',
+                'traccar_desc' => 'Traccar Server (Cloud / Self-Hosted)',
+                'sky_track_desc' => 'Sky Track API Gateway',
+                'gps_server_desc' => 'GPS-Server / gsi-tracking API',
+                'connection_details' => 'Server Connection & Access Credentials',
+                'poll_title' => 'Automatic Polling Every Minute',
+                'poll_desc' => 'Periodically pull live GPS coordinates and speed telemetry in the background.',
+            ],
         ],
     ],
 
