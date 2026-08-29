@@ -295,10 +295,9 @@ export default function Settings({ config, sources, defaultBaseUrl, maxSources, 
                             <button
                                 type="button"
                                 onClick={openCreateSource}
-                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
+                                className="inline-flex items-center rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
                             >
-                                <span>➕</span>
-                                <span>{t('tracking.actions.add_source', undefined, 'Tambah Sumber GPS')}</span>
+                                {t('tracking.actions.add_source', undefined, 'Tambah Sumber GPS')}
                             </button>
                         )}
                     </div>
