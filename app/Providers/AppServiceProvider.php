@@ -46,6 +46,10 @@ class AppServiceProvider extends ServiceProvider
             \Modules\Maintenance\AI\Contracts\PredictiveMaintenanceServiceInterface::class,
             \Modules\Maintenance\AI\Services\GeminiPredictiveMaintenanceService::class
         );
+        $this->app->bind(
+            \Modules\Fleet\AI\Contracts\VehicleAiGeneratorServiceInterface::class,
+            \Modules\Fleet\AI\Services\GeminiVehicleAiGeneratorService::class
+        );
     }
 
     /**

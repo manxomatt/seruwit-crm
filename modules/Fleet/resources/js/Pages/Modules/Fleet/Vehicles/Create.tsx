@@ -10,6 +10,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import VehicleAiGeneratePanel, { ExtractedVehicleData } from '../../../../Components/VehicleAiGeneratePanel';
 import FleetNav from '../../../../FleetNav';
 
 const VEHICLE_STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'] as const;
@@ -76,6 +77,32 @@ export default function Create({ bases = [] }: Props): JSX.Element {
         notes: '',
     });
 
+    const handleApplyAiData = (generated: ExtractedVehicleData) => {
+        setData((prev) => ({
+            ...prev,
+            name: generated.name || prev.name,
+            brand: generated.brand !== undefined && generated.brand !== '' ? generated.brand : prev.brand,
+            plate_number: generated.plate_number || prev.plate_number,
+            type: (generated.type as any) || prev.type,
+            rental_class: generated.rental_class !== undefined ? generated.rental_class : prev.rental_class,
+            model_year: generated.model_year !== null && generated.model_year !== undefined ? String(generated.model_year) : prev.model_year,
+            color: generated.color !== undefined && generated.color !== '' ? generated.color : prev.color,
+            capacity: generated.capacity !== undefined && generated.capacity !== '' ? generated.capacity : prev.capacity,
+            capacity_seats: generated.capacity_seats !== null && generated.capacity_seats !== undefined ? String(generated.capacity_seats) : prev.capacity_seats,
+            capacity_kg: generated.capacity_kg !== null && generated.capacity_kg !== undefined ? String(generated.capacity_kg) : prev.capacity_kg,
+            cost_per_km: generated.cost_per_km !== null && generated.cost_per_km !== undefined ? String(generated.cost_per_km) : prev.cost_per_km,
+            tank_capacity_liters: generated.tank_capacity_liters !== null && generated.tank_capacity_liters !== undefined ? String(generated.tank_capacity_liters) : prev.tank_capacity_liters,
+            expected_km_per_liter: generated.expected_km_per_liter !== null && generated.expected_km_per_liter !== undefined ? String(generated.expected_km_per_liter) : prev.expected_km_per_liter,
+            fuel_type: (generated.fuel_type as any) || prev.fuel_type,
+            status: (generated.status as any) || prev.status,
+            home_base_id: generated.home_base_id ? String(generated.home_base_id) : prev.home_base_id,
+            odometer_km: generated.odometer_km !== null && generated.odometer_km !== undefined ? Number(generated.odometer_km) : prev.odometer_km,
+            stnk_expires_at: generated.stnk_expires_at || prev.stnk_expires_at,
+            kir_expires_at: generated.kir_expires_at || prev.kir_expires_at,
+            notes: generated.notes ? (prev.notes ? `${prev.notes}\n${generated.notes}` : generated.notes) : prev.notes,
+        }));
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(prefixedRoute('fleet.vehicles.store'), {
@@ -118,6 +145,9 @@ export default function Create({ bases = [] }: Props): JSX.Element {
                     <span>/</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">Tambah Unit Baru</span>
                 </nav>
+
+                {/* AI Smart Quick-Fill Assistant */}
+                <VehicleAiGeneratePanel bases={bases} onApply={handleApplyAiData} />
 
                 <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">
                     {/* 1. Identitas & Foto Kendaraan */}
