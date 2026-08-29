@@ -10,6 +10,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useCallback } from 'react';
+import FleetBaseAiGeneratePanel, { ExtractedBaseData } from '../../../../Components/FleetBaseAiGeneratePanel';
 import FleetNav from '../../../../FleetNav';
 
 interface ManagerOption {
@@ -113,6 +114,32 @@ export default function Create({
         staff_ids: [] as number[],
     });
 
+    const handleApplyAiData = (generated: ExtractedBaseData) => {
+        setData((prev) => ({
+            ...prev,
+            code: generated.code || prev.code,
+            name: generated.name || prev.name,
+            kind: (generated.kind as any) || prev.kind,
+            status: (generated.status as any) || prev.status,
+            address: generated.address !== undefined && generated.address !== '' ? generated.address : prev.address,
+            city: generated.city !== undefined && generated.city !== '' ? generated.city : prev.city,
+            province: generated.province !== undefined && generated.province !== '' ? generated.province : prev.province,
+            zip: generated.zip !== undefined && generated.zip !== '' ? generated.zip : prev.zip,
+            latitude: generated.latitude !== undefined && generated.latitude !== '' ? generated.latitude : prev.latitude,
+            longitude: generated.longitude !== undefined && generated.longitude !== '' ? generated.longitude : prev.longitude,
+            phone: generated.phone !== undefined && generated.phone !== '' ? generated.phone : prev.phone,
+            email: generated.email !== undefined && generated.email !== '' ? generated.email : prev.email,
+            opens_at: generated.opens_at || prev.opens_at,
+            closes_at: generated.closes_at || prev.closes_at,
+            timezone: (generated.timezone as any) || prev.timezone,
+            vehicle_capacity: generated.vehicle_capacity !== null && generated.vehicle_capacity !== undefined ? String(generated.vehicle_capacity) : prev.vehicle_capacity,
+            allows_overnight: generated.allows_overnight !== undefined ? generated.allows_overnight : prev.allows_overnight,
+            service_radius_km: generated.service_radius_km !== null && generated.service_radius_km !== undefined ? String(generated.service_radius_km) : prev.service_radius_km,
+            manager_id: generated.manager_id ? String(generated.manager_id) : prev.manager_id,
+            notes: generated.notes ? (prev.notes ? `${prev.notes}\n${generated.notes}` : generated.notes) : prev.notes,
+        }));
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(prefixedRoute('fleet.bases.store'), {
@@ -178,6 +205,9 @@ export default function Create({
                     <span>/</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">Tambah Base Baru</span>
                 </nav>
+
+                {/* AI Smart Quick-Fill Assistant */}
+                <FleetBaseAiGeneratePanel managers={managers} onApply={handleApplyAiData} />
 
                 <form id="fleet-base-create-form" onSubmit={submit} className="space-y-6">
                     {/* 1. Identitas & Jenis Base */}

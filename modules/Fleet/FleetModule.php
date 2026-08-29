@@ -8,6 +8,7 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Fleet\Http\Controllers\DriverAccountController;
 use Modules\Fleet\Http\Controllers\DriverController;
+use Modules\Fleet\Http\Controllers\FleetBaseAiGenerateController;
 use Modules\Fleet\Http\Controllers\FleetBaseController;
 use Modules\Fleet\Http\Controllers\FleetDashboardController;
 use Modules\Fleet\Http\Controllers\FuelAnalyticsController;
@@ -100,6 +101,7 @@ class FleetModule implements ModuleContract
         Route::get('/fleet/bases', [FleetBaseController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.bases.index');
         Route::get('/fleet/bases/create', [FleetBaseController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.bases.create');
         Route::post('/fleet/bases', [FleetBaseController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.bases.store');
+        Route::post('/fleet/bases/ai-generate', [FleetBaseAiGenerateController::class, 'generate'])->middleware('permission:fleet,create')->name('fleet.bases.ai-generate');
         Route::patch('/fleet/bases/batch-status', [FleetBaseController::class, 'batchUpdateStatus'])->middleware('permission:fleet,update')->name('fleet.bases.batch-status');
         Route::post('/fleet/bases/batch-destroy', [FleetBaseController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.bases.batch-destroy');
         Route::get('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.bases.show');
