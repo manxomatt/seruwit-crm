@@ -158,9 +158,9 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
                                     ) : (
                                         <Link
                                             href={prefixedRoute('fleet.bases.create')}
-                                            className="rounded-lg bg-indigo-500/80 hover:bg-indigo-500 px-2 py-1 text-[11px] font-bold text-white transition whitespace-nowrap"
+                                            className="rounded-lg bg-indigo-500/80 hover:bg-indigo-500 px-2.5 py-1 text-[11px] font-bold text-white transition whitespace-nowrap"
                                         >
-                                            + Tambah
+                                            Tambah
                                         </Link>
                                     )}
                                 </div>
@@ -191,9 +191,9 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
                                     ) : (
                                         <Link
                                             href={prefixedRoute('fleet.vehicles.create')}
-                                            className="rounded-lg bg-indigo-500/80 hover:bg-indigo-500 px-2 py-1 text-[11px] font-bold text-white transition whitespace-nowrap"
+                                            className="rounded-lg bg-indigo-500/80 hover:bg-indigo-500 px-2.5 py-1 text-[11px] font-bold text-white transition whitespace-nowrap"
                                         >
-                                            + Tambah
+                                            Tambah
                                         </Link>
                                     )}
                                 </div>
@@ -224,9 +224,9 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
                                     ) : (
                                         <Link
                                             href={prefixedRoute('fleet.drivers.create')}
-                                            className="rounded-lg bg-indigo-500/80 hover:bg-indigo-500 px-2 py-1 text-[11px] font-bold text-white transition whitespace-nowrap"
+                                            className="rounded-lg bg-indigo-500/80 hover:bg-indigo-500 px-2.5 py-1 text-[11px] font-bold text-white transition whitespace-nowrap"
                                         >
-                                            + Tambah
+                                            Tambah
                                         </Link>
                                     )}
                                 </div>
@@ -386,7 +386,6 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
                                 href={prefixedRoute('fleet.bases.create')}
                                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition"
                             >
-                                <span>+</span>
                                 <span>{t('fleet.dashboard.onboarding.base_cta_add', undefined, 'Tambah Base Pertama')}</span>
                             </Link>
                         ) : (
@@ -467,7 +466,6 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
                                 href={prefixedRoute('fleet.vehicles.create')}
                                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition"
                             >
-                                <span>+</span>
                                 <span>{t('fleet.dashboard.onboarding.vehicle_cta_add', undefined, 'Daftarkan Kendaraan Pertama')}</span>
                             </Link>
                         ) : (
@@ -548,7 +546,6 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
                                 href={prefixedRoute('fleet.drivers.create')}
                                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 hover:bg-sky-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-sky-600/20 transition"
                             >
-                                <span>+</span>
                                 <span>{t('fleet.dashboard.onboarding.driver_cta_add', undefined, 'Tambah Pengemudi Pertama')}</span>
                             </Link>
                         ) : (
@@ -559,82 +556,89 @@ export default function FleetOnboardingHero({ counts, can, mode = 'full' }: Prop
             </div>
 
             {/* Feature Value Props Grid */}
-            <div className="space-y-4 pt-4">
-                <h4 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    {t('fleet.dashboard.onboarding.why_setup_title', undefined, 'Fitur Otomatis yang Terbuka Setelah Setup')}
-                </h4>
+            <div className="space-y-4 pt-2">
+                <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {t('fleet.dashboard.onboarding.why_setup_title', undefined, 'Fitur Otomatis yang Terbuka Setelah Setup')}
+                    </h4>
+                </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-                        <div className="flex items-center gap-2.5 mb-2">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-base dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+                    {/* Fuel Analytics */}
+                    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900/60">
+                        <div>
+                            <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-lg text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/10">
                                 ⛽
-                            </span>
-                            <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                            </div>
+                            <h5 className="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
                                 {t('fleet.dashboard.onboarding.why_fuel_title', undefined, 'Analitik Efisiensi BBM')}
                             </h5>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {t(
+                                    'fleet.dashboard.onboarding.why_fuel_desc',
+                                    undefined,
+                                    'Catat setiap pengisian bahan bakar dan deteksi anomali konsumsi secara otomatis.',
+                                )}
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            {t(
-                                'fleet.dashboard.onboarding.why_fuel_desc',
-                                undefined,
-                                'Catat setiap pengisian bahan bakar dan deteksi anomali konsumsi secara otomatis.',
-                            )}
-                        </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-                        <div className="flex items-center gap-2.5 mb-2">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-base dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                    {/* Maintenance */}
+                    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md hover:border-amber-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-amber-900/60">
+                        <div>
+                            <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-lg text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/10">
                                 🛠️
-                            </span>
-                            <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                            </div>
+                            <h5 className="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
                                 {t('fleet.dashboard.onboarding.why_maint_title', undefined, 'Riwayat Servis & Bengkel')}
                             </h5>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {t(
+                                    'fleet.dashboard.onboarding.why_maint_desc',
+                                    undefined,
+                                    'Jadwalkan perawatan berkala dan pantau riwayat servis unit agar armada selalu prima.',
+                                )}
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            {t(
-                                'fleet.dashboard.onboarding.why_maint_desc',
-                                undefined,
-                                'Jadwalkan perawatan berkala dan pantau riwayat servis unit agar armada selalu prima.',
-                            )}
-                        </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-                        <div className="flex items-center gap-2.5 mb-2">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-base dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                    {/* Documents */}
+                    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md hover:border-rose-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-rose-900/60">
+                        <div>
+                            <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-lg text-rose-600 dark:text-rose-400 ring-1 ring-rose-500/10">
                                 📜
-                            </span>
-                            <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                            </div>
+                            <h5 className="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
                                 {t('fleet.dashboard.onboarding.why_docs_title', undefined, 'Peringatan STNK & KIR')}
                             </h5>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {t(
+                                    'fleet.dashboard.onboarding.why_docs_desc',
+                                    undefined,
+                                    'Sistem akan otomatis memberi peringatan 30 hari sebelum masa berlaku dokumen habis.',
+                                )}
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            {t(
-                                'fleet.dashboard.onboarding.why_docs_desc',
-                                undefined,
-                                'Sistem akan otomatis memberi peringatan 30 hari sebelum masa berlaku dokumen habis.',
-                            )}
-                        </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-                        <div className="flex items-center gap-2.5 mb-2">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-base dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                    {/* Routing & Dispatch */}
+                    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-900/60">
+                        <div>
+                            <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-lg text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/10">
                                 🗺️
-                            </span>
-                            <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                            </div>
+                            <h5 className="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
                                 {t('fleet.dashboard.onboarding.why_routing_title', undefined, 'Integrasi Rute & Transportasi')}
                             </h5>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {t(
+                                    'fleet.dashboard.onboarding.why_routing_desc',
+                                    undefined,
+                                    'Unit dan pengemudi siap langsung ditugaskan pada modul Pengiriman, Rute, & Rental.',
+                                )}
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            {t(
-                                'fleet.dashboard.onboarding.why_routing_desc',
-                                undefined,
-                                'Unit dan pengemudi siap langsung ditugaskan pada modul Pengiriman, Rute, & Rental.',
-                            )}
-                        </p>
                     </div>
                 </div>
             </div>

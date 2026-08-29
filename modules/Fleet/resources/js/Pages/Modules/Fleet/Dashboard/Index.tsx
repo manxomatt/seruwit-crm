@@ -211,7 +211,6 @@ export default function Index({ board, can }: Props): JSX.Element {
                                 href={prefixedRoute('fleet.vehicles.create')}
                                 className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
                             >
-                                <span>+</span>
                                 <span>{t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}</span>
                             </Link>
                         ) : undefined
@@ -364,7 +363,6 @@ export default function Index({ board, can }: Props): JSX.Element {
                                                                 href={prefixedRoute('fleet.vehicles.create')}
                                                                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
                                                             >
-                                                                <span>+</span>
                                                                 <span>{t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}</span>
                                                             </Link>
                                                         )}
