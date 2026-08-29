@@ -56,6 +56,7 @@ class PartnerController extends Controller
                 'account_type' => request('account_type'),
                 'role' => request('role'),
                 'type_id' => request('type_id'),
+                'missing_contact' => request('missing_contact'),
             ],
             'partnerTypes' => $this->activePartnerTypes(),
             'exportColumns' => collect(PartnerExportColumns::definitions())
@@ -175,6 +176,7 @@ class PartnerController extends Controller
             'account_type' => request('account_type'),
             'role' => request('role'),
             'type_id' => request('type_id'),
+            'missing_contact' => request('missing_contact'),
         ];
 
         return Partner::query()
@@ -199,6 +201,17 @@ class PartnerController extends Controller
             })
             ->when($filters['type_id'] ?? null, function ($query, $typeId) {
                 $query->whereHas('types', fn ($q) => $q->where('partner_types.id', $typeId));
+            })
+            ->when($filters['missing_contact'] ?? request('missing_contact'), function ($query) {
+                $query->where(function ($q): void {
+                    $q->whereNull('email')->orWhere('email', '');
+                })
+                    ->where(function ($q): void {
+                        $q->whereNull('phone')->orWhere('phone', '');
+                    })
+                    ->where(function ($q): void {
+                        $q->whereNull('mobile')->orWhere('mobile', '');
+                    });
             });
     }
 

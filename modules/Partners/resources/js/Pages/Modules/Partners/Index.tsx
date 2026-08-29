@@ -74,6 +74,7 @@ interface Filters {
     account_type: string | null;
     role: string | null;
     type_id: string | null;
+    missing_contact?: string | null;
 }
 
 interface Props {
@@ -208,7 +209,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
     const somePageSelected = pageIds.some((id) => selected.includes(id));
     const hasActiveFilters = Boolean(
-        filters.search || filters.status || filters.account_type || filters.role || filters.type_id,
+        filters.search || filters.status || filters.account_type || filters.role || filters.type_id || filters.missing_contact,
     );
     const selectionMode = canBatch && selected.length > 0;
 
@@ -274,6 +275,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                     (next.account_type !== undefined ? next.account_type : filters.account_type) || undefined,
                 role: (next.role !== undefined ? next.role : filters.role) || undefined,
                 type_id: (next.type_id !== undefined ? next.type_id : filters.type_id) || undefined,
+                missing_contact: (next.missing_contact !== undefined ? next.missing_contact : filters.missing_contact) || undefined,
             },
             { preserveState: true, replace: true },
         );
@@ -601,6 +603,19 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                         </button>
                                     );
                                 })}
+                                <span className="mx-1 hidden h-4 w-px bg-slate-200 dark:bg-slate-800 sm:inline-block" aria-hidden />
+                                <button
+                                    type="button"
+                                    onClick={() => applyFilters({ missing_contact: filters.missing_contact ? null : '1' })}
+                                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${filters.missing_contact
+                                        ? 'bg-amber-500 text-white shadow-sm ring-1 ring-amber-400'
+                                        : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60'
+                                        }`}
+                                >
+                                    <span>📇</span>
+                                    <span>{t('partners.dashboard.missing_contact', undefined, 'Tanpa info kontak')}</span>
+                                    {filters.missing_contact && <span>✕</span>}
+                                </button>
                                 <span className="ml-auto text-xs font-bold tabular-nums text-slate-400">
                                     {t('common.showing_results', {
                                         from: partners.total === 0 ? 0 : (partners.current_page - 1) * partners.per_page + 1,
@@ -615,20 +630,40 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
 
                 {partners.data.length === 0 ? (
                     <div className="px-6 py-16 text-center">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 text-xl font-bold">
-                            👥
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 text-2xl font-bold">
+                            {filters.missing_contact ? '📇' : '👥'}
                         </div>
-                        <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">{t('partners.index.empty_title')}</h3>
-                        <p className="mt-1 text-xs text-slate-500">{t('partners.index.empty_hint')}</p>
-                        {hasActiveFilters && (
+                        <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
+                            {filters.missing_contact
+                                ? 'Tidak Ada Kontak Tanpa Info Telepon / Email'
+                                : t('partners.index.empty_title')}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                            {filters.missing_contact
+                                ? 'Semua kontak yang terdaftar saat ini telah memiliki informasi nomor telepon atau alamat email.'
+                                : t('partners.index.empty_hint')}
+                        </p>
+                        {hasActiveFilters ? (
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="mt-4 text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 transition"
+                                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                             >
-                                {t('partners.index.clear_filters')}
+                                <span>✕</span>
+                                <span>{t('partners.index.clear_filters')}</span>
                             </button>
-                        )}
+                        ) : can.create ? (
+                            <div className="mt-5">
+                                <Link
+                                    href={prefixedRoute('partners.create')}
+                                    className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition"
+                                >
+                                    <span>👥</span>
+                                    <span>{t('partners.dashboard.onboarding.primary_cta', undefined, 'Tambah Kontak Pertama')}</span>
+                                    <span>➔</span>
+                                </Link>
+                            </div>
+                        ) : null}
                     </div>
                 ) : (
                     <>

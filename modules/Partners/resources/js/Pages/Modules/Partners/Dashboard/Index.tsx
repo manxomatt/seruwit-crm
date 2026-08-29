@@ -5,6 +5,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import PartnersNav from '../../../../PartnersNav';
+import PartnerOnboardingHero, { type PartnerSetupCounts } from '../../../../Components/PartnerOnboardingHero';
 
 interface RecentPartner {
     id: number;
@@ -237,6 +238,19 @@ export default function Index({ board, can }: Props): JSX.Element {
     const { counts, locations, recent, by_industry } = board;
     const industryMax = Math.max(...by_industry.map((row) => row.total), 1);
 
+    const isZeroState = counts.total === 0;
+    const hasMissingContact = counts.missing_contact > 0;
+    const isPartialSetup = !isZeroState && (counts.total < 3 || counts.customers === 0 || locations.total === 0 || hasMissingContact);
+
+    const setupCounts: PartnerSetupCounts = {
+        total: counts.total,
+        active: counts.active,
+        customers: counts.customers,
+        suppliers: counts.suppliers,
+        locations: locations.total,
+        missing_contact: counts.missing_contact,
+    };
+
     return (
         <DynamicLayout
             header={
@@ -256,8 +270,15 @@ export default function Index({ board, can }: Props): JSX.Element {
 
             <PartnersNav />
 
-            <div className="space-y-6">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('partners.dashboard.subtitle')}</p>
+            {isZeroState ? (
+                <PartnerOnboardingHero counts={setupCounts} can={can} mode="full" />
+            ) : (
+                <div className="space-y-6">
+                    {isPartialSetup && (
+                        <PartnerOnboardingHero counts={setupCounts} can={can} mode="banner" />
+                    )}
+
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('partners.dashboard.subtitle')}</p>
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <StatCard
@@ -432,6 +453,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
+            )}
         </DynamicLayout>
     );
 }
