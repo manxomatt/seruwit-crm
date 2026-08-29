@@ -5,6 +5,10 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import TrackingNav from '../../../../TrackingNav';
+import TrackingOnboardingHero, {
+    TrackingSetupCounts,
+    TrackingSetupPermissions,
+} from '../../../../Components/TrackingOnboardingHero';
 
 interface RecentDevice {
     id: number;
@@ -37,13 +41,15 @@ interface Board {
         alerts_enabled: boolean;
         last_polled_at: string | null;
         last_poll_error: string | null;
+        sources_total?: number;
     };
+    sources?: Array<{ id: number; name: string; provider: string; configured: boolean }>;
     recent: RecentDevice[];
 }
 
 interface Props {
     board: Board;
-    can: { update: boolean; create: boolean };
+    can: TrackingSetupPermissions & { update: boolean; create: boolean };
 }
 
 type StatTone = 'emerald' | 'sky' | 'amber' | 'violet' | 'rose' | 'slate';
@@ -259,6 +265,16 @@ export default function Index({ board, can }: Props): JSX.Element {
     const localeTag = useLocaleTag();
     const { devices, geofences, activity, config, recent } = board;
 
+    const setupCounts: TrackingSetupCounts = {
+        configured: config.configured,
+        sources_total: board.sources?.length ?? (config.configured ? 1 : 0),
+        devices_total: devices.total,
+        devices_paired: devices.paired,
+    };
+
+    const isZeroState = !config.configured && devices.total === 0 && devices.paired === 0;
+    const isPartialSetup = !isZeroState && (!config.configured || devices.total === 0 || devices.paired === 0);
+
     const pollHealthy = config.configured && config.poll_enabled && !config.last_poll_error;
     const needsSetup = !config.configured || devices.unpaired > 0 || !!config.last_poll_error;
 
@@ -281,9 +297,11 @@ export default function Index({ board, can }: Props): JSX.Element {
                 <PageHeader
                     title={t('tracking.title')}
                     actions={
-                        <Link href={prefixedRoute('tracking.map')}>
-                            <PrimaryButton>{t('tracking.dashboard.open_map')}</PrimaryButton>
-                        </Link>
+                        !isZeroState ? (
+                            <Link href={prefixedRoute('tracking.map')}>
+                                <PrimaryButton>{t('tracking.dashboard.open_map')}</PrimaryButton>
+                            </Link>
+                        ) : undefined
                     }
                 />
             }
@@ -292,73 +310,83 @@ export default function Index({ board, can }: Props): JSX.Element {
 
             <TrackingNav />
 
-            <p className="mb-6 text-sm text-gray-600">{t('tracking.dashboard.subtitle')}</p>
+            {isZeroState ? (
+                <TrackingOnboardingHero counts={setupCounts} can={can} mode="full" />
+            ) : (
+                <div className="space-y-6">
+                    {isPartialSetup && (
+                        <TrackingOnboardingHero counts={setupCounts} can={can} mode="banner" />
+                    )}
 
-            <div
-                className={`mb-6 rounded-xl border px-4 py-3 ${
-                    pollHealthy && !needsSetup
-                        ? 'border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-900'
-                        : config.last_poll_error
-                          ? 'border-rose-200 bg-gradient-to-r from-rose-50 to-red-50 text-rose-950'
-                          : 'border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-950'
-                }`}
-            >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <p className="text-sm font-semibold">
-                            {!config.configured
-                                ? t('tracking.dashboard.banner_setup')
-                                : config.last_poll_error
-                                  ? t('tracking.dashboard.banner_error')
-                                  : !config.poll_enabled
-                                    ? t('tracking.dashboard.banner_paused')
-                                    : devices.unpaired > 0
-                                      ? t('tracking.dashboard.banner_unpaired')
-                                      : t('tracking.dashboard.banner_ok')}
-                        </p>
-                        <p className="mt-0.5 text-sm opacity-90">
-                            {config.last_poll_error
-                                ? config.last_poll_error
-                                : t('tracking.dashboard.banner_hint', {
-                                      paired: devices.paired,
-                                      total: devices.total,
-                                  })}
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-[11px] font-medium">
-                        {config.provider && config.provider !== 'null' && (
-                            <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
-                                {config.provider
-                                    .split(',')
-                                    .map((p) => p.trim())
-                                    .filter(Boolean)
-                                    .map((p) => t(`tracking.providers.${p}`, undefined, p))
-                                    .join(', ')}
-                            </span>
-                        )}
-                        <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
-                            {config.poll_enabled
-                                ? t('tracking.dashboard.poll_on')
-                                : t('tracking.dashboard.poll_off')}
-                        </span>
-                        {config.last_polled_at && (
-                            <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
-                                {t('tracking.dashboard.last_poll')}: {formatWhen(config.last_polled_at)}
-                            </span>
-                        )}
-                    </div>
-                </div>
-                {(!config.configured || config.last_poll_error) && can.update && (
-                    <div className="mt-3">
-                        <Link
-                            href={prefixedRoute('tracking.settings.edit')}
-                            className="text-sm font-medium underline underline-offset-2"
+                    <p className="text-sm text-gray-600 dark:text-slate-400">{t('tracking.dashboard.subtitle')}</p>
+
+                    {!isPartialSetup && (
+                        <div
+                            className={`rounded-2xl border px-5 py-4 ${
+                                pollHealthy && !needsSetup
+                                    ? 'border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-800'
+                                    : config.last_poll_error
+                                      ? 'border-rose-200/80 bg-gradient-to-r from-rose-50 to-red-50 text-rose-950 dark:bg-rose-950/40 dark:text-rose-200 dark:border-rose-800'
+                                      : 'border-amber-200/80 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-950 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800'
+                            }`}
                         >
-                            {t('tracking.dashboard.open_settings')}
-                        </Link>
-                    </div>
-                )}
-            </div>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold">
+                                        {!config.configured
+                                            ? t('tracking.dashboard.banner_setup')
+                                            : config.last_poll_error
+                                              ? t('tracking.dashboard.banner_error')
+                                              : !config.poll_enabled
+                                                ? t('tracking.dashboard.banner_paused')
+                                                : devices.unpaired > 0
+                                                  ? t('tracking.dashboard.banner_unpaired')
+                                                  : t('tracking.dashboard.banner_ok')}
+                                    </p>
+                                    <p className="mt-0.5 text-sm opacity-90">
+                                        {config.last_poll_error
+                                            ? config.last_poll_error
+                                            : t('tracking.dashboard.banner_hint', {
+                                                  paired: devices.paired,
+                                                  total: devices.total,
+                                              })}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-[11px] font-medium">
+                                    {config.provider && config.provider !== 'null' && (
+                                        <span className="rounded-md bg-white/70 dark:bg-slate-800 px-2 py-1 ring-1 ring-black/5">
+                                            {config.provider
+                                                .split(',')
+                                                .map((p) => p.trim())
+                                                .filter(Boolean)
+                                                .map((p) => t(`tracking.providers.${p}`, undefined, p))
+                                                .join(', ')}
+                                        </span>
+                                    )}
+                                    <span className="rounded-md bg-white/70 dark:bg-slate-800 px-2 py-1 ring-1 ring-black/5">
+                                        {config.poll_enabled
+                                            ? t('tracking.dashboard.poll_on')
+                                            : t('tracking.dashboard.poll_off')}
+                                    </span>
+                                    {config.last_polled_at && (
+                                        <span className="rounded-md bg-white/70 dark:bg-slate-800 px-2 py-1 ring-1 ring-black/5">
+                                            {t('tracking.dashboard.last_poll')}: {formatWhen(config.last_polled_at)}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            {(!config.configured || config.last_poll_error) && can.update && (
+                                <div className="mt-3">
+                                    <Link
+                                        href={prefixedRoute('tracking.settings.edit')}
+                                        className="text-sm font-medium underline underline-offset-2"
+                                    >
+                                        {t('tracking.dashboard.open_settings')}
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard
@@ -547,6 +575,8 @@ export default function Index({ board, can }: Props): JSX.Element {
                     )}
                 </div>
             </div>
-        </DynamicLayout>
-    );
+        </div>
+        )}
+    </DynamicLayout>
+);
 }
