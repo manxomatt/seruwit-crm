@@ -10,7 +10,7 @@ return [
         'geofences' => 'Geofence',
         'devices' => 'Perangkat',
         'settings' => 'Pengaturan',
-        'sources' => 'Sumber',
+        'sources' => 'Sumber GPS',
         'general' => 'Umum',
     ],
 
@@ -153,8 +153,8 @@ return [
         'is_active' => 'Aktif',
         'centre' => 'Titik pusat',
         'source' => 'Sumber GPS',
-        'all_sources' => 'Semua sumber',
-        'source_name' => 'Nama sumber',
+        'all_sources' => 'Semua sumber GPS',
+        'source_name' => 'Nama sumber GPS',
     ],
 
     'placeholders' => [
@@ -173,7 +173,7 @@ return [
         'play_playback' => 'Putar',
         'pause_playback' => 'Jeda',
         'add_geofence' => 'Tambah geofence',
-        'add_source' => 'Tambah sumber',
+        'add_source' => 'Tambah sumber GPS',
     ],
 
     'geofence' => [

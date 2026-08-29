@@ -10,7 +10,7 @@ return [
         'geofences' => 'Geofences',
         'devices' => 'Devices',
         'settings' => 'Settings',
-        'sources' => 'Sources',
+        'sources' => 'GPS Sources',
         'general' => 'General',
     ],
 
