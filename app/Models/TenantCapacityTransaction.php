@@ -9,6 +9,8 @@ class TenantCapacityTransaction extends Model
 {
     public const TYPE_PURCHASE = 'purchase';
 
+    public const TYPE_TOPUP = 'topup';
+
     public const TYPE_ACTIVATION = 'activation';
 
     public const TYPE_RENEWAL = 'renewal';
