@@ -231,4 +231,19 @@ class PaymentOrderTest extends TestCase
             : $shared['pendingPaymentOrdersCount'];
         $this->assertEquals(1, $count);
     }
+
+    public function test_cancel_active_cancels_pending_and_awaiting_orders(): void
+    {
+        $tenant = $this->createTenantRecord(['id' => 'cancel-test']);
+        $plan = Plan::query()->where('key', 'basic')->firstOrFail();
+
+        $service = new PaymentOrderService;
+        $order = $service->createOrder($tenant, $plan, 'activate');
+        $this->assertSame('pending', $order->status);
+
+        $service->cancelActive($tenant);
+
+        $order->refresh();
+        $this->assertSame('cancelled', $order->status);
+    }
 }

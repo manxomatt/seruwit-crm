@@ -153,6 +153,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/subscription/payment/{order}', [ModuleSubscriptionController::class, 'payment'])->middleware('permission:subscription,view')->name('subscription.payment');
         Route::post('/subscription/payment/{order}/proof', [ModuleSubscriptionController::class, 'submitProof'])->middleware('permission:subscription,update')->name('subscription.proof');
         Route::post('/subscription/payment/{order}/cancel', [ModuleSubscriptionController::class, 'cancelOrder'])->middleware('permission:subscription,update')->name('subscription.cancel');
+        Route::post('/subscription/cancel-active', [ModuleSubscriptionController::class, 'cancelActiveOrder'])->middleware('permission:subscription,update')->name('subscription.cancel-active');
 
         // Module User Management Routes
         Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');

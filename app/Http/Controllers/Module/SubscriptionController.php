@@ -54,6 +54,14 @@ class SubscriptionController extends Controller
         // Get subscription tiers from central database
         $tiers = \App\Models\SubscriptionTier::on('central')->orderBy('min_vehicles')->get();
 
+        // Get tenant's recent payment orders / transaction history
+        $orders = PaymentOrder::on('central')
+            ->where('tenant_id', $tenantId)
+            ->with('plan:id,name,key')
+            ->latest()
+            ->limit(10)
+            ->get();
+
         return Inertia::render('Modules/Subscription/Activate', [
             'tenant' => [
                 'id' => $tenantId,
@@ -98,6 +106,19 @@ class SubscriptionController extends Controller
                 'expires_at' => $activePaymentOrder->expires_at?->toIso8601String(),
                 'type' => $activePaymentOrder->type,
             ] : null,
+            'orders' => $orders->map(fn (PaymentOrder $o): array => [
+                'id' => $o->id,
+                'type' => $o->type,
+                'status' => $o->status,
+                'amount' => $o->amount,
+                'unique_code' => $o->unique_code,
+                'total_amount' => $o->total_amount,
+                'created_at' => $o->created_at?->toIso8601String(),
+                'expires_at' => $o->expires_at?->toIso8601String(),
+                'plan_name' => $o->plan?->name ?? 'Paket Langganan',
+                'billing_interval' => $o->billing_interval,
+                'can_cancel' => in_array($o->status, [PaymentOrder::STATUS_PENDING, PaymentOrder::STATUS_AWAITING_CONFIRMATION], true),
+            ])->values()->all(),
             'currentVehiclesCount' => $currentVehiclesCount,
             'totalVehiclesCount' => $totalVehiclesCount,
             'tiers' => $tiers->map(fn ($t) => [
@@ -252,8 +273,24 @@ class SubscriptionController extends Controller
             abort(403);
         }
 
+        $central = config('tenancy.database.central_connection');
+        if (in_array($order->status, [PaymentOrder::STATUS_PENDING, PaymentOrder::STATUS_AWAITING_CONFIRMATION], true)) {
+            $order->setConnection($central);
+            $order->update(['status' => PaymentOrder::STATUS_CANCELLED]);
+        } else {
+            $this->paymentOrderService->cancelActive($tenant);
+        }
+
+        return redirect()->route('module.subscription.index')->with('success', 'Transaksi pesanan pembayaran #'.$order->id.' berhasil dibatalkan.');
+    }
+
+    public function cancelActiveOrder(Request $request): RedirectResponse
+    {
+        $tenant = tenant();
+        abort_unless($tenant instanceof Tenant, 404);
+
         $this->paymentOrderService->cancelActive($tenant);
 
-        return redirect()->route('module.subscription.index')->with('success', 'Pesanan pembayaran berhasil dibatalkan.');
+        return redirect()->route('module.subscription.index')->with('success', 'Transaksi pesanan pembayaran aktif berhasil dibatalkan.');
     }
 }

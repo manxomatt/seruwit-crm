@@ -1,6 +1,7 @@
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 interface PlanOption {
@@ -34,6 +35,20 @@ interface ActivePaymentOrder {
     type: string;
 }
 
+interface OrderItem {
+    id: number;
+    type: string;
+    status: string;
+    amount: string;
+    unique_code: number;
+    total_amount: string;
+    created_at: string | null;
+    expires_at: string | null;
+    plan_name: string;
+    billing_interval?: string;
+    can_cancel: boolean;
+}
+
 interface SubscriptionTier {
     id: number;
     name: string;
@@ -56,6 +71,7 @@ interface Props {
     isOnTrial: boolean;
     trialEndsAt: string | null;
     activePaymentOrder: ActivePaymentOrder | null;
+    orders?: OrderItem[];
     currentVehiclesCount: number;
     tiers: SubscriptionTier[];
 }
@@ -425,13 +441,89 @@ function PlanCard({
     );
 }
 
-export default function SubscriptionActivate({ tenant, plans, subscription, isOnTrial, trialEndsAt, activePaymentOrder, currentVehiclesCount, tiers }: Props): JSX.Element {
+export default function SubscriptionActivate({ tenant, plans, subscription, isOnTrial, trialEndsAt, activePaymentOrder, orders = [], currentVehiclesCount, tiers }: Props): JSX.Element {
     const { t } = useTrans();
-    const { flash } = usePage().props as { flash?: { success?: string } };
+    const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
 
     const [billingInterval, setBillingInterval] = useState<BillingInterval>('month');
     const [faqOpen, setFaqOpen] = useState<number | null>(null);
     const [isRenewingCurrentPlan, setIsRenewingCurrentPlan] = useState(false);
+    const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const handleOpenCancelModal = (orderId?: number) => {
+        setCancellingOrderId(orderId || activePaymentOrder?.id || null);
+        setShowCancelModal(true);
+    };
+
+    const handleConfirmCancel = () => {
+        const targetId = cancellingOrderId || activePaymentOrder?.id;
+        if (!targetId) return;
+
+        setIsCancelling(true);
+        router.post(
+            route('module.subscription.cancel', targetId),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsCancelling(false);
+                    setShowCancelModal(false);
+                    setCancellingOrderId(null);
+                },
+            }
+        );
+    };
+
+    const renderOrderStatusBadge = (status: string) => {
+        switch (status) {
+            case 'pending':
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200/80 px-2.5 py-1 text-xs font-bold text-amber-800">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Menunggu Transfer
+                    </span>
+                );
+            case 'awaiting_confirmation':
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200/80 px-2.5 py-1 text-xs font-bold text-blue-800">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        Menunggu Konfirmasi
+                    </span>
+                );
+            case 'confirmed':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                        ✓ Berhasil / Aktif
+                    </span>
+                );
+            case 'rejected':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200/80 px-2.5 py-1 text-xs font-bold text-rose-800">
+                        ✕ Ditolak
+                    </span>
+                );
+            case 'expired':
+                return (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                        Kedaluwarsa
+                    </span>
+                );
+            case 'cancelled':
+                return (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-500 line-through">
+                        Dibatalkan
+                    </span>
+                );
+            default:
+                return (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        {status}
+                    </span>
+                );
+        }
+    };
 
     const activePlan = useMemo(() => {
         if (subscription?.plan_id) {
@@ -602,9 +694,14 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                         <LightningIcon className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
-                                            Menunggu Transfer
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+                                                Menunggu Transfer
+                                            </span>
+                                            <span className="text-xs text-slate-400 font-mono">
+                                                #{activePaymentOrder.id}
+                                            </span>
+                                        </div>
                                         <h4 className="mt-1 text-base font-black text-slate-900">
                                             Pesanan Pembayaran #{activePaymentOrder.id} Sedang Aktif
                                         </h4>
@@ -613,12 +710,21 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                         </p>
                                     </div>
                                 </div>
-                                <Link
-                                    href={route('module.subscription.payment', activePaymentOrder.id)}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-amber-700 transition"
-                                >
-                                    Lanjutkan Pembayaran →
-                                </Link>
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenCancelModal(activePaymentOrder.id)}
+                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-rose-700 hover:bg-rose-50 hover:border-rose-300 transition shadow-2xs active:scale-95"
+                                    >
+                                        ✕ Batalkan Transaksi
+                                    </button>
+                                    <Link
+                                        href={route('module.subscription.payment', activePaymentOrder.id)}
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-amber-700 transition active:scale-95"
+                                    >
+                                        Lanjutkan Pembayaran →
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -820,6 +926,88 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                     )}
                 </form>
 
+                {/* ── Riwayat Transaksi & Pembayaran ── */}
+                {orders && orders.length > 0 && (
+                    <div className="mt-14 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
+                        <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                                    <span>🧾</span>
+                                    <span>Riwayat Transaksi & Pembayaran</span>
+                                </h4>
+                                <p className="text-xs text-slate-500">
+                                    Daftar pesanan pembayaran dan status invoice langganan workspace Anda
+                                </p>
+                            </div>
+                            <span className="inline-flex self-start sm:self-auto rounded-full bg-slate-200/80 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                                {orders.length} Transaksi Terakhir
+                            </span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                                <thead className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                    <tr>
+                                        <th className="px-6 py-3.5">ID Pesanan</th>
+                                        <th className="px-6 py-3.5">Tanggal</th>
+                                        <th className="px-6 py-3.5">Paket / Tipe</th>
+                                        <th className="px-6 py-3.5">Total Tagihan</th>
+                                        <th className="px-6 py-3.5">Status</th>
+                                        <th className="px-6 py-3.5 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {orders.map((o) => (
+                                        <tr key={o.id} className="hover:bg-slate-50/50 transition">
+                                            <td className="px-6 py-4 font-mono font-bold text-slate-900">
+                                                #{o.id}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
+                                                {o.created_at ? dateLocale(o.created_at) : '-'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-bold text-slate-800">{o.plan_name}</span>
+                                                <span className="block text-[10px] uppercase text-slate-400">
+                                                    {o.type === 'upgrade' ? 'Upgrade Kuota' : o.type === 'renew' ? 'Perpanjangan' : 'Aktivasi'} {o.billing_interval === 'annual' ? '(Tahunan)' : '(Bulanan)'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-mono font-bold text-slate-900 whitespace-nowrap">
+                                                {fmtCurrency(o.total_amount, 'IDR')}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {renderOrderStatusBadge(o.status)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {o.can_cancel ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenCancelModal(o.id)}
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition active:scale-95"
+                                                            >
+                                                                ✕ Batalkan
+                                                            </button>
+                                                            <Link
+                                                                href={route('module.subscription.payment', o.id)}
+                                                                className="inline-flex items-center gap-1 rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-amber-700 transition active:scale-95"
+                                                            >
+                                                                Bayar →
+                                                            </Link>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-slate-400 text-xs">-</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Feature Guarantee Badges ── */}
                 <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4 pt-12 border-t border-slate-200">
                     <div className="flex items-start gap-3 rounded-2xl bg-white p-4 border border-slate-100 shadow-sm">
@@ -896,6 +1084,22 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                     </div>
                 </div>
             </div>
+
+            {/* Modal Konfirmasi Pembatalan Transaksi */}
+            <ConfirmDeleteDialog
+                show={showCancelModal}
+                onClose={() => {
+                    setShowCancelModal(false);
+                    setCancellingOrderId(null);
+                }}
+                onConfirm={handleConfirmCancel}
+                processing={isCancelling}
+                title={`Batalkan Pesanan Pembayaran #${cancellingOrderId || activePaymentOrder?.id}?`}
+                message="Pesanan pembayaran ini akan dibatalkan dan statusnya ditutup. Kode unik transfer akan dilepaskan sehingga Anda dapat memilih paket langganan lain atau membuat pesanan baru kapan saja."
+                confirmText="Ya, Batalkan Transaksi"
+                cancelText="Kembali"
+                processingText="Membatalkan Transaksi…"
+            />
         </DynamicLayout>
     );
 }

@@ -359,15 +359,6 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                     subtitle={t('fleet.vehicles.index_subtitle', undefined, 'Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan.')}
                     actions={
                         <div className="flex items-center gap-2.5">
-                            {quota && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowUpgradeModal(true)}
-                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50/80 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 active:scale-95"
-                                >
-                                    <span>⚡ {t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}</span>
-                                </button>
-                            )}
                             {quota?.reached ? (
                                 <button
                                     type="button"
