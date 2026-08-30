@@ -86,26 +86,6 @@ class SettingSeeder extends Seeder
                 'is_public' => false,
                 'sort_order' => 7,
             ],
-            [
-                'key' => 'general.system_mode',
-                'group' => 'general',
-                'value' => app()->environment('production') ? 'production' : 'development',
-                'type' => 'select',
-                'label' => 'System Mode',
-                'description' => 'Development disables outbound email, shows verification links / phone OTP on screen, and grants new workspaces Allow demo data install. Production sends email and OTP normally.',
-                'is_public' => false,
-                'sort_order' => 8,
-            ],
-            [
-                'key' => 'general.ai_features_enabled',
-                'group' => 'general',
-                'value' => '1',
-                'type' => 'boolean',
-                'label' => 'Fitur AI (Artificial Intelligence)',
-                'description' => 'Master switch untuk mengaktifkan atau menonaktifkan seluruh fitur AI (Visual Handover, Smart KYC, Dynamic Pricing, Predictive Maintenance) di semua workspace tenant.',
-                'is_public' => true,
-                'sort_order' => 9,
-            ],
 
             // ==========================================
             // SITE GROUP
@@ -694,11 +674,6 @@ class SettingSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            // Platform-wide mode lives only on the central connection.
-            if (tenancy()->initialized && $setting['key'] === 'general.system_mode') {
-                continue;
-            }
-
             Setting::updateOrCreate(
                 ['key' => $setting['key']],
                 $setting

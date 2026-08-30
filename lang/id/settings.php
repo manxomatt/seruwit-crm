@@ -26,6 +26,8 @@ return [
 
     'groups' => [
         'general' => 'Umum',
+        'capacity' => 'Armada & Kapasitas',
+        'billing' => 'Billing & Pembayaran',
         'site' => 'Situs',
         'seo' => 'SEO',
         'appearance' => 'Tampilan',
@@ -33,6 +35,7 @@ return [
         'social' => 'Sosial',
         'units' => 'Satuan',
         'maintenance' => 'Maintenance',
+        'security' => 'Keamanan',
     ],
 
     'types' => [

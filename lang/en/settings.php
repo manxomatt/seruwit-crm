@@ -26,6 +26,8 @@ return [
 
     'groups' => [
         'general' => 'General',
+        'capacity' => 'Fleet & Capacity',
+        'billing' => 'Billing & Payments',
         'site' => 'Site',
         'seo' => 'SEO',
         'appearance' => 'Appearance',
@@ -33,6 +35,7 @@ return [
         'social' => 'Social',
         'units' => 'Units',
         'maintenance' => 'Maintenance',
+        'security' => 'Security',
     ],
 
     'types' => [

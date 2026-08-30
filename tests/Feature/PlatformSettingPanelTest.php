@@ -6,6 +6,7 @@ use App\Models\PlatformSetting;
 use App\Models\Setting;
 use App\Support\CentralAiSettings;
 use App\Support\SystemMode;
+use Database\Seeders\PlatformSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -21,25 +22,54 @@ class PlatformSettingPanelTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         $this->setUpRoles();
+        $this->seed(PlatformSettingSeeder::class);
     }
 
-    public function test_admin_can_view_platform_settings_panel(): void
+    public function test_admin_index_redirects_to_first_group(): void
     {
         $this->actingAs($this->createAdminUser())
             ->get(route('module.platform-settings.index'))
+            ->assertRedirect(route('module.platform-settings.group', 'general'));
+    }
+
+    public function test_admin_can_view_platform_settings_group(): void
+    {
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.platform-settings.group', 'general'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Module/PlatformSettings/Index')
-                ->has('settings.ai_features_enabled')
-                ->has('settings.system_mode')
+                ->component('Module/PlatformSettings/Group')
+                ->has('groupSettings')
+                ->has('groups')
+                ->where('currentGroup', 'general')
                 ->has('systemModes'));
     }
 
     public function test_non_admin_cannot_view_platform_settings_panel(): void
     {
         $this->actingAs($this->createUserWithRole())
-            ->get(route('module.platform-settings.index'))
+            ->get(route('module.platform-settings.group', 'general'))
             ->assertForbidden();
+    }
+
+    public function test_admin_bulk_update_persists_to_platform_settings(): void
+    {
+        $setting = PlatformSetting::query()->where('key', CentralAiSettings::KEY)->firstOrFail();
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.platform-settings.bulk-update'), [
+                'group' => 'general',
+                'settings' => [
+                    [
+                        'id' => $setting->id,
+                        'value' => '0',
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('module.platform-settings.group', 'general'));
+
+        $this->assertSame('0', PlatformSetting::getValue(CentralAiSettings::KEY));
+        $this->assertFalse(CentralAiSettings::isEnabled());
     }
 
     public function test_admin_update_persists_to_platform_settings(): void

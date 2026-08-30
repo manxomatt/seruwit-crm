@@ -131,6 +131,49 @@ class PlatformSetting extends Model
     }
 
     /**
+     * Preferred tab order on Modules/PlatformSettings. Unknown groups append alphabetically.
+     *
+     * @return list<string>
+     */
+    public static function uiGroupOrder(): array
+    {
+        return [
+            'general',
+            'capacity',
+            'billing',
+            'email',
+            'security',
+        ];
+    }
+
+    /**
+     * Distinct setting groups in UI tab order.
+     *
+     * @return list<string>
+     */
+    public static function orderedVisibleGroups(): array
+    {
+        $existing = static::query()
+            ->select('group')
+            ->distinct()
+            ->pluck('group')
+            ->all();
+
+        $preferred = array_values(array_filter(
+            static::uiGroupOrder(),
+            fn (string $group): bool => in_array($group, $existing, true),
+        ));
+
+        $remainder = collect($existing)
+            ->reject(fn (string $group): bool => in_array($group, $preferred, true))
+            ->sort()
+            ->values()
+            ->all();
+
+        return [...$preferred, ...$remainder];
+    }
+
+    /**
      * @param  Builder<$this>  $query
      * @return Builder<$this>
      */
