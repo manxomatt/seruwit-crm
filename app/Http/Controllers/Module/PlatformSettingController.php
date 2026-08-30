@@ -27,6 +27,8 @@ class PlatformSettingController extends Controller
     {
         Gate::authorize('manage-platform-settings');
 
+        PlatformSetting::ensureDefaultsExist();
+
         $firstGroup = PlatformSetting::orderedVisibleGroups()[0] ?? 'general';
 
         return redirect()->route('module.platform-settings.group', $firstGroup);
@@ -38,6 +40,8 @@ class PlatformSettingController extends Controller
     public function group(string $group): Response
     {
         Gate::authorize('manage-platform-settings');
+
+        PlatformSetting::ensureDefaultsExist();
 
         $settings = PlatformSetting::query()
             ->where('group', $group)

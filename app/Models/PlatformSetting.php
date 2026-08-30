@@ -131,6 +131,151 @@ class PlatformSetting extends Model
     }
 
     /**
+     * Default list of platform settings.
+     *
+     * @return list<array{key: string, group: string, value: string|null, type: string, label: string, description: string, is_public: bool, sort_order: int}>
+     */
+    public static function defaults(): array
+    {
+        return [
+            // GENERAL
+            [
+                'key' => 'general.system_mode',
+                'group' => 'general',
+                'value' => app()->environment('production') ? 'production' : 'development',
+                'type' => 'select',
+                'label' => 'Mode Sistem',
+                'description' => 'Development menonaktifkan email keluar & menampilkan OTP di layar. Production mengaktifkan email nyata dan proteksi keamanan penuh.',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => 'general.ai_features_enabled',
+                'group' => 'general',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Fitur AI (Artificial Intelligence)',
+                'description' => 'Master switch untuk mengaktifkan atau menonaktifkan seluruh fitur AI (Visual Handover, Smart KYC, Dynamic Pricing, Predictive Maintenance) di semua workspace tenant.',
+                'is_public' => true,
+                'sort_order' => 2,
+            ],
+
+            // CAPACITY
+            [
+                'key' => self::KEY_CAPACITY_CREDITS_LIFETIME,
+                'group' => 'capacity',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Saldo Kredit Lifetime',
+                'description' => 'Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan (tidak pernah kadaluarsa).',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => self::KEY_VEHICLE_ACTIVATION_DURATION_DAYS,
+                'group' => 'capacity',
+                'value' => '30',
+                'type' => 'number',
+                'label' => 'Durasi 1 Siklus Aktivasi (Hari)',
+                'description' => 'Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas kuota armada (default: 30 hari).',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+            [
+                'key' => self::KEY_VEHICLE_GRACE_PERIOD_DAYS,
+                'group' => 'capacity',
+                'value' => '3',
+                'type' => 'number',
+                'label' => 'Masa Tenggang / Grace Period (Hari)',
+                'description' => 'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).',
+                'is_public' => false,
+                'sort_order' => 3,
+            ],
+            [
+                'key' => self::KEY_PAUSE_DURING_MAINTENANCE,
+                'group' => 'capacity',
+                'value' => '0',
+                'type' => 'boolean',
+                'label' => 'Bekukan Masa Aktif Saat Masuk Bengkel',
+                'description' => 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
+                'is_public' => false,
+                'sort_order' => 4,
+            ],
+
+            // EMAIL (Central)
+            [
+                'key' => 'email.from_address',
+                'group' => 'email',
+                'value' => config('mail.from.address', 'noreply@seruwit.com'),
+                'type' => 'email',
+                'label' => 'Email Pengirim Platform',
+                'description' => 'Email default yang digunakan untuk notifikasi sistem dan transaksi central.',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => 'email.from_name',
+                'group' => 'email',
+                'value' => config('mail.from.name', 'Seruwit Platform'),
+                'type' => 'text',
+                'label' => 'Nama Pengirim Platform',
+                'description' => 'Nama pengirim yang tertera pada email keluar sistem central.',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+
+            // SECURITY (Central)
+            [
+                'key' => 'security.max_login_attempts',
+                'group' => 'security',
+                'value' => '5',
+                'type' => 'number',
+                'label' => 'Batas Percobaan Login',
+                'description' => 'Jumlah maksimal kegagalan login berturut-turut sebelum akun diblokir sementara.',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => 'security.lockout_duration_minutes',
+                'group' => 'security',
+                'value' => '15',
+                'type' => 'number',
+                'label' => 'Durasi Penguncian Akun (Menit)',
+                'description' => 'Waktu tunggu akun sebelum dapat mencoba login kembali setelah terkena pembatasan.',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+            [
+                'key' => 'security.enforce_two_factor',
+                'group' => 'security',
+                'value' => '0',
+                'type' => 'boolean',
+                'label' => 'Wajibkan Otentikasi Dua Faktor (2FA)',
+                'description' => 'Wajibkan seluruh admin central untuk mengaktifkan 2FA saat mengakses dashboard central.',
+                'is_public' => false,
+                'sort_order' => 3,
+            ],
+        ];
+    }
+
+    /**
+     * Ensure all default platform settings exist in database.
+     */
+    public static function ensureDefaultsExist(): void
+    {
+        try {
+            foreach (static::defaults() as $def) {
+                static::query()->firstOrCreate(
+                    ['key' => $def['key']],
+                    $def
+                );
+            }
+        } catch (\Throwable $e) {
+            // Gracefully ignore if database connection is unavailable during boot
+        }
+    }
+
+    /**
      * Preferred tab order on Modules/PlatformSettings. Unknown groups append alphabetically.
      *
      * @return list<string>
@@ -140,7 +285,6 @@ class PlatformSetting extends Model
         return [
             'general',
             'capacity',
-            'billing',
             'email',
             'security',
         ];
@@ -153,6 +297,8 @@ class PlatformSetting extends Model
      */
     public static function orderedVisibleGroups(): array
     {
+        static::ensureDefaultsExist();
+
         $existing = static::query()
             ->select('group')
             ->distinct()

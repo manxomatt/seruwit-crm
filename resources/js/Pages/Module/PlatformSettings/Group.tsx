@@ -75,12 +75,14 @@ export default function Group({
         );
     };
 
+    // General indices
     const systemModeIndex = findSettingIndex('general.system_mode');
     const currentSystemMode = systemModeIndex >= 0 ? data.settings[systemModeIndex]?.value : 'development';
 
     const aiFeaturesIndex = findSettingIndex('general.ai_features_enabled');
     const isAiEnabled = aiFeaturesIndex >= 0 ? data.settings[aiFeaturesIndex]?.value === '1' : false;
 
+    // Capacity indices
     const lifetimeCreditIndex = findSettingIndex('capacity_credits_lifetime_enabled');
     const isLifetimeCredit = lifetimeCreditIndex >= 0 ? data.settings[lifetimeCreditIndex]?.value === '1' : true;
 
@@ -89,6 +91,16 @@ export default function Group({
 
     const durationDaysIndex = findSettingIndex('vehicle_activation_duration_days');
     const graceDaysIndex = findSettingIndex('vehicle_grace_period_days');
+
+    // Email indices
+    const emailFromAddressIndex = findSettingIndex('email.from_address');
+    const emailFromNameIndex = findSettingIndex('email.from_name');
+
+    // Security indices
+    const maxAttemptsIndex = findSettingIndex('security.max_login_attempts');
+    const lockoutDurationIndex = findSettingIndex('security.lockout_duration_minutes');
+    const enforce2faIndex = findSettingIndex('security.enforce_two_factor');
+    const isEnforce2fa = enforce2faIndex >= 0 ? data.settings[enforce2faIndex]?.value === '1' : false;
 
     const groupIcon = GROUP_ICONS[currentGroup] ?? '⚙️';
 
@@ -613,8 +625,209 @@ export default function Group({
                         </div>
                     )}
 
+                    {/* SPECIFIC VIEW: EMAIL GROUP */}
+                    {currentGroup === 'email' && (
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                                        <span className="material-symbols-outlined text-[20px]">mail</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                            {t('settings.platform.email.title', undefined, 'Email Pengirim Sentral (Root Mailer)')}
+                                        </h3>
+                                        <p className="mt-0.5 text-xs text-slate-500">
+                                            {t('settings.platform.email.description', undefined, 'Konfigurasi identitas pengirim email resmi platform untuk notifikasi sistem, tagihan langganan, dan pengumuman central.')}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                {emailFromAddressIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="email_from_address"
+                                            value={t('settings.platform.email.from_address_label', undefined, 'Alamat Email Pengirim')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <TextInput
+                                            id="email_from_address"
+                                            type="email"
+                                            className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                            value={data.settings[emailFromAddressIndex].value}
+                                            onChange={(e) => updateValue(emailFromAddressIndex, e.target.value)}
+                                            required
+                                        />
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.email.from_address_desc', undefined, 'Alamat email yang tertera sebagai pengirim resmi platform (cth: noreply@seruwit.com).')}
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${emailFromAddressIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+
+                                {emailFromNameIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="email_from_name"
+                                            value={t('settings.platform.email.from_name_label', undefined, 'Nama Pengirim Platform')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <TextInput
+                                            id="email_from_name"
+                                            type="text"
+                                            className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                            value={data.settings[emailFromNameIndex].value}
+                                            onChange={(e) => updateValue(emailFromNameIndex, e.target.value)}
+                                            required
+                                        />
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.email.from_name_desc', undefined, 'Nama brand atau entitas yang tampil di inbox penerima (cth: Seruwit Platform).')}
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${emailFromNameIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SPECIFIC VIEW: SECURITY GROUP */}
+                    {currentGroup === 'security' && (
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                                        <span className="material-symbols-outlined text-[20px]">security</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                            {t('settings.platform.security.title', undefined, 'Keamanan & Autentikasi Central')}
+                                        </h3>
+                                        <p className="mt-0.5 text-xs text-slate-500">
+                                            {t('settings.platform.security.description', undefined, 'Kebijakan keamanan akses dashboard central, proteksi brute force login, dan otentikasi multi-faktor.')}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                {maxAttemptsIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="security_max_attempts"
+                                            value={t('settings.platform.security.max_attempts_label', undefined, 'Batas Percobaan Login Gagal')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <div className="mt-1.5 flex items-center gap-2">
+                                            <TextInput
+                                                id="security_max_attempts"
+                                                type="number"
+                                                className="block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                value={data.settings[maxAttemptsIndex].value}
+                                                onChange={(e) => updateValue(maxAttemptsIndex, e.target.value)}
+                                                required
+                                            />
+                                            <span className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                                                {t('settings.platform.security.attempts_suffix', undefined, 'Kali')}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.security.max_attempts_desc', undefined, 'Jumlah toleransi kesalahan password berturut-turut sebelum akun dibekukan sementara.')}
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${maxAttemptsIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+
+                                {lockoutDurationIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="security_lockout_duration"
+                                            value={t('settings.platform.security.lockout_duration_label', undefined, 'Durasi Pembekuan Akun (Menit)')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <div className="mt-1.5 flex items-center gap-2">
+                                            <TextInput
+                                                id="security_lockout_duration"
+                                                type="number"
+                                                className="block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                value={data.settings[lockoutDurationIndex].value}
+                                                onChange={(e) => updateValue(lockoutDurationIndex, e.target.value)}
+                                                required
+                                            />
+                                            <span className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                                                {t('settings.platform.security.minutes_suffix', undefined, 'Menit')}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.security.lockout_duration_desc', undefined, 'Waktu tunggu sebelum user diizinkan mencoba login kembali setelah limit terlampaui.')}
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${lockoutDurationIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Enforce 2FA Toggle */}
+                            {enforce2faIndex >= 0 && (
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div
+                                        onClick={() => updateValue(enforce2faIndex, isEnforce2fa ? '0' : '1')}
+                                        className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                            isEnforce2fa
+                                                ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                                : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-xs">
+                                                🛡️
+                                            </span>
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.security.enforce_2fa_label', undefined, 'Wajibkan Otentikasi Dua Faktor (2FA)')}
+                                                </span>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                    {t('settings.platform.security.enforce_2fa_desc', undefined, 'Wajibkan seluruh admin central untuk memverifikasi kode 2FA (Authenticator App) saat masuk.')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div
+                                            role="switch"
+                                            aria-checked={isEnforce2fa}
+                                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                isEnforce2fa ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                    isEnforce2fa ? 'translate-x-5' : 'translate-x-0'
+                                                }`}
+                                            />
+                                        </div>
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${enforce2faIndex}.value`]}
+                                        className="mt-1.5"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* GENERIC FALLBACK FOR OTHER GROUPS */}
-                    {currentGroup !== 'general' && currentGroup !== 'capacity' && (
+                    {currentGroup !== 'general' && currentGroup !== 'capacity' && currentGroup !== 'email' && currentGroup !== 'security' && (
                         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <div className="flex items-center gap-3">
