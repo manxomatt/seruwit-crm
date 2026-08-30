@@ -2,10 +2,12 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
 import { Link, router, useForm, type InertiaFormProps } from '@inertiajs/react';
 import { Head, usePage } from '@inertiajs/react';
-import { FormEventHandler, useMemo } from 'react';
+import { FormEventHandler, useMemo, useState } from 'react';
 import { useTrans } from '@/hooks/useTrans';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { Dialog, DialogPanel } from '@headlessui/react';
 import RentalNav from '../../../../RentalNav';
+import AiDynamicPricingPanel from '../../../../Components/AiDynamicPricingPanel';
 import RateForm from './RateForm';
 import {
     PERIOD_TYPES,
@@ -25,6 +27,9 @@ interface Props {
     vehicles: Vehicle[];
     rentalClasses: Array<{ value: string; label: string }>;
     mode: 'create' | 'edit';
+    aiPricingOptimizerEnabled?: boolean;
+    aiPricingAnalyzeUrl?: string;
+    aiPricingApplyUrl?: string;
 }
 
 function makeTierHooks(form: InertiaFormProps<FormData>) {
@@ -47,9 +52,19 @@ function makeTierHooks(form: InertiaFormProps<FormData>) {
     return { updateTier, addTier, removeTier };
 }
 
-export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props): JSX.Element {
+export default function FormPage({
+    rate,
+    vehicles,
+    rentalClasses,
+    mode,
+    aiPricingOptimizerEnabled = true,
+    aiPricingAnalyzeUrl,
+    aiPricingApplyUrl,
+}: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+    const hasAiPanel = Boolean(aiPricingOptimizerEnabled && aiPricingAnalyzeUrl && aiPricingApplyUrl);
 
     const formLabels: TierFormLabels = {
         rateName: t('rental.fields.rate_name'),
@@ -145,12 +160,27 @@ export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props)
                     title={pageTitle}
                     subtitle={mode === 'create' ? 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.' : 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.'}
                     actions={
-                        <Link
-                            href={prefixedRoute('rental.rates.index')}
-                            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                        >
-                            ← {t('rental.nav.back_to_rates', undefined, 'Kembali ke Daftar Tarif')}
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            {hasAiPanel && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAiModalOpen(true)}
+                                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50/70 px-4 py-2 text-xs font-black text-indigo-700 shadow-2xs hover:border-indigo-300 hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 dark:border-indigo-900/60 dark:bg-slate-800 dark:from-slate-800 dark:to-indigo-950/40 dark:text-indigo-300 dark:hover:bg-slate-700 transition"
+                                >
+                                    <span className="text-sm">⚡</span>
+                                    <span>{t('rental.ai.btn_modal_trigger', undefined, 'AI Smart Dynamic Pricing')}</span>
+                                    <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-2xs">
+                                        Gemini
+                                    </span>
+                                </button>
+                            )}
+                            <Link
+                                href={prefixedRoute('rental.rates.index')}
+                                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                            >
+                                ← {t('rental.nav.back_to_rates', undefined, 'Kembali ke Daftar Tarif')}
+                            </Link>
+                        </div>
                     }
                 />
             }
@@ -203,6 +233,27 @@ export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props)
                     />
                 </div>
             </div>
+
+            {/* Modal AI Smart Dynamic Pricing & Fleet Optimizer */}
+            {hasAiPanel && (
+                <Dialog
+                    open={isAiModalOpen}
+                    onClose={() => setIsAiModalOpen(false)}
+                    className="relative z-50"
+                >
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" aria-hidden="true" />
+                    <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+                        <DialogPanel className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-8 overflow-hidden">
+                            <AiDynamicPricingPanel
+                                analyzeUrl={aiPricingAnalyzeUrl!}
+                                applyUrl={aiPricingApplyUrl!}
+                                canUpdate={true}
+                                onClose={() => setIsAiModalOpen(false)}
+                            />
+                        </DialogPanel>
+                    </div>
+                </Dialog>
+            )}
         </DynamicLayout>
     );
 }
