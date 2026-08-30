@@ -1,12 +1,14 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 interface PlatformSetting {
     id: number;
@@ -25,6 +27,7 @@ interface Props {
     groups: string[];
     currentGroup: string;
     systemModes: string[];
+    hasSmtpPassword?: boolean;
 }
 
 const GROUP_ICONS: Record<string, string> = {
@@ -40,9 +43,16 @@ export default function Group({
     groups,
     currentGroup,
     systemModes,
+    hasSmtpPassword = false,
 }: Props): JSX.Element {
     const { t } = useTrans();
-    const { flash } = usePage<{ flash?: { success?: string } }>().props;
+    const { flash, auth } = usePage<{
+        flash?: { success?: string; error?: string };
+        auth?: { user?: { email?: string } };
+    }>().props;
+
+    const [showTestEmailModal, setShowTestEmailModal] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         group: currentGroup,
@@ -50,6 +60,10 @@ export default function Group({
             id: s.id,
             value: s.value ?? '',
         })),
+    });
+
+    const testEmailForm = useForm({
+        recipient: auth?.user?.email ?? '',
     });
 
     const updateValue = (index: number, value: string) => {
@@ -65,6 +79,16 @@ export default function Group({
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('module.platform-settings.bulk-update'), { preserveScroll: true });
+    };
+
+    const handleSendTestEmail: FormEventHandler = (e) => {
+        e.preventDefault();
+        testEmailForm.post(route('module.platform-settings.test-email'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowTestEmailModal(false);
+            },
+        });
     };
 
     const formatGroupLabel = (group: string): string => {
@@ -92,9 +116,20 @@ export default function Group({
     const durationDaysIndex = findSettingIndex('vehicle_activation_duration_days');
     const graceDaysIndex = findSettingIndex('vehicle_grace_period_days');
 
-    // Email indices
+    // Email SMTP indices
+    const smtpHostIndex = findSettingIndex('email.smtp_host');
+    const smtpPortIndex = findSettingIndex('email.smtp_port');
+    const smtpEncryptionIndex = findSettingIndex('email.smtp_encryption');
+    const smtpUsernameIndex = findSettingIndex('email.smtp_username');
+    const smtpPasswordIndex = findSettingIndex('email.smtp_password');
     const emailFromAddressIndex = findSettingIndex('email.from_address');
     const emailFromNameIndex = findSettingIndex('email.from_name');
+
+    const isSmtpConfigured =
+        smtpHostIndex >= 0 &&
+        Boolean(data.settings[smtpHostIndex]?.value) &&
+        emailFromAddressIndex >= 0 &&
+        Boolean(data.settings[emailFromAddressIndex]?.value);
 
     // Security indices
     const maxAttemptsIndex = findSettingIndex('security.max_login_attempts');
@@ -141,13 +176,22 @@ export default function Group({
                     </div>
                 </div>
 
-                {/* Flash Message */}
+                {/* Flash Messages */}
                 {flash?.success && (
                     <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs font-semibold text-emerald-900 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-xs">
                             ✓
                         </span>
                         <span>{flash.success}</span>
+                    </div>
+                )}
+
+                {flash?.error && (
+                    <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-xs font-semibold text-rose-900 shadow-xs dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white text-xs font-bold shadow-xs">
+                            ✕
+                        </span>
+                        <span>{flash.error}</span>
                     </div>
                 )}
 
@@ -625,43 +669,210 @@ export default function Group({
                         </div>
                     )}
 
-                    {/* SPECIFIC VIEW: EMAIL GROUP */}
+                    {/* SPECIFIC VIEW: EMAIL (SMTP PLATFORM) GROUP */}
                     {currentGroup === 'email' && (
                         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                                         <span className="material-symbols-outlined text-[20px]">mail</span>
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                            {t('settings.platform.email.title', undefined, 'Email Pengirim Sentral (Root Mailer)')}
+                                            {t('settings.platform.email.title', undefined, 'Server SMTP & Pengirim Platform (Root Mailer)')}
                                         </h3>
                                         <p className="mt-0.5 text-xs text-slate-500">
-                                            {t('settings.platform.email.description', undefined, 'Konfigurasi identitas pengirim email resmi platform untuk notifikasi sistem, tagihan langganan, dan pengumuman central.')}
+                                            {t('settings.platform.email.description', undefined, 'Konfigurasi SMTP resmi platform untuk seluruh pengiriman email sistem, pendaftaran tenant, reset password, dan invoice tagihan central.')}
                                         </p>
                                     </div>
                                 </div>
+
+                                <div className="flex items-center gap-2">
+                                    <SecondaryButton
+                                        type="button"
+                                        onClick={() => setShowTestEmailModal(true)}
+                                        className="!rounded-xl !py-2 text-xs font-semibold shadow-xs"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px] mr-1.5">send</span>
+                                        {t('settings.platform.email.test_email_btn', undefined, 'Kirim Email Uji Coba')}
+                                    </SecondaryButton>
+                                </div>
                             </div>
 
-                            <div className="grid gap-6 sm:grid-cols-2">
+                            {/* Status Pill Card */}
+                            <div className={`flex items-center gap-3 rounded-2xl border p-4 text-xs font-medium ${
+                                isSmtpConfigured
+                                    ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                    : 'border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-300'
+                            }`}>
+                                <span className="text-base">{isSmtpConfigured ? '🟢' : '🟡'}</span>
+                                <p>
+                                    {isSmtpConfigured
+                                        ? t('settings.platform.email.status_configured', undefined, 'SMTP Platform Aktif — seluruh email central dan tenant default menggunakan konfigurasi ini.')
+                                        : t('settings.platform.email.status_unconfigured', undefined, 'SMTP Platform Belum Lengkap — email keluar memakai driver bawaan environment.')}
+                                </p>
+                            </div>
+
+                            {/* Server Host & Port */}
+                            <div className="grid gap-5 sm:grid-cols-3">
+                                {smtpHostIndex >= 0 && (
+                                    <div className="sm:col-span-2">
+                                        <InputLabel
+                                            htmlFor="email_smtp_host"
+                                            value={t('settings.platform.email.smtp_host_label', undefined, 'Host SMTP')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <TextInput
+                                            id="email_smtp_host"
+                                            type="text"
+                                            placeholder="smtp.mailgun.org / smtp.gmail.com / mailpit"
+                                            className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs font-mono border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                            value={data.settings[smtpHostIndex].value}
+                                            onChange={(e) => updateValue(smtpHostIndex, e.target.value)}
+                                            required
+                                        />
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.email.smtp_host_desc', undefined, 'Alamat server SMTP penyedia layanan email.')}
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${smtpHostIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+
+                                {smtpPortIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="email_smtp_port"
+                                            value={t('settings.platform.email.smtp_port_label', undefined, 'Port SMTP')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <TextInput
+                                            id="email_smtp_port"
+                                            type="number"
+                                            placeholder="587"
+                                            className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs font-mono border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                            value={data.settings[smtpPortIndex].value}
+                                            onChange={(e) => updateValue(smtpPortIndex, e.target.value)}
+                                            required
+                                        />
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            587 (TLS), 465 (SSL), 25
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${smtpPortIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Encryption & Credentials */}
+                            <div className="grid gap-5 sm:grid-cols-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                {smtpEncryptionIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="email_smtp_encryption"
+                                            value={t('settings.platform.email.smtp_encryption_label', undefined, 'Enkripsi Koneksi')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <select
+                                            id="email_smtp_encryption"
+                                            value={data.settings[smtpEncryptionIndex].value || 'tls'}
+                                            onChange={(e) => updateValue(smtpEncryptionIndex, e.target.value)}
+                                            className="mt-1.5 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs text-slate-900 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                        >
+                                            <option value="tls">{t('settings.platform.email.encryption_tls', undefined, 'TLS (Direkomendasikan)')}</option>
+                                            <option value="ssl">{t('settings.platform.email.encryption_ssl', undefined, 'SSL')}</option>
+                                            <option value="none">{t('settings.platform.email.encryption_none', undefined, 'Tanpa Enkripsi')}</option>
+                                        </select>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${smtpEncryptionIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+
+                                {smtpUsernameIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="email_smtp_username"
+                                            value={t('settings.platform.email.smtp_username_label', undefined, 'Username SMTP')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <TextInput
+                                            id="email_smtp_username"
+                                            type="text"
+                                            placeholder="postmaster@yourdomain.com"
+                                            className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs font-mono border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                            value={data.settings[smtpUsernameIndex].value}
+                                            onChange={(e) => updateValue(smtpUsernameIndex, e.target.value)}
+                                            autoComplete="off"
+                                        />
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${smtpUsernameIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+
+                                {smtpPasswordIndex >= 0 && (
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <InputLabel
+                                                htmlFor="email_smtp_password"
+                                                value={t('settings.platform.email.smtp_password_label', undefined, 'Password SMTP')}
+                                                className="!text-xs !font-bold !uppercase !tracking-wider"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                            >
+                                                {showPassword ? 'Sembunyikan' : 'Tampilkan'}
+                                            </button>
+                                        </div>
+                                        <TextInput
+                                            id="email_smtp_password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder={hasSmtpPassword ? '••••••••' : 'Password / API Secret'}
+                                            className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs font-mono border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                            value={data.settings[smtpPasswordIndex].value}
+                                            onChange={(e) => updateValue(smtpPasswordIndex, e.target.value)}
+                                            autoComplete="new-password"
+                                        />
+                                        <p className="mt-1 text-[11px] text-slate-400">
+                                            {t('settings.platform.email.smtp_password_hint', undefined, 'Kosongkan jika tidak ingin mengubah password.')}
+                                        </p>
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${smtpPasswordIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sender Identity */}
+                            <div className="grid gap-5 sm:grid-cols-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 {emailFromAddressIndex >= 0 && (
                                     <div>
                                         <InputLabel
                                             htmlFor="email_from_address"
-                                            value={t('settings.platform.email.from_address_label', undefined, 'Alamat Email Pengirim')}
+                                            value={t('settings.platform.email.from_address_label', undefined, 'Alamat Email Pengirim (From Address)')}
                                             className="!text-xs !font-bold !uppercase !tracking-wider"
                                         />
                                         <TextInput
                                             id="email_from_address"
                                             type="email"
+                                            placeholder="noreply@seruwit.com"
                                             className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
                                             value={data.settings[emailFromAddressIndex].value}
                                             onChange={(e) => updateValue(emailFromAddressIndex, e.target.value)}
                                             required
                                         />
                                         <p className="mt-1 text-[11px] text-slate-500">
-                                            {t('settings.platform.email.from_address_desc', undefined, 'Alamat email yang tertera sebagai pengirim resmi platform (cth: noreply@seruwit.com).')}
+                                            {t('settings.platform.email.from_address_desc', undefined, 'Alamat email yang tertera sebagai pengirim resmi platform.')}
                                         </p>
                                         <InputError
                                             message={(errors as Record<string, string>)[`settings.${emailFromAddressIndex}.value`]}
@@ -674,19 +885,20 @@ export default function Group({
                                     <div>
                                         <InputLabel
                                             htmlFor="email_from_name"
-                                            value={t('settings.platform.email.from_name_label', undefined, 'Nama Pengirim Platform')}
+                                            value={t('settings.platform.email.from_name_label', undefined, 'Nama Pengirim Platform (From Name)')}
                                             className="!text-xs !font-bold !uppercase !tracking-wider"
                                         />
                                         <TextInput
                                             id="email_from_name"
                                             type="text"
+                                            placeholder="Seruwit Platform"
                                             className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
                                             value={data.settings[emailFromNameIndex].value}
                                             onChange={(e) => updateValue(emailFromNameIndex, e.target.value)}
                                             required
                                         />
                                         <p className="mt-1 text-[11px] text-slate-500">
-                                            {t('settings.platform.email.from_name_desc', undefined, 'Nama brand atau entitas yang tampil di inbox penerima (cth: Seruwit Platform).')}
+                                            {t('settings.platform.email.from_name_desc', undefined, 'Nama brand atau entitas yang tampil di inbox penerima.')}
                                         </p>
                                         <InputError
                                             message={(errors as Record<string, string>)[`settings.${emailFromNameIndex}.value`]}
@@ -968,6 +1180,63 @@ export default function Group({
                     </div>
                 </form>
             </div>
+
+            {/* Test Email Modal */}
+            <Modal show={showTestEmailModal} onClose={() => setShowTestEmailModal(false)} maxWidth="md">
+                <form onSubmit={handleSendTestEmail} className="p-6">
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+                            <span className="material-symbols-outlined text-[22px]">outgoing_mail</span>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                {t('settings.platform.email.test_email_modal_title', undefined, 'Uji Coba Pengiriman Email')}
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                                {t('settings.platform.email.test_email_modal_desc', undefined, 'Kirim email uji coba untuk memverifikasi koneksi SMTP.')}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 space-y-4">
+                        <div>
+                            <InputLabel
+                                htmlFor="test_recipient"
+                                value={t('settings.platform.email.test_email_recipient', undefined, 'Kirim ke Alamat Email')}
+                                className="!text-xs !font-bold !uppercase !tracking-wider"
+                            />
+                            <TextInput
+                                id="test_recipient"
+                                type="email"
+                                className="mt-1.5 block w-full !rounded-xl !py-2.5 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                value={testEmailForm.data.recipient}
+                                onChange={(e) => testEmailForm.setData('recipient', e.target.value)}
+                                placeholder="admin@example.com"
+                                required
+                            />
+                            <InputError message={testEmailForm.errors.recipient} className="mt-1.5" />
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setShowTestEmailModal(false)}
+                            className="!rounded-xl text-xs"
+                        >
+                            {t('settings.platform.email.test_email_cancel', undefined, 'Batal')}
+                        </SecondaryButton>
+                        <PrimaryButton
+                            disabled={testEmailForm.processing}
+                            className="!rounded-xl text-xs"
+                        >
+                            {testEmailForm.processing
+                                ? t('settings.platform.email.test_email_sending', undefined, 'Mengirim pesan…')
+                                : t('settings.platform.email.test_email_submit', undefined, 'Kirim Uji Coba Sekarang')}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
         </DynamicLayout>
     );
 }

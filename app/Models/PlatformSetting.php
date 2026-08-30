@@ -99,6 +99,48 @@ class PlatformSetting extends Model
     }
 
     /**
+     * Dynamically apply Platform SMTP settings to Laravel runtime config.
+     */
+    public static function applyCentralMailConfig(): void
+    {
+        try {
+            $host = static::getValue('email.smtp_host');
+            if (blank($host)) {
+                return;
+            }
+
+            $port = (int) static::getValue('email.smtp_port', 587);
+            $encryption = static::getValue('email.smtp_encryption');
+            $encryption = filled($encryption) && $encryption !== 'none' ? $encryption : null;
+            $username = static::getValue('email.smtp_username');
+            $password = static::getValue('email.smtp_password');
+            $fromAddress = static::getValue('email.from_address');
+            $fromName = static::getValue('email.from_name');
+
+            config([
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.transport' => 'smtp',
+                'mail.mailers.smtp.host' => $host,
+                'mail.mailers.smtp.port' => $port,
+                'mail.mailers.smtp.encryption' => $encryption,
+                'mail.mailers.smtp.username' => $username,
+                'mail.mailers.smtp.password' => $password,
+                'mail.mailers.smtp.timeout' => null,
+            ]);
+
+            if (filled($fromAddress)) {
+                config(['mail.from.address' => $fromAddress]);
+            }
+
+            if (filled($fromName)) {
+                config(['mail.from.name' => $fromName]);
+            }
+        } catch (\Throwable) {
+            // Gracefully ignore during early boot
+        }
+    }
+
+    /**
      * Create or update a platform setting value by key, filling required columns
      * with sensible defaults on first write.
      */
@@ -202,16 +244,66 @@ class PlatformSetting extends Model
                 'sort_order' => 4,
             ],
 
-            // EMAIL (Central)
+            // EMAIL (Central Root SMTP Mailer)
+            [
+                'key' => 'email.smtp_host',
+                'group' => 'email',
+                'value' => config('mail.mailers.smtp.host', 'smtp.gmail.com'),
+                'type' => 'text',
+                'label' => 'Host SMTP',
+                'description' => 'Alamat host server SMTP untuk pengiriman email platform.',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => 'email.smtp_port',
+                'group' => 'email',
+                'value' => (string) config('mail.mailers.smtp.port', '587'),
+                'type' => 'number',
+                'label' => 'Port SMTP',
+                'description' => 'Port koneksi SMTP (587 untuk TLS, 465 untuk SSL, atau 25).',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+            [
+                'key' => 'email.smtp_encryption',
+                'group' => 'email',
+                'value' => config('mail.mailers.smtp.encryption', 'tls') ?: 'tls',
+                'type' => 'select',
+                'label' => 'Enkripsi SMTP',
+                'description' => 'Protokol enkripsi koneksi SMTP (TLS, SSL, atau none).',
+                'is_public' => false,
+                'sort_order' => 3,
+            ],
+            [
+                'key' => 'email.smtp_username',
+                'group' => 'email',
+                'value' => config('mail.mailers.smtp.username', ''),
+                'type' => 'text',
+                'label' => 'Username SMTP',
+                'description' => 'Username atau API Key untuk login ke server SMTP.',
+                'is_public' => false,
+                'sort_order' => 4,
+            ],
+            [
+                'key' => 'email.smtp_password',
+                'group' => 'email',
+                'value' => config('mail.mailers.smtp.password', ''),
+                'type' => 'text',
+                'label' => 'Password SMTP',
+                'description' => 'Password atau API Secret Key untuk login ke server SMTP.',
+                'is_public' => false,
+                'sort_order' => 5,
+            ],
             [
                 'key' => 'email.from_address',
                 'group' => 'email',
                 'value' => config('mail.from.address', 'noreply@seruwit.com'),
                 'type' => 'email',
-                'label' => 'Email Pengirim Platform',
-                'description' => 'Email default yang digunakan untuk notifikasi sistem dan transaksi central.',
+                'label' => 'Alamat Email Pengirim',
+                'description' => 'Alamat email yang tertera sebagai pengirim resmi notifikasi platform.',
                 'is_public' => false,
-                'sort_order' => 1,
+                'sort_order' => 6,
             ],
             [
                 'key' => 'email.from_name',
@@ -219,9 +311,9 @@ class PlatformSetting extends Model
                 'value' => config('mail.from.name', 'Seruwit Platform'),
                 'type' => 'text',
                 'label' => 'Nama Pengirim Platform',
-                'description' => 'Nama pengirim yang tertera pada email keluar sistem central.',
+                'description' => 'Nama pengirim yang tampil pada inbox email penerima.',
                 'is_public' => false,
-                'sort_order' => 2,
+                'sort_order' => 7,
             ],
 
             // SECURITY (Central)
@@ -270,7 +362,7 @@ class PlatformSetting extends Model
                     $def
                 );
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             // Gracefully ignore if database connection is unavailable during boot
         }
     }

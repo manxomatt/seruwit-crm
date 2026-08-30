@@ -9,6 +9,7 @@ use App\Support\SystemMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -50,11 +51,15 @@ class PlatformSettingController extends Controller
 
         $groups = PlatformSetting::orderedVisibleGroups();
 
+        // Check if SMTP password exists in DB
+        $hasSmtpPassword = filled(PlatformSetting::getValue('email.smtp_password'));
+
         return Inertia::render('Module/PlatformSettings/Group', [
             'groupSettings' => $settings,
             'groups' => $groups,
             'currentGroup' => $group,
             'systemModes' => SystemMode::values(),
+            'hasSmtpPassword' => $hasSmtpPassword,
         ]);
     }
 
@@ -82,11 +87,54 @@ class PlatformSettingController extends Controller
                 ]);
             }
 
+            // Keep existing password if blank is submitted
+            if ($setting->key === 'email.smtp_password' && blank($value) && filled($setting->value)) {
+                continue;
+            }
+
             $setting->update(['value' => $value]);
         }
 
+        // Dynamically re-apply updated mail configuration
+        PlatformSetting::applyCentralMailConfig();
+
         return redirect()->route('module.platform-settings.group', $data['group'])
             ->with('success', __('settings.messages.bulk_updated'));
+    }
+
+    /**
+     * Send a test email to verify central SMTP configuration.
+     */
+    public function testEmail(Request $request): RedirectResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $data = $request->validate([
+            'recipient' => ['required', 'email'],
+        ]);
+
+        try {
+            PlatformSetting::applyCentralMailConfig();
+
+            $appName = config('app.name', 'Seruwit');
+            $recipient = $data['recipient'];
+
+            Mail::raw(
+                __('settings.platform.email.test_email_body', [
+                    'app' => $appName,
+                    'time' => now()->toDateTimeString(),
+                    'user' => $request->user()->name,
+                ]),
+                function ($message) use ($recipient, $appName) {
+                    $message->to($recipient)
+                        ->subject(__('settings.platform.email.test_email_subject', ['app' => $appName]));
+                }
+            );
+
+            return back()->with('success', __('settings.platform.email.test_email_sent', ['email' => $recipient]));
+        } catch (\Throwable $e) {
+            return back()->with('error', __('settings.platform.email.test_email_failed', ['error' => $e->getMessage()]));
+        }
     }
 
     /**
@@ -120,6 +168,8 @@ class PlatformSettingController extends Controller
         if (isset($data['pause_during_maintenance_enabled'])) {
             PlatformSetting::setValue(PlatformSetting::KEY_PAUSE_DURING_MAINTENANCE, $data['pause_during_maintenance_enabled'] ? '1' : '0');
         }
+
+        PlatformSetting::applyCentralMailConfig();
 
         return back()->with('success', __('settings.messages.bulk_updated'));
     }

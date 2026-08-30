@@ -101,6 +101,7 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/platform-settings', [PlatformSettingController::class, 'index'])->name('platform-settings.index');
         Route::post('/platform-settings/bulk-update', [PlatformSettingController::class, 'bulkUpdate'])->name('platform-settings.bulk-update');
+        Route::post('/platform-settings/test-email', [PlatformSettingController::class, 'testEmail'])->name('platform-settings.test-email');
         Route::patch('/platform-settings', [PlatformSettingController::class, 'update'])->name('platform-settings.update');
         Route::get('/platform-settings/{group}', [PlatformSettingController::class, 'group'])->name('platform-settings.group');
     });

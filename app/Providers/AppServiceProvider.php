@@ -74,6 +74,8 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDevelopmentMailGate();
         $this->registerDomainEventListeners();
 
+        \App\Models\PlatformSetting::applyCentralMailConfig();
+
         Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
 
         // Installing a module reshapes the whole workspace, so it stays with the
