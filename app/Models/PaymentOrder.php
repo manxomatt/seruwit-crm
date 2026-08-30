@@ -159,7 +159,11 @@ class PaymentOrder extends Model
             return null;
         }
 
-        return Storage::disk('payment_proofs')->url($this->transfer_proof_path);
+        try {
+            return route('module.payment-orders.proof', $this->id);
+        } catch (\Throwable) {
+            return Storage::disk('payment_proofs')->url($this->transfer_proof_path);
+        }
     }
 
     public static function generateUniqueCode(): int

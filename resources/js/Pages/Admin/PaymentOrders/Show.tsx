@@ -171,9 +171,10 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
         });
     };
 
-    const isImage = (url: string | null): boolean => {
-        if (!url) return false;
-        return /\.(jpe?g|png|gif|webp|bmp)(\?|$)/i.test(url);
+    const isImage = (url: string | null, path?: string | null): boolean => {
+        const target = path || url;
+        if (!target) return false;
+        return /\.(jpe?g|png|gif|webp|bmp)(\?|$)/i.test(target);
     };
 
     const pageTitle = t('payment_orders.show.page_title').replace(':id', String(paymentOrder.id));
@@ -433,7 +434,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
 
                             {paymentOrder.proof_url ? (
                                 <div className="space-y-4">
-                                    {isImage(paymentOrder.proof_url) ? (
+                                    {isImage(paymentOrder.proof_url, paymentOrder.transfer_proof_path) ? (
                                         <div className="relative group cursor-zoom-in rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800" onClick={() => setProofExpanded(true)}>
                                             <img
                                                 src={paymentOrder.proof_url}

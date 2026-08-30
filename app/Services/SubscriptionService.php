@@ -406,9 +406,31 @@ class SubscriptionService
             ]);
 
             $tenant = Tenant::on($central)->whereKey($paymentOrder->tenant_id)->firstOrFail();
+            $fromVehicles = (int) ($paymentOrder->upgrade_from_vehicles ?? 0);
+            $targetVehicles = (int) $paymentOrder->subscribed_vehicles;
+            $added = max(0, $targetVehicles - $fromVehicles);
+            if ($added === 0 && $fromVehicles === 0) {
+                $added = $targetVehicles;
+            }
+
+            $newCredits = (int) ($tenant->unit_capacity_credits ?? 0) + $added;
+
             $tenant->update([
                 'max_vehicles_allowed' => $paymentOrder->subscribed_vehicles,
+                'unit_capacity_credits' => $newCredits,
             ]);
+
+            if ($added > 0) {
+                \App\Models\TenantCapacityTransaction::on($central)->create([
+                    'tenant_id' => $tenant->getTenantKey(),
+                    'amount' => $added,
+                    'balance_after' => $newCredits,
+                    'type' => \App\Models\TenantCapacityTransaction::TYPE_TOPUP,
+                    'description' => "Penambahan kuota unit dari upgrade order #{$paymentOrder->id} (+{$added} unit)",
+                    'reference_id' => (string) $paymentOrder->id,
+                    'created_by_id' => $paymentOrder->confirmed_by,
+                ]);
+            }
 
             return $subscription->fresh();
         });

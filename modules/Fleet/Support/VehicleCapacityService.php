@@ -25,9 +25,33 @@ class VehicleCapacityService
 
         $centralConnection = config('tenancy.database.central_connection');
 
-        $credits = Tenant::on($centralConnection)
+        /** @var Tenant|null $centralTenant */
+        $centralTenant = Tenant::on($centralConnection)
             ->whereKey($tenantInstance->getTenantKey())
-            ->value('unit_capacity_credits');
+            ->first();
+
+        if (! $centralTenant) {
+            return 0;
+        }
+
+        $credits = $centralTenant->unit_capacity_credits;
+
+        // Auto-initialize legacy/existing tenants that purchased a quota before the credits column was introduced:
+        if ($credits === null || ($credits === 0 && ! TenantCapacityTransaction::on($centralConnection)->where('tenant_id', $centralTenant->getTenantKey())->exists())) {
+            $initialCredits = (int) ($centralTenant->max_vehicles_allowed ?? 0);
+            if ($initialCredits > 0) {
+                $centralTenant->update(['unit_capacity_credits' => $initialCredits]);
+                TenantCapacityTransaction::on($centralConnection)->create([
+                    'tenant_id' => $centralTenant->getTenantKey(),
+                    'amount' => $initialCredits,
+                    'balance_after' => $initialCredits,
+                    'type' => TenantCapacityTransaction::TYPE_TOPUP,
+                    'description' => "Inisialisasi saldo kuota armada awal ({$initialCredits} unit) dari paket langganan aktif",
+                ]);
+
+                return $initialCredits;
+            }
+        }
 
         return (int) ($credits ?? 0);
     }

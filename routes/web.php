@@ -320,6 +320,7 @@ Route::domain($centralDomain)
 
         Route::get('/payment-orders', [PaymentOrderController::class, 'index'])->name('payment-orders.index');
         Route::get('/payment-orders/{paymentOrder}', [PaymentOrderController::class, 'show'])->name('payment-orders.show');
+        Route::get('/payment-orders/{paymentOrder}/proof', [PaymentOrderController::class, 'proof'])->name('payment-orders.proof');
         Route::post('/payment-orders/{paymentOrder}/confirm', [PaymentOrderController::class, 'confirm'])->name('payment-orders.confirm');
         Route::post('/payment-orders/{paymentOrder}/reject', [PaymentOrderController::class, 'reject'])->name('payment-orders.reject');
         Route::post('/webhooks/payment-orders/{paymentOrder}/confirm', [WebhookController::class, 'confirmPaymentManual'])->name('webhooks.payment-orders.confirm');
