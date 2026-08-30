@@ -201,6 +201,10 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     public function getIsOnTrialAttribute(): bool
     {
+        if ((bool) ($this->is_trial_expired ?? false)) {
+            return false;
+        }
+
         $plan = $this->planModel();
         if ($plan && ! $plan->is_trial && ((float) $plan->price <= 0 || (int) ($plan->trial_days ?? 0) <= 0)) {
             return false;
