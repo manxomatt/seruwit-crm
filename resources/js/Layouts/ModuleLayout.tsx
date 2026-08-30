@@ -333,20 +333,21 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'content', tier: 'content', also: ['media'] },
     // { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
     { titleKey: 'administration', modules: ['roles', 'users', 'modules', 'settings', 'subscription'] },
-    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'payment-orders', 'module-registry'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'payment-orders', 'platform-settings', 'module-registry'] },
 ];
 
 const CENTRAL_MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'finance', modules: ['accounting', 'payment-orders'] },
     { titleKey: 'content', modules: ['pages', 'posts', 'carousels', 'media'] },
     { titleKey: 'administration', modules: ['users', 'roles', 'settings'] },
-    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'module-registry', 'central-modules'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'subscription-tiers', 'platform-settings', 'module-registry', 'central-modules'] },
 ];
 
 const CENTRAL_ALLOWED_MODULES = [
     'accounting', 'payment-orders', 'pages', 'posts',
     'carousels', 'media', 'tenants', 'plans',
-    'module-registry', 'settings', 'users', 'roles',
+    'subscription-tiers', 'platform-settings', 'module-registry', 'central-modules',
+    'settings', 'users', 'roles',
 ];
 
 // Module to route mapping - use module routes
@@ -383,6 +384,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'canvassing': { route: 'module.canvassing.index', routePattern: 'module.canvassing.*' },
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
     'settings': { route: 'module.settings.index', routePattern: 'module.settings.*' },
+    'platform-settings': { route: 'module.platform-settings.index', routePattern: 'module.platform-settings.*' },
     'subscription': { route: 'module.subscription.index', routePattern: 'module.subscription.*' },
     'subscription-tiers': { route: 'module.subscription-tiers.index', routePattern: 'module.subscription-tiers.*' },
     'users': { route: 'module.users.index', routePattern: 'module.users.*' },
@@ -492,6 +494,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'canvassing': <CanvassingIcon />,
     'analytics': <AnalyticsIcon />,
     'settings': <SettingsIcon />,
+    'platform-settings': <SettingsIcon />,
     'subscription': <SubscriptionIcon />,
     'subscription-tiers': <SubscriptionIcon />,
     'users': <UsersIcon />,

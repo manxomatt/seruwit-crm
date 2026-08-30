@@ -106,7 +106,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());
 
         // Platform-global settings (platform_settings) — central admin only.
-        Gate::define('manage-platform-settings', fn (User $user): bool => $user->isAdmin());
+        Gate::define('manage-platform-settings', fn (User $user): bool => ! tenancy()->initialized && $user->isAdmin());
     }
 
     /**
