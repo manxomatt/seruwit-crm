@@ -54,6 +54,10 @@ class AppServiceProvider extends ServiceProvider
             \Modules\Fleet\AI\Contracts\FleetBaseAiGeneratorServiceInterface::class,
             \Modules\Fleet\AI\Services\GeminiFleetBaseAiGeneratorService::class
         );
+        $this->app->bind(
+            \Modules\Rental\AI\Contracts\RentalRateAiGeneratorServiceInterface::class,
+            \Modules\Rental\AI\Services\GeminiRentalRateAiGeneratorService::class
+        );
     }
 
     /**

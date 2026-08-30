@@ -119,6 +119,40 @@ class RentalRateController extends Controller
         ]);
     }
 
+    public function aiGenerate(Request $request, \Modules\Rental\AI\Contracts\RentalRateAiGeneratorServiceInterface $generator): JsonResponse
+    {
+        $validated = $request->validate([
+            'text' => ['required', 'string', 'max:2000'],
+            'vehicles' => ['nullable', 'array'],
+            'rentalClasses' => ['nullable', 'array'],
+        ]);
+
+        $vehicles = $validated['vehicles'] ?? Vehicle::query()
+            ->where('status', Vehicle::STATUS_ACTIVE)
+            ->get(['id', 'name', 'plate_number', 'type'])
+            ->toArray();
+
+        $rentalClasses = $validated['rentalClasses'] ?? collect(VehicleRentalClass::values())
+            ->map(fn (string $value): array => [
+                'value' => $value,
+                'label' => VehicleRentalClass::label($value),
+            ])
+            ->values()
+            ->all();
+
+        $result = $generator->generateFromText(
+            $validated['text'],
+            $vehicles,
+            $rentalClasses,
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+            'message' => 'Data formulir tarif berhasil dihasilkan oleh AI.',
+        ]);
+    }
+
     public function store(StoreRentalRateRequest $request): RedirectResponse
     {
         $data = $request->validated();

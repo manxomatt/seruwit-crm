@@ -5,9 +5,8 @@ import { Head, usePage } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import { useTrans } from '@/hooks/useTrans';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { Dialog, DialogPanel } from '@headlessui/react';
 import RentalNav from '../../../../RentalNav';
-import AiDynamicPricingPanel from '../../../../Components/AiDynamicPricingPanel';
+import RentalRateAiGenerateModal, { type ExtractedRateData } from '../../../../Components/RentalRateAiGenerateModal';
 import RateForm from './RateForm';
 import {
     PERIOD_TYPES,
@@ -57,14 +56,11 @@ export default function FormPage({
     vehicles,
     rentalClasses,
     mode,
-    aiPricingOptimizerEnabled = true,
-    aiPricingAnalyzeUrl,
-    aiPricingApplyUrl,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-    const hasAiPanel = Boolean(aiPricingOptimizerEnabled && aiPricingAnalyzeUrl && aiPricingApplyUrl);
+    const [autoFillSuccessMessage, setAutoFillSuccessMessage] = useState<string | null>(null);
 
     const formLabels: TierFormLabels = {
         rateName: t('rental.fields.rate_name'),
@@ -129,6 +125,38 @@ export default function FormPage({
         flash?: { success?: string; error?: string; warning?: string };
     };
 
+    const handleApplyAiData = (extracted: ExtractedRateData) => {
+        form.setData({
+            ...form.data,
+            name: extracted.name || form.data.name,
+            period_type: (extracted.period_type || form.data.period_type) as any,
+            rate_per_period: extracted.rate_per_period !== undefined ? String(extracted.rate_per_period) : form.data.rate_per_period,
+            deposit_amount: extracted.deposit_amount !== undefined ? String(extracted.deposit_amount) : form.data.deposit_amount,
+            km_limit_per_period: extracted.km_limit_per_period !== undefined && extracted.km_limit_per_period !== null ? String(extracted.km_limit_per_period) : '',
+            excess_km_rate: extracted.excess_km_rate !== undefined ? String(extracted.excess_km_rate) : '',
+            late_fee_per_day: extracted.late_fee_per_day !== undefined ? String(extracted.late_fee_per_day) : '',
+            priority: extracted.priority !== undefined ? extracted.priority : form.data.priority,
+            vehicle_id: extracted.vehicle_id ? String(extracted.vehicle_id) : '',
+            rental_class: extracted.rental_class ? String(extracted.rental_class) : '',
+            is_active: extracted.is_active ?? true,
+            tiers: extracted.tiers && extracted.tiers.length > 0
+                ? extracted.tiers.map((t) => ({
+                    id: null,
+                    tier_type: t.tier_type,
+                    min_threshold: String(t.min_threshold),
+                    max_threshold: t.max_threshold !== null && t.max_threshold !== undefined ? String(t.max_threshold) : '',
+                    modifier_type: t.modifier_type,
+                    modifier_value: String(t.modifier_value),
+                    priority: t.priority ?? 0,
+                    is_active: t.is_active ?? true,
+                }))
+                : form.data.tiers,
+        });
+
+        setAutoFillSuccessMessage('✨ Data tarif dan tier diskon bertingkat berhasil diisi otomatis oleh AI!');
+        setTimeout(() => setAutoFillSuccessMessage(null), 6000);
+    };
+
     const submitHandler: FormEventHandler = (e) => {
         e.preventDefault();
         if (mode === 'create') {
@@ -161,19 +189,17 @@ export default function FormPage({
                     subtitle={mode === 'create' ? 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.' : 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.'}
                     actions={
                         <div className="flex items-center gap-2">
-                            {hasAiPanel && (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsAiModalOpen(true)}
-                                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50/70 px-4 py-2 text-xs font-black text-indigo-700 shadow-2xs hover:border-indigo-300 hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 dark:border-indigo-900/60 dark:bg-slate-800 dark:from-slate-800 dark:to-indigo-950/40 dark:text-indigo-300 dark:hover:bg-slate-700 transition"
-                                >
-                                    <span className="text-sm">⚡</span>
-                                    <span>{t('rental.ai.btn_modal_trigger', undefined, 'AI Smart Dynamic Pricing')}</span>
-                                    <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-2xs">
-                                        Gemini
-                                    </span>
-                                </button>
-                            )}
+                            <button
+                                type="button"
+                                onClick={() => setIsAiModalOpen(true)}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50/70 px-4 py-2 text-xs font-black text-indigo-700 shadow-2xs hover:border-indigo-300 hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 dark:border-indigo-900/60 dark:bg-slate-800 dark:from-slate-800 dark:to-indigo-950/40 dark:text-indigo-300 dark:hover:bg-slate-700 transition"
+                            >
+                                <span className="text-sm">✨</span>
+                                <span>{t('rental.ai.btn_ai_autofill', undefined, 'AI Auto-Fill Tarif')}</span>
+                                <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-2xs">
+                                    Gemini
+                                </span>
+                            </button>
                             <Link
                                 href={prefixedRoute('rental.rates.index')}
                                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
@@ -189,6 +215,24 @@ export default function FormPage({
             <RentalNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-5">
+                {autoFillSuccessMessage && (
+                    <div className="flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-xs font-bold text-emerald-800 shadow-sm dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">
+                                ✓
+                            </span>
+                            <span>{autoFillSuccessMessage}</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setAutoFillSuccessMessage(null)}
+                            className="text-emerald-700 hover:text-emerald-900 dark:text-emerald-300"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
                 {flash?.success && (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 shadow-2xs dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                         ✓ {flash.success}
@@ -234,26 +278,14 @@ export default function FormPage({
                 </div>
             </div>
 
-            {/* Modal AI Smart Dynamic Pricing & Fleet Optimizer */}
-            {hasAiPanel && (
-                <Dialog
-                    open={isAiModalOpen}
-                    onClose={() => setIsAiModalOpen(false)}
-                    className="relative z-50"
-                >
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" aria-hidden="true" />
-                    <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-                        <DialogPanel className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-8 overflow-hidden">
-                            <AiDynamicPricingPanel
-                                analyzeUrl={aiPricingAnalyzeUrl!}
-                                applyUrl={aiPricingApplyUrl!}
-                                canUpdate={true}
-                                onClose={() => setIsAiModalOpen(false)}
-                            />
-                        </DialogPanel>
-                    </div>
-                </Dialog>
-            )}
+            {/* Modal AI Auto-Fill Form Tarif Rental */}
+            <RentalRateAiGenerateModal
+                isOpen={isAiModalOpen}
+                onClose={() => setIsAiModalOpen(false)}
+                vehicles={vehicles}
+                rentalClasses={rentalClasses}
+                onApply={handleApplyAiData}
+            />
         </DynamicLayout>
     );
 }
