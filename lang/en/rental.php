@@ -989,6 +989,7 @@ return [
         'dynamic_pricing_subtitle' => 'Real-time fleet occupancy analysis, weekend surge trends, and rental revenue optimization.',
         'btn_analyze_pricing' => 'Run AI Analysis',
         'btn_reanalyze_pricing' => 'Re-analyze AI',
+        'btn_modal_trigger' => 'AI Smart Dynamic Pricing',
         'analyzing_pricing' => 'Analyzing Fleet Occupancy…',
         'pricing_analysis_success' => 'Dynamic pricing recommendations and fleet metrics generated successfully.',
     ],

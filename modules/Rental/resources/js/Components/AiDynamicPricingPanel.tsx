@@ -62,12 +62,14 @@ interface Props {
     analyzeUrl: string;
     applyUrl: string;
     canUpdate?: boolean;
+    onClose?: () => void;
 }
 
 export default function AiDynamicPricingPanel({
     analyzeUrl,
     applyUrl,
     canUpdate = true,
+    onClose,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const [loading, setLoading] = useState(false);
@@ -143,34 +145,34 @@ export default function AiDynamicPricingPanel({
     };
 
     return (
-        <div className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 shadow-sm transition dark:border-indigo-900/60 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/30">
+        <div className="flex flex-col h-full max-h-[85vh] bg-gradient-to-br from-indigo-50/40 via-white to-purple-50/30 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/20">
             {/* Header */}
-            <div className="border-b border-indigo-100/80 p-5 dark:border-indigo-900/40 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 px-6 py-4 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-lg font-bold text-white shadow-md shadow-indigo-500/20">
                         ⚡
                     </div>
                     <div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                {t('rental.ai.dynamic_pricing_title', undefined, 'AI Dynamic Pricing')}
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                {t('rental.ai.dynamic_pricing_title', undefined, 'AI Smart Dynamic Pricing & Fleet Optimizer')}
                             </h3>
-                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
-                                Gemini
+                            <span className="rounded-full bg-gradient-to-r from-indigo-100 to-purple-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800 dark:from-indigo-950/80 dark:to-purple-950/80 dark:text-indigo-300">
+                                Gemini 1.5 Flash
                             </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
-                            {t('rental.ai.dynamic_pricing_subtitle', undefined, 'Analisis okupansi armada riil & optimasi tarif sewa.')}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {t('rental.ai.dynamic_pricing_subtitle', undefined, 'Analisis okupansi armada riil, pola lonjakan akhir pekan, dan optimasi pendapatan sewa.')}
                         </p>
                     </div>
                 </div>
 
-                <div>
+                <div className="flex items-center gap-2.5">
                     <button
                         type="button"
                         onClick={handleRunAnalysis}
                         disabled={loading}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
                     >
                         {loading ? (
                             <>
@@ -187,251 +189,315 @@ export default function AiDynamicPricingPanel({
                             </>
                         )}
                     </button>
+
+                    {onClose && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-2xl border border-slate-200 bg-white p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:hover:text-white transition"
+                            title="Tutup Modal"
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Error or Success Alert */}
-            {error && (
-                <div className="mx-5 mt-4 rounded-2xl border border-rose-200 bg-rose-50/90 p-3 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/50 dark:text-rose-300">
-                    ⚠️ {error}
-                </div>
-            )}
-            {appliedMessage && (
-                <div className="mx-5 mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-3 text-xs font-semibold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-300">
-                    {appliedMessage}
-                </div>
-            )}
-
-            {/* Initial Empty State */}
-            {!pricingData && !loading && (
-                <div className="p-5 text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-xl dark:bg-indigo-900/40">
-                        📈
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Alerts */}
+                {error && (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/50 dark:text-rose-300">
+                        ⚠️ {error}
                     </div>
-                    <h4 className="mt-3 text-xs font-bold text-slate-800 dark:text-slate-200">
-                        Optimalkan Tarif Rental
-                    </h4>
-                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                        Klik <strong>"Jalankan Analisis AI"</strong> di atas untuk memindai riwayat booking 30 hari dan memperoleh saran surge pricing atau promo diskon unit menganggur.
-                    </p>
-                </div>
-            )}
+                )}
+                {appliedMessage && (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-xs font-semibold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        {appliedMessage}
+                    </div>
+                )}
 
-            {/* Analyzed Results */}
-            {pricingData && (
-                <div className="space-y-4 p-5">
-                    {/* KPI Metrics Stacks */}
-                    <div className="space-y-3">
-                        {/* Utilization */}
-                        <div className="rounded-2xl border border-indigo-100 bg-white/95 p-3.5 shadow-2xs dark:border-indigo-900/40 dark:bg-slate-800/80">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                    📊 Utilisasi Armada
-                                </span>
-                                <span className="text-sm font-black text-slate-900 dark:text-white">
-                                    {pricingData.fleet_utilization_percent}%
-                                </span>
-                            </div>
-                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-                                <div
-                                    className={`h-full rounded-full ${
-                                        pricingData.fleet_utilization_percent >= 70
-                                            ? 'bg-emerald-500'
-                                            : pricingData.fleet_utilization_percent >= 45
-                                              ? 'bg-indigo-500'
-                                              : 'bg-amber-500'
-                                    }`}
-                                    style={{ width: `${Math.min(100, pricingData.fleet_utilization_percent)}%` }}
-                                />
-                            </div>
-                            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                                <span>Hari Kerja: {pricingData.metrics.weekday_utilization_percent}%</span>
-                                <span>Weekend: {pricingData.metrics.weekend_utilization_percent}%</span>
-                            </div>
+                {/* Empty State */}
+                {!pricingData && !loading && (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-100 text-3xl dark:bg-indigo-900/40 shadow-sm">
+                            📈
                         </div>
+                        <h4 className="mt-4 text-base font-black text-slate-900 dark:text-white">
+                            Siap Mengoptimalkan Tarif Rental & Okupansi Armada
+                        </h4>
+                        <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                            Mesin AI akan memindai riwayat pemesanan 30 hari terakhir, memetakan lonjakan permintaan akhir pekan, serta mendeteksi unit yang sering menganggur untuk memberikan strategi kenaikan omzet dan rekomendasi harga optimal.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleRunAnalysis}
+                            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-700"
+                        >
+                            <span>✨</span>
+                            <span>Mulai Analisis AI Sekarang</span>
+                        </button>
+                    </div>
+                )}
 
-                        {/* Revenue Uplift */}
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/30">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                                    🚀 Potensi Kenaikan Omzet
-                                </span>
-                                <span className="text-base font-black text-emerald-700 dark:text-emerald-400">
-                                    +{pricingData.estimated_revenue_uplift_percent}%
-                                </span>
+                {/* Results View */}
+                {pricingData && (
+                    <div className="space-y-6">
+                        {/* KPI Metrics Row */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            {/* Utilization */}
+                            <div className="rounded-2xl border border-indigo-100 bg-white/95 p-4 shadow-xs dark:border-indigo-900/40 dark:bg-slate-800/90">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        📊 Utilisasi Armada
+                                    </span>
+                                    <span className="text-lg font-black text-slate-900 dark:text-white">
+                                        {pricingData.fleet_utilization_percent}%
+                                    </span>
+                                </div>
+                                <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-500 ${
+                                            pricingData.fleet_utilization_percent >= 70
+                                                ? 'bg-emerald-500'
+                                                : pricingData.fleet_utilization_percent >= 45
+                                                  ? 'bg-indigo-500'
+                                                  : 'bg-amber-500'
+                                        }`}
+                                        style={{ width: `${Math.min(100, pricingData.fleet_utilization_percent)}%` }}
+                                    />
+                                </div>
+                                <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                    <span>Hari Kerja: <strong>{pricingData.metrics.weekday_utilization_percent}%</strong></span>
+                                    <span>Weekend: <strong>{pricingData.metrics.weekend_utilization_percent}%</strong></span>
+                                </div>
                             </div>
-                            <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400">
-                                Berdasarkan penyesuaian tarif lonjakan akhir pekan & promo unit idle.
-                            </p>
-                        </div>
 
-                        {/* Fleet Active Count */}
-                        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-800/80 flex items-center justify-between">
-                            <div>
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                    🚗 Total Armada
-                                </span>
-                                <p className="text-sm font-black text-slate-900 dark:text-white">
-                                    {pricingData.metrics.total_vehicles} Unit
+                            {/* Revenue Uplift */}
+                            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-xs dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                                        🚀 Potensi Kenaikan Omzet
+                                    </span>
+                                    <span className="text-xl font-black text-emerald-700 dark:text-emerald-400">
+                                        +{pricingData.estimated_revenue_uplift_percent}%
+                                    </span>
+                                </div>
+                                <p className="mt-2 text-xs leading-relaxed text-emerald-700 dark:text-emerald-400">
+                                    Kombinasi kenaikan tarif lonjakan akhir pekan & promosi unit idle untuk meningkatkan utilisasi.
                                 </p>
                             </div>
-                            {pricingData.idle_vehicles && pricingData.idle_vehicles.length > 0 ? (
-                                <span className="rounded-xl bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-                                    {pricingData.idle_vehicles.length} Menganggur
-                                </span>
-                            ) : (
-                                <span className="rounded-xl bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
-                                    Okupansi Baik
-                                </span>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* AI Strategy Narrative Box */}
-                    {pricingData.summary && (
-                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-3.5 dark:border-indigo-900/40 dark:bg-indigo-950/30">
-                            <div className="flex items-start gap-2">
-                                <span className="text-sm">💡</span>
-                                <div>
-                                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-indigo-950 dark:text-indigo-200">
-                                        Strategi AI
-                                    </h4>
-                                    <p className="mt-1 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                                        {pricingData.summary}
-                                    </p>
+                            {/* Fleet Breakdown */}
+                            <div className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-xs dark:border-slate-800 dark:bg-slate-800/90 flex flex-col justify-between">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        🚗 Total Armada
+                                    </span>
+                                    <span className="text-lg font-black text-slate-900 dark:text-white">
+                                        {pricingData.metrics.total_vehicles} Unit
+                                    </span>
+                                </div>
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="rounded-xl bg-indigo-100 px-2.5 py-1 text-[11px] font-bold text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                                        {pricingData.metrics.booked_vehicles_count} Tersewa / Aktif
+                                    </span>
+                                    {pricingData.idle_vehicles && pricingData.idle_vehicles.length > 0 ? (
+                                        <span className="rounded-xl bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                            {pricingData.idle_vehicles.length} Menganggur
+                                        </span>
+                                    ) : (
+                                        <span className="rounded-xl bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                            Semua Terutilisasi
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Recommendations List */}
-                    <div className="space-y-3">
-                        <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Rekomendasi Tarif ({pricingData.recommendations.length})
-                        </h4>
-
-                        <div className="space-y-3">
-                            {pricingData.recommendations.map((rec) => {
-                                const isSurge = rec.type === 'surge' || rec.adjustment_percent > 0;
-                                const isApplying = applyingId === rec.id;
-
-                                return (
-                                    <div
-                                        key={rec.id}
-                                        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs transition hover:shadow-sm dark:border-slate-800 dark:bg-slate-800/90 space-y-2.5"
-                                    >
-                                        <div className="flex items-center justify-between gap-1.5">
-                                            <span
-                                                className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${
-                                                    isSurge
-                                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300'
-                                                        : 'bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300'
-                                                }`}
-                                            >
-                                                {isSurge ? '🚀 Surge' : '🏷️ Promo'}
-                                            </span>
-                                            <span className="text-[10px] font-semibold text-slate-400">
-                                                Akurasi: {Math.round(rec.confidence * 100)}%
-                                            </span>
-                                        </div>
-
-                                        <div>
-                                            <h5 className="text-xs font-bold text-slate-900 dark:text-white">
-                                                {rec.title}
-                                            </h5>
-                                            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
-                                                {rec.reason}
-                                            </p>
-                                        </div>
-
-                                        {/* Price Comparison */}
-                                        <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2 text-xs dark:bg-slate-900/60">
-                                            <div>
-                                                <span className="text-[9px] uppercase font-bold text-slate-400 block">Katalog</span>
-                                                <span className="font-bold text-slate-500 line-through">
-                                                    {formatMoney(rec.current_rate)}
-                                                </span>
-                                            </div>
-                                            <span className="text-slate-300">→</span>
-                                            <div>
-                                                <span className="text-[9px] uppercase font-bold text-indigo-600 dark:text-indigo-400 block">Saran AI</span>
-                                                <span className="font-black text-indigo-600 dark:text-indigo-400">
-                                                    {formatMoney(rec.suggested_rate)}
-                                                </span>
-                                            </div>
-                                            <span
-                                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                                    isSurge
-                                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
-                                                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
-                                                }`}
-                                            >
-                                                {rec.adjustment_percent > 0 ? `+${rec.adjustment_percent}%` : `${rec.adjustment_percent}%`}
-                                            </span>
-                                        </div>
-
-                                        {canUpdate && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleApplyRecommendation(rec)}
-                                                disabled={isApplying}
-                                                className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow transition hover:bg-indigo-700 disabled:opacity-50"
-                                            >
-                                                {isApplying ? (
-                                                    <>
-                                                        <svg className="h-3.5 w-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                        </svg>
-                                                        <span>Menerapkan…</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span>⚡</span>
-                                                        <span>Terapkan Tarif Ini</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        )}
+                        {/* AI Strategic Narrative Callout */}
+                        {pricingData.summary && (
+                            <div className="rounded-3xl border border-indigo-200/90 bg-indigo-50/70 p-4.5 dark:border-indigo-900/50 dark:bg-indigo-950/30">
+                                <div className="flex items-start gap-3">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-200/80 text-lg dark:bg-indigo-900/80">
+                                        💡
+                                    </span>
+                                    <div>
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-indigo-200">
+                                            Ringkasan Strategi AI Gemini
+                                        </h4>
+                                        <p className="mt-1 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                                            {pricingData.summary}
+                                        </p>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Recommendations & Idle Vehicles Split Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            {/* Left: Recommendations */}
+                            <div className="lg:col-span-7 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                                        ⭐ Rekomendasi Penyesuaian Tarif ({pricingData.recommendations.length})
+                                    </h4>
+                                    <span className="text-[11px] text-slate-400">
+                                        Klik "Terapkan" untuk langsung memperbarui tarif
+                                    </span>
+                                </div>
+
+                                {pricingData.recommendations.length === 0 ? (
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-850">
+                                        Tidak ada rekomendasi penyesuaian baru saat ini. Tarif eksisting sudah optimal.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {pricingData.recommendations.map((rec) => {
+                                            const isSurge = rec.type === 'surge' || rec.adjustment_percent > 0;
+                                            const isApplying = applyingId === rec.id;
+
+                                            return (
+                                                <div
+                                                    key={rec.id}
+                                                    className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs transition hover:shadow-sm dark:border-slate-800 dark:bg-slate-800/90 space-y-3"
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span
+                                                            className={`rounded-lg px-2.5 py-0.5 text-[11px] font-bold ${
+                                                                isSurge
+                                                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300'
+                                                                    : 'bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300'
+                                                            }`}
+                                                        >
+                                                            {isSurge ? '🚀 Surge Pricing' : '🏷️ Promo Okupansi'}
+                                                        </span>
+                                                        <span className="text-[11px] font-semibold text-slate-400">
+                                                            Tingkat Akurasi: {Math.round(rec.confidence * 100)}%
+                                                        </span>
+                                                    </div>
+
+                                                    <div>
+                                                        <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                                                            {rec.title}
+                                                        </h5>
+                                                        <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                                                            {rec.reason}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Price Comparison & Apply Action */}
+                                                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-900/60">
+                                                        <div className="flex items-center gap-3">
+                                                            <div>
+                                                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Katalog Sekarang</span>
+                                                                <span className="font-bold text-slate-500 line-through text-xs">
+                                                                    {formatMoney(rec.current_rate)}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-slate-300 text-sm">→</span>
+                                                            <div>
+                                                                <span className="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 block">Rekomendasi AI</span>
+                                                                <span className="font-black text-indigo-600 dark:text-indigo-400 text-sm font-mono">
+                                                                    {formatMoney(rec.suggested_rate)}
+                                                                </span>
+                                                            </div>
+                                                            <span
+                                                                className={`rounded-full px-2.5 py-0.5 text-xs font-black ${
+                                                                    rec.adjustment_percent > 0
+                                                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+                                                                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                                                                }`}
+                                                            >
+                                                                {rec.adjustment_percent > 0 ? `+${rec.adjustment_percent}%` : `${rec.adjustment_percent}%`}
+                                                            </span>
+                                                        </div>
+
+                                                        {canUpdate && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleApplyRecommendation(rec)}
+                                                                disabled={isApplying}
+                                                                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
+                                                            >
+                                                                {isApplying ? (
+                                                                    <>
+                                                                        <svg className="h-3.5 w-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                                        </svg>
+                                                                        <span>Menerapkan…</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <span>⚡</span>
+                                                                        <span>Terapkan Tarif Ini</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right: Idle Vehicles */}
+                            <div className="lg:col-span-5 space-y-3">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                                    <span>⚠️</span>
+                                    <span>Armada Menganggur ({pricingData.idle_vehicles?.length || 0})</span>
+                                </h4>
+
+                                {(!pricingData.idle_vehicles || pricingData.idle_vehicles.length === 0) ? (
+                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 text-center text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300">
+                                        ✨ Tidak ada unit armada yang menganggur berkepanjangan. Semua armada memiliki tingkat okupansi yang sehat!
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2.5">
+                                        {pricingData.idle_vehicles.map((v) => (
+                                            <div
+                                                key={v.vehicle_id}
+                                                className="rounded-2xl border border-amber-200/80 bg-white p-3.5 shadow-2xs dark:border-amber-900/50 dark:bg-slate-800"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h6 className="font-black text-slate-900 dark:text-white text-xs">{v.name}</h6>
+                                                        <p className="font-mono text-[11px] text-slate-500 mt-0.5">{v.plate_number}</p>
+                                                    </div>
+                                                    <span className="rounded-xl bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                                        Idle {v.days_idle} hari
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-2.5 flex items-center justify-between rounded-xl bg-amber-50/60 px-3 py-2 text-xs dark:bg-slate-900/50">
+                                                    <span className="text-slate-600 dark:text-slate-300 font-medium">Saran Promo Cepat:</span>
+                                                    <span className="font-black font-mono text-emerald-600 dark:text-emerald-400">
+                                                        {formatMoney(v.suggested_promo_rate)} / hari
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
+                )}
+            </div>
 
-                    {/* Idle Vehicles List */}
-                    {pricingData.idle_vehicles && pricingData.idle_vehicles.length > 0 && (
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-2">
-                            <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200">
-                                <span>⚠️</span>
-                                <h4 className="text-[11px] font-bold uppercase tracking-wider">
-                                    Unit Menganggur ({pricingData.idle_vehicles.length})
-                                </h4>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                {pricingData.idle_vehicles.map((v) => (
-                                    <div
-                                        key={v.vehicle_id}
-                                        className="rounded-xl border border-amber-200/80 bg-white p-2.5 text-xs shadow-2xs dark:border-amber-900/50 dark:bg-slate-800"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-bold text-slate-900 dark:text-white truncate max-w-[140px]">{v.name}</span>
-                                            <span className="font-mono text-[10px] text-slate-500">{v.plate_number}</span>
-                                        </div>
-                                        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
-                                            <span>Saran Promo:</span>
-                                            <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                                {formatMoney(v.suggested_promo_rate)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end border-t border-slate-200/80 px-6 py-3.5 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                >
+                    Tutup
+                </button>
+            </div>
         </div>
     );
 }

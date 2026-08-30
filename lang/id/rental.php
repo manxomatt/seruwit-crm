@@ -1010,6 +1010,7 @@ return [
         'dynamic_pricing_subtitle' => 'Analisis okupansi armada riil, pola lonjakan akhir pekan, dan optimasi pendapatan sewa.',
         'btn_analyze_pricing' => 'Jalankan Analisis AI',
         'btn_reanalyze_pricing' => 'Analisis Ulang AI',
+        'btn_modal_trigger' => 'AI Smart Dynamic Pricing',
         'analyzing_pricing' => 'Menganalisis Okupansi Armada…',
         'pricing_analysis_success' => 'Rekomendasi tarif dinamis dan utilisasi armada berhasil dihasilkan.',
     ],

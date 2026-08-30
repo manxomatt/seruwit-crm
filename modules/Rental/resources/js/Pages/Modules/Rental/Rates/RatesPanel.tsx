@@ -73,6 +73,7 @@ export default function RatesIndex({
     const [searchQuery, setSearchQuery] = useState('');
     const [periodFilter, setPeriodFilter] = useState<'all' | 'daily' | 'weekly' | 'monthly'>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
     const filteredRates = useMemo(() => {
         return rates.data.filter((rate) => {
@@ -318,8 +319,22 @@ export default function RatesIndex({
                         </div>
                     </div>
 
-                    {/* New Rate CTA */}
+                    {/* Actions: AI Dynamic Pricing Trigger & New Rate CTA */}
                     <div className="flex items-center gap-2">
+                        {hasAiPanel && (
+                            <button
+                                type="button"
+                                onClick={() => setIsAiModalOpen(true)}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50/70 px-4 py-2.5 text-xs font-black text-indigo-700 shadow-2xs hover:border-indigo-300 hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 dark:border-indigo-900/60 dark:bg-slate-800 dark:from-slate-800 dark:to-indigo-950/40 dark:text-indigo-300 dark:hover:bg-slate-700 transition"
+                            >
+                                <span className="text-sm">⚡</span>
+                                <span>{t('rental.ai.btn_modal_trigger', undefined, 'AI Smart Dynamic Pricing')}</span>
+                                <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-2xs">
+                                    Gemini
+                                </span>
+                            </button>
+                        )}
+
                         <Link
                             href={prefixedRoute('rental.rates.create')}
                             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
@@ -378,12 +393,8 @@ export default function RatesIndex({
                 </div>
             )}
 
-            {/* Main 2-Column Grid Body: Left Rates Table & Right Sticky AI Optimizer Panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 2xl:grid-cols-12 gap-6 lg:gap-8 items-start">
-                {/* Left Column: Rates Table */}
-                <div className={`${hasAiPanel ? 'lg:col-span-8 2xl:col-span-9' : 'lg:col-span-12'} space-y-4`}>
-                    {/* Main Table Card */}
-                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            {/* Main Table Card */}
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                         {filteredRates.length === 0 ? (
                             <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
                                 <span className="text-4xl mb-3">🏷️</span>
@@ -724,19 +735,27 @@ export default function RatesIndex({
                             </>
                         )}
                     </div>
-                </div>
 
-                {/* Right Column: AI Smart Dynamic Pricing & Fleet Optimizer Panel */}
-                {hasAiPanel && (
-                    <div className="lg:col-span-4 2xl:col-span-3 lg:sticky lg:top-6 space-y-4">
-                        <AiDynamicPricingPanel
-                            analyzeUrl={aiPricingAnalyzeUrl!}
-                            applyUrl={aiPricingApplyUrl!}
-                            canUpdate={true}
-                        />
+            {/* Modal AI Smart Dynamic Pricing & Fleet Optimizer */}
+            {hasAiPanel && (
+                <Dialog
+                    open={isAiModalOpen}
+                    onClose={() => setIsAiModalOpen(false)}
+                    className="relative z-50"
+                >
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" aria-hidden="true" />
+                    <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+                        <DialogPanel className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-8 overflow-hidden">
+                            <AiDynamicPricingPanel
+                                analyzeUrl={aiPricingAnalyzeUrl!}
+                                applyUrl={aiPricingApplyUrl!}
+                                canUpdate={true}
+                                onClose={() => setIsAiModalOpen(false)}
+                            />
+                        </DialogPanel>
                     </div>
-                )}
-            </div>
+                </Dialog>
+            )}
 
             {/* Modal Preview Tier Pricing */}
             <Dialog
