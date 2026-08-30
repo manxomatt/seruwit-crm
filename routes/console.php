@@ -117,3 +117,10 @@ Schedule::command('reseller:approve-commissions')
     ->dailyAt('01:30')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Check vehicle active lifecycle, auto-renew expiring vehicles with capacity credits,
+// or deactivate vehicles past grace period.
+Schedule::command('fleet:check-expirations')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->onOneServer();

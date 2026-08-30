@@ -34,6 +34,9 @@ interface Vehicle {
     odometer_km: number;
     home_base_id?: number | null;
     home_base?: HomeBase | null;
+    activated_at?: string | null;
+    active_until?: string | null;
+    auto_renew?: boolean;
 }
 
 interface PaginatedVehicles {
@@ -58,6 +61,7 @@ interface Props {
     bases?: HomeBase[];
     can: { create: boolean; update: boolean; delete: boolean };
     quota?: { max: number | null; current: number; reached: boolean };
+    available_credits?: number;
 }
 
 type VehicleColumn =
@@ -184,18 +188,38 @@ const menuItemClassName =
 const menuItemDangerClassName =
     'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/50';
 
-function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw) as Partial<Record<VehicleColumn, boolean>>;
-        return parsed && typeof parsed === 'object' ? parsed : null;
-    } catch {
-        return null;
-    }
-}
+const getExpiryInfo = (activeUntil: string | null | undefined) => {
+    if (!activeUntil) return null;
+    const expiryDate = new Date(activeUntil);
+    const now = new Date();
+    const diffMs = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-export default function Index({ vehicles, filters, bases = [], can, quota }: Props): JSX.Element {
+    if (diffDays < 0) {
+        return {
+            label: `Kadaluarsa (${Math.abs(diffDays)}h lalu)`,
+            isExpired: true,
+            isNearExpiry: false,
+            badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+        };
+    }
+    if (diffDays <= 3) {
+        return {
+            label: `Sisa ${diffDays} hari`,
+            isExpired: false,
+            isNearExpiry: true,
+            badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+        };
+    }
+    return {
+        label: `Sisa ${diffDays} hari`,
+        isExpired: false,
+        isNearExpiry: false,
+        badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    };
+};
+
+export default function Index({ vehicles, filters, bases = [], can, quota, available_credits }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
@@ -398,7 +422,17 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                 )}
 
                 {/* KPI Stats Cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="overflow-hidden rounded-3xl border border-emerald-200/80 bg-emerald-50/40 p-5 shadow-xs dark:border-emerald-800/60 dark:bg-emerald-950/20 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Saldo Kredit Unit</p>
+                            <p className="mt-1 text-2xl font-black text-emerald-700 dark:text-emerald-300">{available_credits ?? 0} Unit</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl font-bold text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+                            ⚡
+                        </div>
+                    </div>
+
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Armada Terdaftar</p>
@@ -987,11 +1021,28 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                                                 )}
 
                                                 {visibleColumns.status && (
-                                                    <td className="whitespace-nowrap px-4 py-3.5">
-                                                        <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-black ${statusInfo.className}`}>
-                                                            <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
-                                                            <span>{statusInfo.label}</span>
-                                                        </span>
+                                                    <td className="whitespace-nowrap px-4 py-3.5 space-y-1">
+                                                        <div>
+                                                            <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-black ${statusInfo.className}`}>
+                                                                <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
+                                                                <span>{statusInfo.label}</span>
+                                                            </span>
+                                                        </div>
+                                                        {vehicle.status === 'active' && (() => {
+                                                            const expiry = getExpiryInfo(vehicle.active_until);
+                                                            return expiry ? (
+                                                                <div className="flex items-center gap-1 text-[10px]">
+                                                                    <span className={`rounded-md px-1.5 py-0.5 font-bold border ${expiry.badgeClass}`}>
+                                                                        {expiry.label}
+                                                                    </span>
+                                                                    {vehicle.auto_renew && (
+                                                                        <span title="Perpanjangan Otomatis Aktif" className="text-emerald-500 font-bold text-[11px]">
+                                                                            🔄
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ) : null;
+                                                        })()}
                                                     </td>
                                                 )}
 
@@ -1016,7 +1067,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
 
                                                             <MenuItems
                                                                 anchor="bottom end"
-                                                                className="z-30 w-44 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                                className="z-30 w-48 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
                                                             >
                                                                 <MenuItem>
                                                                     <Link
@@ -1027,6 +1078,30 @@ export default function Index({ vehicles, filters, bases = [], can, quota }: Pro
                                                                         <span>Lihat Detail</span>
                                                                     </Link>
                                                                 </MenuItem>
+                                                                {can.update && vehicle.status !== 'active' && (
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => router.post(prefixedRoute('fleet.vehicles.activate', vehicle.id), {}, { preserveScroll: true })}
+                                                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                                                                        >
+                                                                            <span>⚡</span>
+                                                                            <span>Aktifkan (1 Kredit)</span>
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {can.update && vehicle.status === 'active' && (
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => router.post(prefixedRoute('fleet.vehicles.renew', vehicle.id), {}, { preserveScroll: true })}
+                                                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
+                                                                        >
+                                                                            <span>🔄</span>
+                                                                            <span>Perpanjang 1 Bulan</span>
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                )}
                                                                 {can.update && (
                                                                     <MenuItem>
                                                                         <Link

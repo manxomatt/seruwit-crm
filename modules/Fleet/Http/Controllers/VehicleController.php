@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +23,7 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Fleet\Support\FuelConsumptionCalculator;
 use Modules\Fleet\Support\FuelLogRecorder;
+use Modules\Fleet\Support\VehicleCapacityService;
 use Modules\Maintenance\Models\WorkOrder;
 
 class VehicleController extends Controller
@@ -37,7 +39,7 @@ class VehicleController extends Controller
     /**
      * Display a listing of the vehicles.
      */
-    public function index(): Response
+    public function index(VehicleCapacityService $capacityService): Response
     {
         $user = Auth::user();
         $tenant = tenant();
@@ -45,6 +47,7 @@ class VehicleController extends Controller
         $billableVehicles = Vehicle::billable()->count();
         $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $billableVehicles);
         $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_vehicles') : null;
+        $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
 
         $vehicles = Vehicle::query()
             ->with('homeBase:id,code,name')
@@ -85,13 +88,14 @@ class VehicleController extends Controller
                 'total' => $totalVehicles,
                 'reached' => $isLimitReached,
             ],
+            'available_credits' => $availableCredits,
         ]);
     }
 
     /**
      * Show the form for creating a new vehicle.
      */
-    public function create(): Response|RedirectResponse
+    public function create(VehicleCapacityService $capacityService): Response|RedirectResponse
     {
         $tenant = tenant();
         if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
@@ -101,19 +105,23 @@ class VehicleController extends Controller
                 ->with('error', __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]));
         }
 
+        $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
+
         return Inertia::render('Modules/Fleet/Vehicles/Create', [
             'bases' => $this->homeBaseOptions(),
+            'available_credits' => $availableCredits,
         ]);
     }
 
     /**
      * Store a newly created vehicle in storage.
      */
-    public function store(StoreVehicleRequest $request): RedirectResponse
+    public function store(StoreVehicleRequest $request, VehicleCapacityService $capacityService): RedirectResponse
     {
         $status = $request->input('status', Vehicle::STATUS_ACTIVE);
+        $tenant = tenant();
+
         if (in_array($status, Vehicle::billableStatuses(), true)) {
-            $tenant = tenant();
             if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
                 $limit = (int) $tenant->planLimit('max_vehicles');
                 throw ValidationException::withMessages([
@@ -122,7 +130,26 @@ class VehicleController extends Controller
             }
         }
 
-        $vehicle = Vehicle::create($request->validated());
+        // If status chosen is active, ensure tenant has capacity credits
+        if ($status === Vehicle::STATUS_ACTIVE) {
+            $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
+            if ($availableCredits < 1) {
+                throw ValidationException::withMessages([
+                    'status' => 'Saldo kapasitas unit (0) tidak mencukupi untuk mendaftarkan kendaraan dengan status Aktif. Silakan pilih status Non-Aktif (inactive) atau hubungi admin central untuk top-up saldo kapasitas unit.',
+                ]);
+            }
+        }
+
+        $vehicleData = $request->validated();
+        if ($status === Vehicle::STATUS_ACTIVE) {
+            $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
+        }
+
+        $vehicle = Vehicle::create($vehicleData);
+
+        if ($status === Vehicle::STATUS_ACTIVE) {
+            $capacityService->activate($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
+        }
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', __('fleet.messages.vehicle_created'));
@@ -131,7 +158,7 @@ class VehicleController extends Controller
     /**
      * Display the specified vehicle.
      */
-    public function show(Vehicle $vehicle, FuelConsumptionCalculator $calculator, FuelLogRecorder $recorder): Response
+    public function show(Vehicle $vehicle, FuelConsumptionCalculator $calculator, FuelLogRecorder $recorder, VehicleCapacityService $capacityService): Response
     {
         $user = Auth::user();
 
@@ -208,7 +235,47 @@ class VehicleController extends Controller
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),
                 'create' => $user->hasPermissionFor('fleet', 'create'),
             ],
+            'available_credits' => $capacityService->getAvailableCredits(),
         ]);
+    }
+
+    /**
+     * Activate a vehicle using 1 capacity credit.
+     */
+    public function activate(Vehicle $vehicle, VehicleCapacityService $capacityService): RedirectResponse
+    {
+        try {
+            $result = $capacityService->activate($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
+
+            return back()->with('success', "Kendaraan {$vehicle->plate_number} berhasil diaktifkan selama 30 hari (s/d {$result['active_until']->format('d M Y')}). Sisa saldo: {$result['new_balance']} unit.");
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Renew vehicle active period using 1 capacity credit.
+     */
+    public function renew(Vehicle $vehicle, VehicleCapacityService $capacityService): RedirectResponse
+    {
+        try {
+            $result = $capacityService->renew($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
+
+            return back()->with('success', "Masa aktif kendaraan {$vehicle->plate_number} berhasil diperpanjang hingga {$result['active_until']->format('d M Y')}. Sisa saldo: {$result['new_balance']} unit.");
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Toggle auto-renew status for a vehicle.
+     */
+    public function toggleAutoRenew(Request $request, Vehicle $vehicle, VehicleCapacityService $capacityService): RedirectResponse
+    {
+        $autoRenew = $request->boolean('auto_renew', ! $vehicle->auto_renew);
+        $capacityService->toggleAutoRenew($vehicle, $autoRenew);
+
+        return back()->with('success', $autoRenew ? 'Perpanjangan otomatis diaktifkan untuk kendaraan ini.' : 'Perpanjangan otomatis dinonaktifkan.');
     }
 
     /**

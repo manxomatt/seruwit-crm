@@ -48,9 +48,10 @@ interface HomeBaseOption {
 
 interface Props {
     bases?: HomeBaseOption[];
+    available_credits?: number;
 }
 
-export default function Create({ bases = [] }: Props): JSX.Element {
+export default function Create({ bases = [], available_credits = 0 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -502,6 +503,23 @@ export default function Create({ bases = [] }: Props): JSX.Element {
                                     ]}
                                 />
                                 <InputError message={errors.status} className="mt-1" />
+                                {data.status === 'active' && (
+                                    <div className="mt-2.5 rounded-2xl bg-indigo-50/70 p-3 text-xs border border-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 text-slate-700 dark:text-slate-300">
+                                        <div className="flex items-center justify-between">
+                                            <span>
+                                                🚗 Mendaftarkan unit aktif akan menggunakan <strong>1 Kredit Unit</strong> (30 hari masa aktif).
+                                            </span>
+                                            <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                                                Saldo: {available_credits} Unit
+                                            </span>
+                                        </div>
+                                        {available_credits === 0 && (
+                                            <p className="mt-1 text-rose-500 font-semibold text-[11px]">
+                                                ⚠️ Saldo kredit unit Anda 0. Simpan unit sebagai Non-Aktif atau hubungi admin central untuk top-up.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

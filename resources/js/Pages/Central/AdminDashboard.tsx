@@ -557,6 +557,23 @@ export default function AdminDashboard({
                                     </div>
                                 </div>
                             </Link>
+
+                            <Link
+                                href={route('module.platform-settings.index')}
+                                className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-slate-800 transition-all hover:bg-indigo-50 hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                    <span className="material-symbols-outlined text-[20px]">tune</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-semibold text-sm">
+                                        {t('central.dashboard.shortcuts.platform_settings_title', undefined, 'Platform Settings')}
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                        {t('central.dashboard.shortcuts.platform_settings_desc', undefined, 'Global policies, AI switches & capacity')}
+                                    </div>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </div>

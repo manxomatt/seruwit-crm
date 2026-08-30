@@ -82,6 +82,9 @@ interface Vehicle {
     notes: string | null;
     maintenance_logs?: MaintenanceLog[];
     fuel_logs: FuelLog[];
+    activated_at?: string | null;
+    active_until?: string | null;
+    auto_renew?: boolean;
 }
 
 interface ServiceHistoryItem {
@@ -111,6 +114,7 @@ interface Props {
     aiPredictiveEnabled?: boolean;
     aiDiagnoseUrl?: string | null;
     aiCreateWoUrl?: string | null;
+    available_credits?: number;
 }
 
 type ExpiryTone = 'ok' | 'soon' | 'expired' | 'empty';
@@ -212,6 +216,8 @@ export default function Show({
     can,
     aiPredictiveEnabled = false,
     aiDiagnoseUrl = null,
+    aiCreateWoUrl = null,
+    available_credits = 0,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -501,6 +507,97 @@ export default function Show({
                                     </Link>
                                 ) : (
                                     <span className="text-slate-400">Belum Ditugaskan ke Pool Khusus</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Vehicle Activation & Capacity Quota Card */}
+                    <div className="rounded-3xl border border-indigo-100 bg-indigo-50/40 p-5 dark:border-indigo-950 dark:bg-indigo-950/20">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">🚗</span>
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                        Masa Aktif & Kapasitas Unit
+                                    </h3>
+                                    {vehicle.status === 'active' && (
+                                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                            AKTIF
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+                                    <span>
+                                        Jatuh Tempo:{' '}
+                                        <strong className="text-slate-900 dark:text-white">
+                                            {vehicle.active_until ? formatDate(vehicle.active_until, localeTag) : 'Belum Pernah Diaktifkan'}
+                                        </strong>
+                                    </span>
+                                    {vehicle.activated_at && (
+                                        <span>
+                                            Terakhir Diaktifkan: {formatDate(vehicle.activated_at, localeTag)}
+                                        </span>
+                                    )}
+                                    <span>
+                                        Saldo Workspace:{' '}
+                                        <strong className="text-indigo-600 dark:text-indigo-400">
+                                            {available_credits ?? 0} Unit
+                                        </strong>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Actions & Auto-Renew Toggle */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <label className="inline-flex items-center gap-2 cursor-pointer rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(vehicle.auto_renew)}
+                                        onChange={(e) =>
+                                            router.patch(
+                                                prefixedRoute('fleet.vehicles.auto-renew', vehicle.id),
+                                                { auto_renew: e.target.checked },
+                                                { preserveScroll: true }
+                                            )
+                                        }
+                                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span>Perpanjangan Otomatis</span>
+                                </label>
+
+                                {can.update && (
+                                    vehicle.status === 'active' ? (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(
+                                                    prefixedRoute('fleet.vehicles.renew', vehicle.id),
+                                                    {},
+                                                    { preserveScroll: true }
+                                                )
+                                            }
+                                            className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                                        >
+                                            <span>🔄</span>
+                                            <span>Perpanjang 1 Bulan (1 Kredit)</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(
+                                                    prefixedRoute('fleet.vehicles.activate', vehicle.id),
+                                                    {},
+                                                    { preserveScroll: true }
+                                                )
+                                            }
+                                            className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                        >
+                                            <span>⚡</span>
+                                            <span>Aktifkan Kendaraan (1 Kredit)</span>
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </div>
