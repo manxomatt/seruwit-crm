@@ -93,9 +93,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         if ($key === 'max_vehicles') {
             if ($this->isOnTrial) {
-                $plan = $this->planModel();
-
-                return $plan ? $plan->getLimit('max_vehicles', 50) : 50;
+                return null;
             }
 
             $central = config('tenancy.database.central_connection');
@@ -206,16 +204,28 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     public function getIsOnTrialAttribute(): bool
     {
-        if ((bool) ($this->is_trial_expired ?? false)) {
+        $isExpired = filter_var($this->is_trial_expired ?? false, FILTER_VALIDATE_BOOLEAN)
+            || filter_var(data_get($this->data, 'is_trial_expired', false), FILTER_VALIDATE_BOOLEAN)
+            || ($this->status === 'trial_expired');
+
+        if ($isExpired) {
             return false;
         }
 
         $plan = $this->planModel();
-        if ($plan && ! $plan->is_trial && ((float) $plan->price <= 0 || (int) ($plan->trial_days ?? 0) <= 0)) {
+        if ($plan && ! $plan->is_trial && $plan->key !== 'trial' && ((float) $plan->price <= 0 || (int) ($plan->trial_days ?? 0) <= 0)) {
             return false;
         }
 
-        return $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
+        if ($this->trial_ends_at === null) {
+            return false;
+        }
+
+        $trialEndsAt = $this->trial_ends_at instanceof \Carbon\CarbonInterface
+            ? $this->trial_ends_at
+            : \Illuminate\Support\Carbon::parse($this->trial_ends_at);
+
+        return $trialEndsAt->isFuture();
     }
 
     public function scopeOnTrial($query)
