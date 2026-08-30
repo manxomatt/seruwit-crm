@@ -3,7 +3,6 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
@@ -42,7 +41,7 @@ export default function Group({
     currentGroup,
     systemModes,
 }: Props): JSX.Element {
-    const { t } = useTrans();
+    const { t, locale } = useTrans();
     const { flash } = usePage<{ flash?: { success?: string } }>().props;
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
@@ -59,62 +58,82 @@ export default function Group({
         setData('settings', next);
     };
 
+    const findSettingIndex = (key: string): number => {
+        return groupSettings.findIndex((s) => s.key === key);
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('module.platform-settings.bulk-update'), { preserveScroll: true });
     };
 
     const formatGroupLabel = (group: string): string => {
-        const key = `settings.groups.${group}`;
-        const translated = t(key);
-        return translated === key ? group.charAt(0).toUpperCase() + group.slice(1) : translated;
+        return t(`settings.platform.groups.${group}`, undefined, t(`settings.groups.${group}`, undefined, group.charAt(0).toUpperCase() + group.slice(1)));
     };
 
-    const modeOptions = (systemModes || ['development', 'production']).map((mode) => ({
-        value: mode,
-        label: mode.charAt(0).toUpperCase() + mode.slice(1),
-        badge: mode === 'production' ? 'LIVE' : 'DEV',
-        description:
-            mode === 'production'
-                ? 'Mode produksi live (email nyata & keamanan aktif)'
-                : 'Mode pengembangan (debug, simulasi email & OTP)',
-    }));
+    const systemModeIndex = findSettingIndex('general.system_mode');
+    const currentSystemMode = systemModeIndex >= 0 ? data.settings[systemModeIndex]?.value : 'development';
+
+    const aiFeaturesIndex = findSettingIndex('general.ai_features_enabled');
+    const isAiEnabled = aiFeaturesIndex >= 0 ? data.settings[aiFeaturesIndex]?.value === '1' : false;
+
+    const lifetimeCreditIndex = findSettingIndex('capacity_credits_lifetime_enabled');
+    const isLifetimeCredit = lifetimeCreditIndex >= 0 ? data.settings[lifetimeCreditIndex]?.value === '1' : true;
+
+    const pauseMaintenanceIndex = findSettingIndex('pause_during_maintenance_enabled');
+    const isPauseMaintenance = pauseMaintenanceIndex >= 0 ? data.settings[pauseMaintenanceIndex]?.value === '1' : false;
+
+    const durationDaysIndex = findSettingIndex('vehicle_activation_duration_days');
+    const graceDaysIndex = findSettingIndex('vehicle_grace_period_days');
 
     const groupIcon = GROUP_ICONS[currentGroup] ?? '⚙️';
 
     return (
         <DynamicLayout
-            header={<PageHeader title={t('platform_settings.title', undefined, 'Pengaturan Platform')} />}
+            header={
+                <PageHeader
+                    title={t('settings.platform.title', undefined, 'Pengaturan Platform')}
+                    subtitle={t('settings.platform.subtitle', undefined, 'Konfigurasi global platform SaaS, kontrol fitur AI, dan kebijakan kapasitas armada.')}
+                />
+            }
         >
-            <Head title={t('platform_settings.title', undefined, 'Pengaturan Platform')} />
+            <Head title={t('settings.platform.title', undefined, 'Pengaturan Platform')} />
 
-            <div className="mx-auto max-w-4xl space-y-6">
+            <div className="mx-auto max-w-5xl space-y-6 pb-12">
                 {/* Global Scope Banner */}
-                <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/60 p-4 text-xs font-medium text-amber-900 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300">
-                    <span className="text-base shrink-0">🌐</span>
-                    <p>
-                        {t(
-                            'platform_settings.scope_hint',
-                            undefined,
-                            'Pengaturan global platform — berlaku untuk seluruh workspace tenant di sistem. Hanya dapat dikonfigurasi oleh Admin Central.',
-                        )}
-                    </p>
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/40 p-4 shadow-xs dark:border-indigo-950/60 dark:from-indigo-950/30 dark:via-slate-900 dark:to-indigo-950/20">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
+                            <span className="material-symbols-outlined text-[22px]">tune</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
+                                {t('settings.platform.title', undefined, 'Pengaturan Platform SaaS')}
+                            </h4>
+                            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+                                {t(
+                                    'settings.platform.scope_hint',
+                                    undefined,
+                                    'Pengaturan global platform — berlaku untuk seluruh workspace tenant di sistem. Hanya dapat dikonfigurasi oleh Admin Central.',
+                                )}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
+                {/* Flash Message */}
                 {flash?.success && (
-                    <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-4 text-xs font-semibold text-emerald-800 shadow-xs dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300">
-                        <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">
-                                ✓
-                            </span>
-                            <span>{flash.success}</span>
-                        </div>
+                    <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs font-semibold text-emerald-900 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-xs">
+                            ✓
+                        </span>
+                        <span>{flash.success}</span>
                     </div>
                 )}
 
-                {/* Group Pill Navigation Bar */}
-                <div className="flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                    <nav className="flex items-center gap-1.5 overflow-x-auto">
+                {/* Group Navigation Tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <nav className="flex items-center gap-2 overflow-x-auto">
                         {groups.map((g) => {
                             const active = g === currentGroup;
                             const icon = GROUP_ICONS[g] ?? '⚙️';
@@ -122,13 +141,13 @@ export default function Group({
                                 <Link
                                     key={g}
                                     href={route('module.platform-settings.group', g)}
-                                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shrink-0 ${
+                                    className={`inline-flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shrink-0 ${
                                         active
-                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                            ? 'bg-indigo-600 text-white shadow-sm'
                                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
                                     }`}
                                 >
-                                    <span>{icon}</span>
+                                    <span className="text-sm">{icon}</span>
                                     <span>{formatGroupLabel(g)}</span>
                                 </Link>
                             );
@@ -136,163 +155,481 @@ export default function Group({
                     </nav>
                 </div>
 
-                {/* Settings Form Card */}
-                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
-                    <div className="border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex items-center gap-3">
-                            <span className="text-2xl">{groupIcon}</span>
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    {formatGroupLabel(currentGroup)}
-                                </h3>
-                                <p className="text-xs text-slate-500">
-                                    {groupSettings.length} pengaturan platform di grup ini
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {groupSettings.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-xl font-bold text-indigo-600">
-                                ⚙️
-                            </div>
-                            <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
-                                Belum ada pengaturan di grup ini
-                            </h3>
-                        </div>
-                    ) : (
-                        <form onSubmit={submit} className="space-y-6">
-                            {groupSettings.map((setting, index) => (
-                                <div
-                                    key={setting.id}
-                                    className="border-b border-slate-100 pb-6 last:border-b-0 last:pb-0 dark:border-slate-800"
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <InputLabel
-                                                    htmlFor={`value-${setting.id}`}
-                                                    value={setting.label}
-                                                    className="!text-xs !font-bold !uppercase !tracking-wider"
-                                                />
-                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-400 dark:bg-slate-800">
-                                                    {setting.key}
-                                                </span>
+                {/* Form Container */}
+                <form onSubmit={submit} className="space-y-6">
+                    {/* SPECIFIC VIEW: GENERAL & AI GROUP */}
+                    {currentGroup === 'general' && (
+                        <div className="space-y-6">
+                            {/* System Mode Modern Card */}
+                            {systemModeIndex >= 0 && (
+                                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                                                <span className="material-symbols-outlined text-[20px]">memory</span>
                                             </div>
-
-                                            {setting.description && (
-                                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    {setting.description}
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.system_mode.label', undefined, 'Mode Sistem (Environment)')}
+                                                </h3>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {t('settings.platform.system_mode.description', undefined, 'Tentukan lingkungan operasional sistem. Mengatur perilaku pengiriman email keluar, verifikasi OTP, dan proteksi keamanan.')}
                                                 </p>
-                                            )}
+                                            </div>
+                                        </div>
+                                        <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                            general.system_mode
+                                        </span>
+                                    </div>
 
-                                            <div className="mt-3 max-w-xl">
-                                                {setting.type === 'textarea' || setting.type === 'json' ? (
-                                                    <textarea
-                                                        id={`value-${setting.id}`}
-                                                        rows={4}
-                                                        className="block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
-                                                        value={data.settings[index].value}
-                                                        onChange={(e) => updateValue(index, e.target.value)}
-                                                    />
-                                                ) : setting.type === 'boolean' ? (
-                                                    <label
-                                                        className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-3.5 transition ${
-                                                            data.settings[index].value === '1'
-                                                                ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
-                                                                : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
-                                                        }`}
-                                                    >
+                                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                                        {/* Option: Development */}
+                                        <div
+                                            onClick={() => updateValue(systemModeIndex, 'development')}
+                                            className={`relative flex cursor-pointer flex-col justify-between rounded-2xl border p-5 transition-all ${
+                                                currentSystemMode === 'development'
+                                                    ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20 dark:border-amber-600 dark:bg-amber-950/20'
+                                                    : 'border-slate-200/80 bg-slate-50/60 hover:bg-slate-100/70 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:bg-slate-800/70'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="text-xl">🛠️</span>
+                                                    <div>
                                                         <div className="flex items-center gap-2">
-                                                            {setting.key === 'general.ai_features_enabled' && (
-                                                                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-600 text-xs text-white shadow-xs">
-                                                                    ✨
-                                                                </span>
-                                                            )}
-                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                                {data.settings[index].value === '1'
-                                                                    ? 'Aktif (Enabled)'
-                                                                    : 'Nonaktif (Disabled)'}
+                                                            <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                                                                {t('settings.platform.system_mode.dev_title', undefined, 'Development')}
+                                                            </h4>
+                                                            <span className="rounded-md bg-amber-200/70 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                                                                {t('settings.platform.system_mode.dev_badge', undefined, 'DEV')}
                                                             </span>
                                                         </div>
-                                                        <div className="relative shrink-0">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="peer sr-only"
-                                                                checked={data.settings[index].value === '1'}
-                                                                onChange={(e) =>
-                                                                    updateValue(index, e.target.checked ? '1' : '0')
-                                                                }
-                                                            />
-                                                            <div className="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
-                                                            <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform peer-checked:translate-x-5" />
-                                                        </div>
-                                                    </label>
-                                                ) : setting.key === 'general.system_mode' ? (
-                                                    <Select
-                                                        id={`value-${setting.id}`}
-                                                        className="w-full max-w-sm"
-                                                        value={data.settings[index].value}
-                                                        onChange={(value) => updateValue(index, value)}
-                                                        options={modeOptions}
-                                                    />
-                                                ) : setting.type === 'number' ? (
-                                                    <div className="flex items-center gap-3">
-                                                        <TextInput
-                                                            id={`value-${setting.id}`}
-                                                            type="number"
-                                                            className="block w-48 !rounded-xl !py-2 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-                                                            value={data.settings[index].value}
-                                                            onChange={(e) => updateValue(index, e.target.value)}
-                                                        />
-                                                        {setting.key.includes('days') && (
-                                                            <span className="text-xs font-medium text-slate-500">
-                                                                Hari
-                                                            </span>
-                                                        )}
+                                                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {t('settings.platform.system_mode.dev_desc', undefined, 'Mode pengembangan & uji coba. Email keluar dibypass dan kode verifikasi OTP ditampilkan di layar browser.')}
+                                                        </p>
                                                     </div>
-                                                ) : (
-                                                    <TextInput
-                                                        id={`value-${setting.id}`}
-                                                        type={
-                                                            setting.type === 'email'
-                                                                ? 'email'
-                                                                : setting.type === 'url'
-                                                                  ? 'url'
-                                                                  : 'text'
-                                                        }
-                                                        className="block w-full !rounded-xl !py-2 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-                                                        value={data.settings[index].value}
-                                                        onChange={(e) => updateValue(index, e.target.value)}
-                                                    />
-                                                )}
+                                                </div>
+                                                <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                                    currentSystemMode === 'development'
+                                                        ? 'border-amber-500 bg-amber-500 text-white'
+                                                        : 'border-slate-300 dark:border-slate-700'
+                                                }`}>
+                                                    {currentSystemMode === 'development' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                <InputError
-                                                    message={
-                                                        (errors as Record<string, string>)[`settings.${index}.value`]
-                                                    }
-                                                    className="mt-1.5"
-                                                />
+                                        {/* Option: Production */}
+                                        <div
+                                            onClick={() => updateValue(systemModeIndex, 'production')}
+                                            className={`relative flex cursor-pointer flex-col justify-between rounded-2xl border p-5 transition-all ${
+                                                currentSystemMode === 'production'
+                                                    ? 'border-emerald-400 bg-emerald-50/40 ring-2 ring-emerald-400/20 dark:border-emerald-600 dark:bg-emerald-950/20'
+                                                    : 'border-slate-200/80 bg-slate-50/60 hover:bg-slate-100/70 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:bg-slate-800/70'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="text-xl">🚀</span>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                                                                {t('settings.platform.system_mode.prod_title', undefined, 'Production')}
+                                                            </h4>
+                                                            <span className="rounded-md bg-emerald-200/70 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">
+                                                                {t('settings.platform.system_mode.prod_badge', undefined, 'LIVE')}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {t('settings.platform.system_mode.prod_desc', undefined, 'Mode operasional produksi langsung. Email keluar dikirim via SMTP nyata dan sistem keamanan penuh aktif.')}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                                    currentSystemMode === 'production'
+                                                        ? 'border-emerald-500 bg-emerald-500 text-white'
+                                                        : 'border-slate-300 dark:border-slate-700'
+                                                }`}>
+                                                    {currentSystemMode === 'production' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <InputError message={(errors as Record<string, string>)[`settings.${systemModeIndex}.value`]} className="mt-2" />
                                 </div>
-                            ))}
+                            )}
 
-                            <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-xs">
-                                    {t('platform_settings.save', undefined, 'Simpan Pengaturan Platform')}
-                                </PrimaryButton>
-                                {recentlySuccessful && (
-                                    <span className="text-xs font-bold text-emerald-600">
-                                        ✅ {t('platform_settings.saved', undefined, 'Tersimpan')}
-                                    </span>
+                            {/* Master AI Toggle Modern Card */}
+                            {aiFeaturesIndex >= 0 && (
+                                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xs">
+                                                <span className="material-symbols-outlined text-[20px]">psychology</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {t('settings.platform.ai_features.label', undefined, 'Fitur AI (Artificial Intelligence)')}
+                                                    </h3>
+                                                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                        Master Switch
+                                                    </span>
+                                                </div>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {t('settings.platform.ai_features.description', undefined, 'Master switch untuk mengaktifkan atau menonaktifkan seluruh kapabilitas AI di seluruh workspace tenant.')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                            general.ai_features_enabled
+                                        </span>
+                                    </div>
+
+                                    {/* Toggle Bar */}
+                                    <div className="mt-5">
+                                        <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                            isAiEnabled
+                                                ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-white dark:border-indigo-900/60 dark:from-indigo-950/30 dark:via-purple-950/20 dark:to-slate-900'
+                                                : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
+                                        }`}>
+                                            <div className="flex items-center gap-3">
+                                                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-xs">
+                                                    ✨
+                                                </span>
+                                                <div>
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {isAiEnabled
+                                                            ? t('settings.platform.ai_features.active_label', undefined, 'Fitur AI Aktif Global')
+                                                            : t('settings.platform.ai_features.inactive_label', undefined, 'Fitur AI Dinonaktifkan Global')}
+                                                    </span>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                        {isAiEnabled
+                                                            ? t('settings.platform.ai_features.active_desc', undefined, 'Tenant yang berlangganan dapat menggunakan seluruh modul AI cerdas.')
+                                                            : t('settings.platform.ai_features.inactive_desc', undefined, 'Seluruh layanan AI dinonaktifkan sementara di semua workspace.')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="relative shrink-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="peer sr-only"
+                                                    checked={isAiEnabled}
+                                                    onChange={(e) => updateValue(aiFeaturesIndex, e.target.checked ? '1' : '0')}
+                                                />
+                                                <div className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
+                                                <div className="absolute left-[3px] top-[3px] h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    {/* AI Sub-services Grid */}
+                                    <div className="mt-4 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/40">
+                                        <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
+                                            {t('settings.platform.ai_features.included_modules_title', undefined, 'Layanan AI yang Terhubung:')}
+                                        </h5>
+                                        <div className="grid gap-2.5 sm:grid-cols-2">
+                                            <div className="flex items-center gap-2 rounded-xl bg-white p-2.5 text-xs text-slate-700 shadow-2xs dark:bg-slate-900 dark:text-slate-300">
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">🔍</span>
+                                                <span>{t('settings.platform.ai_features.modules.kyc', undefined, 'Smart KYC & Verifikasi Dokumen KTP/SIM')}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 rounded-xl bg-white p-2.5 text-xs text-slate-700 shadow-2xs dark:bg-slate-900 dark:text-slate-300">
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">📸</span>
+                                                <span>{t('settings.platform.ai_features.modules.vision', undefined, 'Visual Handover & Deteksi Kerusakan Unit')}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 rounded-xl bg-white p-2.5 text-xs text-slate-700 shadow-2xs dark:bg-slate-900 dark:text-slate-300">
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">📈</span>
+                                                <span>{t('settings.platform.ai_features.modules.pricing', undefined, 'Dynamic Pricing & Rekomendasi Tarif Sewa')}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 rounded-xl bg-white p-2.5 text-xs text-slate-700 shadow-2xs dark:bg-slate-900 dark:text-slate-300">
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">🛠️</span>
+                                                <span>{t('settings.platform.ai_features.modules.maintenance', undefined, 'Predictive Maintenance & Jadwal Servis Cerdas')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <InputError message={(errors as Record<string, string>)[`settings.${aiFeaturesIndex}.value`]} className="mt-2" />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* SPECIFIC VIEW: CAPACITY GROUP */}
+                    {currentGroup === 'capacity' && (
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                        <span className="material-symbols-outlined text-[20px]">directions_car</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                            {t('settings.platform.groups.capacity', undefined, 'Kebijakan Kapasitas Unit & Armada')}
+                                        </h3>
+                                        <p className="mt-0.5 text-xs text-slate-500">
+                                            {t('settings.platform.capacity.duration_desc', undefined, 'Aturan konsumsi saldo kredit kapasitas unit dan siklus masa aktif kendaraan tenant.')}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Lifetime Credit Toggle */}
+                            {lifetimeCreditIndex >= 0 && (
+                                <div>
+                                    <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                        isLifetimeCredit
+                                            ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                            : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
+                                    }`}>
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-xs">
+                                                ♾️
+                                            </span>
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.capacity.lifetime_label', undefined, 'Saldo Kredit Lifetime')}
+                                                </span>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                    {t('settings.platform.capacity.lifetime_desc', undefined, 'Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan (tidak pernah kadaluarsa).')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="relative shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                className="peer sr-only"
+                                                checked={isLifetimeCredit}
+                                                onChange={(e) => updateValue(lifetimeCreditIndex, e.target.checked ? '1' : '0')}
+                                            />
+                                            <div className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
+                                            <div className="absolute left-[3px] top-[3px] h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                                        </div>
+                                    </label>
+                                    <InputError message={(errors as Record<string, string>)[`settings.${lifetimeCreditIndex}.value`]} className="mt-1.5" />
+                                </div>
+                            )}
+
+                            {/* Dual Stepper: Duration & Grace Period */}
+                            <div className="grid gap-5 sm:grid-cols-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                {durationDaysIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="vehicle_activation_duration_days"
+                                            value={t('settings.platform.capacity.duration_label', undefined, 'Durasi 1 Siklus Aktivasi (Hari)')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <div className="mt-1.5 flex items-center gap-2">
+                                            <TextInput
+                                                id="vehicle_activation_duration_days"
+                                                type="number"
+                                                className="block w-full !rounded-xl !py-2.5 text-xs font-semibold border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                value={data.settings[durationDaysIndex].value}
+                                                onChange={(e) => updateValue(durationDaysIndex, e.target.value)}
+                                                required
+                                            />
+                                            <span className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                                                {t('settings.platform.capacity.days_suffix', undefined, 'Hari')}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.capacity.duration_desc', undefined, 'Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas kuota armada (default: 30 hari).')}
+                                        </p>
+                                        <InputError message={(errors as Record<string, string>)[`settings.${durationDaysIndex}.value`]} className="mt-1.5" />
+                                    </div>
+                                )}
+
+                                {graceDaysIndex >= 0 && (
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="vehicle_grace_period_days"
+                                            value={t('settings.platform.capacity.grace_period_label', undefined, 'Masa Tenggang / Grace Period (Hari)')}
+                                            className="!text-xs !font-bold !uppercase !tracking-wider"
+                                        />
+                                        <div className="mt-1.5 flex items-center gap-2">
+                                            <TextInput
+                                                id="vehicle_grace_period_days"
+                                                type="number"
+                                                className="block w-full !rounded-xl !py-2.5 text-xs font-semibold border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                value={data.settings[graceDaysIndex].value}
+                                                onChange={(e) => updateValue(graceDaysIndex, e.target.value)}
+                                                required
+                                            />
+                                            <span className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                                                {t('settings.platform.capacity.days_suffix', undefined, 'Hari')}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            {t('settings.platform.capacity.grace_period_desc', undefined, 'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).')}
+                                        </p>
+                                        <InputError message={(errors as Record<string, string>)[`settings.${graceDaysIndex}.value`]} className="mt-1.5" />
+                                    </div>
                                 )}
                             </div>
-                        </form>
+
+                            {/* Pause During Maintenance Toggle */}
+                            {pauseMaintenanceIndex >= 0 && (
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                        isPauseMaintenance
+                                            ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                            : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
+                                    }`}>
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-sm text-white shadow-xs">
+                                                🛠️
+                                            </span>
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.capacity.pause_maintenance_label', undefined, 'Bekukan Masa Aktif Saat Masuk Bengkel')}
+                                                </span>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                    {t('settings.platform.capacity.pause_maintenance_desc', undefined, 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="relative shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                className="peer sr-only"
+                                                checked={isPauseMaintenance}
+                                                onChange={(e) => updateValue(pauseMaintenanceIndex, e.target.checked ? '1' : '0')}
+                                            />
+                                            <div className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
+                                            <div className="absolute left-[3px] top-[3px] h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                                        </div>
+                                    </label>
+                                    <InputError message={(errors as Record<string, string>)[`settings.${pauseMaintenanceIndex}.value`]} className="mt-1.5" />
+                                </div>
+                            )}
+                        </div>
                     )}
-                </div>
+
+                    {/* GENERIC FALLBACK FOR OTHER GROUPS */}
+                    {currentGroup !== 'general' && currentGroup !== 'capacity' && (
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl">{groupIcon}</span>
+                                    <div>
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                            {formatGroupLabel(currentGroup)}
+                                        </h3>
+                                        <p className="text-xs text-slate-500">
+                                            {groupSettings.length} {t('settings.platform.count_hint', { count: groupSettings.length }, `${groupSettings.length} pengaturan platform di grup ini`)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {groupSettings.length === 0 ? (
+                                <div className="py-12 text-center">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-xl font-bold text-indigo-600">
+                                        ⚙️
+                                    </div>
+                                    <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+                                        {t('settings.platform.empty', undefined, 'Belum ada pengaturan di grup ini')}
+                                    </h3>
+                                </div>
+                            ) : (
+                                groupSettings.map((setting, index) => (
+                                    <div
+                                        key={setting.id}
+                                        className="border-b border-slate-100 pb-6 last:border-b-0 last:pb-0 dark:border-slate-800"
+                                    >
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <InputLabel
+                                                        htmlFor={`value-${setting.id}`}
+                                                        value={setting.label}
+                                                        className="!text-xs !font-bold !uppercase !tracking-wider"
+                                                    />
+                                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-400 dark:bg-slate-800">
+                                                        {setting.key}
+                                                    </span>
+                                                </div>
+
+                                                {setting.description && (
+                                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        {setting.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="mt-3 max-w-xl">
+                                                    {setting.type === 'textarea' || setting.type === 'json' ? (
+                                                        <textarea
+                                                            id={`value-${setting.id}`}
+                                                            rows={4}
+                                                            className="block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                                            value={data.settings[index].value}
+                                                            onChange={(e) => updateValue(index, e.target.value)}
+                                                        />
+                                                    ) : setting.type === 'boolean' ? (
+                                                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-800/60">
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                                {data.settings[index].value === '1' ? 'Aktif (Enabled)' : 'Nonaktif (Disabled)'}
+                                                            </span>
+                                                            <div className="relative shrink-0">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="peer sr-only"
+                                                                    checked={data.settings[index].value === '1'}
+                                                                    onChange={(e) =>
+                                                                        updateValue(index, e.target.checked ? '1' : '0')
+                                                                    }
+                                                                />
+                                                                <div className="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-checked:bg-indigo-600 dark:bg-slate-700" />
+                                                                <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform peer-checked:translate-x-5" />
+                                                            </div>
+                                                        </label>
+                                                    ) : (
+                                                        <TextInput
+                                                            id={`value-${setting.id}`}
+                                                            type={setting.type === 'number' ? 'number' : 'text'}
+                                                            className="block w-full !rounded-xl !py-2 text-xs border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                            value={data.settings[index].value}
+                                                            onChange={(e) => updateValue(index, e.target.value)}
+                                                        />
+                                                    )}
+
+                                                    <InputError
+                                                        message={
+                                                            (errors as Record<string, string>)[`settings.${index}.value`]
+                                                        }
+                                                        className="mt-1.5"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    {/* Bottom Action Card */}
+                    <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {t('settings.platform.groups.' + currentGroup, undefined, formatGroupLabel(currentGroup))}
+                            </span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            {recentlySuccessful && (
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in">
+                                    <span>✓</span>
+                                    <span>{t('settings.platform.saved', undefined, 'Tersimpan')}</span>
+                                </span>
+                            )}
+                            <PrimaryButton
+                                disabled={processing}
+                                className="!rounded-xl px-5 py-2.5 text-xs font-bold shadow-xs hover:shadow-sm"
+                            >
+                                {t('settings.platform.save', undefined, 'Simpan Pengaturan Platform')}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </form>
             </div>
         </DynamicLayout>
     );
