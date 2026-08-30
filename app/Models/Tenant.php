@@ -92,26 +92,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function planLimit(string $key, mixed $default = null): mixed
     {
         if ($key === 'max_vehicles') {
-            if ($this->isOnTrial) {
-                return null;
-            }
-
-            $central = config('tenancy.database.central_connection');
-            $subscription = Subscription::on($central)
-                ->where('tenant_id', $this->getTenantKey())
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->first();
-
-            if ($subscription && $subscription->isActive()) {
-                return (int) $subscription->subscribed_vehicles;
-            }
-
-            $plan = $this->planModel();
-            if ($plan && ! $plan->is_trial && $plan->key !== 'trial') {
-                return $plan->getLimit('max_vehicles', $default);
-            }
-
-            return 0;
+            return app(\App\Services\SubscriptionService::class)->getMaxVehiclesAllowed($this);
         }
 
         $plan = $this->planModel();
