@@ -105,6 +105,8 @@ class SubscriptionController extends Controller
                 'unique_code' => $activePaymentOrder->unique_code,
                 'expires_at' => $activePaymentOrder->expires_at?->toIso8601String(),
                 'type' => $activePaymentOrder->type,
+                'subscribed_vehicles' => $activePaymentOrder->subscribed_vehicles,
+                'upgrade_from_vehicles' => $activePaymentOrder->upgrade_from_vehicles,
             ] : null,
             'orders' => $orders->map(fn (PaymentOrder $o): array => [
                 'id' => $o->id,
@@ -117,6 +119,9 @@ class SubscriptionController extends Controller
                 'expires_at' => $o->expires_at?->toIso8601String(),
                 'plan_name' => $o->plan?->name ?? 'Paket Langganan',
                 'billing_interval' => $o->billing_interval,
+                'subscribed_vehicles' => $o->subscribed_vehicles,
+                'upgrade_from_vehicles' => $o->upgrade_from_vehicles,
+                'price_per_vehicle' => $o->price_per_vehicle,
                 'can_cancel' => in_array($o->status, [PaymentOrder::STATUS_PENDING, PaymentOrder::STATUS_AWAITING_CONFIRMATION], true),
             ])->values()->all(),
             'currentVehiclesCount' => $currentVehiclesCount,
@@ -236,6 +241,9 @@ class SubscriptionController extends Controller
                 'bank_account_number' => $order->bank_account_number ?? $instructions['bank_account_number'] ?? null,
                 'bank_account_name' => $order->bank_account_name ?? $instructions['bank_account_name'] ?? null,
                 'proof_url' => $order->proof_url,
+                'subscribed_vehicles' => $order->subscribed_vehicles,
+                'upgrade_from_vehicles' => $order->upgrade_from_vehicles,
+                'price_per_vehicle' => $order->price_per_vehicle,
             ],
             'plan' => $order->plan ? [
                 'id' => $order->plan->id,

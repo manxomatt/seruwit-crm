@@ -20,6 +20,9 @@ interface OrderProps {
     bank_account_number: string | null;
     bank_account_name: string | null;
     proof_url: string | null;
+    subscribed_vehicles?: number | null;
+    upgrade_from_vehicles?: number | null;
+    price_per_vehicle?: string | number | null;
 }
 
 interface PlanProps {
@@ -177,7 +180,17 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
                                 Selesaikan Transfer Langganan
                             </h1>
                             <p className="mt-1 text-sm text-slate-300">
-                                Paket: <strong className="text-white">{plan?.name || 'Paket Langganan'}</strong> · Tagihan Total:{' '}
+                                Paket: <strong className="text-white">{plan?.name || 'Paket Langganan'}</strong>
+                                {order.subscribed_vehicles ? (
+                                    <>
+                                        {' '}· Kapasitas:{' '}
+                                        <strong className="text-teal-300">
+                                            {order.subscribed_vehicles} Unit
+                                            {order.type === 'upgrade' && order.upgrade_from_vehicles ? ` (+${Math.max(1, order.subscribed_vehicles - order.upgrade_from_vehicles)} upgrade)` : ''}
+                                        </strong>
+                                    </>
+                                ) : null}
+                                {' '}· Tagihan Total:{' '}
                                 <strong className="text-teal-300">{formatPrice(order.total_amount)}</strong>
                             </p>
                         </div>

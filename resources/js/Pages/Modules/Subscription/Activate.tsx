@@ -33,6 +33,8 @@ interface ActivePaymentOrder {
     unique_code: number;
     expires_at: string;
     type: string;
+    subscribed_vehicles?: number | null;
+    upgrade_from_vehicles?: number | null;
 }
 
 interface OrderItem {
@@ -46,6 +48,9 @@ interface OrderItem {
     expires_at: string | null;
     plan_name: string;
     billing_interval?: string;
+    subscribed_vehicles?: number | null;
+    upgrade_from_vehicles?: number | null;
+    price_per_vehicle?: string | number | null;
     can_cancel: boolean;
 }
 
@@ -706,6 +711,9 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                             Pesanan Pembayaran #{activePaymentOrder.id} Sedang Aktif
                                         </h4>
                                         <p className="mt-0.5 text-xs sm:text-sm text-slate-600">
+                                            {activePaymentOrder.subscribed_vehicles ? (
+                                                <>Kapasitas: <strong className="text-slate-900">{activePaymentOrder.subscribed_vehicles} Unit {activePaymentOrder.type === 'upgrade' && activePaymentOrder.upgrade_from_vehicles ? `(+${Math.max(1, activePaymentOrder.subscribed_vehicles - activePaymentOrder.upgrade_from_vehicles)} upgrade)` : ''}</strong> · </>
+                                            ) : null}
                                             Total: <strong className="text-slate-900">{fmtCurrency(activePaymentOrder.total_amount, 'IDR')}</strong> (kode unik <strong className="text-amber-700">+{activePaymentOrder.unique_code}</strong>) · batas waktu <strong className="text-slate-900">{paymentOrderDaysLeft} hari lagi</strong>
                                         </p>
                                     </div>
@@ -951,6 +959,7 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                         <th className="px-6 py-3.5">ID Pesanan</th>
                                         <th className="px-6 py-3.5">Tanggal</th>
                                         <th className="px-6 py-3.5">Paket / Tipe</th>
+                                        <th className="px-6 py-3.5">Kapasitas Unit</th>
                                         <th className="px-6 py-3.5">Total Tagihan</th>
                                         <th className="px-6 py-3.5">Status</th>
                                         <th className="px-6 py-3.5 text-right">Aksi</th>
@@ -970,6 +979,26 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                                 <span className="block text-[10px] uppercase text-slate-400">
                                                     {o.type === 'upgrade' ? 'Upgrade Kuota' : o.type === 'renew' ? 'Perpanjangan' : 'Aktivasi'} {o.billing_interval === 'annual' ? '(Tahunan)' : '(Bulanan)'}
                                                 </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {o.subscribed_vehicles ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-slate-800">
+                                                            {o.subscribed_vehicles} Unit
+                                                        </span>
+                                                        {o.type === 'upgrade' && o.upgrade_from_vehicles !== undefined && o.upgrade_from_vehicles !== null ? (
+                                                            <span className="text-[10px] font-bold text-indigo-600">
+                                                                (+{Math.max(1, o.subscribed_vehicles - o.upgrade_from_vehicles)} unit upgrade)
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-400">
+                                                                Total armada aktif
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400 font-medium">-</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 font-mono font-bold text-slate-900 whitespace-nowrap">
                                                 {fmtCurrency(o.total_amount, 'IDR')}
