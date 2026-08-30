@@ -116,7 +116,7 @@ export default function RateForm(props: RateFormProps): JSX.Element {
     }, [baseRate, form.data.period_type]);
 
     return (
-        <form onSubmit={onSubmit} className="space-y-6 pb-24">
+        <form onSubmit={onSubmit} className="space-y-6">
             {/* 1. Target Kendaraan & Identitas Tarif */}
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
@@ -760,25 +760,23 @@ export default function RateForm(props: RateFormProps): JSX.Element {
                 </div>
             </div>
 
-            {/* Sticky Action Footer */}
-            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
-                <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-                    <SecondaryButton
-                        type="button"
-                        onClick={onCancel}
-                        className="rounded-2xl px-5 py-2.5 text-xs font-bold shadow-2xs"
-                    >
-                        ← {labels.cancel}
-                    </SecondaryButton>
+            {/* Action Footer */}
+            <div className="flex items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <SecondaryButton
+                    type="button"
+                    onClick={onCancel}
+                    className="rounded-2xl px-5 py-2.5 text-xs font-bold shadow-2xs"
+                >
+                    ← {labels.cancel}
+                </SecondaryButton>
 
-                    <PrimaryButton
-                        type="submit"
-                        disabled={form.processing}
-                        className="rounded-2xl px-6 py-3 text-sm font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
-                    >
-                        {form.processing ? 'Menyimpan Tarif...' : `💾 ${label}`}
-                    </PrimaryButton>
-                </div>
+                <PrimaryButton
+                    type="submit"
+                    disabled={form.processing}
+                    className="rounded-2xl px-6 py-3 text-sm font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+                >
+                    {form.processing ? 'Menyimpan Tarif...' : `💾 ${label}`}
+                </PrimaryButton>
             </div>
         </form>
     );
