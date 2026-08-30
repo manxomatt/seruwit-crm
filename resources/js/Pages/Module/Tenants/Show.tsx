@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -45,6 +46,17 @@ interface ActivityLogEntry {
     meta: Record<string, unknown> | null;
 }
 
+interface CapacityTransactionEntry {
+    id: number;
+    amount: number;
+    balance_after: number;
+    type: string;
+    description: string;
+    reference_id: string | null;
+    created_by_name: string;
+    created_at: string | null;
+}
+
 const STATE_BADGE_CLASS: Record<ModuleState, string> = {
     installed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
     available: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
@@ -62,6 +74,7 @@ const ACTION_COLOR: Record<string, string> = {
     module_installed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     module_uninstalled: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
     setup_retried: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+    capacity_adjusted: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
 };
 
 const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
@@ -81,6 +94,7 @@ interface TenantDetail {
     notes: string | null;
     plan: string;
     can_install_demo_data: boolean;
+    unit_capacity_credits: number;
 }
 
 interface Props {
@@ -90,6 +104,7 @@ interface Props {
     plans: Plan[];
     graceDays: number;
     activityLogs: ActivityLogEntry[];
+    capacityTransactions: CapacityTransactionEntry[];
     canRetrySetup: boolean;
 }
 
@@ -136,12 +151,13 @@ const formatActivityTime = (isoString: string | null): string => {
     return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-type TabType = 'overview' | 'modules' | 'members' | 'activity' | 'danger';
+type TabType = 'overview' | 'capacity' | 'modules' | 'members' | 'activity' | 'danger';
 
-export default function Show({ tenant, members, modules, plans, graceDays, activityLogs, canRetrySetup }: Props): JSX.Element {
+export default function Show({ tenant, members, modules, plans, graceDays, activityLogs, capacityTransactions, canRetrySetup }: Props): JSX.Element {
     const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
     const [activeTab, setActiveTab] = useState<TabType>('overview');
+    const [isAdjustModalOpen, setIsAdjustModalOpen] = useState<boolean>(false);
 
     const { data, setData, patch, processing, errors } = useForm({
         name: tenant.name,
@@ -155,6 +171,23 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
         tax_id: tenant.tax_id ?? '',
         notes: tenant.notes ?? '',
     });
+
+    const adjustForm = useForm({
+        amount: 1,
+        type: 'admin_adjustment',
+        notes: '',
+    });
+
+    const submitAdjust = (e: React.FormEvent) => {
+        e.preventDefault();
+        adjustForm.post(route('module.tenants.adjust-capacity-credits', tenant.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsAdjustModalOpen(false);
+                adjustForm.reset();
+            },
+        });
+    };
 
     const planOptions = useMemo<SelectOption[]>(() => {
         const list: SelectOption[] = plans.map((plan) => ({
@@ -218,6 +251,7 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
 
     const tabs: Array<{ id: TabType; label: string; icon: string; badge?: number }> = [
         { id: 'overview', label: t('tenants.pages.show.tabs.overview'), icon: '⚙️' },
+        { id: 'capacity', label: 'Kapasitas Unit', icon: '🚗', badge: tenant.unit_capacity_credits },
         { id: 'modules', label: t('tenants.pages.show.tabs.modules'), icon: '🧩', badge: modules.filter((m) => m.installed).length },
         { id: 'members', label: t('tenants.pages.show.tabs.members'), icon: '👥', badge: members.length },
         { id: 'activity', label: t('tenants.pages.show.tabs.activity'), icon: '📜', badge: activityLogs.length },
@@ -326,6 +360,12 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
 
                         {/* Top Stats Chips */}
                         <div className="flex flex-wrap items-center gap-3">
+                            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200/80 dark:border-emerald-800/60 text-center min-w-[100px]">
+                                <div className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400">Saldo Unit</div>
+                                <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-300">
+                                    {tenant.unit_capacity_credits} Unit
+                                </div>
+                            </div>
                             <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-100 dark:border-slate-800 text-center min-w-[100px]">
                                 <div className="text-[10px] font-bold uppercase text-slate-400">Paket</div>
                                 <div className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
@@ -519,6 +559,110 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
                             </div>
                         </div>
                     </form>
+                )}
+
+                {/* Tab: Capacity Unit & Credits */}
+                {activeTab === 'capacity' && (
+                    <div className="space-y-6">
+                        {/* Summary Card */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>🚗</span>
+                                        <span>Saldo Kredit Kapasitas Unit</span>
+                                    </h2>
+                                    <p className="text-xs text-slate-500">
+                                        Saldo kredit yang tersedia untuk mengaktifkan atau memperpanjang armada kendaraan (1 kredit = 30 hari masa aktif).
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 px-5 py-3 border border-emerald-200 dark:border-emerald-800 text-center">
+                                        <div className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Saldo Tersedia</div>
+                                        <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
+                                            {tenant.unit_capacity_credits} <span className="text-xs font-semibold">Unit</span>
+                                        </div>
+                                    </div>
+
+                                    <PrimaryButton
+                                        type="button"
+                                        onClick={() => setIsAdjustModalOpen(true)}
+                                        className="!rounded-xl text-xs flex items-center gap-1.5 shadow-sm"
+                                    >
+                                        <span>⚡</span>
+                                        <span>Sesuaikan Saldo</span>
+                                    </PrimaryButton>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Transaction History Ledger */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                            <div className="border-b border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>📜</span>
+                                    <span>Riwayat Transaksi Saldo Kapasitas</span>
+                                </h3>
+                                <span className="text-xs text-slate-400 font-mono">
+                                    {capacityTransactions.length} transaksi terakhir
+                                </span>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    <thead>
+                                        <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-left font-bold text-slate-500 uppercase tracking-wider">
+                                            <th className="px-6 py-3">Waktu</th>
+                                            <th className="px-6 py-3">Tipe</th>
+                                            <th className="px-6 py-3">Perubahan</th>
+                                            <th className="px-6 py-3">Saldo Akhir</th>
+                                            <th className="px-6 py-3">Keterangan</th>
+                                            <th className="px-6 py-3">Oleh</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {capacityTransactions.map((tx) => {
+                                            const isPositive = tx.amount > 0;
+                                            return (
+                                                <tr key={tx.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                                    <td className="px-6 py-4 font-mono text-slate-500 whitespace-nowrap">
+                                                        {formatActivityTime(tx.created_at)}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-0.5 text-[10px] font-bold uppercase">
+                                                            {tx.type.replace('_', ' ')}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-extrabold whitespace-nowrap">
+                                                        <span className={isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                                                            {isPositive ? `+${tx.amount}` : tx.amount} Unit
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-mono font-bold text-slate-900 dark:text-white">
+                                                        {tx.balance_after} Unit
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                                                        {tx.description}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-500">
+                                                        {tx.created_by_name}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {capacityTransactions.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-10 text-center text-slate-400 italic">
+                                                    Belum ada riwayat transaksi kapasitas unit.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 {/* Tab 2: Modules Management */}
@@ -720,6 +864,83 @@ export default function Show({ tenant, members, modules, plans, graceDays, activ
                         </PrimaryButton>
                     </form>
                 )}
+
+                {/* Modal: Adjust Capacity Credits */}
+                <Modal show={isAdjustModalOpen} onClose={() => setIsAdjustModalOpen(false)} maxWidth="md">
+                    <form onSubmit={submitAdjust} className="p-6 space-y-5">
+                        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>⚡</span>
+                                <span>Sesuaikan Saldo Kapasitas Unit</span>
+                            </h3>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Tambah (bonus/pembelian) atau kurangi saldo unit kredit workspace {tenant.name}.
+                            </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-3 text-xs text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700">
+                            Saldo saat ini: <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{tenant.unit_capacity_credits} Unit</strong>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                Jumlah Perubahan Unit (+ / -)
+                            </label>
+                            <input
+                                type="number"
+                                className={inputClass}
+                                value={adjustForm.data.amount}
+                                onChange={(e) => adjustForm.setData('amount', parseInt(e.target.value) || 0)}
+                                placeholder="Contoh: 5 atau -2"
+                                required
+                            />
+                            <p className="mt-1 text-[11px] text-slate-500">Gunakan angka positif untuk menambah (misal 5) atau negatif untuk mengurangi (misal -2).</p>
+                            {adjustForm.errors.amount && <p className="mt-1 text-xs text-rose-500">{adjustForm.errors.amount}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                Jenis Penyesuaian
+                            </label>
+                            <Select
+                                className="w-full"
+                                value={adjustForm.data.type}
+                                onChange={(val) => adjustForm.setData('type', val)}
+                                options={[
+                                    { value: 'admin_adjustment', label: 'Penyesuaian Admin', description: 'Penyesuaian saldo manual oleh admin central' },
+                                    { value: 'bonus', label: 'Bonus / Kompensasi', description: 'Pemberian kredit bonus gratis' },
+                                    { value: 'correction', label: 'Koreksi Saldo', description: 'Koreksi kesalahan input sebelumnya' },
+                                    { value: 'refund', label: 'Pengembalian / Refund', description: 'Pengembalian saldo unit' },
+                                ]}
+                            />
+                            {adjustForm.errors.type && <p className="mt-1 text-xs text-rose-500">{adjustForm.errors.type}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                Catatan / Alasan Penyesuaian
+                            </label>
+                            <input
+                                type="text"
+                                className={inputClass}
+                                value={adjustForm.data.notes}
+                                onChange={(e) => adjustForm.setData('notes', e.target.value)}
+                                placeholder="Contoh: Bonus promo onboarding / kompensasi armada"
+                                required
+                            />
+                            {adjustForm.errors.notes && <p className="mt-1 text-xs text-rose-500">{adjustForm.errors.notes}</p>}
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <SecondaryButton type="button" onClick={() => setIsAdjustModalOpen(false)} className="!rounded-xl text-xs">
+                                {t('common.cancel')}
+                            </SecondaryButton>
+                            <PrimaryButton type="submit" disabled={adjustForm.processing} className="!rounded-xl text-xs">
+                                Simpan Perubahan
+                            </PrimaryButton>
+                        </div>
+                    </form>
+                </Modal>
             </div>
         </DynamicLayout>
     );

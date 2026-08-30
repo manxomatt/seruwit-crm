@@ -309,6 +309,7 @@ Route::domain($centralDomain)
         Route::get('/tenants/{tenant}', [TenantController::class, 'show'])->name('tenants.show');
         Route::patch('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
         Route::patch('/tenants/{tenant}/status', [TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+        Route::post('/tenants/{tenant}/adjust-capacity-credits', [TenantController::class, 'adjustCapacityCredits'])->name('tenants.adjust-capacity-credits');
         Route::post('/tenants/{tenant}/retry-setup', [TenantController::class, 'retrySetup'])->name('tenants.retry-setup');
         Route::post('/tenants/{tenant}/modules/{module}', [TenantController::class, 'installModule'])->name('tenants.modules.install');
         Route::delete('/tenants/{tenant}/modules/{module}', [TenantController::class, 'uninstallModule'])->name('tenants.modules.uninstall');

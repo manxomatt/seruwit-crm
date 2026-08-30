@@ -9,6 +9,7 @@ use App\Models\CentralUser;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantActivityLog;
+use App\Models\TenantCapacityTransaction;
 use App\Models\User;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleCatalog;
@@ -20,6 +21,7 @@ use App\Services\TenantActivityLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -250,6 +252,24 @@ class TenantController extends Controller
             ])
             ->all();
 
+        $capacityTransactions = TenantCapacityTransaction::query()
+            ->where('tenant_id', $tenant->id)
+            ->with('createdBy:global_id,name')
+            ->orderByDesc('created_at')
+            ->limit(30)
+            ->get()
+            ->map(fn (TenantCapacityTransaction $tx): array => [
+                'id' => $tx->id,
+                'amount' => $tx->amount,
+                'balance_after' => $tx->balance_after,
+                'type' => $tx->type,
+                'description' => $tx->description,
+                'reference_id' => $tx->reference_id,
+                'created_by_name' => $tx->createdBy?->name ?? 'System',
+                'created_at' => $tx->created_at?->toIso8601String(),
+            ])
+            ->all();
+
         $provision = $tenant->provision ?? [];
         $canRetrySetup = ! empty($provision['owner_global_id'] ?? null);
 
@@ -269,14 +289,66 @@ class TenantController extends Controller
                 'notes' => $tenant->notes,
                 'plan' => $tenant->planKey(),
                 'can_install_demo_data' => $tenant->canInstallDemoData(),
+                'unit_capacity_credits' => (int) ($tenant->unit_capacity_credits ?? 0),
             ],
             'members' => $members,
             'modules' => $this->catalog->forTenant($tenant),
             'plans' => $this->catalog->allPlans(),
             'graceDays' => config('modules.purge_after_days'),
             'activityLogs' => $activityLogs,
+            'capacityTransactions' => $capacityTransactions,
             'canRetrySetup' => $canRetrySetup,
         ]);
+    }
+
+    /**
+     * Adjust a tenant's unit capacity credits manually by central admin.
+     */
+    public function adjustCapacityCredits(Request $request, Tenant $tenant): RedirectResponse
+    {
+        Gate::authorize('manage-tenants');
+
+        $validated = $request->validate([
+            'amount' => ['required', 'integer', 'not_in:0'],
+            'type' => ['required', 'string', 'in:admin_adjustment,bonus,correction,refund'],
+            'notes' => ['required', 'string', 'max:255'],
+        ]);
+
+        $amount = (int) $validated['amount'];
+        $type = $validated['type'];
+        $notes = $validated['notes'];
+
+        return DB::transaction(function () use ($tenant, $amount, $type, $notes, $request): RedirectResponse {
+            $tenant->refresh();
+            $currentCredits = (int) ($tenant->unit_capacity_credits ?? 0);
+            $newCredits = $currentCredits + $amount;
+
+            if ($newCredits < 0) {
+                return back()->with('error', 'Saldo kredit kapasitas unit tidak boleh kurang dari 0.');
+            }
+
+            $tenant->update(['unit_capacity_credits' => $newCredits]);
+
+            TenantCapacityTransaction::create([
+                'tenant_id' => $tenant->id,
+                'amount' => $amount,
+                'balance_after' => $newCredits,
+                'type' => $type,
+                'description' => $notes,
+                'created_by_id' => $request->user()->global_id ?? null,
+            ]);
+
+            $changeSign = $amount > 0 ? "+{$amount}" : "{$amount}";
+            TenantActivityLogger::log(
+                $tenant,
+                'capacity_adjusted',
+                "Penyesuaian saldo kapasitas unit: {$changeSign} kredit ({$notes}). Saldo saat ini: {$newCredits}.",
+                $request->user(),
+                ['amount' => $amount, 'balance_after' => $newCredits, 'type' => $type],
+            );
+
+            return back()->with('success', "Saldo kapasitas unit berhasil disesuaikan. Saldo sekarang: {$newCredits} unit.");
+        });
     }
 
     /**

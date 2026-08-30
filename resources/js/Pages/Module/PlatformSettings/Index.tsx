@@ -12,6 +12,10 @@ interface Props {
     settings: {
         ai_features_enabled: boolean;
         system_mode: string;
+        capacity_credits_lifetime_enabled: boolean;
+        vehicle_activation_duration_days: number;
+        vehicle_grace_period_days: number;
+        pause_during_maintenance_enabled: boolean;
     };
     systemModes: string[];
 }
@@ -21,6 +25,10 @@ export default function Index({ settings, systemModes }: Props): JSX.Element {
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
         ai_features_enabled: settings.ai_features_enabled,
         system_mode: settings.system_mode,
+        capacity_credits_lifetime_enabled: settings.capacity_credits_lifetime_enabled,
+        vehicle_activation_duration_days: settings.vehicle_activation_duration_days,
+        vehicle_grace_period_days: settings.vehicle_grace_period_days,
+        pause_during_maintenance_enabled: settings.pause_during_maintenance_enabled,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -87,6 +95,105 @@ export default function Index({ settings, systemModes }: Props): JSX.Element {
                         className="w-full max-w-xs"
                     />
                     <InputError message={errors.system_mode} className="mt-2" />
+                </div>
+
+                {/* Capacity Unit & Fleet Activation Policies */}
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                    <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>🚗</span>
+                            <span>Kebijakan Kapasitas Unit & Masa Aktif Armada</span>
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            Aturan konsumsi saldo kredit kapasitas unit dan siklus masa aktif kendaraan tenant.
+                        </p>
+                    </div>
+
+                    {/* Lifetime Credit Toggle */}
+                    <label htmlFor="capacity_credits_lifetime_enabled" className="flex cursor-pointer items-start justify-between gap-4">
+                        <div className="min-w-0">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                Saldo Kredit Lifetime / Tidak Pernah Kadaluarsa
+                            </span>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan.
+                            </p>
+                        </div>
+                        <div className="relative mt-0.5 shrink-0">
+                            <input
+                                type="checkbox"
+                                id="capacity_credits_lifetime_enabled"
+                                checked={data.capacity_credits_lifetime_enabled}
+                                onChange={(e) => setData('capacity_credits_lifetime_enabled', e.target.checked)}
+                                className="peer sr-only"
+                            />
+                            <div className="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-checked:bg-indigo-600 dark:bg-slate-700" />
+                            <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                        </div>
+                    </label>
+                    <InputError message={errors.capacity_credits_lifetime_enabled} className="mt-1" />
+
+                    <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        {/* Duration Days */}
+                        <div>
+                            <InputLabel htmlFor="vehicle_activation_duration_days" value="Durasi 1 Siklus Aktivasi (Hari)" />
+                            <input
+                                id="vehicle_activation_duration_days"
+                                type="number"
+                                min="1"
+                                max="365"
+                                value={data.vehicle_activation_duration_days}
+                                onChange={(e) => setData('vehicle_activation_duration_days', parseInt(e.target.value) || 30)}
+                                className="mt-1 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                required
+                            />
+                            <p className="mt-1 text-[11px] text-slate-500">Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas (default: 30 hari).</p>
+                            <InputError message={errors.vehicle_activation_duration_days} className="mt-1" />
+                        </div>
+
+                        {/* Grace Period Days */}
+                        <div>
+                            <InputLabel htmlFor="vehicle_grace_period_days" value="Masa Tenggang / Grace Period (Hari)" />
+                            <input
+                                id="vehicle_grace_period_days"
+                                type="number"
+                                min="0"
+                                max="30"
+                                value={data.vehicle_grace_period_days}
+                                onChange={(e) => setData('vehicle_grace_period_days', parseInt(e.target.value) || 0)}
+                                className="mt-1 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                required
+                            />
+                            <p className="mt-1 text-[11px] text-slate-500">Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal (default: 3 hari).</p>
+                            <InputError message={errors.vehicle_grace_period_days} className="mt-1" />
+                        </div>
+                    </div>
+
+                    {/* Pause during Maintenance Toggle */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <label htmlFor="pause_during_maintenance_enabled" className="flex cursor-pointer items-start justify-between gap-4">
+                            <div className="min-w-0">
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                    Bekukan Masa Aktif Saat Masuk Bengkel (Maintenance)
+                                </span>
+                                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                    Jika diaktifkan, masa aktif kendaraan tidak berkurang saat berstatus maintenance.
+                                </p>
+                            </div>
+                            <div className="relative mt-0.5 shrink-0">
+                                <input
+                                    type="checkbox"
+                                    id="pause_during_maintenance_enabled"
+                                    checked={data.pause_during_maintenance_enabled}
+                                    onChange={(e) => setData('pause_during_maintenance_enabled', e.target.checked)}
+                                    className="peer sr-only"
+                                />
+                                <div className="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-checked:bg-indigo-600 dark:bg-slate-700" />
+                                <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                            </div>
+                        </label>
+                        <InputError message={errors.pause_during_maintenance_enabled} className="mt-1" />
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">

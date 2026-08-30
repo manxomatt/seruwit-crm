@@ -40,6 +40,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'is_trial_expired' => 'boolean',
             'can_install_demo_data' => 'boolean',
             'max_vehicles_allowed' => 'integer',
+            'unit_capacity_credits' => 'integer',
             'reseller_attributed_at' => 'datetime',
             'reseller_attribution_ends_at' => 'datetime',
         ];
@@ -183,6 +184,14 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasOne(Subscription::class);
     }
 
+    /**
+     * @return HasMany<TenantCapacityTransaction, $this>
+     */
+    public function capacityTransactions(): HasMany
+    {
+        return $this->hasMany(TenantCapacityTransaction::class)->orderByDesc('created_at');
+    }
+
     public function getIsOnTrialAttribute(): bool
     {
         $isExpired = filter_var($this->is_trial_expired ?? false, FILTER_VALIDATE_BOOLEAN)
@@ -233,6 +242,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'status',
             'subscription_type',
             'max_vehicles_allowed',
+            'unit_capacity_credits',
             'subscription_id',
             'reseller_global_id',
             'reseller_attributed_at',

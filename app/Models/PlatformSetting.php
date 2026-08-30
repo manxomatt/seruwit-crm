@@ -17,6 +17,14 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PlatformSetting extends Model
 {
+    public const KEY_CAPACITY_CREDITS_LIFETIME = 'capacity_credits_lifetime_enabled';
+
+    public const KEY_VEHICLE_ACTIVATION_DURATION_DAYS = 'vehicle_activation_duration_days';
+
+    public const KEY_VEHICLE_GRACE_PERIOD_DAYS = 'vehicle_grace_period_days';
+
+    public const KEY_PAUSE_DURING_MAINTENANCE = 'pause_during_maintenance_enabled';
+
     /**
      * @var list<string>
      */
@@ -64,6 +72,30 @@ class PlatformSetting extends Model
     public static function getValue(string $key, mixed $default = null): mixed
     {
         return static::query()->where('key', $key)->value('value') ?? $default;
+    }
+
+    public static function isCapacityCreditsLifetime(): bool
+    {
+        $val = static::getValue(self::KEY_CAPACITY_CREDITS_LIFETIME, '1');
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function getVehicleActivationDurationDays(): int
+    {
+        return (int) static::getValue(self::KEY_VEHICLE_ACTIVATION_DURATION_DAYS, 30);
+    }
+
+    public static function getVehicleGracePeriodDays(): int
+    {
+        return (int) static::getValue(self::KEY_VEHICLE_GRACE_PERIOD_DAYS, 3);
+    }
+
+    public static function isPauseDuringMaintenanceEnabled(): bool
+    {
+        $val = static::getValue(self::KEY_PAUSE_DURING_MAINTENANCE, '0');
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
