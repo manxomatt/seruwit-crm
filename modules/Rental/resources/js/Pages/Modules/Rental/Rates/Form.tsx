@@ -189,17 +189,19 @@ export default function FormPage({
                     subtitle={mode === 'create' ? 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.' : 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.'}
                     actions={
                         <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsAiModalOpen(true)}
-                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50/70 px-4 py-2 text-xs font-black text-indigo-700 shadow-2xs hover:border-indigo-300 hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 dark:border-indigo-900/60 dark:bg-slate-800 dark:from-slate-800 dark:to-indigo-950/40 dark:text-indigo-300 dark:hover:bg-slate-700 transition"
-                            >
-                                <span className="text-sm">✨</span>
-                                <span>{t('rental.ai.btn_ai_autofill', undefined, 'AI Auto-Fill Tarif')}</span>
-                                <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-2xs">
-                                    Gemini
-                                </span>
-                            </button>
+                            {mode === 'create' && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAiModalOpen(true)}
+                                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50/70 px-4 py-2 text-xs font-black text-indigo-700 shadow-2xs hover:border-indigo-300 hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 dark:border-indigo-900/60 dark:bg-slate-800 dark:from-slate-800 dark:to-indigo-950/40 dark:text-indigo-300 dark:hover:bg-slate-700 transition"
+                                >
+                                    <span className="text-sm">✨</span>
+                                    <span>{t('rental.ai.btn_ai_autofill', undefined, 'AI Auto-Fill Tarif')}</span>
+                                    <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-2xs">
+                                        Gemini
+                                    </span>
+                                </button>
+                            )}
                             <Link
                                 href={prefixedRoute('rental.rates.index')}
                                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
@@ -278,14 +280,16 @@ export default function FormPage({
                 </div>
             </div>
 
-            {/* Modal AI Auto-Fill Form Tarif Rental */}
-            <RentalRateAiGenerateModal
-                isOpen={isAiModalOpen}
-                onClose={() => setIsAiModalOpen(false)}
-                vehicles={vehicles}
-                rentalClasses={rentalClasses}
-                onApply={handleApplyAiData}
-            />
+            {/* Modal AI Auto-Fill Form Tarif Rental (Only in create mode) */}
+            {mode === 'create' && (
+                <RentalRateAiGenerateModal
+                    isOpen={isAiModalOpen}
+                    onClose={() => setIsAiModalOpen(false)}
+                    vehicles={vehicles}
+                    rentalClasses={rentalClasses}
+                    onApply={handleApplyAiData}
+                />
+            )}
         </DynamicLayout>
     );
 }
