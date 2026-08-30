@@ -41,7 +41,7 @@ export default function Group({
     currentGroup,
     systemModes,
 }: Props): JSX.Element {
-    const { t, locale } = useTrans();
+    const { t } = useTrans();
     const { flash } = usePage<{ flash?: { success?: string } }>().props;
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
@@ -68,7 +68,11 @@ export default function Group({
     };
 
     const formatGroupLabel = (group: string): string => {
-        return t(`settings.platform.groups.${group}`, undefined, t(`settings.groups.${group}`, undefined, group.charAt(0).toUpperCase() + group.slice(1)));
+        return t(
+            `settings.platform.groups.${group}`,
+            undefined,
+            t(`settings.groups.${group}`, undefined, group.charAt(0).toUpperCase() + group.slice(1)),
+        );
     };
 
     const systemModeIndex = findSettingIndex('general.system_mode');
@@ -93,7 +97,11 @@ export default function Group({
             header={
                 <PageHeader
                     title={t('settings.platform.title', undefined, 'Pengaturan Platform')}
-                    subtitle={t('settings.platform.subtitle', undefined, 'Konfigurasi global platform SaaS, kontrol fitur AI, dan kebijakan kapasitas armada.')}
+                    subtitle={t(
+                        'settings.platform.subtitle',
+                        undefined,
+                        'Konfigurasi global platform SaaS, kontrol fitur AI, dan kebijakan kapasitas armada.',
+                    )}
                 />
             }
         >
@@ -173,12 +181,17 @@ export default function Group({
                                                     {t('settings.platform.system_mode.label', undefined, 'Mode Sistem (Environment)')}
                                                 </h3>
                                                 <p className="mt-0.5 text-xs text-slate-500">
-                                                    {t('settings.platform.system_mode.description', undefined, 'Tentukan lingkungan operasional sistem. Mengatur perilaku pengiriman email keluar, verifikasi OTP, dan proteksi keamanan.')}
+                                                    {t(
+                                                        'settings.platform.system_mode.description',
+                                                        undefined,
+                                                        'Tentukan lingkungan operasional sistem. Mengatur perilaku pengiriman email keluar, verifikasi OTP, dan proteksi keamanan.',
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                                            general.system_mode
+                                        <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                            {currentSystemMode === 'production' ? 'LIVE' : 'DEV'}
                                         </span>
                                     </div>
 
@@ -205,16 +218,24 @@ export default function Group({
                                                             </span>
                                                         </div>
                                                         <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                                            {t('settings.platform.system_mode.dev_desc', undefined, 'Mode pengembangan & uji coba. Email keluar dibypass dan kode verifikasi OTP ditampilkan di layar browser.')}
+                                                            {t(
+                                                                'settings.platform.system_mode.dev_desc',
+                                                                undefined,
+                                                                'Mode pengembangan & uji coba. Email keluar dibypass dan kode verifikasi OTP ditampilkan di layar browser.',
+                                                            )}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                                                    currentSystemMode === 'development'
-                                                        ? 'border-amber-500 bg-amber-500 text-white'
-                                                        : 'border-slate-300 dark:border-slate-700'
-                                                }`}>
-                                                    {currentSystemMode === 'development' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                <div
+                                                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                                        currentSystemMode === 'development'
+                                                            ? 'border-amber-500 bg-amber-500 text-white'
+                                                            : 'border-slate-300 dark:border-slate-700'
+                                                    }`}
+                                                >
+                                                    {currentSystemMode === 'development' && (
+                                                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -241,21 +262,32 @@ export default function Group({
                                                             </span>
                                                         </div>
                                                         <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                                            {t('settings.platform.system_mode.prod_desc', undefined, 'Mode operasional produksi langsung. Email keluar dikirim via SMTP nyata dan sistem keamanan penuh aktif.')}
+                                                            {t(
+                                                                'settings.platform.system_mode.prod_desc',
+                                                                undefined,
+                                                                'Mode operasional produksi langsung. Email keluar dikirim via SMTP nyata dan sistem keamanan penuh aktif.',
+                                                            )}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                                                    currentSystemMode === 'production'
-                                                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                                                        : 'border-slate-300 dark:border-slate-700'
-                                                }`}>
-                                                    {currentSystemMode === 'production' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                <div
+                                                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                                        currentSystemMode === 'production'
+                                                            ? 'border-emerald-500 bg-emerald-500 text-white'
+                                                            : 'border-slate-300 dark:border-slate-700'
+                                                    }`}
+                                                >
+                                                    {currentSystemMode === 'production' && (
+                                                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <InputError message={(errors as Record<string, string>)[`settings.${systemModeIndex}.value`]} className="mt-2" />
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${systemModeIndex}.value`]}
+                                        className="mt-2"
+                                    />
                                 </div>
                             )}
 
@@ -277,22 +309,40 @@ export default function Group({
                                                     </span>
                                                 </div>
                                                 <p className="mt-0.5 text-xs text-slate-500">
-                                                    {t('settings.platform.ai_features.description', undefined, 'Master switch untuk mengaktifkan atau menonaktifkan seluruh kapabilitas AI di seluruh workspace tenant.')}
+                                                    {t(
+                                                        'settings.platform.ai_features.description',
+                                                        undefined,
+                                                        'Master switch untuk mengaktifkan atau menonaktifkan seluruh kapabilitas AI di seluruh workspace tenant.',
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                                            general.ai_features_enabled
+                                        <span
+                                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                                isAiEnabled
+                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`h-1.5 w-1.5 rounded-full ${
+                                                    isAiEnabled ? 'bg-emerald-500' : 'bg-slate-400'
+                                                }`}
+                                            />
+                                            {isAiEnabled ? 'AKTIF' : 'NONAKTIF'}
                                         </span>
                                     </div>
 
                                     {/* Toggle Bar */}
                                     <div className="mt-5">
-                                        <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
-                                            isAiEnabled
-                                                ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-white dark:border-indigo-900/60 dark:from-indigo-950/30 dark:via-purple-950/20 dark:to-slate-900'
-                                                : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
-                                        }`}>
+                                        <div
+                                            onClick={() => updateValue(aiFeaturesIndex, isAiEnabled ? '0' : '1')}
+                                            className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                                isAiEnabled
+                                                    ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-white dark:border-indigo-900/60 dark:from-indigo-950/30 dark:via-purple-950/20 dark:to-slate-900'
+                                                    : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:bg-slate-800/90'
+                                            }`}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-xs">
                                                     ✨
@@ -305,22 +355,35 @@ export default function Group({
                                                     </span>
                                                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                                                         {isAiEnabled
-                                                            ? t('settings.platform.ai_features.active_desc', undefined, 'Tenant yang berlangganan dapat menggunakan seluruh modul AI cerdas.')
-                                                            : t('settings.platform.ai_features.inactive_desc', undefined, 'Seluruh layanan AI dinonaktifkan sementara di semua workspace.')}
+                                                            ? t(
+                                                                  'settings.platform.ai_features.active_desc',
+                                                                  undefined,
+                                                                  'Tenant yang berlangganan dapat menggunakan seluruh modul AI cerdas.',
+                                                              )
+                                                            : t(
+                                                                  'settings.platform.ai_features.inactive_desc',
+                                                                  undefined,
+                                                                  'Seluruh layanan AI dinonaktifkan sementara di semua workspace.',
+                                                              )}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="relative shrink-0">
-                                                <input
-                                                    type="checkbox"
-                                                    className="peer sr-only"
-                                                    checked={isAiEnabled}
-                                                    onChange={(e) => updateValue(aiFeaturesIndex, e.target.checked ? '1' : '0')}
+
+                                            {/* Reliable Animated Switch */}
+                                            <div
+                                                role="switch"
+                                                aria-checked={isAiEnabled}
+                                                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                    isAiEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                        isAiEnabled ? 'translate-x-5' : 'translate-x-0'
+                                                    }`}
                                                 />
-                                                <div className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
-                                                <div className="absolute left-[3px] top-[3px] h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
                                             </div>
-                                        </label>
+                                        </div>
                                     </div>
 
                                     {/* AI Sub-services Grid */}
@@ -347,7 +410,10 @@ export default function Group({
                                             </div>
                                         </div>
                                     </div>
-                                    <InputError message={(errors as Record<string, string>)[`settings.${aiFeaturesIndex}.value`]} className="mt-2" />
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${aiFeaturesIndex}.value`]}
+                                        className="mt-2"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -366,7 +432,11 @@ export default function Group({
                                             {t('settings.platform.groups.capacity', undefined, 'Kebijakan Kapasitas Unit & Armada')}
                                         </h3>
                                         <p className="mt-0.5 text-xs text-slate-500">
-                                            {t('settings.platform.capacity.duration_desc', undefined, 'Aturan konsumsi saldo kredit kapasitas unit dan siklus masa aktif kendaraan tenant.')}
+                                            {t(
+                                                'settings.platform.capacity.duration_desc',
+                                                undefined,
+                                                'Aturan konsumsi saldo kredit kapasitas unit dan siklus masa aktif kendaraan tenant.',
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -375,11 +445,14 @@ export default function Group({
                             {/* Lifetime Credit Toggle */}
                             {lifetimeCreditIndex >= 0 && (
                                 <div>
-                                    <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
-                                        isLifetimeCredit
-                                            ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
-                                            : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
-                                    }`}>
+                                    <div
+                                        onClick={() => updateValue(lifetimeCreditIndex, isLifetimeCredit ? '0' : '1')}
+                                        className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                            isLifetimeCredit
+                                                ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                                : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60'
+                                        }`}
+                                    >
                                         <div className="flex items-center gap-3">
                                             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-xs">
                                                 ♾️
@@ -389,22 +462,32 @@ export default function Group({
                                                     {t('settings.platform.capacity.lifetime_label', undefined, 'Saldo Kredit Lifetime')}
                                                 </span>
                                                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                                    {t('settings.platform.capacity.lifetime_desc', undefined, 'Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan (tidak pernah kadaluarsa).')}
+                                                    {t(
+                                                        'settings.platform.capacity.lifetime_desc',
+                                                        undefined,
+                                                        'Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan (tidak pernah kadaluarsa).',
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="relative shrink-0">
-                                            <input
-                                                type="checkbox"
-                                                className="peer sr-only"
-                                                checked={isLifetimeCredit}
-                                                onChange={(e) => updateValue(lifetimeCreditIndex, e.target.checked ? '1' : '0')}
+                                        <div
+                                            role="switch"
+                                            aria-checked={isLifetimeCredit}
+                                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                isLifetimeCredit ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                    isLifetimeCredit ? 'translate-x-5' : 'translate-x-0'
+                                                }`}
                                             />
-                                            <div className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
-                                            <div className="absolute left-[3px] top-[3px] h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
                                         </div>
-                                    </label>
-                                    <InputError message={(errors as Record<string, string>)[`settings.${lifetimeCreditIndex}.value`]} className="mt-1.5" />
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${lifetimeCreditIndex}.value`]}
+                                        className="mt-1.5"
+                                    />
                                 </div>
                             )}
 
@@ -431,9 +514,16 @@ export default function Group({
                                             </span>
                                         </div>
                                         <p className="mt-1 text-[11px] text-slate-500">
-                                            {t('settings.platform.capacity.duration_desc', undefined, 'Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas kuota armada (default: 30 hari).')}
+                                            {t(
+                                                'settings.platform.capacity.duration_desc',
+                                                undefined,
+                                                'Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas kuota armada (default: 30 hari).',
+                                            )}
                                         </p>
-                                        <InputError message={(errors as Record<string, string>)[`settings.${durationDaysIndex}.value`]} className="mt-1.5" />
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${durationDaysIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
                                     </div>
                                 )}
 
@@ -458,9 +548,16 @@ export default function Group({
                                             </span>
                                         </div>
                                         <p className="mt-1 text-[11px] text-slate-500">
-                                            {t('settings.platform.capacity.grace_period_desc', undefined, 'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).')}
+                                            {t(
+                                                'settings.platform.capacity.grace_period_desc',
+                                                undefined,
+                                                'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).',
+                                            )}
                                         </p>
-                                        <InputError message={(errors as Record<string, string>)[`settings.${graceDaysIndex}.value`]} className="mt-1.5" />
+                                        <InputError
+                                            message={(errors as Record<string, string>)[`settings.${graceDaysIndex}.value`]}
+                                            className="mt-1.5"
+                                        />
                                     </div>
                                 )}
                             </div>
@@ -468,11 +565,14 @@ export default function Group({
                             {/* Pause During Maintenance Toggle */}
                             {pauseMaintenanceIndex >= 0 && (
                                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                                    <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
-                                        isPauseMaintenance
-                                            ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
-                                            : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
-                                    }`}>
+                                    <div
+                                        onClick={() => updateValue(pauseMaintenanceIndex, isPauseMaintenance ? '0' : '1')}
+                                        className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                            isPauseMaintenance
+                                                ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                                : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60'
+                                        }`}
+                                    >
                                         <div className="flex items-center gap-3">
                                             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-sm text-white shadow-xs">
                                                 🛠️
@@ -482,22 +582,32 @@ export default function Group({
                                                     {t('settings.platform.capacity.pause_maintenance_label', undefined, 'Bekukan Masa Aktif Saat Masuk Bengkel')}
                                                 </span>
                                                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                                    {t('settings.platform.capacity.pause_maintenance_desc', undefined, 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).')}
+                                                    {t(
+                                                        'settings.platform.capacity.pause_maintenance_desc',
+                                                        undefined,
+                                                        'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="relative shrink-0">
-                                            <input
-                                                type="checkbox"
-                                                className="peer sr-only"
-                                                checked={isPauseMaintenance}
-                                                onChange={(e) => updateValue(pauseMaintenanceIndex, e.target.checked ? '1' : '0')}
+                                        <div
+                                            role="switch"
+                                            aria-checked={isPauseMaintenance}
+                                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                isPauseMaintenance ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                    isPauseMaintenance ? 'translate-x-5' : 'translate-x-0'
+                                                }`}
                                             />
-                                            <div className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 dark:bg-slate-700" />
-                                            <div className="absolute left-[3px] top-[3px] h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
                                         </div>
-                                    </label>
-                                    <InputError message={(errors as Record<string, string>)[`settings.${pauseMaintenanceIndex}.value`]} className="mt-1.5" />
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${pauseMaintenanceIndex}.value`]}
+                                        className="mt-1.5"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -514,7 +624,12 @@ export default function Group({
                                             {formatGroupLabel(currentGroup)}
                                         </h3>
                                         <p className="text-xs text-slate-500">
-                                            {groupSettings.length} {t('settings.platform.count_hint', { count: groupSettings.length }, `${groupSettings.length} pengaturan platform di grup ini`)}
+                                            {groupSettings.length}{' '}
+                                            {t(
+                                                'settings.platform.count_hint',
+                                                { count: groupSettings.length },
+                                                `${groupSettings.length} pengaturan platform di grup ini`,
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -543,9 +658,6 @@ export default function Group({
                                                         value={setting.label}
                                                         className="!text-xs !font-bold !uppercase !tracking-wider"
                                                     />
-                                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-400 dark:bg-slate-800">
-                                                        {setting.key}
-                                                    </span>
                                                 </div>
 
                                                 {setting.description && (
@@ -564,23 +676,35 @@ export default function Group({
                                                             onChange={(e) => updateValue(index, e.target.value)}
                                                         />
                                                     ) : setting.type === 'boolean' ? (
-                                                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-800/60">
+                                                        <div
+                                                            onClick={() =>
+                                                                updateValue(index, data.settings[index].value === '1' ? '0' : '1')
+                                                            }
+                                                            className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-800/60"
+                                                        >
                                                             <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                                {data.settings[index].value === '1' ? 'Aktif (Enabled)' : 'Nonaktif (Disabled)'}
+                                                                {data.settings[index].value === '1'
+                                                                    ? 'Aktif (Enabled)'
+                                                                    : 'Nonaktif (Disabled)'}
                                                             </span>
-                                                            <div className="relative shrink-0">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="peer sr-only"
-                                                                    checked={data.settings[index].value === '1'}
-                                                                    onChange={(e) =>
-                                                                        updateValue(index, e.target.checked ? '1' : '0')
-                                                                    }
+                                                            <div
+                                                                role="switch"
+                                                                aria-checked={data.settings[index].value === '1'}
+                                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                                    data.settings[index].value === '1'
+                                                                        ? 'bg-indigo-600'
+                                                                        : 'bg-slate-300 dark:bg-slate-700'
+                                                                }`}
+                                                            >
+                                                                <span
+                                                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                                        data.settings[index].value === '1'
+                                                                            ? 'translate-x-5'
+                                                                            : 'translate-x-0'
+                                                                    }`}
                                                                 />
-                                                                <div className="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-checked:bg-indigo-600 dark:bg-slate-700" />
-                                                                <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform peer-checked:translate-x-5" />
                                                             </div>
-                                                        </label>
+                                                        </div>
                                                     ) : (
                                                         <TextInput
                                                             id={`value-${setting.id}`}
