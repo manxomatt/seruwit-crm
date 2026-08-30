@@ -219,6 +219,17 @@ const getExpiryInfo = (activeUntil: string | null | undefined) => {
     };
 };
 
+function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as Partial<Record<VehicleColumn, boolean>>;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
 export default function Index({ vehicles, filters, bases = [], can, quota, available_credits }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
