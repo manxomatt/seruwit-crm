@@ -825,15 +825,17 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
 
                     {selectedPlan?.key === 'pay_as_you_go' && (
                         <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
-                            <h3 className="text-lg font-black text-slate-900">Konfigurasi Kuota Pay As You Go</h3>
+                            <h3 className="text-lg font-black text-slate-900">
+                                {t('subscription.payg_config_title', undefined, 'Konfigurasi Kuota Pay As You Go')}
+                            </h3>
                             <p className="text-sm text-slate-500 mt-1">
-                                Tentukan kapasitas maksimal kendaraan yang ingin Anda daftarkan di workspace ini.
+                                {t('subscription.payg_config_desc', undefined, 'Tentukan kapasitas maksimal kendaraan yang ingin Anda daftarkan di workspace ini.')}
                             </p>
 
                             <div className="mt-6 grid gap-6 md:grid-cols-2">
                                 <div className="space-y-4">
                                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                                        Jumlah Slot Kendaraan
+                                        {t('subscription.vehicle_capacity', undefined, 'Kapasitas Unit Kendaraan')}
                                     </label>
                                     <div className="flex items-center gap-3">
                                         <button
@@ -859,13 +861,13 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                         </button>
                                     </div>
                                     <p className="text-xs text-slate-500">
-                                        * Jumlah minimal slot adalah <strong>{currentVehiclesCount}</strong> unit, disesuaikan dengan armada terdaftar Anda saat ini.
+                                        {t('subscription.min_capacity_hint', { count: currentVehiclesCount }, `Jumlah minimal kapasitas adalah ${currentVehiclesCount} unit, disesuaikan dengan armada terdaftar Anda saat ini.`)}
                                     </p>
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-3">
-                                        Skema Harga Tiering
+                                        {t('subscription.tier_pricing_scheme', undefined, 'Skema Harga Tiering')}
                                     </label>
                                     <div className="divide-y divide-slate-200 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                                         {tiers.map((t) => {
@@ -941,14 +943,14 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                             <div>
                                 <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
                                     <span>🧾</span>
-                                    <span>Riwayat Transaksi & Pembayaran</span>
+                                    <span>{t('subscription.transactions_history', undefined, 'Riwayat Transaksi & Pembayaran')}</span>
                                 </h4>
                                 <p className="text-xs text-slate-500">
-                                    Daftar pesanan pembayaran dan status invoice langganan workspace Anda
+                                    {t('subscription.transactions_history_desc', undefined, 'Daftar pesanan pembayaran dan status invoice langganan workspace Anda')}
                                 </p>
                             </div>
                             <span className="inline-flex self-start sm:self-auto rounded-full bg-slate-200/80 px-2.5 py-0.5 text-xs font-bold text-slate-700">
-                                {orders.length} Transaksi Terakhir
+                                {t('subscription.recent_transactions', { count: orders.length }, `${orders.length} Transaksi Terakhir`)}
                             </span>
                         </div>
 
@@ -956,13 +958,13 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                             <table className="w-full text-left text-xs">
                                 <thead className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                                     <tr>
-                                        <th className="px-6 py-3.5">ID Pesanan</th>
-                                        <th className="px-6 py-3.5">Tanggal</th>
-                                        <th className="px-6 py-3.5">Paket / Tipe</th>
-                                        <th className="px-6 py-3.5">Kapasitas Unit</th>
-                                        <th className="px-6 py-3.5">Total Tagihan</th>
-                                        <th className="px-6 py-3.5">Status</th>
-                                        <th className="px-6 py-3.5 text-right">Aksi</th>
+                                        <th className="px-6 py-3.5">{t('subscription.order_id', undefined, 'ID Pesanan')}</th>
+                                        <th className="px-6 py-3.5">{t('subscription.order_date', undefined, 'Tanggal')}</th>
+                                        <th className="px-6 py-3.5">{t('subscription.plan_type', undefined, 'Paket / Tipe')}</th>
+                                        <th className="px-6 py-3.5">{t('subscription.unit_capacity', undefined, 'Kapasitas Unit')}</th>
+                                        <th className="px-6 py-3.5">{t('subscription.total_bill', undefined, 'Total Tagihan')}</th>
+                                        <th className="px-6 py-3.5">{t('subscription.status', undefined, 'Status')}</th>
+                                        <th className="px-6 py-3.5 text-right">{t('subscription.action', undefined, 'Aksi')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -977,22 +979,29 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                             <td className="px-6 py-4">
                                                 <span className="font-bold text-slate-800">{o.plan_name}</span>
                                                 <span className="block text-[10px] uppercase text-slate-400">
-                                                    {o.type === 'upgrade' ? 'Upgrade Kuota' : o.type === 'renew' ? 'Perpanjangan' : 'Aktivasi'} {o.billing_interval === 'annual' ? '(Tahunan)' : '(Bulanan)'}
+                                                    {o.type === 'upgrade'
+                                                        ? t('subscription.upgrade_capacity', undefined, 'Upgrade Kuota')
+                                                        : o.type === 'renew'
+                                                          ? t('subscription.renewal', undefined, 'Perpanjangan')
+                                                          : t('subscription.activation', undefined, 'Aktivasi')}{' '}
+                                                    {o.billing_interval === 'annual'
+                                                        ? t('subscription.annual', undefined, '(Tahunan)')
+                                                        : t('subscription.monthly', undefined, '(Bulanan)')}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {o.subscribed_vehicles ? (
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-slate-800">
-                                                            {o.subscribed_vehicles} Unit
+                                                            {o.subscribed_vehicles} {t('subscription.units', undefined, 'Unit')}
                                                         </span>
                                                         {o.type === 'upgrade' && o.upgrade_from_vehicles !== undefined && o.upgrade_from_vehicles !== null ? (
                                                             <span className="text-[10px] font-bold text-indigo-600">
-                                                                (+{Math.max(1, o.subscribed_vehicles - o.upgrade_from_vehicles)} unit upgrade)
+                                                                {t('subscription.unit_upgrade', { count: Math.max(1, o.subscribed_vehicles - o.upgrade_from_vehicles) }, `(+${Math.max(1, o.subscribed_vehicles - o.upgrade_from_vehicles)} unit upgrade)`)}
                                                             </span>
                                                         ) : (
                                                             <span className="text-[10px] text-slate-400">
-                                                                Total armada aktif
+                                                                {t('subscription.total_active_fleet', undefined, 'Total armada aktif')}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1015,13 +1024,13 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                                                 onClick={() => handleOpenCancelModal(o.id)}
                                                                 className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition active:scale-95"
                                                             >
-                                                                ✕ Batalkan
+                                                                ✕ {t('subscription.cancel_order', undefined, 'Batalkan')}
                                                             </button>
                                                             <Link
                                                                 href={route('module.subscription.payment', o.id)}
                                                                 className="inline-flex items-center gap-1 rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-amber-700 transition active:scale-95"
                                                             >
-                                                                Bayar →
+                                                                {t('subscription.pay_order', undefined, 'Bayar →')}
                                                             </Link>
                                                         </>
                                                     ) : (
