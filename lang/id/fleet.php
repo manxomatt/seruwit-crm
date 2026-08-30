@@ -114,6 +114,10 @@ return [
         'prorated_hint' => 'Hanya bayar selisih sisa hari',
         'calculating' => 'Menghitung...',
         'proceed_payment' => 'Lanjut ke Pembayaran →',
+        'custom_addition_label' => 'Tentukan Jumlah Tambahan Kapasitas Unit:',
+        'quick_presets_label' => 'Pilihan Cepat Tambahan / Pengurangan:',
+        'units_label' => 'Unit',
+        'min_addition_warning' => 'Minimal penambahan adalah 1 unit.',
     ],
 
     'vehicles' => [

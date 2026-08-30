@@ -114,6 +114,10 @@ return [
         'prorated_hint' => 'Pay only for remaining days difference',
         'calculating' => 'Calculating...',
         'proceed_payment' => 'Proceed to Payment →',
+        'custom_addition_label' => 'Set Additional Unit Capacity Amount:',
+        'quick_presets_label' => 'Quick Capacity Presets (+ / -):',
+        'units_label' => 'Units',
+        'min_addition_warning' => 'Minimum addition is 1 unit.',
     ],
 
     'vehicles' => [

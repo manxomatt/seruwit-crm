@@ -46,54 +46,60 @@ export default function UpgradeSlotModal({
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState<boolean>(false);
 
-    const targetQuota = Math.max(currentQuota + 1, currentQuota + addition);
+    // If current quota is 0 (trial expired/new), minimum target is addition. Otherwise currentQuota + addition.
+    const targetQuota = currentQuota > 0 ? currentQuota + addition : Math.max(1, addition);
 
-    // Fetch live calculation preview when target quota changes
+    // Fetch live calculation preview with debounce when target quota changes
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || addition < 1) return;
 
         let isMounted = true;
         setLoading(true);
         setError(null);
 
-        const url = `${prefixedRoute('subscription.upgrade.preview')}?new_vehicle_quota=${targetQuota}`;
+        const timeoutId = setTimeout(() => {
+            const url = `${prefixedRoute('subscription.upgrade.preview')}?new_vehicle_quota=${targetQuota}`;
 
-        fetch(url, {
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-            .then(async (res) => {
-                const json = await res.json().catch(() => null);
-                if (!res.ok) {
-                    throw new Error(json?.message || 'Gagal menghitung kalkulasi prorata.');
-                }
-                return json;
+            fetch(url, {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             })
-            .then((json) => {
-                if (isMounted) {
-                    if (json?.success && json.data) {
-                        setPreview(json.data);
-                    } else {
-                        setError(json?.message || 'Gagal memuat preview.');
+                .then(async (res) => {
+                    const json = await res.json().catch(() => null);
+                    if (!res.ok) {
+                        throw new Error(json?.message || 'Gagal menghitung kalkulasi prorata.');
                     }
-                    setLoading(false);
-                }
-            })
-            .catch((err) => {
-                if (isMounted) {
-                    setError(err.message || 'Terjadi kesalahan jaringan.');
-                    setLoading(false);
-                }
-            });
+                    return json;
+                })
+                .then((json) => {
+                    if (isMounted) {
+                        if (json?.success && json.data) {
+                            setPreview(json.data);
+                        } else {
+                            setError(json?.message || 'Gagal memuat preview.');
+                        }
+                        setLoading(false);
+                    }
+                })
+                .catch((err) => {
+                    if (isMounted) {
+                        setError(err.message || 'Terjadi kesalahan jaringan.');
+                        setLoading(false);
+                    }
+                });
+        }, 200);
 
         return () => {
             isMounted = false;
+            clearTimeout(timeoutId);
         };
-    }, [targetQuota, isOpen]);
+    }, [targetQuota, addition, isOpen]);
 
     const handleConfirmUpgrade = () => {
+        if (addition < 1) return;
+
         setSubmitting(true);
         router.post(
             prefixedRoute('subscription.order'),
@@ -110,6 +116,15 @@ export default function UpgradeSlotModal({
         );
     };
 
+    const handleAdditionChange = (val: number) => {
+        const normalized = Math.max(1, Math.min(9999, Math.floor(val) || 1));
+        setAddition(normalized);
+    };
+
+    const adjustAddition = (delta: number) => {
+        setAddition((prev) => Math.max(1, Math.min(9999, prev + delta)));
+    };
+
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -118,7 +133,7 @@ export default function UpgradeSlotModal({
         }).format(val);
     };
 
-    const PRESET_OPTIONS = [1, 5, 10, 20];
+    const QUICK_ADD_OPTIONS = [1, 2, 5, 10, 20, 50];
 
     return (
         <Modal show={isOpen} onClose={onClose} maxWidth="lg">
@@ -140,19 +155,19 @@ export default function UpgradeSlotModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                        className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition"
                     >
                         ✕
                     </button>
                 </div>
 
-                {/* Current Status Badge */}
-                <div className="flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 border border-slate-200/60 dark:border-slate-700/60">
+                {/* Current Status & Target Summary Badge */}
+                <div className="grid grid-cols-2 gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 border border-slate-200/60 dark:border-slate-700/60">
                     <div>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                             {t('fleet.quota.current_capacity', undefined, 'Kapasitas Saat Ini')}
                         </p>
-                        <p className="text-sm font-black text-slate-800 dark:text-slate-200">
+                        <p className="text-sm font-black text-slate-800 dark:text-slate-200 mt-0.5">
                             {t('fleet.quota.current_capacity_value', { quota: currentQuota, used: currentUsed }, `${currentQuota} Unit (${currentUsed} Terpakai)`)}
                         </p>
                     </div>
@@ -160,32 +175,106 @@ export default function UpgradeSlotModal({
                         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                             {t('fleet.quota.target_capacity', undefined, 'Target Kapasitas Baru')}
                         </p>
-                        <p className="text-base font-black text-indigo-600 dark:text-indigo-400">
+                        <p className="text-base font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
                             {t('fleet.quota.target_capacity_value', { quota: targetQuota, addition }, `${targetQuota} Unit (+${addition})`)}
                         </p>
                     </div>
                 </div>
 
-                {/* Preset Options */}
-                <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {t('fleet.quota.select_addition', undefined, 'Pilih Tambahan Kapasitas Unit:')}
+                {/* Flexible Addition / Reduction Stepper & Numeric Input */}
+                <div className="space-y-3">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        {t('fleet.quota.custom_addition_label', undefined, 'Tentukan Jumlah Tambahan Kapasitas Unit:')}
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
-                        {PRESET_OPTIONS.map((opt) => (
-                            <button
-                                key={opt}
-                                type="button"
-                                onClick={() => setAddition(opt)}
-                                className={`rounded-2xl py-2.5 text-xs font-black transition border ${
-                                    addition === opt
-                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/30'
-                                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
-                                }`}
-                            >
-                                {t('fleet.quota.add_units_btn', { count: opt }, `+${opt} Unit`)}
-                            </button>
-                        ))}
+
+                    {/* Stepper Input Container */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => adjustAddition(-1)}
+                            disabled={addition <= 1}
+                            aria-label="Kurang 1 unit"
+                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-xs transition hover:bg-slate-50 hover:border-indigo-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                        >
+                            −
+                        </button>
+
+                        <div className="relative flex-1">
+                            <input
+                                type="number"
+                                min={1}
+                                max={9999}
+                                value={addition}
+                                onChange={(e) => handleAdditionChange(parseInt(e.target.value, 10))}
+                                className="block w-full rounded-2xl border border-slate-200/80 bg-white py-3 px-4 text-center text-xl font-black text-slate-900 shadow-inner focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                            />
+                            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                                {t('fleet.quota.units_label', undefined, 'Unit')}
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => adjustAddition(1)}
+                            aria-label="Tambah 1 unit"
+                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-xs transition hover:bg-slate-50 hover:border-indigo-300 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                        >
+                            +
+                        </button>
+                    </div>
+
+                    {/* Quick Preset Buttons & Increments / Decrements */}
+                    <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                            <span>{t('fleet.quota.quick_presets_label', undefined, 'Pilihan Cepat Tambahan / Pengurangan:')}</span>
+                            {addition > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setAddition(1)}
+                                    className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-semibold"
+                                >
+                                    Reset (1 Unit)
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {/* Decrement shortcuts if addition > 5 */}
+                            {addition > 5 && (
+                                <button
+                                    type="button"
+                                    onClick={() => adjustAddition(-5)}
+                                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                >
+                                    −5
+                                </button>
+                            )}
+                            {addition > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => adjustAddition(-1)}
+                                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                >
+                                    −1
+                                </button>
+                            )}
+
+                            {/* Preset buttons */}
+                            {QUICK_ADD_OPTIONS.map((opt) => (
+                                <button
+                                    key={opt}
+                                    type="button"
+                                    onClick={() => setAddition(opt)}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-black transition border ${
+                                        addition === opt
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs shadow-indigo-600/30'
+                                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-slate-700'
+                                    }`}
+                                >
+                                    +{opt}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -242,8 +331,8 @@ export default function UpgradeSlotModal({
                     <button
                         type="button"
                         onClick={handleConfirmUpgrade}
-                        disabled={loading || submitting || !preview}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
+                        disabled={loading || submitting || !preview || addition < 1}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
                     >
                         {submitting ? t('common.processing', undefined, 'Memproses...') : t('fleet.quota.proceed_payment', undefined, 'Lanjut ke Pembayaran →')}
                     </button>
