@@ -103,7 +103,7 @@ class HandleInertiaRequests extends Middleware
                     ]),
             ] : null,
             'pendingPaymentOrdersCount' => fn () => ($user && $user->isAdmin())
-                ? \App\Models\PaymentOrder::where('status', \App\Models\PaymentOrder::STATUS_AWAITING_CONFIRMATION)->count()
+                ? \App\Models\PaymentOrder::on(config('tenancy.database.central_connection'))->where('status', \App\Models\PaymentOrder::STATUS_AWAITING_CONFIRMATION)->count()
                 : 0,
             // Reservations whose uploaded transfer proof still needs a staff
             // approve/reject decision — drives the badge on the Reservasi menu.
@@ -214,7 +214,9 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $subscription = \App\Models\Subscription::with('plan:id,name')
+        $central = config('tenancy.database.central_connection');
+        $subscription = \App\Models\Subscription::on($central)
+            ->with('plan:id,name')
             ->where('tenant_id', tenant('id'))
             ->where('status', \App\Models\Subscription::STATUS_ACTIVE)
             ->first(['id', 'plan_id', 'status']);

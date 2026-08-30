@@ -98,7 +98,12 @@ class Tenant extends BaseTenant implements TenantWithDatabase
                 return $plan ? $plan->getLimit('max_vehicles', 50) : 50;
             }
 
-            $subscription = $this->subscription;
+            $central = config('tenancy.database.central_connection');
+            $subscription = Subscription::on($central)
+                ->where('tenant_id', $this->getTenantKey())
+                ->where('status', Subscription::STATUS_ACTIVE)
+                ->first();
+
             if ($subscription && $subscription->isActive()) {
                 return (int) $subscription->subscribed_vehicles;
             }
