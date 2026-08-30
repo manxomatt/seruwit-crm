@@ -203,7 +203,7 @@ class SubscriptionPaygTest extends TestCase
 
         $tenant1->refresh();
         $this->assertTrue($tenant1->is_trial_expired);
-        $this->assertEquals('suspended', $tenant1->status);
+        $this->assertEquals('active', $tenant1->status);
 
         $tenant2->refresh();
         $this->assertFalse($tenant2->is_trial_expired);

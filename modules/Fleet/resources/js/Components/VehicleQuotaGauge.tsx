@@ -17,27 +17,28 @@ export default function VehicleQuotaGauge({
     onOpenUpgrade,
 }: Props): JSX.Element {
     const { t } = useTrans();
-    const isUnlimited = max === null || max <= 0;
+    const isUnlimited = max === null;
     const inactiveCount = Math.max(0, total - current);
 
     const percentage = useMemo(() => {
         if (isUnlimited) return 0;
+        if (max === 0) return 100;
         return Math.min(100, Math.round((current / max) * 100));
     }, [current, max, isUnlimited]);
 
     const statusColor = useMemo(() => {
         if (isUnlimited) return 'bg-emerald-500';
-        if (percentage >= 100 || reached) return 'bg-rose-500';
+        if (percentage >= 100 || reached || max === 0) return 'bg-rose-500';
         if (percentage >= 80) return 'bg-amber-500';
         return 'bg-indigo-600';
-    }, [percentage, reached, isUnlimited]);
+    }, [percentage, reached, isUnlimited, max]);
 
     const badgeColor = useMemo(() => {
         if (isUnlimited) return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800';
-        if (percentage >= 100 || reached) return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800';
+        if (percentage >= 100 || reached || max === 0) return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800';
         if (percentage >= 80) return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800';
         return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800';
-    }, [percentage, reached, isUnlimited]);
+    }, [percentage, reached, isUnlimited, max]);
 
     return (
         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-all">
@@ -54,7 +55,9 @@ export default function VehicleQuotaGauge({
                         <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${badgeColor}`}>
                             {isUnlimited
                                 ? t('fleet.quota.unlimited', undefined, 'Unlimited (Trial)')
-                                : t('fleet.quota.used_percent', { percent: percentage }, `${percentage}% Terpakai`)}
+                                : max === 0
+                                  ? t('fleet.quota.subscription_required', undefined, 'Langganan Diperlukan (Kuota 0)')
+                                  : t('fleet.quota.used_percent', { percent: percentage }, `${percentage}% Terpakai`)}
                         </span>
                     </div>
 

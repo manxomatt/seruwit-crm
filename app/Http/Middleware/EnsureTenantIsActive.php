@@ -30,18 +30,6 @@ class EnsureTenantIsActive
                     );
                 }
             }
-
-            if (isset($tenant->is_trial_expired) && $tenant->is_trial_expired) {
-                if (! $this->isSubscriptionRoute($request)) {
-                    return WorkspaceSuspendedPage::toResponse(
-                        $request,
-                        $tenant->name,
-                        $tenant->domains->first()?->domain,
-                        $tenant->id,
-                        true,
-                    );
-                }
-            }
         }
 
         return $next($request);

@@ -89,6 +89,7 @@ return [
     'quota' => [
         'title' => 'Kapasitas Unit Kendaraan Aktif',
         'unlimited' => 'Unlimited (Trial)',
+        'subscription_required' => 'Langganan Diperlukan (Kuota 0)',
         'used_percent' => ':percent% Terpakai',
         'active_units' => '/ :max Kapasitas Unit Aktif',
         'unlimited_active' => '/ ∞ Kapasitas Unit Aktif',

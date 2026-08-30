@@ -91,7 +91,7 @@ class WorkspaceController extends Controller
         $domain = $tenant->domains->first()?->domain;
         abort_if($domain === null, 404, 'Workspace ini belum memiliki domain.');
 
-        $isUnpaidOrSuspended = ($tenant->status !== 'active') || (bool) ($tenant->is_trial_expired ?? false);
+        $isUnpaidOrSuspended = ($tenant->status !== 'active');
 
         if ($isUnpaidOrSuspended) {
             $activeOrder = \App\Models\PaymentOrder::on('central')

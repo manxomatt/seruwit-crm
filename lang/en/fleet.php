@@ -89,6 +89,7 @@ return [
     'quota' => [
         'title' => 'Active Vehicle Unit Capacity',
         'unlimited' => 'Unlimited (Trial)',
+        'subscription_required' => 'Subscription Required (Quota 0)',
         'used_percent' => ':percent% Used',
         'active_units' => '/ :max Active Unit Capacity',
         'unlimited_active' => '/ ∞ Active Unit Capacity',

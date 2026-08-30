@@ -150,7 +150,6 @@ class SubscriptionService
 
         if (! empty($tenantIds)) {
             Tenant::on($central)->whereIn('id', $tenantIds)->update([
-                'status' => 'suspended',
                 'is_trial_expired' => true,
             ]);
         }

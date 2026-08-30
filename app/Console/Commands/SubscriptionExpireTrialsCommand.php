@@ -18,7 +18,7 @@ class SubscriptionExpireTrialsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Expire and suspend tenants whose trial period has ended';
+    protected $description = 'Expire trials for tenants whose trial period has ended';
 
     /**
      * Execute the console command.
@@ -26,7 +26,7 @@ class SubscriptionExpireTrialsCommand extends Command
     public function handle(\App\Services\SubscriptionService $service): int
     {
         $count = $service->expireTrials();
-        $this->info("Expired {$count} trials and suspended workspaces.");
+        $this->info("Expired {$count} trials.");
 
         return 0;
     }

@@ -104,7 +104,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             }
 
             $plan = $this->planModel();
-            if ($plan) {
+            if ($plan && ! $plan->is_trial && $plan->key !== 'trial') {
                 return $plan->getLimit('max_vehicles', $default);
             }
 
@@ -124,13 +124,13 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     }
 
     /**
-     * Check if a specific limit key has a finite threshold (> 0).
+     * Check if a specific limit key has a finite threshold (>= 0).
      */
     public function hasFiniteLimit(string $key): bool
     {
         $limit = $this->planLimit($key);
 
-        return $limit !== null && (int) $limit > 0;
+        return $limit !== null && (int) $limit >= 0;
     }
 
     /**
@@ -140,7 +140,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         $limit = $this->planLimit($key);
 
-        if ($limit === null || (int) $limit <= 0) {
+        if ($limit === null) {
             return false;
         }
 

@@ -85,16 +85,17 @@ class SubscriptionTest extends TestCase
         $this->assertSame(1, $count);
 
         $tenant->refresh();
-        $this->assertSame('suspended', $tenant->status);
+        $this->assertSame('active', $tenant->status);
         $this->assertTrue($tenant->is_trial_expired);
+        $this->assertFalse($tenant->isOnTrial);
     }
 
     public function test_expire_trials_skips_already_expired_tenants(): void
     {
-        $this->createTenantRecord([
+        $tenant = $this->createTenantRecord([
             'id' => 'already-expired',
             'name' => 'Already Expired',
-            'status' => 'suspended',
+            'status' => 'active',
             'trial_ends_at' => now()->subDays(2),
             'is_trial_expired' => true,
         ]);
@@ -175,7 +176,8 @@ class SubscriptionTest extends TestCase
             ->assertExitCode(0);
 
         $tenant = Tenant::query()->findOrFail('cmd-test');
-        $this->assertSame('suspended', $tenant->status);
+        $this->assertSame('active', $tenant->status);
+        $this->assertTrue($tenant->is_trial_expired);
     }
 
     public function test_price_tiering_calculation(): void
@@ -235,5 +237,30 @@ class SubscriptionTest extends TestCase
         // 12 * 15,000 = 180,000
         $this->assertEquals(180000, (float) $order->amount);
         $this->assertEquals(180000 + $order->unique_code, (float) $order->total_amount);
+    }
+
+    public function test_expired_trial_tenant_stays_accessible_but_vehicle_creation_blocked(): void
+    {
+        $tenant = $this->createTenantRecord([
+            'id' => 'expired-trial-tenant',
+            'name' => 'Expired Trial Tenant',
+            'plan' => Plan::KEY_TRIAL,
+            'trial_ends_at' => now()->subDay(),
+            'is_trial_expired' => true,
+            'status' => 'active',
+        ]);
+
+        $this->assertFalse($tenant->isOnTrial);
+        $this->assertSame('active', $tenant->status);
+
+        // Limit for vehicles must be 0
+        $this->assertEquals(0, $tenant->planLimit('max_vehicles'));
+        $this->assertTrue($tenant->hasReachedLimit('max_vehicles', 0));
+        $this->assertTrue($tenant->hasReachedLimit('max_vehicles', 1));
+
+        // SubscriptionService canAddVehicle must be false
+        $service = new SubscriptionService;
+        $this->assertFalse($service->canAddVehicle($tenant, 0));
+        $this->assertSame(0, $service->getMaxVehiclesAllowed($tenant));
     }
 }
