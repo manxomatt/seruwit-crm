@@ -242,7 +242,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
             <Head title="Pengemudi · Fleet" />
             <FleetNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-10">
+            <div className="w-full space-y-6 pb-10">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                     {kpiCards.map((kpi) => (

@@ -318,7 +318,7 @@ export default function Index({ bases, filters, kinds, can, quota }: Props): JSX
             <Head title={t('fleet.bases.title', undefined, 'Pool Armada (Bases)')} />
             <FleetNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+            <div className="w-full space-y-6 pb-20">
                 {/* Quota Limit Warning Alert */}
                 {quota?.reached && (
                     <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/40 p-4 text-xs font-semibold text-amber-800 dark:text-amber-200 shadow-sm">
