@@ -420,7 +420,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota, avail
             <Head title={t('fleet.vehicles.head_title', undefined, 'Armada Kendaraan (Vehicles)')} />
             <FleetNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+            <div className="w-full space-y-6 pb-20">
                 {/* Vehicle Quota Gauge */}
                 {quota && (
                     <VehicleQuotaGauge
