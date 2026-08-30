@@ -315,18 +315,27 @@ export default function AiDynamicPricingPanel({
                             </div>
                         </div>
 
-                        {/* AI Strategic Narrative Callout */}
+                        {/* AI Strategic Narrative Banner */}
                         {pricingData.summary && (
-                            <div className="rounded-3xl border border-indigo-200/90 bg-indigo-50/70 p-4.5 dark:border-indigo-900/50 dark:bg-indigo-950/30">
-                                <div className="flex items-start gap-3">
-                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-200/80 text-lg dark:bg-indigo-900/80">
+                            <div className="relative overflow-hidden rounded-3xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-white p-5 shadow-xs dark:border-indigo-900/50 dark:from-slate-800/95 dark:via-slate-800/80 dark:to-indigo-950/30">
+                                {/* Subtle decorative background glow */}
+                                <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-indigo-500/10 blur-xl dark:bg-indigo-500/15" />
+
+                                <div className="relative flex items-start sm:items-center gap-4">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-xl font-bold text-white shadow-md shadow-indigo-500/25">
                                         💡
-                                    </span>
-                                    <div>
-                                        <h4 className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-indigo-200">
-                                            Ringkasan Strategi AI Gemini
-                                        </h4>
-                                        <p className="mt-1 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                                    </div>
+                                    <div className="min-w-0 flex-1 space-y-1.5">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-indigo-200">
+                                                Ringkasan Strategi AI Gemini
+                                            </h4>
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100/90 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-800 dark:bg-indigo-950/90 dark:text-indigo-300">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                Wawasan Real-Time
+                                            </span>
+                                        </div>
+                                        <p className="text-xs sm:text-[13px] font-semibold leading-relaxed text-slate-700 dark:text-slate-200">
                                             {pricingData.summary}
                                         </p>
                                     </div>
