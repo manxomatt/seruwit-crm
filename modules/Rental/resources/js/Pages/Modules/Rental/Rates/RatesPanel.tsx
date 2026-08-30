@@ -210,7 +210,7 @@ export default function RatesIndex({
     };
 
     return (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+        <div className="w-full space-y-6 pb-20">
             {/* KPI Stats & Header */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
@@ -378,10 +378,10 @@ export default function RatesIndex({
                 </div>
             )}
 
-            {/* Main 2-Column Grid Body: Left Rates Table (8 cols) & Right Sticky AI Optimizer Panel (4 cols) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Main 2-Column Grid Body: Left Rates Table & Right Sticky AI Optimizer Panel */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 2xl:grid-cols-12 gap-6 lg:gap-8 items-start">
                 {/* Left Column: Rates Table */}
-                <div className={`${hasAiPanel ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-4`}>
+                <div className={`${hasAiPanel ? 'lg:col-span-8 2xl:col-span-9' : 'lg:col-span-12'} space-y-4`}>
                     {/* Main Table Card */}
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                         {filteredRates.length === 0 ? (
@@ -728,7 +728,7 @@ export default function RatesIndex({
 
                 {/* Right Column: AI Smart Dynamic Pricing & Fleet Optimizer Panel */}
                 {hasAiPanel && (
-                    <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4">
+                    <div className="lg:col-span-4 2xl:col-span-3 lg:sticky lg:top-6 space-y-4">
                         <AiDynamicPricingPanel
                             analyzeUrl={aiPricingAnalyzeUrl!}
                             applyUrl={aiPricingApplyUrl!}
