@@ -19,20 +19,31 @@ class MaintenanceScheduleController extends Controller
         return 'module';
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = Auth::user();
 
         $schedules = MaintenanceSchedule::query()
             ->with(['vehicle', 'category'])
-            ->when(request('vehicle_id'), fn ($q, $v) => $q->where('vehicle_id', $v))
-            ->when(request('is_active') !== null, fn ($q) => $q->where('is_active', request('is_active') === '1'))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $like = "%{$request->search}%";
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'ilike', $like)
+                        ->orWhere('notes', 'ilike', $like)
+                        ->orWhereHas('vehicle', function ($vq) use ($like) {
+                            $vq->where('name', 'ilike', $like)
+                                ->orWhere('plate_number', 'ilike', $like);
+                        });
+                });
+            })
+            ->when($request->filled('vehicle_id'), fn ($q) => $q->where('vehicle_id', $request->vehicle_id))
+            ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->is_active === '1'))
             ->orderBy('next_service_date')
             ->orderBy('next_service_odometer')
             ->paginate(20)
             ->withQueryString();
 
-        $vehicles = Vehicle::query()->select('id', 'name', 'plate_number')->orderBy('name')->get();
+        $vehicles = Vehicle::query()->select('id', 'name', 'plate_number', 'odometer_km')->orderBy('name')->get();
         $categories = MaintenanceCategory::query()->orderBy('sort_order')->get();
 
         return Inertia::render('Modules/Maintenance/Schedules/Index', [
@@ -40,8 +51,9 @@ class MaintenanceScheduleController extends Controller
             'vehicles' => $vehicles,
             'categories' => $categories,
             'filters' => [
-                'vehicle_id' => request('vehicle_id'),
-                'is_active' => request('is_active'),
+                'search' => $request->query('search'),
+                'vehicle_id' => $request->query('vehicle_id'),
+                'is_active' => $request->query('is_active'),
             ],
             'can' => [
                 'create' => $user->hasPermissionFor('maintenance', 'create'),

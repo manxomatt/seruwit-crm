@@ -11,16 +11,27 @@ use Modules\Maintenance\Models\MaintenanceCategory;
 
 class MaintenanceCategoryController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $categories = MaintenanceCategory::query()
             ->withCount('workOrders')
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $like = "%{$request->search}%";
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'ilike', $like)
+                        ->orWhere('key', 'ilike', $like)
+                        ->orWhere('description', 'ilike', $like);
+                });
+            })
             ->orderBy('sort_order')
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/Maintenance/Categories/Index', [
             'categories' => $categories,
+            'filters' => [
+                'search' => $request->query('search'),
+            ],
         ]);
     }
 
