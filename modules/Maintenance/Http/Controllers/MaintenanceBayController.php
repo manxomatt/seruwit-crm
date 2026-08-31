@@ -13,7 +13,7 @@ use Modules\Maintenance\Models\MaintenanceBay;
 
 class MaintenanceBayController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = Auth::user();
 
@@ -21,12 +21,31 @@ class MaintenanceBayController extends Controller
             ->withCount([
                 'workOrders as active_work_orders_count' => fn ($query) => $query->where('status', 'in_progress'),
             ])
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $like = "%{$request->search}%";
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'ilike', $like)
+                        ->orWhere('code', 'ilike', $like);
+                });
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $status = $request->status;
+                if ($status === 'active') {
+                    $query->where('is_active', true);
+                } elseif ($status === 'inactive') {
+                    $query->where('is_active', false);
+                }
+            })
             ->ordered()
             ->paginate(20)
             ->withQueryString();
 
         return Inertia::render('Modules/Maintenance/Bays/Index', [
             'bays' => $bays,
+            'filters' => [
+                'search' => $request->query('search'),
+                'status' => $request->query('status'),
+            ],
             'can' => [
                 'manage' => $user->hasPermissionFor('maintenance', 'manage_bays')
                     || $user->hasPermissionFor('maintenance', 'create'),
