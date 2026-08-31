@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Partners\Http\Controllers\Api\Mobile\KycController;
+use Modules\Partners\Http\Controllers\Api\Mobile\ProfileController;
 use Modules\Rental\Http\Controllers\Api\Mobile\BookingController as RentalBookingController;
 use Modules\Rental\Http\Controllers\Api\Mobile\CatalogController as RentalCatalogController;
 use Modules\Rental\Http\Controllers\Api\Mobile\QuoteController as RentalQuoteController;
@@ -43,7 +45,20 @@ Route::prefix('api/mobile/v1')
 
         Route::middleware(AuthenticateMobilePassenger::class)->group(function (): void {
             Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
+            Route::get('/auth/profile', [ProfileController::class, 'show'])->name('auth.profile.show');
+            Route::match(['put', 'post'], '/auth/profile', [ProfileController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('auth.profile.update');
+            Route::delete('/auth/account', [ProfileController::class, 'destroy'])
+                ->middleware('throttle:5,1')
+                ->name('auth.account.delete');
             Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+            Route::get('/auth/kyc', [KycController::class, 'show'])->name('auth.kyc.show');
+            Route::post('/auth/kyc', [KycController::class, 'submit'])
+                ->middleware('throttle:10,1')
+                ->name('auth.kyc.submit');
+
             Route::get('/shuttle/bookings', BookingHistoryController::class)->name('shuttle.bookings');
 
             Route::get('/rental/bookings', [RentalBookingController::class, 'index'])->name('rental.bookings.index');

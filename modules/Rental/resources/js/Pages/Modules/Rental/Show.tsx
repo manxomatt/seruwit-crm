@@ -4,21 +4,13 @@ import VehicleMarker from '@/Components/Map/VehicleMarker';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
-import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import TextInput from '@/Components/TextInput';
-import InputLabel from '@/Components/InputLabel';
-import InputError from '@/Components/InputError';
-import ImageUploader from '@/Components/ImageUploader';
-import SignaturePad from '@/Components/SignaturePad';
-import MoneyInput from '@/Components/MoneyInput';
-import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
 import { formatDateTimeDmYHi, formatDateDmY } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
-import { Head, Link, router, useForm, usePage, usePoll } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { Head, Link, router, usePage, usePoll } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import ConfirmPaymentPanel, {
     type CompanyBankAccountOption,
     type DepositPaymentMethod,
@@ -33,16 +25,17 @@ import type { PostConfirmAction, PostConfirmProgress, PostConfirmStepId } from '
 import { POST_CONFIRM_STEPS } from '../../../PostConfirm/types';
 import RentalNav from '../../../RentalNav';
 import {
-    ChecklistToggleCard,
     DetailRow,
     EmptyBlock,
-    FuelLevelPicker,
-    ModalHeader,
     PaymentBadge,
     SectionCard,
     StatCard,
     StatusBadge,
 } from './ShowUi';
+import LifecycleModals from './Show/modals/LifecycleModals';
+import type { LifecycleModalName } from './Show/modals/LifecycleModals';
+import ApproveDepositProofModal from './Show/modals/ApproveDepositProofModal';
+import RejectDepositProofModal from './Show/modals/RejectDepositProofModal';
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
 interface ExtensionRequest {
@@ -282,11 +275,10 @@ export default function Show({
     const confirmErrors = (page.props.errors ?? {}) as Partial<
         Record<'payment_method' | 'company_bank_account_id' | 'deposit' | 'vehicle_id', string>
     >;
-    const [modal, setModal] = useState<'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
+    const [modal, setModal] = useState<LifecycleModalName>(null);
     const [confirming, setConfirming] = useState(false);
     const [showConfirmPayment, setShowConfirmPayment] = useState(false);
     const [showApproveProofModal, setShowApproveProofModal] = useState(false);
-    const [approvingProof, setApprovingProof] = useState(false);
     const [showRejectProofModal, setShowRejectProofModal] = useState(false);
     const [showPayInvoicesModal, setShowPayInvoicesModal] = useState(false);
     const [payingInvoices, setPayingInvoices] = useState(false);
@@ -318,22 +310,6 @@ export default function Show({
         });
     }, [showConfirmPayment]);
 
-    const cancelForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
-    const noShowForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
-    const rejectProofForm = useForm({ rejected_reason: 'Bukti transfer tidak terbaca atau nominal tidak sesuai' });
-    const extendForm = useForm({ new_end_date: '', notes: '' });
-    const swapForm = useForm({ to_vehicle_id: '', odometer_km: '', notes: '' });
-    const damageForm = useForm({ description: '', amount: '', photo_path: '' });
-    const addonForm = useForm({
-        addon_code: addonCodes[0]?.value ?? 'other',
-        amount: '',
-        description: '',
-    });
-    const depositForm = useForm({
-        deposit_applied_amount: '0',
-        deposit_refunded_amount: String(rental.deposit_amount ?? '0'),
-    });
-
     const action = (name: string, extra: Record<string, unknown> = {}) =>
         router.post(prefixedRoute(`rental.${name}`, rental.id), extra as any, { preserveScroll: true });
 
@@ -364,28 +340,6 @@ export default function Show({
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
         });
-    };
-
-    const submitCancel: FormEventHandler = (e) => { e.preventDefault(); cancelForm.post(prefixedRoute('rental.cancel', rental.id), { onSuccess: () => setModal(null) }); };
-    const submitNoShow: FormEventHandler = (e) => { e.preventDefault(); noShowForm.post(prefixedRoute('rental.no_show', rental.id), { onSuccess: () => setModal(null) }); };
-    const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
-    const submitSwap: FormEventHandler = (e) => {
-        e.preventDefault();
-        swapForm.post(prefixedRoute('rental.swap', rental.id), { onSuccess: () => setModal(null) });
-    };
-    const submitDamage: FormEventHandler = (e) => { e.preventDefault(); damageForm.post(prefixedRoute('rental.damages.store', rental.id), { onSuccess: () => setModal(null) }); };
-    const submitAddon: FormEventHandler = (e) => {
-        e.preventDefault();
-        addonForm.post(prefixedRoute('rental.addons.store', rental.id), {
-            onSuccess: () => {
-                setModal(null);
-                addonForm.reset('amount', 'description');
-            },
-        });
-    };
-    const submitDeposit: FormEventHandler = (e) => {
-        e.preventDefault();
-        depositForm.post(prefixedRoute('rental.deposit.settle', rental.id), { onSuccess: () => setModal(null) });
     };
 
     const is = (s: string) => rental.status === s;
@@ -1688,543 +1642,20 @@ export default function Show({
                 </div>
             </div>
 
-            {/* Modals */}
-            {/* Modal: Batal Rental */}
-            <Modal show={modal === 'cancel'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitCancel} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="danger"
-                        icon="🚫"
-                        title={t('rental.modals.cancel', undefined, 'Batalkan Reservasi')}
-                        subtitle={`Booking ${rental.code} • ${rental.partner?.name || ''}`}
-                        onClose={() => setModal(null)}
-                    />
+            <LifecycleModals
+                active={modal}
+                rental={rental}
+                swapVehicles={swapVehicles}
+                addonCodes={addonCodes}
+                onClose={() => setModal(null)}
+            />
 
-                    <div className="rounded-2xl border border-rose-200/80 bg-rose-50/50 p-3.5 text-xs text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">
-                        <p className="font-semibold">⚠️ Perhatian Pembatalan</p>
-                        <p className="mt-0.5 opacity-90">
-                            Pembatalan akan menghentikan proses rental dan melepaskan unit kendaraan kembali ke jadwal ketersediaan.
-                        </p>
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="cancelled_reason" value={`${t('rental.fields.cancel_reason', undefined, 'Alasan Pembatalan')} *`} />
-                        <textarea
-                            id="cancelled_reason"
-                            rows={3}
-                            value={cancelForm.data.cancelled_reason}
-                            onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)}
-                            placeholder="Tuliskan alasan pembatalan rental ini..."
-                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                            required
-                        />
-                        <InputError message={cancelForm.errors.cancelled_reason} className="mt-1" />
-                    </div>
-
-                    <ChecklistToggleCard
-                        label={t('rental.modals.cancel_fee_hint', undefined, 'Kenakan Biaya Pembatalan (Cancellation Fee)')}
-                        checked={cancelForm.data.charge_fee}
-                        onChange={(checked) => cancelForm.setData('charge_fee', checked)}
-                    />
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('rental.nav.back', undefined, 'Kembali')}
-                        </SecondaryButton>
-                        <DangerButton disabled={cancelForm.processing} className="rounded-xl px-4 py-2">
-                            {cancelForm.processing
-                                ? 'Memproses...'
-                                : cancelForm.data.charge_fee
-                                    ? t('rental.actions.cancel_with_fee', undefined, 'Batalkan & Kenakan Biaya')
-                                    : t('rental.actions.cancel_rental', undefined, 'Ya, Batalkan Rental')}
-                        </DangerButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: No-Show */}
-            <Modal show={modal === 'no_show'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitNoShow} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="amber"
-                        icon="⚠️"
-                        title={t('rental.modals.no_show', undefined, 'Tandai Sebagai No-Show')}
-                        subtitle={`Booking ${rental.code} • Pelanggan tidak hadir`}
-                        onClose={() => setModal(null)}
-                    />
-
-                    <div className="rounded-2xl border border-amber-200/80 bg-amber-50/50 p-3.5 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-                        <p className="font-semibold">Informasi No-Show</p>
-                        <p className="mt-0.5 opacity-90">
-                            Tandai jika pelanggan tidak datang pada jadwal pengambilan kendaraan tanpa konfirmasi pembatalan sebelumnya.
-                        </p>
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="no_show_reason" value={t('rental.fields.cancel_reason', undefined, 'Catatan / Alasan')} />
-                        <textarea
-                            id="no_show_reason"
-                            rows={3}
-                            value={noShowForm.data.cancelled_reason}
-                            onChange={(e) => noShowForm.setData('cancelled_reason', e.target.value)}
-                            placeholder="Catatan tambahan no-show (opsional)..."
-                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-amber-500 focus:ring-amber-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        />
-                    </div>
-
-                    <ChecklistToggleCard
-                        label={t('rental.modals.no_show_fee_hint', undefined, 'Kenakan Biaya No-Show (No-Show Fee)')}
-                        checked={noShowForm.data.charge_fee}
-                        onChange={(checked) => noShowForm.setData('charge_fee', checked)}
-                    />
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('rental.nav.back', undefined, 'Kembali')}
-                        </SecondaryButton>
-                        <DangerButton disabled={noShowForm.processing} className="rounded-xl px-4 py-2 bg-amber-600 hover:bg-amber-700 focus:ring-amber-500">
-                            {noShowForm.processing
-                                ? 'Memproses...'
-                                : noShowForm.data.charge_fee
-                                    ? t('rental.actions.no_show_with_fee', undefined, 'Tandai No-Show & Kenakan Biaya')
-                                    : t('rental.actions.mark_no_show', undefined, 'Tandai No-Show')}
-                        </DangerButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: Extend */}
-            <Modal show={modal === 'extend'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitExtend} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="primary"
-                        icon="🗓️"
-                        title={t('rental.modals.extend', undefined, 'Perpanjang Masa Sewa')}
-                        subtitle={`Booking ${rental.code} • ${rental.vehicle.name}`}
-                        onClose={() => setModal(null)}
-                    />
-
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 text-xs dark:border-slate-700 dark:bg-slate-800/60 space-y-1.5">
-                        <div className="flex justify-between">
-                            <span className="text-slate-500">Tanggal Mulai:</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{formatDateDmY(rental.start_date)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-slate-500">Jadwal Selesai Saat Ini:</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{formatDateDmY(rental.end_date)}</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="new_end_date" value={`${t('rental.fields.new_end_date', undefined, 'Tanggal Selesai Baru')} *`} />
-                        <TextInput
-                            id="new_end_date"
-                            type="date"
-                            min={rental.end_date}
-                            value={extendForm.data.new_end_date}
-                            onChange={(e) => extendForm.setData('new_end_date', e.target.value)}
-                            className="mt-1 w-full !rounded-xl"
-                            required
-                        />
-                        <InputError message={extendForm.errors.new_end_date} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="extend_notes" value={t('rental.fields.notes', undefined, 'Catatan Perpanjangan')} />
-                        <textarea
-                            id="extend_notes"
-                            rows={2}
-                            value={extendForm.data.notes}
-                            onChange={(e) => extendForm.setData('notes', e.target.value)}
-                            placeholder="Alasan / catatan perpanjangan..."
-                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        />
-                    </div>
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('common.cancel', undefined, 'Batal')}
-                        </SecondaryButton>
-                        <PrimaryButton disabled={extendForm.processing} className="rounded-xl px-5 py-2">
-                            {extendForm.processing ? 'Menyimpan...' : t('rental.actions.extend', undefined, 'Perpanjang Rental')}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: Swap Kendaraan */}
-            <Modal show={modal === 'swap'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitSwap} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="purple"
-                        icon="🔄"
-                        title={t('rental.modals.swap', undefined, 'Tukar Unit Kendaraan')}
-                        subtitle={`Tukar unit ${rental.vehicle.name} (${rental.vehicle.plate_number})`}
-                        onClose={() => setModal(null)}
-                    />
-
-                    <div className="rounded-2xl border border-purple-200/80 bg-purple-50/50 p-3.5 text-xs text-purple-900 dark:border-purple-900/50 dark:bg-purple-950/30 dark:text-purple-200">
-                        <p className="font-semibold">Unit Saat Ini:</p>
-                        <p className="font-bold text-sm mt-0.5">{rental.vehicle.name} — {rental.vehicle.plate_number}</p>
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="to_vehicle_id" value={`${t('rental.fields.swap_to_vehicle', undefined, 'Pilih Unit Kendaraan Pengganti')} *`} />
-                        <Select
-                            id="to_vehicle_id"
-                            options={[
-                                { value: '', label: t('rental.placeholders.select_vehicle', undefined, '-- Pilih Kendaraan Tersedia --') },
-                                ...swapVehicles.map((v) => ({
-                                    value: String(v.id),
-                                    label: `${v.name} — ${v.plate_number}`,
-                                })),
-                            ]}
-                            value={swapForm.data.to_vehicle_id}
-                            onChange={(value) => swapForm.setData('to_vehicle_id', value)}
-                            className="mt-1 w-full !rounded-xl"
-                        />
-                        <InputError message={swapForm.errors.to_vehicle_id} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="swap_odometer" value={`${t('rental.fields.swap_odometer', undefined, 'Odometer Saat Tukar')} (KM)`} />
-                        <div className="relative mt-1">
-                            <TextInput
-                                id="swap_odometer"
-                                type="number"
-                                min={0}
-                                value={swapForm.data.odometer_km}
-                                onChange={(e) => swapForm.setData('odometer_km', e.target.value)}
-                                className="w-full !rounded-xl pr-12 font-mono"
-                                placeholder="0"
-                            />
-                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-slate-400">
-                                KM
-                            </span>
-                        </div>
-                        <InputError message={swapForm.errors.odometer_km} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="swap_notes" value={t('rental.fields.notes', undefined, 'Alasan Penukaran Unit')} />
-                        <textarea
-                            id="swap_notes"
-                            rows={2}
-                            value={swapForm.data.notes}
-                            onChange={(e) => swapForm.setData('notes', e.target.value)}
-                            placeholder="Contoh: Kendaraan perlu servis rutin / upgrade unit..."
-                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-purple-500 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        />
-                    </div>
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('common.cancel', undefined, 'Batal')}
-                        </SecondaryButton>
-                        <PrimaryButton disabled={swapForm.processing} className="rounded-xl px-5 py-2 bg-purple-600 hover:bg-purple-700 focus:ring-purple-500">
-                            {swapForm.processing ? 'Memproses Tukar...' : t('rental.actions.swap_vehicle', undefined, 'Konfirmasi Tukar Unit')}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: Damage */}
-            <Modal show={modal === 'damage'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitDamage} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="danger"
-                        icon="💥"
-                        title={t('rental.modals.damage', undefined, 'Laporkan Kerusakan Kendaraan')}
-                        subtitle={`Booking ${rental.code} • ${rental.vehicle.name}`}
-                        onClose={() => setModal(null)}
-                    />
-
-                    <div>
-                        <InputLabel htmlFor="damage_desc" value={`${t('rental.fields.description', undefined, 'Deskripsi Kerusakan')} *`} />
-                        <textarea
-                            id="damage_desc"
-                            rows={2}
-                            value={damageForm.data.description}
-                            onChange={(e) => damageForm.setData('description', e.target.value)}
-                            placeholder="Contoh: Goresan pada pintu kanan belakang..."
-                            className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                            required
-                        />
-                        <InputError message={damageForm.errors.description} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="damage_amount" value={`${t('rental.fields.repair_cost', undefined, 'Estimasi Biaya Perbaikan')} *`} />
-                        <MoneyInput
-                            id="damage_amount"
-                            value={damageForm.data.amount}
-                            onChange={(value) => damageForm.setData('amount', value)}
-                            className="mt-1 w-full"
-                        />
-                        <InputError message={damageForm.errors.amount} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel value={t('rental.fields.damage_photo', undefined, 'Foto Bukti Kerusakan')} />
-                        <ImageUploader
-                            value={damageForm.data.photo_path}
-                            onChange={(value) => damageForm.setData('photo_path', value)}
-                            className="mt-1"
-                        />
-                        <InputError message={damageForm.errors.photo_path} className="mt-1" />
-                    </div>
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('common.cancel', undefined, 'Batal')}
-                        </SecondaryButton>
-                        <PrimaryButton disabled={damageForm.processing} className="rounded-xl px-5 py-2 bg-rose-600 hover:bg-rose-700 focus:ring-rose-500">
-                            {damageForm.processing ? 'Menyimpan...' : t('rental.actions.save_damage', undefined, 'Simpan Kerusakan')}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: Addon */}
-            <Modal show={modal === 'addon'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitAddon} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="primary"
-                        icon="➕"
-                        title={t('rental.modals.addon', undefined, 'Tambah Layanan Tambahan (Addon)')}
-                        subtitle={`Booking ${rental.code} • Layanan / Biaya Ekstra`}
-                        onClose={() => setModal(null)}
-                    />
-
-                    <div>
-                        <InputLabel htmlFor="addon_code" value={`${t('rental.fields.addon_code', undefined, 'Pilih Jenis Layanan')} *`} />
-                        <Select
-                            id="addon_code"
-                            className="mt-1 w-full !rounded-xl"
-                            value={addonForm.data.addon_code}
-                            onChange={(value) => addonForm.setData('addon_code', value)}
-                            placeholder={t('rental.placeholders.select_addon_code', undefined, '-- Pilih Layanan --')}
-                            searchable
-                            maxVisibleOptions={Math.max(addonCodes.length, 1)}
-                            options={addonCodes.map((option) => ({
-                                value: option.value,
-                                label: option.label || t(`rental.addon.codes.${option.value}`, undefined, option.value),
-                            }))}
-                        />
-                        <InputError message={addonForm.errors.addon_code} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="addon_amount" value={`${t('rental.fields.addon_amount', undefined, 'Nominal Biaya')} *`} />
-                        <MoneyInput
-                            id="addon_amount"
-                            value={addonForm.data.amount}
-                            onChange={(value) => addonForm.setData('amount', value)}
-                            className="mt-1 w-full"
-                        />
-                        <InputError message={addonForm.errors.amount} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="addon_desc" value={t('rental.fields.addon_description', undefined, 'Keterangan Tambahan')} />
-                        <TextInput
-                            id="addon_desc"
-                            value={addonForm.data.description}
-                            onChange={(e) => addonForm.setData('description', e.target.value)}
-                            className="mt-1 w-full !rounded-xl"
-                            placeholder={t('rental.placeholders.addon_description', undefined, 'Catatan atau detail layanan...')}
-                        />
-                        <InputError message={addonForm.errors.description} className="mt-1" />
-                    </div>
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('common.cancel', undefined, 'Batal')}
-                        </SecondaryButton>
-                        <PrimaryButton disabled={addonForm.processing} className="rounded-xl px-5 py-2">
-                            {addonForm.processing ? 'Menyimpan...' : t('rental.actions.save_addon', undefined, 'Tambahkan Layanan')}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: Settle Deposit */}
-            <Modal show={modal === 'deposit'} onClose={() => setModal(null)} maxWidth="md">
-                <form onSubmit={submitDeposit} className="space-y-4 p-6">
-                    <ModalHeader
-                        tone="emerald"
-                        icon="💰"
-                        title={t('rental.modals.deposit', undefined, 'Penyelesaian Deposit (Settlement)')}
-                        subtitle={`Booking ${rental.code} • Total Ditahan: ${formatMoney(rental.deposit_amount)}`}
-                        onClose={() => setModal(null)}
-                    />
-
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 text-xs dark:border-slate-700 dark:bg-slate-800/60 space-y-2">
-                        <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
-                            <span>Total Deposit Ditahan:</span>
-                            <span className="font-extrabold text-sm text-slate-900 dark:text-white">{formatMoney(rental.deposit_amount)}</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="deposit_applied" value={t('rental.fields.deposit_applied', undefined, 'Dipotong untuk Tagihan / Kerusakan (Rp)')} />
-                        <MoneyInput
-                            id="deposit_applied"
-                            value={depositForm.data.deposit_applied_amount}
-                            onChange={(applied) => {
-                                const deposit = Number(rental.deposit_amount);
-                                const refunded = Math.max(0, deposit - Number(applied || 0));
-                                depositForm.setData({
-                                    deposit_applied_amount: applied,
-                                    deposit_refunded_amount: String(refunded),
-                                });
-                            }}
-                            className="mt-1 w-full"
-                        />
-                        <InputError message={depositForm.errors.deposit_applied_amount} className="mt-1" />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="deposit_refunded" value={t('rental.fields.deposit_refunded', undefined, 'Dikembalikan ke Pelanggan (Rp)')} />
-                        <MoneyInput
-                            id="deposit_refunded"
-                            value={depositForm.data.deposit_refunded_amount}
-                            onChange={(value) => depositForm.setData('deposit_refunded_amount', value)}
-                            className="mt-1 w-full"
-                        />
-                        <InputError message={depositForm.errors.deposit_refunded_amount} className="mt-1" />
-                    </div>
-
-                    <div className="flex justify-end gap-2.5 pt-2">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>
-                            {t('common.cancel', undefined, 'Batal')}
-                        </SecondaryButton>
-                        <PrimaryButton disabled={depositForm.processing} className="rounded-xl px-5 py-2 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500">
-                            {depositForm.processing ? 'Menyimpan...' : t('rental.actions.settle_deposit', undefined, 'Selesaikan Deposit')}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal: Approve Transfer Proof */}
             {showApproveProofModal && (
-                <Modal show onClose={() => setShowApproveProofModal(false)} maxWidth="md">
-                    <div className="p-6 space-y-4">
-                        <ModalHeader
-                            tone="emerald"
-                            icon="✅"
-                            title="Konfirmasi Persetujuan Bukti Transfer"
-                            subtitle={`Verifikasi pembayaran untuk ${rental.code}`}
-                            onClose={() => setShowApproveProofModal(false)}
-                        />
-
-                        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/80 space-y-2 text-xs">
-                            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700">
-                                <span className="text-slate-500">Kode Reservasi:</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-white">{rental.code}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-slate-500">Pemesan:</span>
-                                <span className="font-semibold text-slate-900 dark:text-white">{rental.partner?.name || '—'}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-slate-500">{Number(rental.deposit_amount) > 0 ? 'Nominal Deposit:' : 'Nominal Pembayaran Sewa:'}</span>
-                                <span className="font-black text-emerald-700 dark:text-emerald-400 text-sm">{formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-slate-500">Rekening Tujuan:</span>
-                                <span className="font-semibold text-slate-900 dark:text-white">
-                                    {rental.depositCompanyBankAccount
-                                        ? `${rental.depositCompanyBankAccount.bank_name || ''} - ${rental.depositCompanyBankAccount.account_number || ''}`
-                                        : 'Transfer Bank'}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* List Dampak Aksi */}
-                        <div className="rounded-2xl bg-emerald-50/70 p-3.5 border border-emerald-200/80 dark:bg-emerald-950/30 dark:border-emerald-800/50 space-y-1.5 text-xs text-emerald-900 dark:text-emerald-200">
-                            <p className="font-bold mb-1">Dampak setelah bukti transfer disetujui:</p>
-                            <div className="flex items-center gap-2">
-                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
-                                <span>Status bukti transfer diubah menjadi <b>Disetujui (Approved)</b></span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
-                                <span>{Number(rental.deposit_amount) > 0 ? 'Pembayaran deposit otomatis dicatat ke sistem' : 'Pembayaran sewa otomatis dicatat ke sistem'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
-                                <span>Status reservasi otomatis berubah menjadi <b>Dikonfirmasi (Open)</b></span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2.5 pt-2">
-                            <SecondaryButton type="button" onClick={() => setShowApproveProofModal(false)}>
-                                Batal
-                            </SecondaryButton>
-                            <PrimaryButton
-                                type="button"
-                                disabled={approvingProof}
-                                onClick={() => {
-                                    setApprovingProof(true);
-                                    router.post(prefixedRoute('rental.approve_deposit_proof', rental.id), {}, {
-                                        onFinish: () => {
-                                            setApprovingProof(false);
-                                            setShowApproveProofModal(false);
-                                        },
-                                    });
-                                }}
-                                className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
-                            >
-                                {approvingProof ? 'Memproses...' : (Number(rental.deposit_amount) > 0 ? 'Ya, Setujui Deposit' : 'Ya, Setujui Pembayaran')}
-                            </PrimaryButton>
-                        </div>
-                    </div>
-                </Modal>
+                <ApproveDepositProofModal rental={rental} onClose={() => setShowApproveProofModal(false)} />
             )}
 
-            {/* Modal: Reject Transfer Proof */}
             {showRejectProofModal && (
-                <Modal show onClose={() => setShowRejectProofModal(false)} maxWidth="md">
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            rejectProofForm.post(prefixedRoute('rental.reject_deposit_proof', rental.id), {
-                                onSuccess: () => setShowRejectProofModal(false),
-                            });
-                        }}
-                        className="p-6 space-y-4"
-                    >
-                        <ModalHeader
-                            tone="danger"
-                            icon="❌"
-                            title="Tolak Bukti Transfer"
-                            subtitle={`Pembayaran untuk ${rental.code}`}
-                            onClose={() => setShowRejectProofModal(false)}
-                        />
-
-                        <div>
-                            <InputLabel value="Alasan Penolakan *" />
-                            <textarea
-                                rows={3}
-                                className="mt-1 block w-full rounded-xl border-slate-200 bg-white text-sm shadow-2xs focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                value={rejectProofForm.data.rejected_reason}
-                                onChange={(e) => rejectProofForm.setData('rejected_reason', e.target.value)}
-                                placeholder="Contoh: Bukti transfer tidak terbaca / nominal tidak sesuai"
-                                required
-                            />
-                            <InputError message={rejectProofForm.errors.rejected_reason} className="mt-1" />
-                        </div>
-                        <div className="flex justify-end gap-2.5 pt-2">
-                            <SecondaryButton type="button" onClick={() => setShowRejectProofModal(false)}>
-                                Batal
-                            </SecondaryButton>
-                            <DangerButton type="submit" disabled={rejectProofForm.processing} className="rounded-xl px-4 py-2">
-                                {rejectProofForm.processing ? 'Menolak...' : 'Tolak Bukti Transfer'}
-                            </DangerButton>
-                        </div>
-                    </form>
-                </Modal>
+                <RejectDepositProofModal rental={rental} onClose={() => setShowRejectProofModal(false)} />
             )}
 
             {showPayInvoicesModal && (

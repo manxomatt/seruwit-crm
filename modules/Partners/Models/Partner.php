@@ -55,6 +55,17 @@ class Partner extends Model
         'notes',
         'comment',
         'status',
+        'kyc_status',
+        'kyc_submitted_at',
+        'kyc_verified_at',
+        'kyc_verified_by',
+        'kyc_rejected_reason',
+        'id_card_photo_path',
+        'driver_license_photo_path',
+        'selfie_photo_path',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relationship',
         'is_blacklisted',
         'blacklist_reason',
         'blacklisted_at',
@@ -70,9 +81,29 @@ class Partner extends Model
             'credit_limit' => 'decimal:2',
             'payment_term_days' => 'integer',
             'license_expires_at' => 'date:Y-m-d',
+            'kyc_submitted_at' => 'datetime',
+            'kyc_verified_at' => 'datetime',
             'is_blacklisted' => 'boolean',
             'blacklisted_at' => 'datetime',
         ];
+    }
+
+    public const KYC_STATUS_UNVERIFIED = 'unverified';
+
+    public const KYC_STATUS_PENDING = 'pending';
+
+    public const KYC_STATUS_VERIFIED = 'verified';
+
+    public const KYC_STATUS_REJECTED = 'rejected';
+
+    public function isKycVerified(): bool
+    {
+        return $this->kyc_status === self::KYC_STATUS_VERIFIED;
+    }
+
+    public function isKycPending(): bool
+    {
+        return $this->kyc_status === self::KYC_STATUS_PENDING;
     }
 
     public function isCustomer(): bool

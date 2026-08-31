@@ -457,4 +457,24 @@ return [
         'delete_title' => 'Delete location',
         'delete_confirm' => 'Delete location ":name"? This cannot be undone.',
     ],
+
+    'kyc' => [
+        'submitted_success' => 'KYC documents submitted successfully. Please wait for verification.',
+        'status' => [
+            'unverified' => 'Unverified',
+            'pending' => 'Pending Verification',
+            'verified' => 'Verified',
+            'rejected' => 'Verification Rejected',
+        ],
+    ],
+
+    'profile' => [
+        'updated_success' => 'Profile updated successfully.',
+    ],
+
+    'account' => [
+        'deleted_success' => 'Your account has been deleted successfully.',
+        'cannot_delete_active_rentals' => 'Account cannot be deleted while you have active or ongoing rentals.',
+        'cannot_delete_active_shuttle' => 'Account cannot be deleted while you have active or upcoming shuttle trips.',
+    ],
 ];

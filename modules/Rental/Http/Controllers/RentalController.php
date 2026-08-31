@@ -604,7 +604,7 @@ class RentalController extends Controller
             $paymentSummary = $this->invoices->paymentSummary($rental);
             if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
                 $depositBlocksCheckout = true;
-                $checkoutBlockedReason = 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.';
+                $checkoutBlockedReason = __('rental.errors.checkout_prepayment_required');
             }
         }
 

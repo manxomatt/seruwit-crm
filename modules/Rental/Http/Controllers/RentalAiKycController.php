@@ -23,7 +23,7 @@ class RentalAiKycController extends Controller
     public function scanRentalDocuments(Request $request, Rental $rental): JsonResponse|RedirectResponse
     {
         if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
-            $message = 'Fitur AI Smart KYC dinonaktifkan oleh administrator central atau pengaturan rental.';
+            $message = __('rental.ai.feature_disabled', ['feature' => 'AI Smart KYC']);
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 403);
             }
@@ -69,7 +69,7 @@ class RentalAiKycController extends Controller
         if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fitur AI Smart KYC dinonaktifkan oleh administrator central atau pengaturan rental.',
+                'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Smart KYC']),
             ], 403);
         }
 
@@ -106,7 +106,7 @@ class RentalAiKycController extends Controller
         $partner = $rental->partner;
 
         if (! $partner) {
-            $message = 'Pelanggan tidak ditemukan pada data rental ini.';
+            $message = __('rental.ai.partner_missing_on_rental');
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 422);
             }
@@ -116,7 +116,7 @@ class RentalAiKycController extends Controller
 
         $assessment = $rental->ai_kyc_assessment;
         if (! is_array($assessment)) {
-            $message = 'Hasil verifikasi AI KYC belum tersedia.';
+            $message = __('rental.ai.kyc_result_unavailable');
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 422);
             }

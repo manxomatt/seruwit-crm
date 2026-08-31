@@ -119,7 +119,7 @@ class RentalActionController extends Controller
             $paymentSummary = $this->invoices->paymentSummary($rental);
             if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
                 throw ValidationException::withMessages([
-                    'payment' => 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.',
+                    'payment' => __('rental.errors.checkout_prepayment_required'),
                 ]);
             }
         }
@@ -735,7 +735,7 @@ class RentalActionController extends Controller
         abort_unless(
             $rental->deposit_proof_status === 'pending',
             422,
-            'Bukti transfer deposit tidak dalam status pending.',
+            __('rental.errors.deposit_proof_not_pending'),
         );
 
         $rental->update([
@@ -757,7 +757,7 @@ class RentalActionController extends Controller
             $this->accounting->payRentalInvoicesFromProof($rental->fresh());
         }
 
-        return back()->with('success', 'Bukti transfer disetujui. Pembayaran berhasil dicatat & reservasi dikonfirmasi.');
+        return back()->with('success', __('rental.messages.deposit_proof_approved'));
     }
 
     /**
@@ -768,7 +768,7 @@ class RentalActionController extends Controller
         abort_unless(
             $rental->deposit_proof_status === 'pending',
             422,
-            'Bukti transfer deposit tidak dalam status pending.',
+            __('rental.errors.deposit_proof_not_pending'),
         );
 
         $validated = $request->validate([
@@ -780,6 +780,6 @@ class RentalActionController extends Controller
             'deposit_proof_rejected_reason' => $validated['rejected_reason'],
         ]);
 
-        return back()->with('success', 'Bukti transfer deposit ditolak.');
+        return back()->with('success', __('rental.messages.deposit_proof_rejected'));
     }
 }

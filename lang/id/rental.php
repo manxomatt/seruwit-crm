@@ -795,6 +795,7 @@ return [
         'damage' => 'Catat Damage',
         'addon' => 'Tambah biaya ekstra',
         'deposit' => 'Settle Deposit',
+        'reject_proof_default_reason' => 'Bukti transfer tidak terbaca atau nominal tidak sesuai',
     ],
 
     'messages' => [
@@ -833,6 +834,8 @@ return [
         'rate_batch_deleted' => ':count tarif dihapus.',
         'rate_batch_delete_partial' => ':deleted tarif dihapus; :blocked tidak dapat dihapus karena masih digunakan.',
         'rate_batch_delete_blocked' => ':blocked tarif tidak dapat dihapus karena masih digunakan.',
+        'deposit_proof_approved' => 'Bukti transfer disetujui. Pembayaran berhasil dicatat & reservasi dikonfirmasi.',
+        'deposit_proof_rejected' => 'Bukti transfer deposit ditolak.',
     ],
 
     'errors' => [
@@ -874,6 +877,8 @@ return [
         'handover_photo_required' => 'Tambahkan minimal satu foto kondisi.',
         'handover_photo_max' => 'Maksimal :max foto kondisi yang boleh diunggah.',
         'handover_signature_required' => 'Tanda tangan pelanggan wajib.',
+        'checkout_prepayment_required' => 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.',
+        'deposit_proof_not_pending' => 'Bukti transfer deposit tidak dalam status pending.',
     ],
 
     'portal' => [
@@ -907,6 +912,13 @@ return [
         'cancel_not_allowed' => 'Reservasi ini tidak bisa dibatalkan secara online.',
         'cancel_fee_applies' => 'Pembatalan dalam jendela berbayar dikenakan biaya Rp :amount.',
         'pickup_note' => 'Pengambilan & pengembalian dilakukan di cabang sesuai jadwal.',
+        'whatsapp_verified' => 'Nomor WhatsApp Anda sudah terverifikasi.',
+        'whatsapp_verify_success' => 'Nomor WhatsApp berhasil diverifikasi.',
+        'deposit_proof_uploaded' => 'Bukti transfer deposit berhasil diunggah. Menunggu konfirmasi/approval admin.',
+        'pickup_confirmed_only' => 'Permohonan pickup hanya dapat dilakukan untuk reservasi yang sudah dikonfirmasi.',
+        'pickup_deposit_unsettled' => 'Penahanan deposit belum diselesaikan. Silakan lunasi deposit sebelum melakukan permohonan pickup.',
+        'pickup_prepayment_required' => 'Pelunasan tagihan pembayaran di muka harus diselesaikan terlebih dahulu sebelum melakukan pickup kendaraan.',
+        'pickup_requested' => 'Permohonan pickup dan tanda tangan kontrak digital berhasil dikirim. Silakan tunjukkan layar ini kepada staf depot.',
         'extend_active_only' => 'Hanya rental aktif yang dapat mengajukan perpanjangan.',
         'extend_request_pending' => 'Sudah ada permintaan perpanjangan yang menunggu review staf.',
         'extend_requested' => 'Permintaan perpanjangan dikirim. Staf akan meninjau segera.',
@@ -1016,5 +1028,9 @@ return [
         'generator_subtitle' => 'Ketik deskripsi tarif bebas dalam bahasa Indonesia. AI akan mengisi form dan diskon bertingkat secara otomatis.',
         'analyzing_pricing' => 'Menganalisis Okupansi Armada…',
         'pricing_analysis_success' => 'Rekomendasi tarif dinamis dan utilisasi armada berhasil dihasilkan.',
+        'feature_disabled' => 'Fitur :feature dinonaktifkan oleh administrator central atau pengaturan rental.',
+        'rate_generate_success' => 'Data formulir tarif berhasil dihasilkan oleh AI.',
+        'partner_missing_on_rental' => 'Pelanggan tidak ditemukan pada data rental ini.',
+        'kyc_result_unavailable' => 'Hasil verifikasi AI KYC belum tersedia.',
     ],
 ];

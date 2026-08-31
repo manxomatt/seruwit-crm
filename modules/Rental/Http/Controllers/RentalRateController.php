@@ -149,7 +149,7 @@ class RentalRateController extends Controller
         return response()->json([
             'success' => true,
             'data' => $result,
-            'message' => 'Data formulir tarif berhasil dihasilkan oleh AI.',
+            'message' => __('rental.ai.rate_generate_success'),
         ]);
     }
 

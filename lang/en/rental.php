@@ -774,6 +774,7 @@ return [
         'damage' => 'Record Damage',
         'addon' => 'Add extra charge',
         'deposit' => 'Settle Deposit',
+        'reject_proof_default_reason' => 'Transfer proof is unreadable or the amount does not match',
     ],
 
     'messages' => [
@@ -812,6 +813,8 @@ return [
         'rate_batch_deleted' => ':count rate(s) deleted.',
         'rate_batch_delete_partial' => ':deleted rate(s) deleted; :blocked could not be deleted because they are in use.',
         'rate_batch_delete_blocked' => ':blocked rate(s) could not be deleted because they are currently in use.',
+        'deposit_proof_approved' => 'Transfer proof approved. Payment recorded and reservation confirmed.',
+        'deposit_proof_rejected' => 'Deposit transfer proof rejected.',
     ],
 
     'errors' => [
@@ -853,6 +856,8 @@ return [
         'handover_photo_required' => 'Add at least one condition photo.',
         'handover_photo_max' => 'You can upload at most :max condition photos.',
         'handover_signature_required' => 'Customer signature is required.',
+        'checkout_prepayment_required' => 'Upfront invoice payment must be settled before checking out the vehicle.',
+        'deposit_proof_not_pending' => 'The deposit transfer proof is not in a pending state.',
     ],
 
     'portal' => [
@@ -886,6 +891,13 @@ return [
         'cancel_not_allowed' => 'This reservation can no longer be cancelled online.',
         'cancel_fee_applies' => 'Cancellation within the paid window is charged Rp :amount.',
         'pickup_note' => 'Pickup and return are done at the branch as scheduled.',
+        'whatsapp_verified' => 'Your WhatsApp number is already verified.',
+        'whatsapp_verify_success' => 'WhatsApp number verified successfully.',
+        'deposit_proof_uploaded' => 'Deposit transfer proof uploaded successfully. Awaiting admin confirmation/approval.',
+        'pickup_confirmed_only' => 'Pickup requests can only be made for confirmed reservations.',
+        'pickup_deposit_unsettled' => 'The deposit hold has not been settled. Please pay the deposit before requesting pickup.',
+        'pickup_prepayment_required' => 'Upfront invoice payment must be settled first before requesting vehicle pickup.',
+        'pickup_requested' => 'Pickup request and digital contract signature submitted. Please show this screen to the depot staff.',
         'extend_active_only' => 'Only an active rental can request an extension.',
         'extend_request_pending' => 'An extension request is already pending staff review.',
         'extend_requested' => 'Extension request submitted. Staff will review it shortly.',
@@ -995,5 +1007,9 @@ return [
         'generator_subtitle' => 'Type any rental tariff description or instructions. AI will populate form fields and tiered discounts automatically.',
         'analyzing_pricing' => 'Analyzing Fleet Occupancy…',
         'pricing_analysis_success' => 'Dynamic pricing recommendations and fleet metrics generated successfully.',
+        'feature_disabled' => 'The :feature feature has been disabled by the central administrator or rental settings.',
+        'rate_generate_success' => 'Rate form data generated successfully by AI.',
+        'partner_missing_on_rental' => 'No customer is linked to this rental.',
+        'kyc_result_unavailable' => 'AI KYC verification result is not available yet.',
     ],
 ];

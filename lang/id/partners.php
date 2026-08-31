@@ -457,4 +457,24 @@ return [
         'delete_title' => 'Hapus lokasi',
         'delete_confirm' => 'Hapus lokasi ":name"? Tindakan ini tidak dapat dibatalkan.',
     ],
+
+    'kyc' => [
+        'submitted_success' => 'Dokumen verifikasi identitas (KYC) berhasil dikirim. Mohon tunggu proses verifikasi oleh tim kami.',
+        'status' => [
+            'unverified' => 'Belum Terverifikasi',
+            'pending' => 'Menunggu Verifikasi',
+            'verified' => 'Terverifikasi',
+            'rejected' => 'Verifikasi Ditolak',
+        ],
+    ],
+
+    'profile' => [
+        'updated_success' => 'Profil berhasil diperbarui.',
+    ],
+
+    'account' => [
+        'deleted_success' => 'Akun Anda telah berhasil dihapus.',
+        'cannot_delete_active_rentals' => 'Akun tidak dapat dihapus selama Anda masih memiliki transaksi rental aktif atau berjalan.',
+        'cannot_delete_active_shuttle' => 'Akun tidak dapat dihapus selama Anda masih memiliki jadwal perjalanan shuttle aktif.',
+    ],
 ];

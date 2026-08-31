@@ -226,11 +226,11 @@ class PublicRentalBookingController extends Controller
                 return response()->json([
                     'ok' => true,
                     'already_verified' => true,
-                    'message' => 'Nomor WhatsApp Anda sudah terverifikasi.',
+                    'message' => __('rental.public.whatsapp_verified'),
                 ]);
             }
 
-            return back()->with('success', 'Nomor WhatsApp Anda sudah terverifikasi.')->with('already_verified', true);
+            return back()->with('success', __('rental.public.whatsapp_verified'))->with('already_verified', true);
         }
 
         $code = $otp->send($data['booker_phone']);
@@ -329,7 +329,7 @@ class PublicRentalBookingController extends Controller
 
         return response()->json([
             'ok' => true,
-            'message' => 'Nomor WhatsApp berhasil diverifikasi.',
+            'message' => __('rental.public.whatsapp_verify_success'),
         ]);
     }
 
@@ -433,7 +433,7 @@ class PublicRentalBookingController extends Controller
 
         RentalDepositProofNotifier::notifyPendingReview($rental);
 
-        return back()->with('success', 'Bukti transfer deposit berhasil diunggah. Menunggu konfirmasi/approval admin.');
+        return back()->with('success', __('rental.public.deposit_proof_uploaded'));
     }
 
     public function cancel(
@@ -603,17 +603,17 @@ class PublicRentalBookingController extends Controller
         abort_if(
             $rental->status !== Rental::STATUS_CONFIRMED,
             422,
-            'Permohonan pickup hanya dapat dilakukan untuk reservasi yang sudah dikonfirmasi.'
+            __('rental.public.pickup_confirmed_only'),
         );
 
         if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
-            return back()->with('error', 'Penahanan deposit belum diselesaikan. Silakan lunasi deposit sebelum melakukan permohonan pickup.');
+            return back()->with('error', __('rental.public.pickup_deposit_unsettled'));
         }
 
         if ((float) $rental->deposit_amount <= 0) {
             $paymentSummary = app(RentalInvoiceService::class)->paymentSummary($rental);
             if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
-                return back()->with('error', 'Pelunasan tagihan pembayaran di muka harus diselesaikan terlebih dahulu sebelum melakukan pickup kendaraan.');
+                return back()->with('error', __('rental.public.pickup_prepayment_required'));
             }
         }
 
@@ -644,7 +644,7 @@ class PublicRentalBookingController extends Controller
 
         return redirect()
             ->route('book.rental.booking.show', $token)
-            ->with('success', 'Permohonan pickup dan tanda tangan kontrak digital berhasil dikirim. Silakan tunjukkan layar ini kepada staf depot.');
+            ->with('success', __('rental.public.pickup_requested'));
     }
 
     public function history(Request $request, PassengerOtpService $otp): Response
