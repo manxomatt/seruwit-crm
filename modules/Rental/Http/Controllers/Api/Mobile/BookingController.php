@@ -5,13 +5,17 @@ namespace Modules\Rental\Http\Controllers\Api\Mobile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Accounting\Models\CompanyBankAccount;
 use Modules\Rental\Http\Controllers\Api\Mobile\Concerns\InteractsWithMobileRentalApi;
 use Modules\Rental\Http\Requests\Mobile\CancelMobileRentalBookingRequest;
 use Modules\Rental\Http\Requests\Mobile\StoreMobileRentalBookingRequest;
+use Modules\Rental\Http\Requests\Mobile\UploadDepositProofRequest;
 use Modules\Rental\Http\Resources\Mobile\MobileRentalBookingResource;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Support\MobilePassengerPartnerResolver;
 use Modules\Rental\Support\MobileRentalBookingService;
+use Modules\Rental\Support\RentalDepositProofNotifier;
+use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Shuttle\Support\MobileApiIdempotency;
 use Throwable;
 
@@ -176,6 +180,74 @@ class BookingController extends Controller
         $idempotency->store($request, 'rental-pay:'.$token, $response);
 
         return $response;
+    }
+
+    public function paymentMethods(): JsonResponse
+    {
+        $this->ensurePassengerChannelEnabled();
+
+        $bankAccounts = [];
+        if (class_exists(CompanyBankAccount::class)) {
+            $bankAccounts = CompanyBankAccount::query()
+                ->where('is_active', true)
+                ->where('kind', CompanyBankAccount::KIND_BANK)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(['id', 'name', 'bank_name', 'account_number', 'account_holder', 'is_default'])
+                ->map(fn ($acc): array => [
+                    'id' => (int) $acc->id,
+                    'name' => (string) $acc->name,
+                    'bank_name' => $acc->bank_name,
+                    'account_number' => $acc->account_number,
+                    'account_holder' => $acc->account_holder,
+                    'is_default' => (bool) $acc->is_default,
+                ])
+                ->values()
+                ->all();
+        }
+
+        return response()->json([
+            'bank_accounts' => $bankAccounts,
+            'gateway_available' => $this->gatewayAvailable(),
+        ]);
+    }
+
+    public function uploadDepositProof(
+        UploadDepositProofRequest $request,
+        string $token,
+        RentalPassengerDocMedia $docMedia,
+    ): JsonResponse {
+        $this->ensurePassengerChannelEnabled();
+
+        $rental = $this->findMobileBooking($token);
+        $this->assertOwnership($request, $rental);
+
+        $isAlreadyPaid = (float) $rental->deposit_amount > 0 ? $rental->isDepositReceived() : $rental->status === Rental::STATUS_CONFIRMED;
+        if ($isAlreadyPaid) {
+            return response()->json([
+                'message' => __('rental.public.deposit_already_received', ['default' => 'Deposit has already been paid or received.']),
+                'code' => 'deposit_already_received',
+            ], 400);
+        }
+
+        $proofPath = $docMedia->storeDepositProof($request->file('deposit_proof'), $rental->id);
+        $bankAccountId = $request->filled('company_bank_account_id') ? (int) $request->input('company_bank_account_id') : null;
+
+        $rental->update([
+            'deposit_payment_method' => 'transfer',
+            'deposit_company_bank_account_id' => $bankAccountId,
+            'deposit_proof_path' => $proofPath,
+            'deposit_proof_uploaded_at' => now(),
+            'deposit_proof_status' => Rental::PROOF_PENDING,
+            'deposit_proof_rejected_reason' => null,
+        ]);
+
+        RentalDepositProofNotifier::notifyPendingReview($rental);
+
+        return response()->json([
+            'message' => __('rental.public.deposit_proof_uploaded', ['default' => 'Deposit payment proof uploaded successfully.']),
+            'booking' => (new MobileRentalBookingResource($rental->fresh(['vehicle', 'partner', 'insurancePackage'])))->resolve(),
+        ]);
     }
 
     private function assertOptionalOwnership(Request $request, Rental $rental): void
