@@ -36,6 +36,16 @@ import LifecycleModals from './Show/modals/LifecycleModals';
 import type { LifecycleModalName } from './Show/modals/LifecycleModals';
 import ApproveDepositProofModal from './Show/modals/ApproveDepositProofModal';
 import RejectDepositProofModal from './Show/modals/RejectDepositProofModal';
+import RentalSections from './Show/RentalSections';
+import type {
+    AddonCharge,
+    AddonCodeOption,
+    HandoverEvidence,
+    PaymentSummary,
+    Rental,
+    SwapVehicleOption,
+    VehicleSwapRow,
+} from './Show/types';
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
 interface ExtensionRequest {
