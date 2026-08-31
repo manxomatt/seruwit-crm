@@ -11,7 +11,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     MaintenanceCategory,
@@ -30,11 +30,17 @@ interface PaginatedSchedules {
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
 
+interface Filters {
+    search?: string | null;
+    vehicle_id?: string | null;
+    is_active?: string | null;
+}
+
 interface Props {
     schedules: PaginatedSchedules;
     vehicles: WorkOrderVehicle[];
     categories: MaintenanceCategory[];
-    filters: { vehicle_id: string | null; is_active: string | null };
+    filters: Filters;
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -51,26 +57,14 @@ function isDue(schedule: MaintenanceSchedule, currentOdometer?: number): boolean
 }
 
 const PencilIcon = () => (
-    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
 );
 
 const TrashIcon = () => (
-    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-);
-
-const GridIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-    </svg>
-);
-
-const TableIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M10 3v18M6 3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6a3 3 0 013-3z" />
     </svg>
 );
 
@@ -78,11 +72,13 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
+
+    const [search, setSearch] = useState(filters?.search || '');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [showModal, setShowModal] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<MaintenanceSchedule | null>(null);
     const [deletingSchedule, setDeletingSchedule] = useState<MaintenanceSchedule | null>(null);
     const [deleting, setDeleting] = useState(false);
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     const { data, setData, post, patch, processing, errors, reset } = useForm({
         vehicle_id: '',
@@ -95,6 +91,12 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
         is_active: true,
         notes: '',
     });
+
+    useEffect(() => {
+        setSearch(filters?.search || '');
+    }, [filters?.search]);
+
+    const hasActiveFilters = Boolean(filters?.search || filters?.vehicle_id || filters?.is_active);
 
     const kpiStats = useMemo(() => {
         const data = schedules.data;
@@ -116,6 +118,36 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
             mileage: mileageCount,
         };
     }, [schedules, vehicles]);
+
+    const applyFilters = (next: { search?: string; vehicle_id?: string | null; is_active?: string | null }) => {
+        router.get(
+            prefixedRoute('maintenance.schedules.index'),
+            {
+                search: (next.search ?? search) || undefined,
+                vehicle_id: (next.vehicle_id !== undefined ? next.vehicle_id : filters?.vehicle_id) || undefined,
+                is_active: (next.is_active !== undefined ? next.is_active : filters?.is_active) || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const handleSearch: FormEventHandler = (e) => {
+        e.preventDefault();
+        applyFilters({ search });
+    };
+
+    const handleVehicleFilter = (vehicleId: string) => {
+        applyFilters({ vehicle_id: vehicleId || null });
+    };
+
+    const handleStatusFilter = (status: string) => {
+        applyFilters({ is_active: status || null });
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        router.get(prefixedRoute('maintenance.schedules.index'), {}, { preserveState: true, replace: true });
+    };
 
     const openCreate = (): void => {
         setEditingSchedule(null);
@@ -163,17 +195,6 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
         });
     };
 
-    const applyFilter = (key: string, value: string): void => {
-        router.get(prefixedRoute('maintenance.schedules.index'), { ...filters, [key]: value || undefined } as Record<string, string>, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const clearFilters = (): void => {
-        router.get(prefixedRoute('maintenance.schedules.index'), {}, { preserveState: true, replace: true });
-    };
-
     const formatInterval = (schedule: MaintenanceSchedule): string => {
         if (schedule.interval_type === 'mileage') {
             return `Setiap ${new Intl.NumberFormat(localeTag).format(schedule.interval_value)} km`;
@@ -181,15 +202,6 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
         return `Setiap ${schedule.interval_value} hari`;
     };
-
-    const kpiCards = [
-        { label: 'Total Jadwal Servis', value: kpiStats.total.toString(), icon: '📅', color: 'indigo' },
-        { label: 'Waktunya Servis (Overdue)', value: kpiStats.due.toString(), icon: '⚠️', color: 'amber' },
-        { label: 'Jadwal Aktif', value: kpiStats.active.toString(), icon: '✅', color: 'emerald' },
-        { label: 'Berdasarkan Odometer (Km)', value: kpiStats.mileage.toString(), icon: '🚗', color: 'sky' },
-    ];
-
-    const hasActiveFilters = Boolean(filters.vehicle_id || filters.is_active);
 
     return (
         <DynamicLayout
@@ -199,9 +211,13 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                     subtitle="Atur jadwal servis rutin kendaraan berdasarkan jarak tempuh (odometer km) atau interval kalender."
                     actions={
                         can.create && (
-                            <PrimaryButton onClick={openCreate} className="rounded-2xl text-xs font-black shadow-md">
-                                Buat Jadwal Baru
-                            </PrimaryButton>
+                            <button
+                                type="button"
+                                onClick={openCreate}
+                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                            >
+                                <span>+ Buat Jadwal Baru</span>
+                            </button>
                         )
                     }
                 />
@@ -210,34 +226,87 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
             <Head title="Jadwal Servis · Maintenance" />
             <MaintenanceNav />
 
-            <div className="w-full space-y-6 pb-10">
+            <div className="w-full space-y-6 pb-20">
                 {/* KPI Cards */}
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    {kpiCards.map((kpi) => (
-                        <div
-                            key={kpi.label}
-                            className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
-                        >
-                            <div className="flex items-start justify-between">
-                                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{kpi.label}</p>
-                                <span className="text-base">{kpi.icon}</span>
-                            </div>
-                            <p className="mt-2 text-3xl font-black tabular-nums text-slate-900 dark:text-white">{kpi.value}</p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Jadwal</p>
+                            <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{kpiStats.total}</p>
                         </div>
-                    ))}
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                            📅
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Waktunya Servis (Due)</p>
+                            <p className="mt-1 text-2xl font-black text-amber-600 dark:text-amber-400">{kpiStats.due}</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-xl font-bold text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+                            ⚠️
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Jadwal Aktif</p>
+                            <p className="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">{kpiStats.active}</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-xl font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                            ✓
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Interval Jarak (Km)</p>
+                            <p className="mt-1 text-2xl font-black text-sky-600 dark:text-sky-400">{kpiStats.mileage}</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-xl font-bold text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
+                            🚗
+                        </div>
+                    </div>
                 </div>
 
-                {/* Main Content Card */}
-                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                    {/* Toolbar */}
-                    <div className="flex flex-col gap-3 border-b border-slate-100 p-5 dark:border-slate-800">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            {/* Filter Inputs */}
-                            <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[240px]">
+                {/* Filter Toolbar & Actions */}
+                <div className="relative z-20 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        {/* Search & Filter Inputs */}
+                        <div className="flex flex-1 flex-wrap items-center gap-3">
+                            {/* Search Input */}
+                            <form onSubmit={handleSearch} className="relative min-w-[220px] flex-1 sm:max-w-xs">
+                                <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400">
+                                    🔍
+                                </span>
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Cari jadwal, unit, catatan..."
+                                    className="w-full rounded-2xl border-slate-200 bg-slate-50/50 pl-10 pr-8 py-2 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white shadow-2xs"
+                                />
+                                {search && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearch('');
+                                            applyFilters({ search: '' });
+                                        }}
+                                        className="absolute inset-y-0 right-3 flex items-center text-xs text-slate-400 hover:text-slate-600"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </form>
+
+                            {/* Vehicle Filter Select */}
+                            <div className="min-w-[200px]">
                                 <Select
-                                    className="w-64 !py-1.5 text-xs"
-                                    value={filters.vehicle_id ?? ''}
-                                    onChange={(val) => applyFilter('vehicle_id', val)}
+                                    className="w-full !py-1.5 text-xs"
+                                    value={filters?.vehicle_id ?? ''}
+                                    onChange={handleVehicleFilter}
                                     searchable
                                     placeholder="Semua Kendaraan"
                                     options={[
@@ -248,265 +317,319 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                         })),
                                     ]}
                                 />
-
-                                <Select
-                                    className="w-44 !py-1.5 text-xs"
-                                    value={filters.is_active ?? ''}
-                                    onChange={(val) => applyFilter('is_active', val)}
-                                    placeholder="Semua Status"
-                                    options={[
-                                        { value: '', label: 'Semua Status' },
-                                        { value: '1', label: 'Jadwal Aktif' },
-                                        { value: '0', label: 'Jadwal Non-Aktif' },
-                                    ]}
-                                />
-
-                                {hasActiveFilters && (
-                                    <button
-                                        type="button"
-                                        onClick={clearFilters}
-                                        className="inline-flex h-9 items-center gap-1 rounded-2xl px-3 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                    >
-                                        ✕ Reset Filter
-                                    </button>
-                                )}
                             </div>
 
-                            {/* View Switcher & Result Count */}
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs tabular-nums text-slate-400">
-                                    {schedules.total} Jadwal
-                                </span>
-                                <div className="flex items-center rounded-2xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+                            {/* Status Filter Tabs */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
+                                {[
+                                    { key: '', label: 'Semua Status' },
+                                    { key: '1', label: 'Aktif' },
+                                    { key: '0', label: 'Non Aktif' },
+                                ].map((tab) => (
                                     <button
+                                        key={tab.key}
                                         type="button"
-                                        onClick={() => setViewMode('grid')}
-                                        className={`inline-flex h-7 w-7 items-center justify-center rounded-xl transition ${viewMode === 'grid' ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                                        title="Tampilan Grid"
+                                        onClick={() => handleStatusFilter(tab.key)}
+                                        className={`rounded-xl px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
+                                            (filters?.is_active || '') === tab.key
+                                                ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                        }`}
                                     >
-                                        <GridIcon />
+                                        {tab.label}
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setViewMode('table')}
-                                        className={`inline-flex h-7 w-7 items-center justify-center rounded-xl transition ${viewMode === 'table' ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                                        title="Tampilan Tabel"
-                                    >
-                                        <TableIcon />
-                                    </button>
-                                </div>
+                                ))}
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Empty State */}
-                    {schedules.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                            <span className="text-4xl">📅</span>
-                            <h3 className="mt-3 text-sm font-black text-slate-900 dark:text-white">Tidak Ada Jadwal Maintenance</h3>
-                            <p className="mt-1 text-xs text-slate-400">Coba ubah filter pencarian atau buat jadwal servis baru.</p>
-                            {can.create && (
+                            {hasActiveFilters && (
                                 <button
                                     type="button"
-                                    onClick={openCreate}
-                                    className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md hover:bg-indigo-700"
+                                    onClick={clearFilters}
+                                    className="rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                 >
-                                    Buat Jadwal Baru
+                                    ✕ Reset Filter
                                 </button>
                             )}
                         </div>
-                    ) : viewMode === 'grid' ? (
-                        /* Grid View */
-                        <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {schedules.data.map((s) => {
-                                const vehicleOdometer = vehicles.find((v) => v.id === s.vehicle_id)?.odometer_km;
-                                const due = isDue(s, vehicleOdometer);
 
-                                return (
-                                    <div
-                                        key={s.id}
-                                        className={`group relative flex flex-col justify-between rounded-3xl border p-5 transition hover:shadow-md ${
-                                            due
-                                                ? 'border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20'
-                                                : s.is_active
-                                                    ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
-                                                    : 'border-slate-200/60 bg-slate-50/60 opacity-60 dark:border-slate-800 dark:bg-slate-850'
-                                        }`}
-                                    >
-                                        <div>
-                                            {/* Due Alert Badge */}
-                                            {due && (
-                                                <div className="mb-3 rounded-2xl bg-amber-100 px-3 py-1 text-center dark:bg-amber-950/60">
-                                                    <span className="text-[10px] font-black text-amber-800 dark:text-amber-300">
-                                                        ⚠️ WAKTUNYA SERVIS (DUE)
-                                                    </span>
-                                                </div>
+                        {/* View Switcher */}
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('table')}
+                                    title="Tampilan Tabel"
+                                    className={`rounded-lg p-1.5 transition-all ${
+                                        viewMode === 'table'
+                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5m-16.5-7.5h16.5" />
+                                    </svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('grid')}
+                                    title="Tampilan Grid Kartu"
+                                    className={`rounded-lg p-1.5 transition-all ${
+                                        viewMode === 'grid'
+                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM14 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM4 16a2.25 2.25 0 012.25-2.25H6a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25v-2zM14 16a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Content Rendering */}
+                {schedules.data.length === 0 ? (
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <span className="text-4xl mb-3 block">📅</span>
+                        <h3 className="text-base font-black text-slate-900 dark:text-white">
+                            {hasActiveFilters ? 'Tidak Ditemukan Jadwal yang Sesuai' : 'Belum Ada Jadwal Servis Berkala'}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                            {hasActiveFilters
+                                ? 'Coba ubah kata kunci pencarian atau sesuaikan filter kendaraan / status di atas.'
+                                : 'Buat jadwal servis rutin pertama berdasarkan odometer km atau tanggal interval kalender.'}
+                        </p>
+                        {can.create && !hasActiveFilters && (
+                            <button
+                                type="button"
+                                onClick={openCreate}
+                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
+                            >
+                                + Buat Jadwal Pertama
+                            </button>
+                        )}
+                    </div>
+                ) : viewMode === 'grid' ? (
+                    /* Grid Card View */
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {schedules.data.map((s) => {
+                            const vehicleOdometer = vehicles.find((v) => v.id === s.vehicle_id)?.odometer_km;
+                            const due = isDue(s, vehicleOdometer);
+
+                            return (
+                                <div
+                                    key={s.id}
+                                    className={`relative overflow-hidden rounded-3xl border bg-white p-5 shadow-xs transition hover:shadow-md dark:bg-slate-900 flex flex-col justify-between ${
+                                        due
+                                            ? 'border-amber-300 ring-2 ring-amber-500/20 dark:border-amber-700'
+                                            : s.is_active
+                                                ? 'border-slate-200/80 dark:border-slate-800'
+                                                : 'border-slate-200/60 bg-slate-50/50 opacity-75 dark:border-slate-800 dark:bg-slate-850'
+                                    }`}
+                                >
+                                    <div>
+                                        {/* Due Alert Badge */}
+                                        {due && (
+                                            <div className="mb-3 rounded-2xl bg-amber-100 dark:bg-amber-950/70 p-2 text-center">
+                                                <span className="text-xs font-black text-amber-800 dark:text-amber-300">
+                                                    ⚠️ WAKTUNYA SERVIS (DUE)
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Vehicle & Status Header */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            {s.vehicle ? (
+                                                <Link
+                                                    href={prefixedRoute('fleet.vehicles.show', s.vehicle_id)}
+                                                    className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
+                                                >
+                                                    <span>🚘</span>
+                                                    <span>{s.vehicle.plate_number}</span>
+                                                </Link>
+                                            ) : (
+                                                <span className="text-xs text-slate-400">—</span>
                                             )}
 
-                                            {/* Vehicle Pill */}
-                                            <div className="flex items-center justify-between gap-2">
-                                                {s.vehicle ? (
-                                                    <Link
-                                                        href={prefixedRoute('fleet.vehicles.show', s.vehicle_id)}
-                                                        className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
-                                                    >
-                                                        <span>🚘</span>
-                                                        <span>{s.vehicle.plate_number}</span>
-                                                    </Link>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400">—</span>
-                                                )}
-
-                                                <span className={`inline-flex items-center gap-1 rounded-xl px-2 py-0.5 text-[10px] font-black ${
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-0.5 text-xs font-black ${
                                                     s.is_active
-                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                }`}>
-                                                    {s.is_active ? 'Aktif' : 'Non-Aktif'}
-                                                </span>
-                                            </div>
-
-                                            {/* Name & Category */}
-                                            <h4 className="mt-3 text-sm font-black text-slate-900 dark:text-white">{s.name}</h4>
-                                            {s.category && (
-                                                <div className="mt-1 flex items-center gap-1.5">
-                                                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.category.color }} />
-                                                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{s.category.name}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Interval Badge */}
-                                            <div className="mt-3">
-                                                <span className="inline-flex items-center rounded-xl bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                                    🔄 {formatInterval(s)}
-                                                </span>
-                                            </div>
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <span className={`h-1.5 w-1.5 rounded-full ${s.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                                <span>{s.is_active ? 'Aktif' : 'Non Aktif'}</span>
+                                            </span>
                                         </div>
 
-                                        {/* Next Service Info & Actions */}
-                                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="text-slate-400">Servis Berikutnya:</span>
-                                                <span className={`font-mono font-black ${due ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
-                                                    {s.interval_type === 'mileage'
-                                                        ? formatOdometer(s.next_service_odometer, localeTag)
-                                                        : formatDate(s.next_service_date, localeTag)}
-                                                </span>
-                                            </div>
-
-                                            <div className="mt-3 flex items-center justify-between gap-2">
-                                                <span className="text-[10px] text-slate-400">
-                                                    Terakhir: {s.interval_type === 'mileage' ? formatOdometer(s.last_service_odometer, localeTag) : formatDate(s.last_service_date, localeTag)}
-                                                </span>
-
-                                                <div className="flex items-center gap-1">
-                                                    {can.update && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => openEdit(s)}
-                                                            className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-400"
-                                                            title="Edit Jadwal"
-                                                        >
-                                                            <PencilIcon />
-                                                        </button>
-                                                    )}
-                                                    {can.delete && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setDeletingSchedule(s)}
-                                                            className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-400"
-                                                            title="Hapus Jadwal"
-                                                        >
-                                                            <TrashIcon />
-                                                        </button>
-                                                    )}
+                                        {/* Name & Category */}
+                                        <div className="mt-3 space-y-1">
+                                            <h4 className="text-base font-black text-slate-900 dark:text-white block truncate" title={s.name}>
+                                                {s.name}
+                                            </h4>
+                                            {s.category && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.category.color }} />
+                                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{s.category.name}</span>
                                                 </div>
+                                            )}
+                                        </div>
+
+                                        {/* Interval Pill */}
+                                        <div className="mt-3">
+                                            <span className="inline-flex items-center rounded-xl bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                                🔄 {formatInterval(s)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Next Service Info & Actions */}
+                                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-slate-400">Servis Berikutnya:</span>
+                                            <span className={`font-mono font-black ${due ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
+                                                {s.interval_type === 'mileage'
+                                                    ? formatOdometer(s.next_service_odometer, localeTag)
+                                                    : formatDate(s.next_service_date, localeTag)}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between gap-2 pt-1">
+                                            <span className="text-[11px] text-slate-400">
+                                                Terakhir: {s.interval_type === 'mileage' ? formatOdometer(s.last_service_odometer, localeTag) : formatDate(s.last_service_date, localeTag)}
+                                            </span>
+
+                                            <div className="flex items-center gap-1">
+                                                {can.update && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEdit(s)}
+                                                        className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                        title="Edit Jadwal"
+                                                    >
+                                                        <PencilIcon />
+                                                    </button>
+                                                )}
+                                                {can.delete && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDeletingSchedule(s)}
+                                                        className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                        title="Hapus Jadwal"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        /* Table View */
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    /* Table View */
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
                                 <thead>
-                                    <tr className="bg-slate-50/80 dark:bg-slate-850/80 text-[10px] font-black uppercase text-slate-400">
-                                        <th className="px-6 py-3 text-left">Kendaraan</th>
-                                        <th className="px-6 py-3 text-left">Nama Jadwal & Kategori</th>
-                                        <th className="px-6 py-3 text-left">Interval Servis</th>
-                                        <th className="px-6 py-3 text-left">Servis Terakhir</th>
-                                        <th className="px-6 py-3 text-left">Servis Berikutnya</th>
-                                        <th className="px-6 py-3 text-left">Status</th>
-                                        <th className="w-24 px-6 py-3 text-right"><span className="sr-only">Aksi</span></th>
+                                    <tr className="bg-slate-50/80 dark:bg-slate-850/80">
+                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Kendaraan
+                                        </th>
+                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Nama Jadwal & Kategori
+                                        </th>
+                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Interval Servis
+                                        </th>
+                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Servis Terakhir
+                                        </th>
+                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Servis Berikutnya
+                                        </th>
+                                        <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Status
+                                        </th>
+                                        <th className="w-24 px-4 py-3.5 text-right font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Aksi
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                                     {schedules.data.map((s) => {
                                         const vehicleOdometer = vehicles.find((v) => v.id === s.vehicle_id)?.odometer_km;
                                         const due = isDue(s, vehicleOdometer);
 
                                         return (
-                                            <tr key={s.id} className={`group transition-colors ${due ? 'bg-amber-50/60 dark:bg-amber-950/20' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'}`}>
-                                                <td className="px-6 py-3.5">
+                                            <tr
+                                                key={s.id}
+                                                className={`group transition-colors ${due ? 'bg-amber-50/40 dark:bg-amber-950/20' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'}`}
+                                            >
+                                                <td className="whitespace-nowrap px-4 py-3.5">
                                                     {s.vehicle ? (
                                                         <Link
                                                             href={prefixedRoute('fleet.vehicles.show', s.vehicle_id)}
                                                             className="font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
                                                         >
                                                             {s.vehicle.name}
-                                                            <p className="font-mono text-[10px] text-slate-400">{s.vehicle.plate_number}</p>
+                                                            <p className="font-mono text-xs text-slate-400">{s.vehicle.plate_number}</p>
                                                         </Link>
                                                     ) : (
                                                         '—'
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-3.5">
+                                                <td className="whitespace-nowrap px-4 py-3.5">
                                                     <div className="flex items-center gap-2">
-                                                        {s.category && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.category.color }} />}
+                                                        {s.category && <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: s.category.color }} />}
                                                         <div>
-                                                            <p className="font-bold text-slate-900 dark:text-white">{s.name}</p>
-                                                            <p className="text-[10px] text-slate-400">{s.category?.name}</p>
+                                                            <p className="font-black text-slate-900 dark:text-white">{s.name}</p>
+                                                            <p className="text-xs text-slate-400">{s.category?.name}</p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-3.5 font-medium text-slate-700 dark:text-slate-300">
+                                                <td className="whitespace-nowrap px-4 py-3.5 font-bold text-slate-700 dark:text-slate-300">
                                                     {formatInterval(s)}
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-3.5 font-mono text-slate-500">
+                                                <td className="whitespace-nowrap px-4 py-3.5 font-mono text-slate-500">
                                                     {s.interval_type === 'mileage'
                                                         ? formatOdometer(s.last_service_odometer, localeTag)
                                                         : formatDate(s.last_service_date, localeTag)}
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-3.5 font-mono">
-                                                    <span className={`font-bold ${due ? 'text-amber-700 dark:text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                <td className="whitespace-nowrap px-4 py-3.5 font-mono">
+                                                    <span className={`font-black ${due ? 'text-amber-700 dark:text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>
                                                         {s.interval_type === 'mileage'
                                                             ? formatOdometer(s.next_service_odometer, localeTag)
                                                             : formatDate(s.next_service_date, localeTag)}
                                                     </span>
                                                     {due && (
-                                                        <span className="ml-2 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                                        <span className="ml-2 rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                                                             ⚠️ Due
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-3.5">
-                                                    <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-0.5 text-[10px] font-black ${
-                                                        s.is_active
-                                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                    }`}>
-                                                        {s.is_active ? 'Aktif' : 'Non-Aktif'}
+                                                <td className="whitespace-nowrap px-4 py-3.5">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-black ${
+                                                            s.is_active
+                                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                        }`}
+                                                    >
+                                                        <span className={`h-1.5 w-1.5 rounded-full ${s.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                                        <span>{s.is_active ? 'Aktif' : 'Non Aktif'}</span>
                                                     </span>
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-3.5 text-right">
+                                                <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                                     <div className="flex items-center justify-end gap-1">
                                                         {can.update && (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => openEdit(s)}
-                                                                className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-400"
+                                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
                                                                 title="Edit"
                                                             >
                                                                 <PencilIcon />
@@ -516,7 +639,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setDeletingSchedule(s)}
-                                                                className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-400"
+                                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
                                                                 title="Hapus"
                                                             >
                                                                 <TrashIcon />
@@ -530,29 +653,39 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {/* Pagination */}
-                    {schedules.last_page > 1 && (
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-                            <p className="text-xs text-slate-400">
-                                Menampilkan {(schedules.current_page - 1) * schedules.per_page + 1}–{Math.min(schedules.current_page * schedules.per_page, schedules.total)} dari {schedules.total} jadwal
-                            </p>
-                            <div className="flex gap-1">
-                                {schedules.links.map((link, i) => (
-                                    <button
-                                        key={i}
-                                        type="button"
-                                        onClick={() => link.url && router.get(link.url)}
-                                        disabled={!link.url}
-                                        className={`rounded-xl px-2.5 py-1.5 text-xs font-bold transition ${link.active ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : link.url ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'cursor-not-allowed text-slate-300 dark:text-slate-600'}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
+                {/* Pagination */}
+                {schedules.last_page > 1 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {t('common.showing_results', {
+                                from: schedules.total === 0 ? 0 : (schedules.current_page - 1) * schedules.per_page + 1,
+                                to: Math.min(schedules.current_page * schedules.per_page, schedules.total),
+                                total: schedules.total,
+                            })}
+                        </p>
+                        <div className="flex gap-1.5">
+                            {schedules.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white shadow-2xs'
+                                            : link.url
+                                                ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                : 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Create/Edit Modal */}
