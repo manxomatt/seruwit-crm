@@ -18,11 +18,17 @@ class IncentiveRuleController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('Modules/DriverScoring/Incentives/Index', [
-            'rules' => DriverIncentiveRule::query()->latest('id')->get(),
-            'awards' => DriverIncentiveAward::query()
-                ->with(['driver:id,name', 'rule:id,name'])
+            'rules' => DriverIncentiveRule::query()
+                ->withCount('awards')
                 ->latest('id')
-                ->limit(50)
+                ->get(),
+            'awards' => DriverIncentiveAward::query()
+                ->with([
+                    'driver:id,name,phone,status',
+                    'rule:id,name,period,reward_amount,reward_label',
+                ])
+                ->latest('id')
+                ->limit(100)
                 ->get(),
             'can' => [
                 'create' => $request->user()?->hasPermissionFor('scoring', 'create') ?? false,
