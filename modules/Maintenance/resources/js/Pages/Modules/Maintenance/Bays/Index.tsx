@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import MaintenanceNav from '../../../../MaintenanceNav';
@@ -53,6 +54,22 @@ const TrashIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
 );
+
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
+    </svg>
+);
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/50';
 
 export default function Index({ bays, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -410,27 +427,33 @@ export default function Index({ bays, filters, can }: Props): JSX.Element {
                                     </div>
 
                                     {/* Footer Actions */}
-                                    {can.manage && (
-                                        <div className="mt-4 flex items-center justify-end gap-1 border-t border-slate-100 pt-3 dark:border-slate-800">
-                                            <button
-                                                type="button"
-                                                onClick={() => openEdit(bay)}
-                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                                                title="Edit Bay"
-                                            >
-                                                <PencilIcon />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDeleting(bay)}
-                                                disabled={isOccupied}
-                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed dark:hover:bg-rose-950/40"
-                                                title={isOccupied ? 'Tidak dapat dihapus karena sedang digunakan SPK' : 'Hapus Bay'}
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                                         <span className="text-xs font-bold text-slate-400">
+                                             Urutan #{bay.sort_order}
+                                         </span>
+
+                                         {can.manage && (
+                                             <div className="flex items-center gap-1">
+                                                 <button
+                                                     type="button"
+                                                     onClick={() => openEdit(bay)}
+                                                     className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                     title="Edit Bay"
+                                                 >
+                                                     <PencilIcon />
+                                                 </button>
+                                                 <button
+                                                     type="button"
+                                                     onClick={() => setDeleting(bay)}
+                                                     disabled={isOccupied}
+                                                     className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed dark:hover:bg-rose-950/40"
+                                                     title={isOccupied ? 'Tidak dapat dihapus karena sedang digunakan SPK' : 'Hapus Bay'}
+                                                 >
+                                                     <TrashIcon />
+                                                 </button>
+                                             </div>
+                                         )}
+                                     </div>
                                 </div>
                             );
                         })}
@@ -507,20 +530,49 @@ export default function Index({ bays, filters, can }: Props): JSX.Element {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => openEdit(bay)}
-                                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                                                 title="Edit Bay"
                                                             >
                                                                 <PencilIcon />
+                                                                <span>Edit</span>
                                                             </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeleting(bay)}
-                                                                disabled={isOccupied}
-                                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed dark:hover:bg-rose-950/40"
-                                                                title={isOccupied ? 'Tidak dapat dihapus karena digunakan SPK' : 'Hapus Bay'}
-                                                            >
-                                                                <TrashIcon />
-                                                            </button>
+
+                                                            <Menu as="div" className="relative inline-block text-left">
+                                                                <MenuButton
+                                                                    className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                                    title="Menu Aksi Lainnya"
+                                                                >
+                                                                    <EllipsisVerticalIcon />
+                                                                </MenuButton>
+
+                                                                <MenuItems
+                                                                    anchor="bottom end"
+                                                                    className="z-30 w-48 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                                >
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openEdit(bay)}
+                                                                            className={menuItemClassName}
+                                                                        >
+                                                                            <PencilIcon />
+                                                                            <span>Edit Bay</span>
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                    <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setDeleting(bay)}
+                                                                            disabled={isOccupied}
+                                                                            className={`${menuItemDangerClassName} disabled:opacity-40 disabled:cursor-not-allowed`}
+                                                                        >
+                                                                            <TrashIcon />
+                                                                            <span>Hapus Bay</span>
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                </MenuItems>
+                                                            </Menu>
                                                         </div>
                                                     )}
                                                 </td>

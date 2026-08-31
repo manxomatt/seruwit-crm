@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import MaintenanceNav from '../../../../MaintenanceNav';
@@ -56,6 +57,13 @@ function isDue(schedule: MaintenanceSchedule, currentOdometer?: number): boolean
     return false;
 }
 
+const EyeIcon = () => (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+);
+
 const PencilIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -67,6 +75,22 @@ const TrashIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
 );
+
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
+    </svg>
+);
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/50';
 
 export default function Index({ schedules, vehicles, categories, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -487,44 +511,53 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
                                     {/* Next Service Info & Actions */}
                                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                                        <div className="flex items-center justify-between text-xs">
-                                            <span className="text-slate-400">Servis Berikutnya:</span>
-                                            <span className={`font-mono font-black ${due ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
-                                                {s.interval_type === 'mileage'
-                                                    ? formatOdometer(s.next_service_odometer, localeTag)
-                                                    : formatDate(s.next_service_date, localeTag)}
-                                            </span>
-                                        </div>
+                                         <div className="flex items-center justify-between text-xs">
+                                             <span className="text-slate-400">Servis Berikutnya:</span>
+                                             <span className={`font-mono font-black ${due ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
+                                                 {s.interval_type === 'mileage'
+                                                     ? formatOdometer(s.next_service_odometer, localeTag)
+                                                     : formatDate(s.next_service_date, localeTag)}
+                                             </span>
+                                         </div>
 
-                                        <div className="flex items-center justify-between gap-2 pt-1">
-                                            <span className="text-[11px] text-slate-400">
-                                                Terakhir: {s.interval_type === 'mileage' ? formatOdometer(s.last_service_odometer, localeTag) : formatDate(s.last_service_date, localeTag)}
-                                            </span>
+                                         <div className="flex items-center justify-between gap-2 pt-1">
+                                             {s.vehicle_id ? (
+                                                 <Link
+                                                     href={prefixedRoute('fleet.vehicles.show', s.vehicle_id)}
+                                                     className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                                 >
+                                                     Detail Unit →
+                                                 </Link>
+                                             ) : (
+                                                 <span className="text-[11px] text-slate-400">
+                                                     Terakhir: {s.interval_type === 'mileage' ? formatOdometer(s.last_service_odometer, localeTag) : formatDate(s.last_service_date, localeTag)}
+                                                 </span>
+                                             )}
 
-                                            <div className="flex items-center gap-1">
-                                                {can.update && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openEdit(s)}
-                                                        className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                                                        title="Edit Jadwal"
-                                                    >
-                                                        <PencilIcon />
-                                                    </button>
-                                                )}
-                                                {can.delete && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setDeletingSchedule(s)}
-                                                        className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
-                                                        title="Hapus Jadwal"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
+                                             <div className="flex items-center gap-1">
+                                                 {can.update && (
+                                                     <button
+                                                         type="button"
+                                                         onClick={() => openEdit(s)}
+                                                         className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                         title="Edit Jadwal"
+                                                     >
+                                                         <PencilIcon />
+                                                     </button>
+                                                 )}
+                                                 {can.delete && (
+                                                     <button
+                                                         type="button"
+                                                         onClick={() => setDeletingSchedule(s)}
+                                                         className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                         title="Hapus Jadwal"
+                                                     >
+                                                         <TrashIcon />
+                                                     </button>
+                                                 )}
+                                             </div>
+                                         </div>
+                                     </div>
                                 </div>
                             );
                         })}
@@ -629,22 +662,66 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                                             <button
                                                                 type="button"
                                                                 onClick={() => openEdit(s)}
-                                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                                                                title="Edit"
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                                title="Edit Jadwal"
                                                             >
                                                                 <PencilIcon />
+                                                                <span>Edit</span>
                                                             </button>
                                                         )}
-                                                        {can.delete && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeletingSchedule(s)}
-                                                                className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
-                                                                title="Hapus"
+
+                                                        <Menu as="div" className="relative inline-block text-left">
+                                                            <MenuButton
+                                                                className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                                title="Menu Aksi Lainnya"
                                                             >
-                                                                <TrashIcon />
-                                                            </button>
-                                                        )}
+                                                                <EllipsisVerticalIcon />
+                                                            </MenuButton>
+
+                                                            <MenuItems
+                                                                anchor="bottom end"
+                                                                className="z-30 w-48 origin-top-right rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+                                                            >
+                                                                {s.vehicle_id && (
+                                                                    <MenuItem>
+                                                                        <Link
+                                                                            href={prefixedRoute('fleet.vehicles.show', s.vehicle_id)}
+                                                                            className={menuItemClassName}
+                                                                        >
+                                                                            <EyeIcon />
+                                                                            <span>Lihat Unit Kendaraan</span>
+                                                                        </Link>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {can.update && (
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openEdit(s)}
+                                                                            className={menuItemClassName}
+                                                                        >
+                                                                            <PencilIcon />
+                                                                            <span>Edit Jadwal</span>
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {can.delete && (
+                                                                    <>
+                                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                        <MenuItem>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setDeletingSchedule(s)}
+                                                                                className={menuItemDangerClassName}
+                                                                            >
+                                                                                <TrashIcon />
+                                                                                <span>Hapus Jadwal</span>
+                                                                            </button>
+                                                                        </MenuItem>
+                                                                    </>
+                                                                )}
+                                                            </MenuItems>
+                                                        </Menu>
                                                     </div>
                                                 </td>
                                             </tr>
