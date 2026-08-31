@@ -160,7 +160,7 @@ export default function Index({ categories }: Props): JSX.Element {
             <Head title="Kategori Maintenance · Fleet" />
             <MaintenanceNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-10">
+            <div className="w-full space-y-6 pb-10">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {kpiCards.map((kpi) => (

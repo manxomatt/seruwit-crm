@@ -1221,129 +1221,364 @@ export default function Show({
             </Modal>
 
             {/* Modal Quick Log Fuel */}
-            <Modal show={showFuelModal} onClose={() => setShowFuelModal(false)} maxWidth="lg">
-                <form onSubmit={submitFuel} className="p-6">
-                    <h3 className="mb-4 text-base font-black text-slate-900 dark:text-white">Catat Pengisian Bahan Bakar (BBM)</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Modal show={showFuelModal} onClose={() => setShowFuelModal(false)} maxWidth="2xl">
+                <form onSubmit={submitFuel} className="overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl">
+                    {/* Header */}
+                    <div className="relative border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent p-6 pb-5">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-2xl text-white shadow-lg shadow-amber-500/30">
+                                    ⛽
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                                        Catat Pengisian Bahan Bakar (BBM)
+                                    </h3>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {vehicle.name}
+                                        </span>
+                                        <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-black text-slate-700 dark:text-slate-300">
+                                            {vehicle.plate_number}
+                                        </span>
+                                        {vehicle.fuel_type && (
+                                            <span className="rounded-md bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400">
+                                                {vehicle.fuel_type}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowFuelModal(false)}
+                                className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Top Context Metric Bar */}
+                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5 rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-3 text-xs backdrop-blur-xs">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Odometer Terakhir</p>
+                                <p className="mt-0.5 font-mono font-black text-slate-800 dark:text-slate-200">
+                                    {(fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0).toLocaleString('id-ID')} KM
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rata-rata Konsumsi</p>
+                                <p className="mt-0.5 font-mono font-black text-emerald-600 dark:text-emerald-400">
+                                    {fuelSummary.average_km_per_liter ? `${fuelSummary.average_km_per_liter} KM/L` : (fuelSummary.expected_km_per_liter ? `~${fuelSummary.expected_km_per_liter} KM/L` : '—')}
+                                </p>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kapasitas Tangki</p>
+                                <p className="mt-0.5 font-mono font-black text-slate-800 dark:text-slate-200">
+                                    {vehicle.fuel_capacity_liters ? `${vehicle.fuel_capacity_liters} Liter` : '—'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modal Body */}
+                    <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                        {/* Section 1: Pengisian BBM & Biaya */}
                         <div>
-                            <InputLabel htmlFor="f_filled_at" value="Tanggal Pengisian *" />
-                            <TextInput
-                                id="f_filled_at"
-                                type="date"
-                                className="mt-1.5 block w-full !rounded-2xl"
-                                value={fuelForm.data.filled_at}
-                                onChange={(e) => fuelForm.setData('filled_at', e.target.value)}
-                                required
-                            />
-                            <InputError message={fuelForm.errors.filled_at} className="mt-1" />
+                            <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                                <span>💰</span>
+                                <span>Data Bahan Bakar & Biaya</span>
+                            </p>
+
+                            {/* Quick Fuel Type Presets */}
+                            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                                <span className="text-[11px] font-bold text-slate-400 mr-1">Tipe BBM:</span>
+                                {[
+                                    { name: 'Pertalite', price: 10000 },
+                                    { name: 'Pertamax', price: 12950 },
+                                    { name: 'BioSolar', price: 6800 },
+                                    { name: 'Dexlite', price: 13900 },
+                                ].map((fuel) => (
+                                    <button
+                                        key={fuel.name}
+                                        type="button"
+                                        onClick={() => {
+                                            const currentLiters = parseFloat(fuelForm.data.liters) || 0;
+                                            const currentCost = parseFloat(fuelForm.data.cost) || 0;
+                                            if (currentLiters > 0) {
+                                                fuelForm.setData('cost', String(Math.round(currentLiters * fuel.price)));
+                                            } else if (currentCost > 0) {
+                                                fuelForm.setData('liters', String((currentCost / fuel.price).toFixed(2)));
+                                            }
+                                        }}
+                                        className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700 dark:hover:text-amber-300 transition"
+                                        title={`Klik untuk hitung otomatis dengan asumsi harga Rp ${fuel.price.toLocaleString('id-ID')}/L`}
+                                    >
+                                        {fuel.name} <span className="font-mono text-[10px] text-slate-400">(Rp {fuel.price.toLocaleString('id-ID')})</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="f_liters" value="Volume BBM (Liter) *" />
+                                    <div className="relative mt-1.5">
+                                        <TextInput
+                                            id="f_liters"
+                                            type="number"
+                                            min={0}
+                                            step="0.01"
+                                            className="block w-full !rounded-2xl font-mono text-base font-bold pr-12"
+                                            value={fuelForm.data.liters}
+                                            onChange={(e) => fuelForm.setData('liters', e.target.value)}
+                                            placeholder="0.00"
+                                            required
+                                        />
+                                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">
+                                            Liter
+                                        </span>
+                                    </div>
+                                    <InputError message={fuelForm.errors.liters} className="mt-1" />
+
+                                    {/* Quick Liters Chips */}
+                                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                                        {[10, 20, 30, 40, 50].map((lit) => (
+                                            <button
+                                                key={lit}
+                                                type="button"
+                                                onClick={() => {
+                                                    const cur = parseFloat(fuelForm.data.liters) || 0;
+                                                    fuelForm.setData('liters', String(cur + lit));
+                                                }}
+                                                className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                                            >
+                                                +{lit}L
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="f_cost" value="Total Biaya (Rp) *" />
+                                    <div className="relative mt-1.5">
+                                        <TextInput
+                                            id="f_cost"
+                                            type="number"
+                                            min={0}
+                                            className="block w-full !rounded-2xl font-mono text-base font-bold pl-10"
+                                            value={fuelForm.data.cost}
+                                            onChange={(e) => fuelForm.setData('cost', e.target.value)}
+                                            placeholder="0"
+                                            required
+                                        />
+                                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">
+                                            Rp
+                                        </span>
+                                    </div>
+                                    <InputError message={fuelForm.errors.cost} className="mt-1" />
+
+                                    {/* Quick Cost Chips */}
+                                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                                        {[100000, 200000, 300000, 500000].map((amt) => (
+                                            <button
+                                                key={amt}
+                                                type="button"
+                                                onClick={() => fuelForm.setData('cost', String(amt))}
+                                                className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                                            >
+                                                {amt >= 1000000 ? `${amt / 1000000}jt` : `${amt / 1000}k`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Live Calculated Price Indicator */}
+                            {parseFloat(fuelForm.data.liters) > 0 && parseFloat(fuelForm.data.cost) > 0 && (
+                                <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 px-3 py-2 text-xs font-bold text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40">
+                                    <span>💡</span>
+                                    <span>
+                                        Estimasi Harga: <strong className="font-mono">Rp {Math.round(parseFloat(fuelForm.data.cost) / parseFloat(fuelForm.data.liters)).toLocaleString('id-ID')}</strong> / Liter
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
+                        {/* Section 2: Odometer & Efisiensi */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                            <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                                <span>📍</span>
+                                <span>Odometer & Analisis Jarak Tempuh</span>
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="f_odometer_km" value="Odometer Saat Isi (KM) *" />
+                                    <div className="relative mt-1.5">
+                                        <TextInput
+                                            id="f_odometer_km"
+                                            type="number"
+                                            min={0}
+                                            className="block w-full !rounded-2xl font-mono text-base font-bold pr-12"
+                                            value={fuelForm.data.odometer_km}
+                                            onChange={(e) => fuelForm.setData('odometer_km', e.target.value)}
+                                            placeholder="Contoh: 45200"
+                                        />
+                                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">
+                                            KM
+                                        </span>
+                                    </div>
+                                    <InputError message={fuelForm.errors.odometer_km} className="mt-1" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="f_filled_at" value="Tanggal Pengisian *" />
+                                    <TextInput
+                                        id="f_filled_at"
+                                        type="date"
+                                        className="mt-1.5 block w-full !rounded-2xl"
+                                        value={fuelForm.data.filled_at}
+                                        onChange={(e) => fuelForm.setData('filled_at', e.target.value)}
+                                        required
+                                    />
+                                    <InputError message={fuelForm.errors.filled_at} className="mt-1" />
+                                </div>
+                            </div>
+
+                            {/* Live Delta & Efficiency preview */}
+                            {parseInt(fuelForm.data.odometer_km, 10) > (fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0) && (
+                                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 p-3 text-xs border border-indigo-200/60 dark:border-indigo-900/40">
+                                    <span className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                                        <span>🚗</span>
+                                        <span>
+                                            Jarak tempuh: +{(parseInt(fuelForm.data.odometer_km, 10) - (fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0)).toLocaleString('id-ID')} KM sejak pengisian sebelumnya
+                                        </span>
+                                    </span>
+                                    {parseFloat(fuelForm.data.liters) > 0 && (
+                                        <span className="rounded-xl bg-indigo-600 px-2.5 py-1 font-mono font-black text-white shadow-xs">
+                                            ⚡ {((parseInt(fuelForm.data.odometer_km, 10) - (fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0)) / parseFloat(fuelForm.data.liters)).toFixed(2)} KM/L
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Section 3: Driver, Lokasi SPBU & Bukti */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                            <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                                <span>🏢</span>
+                                <span>Pengemudi & Lokasi SPBU</span>
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="f_driver_id" value="Pengemudi / Driver" />
+                                    <Select
+                                        id="f_driver_id"
+                                        className="mt-1.5 !rounded-2xl"
+                                        value={fuelForm.data.driver_id}
+                                        onChange={(value) => fuelForm.setData('driver_id', value)}
+                                        placeholder="Pilih Pengemudi (Opsional)"
+                                        options={drivers.map((d) => ({ value: String(d.id), label: d.name }))}
+                                    />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="f_receipt_number" value="No. Struk / Nota Transaksi" />
+                                    <TextInput
+                                        id="f_receipt_number"
+                                        className="mt-1.5 block w-full !rounded-2xl font-mono"
+                                        value={fuelForm.data.receipt_number}
+                                        onChange={(e) => fuelForm.setData('receipt_number', e.target.value)}
+                                        placeholder="Contoh: STR-98210"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <InputLabel htmlFor="f_station_name" value="Nama SPBU / Lokasi Pengisian" />
+                                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 mb-2">
+                                        {['Pertamina', 'Shell', 'BP AKR', 'TotalEnergies'].map((brand) => (
+                                            <button
+                                                key={brand}
+                                                type="button"
+                                                onClick={() => {
+                                                    const cur = fuelForm.data.station_name;
+                                                    fuelForm.setData('station_name', cur ? `${brand} ${cur.replace(/^(Pertamina|Shell|BP AKR|TotalEnergies)\s*/i, '')}` : `SPBU ${brand}`);
+                                                }}
+                                                className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                            >
+                                                + {brand}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <TextInput
+                                        id="f_station_name"
+                                        className="block w-full !rounded-2xl"
+                                        value={fuelForm.data.station_name}
+                                        onChange={(e) => fuelForm.setData('station_name', e.target.value)}
+                                        placeholder="Contoh: SPBU Pertamina 34-12345 Jl. Sudirman"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 4: Full Tank Toggle Card */}
+                        <div
+                            onClick={() => fuelForm.setData('is_full_tank', !fuelForm.data.is_full_tank)}
+                            className={`cursor-pointer rounded-2xl border p-4 transition-all flex items-center justify-between gap-4 ${
+                                fuelForm.data.is_full_tank
+                                    ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/30'
+                                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
+                                    fuelForm.data.is_full_tank ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                                }`}>
+                                    ⛽
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-slate-900 dark:text-white">
+                                        Isi Tangki Penuh (Full Tank)
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        Wajib diaktifkan bila pengisian sampai penuh agar perhitungan efisiensi KM/Liter akurat.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <input
+                                type="checkbox"
+                                checked={fuelForm.data.is_full_tank}
+                                onChange={(e) => fuelForm.setData('is_full_tank', e.target.checked)}
+                                className="h-5 w-5 rounded-lg border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                        </div>
+
+                        {/* Section 5: Catatan Tambahan */}
                         <div>
-                            <InputLabel htmlFor="f_driver_id" value="Pengemudi / Driver" />
-                            <Select
-                                id="f_driver_id"
-                                className="mt-1.5"
-                                value={fuelForm.data.driver_id}
-                                onChange={(value) => fuelForm.setData('driver_id', value)}
-                                placeholder="Pilih Pengemudi"
-                                options={drivers.map((d) => ({ value: String(d.id), label: d.name }))}
-                            />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="f_liters" value="Volume BBM (Liter) *" />
-                            <TextInput
-                                id="f_liters"
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                className="mt-1.5 block w-full !rounded-2xl font-mono"
-                                value={fuelForm.data.liters}
-                                onChange={(e) => fuelForm.setData('liters', e.target.value)}
-                                placeholder="Contoh: 30"
-                                required
-                            />
-                            <InputError message={fuelForm.errors.liters} className="mt-1" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="f_cost" value="Total Biaya (Rp) *" />
-                            <TextInput
-                                id="f_cost"
-                                type="number"
-                                min={0}
-                                className="mt-1.5 block w-full !rounded-2xl font-mono"
-                                value={fuelForm.data.cost}
-                                onChange={(e) => fuelForm.setData('cost', e.target.value)}
-                                placeholder="Contoh: 300000"
-                                required
-                            />
-                            <InputError message={fuelForm.errors.cost} className="mt-1" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="f_odometer_km" value="Odometer Saat Isi (KM)" />
-                            <TextInput
-                                id="f_odometer_km"
-                                type="number"
-                                min={0}
-                                className="mt-1.5 block w-full !rounded-2xl font-mono"
-                                value={fuelForm.data.odometer_km}
-                                onChange={(e) => fuelForm.setData('odometer_km', e.target.value)}
-                            />
-                            <InputError message={fuelForm.errors.odometer_km} className="mt-1" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="f_station_name" value="Nama SPBU / Lokasi" />
-                            <TextInput
-                                id="f_station_name"
-                                className="mt-1.5 block w-full !rounded-2xl"
-                                value={fuelForm.data.station_name}
-                                onChange={(e) => fuelForm.setData('station_name', e.target.value)}
-                                placeholder="SPBU Pertamina KM 19"
-                            />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="f_receipt_number" value="No. Struk / Bukti" />
-                            <TextInput
-                                id="f_receipt_number"
-                                className="mt-1.5 block w-full !rounded-2xl font-mono"
-                                value={fuelForm.data.receipt_number}
-                                onChange={(e) => fuelForm.setData('receipt_number', e.target.value)}
-                            />
-                        </div>
-
-                        <div className="flex items-center pt-6">
-                            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={fuelForm.data.is_full_tank}
-                                    onChange={(e) => fuelForm.setData('is_full_tank', e.target.checked)}
-                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <span>Isi Tangki Penuh (Full Tank)</span>
-                            </label>
-                        </div>
-
-                        <div className="sm:col-span-2">
-                            <InputLabel htmlFor="f_notes" value="Catatan Tambahan" />
+                            <InputLabel htmlFor="f_notes" value="Catatan Tambahan (Opsional)" />
                             <TextInput
                                 id="f_notes"
                                 className="mt-1.5 block w-full !rounded-2xl"
                                 value={fuelForm.data.notes}
                                 onChange={(e) => fuelForm.setData('notes', e.target.value)}
+                                placeholder="Misal: BBM darurat, jalan menanjak, isi saat perjalanan ke luar kota..."
                             />
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowFuelModal(false)}>
+                    {/* Footer Actions */}
+                    <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60 px-6 py-4">
+                        <SecondaryButton type="button" onClick={() => setShowFuelModal(false)} className="!rounded-2xl text-xs font-bold">
                             Batal
                         </SecondaryButton>
-                        <PrimaryButton disabled={fuelForm.processing}>
-                            {fuelForm.processing ? 'Menyimpan...' : 'Simpan Log BBM'}
+                        <PrimaryButton
+                            disabled={fuelForm.processing}
+                            className="!rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-xs font-black shadow-lg shadow-amber-500/20"
+                        >
+                            {fuelForm.processing ? 'Menyimpan Log...' : '⛽ Simpan Log BBM'}
                         </PrimaryButton>
                     </div>
                 </form>

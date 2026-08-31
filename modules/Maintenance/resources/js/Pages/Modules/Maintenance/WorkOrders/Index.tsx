@@ -148,7 +148,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
             <Head title="Work Orders · Maintenance" />
             <MaintenanceNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+            <div className="w-full space-y-6 pb-12">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                     {kpiCards.map((kpi) => (

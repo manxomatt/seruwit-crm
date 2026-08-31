@@ -150,7 +150,7 @@ export default function Index({ bays, can }: Props): JSX.Element {
             <Head title="Bay Servis · Maintenance" />
             <MaintenanceNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-10">
+            <div className="w-full space-y-6 pb-10">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                     {kpiCards.map((kpi) => (

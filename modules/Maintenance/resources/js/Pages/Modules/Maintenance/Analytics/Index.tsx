@@ -175,7 +175,7 @@ export default function Index({
             <Head title="Analisis Maintenance · Fleet" />
             <MaintenanceNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+            <div className="w-full space-y-6 pb-12">
                 {/* AI Predictive Maintenance Section */}
                 {aiPredictiveEnabled && aiPredictiveAnalyzeUrl && aiPredictiveCreateWoUrl && (
                     <AiPredictiveMaintenanceCard
