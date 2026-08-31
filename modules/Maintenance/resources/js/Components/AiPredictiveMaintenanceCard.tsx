@@ -149,34 +149,34 @@ export default function AiPredictiveMaintenanceCard({
     };
 
     return (
-        <div className="mb-8 overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 shadow-sm transition dark:border-indigo-900/60 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/30">
+        <div className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 shadow-sm transition dark:border-indigo-900/60 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/30">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-indigo-100/80 px-6 py-4 dark:border-indigo-900/40">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-indigo-100/80 p-5 dark:border-indigo-900/40">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-lg font-bold text-white shadow-md shadow-indigo-500/20">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-lg font-bold text-white shadow-md shadow-indigo-500/20">
                         🛡️
                     </div>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                {t('maintenance.ai.predictive_title', undefined, 'AI Predictive Fleet Maintenance & Anomaly Detection')}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                {t('maintenance.ai.predictive_title', undefined, 'AI Predictive Maintenance & Anomaly Detection')}
                             </h3>
-                            <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-bold text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
+                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
                                 Gemini 1.5 Flash
                             </span>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {t('maintenance.ai.predictive_subtitle', undefined, 'Prediksi waktu servis berbasis laju KM harian, deteksi anomali pemakaian, dan pencegahan risiko mogok.')}
                         </p>
                     </div>
                 </div>
 
-                <div>
+                <div className="w-full sm:w-auto shrink-0">
                     <button
                         type="button"
                         onClick={handleRunAnalysis}
                         disabled={loading}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-indigo-300 bg-white px-4 py-2 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50 hover:shadow disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200 dark:hover:bg-slate-700"
+                        className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl border border-indigo-300 bg-white px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50 hover:shadow disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200 dark:hover:bg-slate-700"
                     >
                         {loading ? (
                             <>
@@ -184,12 +184,12 @@ export default function AiPredictiveMaintenanceCard({
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                 </svg>
-                                <span>{t('maintenance.ai.analyzing_fleet', undefined, 'Menganalisis Telemetri Armada…')}</span>
+                                <span>{t('maintenance.ai.analyzing_fleet', undefined, 'Menganalisis Telemetri…')}</span>
                             </>
                         ) : (
                             <>
                                 <span>✨</span>
-                                <span>{predictiveData ? t('maintenance.ai.btn_reanalyze', undefined, 'Perbarui Prediksi AI') : t('maintenance.ai.btn_analyze', undefined, 'Jalankan Analisis Prediktif AI')}</span>
+                                <span>{predictiveData ? t('maintenance.ai.btn_reanalyze', undefined, 'Perbarui Prediksi AI') : t('maintenance.ai.btn_analyze', undefined, 'Jalankan Analisis AI')}</span>
                             </>
                         )}
                     </button>
@@ -227,7 +227,7 @@ export default function AiPredictiveMaintenanceCard({
             {predictiveData && (
                 <div className="space-y-6 p-6">
                     {/* KPI Metrics */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1 2xl:grid-cols-3">
                         <div className="rounded-2xl border border-indigo-100 bg-white/90 p-4 shadow-sm dark:border-indigo-900/40 dark:bg-slate-800/80">
                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                 🛡️ Skor Kesehatan Armada
@@ -342,9 +342,9 @@ export default function AiPredictiveMaintenanceCard({
 
                     {/* Service Forecasts Tab */}
                     {activeTab === 'forecasts' && (
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3.5">
                             {predictiveData.service_forecasts.length === 0 ? (
-                                <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-800">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-800">
                                     ✅ Tidak ada jadwal servis mendesak dalam 30 hari ke depan. Seluruh armada dalam batas aman.
                                 </div>
                             ) : (
