@@ -60,7 +60,48 @@ class MobileRentalBookingResource extends JsonResource
             'cancelled_reason' => $rental->cancelled_reason,
             'confirmed_at' => $rental->confirmed_at?->toIso8601String(),
             'reserved_until' => $rental->reserved_until?->toIso8601String(),
+            'payment' => $this->paymentSummary($rental),
             'booking_path' => '/api/mobile/v1/rental/bookings/'.$token,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function paymentSummary(Rental $rental): array
+    {
+        if (! class_exists(\Modules\Rental\Support\RentalInvoiceService::class)) {
+            return [
+                'status' => 'unpaid',
+                'total_invoiced' => 0.0,
+                'total_paid' => 0.0,
+                'balance_due' => (float) $rental->total_amount,
+                'can_pay_balance' => false,
+                'invoices' => [],
+            ];
+        }
+
+        $summary = app(\Modules\Rental\Support\RentalInvoiceService::class)->paymentSummary($rental);
+        $invoices = collect($summary['invoices'])
+            ->map(fn (array $inv): array => [
+                'id' => (int) $inv['id'],
+                'code' => (string) $inv['code'],
+                'status' => (string) $inv['status'],
+                'total' => (float) $inv['total'],
+                'balance' => (float) $inv['balance'],
+            ])
+            ->values()
+            ->all();
+
+        $payable = collect($invoices)->filter(fn (array $inv): bool => in_array($inv['status'], ['issued', 'partially_paid'], true) && $inv['balance'] > 0);
+
+        return [
+            'status' => (string) $summary['status'],
+            'total_invoiced' => (float) $summary['total_invoiced'],
+            'total_paid' => (float) $summary['total_paid'],
+            'balance_due' => (float) $summary['balance_due'],
+            'can_pay_balance' => $payable->isNotEmpty(),
+            'invoices' => $invoices,
         ];
     }
 }

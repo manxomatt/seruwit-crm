@@ -71,6 +71,9 @@ Route::prefix('api/mobile/v1')
             Route::post('/rental/bookings/{token}/pay-deposit', [RentalBookingController::class, 'payDeposit'])
                 ->middleware('throttle:20,1')
                 ->name('rental.bookings.pay_deposit');
+            Route::post('/rental/bookings/{token}/pay-balance', [RentalBookingController::class, 'payBalance'])
+                ->middleware('throttle:20,1')
+                ->name('rental.bookings.pay_balance');
             Route::post('/rental/bookings/{token}/deposit-proof', [RentalBookingController::class, 'uploadDepositProof'])
                 ->middleware('throttle:20,1')
                 ->name('rental.bookings.deposit_proof');

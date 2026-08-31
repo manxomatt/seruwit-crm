@@ -250,6 +250,104 @@ class BookingController extends Controller
         ]);
     }
 
+    public function payBalance(
+        Request $request,
+        string $token,
+        MobileApiIdempotency $idempotency,
+    ): JsonResponse {
+        $this->ensurePassengerChannelEnabled();
+
+        if ($replay = $idempotency->recall($request, 'rental-pay-balance:'.$token)) {
+            return $replay;
+        }
+
+        $rental = $this->findMobileBooking($token);
+        $this->assertOwnership($request, $rental);
+
+        if (! class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
+            || ! $this->gatewayAvailable()) {
+            return response()->json([
+                'message' => __('rental.public.gateway_unavailable', ['default' => 'Payment gateway is not available.']),
+                'code' => 'gateway_unavailable',
+            ], 503);
+        }
+
+        if (! class_exists(\Modules\Rental\Support\RentalInvoiceService::class)) {
+            return response()->json([
+                'message' => __('rental.public.invoice_service_unavailable', ['default' => 'Invoicing service is not available.']),
+                'code' => 'invoicing_unavailable',
+            ], 503);
+        }
+
+        $invoiceService = app(\Modules\Rental\Support\RentalInvoiceService::class);
+        $invoices = $invoiceService->invoicesFor($rental);
+
+        $invoiceId = $request->input('invoice_id');
+        $invoice = null;
+
+        if ($invoiceId !== null) {
+            $invoice = $invoices->firstWhere('id', (int) $invoiceId);
+            if ($invoice === null) {
+                return response()->json([
+                    'message' => __('rental.public.invoice_not_found', ['default' => 'Invoice not found for this rental.']),
+                    'code' => 'invoice_not_found',
+                ], 404);
+            }
+        } else {
+            // Find first open payable invoice
+            $invoice = $invoices->first(
+                fn ($inv): bool => in_array($inv->status, [
+                    \Modules\Invoicing\Models\Invoice::STATUS_ISSUED,
+                    \Modules\Invoicing\Models\Invoice::STATUS_PARTIALLY_PAID,
+                ], true) && $inv->balanceDue() > 0
+            );
+
+            // If no invoice exists yet, create base invoice if rental has base amount
+            if ($invoice === null && (float) $rental->base_amount > 0) {
+                $invoice = $invoiceService->invoiceBase($rental);
+                if ($invoice !== null && $invoice->status === \Modules\Invoicing\Models\Invoice::STATUS_DRAFT) {
+                    $invoice->update(['status' => \Modules\Invoicing\Models\Invoice::STATUS_ISSUED]);
+                }
+            }
+        }
+
+        if ($invoice === null || $invoice->balanceDue() <= 0) {
+            return response()->json([
+                'message' => __('rental.public.no_outstanding_balance', ['default' => 'No outstanding balance due for payment.']),
+                'code' => 'no_balance_due',
+            ], 400);
+        }
+
+        try {
+            $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
+                ->createInvoiceCharge($invoice, '/book/rental/booking/'.$rental->public_token.'/finish/invoice');
+        } catch (Throwable $e) {
+            return $this->jsonFromThrowable($e);
+        }
+
+        $response = response()->json([
+            'payment' => [
+                'mode' => 'midtrans_snap',
+                'redirect_url' => $charge->redirect_url,
+                'snap_token' => $charge->snap_token ?? null,
+                'amount' => (float) $invoice->balanceDue(),
+                'expires_at' => null,
+            ],
+            'invoice' => [
+                'id' => $invoice->id,
+                'code' => $invoice->code,
+                'status' => $invoice->status,
+                'total' => (float) $invoice->total,
+                'balance' => (float) $invoice->balanceDue(),
+            ],
+            'booking' => (new MobileRentalBookingResource($rental->fresh(['vehicle', 'partner', 'insurancePackage'])))->resolve(),
+        ]);
+
+        $idempotency->store($request, 'rental-pay-balance:'.$token, $response);
+
+        return $response;
+    }
+
     private function assertOptionalOwnership(Request $request, Rental $rental): void
     {
         $phone = $request->attributes->get('mobile_passenger_phone');
