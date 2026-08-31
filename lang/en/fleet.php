@@ -514,7 +514,7 @@ return [
         'period_month' => '30 days',
         'period_quarter' => '3 months',
         'period_year' => '12 months',
-        'fuel_history' => 'Fuel fill history →',
+        'fuel_history' => 'Fuel fill history',
         'fuel_cost' => 'Fuel cost',
         'vs_previous' => ':pct vs previous period',
         'same_previous' => 'Same as previous period',

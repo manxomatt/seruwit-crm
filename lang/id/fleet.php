@@ -514,7 +514,7 @@ return [
         'period_month' => '30 hari',
         'period_quarter' => '3 bulan',
         'period_year' => '12 bulan',
-        'fuel_history' => 'Riwayat isi BBM →',
+        'fuel_history' => 'Riwayat isi BBM',
         'fuel_cost' => 'Biaya BBM',
         'vs_previous' => ':pct vs periode lalu',
         'same_previous' => 'Sama dengan periode lalu',

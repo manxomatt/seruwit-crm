@@ -192,7 +192,7 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
                         href={prefixedRoute('fleet.fuel.index')}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
-                        {t('fleet.analytics.fuel_history', undefined, 'View Fuel Registry')} ➔
+                        {t('fleet.analytics.fuel_history', undefined, 'View Fuel Registry')}
                     </Link>
                 </div>
 
