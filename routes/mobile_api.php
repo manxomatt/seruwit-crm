@@ -77,6 +77,14 @@ Route::prefix('api/mobile/v1')
             Route::post('/rental/bookings/{token}/deposit-proof', [RentalBookingController::class, 'uploadDepositProof'])
                 ->middleware('throttle:20,1')
                 ->name('rental.bookings.deposit_proof');
+            Route::post('/rental/bookings/{token}/extend', [RentalBookingController::class, 'extend'])
+                ->middleware('throttle:20,1')
+                ->name('rental.bookings.extend');
+            Route::get('/rental/bookings/{token}/extensions', [RentalBookingController::class, 'extensions'])
+                ->name('rental.bookings.extensions');
+            Route::post('/rental/bookings/{token}/check-in', [RentalBookingController::class, 'checkIn'])
+                ->middleware('throttle:20,1')
+                ->name('rental.bookings.check_in');
         });
 
         Route::get('/shuttle/corridors', [ShuttleCatalogController::class, 'corridors'])

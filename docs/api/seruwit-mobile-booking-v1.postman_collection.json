@@ -1,23 +1,24 @@
 {
   "info": {
-    "name": "Seruwit Mobile Booking API v1 (Travel + Rental)",
-    "description": "JSON API untuk aplikasi mobile Capacitor (Travel shuttle + Rental).\n\n**Base path:** `/api/mobile/v1` di **domain tenant**.\n\n**Auth bersama:** OTP HP → Bearer `{{token}}` (aktif jika Travel dan/atau Rental surface enabled).\n\n**Alur Travel:** Health → Bootstrap → OTP → Corridors/Departures → Hold → Ticket → Pay/Cancel → History\n\n**Alur Rental:** Health → Bootstrap → OTP → Vehicles/Quote → Booking → Pay deposit/Cancel → History\n\n**Enable surfaces:**\n- Travel: `shuttle_settings.passenger_booking_enabled=1`\n- Rental: setting `rental.passenger_booking_enabled=1`\n\nSet `baseUrl` ke domain tenant (contoh `https://andito.seruwit-crm.test`). Setelah Verify OTP, `token` terisi otomatis.",
+    "name": "Seruwit Mobile Booking API v1 (Rental + Travel)",
+    "description": "JSON API lengkap untuk aplikasi mobile Android / iOS Seruwit CRM (Rental Kendaraan & Travel Shuttle).\n\n**Base path:** `/api/mobile/v1` di **domain tenant** (contoh: `https://andito.seruwit-crm.test`).\n\n**Autentikasi:** OTP Nomor HP → Bearer `{{token}}` (Masa aktif 30 hari).\n\n**Fitur yang Didukung:**\n1. Platform & Bootstrap Branding\n2. Otentikasi OTP, Profil Lengkap & Hapus Akun (Google Play Compliant)\n3. Verifikasi Identitas Customer (KYC: KTP, SIM A, Selfie)\n4. Katalog Armada Kendaraan, Lokasi Depot, Asuransi & Simulasi Tarif (Quote)\n5. Reservasi Pemesanan Rental (Idempotency Safe)\n6. Pembayaran Terpadu: Payment Gateway Midtrans (DP & Pelunasan) & Transfer Bank Manual (Daftar Rekening + Upload Bukti Transfer)\n7. Operasional Sewa: Pengajuan Perpanjangan Sewa (Rental Extension) & Digital Check-In / Tanda Tangan Serah Terima (Handover)\n8. Modul Travel Shuttle (Rute, Jadwal, Hold Kursi, Tiket)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "https://andito.seruwit-crm.test" },
     { "key": "token", "value": "" },
-    { "key": "phone", "value": "08123456789" },
+    { "key": "phone", "value": "081234567890" },
     { "key": "otpCode", "value": "" },
+    { "key": "vehicleId", "value": "1" },
+    { "key": "startDate", "value": "2026-09-01" },
+    { "key": "endDate", "value": "2026-09-03" },
+    { "key": "newEndDate", "value": "2026-09-05" },
+    { "key": "rentalPublicToken", "value": "" },
+    { "key": "idempotencyKey", "value": "" },
     { "key": "corridorId", "value": "1" },
     { "key": "departureId", "value": "1" },
-    { "key": "departDate", "value": "2026-08-05" },
-    { "key": "publicToken", "value": "" },
-    { "key": "vehicleId", "value": "1" },
-    { "key": "startDate", "value": "2026-08-10" },
-    { "key": "endDate", "value": "2026-08-12" },
-    { "key": "rentalPublicToken", "value": "" },
-    { "key": "idempotencyKey", "value": "" }
+    { "key": "departDate", "value": "2026-09-01" },
+    { "key": "shuttlePublicToken", "value": "" }
   ],
   "auth": {
     "type": "bearer",
@@ -27,10 +28,10 @@
   },
   "item": [
     {
-      "name": "0. Platform",
+      "name": "0. Platform & Bootstrap",
       "item": [
         {
-          "name": "Health",
+          "name": "Health Check",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -39,7 +40,7 @@
           }
         },
         {
-          "name": "Bootstrap",
+          "name": "Bootstrap Config & Branding",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -48,16 +49,16 @@
               { "key": "X-App-Version", "value": "1.0.0" }
             ],
             "url": "{{baseUrl}}/api/mobile/v1/bootstrap",
-            "description": "Cek `surfaces.shuttle.enabled` (Travel) dan `surfaces.rental.enabled`."
+            "description": "Mengambil identitas tenant, tema warna, logo, dan status modul aktif (rental & shuttle)."
           }
         }
       ]
     },
     {
-      "name": "1. Auth (shared)",
+      "name": "1. Auth & Customer Profile",
       "item": [
         {
-          "name": "Send OTP",
+          "name": "Send OTP (WhatsApp / SMS)",
           "event": [
             {
               "listen": "test",
@@ -86,7 +87,7 @@
           }
         },
         {
-          "name": "Verify OTP (issue Bearer)",
+          "name": "Verify OTP (Issue Bearer Token)",
           "event": [
             {
               "listen": "test",
@@ -115,11 +116,51 @@
           }
         },
         {
-          "name": "Me",
+          "name": "Get Authenticated Phone (Me)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/auth/me"
+          }
+        },
+        {
+          "name": "Get Full Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/auth/profile",
+            "description": "Mengambil data profil lengkap customer: nama, email, no HP, alamat, avatar, status KYC, dan kontak darurat."
+          }
+        },
+        {
+          "name": "Update Profile & Avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Budi Gunawan", "type": "text" },
+                { "key": "email", "value": "budi.gunawan@example.com", "type": "text" },
+                { "key": "address", "value": "Jl. Sudirman No. 10, Bandung", "type": "text" },
+                { "key": "emergency_contact_name", "value": "Siti Rahma", "type": "text" },
+                { "key": "emergency_contact_phone", "value": "081299887766", "type": "text" },
+                { "key": "emergency_contact_relationship", "value": "Istri", "type": "text" },
+                { "key": "avatar", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/auth/profile"
+          }
+        },
+        {
+          "name": "Delete Account (Google Play Policy)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/auth/account",
+            "description": "Menghapus akun customer mandiri, mencabut semua sesi token, dan meng-anonymize data pribadi."
           }
         },
         {
@@ -133,196 +174,48 @@
       ]
     },
     {
-      "name": "2. Travel — Catalog",
+      "name": "2. KYC Identity Verification",
       "item": [
         {
-          "name": "List corridors",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.data && j.data[0]) { pm.collectionVariables.set('corridorId', String(j.data[0].id)); }",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Get KYC Status",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/mobile/v1/shuttle/corridors"
+            "url": "{{baseUrl}}/api/mobile/v1/auth/kyc",
+            "description": "Mengambil status verifikasi identitas (unverified, pending, verified, rejected) beserta URL dokumen yang telah diunggah."
           }
         },
         {
-          "name": "List departures",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.data && j.data[0]) { pm.collectionVariables.set('departureId', String(j.data[0].id)); }",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Submit KYC Documents (KTP, SIM, Selfie)",
           "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/departures?date={{departDate}}&corridor_id={{corridorId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "mobile", "v1", "shuttle", "departures"],
-              "query": [
-                { "key": "date", "value": "{{departDate}}" },
-                { "key": "corridor_id", "value": "{{corridorId}}" }
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "id_number", "value": "3201123456780001", "type": "text" },
+                { "key": "license_number", "value": "123456789012", "type": "text" },
+                { "key": "license_expires_at", "value": "2029-12-31", "type": "text" },
+                { "key": "id_card_photo", "type": "file", "src": [] },
+                { "key": "driver_license_photo", "type": "file", "src": [] },
+                { "key": "selfie_photo", "type": "file", "src": [] },
+                { "key": "emergency_contact_name", "value": "Siti Rahma", "type": "text" },
+                { "key": "emergency_contact_phone", "value": "081299887766", "type": "text" },
+                { "key": "emergency_contact_relationship", "value": "Istri", "type": "text" }
               ]
-            }
-          }
-        },
-        {
-          "name": "Geocode reverse",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/geocode/reverse?lat=-6.2&lng=106.8",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "mobile", "v1", "shuttle", "geocode", "reverse"],
-              "query": [
-                { "key": "lat", "value": "-6.2" },
-                { "key": "lng", "value": "106.8" }
-              ]
-            }
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/auth/kyc"
           }
         }
       ]
     },
     {
-      "name": "3. Travel — Booking",
+      "name": "3. Rental — Catalog & Quotes",
       "item": [
         {
-          "name": "Create hold (Bearer)",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.booking && j.booking.public_token) {",
-                  "    pm.collectionVariables.set('publicToken', j.booking.public_token);",
-                  "  }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{idempotencyKey}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"departure_id\": {{departureId}},\n  \"passenger_count\": 1,\n  \"pickup_mode\": \"pool\",\n  \"dropoff_mode\": \"pool\",\n  \"notes\": null,\n  \"passengers\": [\n    { \"name\": \"Budi Santoso\", \"phone\": \"{{phone}}\", \"id_number\": null }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/api/mobile/v1/shuttle/holds"
-          }
-        },
-        {
-          "name": "Create hold (OTP dual-mode, no Bearer)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{$guid}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"departure_id\": {{departureId}},\n  \"passenger_count\": 1,\n  \"pickup_mode\": \"pool\",\n  \"dropoff_mode\": \"pool\",\n  \"booker_phone\": \"{{phone}}\",\n  \"otp_code\": \"{{otpCode}}\",\n  \"passengers\": [\n    { \"name\": \"Budi Santoso\" }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/api/mobile/v1/shuttle/holds"
-          }
-        },
-        {
-          "name": "Get ticket",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}"
-          }
-        },
-        {
-          "name": "Pay (gateway)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{$guid}}" }
-            ],
-            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}/pay"
-          }
-        },
-        {
-          "name": "Cancel ticket",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cancel_reason\": \"Berubah pikiran\"\n}"
-            },
-            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}/cancel"
-          }
-        },
-        {
-          "name": "My travel bookings",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/bookings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "mobile", "v1", "shuttle", "bookings"],
-              "query": [
-                { "key": "status", "value": "draft", "disabled": true }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "4. Rental — Catalog",
-      "item": [
-        {
-          "name": "Classes",
+          "name": "Vehicle Classes",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -331,20 +224,7 @@
           }
         },
         {
-          "name": "Vehicles",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.data && j.data[0]) { pm.collectionVariables.set('vehicleId', String(j.data[0].id)); }",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Available Vehicles",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -363,7 +243,7 @@
           }
         },
         {
-          "name": "Vehicle detail",
+          "name": "Vehicle Detail",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -372,7 +252,7 @@
           }
         },
         {
-          "name": "Locations",
+          "name": "Depot Locations",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -381,7 +261,7 @@
           }
         },
         {
-          "name": "Insurance packages",
+          "name": "Insurance Packages",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -395,7 +275,7 @@
           }
         },
         {
-          "name": "Quote",
+          "name": "Quote Calculation",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -413,10 +293,10 @@
       ]
     },
     {
-      "name": "5. Rental — Booking",
+      "name": "4. Rental — Bookings",
       "item": [
         {
-          "name": "Create booking",
+          "name": "Create Booking",
           "event": [
             {
               "listen": "prerequest",
@@ -455,16 +335,53 @@
           }
         },
         {
-          "name": "Get booking",
+          "name": "Get Booking Detail",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}"
           }
         },
         {
-          "name": "Pay deposit",
+          "name": "My Rental Bookings History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings"
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancelled_reason\": \"Perubahan rencana perjalanan\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Rental — Payments",
+      "item": [
+        {
+          "name": "Get Payment Methods & Bank Accounts",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/payment-methods",
+            "description": "Mengambil daftar rekening bank resmi tenant (BCA, Mandiri, dll) dan ketersediaan online payment gateway."
+          }
+        },
+        {
+          "name": "Pay Deposit (Midtrans Snap Gateway)",
           "request": {
             "method": "POST",
             "header": [
@@ -475,7 +392,47 @@
           }
         },
         {
-          "name": "Cancel booking",
+          "name": "Upload Manual Deposit Transfer Proof",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "company_bank_account_id", "value": "1", "type": "text" },
+                { "key": "notes", "value": "Transfer via BCA Mobile jam 10 pagi", "type": "text" },
+                { "key": "deposit_proof", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/deposit-proof"
+          }
+        },
+        {
+          "name": "Pay Balance / Invoice (Midtrans Snap Gateway)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_id\": null\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/pay-balance",
+            "description": "Pelunasan sisa tagihan sewa / bayar invoice terbuka via Midtrans Snap."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Rental — Operations",
+      "item": [
+        {
+          "name": "Digital Check-In & Customer Signature",
           "request": {
             "method": "POST",
             "header": [
@@ -484,24 +441,148 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cancelled_reason\": \"Berubah pikiran\"\n}"
+              "raw": "{\n  \"terms_agreed\": true,\n  \"customer_signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\",\n  \"pickup_notes\": \"Mohon diantar tepat waktu di lobi hotel\"\n}"
             },
-            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/cancel"
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/check-in"
           }
         },
         {
-          "name": "My rental bookings",
+          "name": "Request Rental Extension",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_end_date\": \"{{newEndDate}}\",\n  \"notes\": \"Menambah 2 hari sewa untuk keliling kota\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/extend"
+          }
+        },
+        {
+          "name": "Get Extension Requests & History",
           "request": {
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/extensions"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Travel (Shuttle / Bus)",
+      "item": [
+        {
+          "name": "Corridors",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/corridors"
+          }
+        },
+        {
+          "name": "Departures",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
-              "raw": "{{baseUrl}}/api/mobile/v1/rental/bookings",
+              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/departures?corridor_id={{corridorId}}&depart_date={{departDate}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "mobile", "v1", "rental", "bookings"],
+              "path": ["api", "mobile", "v1", "shuttle", "departures"],
               "query": [
-                { "key": "status", "value": "confirmed", "disabled": true }
+                { "key": "corridor_id", "value": "{{corridorId}}" },
+                { "key": "depart_date", "value": "{{departDate}}" }
               ]
             }
+          }
+        },
+        {
+          "name": "Hold Seats (Create Draft Ticket)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.ticket && j.ticket.public_token) {",
+                  "    pm.collectionVariables.set('shuttlePublicToken', j.ticket.public_token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotencyKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departure_id\": {{departureId}},\n  \"seats\": [\"1\", \"2\"],\n  \"pickup_mode\": \"pool\",\n  \"dropoff_mode\": \"pool\",\n  \"booker_phone\": \"{{phone}}\",\n  \"booker_name\": \"Penumpang Travel\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/holds"
+          }
+        },
+        {
+          "name": "Show Ticket",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{shuttlePublicToken}}"
+          }
+        },
+        {
+          "name": "Pay Ticket (Midtrans Snap)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{shuttlePublicToken}}/pay"
+          }
+        },
+        {
+          "name": "Cancel Ticket",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancelled_reason\": \"Batal berangkat\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{shuttlePublicToken}}/cancel"
+          }
+        },
+        {
+          "name": "My Shuttle Bookings History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/bookings"
           }
         }
       ]

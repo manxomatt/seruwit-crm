@@ -60,8 +60,54 @@ class MobileRentalBookingResource extends JsonResource
             'cancelled_reason' => $rental->cancelled_reason,
             'confirmed_at' => $rental->confirmed_at?->toIso8601String(),
             'reserved_until' => $rental->reserved_until?->toIso8601String(),
+            'pickup_request' => [
+                'requested_at' => $rental->pickup_requested_at?->toIso8601String(),
+                'status' => $rental->pickup_request_status,
+                'customer_signature_url' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->pickup_customer_signature_path),
+                'terms_agreed' => (bool) $rental->pickup_terms_agreed,
+                'notes' => $rental->pickup_notes,
+                'can_check_in' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at) && $this->isUpfrontPaid($rental),
+            ],
+            'pending_extension_request' => $this->pendingExtensionRequest($rental),
             'payment' => $this->paymentSummary($rental),
             'booking_path' => '/api/mobile/v1/rental/bookings/'.$token,
+        ];
+    }
+
+    private function isUpfrontPaid(Rental $rental): bool
+    {
+        if ((float) $rental->deposit_amount > 0) {
+            return $rental->isDepositReceived();
+        }
+
+        return $rental->deposit_proof_status === Rental::PROOF_APPROVED || $rental->status === Rental::STATUS_CONFIRMED;
+    }
+
+    /**
+     * @return array{id: int, requested_end_date: string|null, estimated_periods: int, estimated_amount: float, status: string}|null
+     */
+    private function pendingExtensionRequest(Rental $rental): ?array
+    {
+        if (! class_exists(\Modules\Rental\Models\RentalExtensionRequest::class)) {
+            return null;
+        }
+
+        $request = \Modules\Rental\Models\RentalExtensionRequest::query()
+            ->where('rental_id', $rental->id)
+            ->where('status', \Modules\Rental\Models\RentalExtensionRequest::STATUS_PENDING)
+            ->latest('id')
+            ->first();
+
+        if ($request === null) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $request->id,
+            'requested_end_date' => $request->requested_end_date?->toDateString(),
+            'estimated_periods' => (int) $request->estimated_periods,
+            'estimated_amount' => (float) $request->estimated_amount,
+            'status' => (string) $request->status,
         ];
     }
 

@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Modules\Accounting\Models\CompanyBankAccount;
 use Modules\Rental\Http\Controllers\Api\Mobile\Concerns\InteractsWithMobileRentalApi;
 use Modules\Rental\Http\Requests\Mobile\CancelMobileRentalBookingRequest;
+use Modules\Rental\Http\Requests\Mobile\RentalCheckInRequest;
+use Modules\Rental\Http\Requests\Mobile\RequestRentalExtensionRequest;
 use Modules\Rental\Http\Requests\Mobile\StoreMobileRentalBookingRequest;
 use Modules\Rental\Http\Requests\Mobile\UploadDepositProofRequest;
 use Modules\Rental\Http\Resources\Mobile\MobileRentalBookingResource;
@@ -15,6 +17,8 @@ use Modules\Rental\Models\Rental;
 use Modules\Rental\Support\MobilePassengerPartnerResolver;
 use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\RentalDepositProofNotifier;
+use Modules\Rental\Support\RentalExtensionService;
+use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Shuttle\Support\MobileApiIdempotency;
 use Throwable;
@@ -346,6 +350,123 @@ class BookingController extends Controller
         $idempotency->store($request, 'rental-pay-balance:'.$token, $response);
 
         return $response;
+    }
+
+    public function extend(
+        RequestRentalExtensionRequest $request,
+        string $token,
+        RentalExtensionService $extensions,
+    ): JsonResponse {
+        $this->ensurePassengerChannelEnabled();
+
+        $rental = $this->findMobileBooking($token);
+        $this->assertOwnership($request, $rental);
+
+        try {
+            $extensionRequest = $extensions->requestFromPassenger(
+                $rental,
+                $request->validated('new_end_date'),
+                'mobile',
+                $request->validated('notes'),
+            );
+        } catch (Throwable $e) {
+            return $this->jsonFromThrowable($e);
+        }
+
+        return response()->json([
+            'message' => __('rental.public.extend_requested', ['default' => 'Rental extension request submitted successfully.']),
+            'extension_request' => [
+                'id' => $extensionRequest->id,
+                'requested_end_date' => $extensionRequest->requested_end_date?->toDateString(),
+                'estimated_periods' => (int) $extensionRequest->estimated_periods,
+                'estimated_amount' => (float) $extensionRequest->estimated_amount,
+                'status' => $extensionRequest->status,
+                'notes' => $extensionRequest->notes,
+                'created_at' => $extensionRequest->created_at?->toIso8601String(),
+            ],
+            'booking' => (new MobileRentalBookingResource($rental->fresh(['vehicle', 'partner', 'insurancePackage'])))->resolve(),
+        ], 201);
+    }
+
+    public function extensions(Request $request, string $token): JsonResponse
+    {
+        $this->ensurePassengerChannelEnabled();
+
+        $rental = $this->findMobileBooking($token);
+        $this->assertOwnership($request, $rental);
+
+        $requests = $rental->extensionRequests()
+            ->latest('id')
+            ->get()
+            ->map(fn ($r): array => [
+                'id' => $r->id,
+                'requested_end_date' => $r->requested_end_date?->toDateString(),
+                'estimated_periods' => (int) $r->estimated_periods,
+                'estimated_amount' => (float) $r->estimated_amount,
+                'status' => $r->status,
+                'notes' => $r->notes,
+                'staff_notes' => $r->staff_notes,
+                'reviewed_at' => $r->reviewed_at?->toIso8601String(),
+                'created_at' => $r->created_at?->toIso8601String(),
+            ]);
+
+        $approvedExtensions = $rental->extensions()
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($ext): array => [
+                'id' => $ext->id,
+                'original_end_date' => $ext->original_end_date?->toDateString(),
+                'new_end_date' => $ext->new_end_date?->toDateString(),
+                'extended_periods' => (int) $ext->extended_periods,
+                'additional_amount' => (float) $ext->additional_amount,
+                'notes' => $ext->notes,
+                'created_at' => $ext->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'requests' => $requests,
+            'extensions' => $approvedExtensions,
+        ]);
+    }
+
+    public function checkIn(
+        RentalCheckInRequest $request,
+        string $token,
+        RentalHandoverMedia $handoverMedia,
+    ): JsonResponse {
+        $this->ensurePassengerChannelEnabled();
+
+        $rental = $this->findMobileBooking($token);
+        $this->assertOwnership($request, $rental);
+
+        if ($rental->status !== Rental::STATUS_CONFIRMED) {
+            return response()->json([
+                'message' => __('rental.public.pickup_confirmed_only', ['default' => 'Digital check-in is only available for confirmed rentals.']),
+                'code' => 'booking_not_confirmed',
+            ], 422);
+        }
+
+        if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
+            return response()->json([
+                'message' => __('rental.public.pickup_deposit_unsettled', ['default' => 'Deposit must be paid before check-in.']),
+                'code' => 'deposit_unsettled',
+            ], 400);
+        }
+
+        $signaturePath = $handoverMedia->storeSignature($request->validated('customer_signature'), 'rental/pickup-signatures');
+
+        $rental->update([
+            'pickup_requested_at' => now(),
+            'pickup_request_status' => 'pending',
+            'pickup_customer_signature_path' => $signaturePath,
+            'pickup_terms_agreed' => true,
+            'pickup_notes' => $request->input('pickup_notes'),
+        ]);
+
+        return response()->json([
+            'message' => __('rental.public.pickup_requested', ['default' => 'Check-in request submitted successfully.']),
+            'booking' => (new MobileRentalBookingResource($rental->fresh(['vehicle', 'partner', 'insurancePackage'])))->resolve(),
+        ]);
     }
 
     private function assertOptionalOwnership(Request $request, Rental $rental): void
