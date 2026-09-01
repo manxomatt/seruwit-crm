@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\TenantCapacityTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Vehicle;
 use RuntimeException;
 
