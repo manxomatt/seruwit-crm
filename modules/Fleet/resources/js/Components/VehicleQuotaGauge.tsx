@@ -6,7 +6,8 @@ interface Props {
     max: number | null;
     total?: number;
     reached?: boolean;
-    onOpenUpgrade: () => void;
+    onOpenUpgrade?: () => void;
+    showUpgradeButton?: boolean;
 }
 
 export default function VehicleQuotaGauge({
@@ -15,6 +16,7 @@ export default function VehicleQuotaGauge({
     total = current,
     reached = false,
     onOpenUpgrade,
+    showUpgradeButton = true,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const isUnlimited = max === null;
@@ -79,16 +81,18 @@ export default function VehicleQuotaGauge({
                 </div>
 
                 {/* Upgrade Button */}
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={onOpenUpgrade}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-95"
-                    >
-                        <span>⚡</span>
-                        <span>{t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}</span>
-                    </button>
-                </div>
+                {showUpgradeButton && onOpenUpgrade && (
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onOpenUpgrade}
+                            className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-95"
+                        >
+                            <span>⚡</span>
+                            <span>{t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Progress Bar */}

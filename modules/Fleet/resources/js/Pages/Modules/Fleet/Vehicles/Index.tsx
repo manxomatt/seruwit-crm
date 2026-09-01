@@ -247,9 +247,19 @@ function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
     }
 }
 
-export default function Index({ vehicles, filters, bases = [], can, quota, available_credits }: Props): JSX.Element {
+export default function Index({
+    vehicles,
+    filters,
+    bases = [],
+    can,
+    quota,
+    available_credits,
+    business_model = 'per_vehicle_trial',
+    trial_duration_days,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const isTrialMode = business_model === 'per_vehicle_trial';
 
     const [search, setSearch] = useState(filters.search || '');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -411,7 +421,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota, avail
                     subtitle={t('fleet.vehicles.index_subtitle', undefined, 'Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan.')}
                     actions={
                         <div className="flex items-center gap-2.5">
-                            {quota?.reached ? (
+                            {!isTrialMode && quota?.reached ? (
                                 <button
                                     type="button"
                                     onClick={() => setShowUpgradeModal(true)}
@@ -446,6 +456,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota, avail
                         total={quota.total ?? totalVehicles}
                         reached={quota.reached}
                         onOpenUpgrade={() => setShowUpgradeModal(true)}
+                        showUpgradeButton={!isTrialMode}
                     />
                 )}
 
