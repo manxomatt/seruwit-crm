@@ -179,19 +179,46 @@ class DashboardController extends Controller
         $subscription = $tenant->subscription;
         $subscribedVehicles = (int) ($subscription?->subscribed_vehicles ?? 0);
 
+        // Fleet stats
+        $totalFleet = Modules::available('fleet') ? (int) Vehicle::query()->count() : 0;
+        $activeFleet = Modules::available('fleet') ? (int) Vehicle::query()->where('status', Vehicle::STATUS_ACTIVE)->count() : 0;
+        $expiredFleet = Modules::available('fleet') ? (int) Vehicle::query()->whereNotNull('active_until')->where('active_until', '<', Carbon::now())->count() : 0;
+        $expiringFleet = Modules::available('fleet') ? (int) Vehicle::query()->where('status', Vehicle::STATUS_ACTIVE)->whereNotNull('active_until')->whereBetween('active_until', [Carbon::now(), Carbon::now()->addDays(7)])->count() : 0;
+
         // Basis: the billed quota when subscribed, otherwise the live registered
         // fleet as a projection of what the tenant would pay.
         $vehicleCount = $subscribedVehicles > 0
             ? $subscribedVehicles
-            : (Modules::available('fleet') ? (int) Vehicle::query()->count() : 0);
+            : $totalFleet;
 
         $activeTier = $vehicleCount > 0 ? SubscriptionTier::tierFor($vehicleCount) : null;
+
+        // Find next tier for upgrade progress
+        $nextTier = null;
+        if ($activeTier) {
+            $nextTier = $tiers->first(fn (SubscriptionTier $t): bool => $t->min_vehicles > $activeTier->max_vehicles);
+        } else {
+            $nextTier = $tiers->first();
+        }
+
+        $vehiclesToNextTier = $nextTier ? max(0, $nextTier->min_vehicles - $vehicleCount) : 0;
 
         return [
             'subscription_type' => $tenant->subscription_type,
             'vehicle_count' => $vehicleCount,
+            'total_fleet' => $totalFleet,
+            'active_fleet' => $activeFleet,
+            'expired_fleet' => $expiredFleet,
+            'expiring_fleet' => $expiringFleet,
             'is_billed_quota' => $subscribedVehicles > 0,
             'active_tier_id' => $activeTier?->id,
+            'next_tier' => $nextTier ? [
+                'id' => $nextTier->id,
+                'name' => $nextTier->name,
+                'min_vehicles' => (int) $nextTier->min_vehicles,
+                'price_per_vehicle' => (float) $nextTier->price_per_vehicle,
+                'vehicles_needed' => $vehiclesToNextTier,
+            ] : null,
             'price_per_vehicle' => $activeTier ? (float) $activeTier->price_per_vehicle : null,
             'monthly_estimate' => $activeTier ? $vehicleCount * (float) $activeTier->price_per_vehicle : null,
             'currency_symbol' => (string) Setting::getValue('ecommerce.currency_symbol', 'Rp'),

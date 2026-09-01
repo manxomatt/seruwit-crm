@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import DashboardOnboardingCTA, { type OnboardingOverview } from '@/Components/DashboardOnboardingCTA';
+import SubscriptionPricingSection, { type SubscriptionOverview } from '@/Components/Dashboard/SubscriptionPricingSection';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -160,25 +161,6 @@ interface Page {
 interface FilterOptions {
     periods: { key: string; label: string }[];
     modules: string[];
-}
-
-interface SubscriptionTierRow {
-    id: number;
-    name: string;
-    min_vehicles: number;
-    max_vehicles: number;
-    price_per_vehicle: number;
-}
-
-interface SubscriptionOverview {
-    subscription_type: string | null;
-    vehicle_count: number;
-    is_billed_quota: boolean;
-    active_tier_id: number | null;
-    price_per_vehicle: number | null;
-    monthly_estimate: number | null;
-    currency_symbol: string;
-    tiers: SubscriptionTierRow[];
 }
 
 interface Props {
@@ -1150,88 +1132,7 @@ export default function Dashboard({
                         </div>
 
                         {subscription && subscription.tiers.length > 0 && (
-                            <SectionCard
-                                title={t('dashboard.subscription.title')}
-                                subtitle={t('dashboard.subscription.subtitle')}
-                            >
-                                <div className="mb-5 grid gap-4 sm:grid-cols-3">
-                                    <div className="rounded-2xl bg-indigo-50 p-4 ring-1 ring-indigo-100 dark:bg-indigo-950/40 dark:ring-indigo-900">
-                                        <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">
-                                            {t('dashboard.subscription.current_tier')}
-                                        </p>
-                                        <p className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white">
-                                            {subscription.tiers.find((ti) => ti.id === subscription.active_tier_id)?.name
-                                                ?? t('dashboard.subscription.no_tier')}
-                                        </p>
-                                    </div>
-                                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-800/50 dark:ring-slate-700">
-                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                            {t('dashboard.subscription.per_vehicle')}
-                                        </p>
-                                        <p className="mt-1 text-lg font-extrabold tabular-nums text-slate-900 dark:text-white">
-                                            {subscription.price_per_vehicle != null
-                                                ? formatMoney(subscription.price_per_vehicle, subscription.currency_symbol, localeTag)
-                                                : '—'}
-                                        </p>
-                                    </div>
-                                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-800/50 dark:ring-slate-700">
-                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                            {t('dashboard.subscription.monthly_estimate')}
-                                        </p>
-                                        <p className="mt-1 text-lg font-extrabold tabular-nums text-slate-900 dark:text-white">
-                                            {subscription.monthly_estimate != null
-                                                ? formatMoney(subscription.monthly_estimate, subscription.currency_symbol, localeTag)
-                                                : '—'}
-                                        </p>
-                                        <p className="mt-0.5 text-[11px] text-slate-400">
-                                            {formatNumber(subscription.vehicle_count, localeTag)} {t('dashboard.subscription.vehicles')}
-                                            {' · '}
-                                            {subscription.is_billed_quota
-                                                ? t('dashboard.subscription.billed_quota_note')
-                                                : t('dashboard.subscription.projected_note')}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    {subscription.tiers.map((tier) => {
-                                        const active = tier.id === subscription.active_tier_id;
-                                        return (
-                                            <div
-                                                key={tier.id}
-                                                className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${active
-                                                    ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-500/30 dark:bg-indigo-950/30'
-                                                    : 'border-slate-200 dark:border-slate-700'
-                                                    }`}
-                                            >
-                                                <div className="min-w-0">
-                                                    <p className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-                                                        {tier.name}
-                                                        {active && (
-                                                            <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                                                                {t('dashboard.subscription.your_tier')}
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {formatNumber(tier.min_vehicles, localeTag)}–
-                                                        {tier.max_vehicles >= 100000
-                                                            ? t('dashboard.subscription.unlimited')
-                                                            : formatNumber(tier.max_vehicles, localeTag)}{' '}
-                                                        {t('dashboard.subscription.vehicles')}
-                                                    </p>
-                                                </div>
-                                                <span className="shrink-0 text-sm font-extrabold tabular-nums text-slate-900 dark:text-white">
-                                                    {formatMoney(tier.price_per_vehicle, subscription.currency_symbol, localeTag)}
-                                                    <span className="text-xs font-normal text-slate-400">
-                                                        {t('dashboard.subscription.per_vehicle')}
-                                                    </span>
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </SectionCard>
+                            <SubscriptionPricingSection subscription={subscription} />
                         )}
 
                         {(recentPosts.length > 0 || recentPages.length > 0) && (
