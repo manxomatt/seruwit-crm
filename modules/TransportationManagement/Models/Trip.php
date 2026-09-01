@@ -286,6 +286,19 @@ class Trip extends Model
             ]);
         }
 
+        if ($vehicle->active_until && $vehicle->active_until->isPast()) {
+            $reasons[] = __('transportation.messages.vehicle_capacity_expired', [
+                'name' => $vehicle->name,
+                'date' => $vehicle->active_until->format('d/m/Y'),
+            ]);
+        } elseif ($vehicle->active_until && \Carbon\Carbon::parse($startsAt)->isAfter($vehicle->active_until)) {
+            $reasons[] = __('transportation.messages.vehicle_capacity_expired_for_trip', [
+                'name' => $vehicle->name,
+                'date' => $vehicle->active_until->format('d/m/Y'),
+                'start' => \Carbon\Carbon::parse($startsAt)->format('d/m/Y'),
+            ]);
+        }
+
         if (self::hasOverlappingTrip('vehicle_id', $vehicle->id, $startsAt, $endsAt, $excludingTripId, $distanceKm, $durationMinutes)) {
             $reasons[] = __('transportation.messages.vehicle_has_trip', ['name' => $vehicle->name]);
         }

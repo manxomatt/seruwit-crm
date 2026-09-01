@@ -930,6 +930,8 @@ return [
     'validation' => [
         'storefront_color_invalid' => 'Color must be a 6-digit hex code, e.g. #0f766e.',
         'vehicle_not_active' => 'Vehicle :name is :status, not active.',
+        'vehicle_capacity_expired' => 'Operational capacity for vehicle :name has expired (:date). Please renew vehicle capacity first.',
+        'vehicle_capacity_expired_for_booking' => 'Operational capacity for vehicle :name (until :date) expires before the rental date (:start).',
         'vehicle_rental_overlap' => 'Vehicle :name already has a rental in this period.',
         'vehicle_stnk_expired' => 'Vehicle :name has an expired STNK.',
         'vehicle_kir_expired' => 'Vehicle :name has an expired KIR.',

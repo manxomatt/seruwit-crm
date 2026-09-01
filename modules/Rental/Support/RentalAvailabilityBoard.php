@@ -117,12 +117,9 @@ class RentalAvailabilityBoard
         ];
     }
 
-    /**
-     * @param  Collection<int, Rental>  $bookings
-     */
     private function resolveAvailability(Vehicle $vehicle, Collection $bookings): string
     {
-        if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || ! $vehicle->hasActiveCapacity()) {
             return 'unavailable';
         }
 

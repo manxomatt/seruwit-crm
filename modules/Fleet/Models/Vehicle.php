@@ -171,6 +171,34 @@ class Vehicle extends Model
     }
 
     /**
+     * Check whether this vehicle has active operational capacity (not expired).
+     */
+    public function hasActiveCapacity(\DateTimeInterface|string|null $date = null): bool
+    {
+        if ($this->active_until === null) {
+            return true;
+        }
+
+        $targetDate = $date ? \Carbon\Carbon::parse($date) : \Carbon\Carbon::now();
+
+        return $this->active_until->greaterThanOrEqualTo($targetDate);
+    }
+
+    /**
+     * Scope to vehicles that are active and have valid capacity until the given date.
+     */
+    public function scopeOperable(\Illuminate\Database\Eloquent\Builder $query, \DateTimeInterface|string|null $date = null): \Illuminate\Database\Eloquent\Builder
+    {
+        $targetDate = $date ? \Carbon\Carbon::parse($date) : \Carbon\Carbon::now();
+
+        return $query->where('status', self::STATUS_ACTIVE)
+            ->where(function ($q) use ($targetDate) {
+                $q->whereNull('active_until')
+                    ->orWhere('active_until', '>=', $targetDate);
+            });
+    }
+
+    /**
      * @return BelongsTo<FleetBase, $this>
      */
     public function homeBase(): BelongsTo

@@ -591,6 +591,19 @@ class Rental extends Model
             ]);
         }
 
+        if ($vehicle->active_until && $vehicle->active_until->isPast()) {
+            $reasons[] = __('rental.validation.vehicle_capacity_expired', [
+                'name' => $vehicle->name,
+                'date' => $vehicle->active_until->format('d/m/Y'),
+            ]);
+        } elseif ($vehicle->active_until && $start && \Carbon\Carbon::parse($start)->isAfter($vehicle->active_until)) {
+            $reasons[] = __('rental.validation.vehicle_capacity_expired_for_booking', [
+                'name' => $vehicle->name,
+                'date' => $vehicle->active_until->format('d/m/Y'),
+                'start' => \Carbon\Carbon::parse($start)->format('d/m/Y'),
+            ]);
+        }
+
         if (self::hasOverlapFor($vehicle->id, $start, $end, $excludingId)) {
             $reasons[] = __('rental.validation.vehicle_rental_overlap', ['name' => $vehicle->name]);
         }
