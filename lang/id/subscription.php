@@ -35,7 +35,7 @@ return [
     'fleet_capacity_hub_title' => 'Kapasitas Armada & Status Uji Coba Unit',
     'mode_per_vehicle_trial' => 'Mode Per-Vehicle Trial',
     'mode_tenant_quota' => 'Mode Kuota Tenant',
-    'fleet_capacity_desc_trial' => 'Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan 30 hari masa trial gratis.',
+    'fleet_capacity_desc_trial' => 'Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan :days hari masa trial gratis.',
     'fleet_capacity_desc_quota' => 'Kapasitas armada dibatasi oleh paket langganan dan saldo kredit aktif.',
     'manage_fleet_btn' => 'Kelola Armada (:total Unit) →',
     'credit_balance_title' => 'Saldo Kredit',
@@ -43,7 +43,7 @@ return [
     'unit_credits' => 'Unit Kredit',
     'credit_balance_desc' => 'Saldo aktif untuk aktivasi atau perpanjangan armada.',
     'active_trial_title' => 'Trial Aktif',
-    'trial_badge' => 'Gratis 30 Hari',
+    'trial_badge' => 'Gratis :days Hari',
     'fleet_units' => 'Armada',
     'active_trial_desc' => 'Unit armada baru dalam masa uji coba gratis.',
     'active_paid_title' => 'Aktif Berbayar',
@@ -187,22 +187,15 @@ return [
 
     // FAQs
     'faq_title' => 'Pertanyaan Umum (FAQ)',
+    'faq_subtitle' => 'Informasi lengkap seputar model pendaftaran armada bebas kuota dan masa uji coba unit gratis',
     'faqs' => [
         [
-            'q' => 'Bagaimana cara pembayaran langganan?',
-            'a' => 'Pembayaran dilakukan via transfer bank manual ke rekening resmi kami. Setelah memilih paket, sistem akan memberikan nominal tepat beserta 3 digit kode unik untuk verifikasi instan.',
+            'q' => 'Berapa banyak armada kendaraan yang bisa saya daftarkan?',
+            'a' => 'Pendaftaran armada bebas kuota (unlimited). Setiap unit kendaraan baru yang Anda daftarkan otomatis mendapatkan masa uji coba gratis (Free Trial) selama :days hari penuh dengan seluruh fitur operasional aktif.',
         ],
         [
-            'q' => 'Kapan paket saya langsung aktif?',
-            'a' => 'Setelah Anda mengunggah bukti transfer, tim admin akan memverifikasi dalam waktu 5-15 menit pada jam operasional, dan seluruh modul paket akan aktif otomatis.',
-        ],
-        [
-            'q' => 'Apakah saya bisa upgrade atau perpanjang paket kapan saja?',
-            'a' => 'Tentu. Anda dapat berpindah ke paket yang lebih tinggi atau memperpanjang masa aktif workspace kapan saja tanpa kehilangan data bisnis Anda.',
-        ],
-        [
-            'q' => 'Bagaimana jika masa trial saya habis?',
-            'a' => 'Data workspace Anda tetap aman tersimpan. Namun akses ke modul bisnis akan dijeda hingga Anda mengaktifkan salah satu paket langganan.',
+            'q' => 'Apa yang terjadi setelah masa uji coba :days hari kendaraan berakhir?',
+            'a' => 'Setelah :days hari, kendaraan akan masuk status non-aktif (dijeda dari kalender booking dan penugasan) hingga Anda memperpanjangnya menggunakan Saldo Kredit Unit Kapasitas. Data kendaraan dan histori operasional Anda tetap aman tersimpan.',
         ],
     ],
 

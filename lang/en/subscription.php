@@ -35,7 +35,7 @@ return [
     'fleet_capacity_hub_title' => 'Fleet Capacity & Trial Unit Status',
     'mode_per_vehicle_trial' => 'Per-Vehicle Trial Mode',
     'mode_tenant_quota' => 'Tenant Quota Mode',
-    'fleet_capacity_desc_trial' => 'Unlimited vehicle registration. Each newly registered unit automatically receives a free 30-day trial.',
+    'fleet_capacity_desc_trial' => 'Unlimited vehicle registration. Each newly registered unit automatically receives a free :days-day trial.',
     'fleet_capacity_desc_quota' => 'Fleet capacity is bounded by subscription plan quota and active capacity credits.',
     'manage_fleet_btn' => 'Manage Fleet (:total Units) →',
     'credit_balance_title' => 'Credit Balance',
@@ -43,7 +43,7 @@ return [
     'unit_credits' => 'Unit Credits',
     'credit_balance_desc' => 'Active balance used to activate or renew fleet vehicles.',
     'active_trial_title' => 'Active Trial',
-    'trial_badge' => 'Free 30 Days',
+    'trial_badge' => 'Free :days Days',
     'fleet_units' => 'Vehicles',
     'active_trial_desc' => 'Newly added units currently in their free trial period.',
     'active_paid_title' => 'Paid Active',
@@ -187,22 +187,15 @@ return [
 
     // FAQs
     'faq_title' => 'Frequently Asked Questions (FAQ)',
+    'faq_subtitle' => 'Comprehensive information regarding unlimited vehicle registration and free trial periods',
     'faqs' => [
         [
-            'q' => 'How does subscription payment work?',
-            'a' => 'Payments are made via manual bank transfer to our official account. After selecting a plan, the system generates the exact amount including a 3-digit unique code for fast verification.',
+            'q' => 'How many fleet vehicles can I register in my workspace?',
+            'a' => 'Vehicle registration is quota-free (unlimited). Each newly added vehicle unit automatically receives a full :days-day Free Trial with all operational features enabled.',
         ],
         [
-            'q' => 'When will my plan be activated?',
-            'a' => 'Once you upload the payment proof, our admin team verifies it within 5-15 minutes during operating hours, and all modules activate automatically.',
-        ],
-        [
-            'q' => 'Can I upgrade or renew my plan anytime?',
-            'a' => 'Yes, you can upgrade to a higher tier or extend your workspace subscription at any time without losing business data.',
-        ],
-        [
-            'q' => 'What happens when my trial expires?',
-            'a' => 'Your workspace data remains completely safe. However, access to modules is paused until you activate a subscription plan.',
+            'q' => 'What happens after a vehicle\'s :days-day trial period expires?',
+            'a' => 'After :days days, the vehicle status transitions to inactive (paused from bookings and assignments) until you renew it using Fleet Capacity Credits. All vehicle data and history remain safely preserved.',
         ],
     ],
 

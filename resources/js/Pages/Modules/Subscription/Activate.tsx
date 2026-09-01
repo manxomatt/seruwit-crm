@@ -81,6 +81,7 @@ interface Props {
     totalVehiclesCount?: number;
     business_model?: string;
     is_trial_mode?: boolean;
+    trial_days?: number;
     available_credits?: number;
     fleet_summary?: {
         total: number;
@@ -527,6 +528,7 @@ export default function SubscriptionActivate({
     totalVehiclesCount = 0,
     business_model = 'per_vehicle_trial',
     is_trial_mode = true,
+    trial_days = 30,
     available_credits = 0,
     fleet_summary = { total: 0, active_paid: 0, active_trial: 0, expiring_soon: 0, inactive: 0 },
     expiring_vehicles = [],
@@ -692,20 +694,12 @@ export default function SubscriptionActivate({
 
     const faqs = [
         {
-            q: t('subscription.faqs.0.q', undefined, 'Bagaimana cara pembayaran langganan?'),
-            a: t('subscription.faqs.0.a', undefined, 'Pembayaran dilakukan via transfer bank manual ke rekening resmi kami. Setelah memilih paket, sistem akan memberikan nominal tepat beserta 3 digit kode unik untuk verifikasi instan.'),
+            q: t('subscription.faqs.0.q', undefined, 'Berapa banyak armada kendaraan yang bisa saya daftarkan?'),
+            a: t('subscription.faqs.0.a', { days: trial_days }, `Pendaftaran armada bebas kuota (unlimited). Setiap unit kendaraan baru yang Anda daftarkan otomatis mendapatkan masa uji coba gratis (Free Trial) selama ${trial_days} hari penuh dengan seluruh fitur operasional aktif.`),
         },
         {
-            q: t('subscription.faqs.1.q', undefined, 'Kapan paket saya langsung aktif?'),
-            a: t('subscription.faqs.1.a', undefined, 'Setelah Anda mengunggah bukti transfer, tim admin akan memverifikasi dalam waktu 5-15 menit pada jam operasional, dan seluruh modul paket akan aktif otomatis.'),
-        },
-        {
-            q: t('subscription.faqs.2.q', undefined, 'Apakah saya bisa upgrade atau perpanjang paket kapan saja?'),
-            a: t('subscription.faqs.2.a', undefined, 'Tentu. Anda dapat berpindah ke paket yang lebih tinggi atau memperpanjang masa aktif workspace kapan saja tanpa kehilangan data bisnis Anda.'),
-        },
-        {
-            q: t('subscription.faqs.3.q', undefined, 'Bagaimana jika masa trial saya habis?'),
-            a: t('subscription.faqs.3.a', undefined, 'Data workspace Anda tetap aman tersimpan. Namun akses ke modul bisnis akan dijeda hingga Anda mengaktifkan salah satu paket langganan.'),
+            q: t('subscription.faqs.1.q', { days: trial_days }, `Apa yang terjadi setelah masa uji coba ${trial_days} hari kendaraan berakhir?`),
+            a: t('subscription.faqs.1.a', { days: trial_days }, `Setelah ${trial_days} hari, kendaraan akan masuk status non-aktif (dijeda dari kalender booking dan penugasan) hingga Anda memperpanjangnya menggunakan Saldo Kredit Unit Kapasitas. Data kendaraan dan histori operasional Anda tetap aman tersimpan.`),
         },
     ];
 
@@ -920,7 +914,7 @@ export default function SubscriptionActivate({
                                 </div>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {is_trial_mode
-                                        ? t('subscription.fleet_capacity_desc_trial', undefined, 'Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan 30 hari masa trial gratis.')
+                                        ? t('subscription.fleet_capacity_desc_trial', { days: trial_days }, `Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan ${trial_days} hari masa trial gratis.`)
                                         : t('subscription.fleet_capacity_desc_quota', undefined, 'Kapasitas armada dibatasi oleh paket langganan dan saldo kredit aktif.')}
                                 </p>
                             </div>
@@ -983,7 +977,7 @@ export default function SubscriptionActivate({
                                         </h4>
                                         <div className="mt-1">
                                             <span className="inline-flex rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                                                {t('subscription.trial_badge', undefined, 'Gratis 30 Hari')}
+                                                {t('subscription.trial_badge', { days: trial_days }, `Gratis ${trial_days} Hari`)}
                                             </span>
                                         </div>
                                     </div>

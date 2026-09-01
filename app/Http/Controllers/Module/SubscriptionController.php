@@ -192,6 +192,7 @@ class SubscriptionController extends Controller
             'totalVehiclesCount' => $totalVehiclesCount,
             'business_model' => PlatformSetting::getBusinessModel(),
             'is_trial_mode' => PlatformSetting::isPerVehicleTrialEnabled(),
+            'trial_days' => PlatformSetting::getVehicleTrialDurationDays(),
             'available_credits' => $availableCredits,
             'fleet_summary' => $fleetSummary,
             'expiring_vehicles' => $expiringVehicles,
