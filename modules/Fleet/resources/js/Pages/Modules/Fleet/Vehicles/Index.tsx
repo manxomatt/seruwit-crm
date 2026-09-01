@@ -37,6 +37,8 @@ interface Vehicle {
     activated_at?: string | null;
     active_until?: string | null;
     auto_renew?: boolean;
+    is_trial?: boolean;
+    trial_ends_at?: string | null;
 }
 
 interface PaginatedVehicles {
@@ -62,6 +64,8 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
     quota?: { max: number | null; current: number; reached: boolean };
     available_credits?: number;
+    business_model?: string;
+    trial_duration_days?: number;
 }
 
 type VehicleColumn =
@@ -118,13 +122,26 @@ const getVehicleTypeInfo = (type: string) => {
     }
 };
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, isTrial?: boolean) => {
+    if (status === 'active' && isTrial) {
+        return {
+            label: 'Trial (Uji Coba)',
+            className: 'bg-cyan-100 text-cyan-800 border border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800',
+            dot: 'bg-cyan-500',
+        };
+    }
     switch (status) {
         case 'active':
             return {
                 label: 'Siap Operasi',
                 className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
                 dot: 'bg-emerald-500',
+            };
+        case 'inactive':
+            return {
+                label: 'Non-Aktif',
+                className: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                dot: 'bg-rose-500',
             };
         case 'maintenance':
             return {
@@ -723,7 +740,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota, avail
                         {vehicles.data.map((vehicle) => {
                             const isSelected = selected.includes(vehicle.id);
                             const typeInfo = getVehicleTypeInfo(vehicle.type);
-                            const statusInfo = getStatusBadge(vehicle.status);
+                            const statusInfo = getStatusBadge(vehicle.status, vehicle.is_trial);
 
                             return (
                                 <div
@@ -925,7 +942,7 @@ export default function Index({ vehicles, filters, bases = [], can, quota, avail
                                     {vehicles.data.map((vehicle) => {
                                         const isSelected = selected.includes(vehicle.id);
                                         const typeInfo = getVehicleTypeInfo(vehicle.type);
-                                        const statusInfo = getStatusBadge(vehicle.status);
+                                        const statusInfo = getStatusBadge(vehicle.status, vehicle.is_trial);
 
                                         return (
                                             <tr

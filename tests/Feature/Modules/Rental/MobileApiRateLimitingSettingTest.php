@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Modules\Rental;
 
 use App\Models\Setting;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Rental\Support\RentalGeneralSettings;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -18,6 +18,18 @@ class MobileApiRateLimitingSettingTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         $this->setUpRoles();
+
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.passenger_booking_enabled'],
+            [
+                'group' => 'rental',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Mobile rental',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+        );
     }
 
     public function test_rate_limiting_is_disabled_by_default_allowing_multiple_otp_requests(): void
@@ -65,10 +77,10 @@ class MobileApiRateLimitingSettingTest extends TestCase
 
     public function test_tenant_admin_can_update_rate_limiting_setting_via_dashboard(): void
     {
-        $user = User::factory()->create();
-        $user->assignRole('super-admin');
+        $user = $this->createAdminUser();
 
         $this->actingAs($user)
+            ->from(route('module.rental.settings.index', ['tab' => 'general']))
             ->patch(route('module.rental.settings.general.update'), [
                 'default_one_way_fee' => 150000,
                 'passenger_booking_enabled' => true,
@@ -80,13 +92,14 @@ class MobileApiRateLimitingSettingTest extends TestCase
                 'passenger_free_cancel_hours' => 24,
                 'public_mask_plates' => true,
                 'calendar_click_to_book' => true,
+                'ai_inspection_enabled' => true,
+                'ai_kyc_enabled' => true,
+                'ai_pricing_optimizer_enabled' => true,
                 'mobile_rate_limiting_enabled' => true,
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('module.rental.settings.index', ['tab' => 'general']));
 
-        $this->assertDatabaseHas('settings', [
-            'key' => 'rental.mobile_rate_limiting_enabled',
-            'value' => '1',
-        ]);
+        $settings = RentalGeneralSettings::all();
+        $this->assertTrue($settings['mobile_rate_limiting_enabled']);
     }
 }

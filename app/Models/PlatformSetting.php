@@ -17,6 +17,12 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PlatformSetting extends Model
 {
+    public const KEY_CAPACITY_BUSINESS_MODEL = 'capacity.business_model';
+
+    public const KEY_VEHICLE_TRIAL_DURATION_DAYS = 'capacity.vehicle_trial_duration_days';
+
+    public const KEY_PREVENT_DUPLICATE_PLATE_TRIAL = 'capacity.prevent_duplicate_plate_trial';
+
     public const KEY_CAPACITY_CREDITS_LIFETIME = 'capacity_credits_lifetime_enabled';
 
     public const KEY_VEHICLE_ACTIVATION_DURATION_DAYS = 'vehicle_activation_duration_days';
@@ -24,6 +30,10 @@ class PlatformSetting extends Model
     public const KEY_VEHICLE_GRACE_PERIOD_DAYS = 'vehicle_grace_period_days';
 
     public const KEY_PAUSE_DURING_MAINTENANCE = 'pause_during_maintenance_enabled';
+
+    public const MODEL_PER_VEHICLE_TRIAL = 'per_vehicle_trial';
+
+    public const MODEL_TENANT_QUOTA = 'tenant_quota';
 
     /**
      * @var list<string>
@@ -72,6 +82,28 @@ class PlatformSetting extends Model
     public static function getValue(string $key, mixed $default = null): mixed
     {
         return static::query()->where('key', $key)->value('value') ?? $default;
+    }
+
+    public static function getBusinessModel(): string
+    {
+        return (string) static::getValue(self::KEY_CAPACITY_BUSINESS_MODEL, self::MODEL_PER_VEHICLE_TRIAL);
+    }
+
+    public static function isPerVehicleTrialEnabled(): bool
+    {
+        return static::getBusinessModel() === self::MODEL_PER_VEHICLE_TRIAL;
+    }
+
+    public static function getVehicleTrialDurationDays(): int
+    {
+        return (int) static::getValue(self::KEY_VEHICLE_TRIAL_DURATION_DAYS, 30);
+    }
+
+    public static function isPreventDuplicatePlateTrial(): bool
+    {
+        $val = static::getValue(self::KEY_PREVENT_DUPLICATE_PLATE_TRIAL, '1');
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
     }
 
     public static function isCapacityCreditsLifetime(): bool
@@ -204,6 +236,36 @@ class PlatformSetting extends Model
 
             // CAPACITY
             [
+                'key' => self::KEY_CAPACITY_BUSINESS_MODEL,
+                'group' => 'capacity',
+                'value' => self::MODEL_PER_VEHICLE_TRIAL,
+                'type' => 'select',
+                'label' => 'Model Interaksi Bisnis Kapasitas Armada',
+                'description' => 'Pilih antara Per-Vehicle Free Trial (pendaftaran bebas kuota & 30 hari trial per armada) atau Tenant Quota (kuota langganan / top-up kredit di muka).',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => self::KEY_VEHICLE_TRIAL_DURATION_DAYS,
+                'group' => 'capacity',
+                'value' => '30',
+                'type' => 'number',
+                'label' => 'Durasi Free Trial per Armada (Hari)',
+                'description' => 'Masa uji coba gratis yang didapat setiap unit kendaraan baru yang didaftarkan tenant (pada model Per-Vehicle Free Trial).',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+            [
+                'key' => self::KEY_PREVENT_DUPLICATE_PLATE_TRIAL,
+                'group' => 'capacity',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Cegah Duplikasi Trial Pelat Nomor',
+                'description' => 'Mencegah kendaraan dengan pelat nomor yang sama memperoleh masa trial ulang jika dihapus dan didaftarkan kembali.',
+                'is_public' => false,
+                'sort_order' => 3,
+            ],
+            [
                 'key' => self::KEY_CAPACITY_CREDITS_LIFETIME,
                 'group' => 'capacity',
                 'value' => '1',
@@ -211,7 +273,7 @@ class PlatformSetting extends Model
                 'label' => 'Saldo Kredit Lifetime',
                 'description' => 'Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan (tidak pernah kadaluarsa).',
                 'is_public' => false,
-                'sort_order' => 1,
+                'sort_order' => 4,
             ],
             [
                 'key' => self::KEY_VEHICLE_ACTIVATION_DURATION_DAYS,
@@ -221,7 +283,7 @@ class PlatformSetting extends Model
                 'label' => 'Durasi 1 Siklus Aktivasi (Hari)',
                 'description' => 'Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas kuota armada (default: 30 hari).',
                 'is_public' => false,
-                'sort_order' => 2,
+                'sort_order' => 5,
             ],
             [
                 'key' => self::KEY_VEHICLE_GRACE_PERIOD_DAYS,
@@ -231,7 +293,7 @@ class PlatformSetting extends Model
                 'label' => 'Masa Tenggang / Grace Period (Hari)',
                 'description' => 'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).',
                 'is_public' => false,
-                'sort_order' => 3,
+                'sort_order' => 6,
             ],
             [
                 'key' => self::KEY_PAUSE_DURING_MAINTENANCE,
@@ -241,7 +303,7 @@ class PlatformSetting extends Model
                 'label' => 'Bekukan Masa Aktif Saat Masuk Bengkel',
                 'description' => 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
                 'is_public' => false,
-                'sort_order' => 4,
+                'sort_order' => 7,
             ],
 
             // EMAIL (Central Root SMTP Mailer)

@@ -65,6 +65,94 @@ class VehicleCapacityService
     }
 
     /**
+     * Normalize license plate for fingerprint comparison.
+     */
+    public function normalizePlateNumber(string $plateNumber): string
+    {
+        return strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $plateNumber));
+    }
+
+    /**
+     * Check if a license plate or VIN is eligible to claim a free trial.
+     */
+    public function canClaimTrial(string $plateNumber, ?string $vinNumber = null): bool
+    {
+        if (! PlatformSetting::isPreventDuplicatePlateTrial()) {
+            return true;
+        }
+
+        if (! Schema::hasTable('vehicle_trial_fingerprints')) {
+            return true;
+        }
+
+        $normalized = $this->normalizePlateNumber($plateNumber);
+        if (blank($normalized)) {
+            return true;
+        }
+
+        $query = DB::table('vehicle_trial_fingerprints')->where('plate_number_normalized', $normalized);
+
+        if (filled($vinNumber)) {
+            $query->orWhere('vin_number', $vinNumber);
+        }
+
+        return ! $query->exists();
+    }
+
+    /**
+     * Record a license plate / VIN fingerprint after claiming a free trial.
+     */
+    public function recordTrialFingerprint(string $plateNumber, ?string $vinNumber = null): void
+    {
+        if (! Schema::hasTable('vehicle_trial_fingerprints')) {
+            return;
+        }
+
+        $normalized = $this->normalizePlateNumber($plateNumber);
+        if (blank($normalized)) {
+            return;
+        }
+
+        DB::table('vehicle_trial_fingerprints')->updateOrInsert(
+            ['plate_number_normalized' => $normalized],
+            [
+                'vin_number' => $vinNumber,
+                'first_trial_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'created_at' => Carbon::now(),
+            ]
+        );
+    }
+
+    /**
+     * Start a free trial period for a newly registered vehicle without consuming credit.
+     *
+     * @return array{success: bool, is_trial: bool, active_until: Carbon}
+     */
+    public function startTrial(Vehicle $vehicle, ?int $durationDays = null): array
+    {
+        $duration = $durationDays ?? PlatformSetting::getVehicleTrialDurationDays();
+        $now = Carbon::now();
+        $activeUntil = $now->copy()->addDays($duration);
+
+        $vehicle->update([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'is_trial' => true,
+            'activated_at' => $now,
+            'active_until' => $activeUntil,
+            'trial_ends_at' => $activeUntil,
+        ]);
+
+        $this->recordTrialFingerprint($vehicle->plate_number);
+
+        return [
+            'success' => true,
+            'is_trial' => true,
+            'active_until' => $activeUntil,
+        ];
+    }
+
+    /**
      * Activate a vehicle by consuming 1 unit capacity credit.
      *
      * @return array{success: bool, new_balance: int, active_until: Carbon}
@@ -126,6 +214,7 @@ class VehicleCapacityService
             // Update vehicle in tenant DB
             $vehicle->update([
                 'status' => Vehicle::STATUS_ACTIVE,
+                'is_trial' => false,
                 'activated_at' => $now,
                 'active_until' => $activeUntil,
             ]);
@@ -204,6 +293,7 @@ class VehicleCapacityService
             // Update vehicle in tenant DB
             $vehicle->update([
                 'status' => Vehicle::STATUS_ACTIVE,
+                'is_trial' => false,
                 'activated_at' => $now,
                 'active_until' => $activeUntil,
             ]);

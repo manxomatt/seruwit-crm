@@ -116,6 +116,8 @@ class Vehicle extends Model
         'activated_at',
         'active_until',
         'auto_renew',
+        'is_trial',
+        'trial_ends_at',
         'home_base_id',
         'odometer_km',
         'stnk_expires_at',
@@ -140,10 +142,32 @@ class Vehicle extends Model
             'activated_at' => 'datetime',
             'active_until' => 'datetime',
             'auto_renew' => 'boolean',
+            'is_trial' => 'boolean',
+            'trial_ends_at' => 'datetime',
             'stnk_expires_at' => 'date:Y-m-d',
             'kir_expires_at' => 'date:Y-m-d',
             'home_base_id' => 'integer',
         ];
+    }
+
+    /**
+     * Check whether this vehicle is currently within an active free trial period.
+     */
+    public function isCurrentlyTrial(): bool
+    {
+        return (bool) $this->is_trial && $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
+    }
+
+    /**
+     * Calculate remaining days in the trial period.
+     */
+    public function trialDaysRemaining(): int
+    {
+        if (! $this->isCurrentlyTrial() || ! $this->trial_ends_at) {
+            return 0;
+        }
+
+        return (int) max(0, now()->diffInDays($this->trial_ends_at, false));
     }
 
     /**

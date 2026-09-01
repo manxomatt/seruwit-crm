@@ -85,6 +85,8 @@ interface Vehicle {
     activated_at?: string | null;
     active_until?: string | null;
     auto_renew?: boolean;
+    is_trial?: boolean;
+    trial_ends_at?: string | null;
 }
 
 interface ServiceHistoryItem {
@@ -115,6 +117,8 @@ interface Props {
     aiDiagnoseUrl?: string | null;
     aiCreateWoUrl?: string | null;
     available_credits?: number;
+    business_model?: string;
+    is_trial_mode?: boolean;
 }
 
 type ExpiryTone = 'ok' | 'soon' | 'expired' | 'empty';
@@ -522,9 +526,15 @@ export default function Show({
                                         Masa Aktif & Kapasitas Unit
                                     </h3>
                                     {vehicle.status === 'active' && (
-                                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                                            AKTIF
-                                        </span>
+                                        vehicle.is_trial ? (
+                                            <span className="rounded-full bg-cyan-100 px-2.5 py-0.5 text-[10px] font-black text-cyan-800 border border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800">
+                                                FREE TRIAL (UJI COBA)
+                                            </span>
+                                        ) : (
+                                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                AKTIF
+                                            </span>
+                                        )
                                     )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">

@@ -107,6 +107,14 @@ export default function Group({
     const isAiEnabled = aiFeaturesIndex >= 0 ? data.settings[aiFeaturesIndex]?.value === '1' : false;
 
     // Capacity indices
+    const businessModelIndex = findSettingIndex('capacity.business_model');
+    const businessModel = businessModelIndex >= 0 ? data.settings[businessModelIndex]?.value || 'per_vehicle_trial' : 'per_vehicle_trial';
+
+    const trialDurationDaysIndex = findSettingIndex('capacity.vehicle_trial_duration_days');
+
+    const preventDuplicatePlateIndex = findSettingIndex('capacity.prevent_duplicate_plate_trial');
+    const isPreventDuplicatePlate = preventDuplicatePlateIndex >= 0 ? data.settings[preventDuplicatePlateIndex]?.value === '1' : true;
+
     const lifetimeCreditIndex = findSettingIndex('capacity_credits_lifetime_enabled');
     const isLifetimeCredit = lifetimeCreditIndex >= 0 ? data.settings[lifetimeCreditIndex]?.value === '1' : true;
 
@@ -497,6 +505,166 @@ export default function Group({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Business Model Selector */}
+                            {businessModelIndex >= 0 && (
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                                            {t('settings.platform.capacity.business_model_label', undefined, 'Model Interaksi Bisnis Armada')}
+                                        </label>
+                                        <p className="text-[11px] text-slate-500">
+                                            {t('settings.platform.capacity.business_model_desc', undefined, 'Pilih mekanisme pendaftaran dan penagihan kapasitas kendaraan untuk seluruh tenant.')}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        {/* Per-Vehicle Trial Model */}
+                                        <div
+                                            onClick={() => updateValue(businessModelIndex, 'per_vehicle_trial')}
+                                            className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+                                                businessModel === 'per_vehicle_trial'
+                                                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-600/20 dark:border-indigo-500 dark:bg-indigo-950/30'
+                                                    : 'border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/40'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-base text-white shadow-xs">
+                                                    🚀
+                                                </span>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                            Per-Vehicle Free Trial
+                                                        </span>
+                                                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                            Rekomendasi PLG
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                                                        Pendaftaran armada bebas kuota. Setiap kendaraan baru otomatis mendapat masa uji coba 30 hari gratis sebelum wajib diperpanjang/dibayar.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Tenant Quota Model */}
+                                        <div
+                                            onClick={() => updateValue(businessModelIndex, 'tenant_quota')}
+                                            className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+                                                businessModel === 'tenant_quota'
+                                                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-600/20 dark:border-indigo-500 dark:bg-indigo-950/30'
+                                                    : 'border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/40'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-700 text-base text-white shadow-xs dark:bg-slate-800">
+                                                    🏢
+                                                </span>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                            Tenant Quota & Upfront Credits
+                                                        </span>
+                                                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                            Tradisional
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                                                        Kendaraan dibatasi oleh kuota paket langganan (max_vehicles) dan wajib memiliki saldo kredit kapasitas sebelum unit dapat diaktifkan.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${businessModelIndex}.value`]}
+                                        className="mt-1.5"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Trial-Specific Parameters (when per_vehicle_trial is selected) */}
+                            {businessModel === 'per_vehicle_trial' && (
+                                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/30 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20 space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
+                                            ⚙️ Parameter Uji Coba Kendaraan
+                                        </span>
+                                    </div>
+
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {trialDurationDaysIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="capacity_vehicle_trial_duration_days"
+                                                    value="Durasi Free Trial per Armada (Hari)"
+                                                    className="!text-xs !font-bold"
+                                                />
+                                                <div className="mt-1.5 flex items-center gap-2">
+                                                    <TextInput
+                                                        id="capacity_vehicle_trial_duration_days"
+                                                        type="number"
+                                                        className="block w-full !rounded-xl !py-2 text-xs font-semibold border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                        value={data.settings[trialDurationDaysIndex]?.value || '30'}
+                                                        onChange={(e) => updateValue(trialDurationDaysIndex, e.target.value)}
+                                                        required
+                                                    />
+                                                    <span className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                                                        Hari
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    Masa aktif gratis saat pertama kali kendaraan didaftarkan oleh tenant.
+                                                </p>
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${trialDurationDaysIndex}.value`]}
+                                                    className="mt-1.5"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {preventDuplicatePlateIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    value="Proteksi Anti-Abuse Pelat Nomor"
+                                                    className="!text-xs !font-bold"
+                                                />
+                                                <div
+                                                    onClick={() => updateValue(preventDuplicatePlateIndex, isPreventDuplicatePlate ? '0' : '1')}
+                                                    className="mt-1.5 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-2.5 transition-all dark:border-slate-800 dark:bg-slate-900"
+                                                >
+                                                    <div>
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                            Cegah Duplikasi Trial Pelat Nomor
+                                                        </span>
+                                                        <p className="text-[10px] text-slate-500">
+                                                            Pelat nomor yang sama tidak bisa di-reset trialnya jika dihapus lalu didaftarkan ulang.
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        role="switch"
+                                                        aria-checked={isPreventDuplicatePlate}
+                                                        className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                            isPreventDuplicatePlate ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                                isPreventDuplicatePlate ? 'translate-x-4' : 'translate-x-0'
+                                                            }`}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${preventDuplicatePlateIndex}.value`]}
+                                                    className="mt-1.5"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Lifetime Credit Toggle */}
                             {lifetimeCreditIndex >= 0 && (

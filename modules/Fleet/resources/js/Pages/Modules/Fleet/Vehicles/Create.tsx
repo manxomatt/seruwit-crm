@@ -49,9 +49,11 @@ interface HomeBaseOption {
 interface Props {
     bases?: HomeBaseOption[];
     available_credits?: number;
+    is_trial_mode?: boolean;
+    trial_duration_days?: number;
 }
 
-export default function Create({ bases = [], available_credits = 0 }: Props): JSX.Element {
+export default function Create({ bases = [], available_credits = 0, is_trial_mode = false, trial_duration_days = 30 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -150,6 +152,22 @@ export default function Create({ bases = [], available_credits = 0 }: Props): JS
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 items-start">
                     {/* Kolom Kiri: Form Utama */}
                     <div className="lg:col-span-8 space-y-6">
+                        {is_trial_mode && (
+                            <div className="flex items-center gap-4 rounded-3xl border border-cyan-200/80 bg-cyan-50/60 p-5 shadow-xs dark:border-cyan-800/60 dark:bg-cyan-950/20">
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-xl text-white shadow-xs">
+                                    🎁
+                                </span>
+                                <div className="space-y-0.5">
+                                    <h4 className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
+                                        Free Trial {trial_duration_days} Hari untuk Armada Baru
+                                    </h4>
+                                    <p className="text-[11px] leading-relaxed text-cyan-700 dark:text-cyan-300">
+                                        Pendaftaran armada bebas kuota. Setiap unit baru yang didaftarkan otomatis mendapatkan masa uji coba gratis selama {trial_duration_days} hari tanpa memotong saldo kredit kapasitas unit Anda.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">
                             {/* 1. Identitas & Foto Kendaraan */}
                             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">

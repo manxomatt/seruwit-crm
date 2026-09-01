@@ -3,6 +3,7 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformSetting;
 use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
@@ -43,10 +44,11 @@ class VehicleController extends Controller
     {
         $user = Auth::user();
         $tenant = tenant();
+        $isPerVehicleTrial = PlatformSetting::isPerVehicleTrialEnabled();
         $totalVehicles = Vehicle::count();
         $billableVehicles = Vehicle::billable()->count();
-        $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $billableVehicles);
-        $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_vehicles') : null;
+        $isLimitReached = ! $isPerVehicleTrial && $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $billableVehicles);
+        $maxLimit = (! $isPerVehicleTrial && $tenant instanceof Tenant) ? $tenant->planLimit('max_vehicles') : null;
         $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
 
         $vehicles = Vehicle::query()
@@ -89,6 +91,8 @@ class VehicleController extends Controller
                 'reached' => $isLimitReached,
             ],
             'available_credits' => $availableCredits,
+            'business_model' => PlatformSetting::getBusinessModel(),
+            'trial_duration_days' => PlatformSetting::getVehicleTrialDurationDays(),
         ]);
     }
 
@@ -98,7 +102,8 @@ class VehicleController extends Controller
     public function create(VehicleCapacityService $capacityService): Response|RedirectResponse
     {
         $tenant = tenant();
-        if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
+        $isPerVehicleTrial = PlatformSetting::isPerVehicleTrialEnabled();
+        if (! $isPerVehicleTrial && $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
             $limit = (int) $tenant->planLimit('max_vehicles');
 
             return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.index')
@@ -110,6 +115,8 @@ class VehicleController extends Controller
         return Inertia::render('Modules/Fleet/Vehicles/Create', [
             'bases' => $this->homeBaseOptions(),
             'available_credits' => $availableCredits,
+            'is_trial_mode' => $isPerVehicleTrial,
+            'trial_duration_days' => PlatformSetting::getVehicleTrialDurationDays(),
         ]);
     }
 
@@ -120,8 +127,9 @@ class VehicleController extends Controller
     {
         $status = $request->input('status', Vehicle::STATUS_ACTIVE);
         $tenant = tenant();
+        $isPerVehicleTrial = PlatformSetting::isPerVehicleTrialEnabled();
 
-        if (in_array($status, Vehicle::billableStatuses(), true)) {
+        if (! $isPerVehicleTrial && in_array($status, Vehicle::billableStatuses(), true)) {
             if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', Vehicle::billable()->count())) {
                 $limit = (int) $tenant->planLimit('max_vehicles');
                 throw ValidationException::withMessages([
@@ -130,7 +138,47 @@ class VehicleController extends Controller
             }
         }
 
-        // If status chosen is active, ensure tenant has capacity credits
+        $vehicleData = $request->validated();
+
+        if ($isPerVehicleTrial) {
+            // Check if vehicle can claim a trial period
+            $canClaimTrial = $capacityService->canClaimTrial($request->plate_number, $request->vin_number ?? null);
+
+            if ($canClaimTrial) {
+                $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
+                $vehicle = Vehicle::create($vehicleData);
+                $capacityService->startTrial($vehicle);
+
+                return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
+                    ->with('success', "Kendaraan {$vehicle->plate_number} berhasil didaftarkan dengan masa uji coba gratis {$vehicle->trialDaysRemaining()} hari.");
+            }
+
+            // If trial already claimed before, vehicle is created and requires credit activation if ACTIVE
+            if ($status === Vehicle::STATUS_ACTIVE) {
+                $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
+                if ($availableCredits < 1) {
+                    $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
+                    $vehicle = Vehicle::create($vehicleData);
+
+                    return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
+                        ->with('info', "Kendaraan {$vehicle->plate_number} pernah menggunakan masa uji coba sebelumnya. Status kendaraan diset Non-Aktif karena saldo kredit kapasitas 0. Silakan lakukan aktivasi/top-up kredit.");
+                }
+
+                $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
+                $vehicle = Vehicle::create($vehicleData);
+                $capacityService->activate($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
+
+                return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
+                    ->with('success', __('fleet.messages.vehicle_created'));
+            }
+
+            $vehicle = Vehicle::create($vehicleData);
+
+            return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
+                ->with('success', __('fleet.messages.vehicle_created'));
+        }
+
+        // Standard Tenant Quota Mode
         if ($status === Vehicle::STATUS_ACTIVE) {
             $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
             if ($availableCredits < 1) {
@@ -140,7 +188,6 @@ class VehicleController extends Controller
             }
         }
 
-        $vehicleData = $request->validated();
         if ($status === Vehicle::STATUS_ACTIVE) {
             $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
         }
@@ -236,6 +283,8 @@ class VehicleController extends Controller
                 'create' => $user->hasPermissionFor('fleet', 'create'),
             ],
             'available_credits' => $capacityService->getAvailableCredits(),
+            'business_model' => PlatformSetting::getBusinessModel(),
+            'is_trial_mode' => PlatformSetting::isPerVehicleTrialEnabled(),
         ]);
     }
 
