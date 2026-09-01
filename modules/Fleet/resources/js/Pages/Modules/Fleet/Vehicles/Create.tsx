@@ -523,12 +523,9 @@ export default function Create({ bases = [], available_credits = 0, is_trial_mod
                                 <InputError message={errors.status} className="mt-1" />
                                 {data.status === 'active' && is_trial_mode && (
                                     <div className="mt-2.5 rounded-2xl bg-cyan-50/70 p-3 text-xs border border-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200">
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
                                             <span>
                                                 🎁 Unit baru akan langsung aktif dengan masa uji coba <strong>Free Trial {trial_duration_days} Hari</strong>.
-                                            </span>
-                                            <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                                                Tanpa Potong Kredit
                                             </span>
                                         </div>
                                     </div>
