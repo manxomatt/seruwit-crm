@@ -93,6 +93,7 @@ return [
         'transportation',
         'users',
         'payment_orders',
+        'subscription',
     ],
 
 ];
