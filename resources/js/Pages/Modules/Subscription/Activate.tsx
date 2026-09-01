@@ -941,18 +941,20 @@ export default function SubscriptionActivate({
                         {/* 1. Saldo Kredit Unit */}
                         <div className="flex flex-col justify-between rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-indigo-200 dark:border-indigo-900/30 dark:bg-slate-900/90 dark:hover:border-indigo-800/60">
                             <div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                            ⚡
-                                        </span>
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            {t('subscription.credit_balance_title', undefined, 'Saldo Kredit')}
-                                        </span>
-                                    </div>
-                                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                        {t('subscription.lifetime_badge', undefined, 'Lifetime')}
+                                <div className="flex items-center gap-2.5">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        ⚡
                                     </span>
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            {t('subscription.credit_balance_title', undefined, 'Saldo Kredit')}
+                                        </h4>
+                                        <div className="mt-1">
+                                            <span className="inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                {t('subscription.lifetime_badge', undefined, 'Lifetime')}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
                                     <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -971,18 +973,20 @@ export default function SubscriptionActivate({
                         {/* 2. Armada Masa Trial */}
                         <div className="flex flex-col justify-between rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-cyan-200 dark:border-cyan-900/30 dark:bg-slate-900/90 dark:hover:border-cyan-800/60">
                             <div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-xs font-bold text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300">
-                                            🎁
-                                        </span>
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            {t('subscription.active_trial_title', undefined, 'Trial Aktif')}
-                                        </span>
-                                    </div>
-                                    <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                                        {t('subscription.trial_badge', undefined, 'Gratis 30 Hari')}
+                                <div className="flex items-center gap-2.5">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-sm font-bold text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300">
+                                        🎁
                                     </span>
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            {t('subscription.active_trial_title', undefined, 'Trial Aktif')}
+                                        </h4>
+                                        <div className="mt-1">
+                                            <span className="inline-flex rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
+                                                {t('subscription.trial_badge', undefined, 'Gratis 30 Hari')}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
                                     <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -1001,18 +1005,20 @@ export default function SubscriptionActivate({
                         {/* 3. Armada Berbayar Aktif */}
                         <div className="flex flex-col justify-between rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-emerald-200 dark:border-emerald-900/30 dark:bg-slate-900/90 dark:hover:border-emerald-800/60">
                             <div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                                            🟢
-                                        </span>
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            {t('subscription.active_paid_title', undefined, 'Aktif Berbayar')}
-                                        </span>
-                                    </div>
-                                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                        {t('subscription.production_badge', undefined, 'Produksi')}
+                                <div className="flex items-center gap-2.5">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                        🟢
                                     </span>
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            {t('subscription.active_paid_title', undefined, 'Aktif Berbayar')}
+                                        </h4>
+                                        <div className="mt-1">
+                                            <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                {t('subscription.production_badge', undefined, 'Produksi')}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
                                     <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -1031,18 +1037,20 @@ export default function SubscriptionActivate({
                         {/* 4. Perlu Perpanjangan / Expired */}
                         <div className="flex flex-col justify-between rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-amber-200 dark:border-amber-900/30 dark:bg-slate-900/90 dark:hover:border-amber-800/60">
                             <div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                                            ⚠️
-                                        </span>
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            {t('subscription.attention_required_title', undefined, 'Perlu Perhatian')}
-                                        </span>
-                                    </div>
-                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                                        {t('subscription.due_badge', undefined, 'Jatuh Tempo')}
+                                <div className="flex items-center gap-2.5">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-sm font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                        ⚠️
                                     </span>
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            {t('subscription.attention_required_title', undefined, 'Perlu Perhatian')}
+                                        </h4>
+                                        <div className="mt-1">
+                                            <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                                {t('subscription.due_badge', undefined, 'Jatuh Tempo')}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
                                     <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
