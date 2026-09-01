@@ -85,7 +85,7 @@ class UpdateVehicleRequest extends FormRequest
         $validator->after(function ($validator): void {
             AccessibleFleetBases::rejectIfDenied($validator, $this->input('home_base_id'));
 
-            if ($this->has('status')) {
+            if ($this->has('status') && ! \App\Models\PlatformSetting::isPerVehicleTrialEnabled()) {
                 $newStatus = $this->input('status');
                 $isBecomingBillable = in_array($newStatus, \Modules\Fleet\Models\Vehicle::billableStatuses(), true);
 

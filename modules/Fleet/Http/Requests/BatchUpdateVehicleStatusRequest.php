@@ -31,7 +31,7 @@ class BatchUpdateVehicleStatusRequest extends FormRequest
             }
 
             $status = $this->input('status');
-            if (in_array($status, \Modules\Fleet\Models\Vehicle::billableStatuses(), true)) {
+            if (! \App\Models\PlatformSetting::isPerVehicleTrialEnabled() && in_array($status, \Modules\Fleet\Models\Vehicle::billableStatuses(), true)) {
                 $tenant = tenant();
                 if ($tenant instanceof \App\Models\Tenant && $tenant->hasFiniteLimit('max_vehicles')) {
                     $limit = (int) $tenant->planLimit('max_vehicles');

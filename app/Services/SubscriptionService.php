@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PaymentOrder;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use App\Models\SubscriptionTier;
 use App\Models\Tenant;
@@ -159,10 +160,14 @@ class SubscriptionService
 
     /**
      * Get maximum vehicles allowed for tenant (dynamic limit).
-     * Returns null if unlimited (trial or no subscription).
+     * Returns null if unlimited (trial or per-vehicle trial mode).
      */
     public function getMaxVehiclesAllowed(Tenant $tenant): ?int
     {
+        if (PlatformSetting::isPerVehicleTrialEnabled()) {
+            return null;
+        }
+
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
 

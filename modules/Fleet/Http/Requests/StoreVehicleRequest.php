@@ -79,7 +79,7 @@ class StoreVehicleRequest extends FormRequest
             AccessibleFleetBases::rejectIfDenied($validator, $this->input('home_base_id'));
 
             $status = $this->input('status', \Modules\Fleet\Models\Vehicle::STATUS_ACTIVE);
-            if (in_array($status, \Modules\Fleet\Models\Vehicle::billableStatuses(), true)) {
+            if (! \App\Models\PlatformSetting::isPerVehicleTrialEnabled() && in_array($status, \Modules\Fleet\Models\Vehicle::billableStatuses(), true)) {
                 $tenant = tenant();
                 if ($tenant instanceof \App\Models\Tenant && $tenant->hasReachedLimit('max_vehicles', \Modules\Fleet\Models\Vehicle::billable()->count())) {
                     $limit = (int) $tenant->planLimit('max_vehicles');
