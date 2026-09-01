@@ -135,7 +135,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                             {t('dashboard.subscription.title', undefined, 'Paket & Harga per Kendaraan')}
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 ring-1 ring-emerald-500/20">
-                            ⚡ Pay As You Go (PAYG)
+                            {t('dashboard.subscription.payg_badge', undefined, '⚡ Pay As You Go (PAYG)')}
                         </span>
 
                         {!isExpanded && currentTier && (
@@ -143,12 +143,12 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                 <span>👑 {currentTier.name}</span>
                                 <span>·</span>
                                 <span className="text-emerald-600 dark:text-emerald-400">
-                                    {formatMoney(currentTier.price_per_vehicle, subscription.currency_symbol, localeTag)}/unit
+                                    {formatMoney(currentTier.price_per_vehicle, subscription.currency_symbol, localeTag)}/{t('dashboard.subscription.per_vehicle', undefined, 'unit')}
                                 </span>
                                 {subscription.monthly_estimate != null && (
                                     <>
                                         <span>·</span>
-                                        <span>Est: {formatMoney(subscription.monthly_estimate, subscription.currency_symbol, localeTag)}/bln</span>
+                                        <span>Est: {formatMoney(subscription.monthly_estimate, subscription.currency_symbol, localeTag)}/{t('dashboard.subscription.monthly', undefined, 'bln')}</span>
                                     </>
                                 )}
                             </span>
@@ -156,11 +156,11 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                         <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-                            Tarif Berjenjang Sesuai Skala Armada
+                            {t('dashboard.subscription.heading', undefined, 'Tarif Berjenjang Sesuai Skala Armada')}
                         </h3>
                     </div>
                     <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-2xl">
-                        Semakin banyak unit kendaraan terdaftar di sistem, semakin hemat tarif per unitnya secara otomatis tanpa perlu komitmen paket kaku.
+                        {t('dashboard.subscription.heading_description', undefined, 'Semakin banyak unit kendaraan terdaftar di sistem, semakin hemat tarif per unitnya secara otomatis tanpa perlu komitmen paket kaku.')}
                     </p>
                 </div>
 
@@ -170,20 +170,20 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                         href={route('module.fleet.vehicles.index')}
                         className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/30 active:scale-98 dark:bg-indigo-500 dark:hover:bg-indigo-600"
                     >
-                        <span>⚡ Kelola Armada</span>
+                        <span>{t('dashboard.subscription.manage_fleet', undefined, '⚡ Kelola Armada')}</span>
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
                     </Link>
 
-                    {/* Collapse / Expand Toggle Button */}
+                    {/* Collapse / Expand Toggle Button (Icon only) */}
                     <button
                         type="button"
                         onClick={toggleExpanded}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                        title={isExpanded ? 'Ciutkan Panel' : 'Buka Detail & Simulator'}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-xs transition hover:bg-slate-50 hover:text-slate-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                        title={isExpanded ? t('dashboard.subscription.collapse', undefined, 'Ciutkan Panel') : t('dashboard.subscription.expand', undefined, 'Buka Detail & Simulator')}
+                        aria-label={isExpanded ? t('dashboard.subscription.collapse', undefined, 'Ciutkan Panel') : t('dashboard.subscription.expand', undefined, 'Buka Detail & Simulator')}
                     >
-                        <span>{isExpanded ? 'Ciutkan' : 'Buka Detail'}</span>
                         <svg
                             className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                             fill="none"
@@ -217,9 +217,9 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                         {currentTier?.name ?? t('dashboard.subscription.no_tier', undefined, 'Belum Ada Tier')}
                     </p>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Kapasitas:{' '}
+                        {t('dashboard.subscription.vehicles', undefined, 'Kapasitas')}:{' '}
                         <strong className="text-slate-800 dark:text-slate-200">
-                            {currentTier ? `${formatNumber(currentTier.min_vehicles, localeTag)} – ${currentTier.max_vehicles >= 100000 ? 'Tak Terbatas' : formatNumber(currentTier.max_vehicles, localeTag)} Unit` : '—'}
+                            {currentTier ? `${formatNumber(currentTier.min_vehicles, localeTag)} – ${currentTier.max_vehicles >= 100000 ? t('dashboard.subscription.unlimited', undefined, 'Tak Terbatas') : formatNumber(currentTier.max_vehicles, localeTag)} ${t('dashboard.subscription.unit', undefined, 'Unit')}` : '—'}
                         </strong>
                     </p>
                 </div>
@@ -228,7 +228,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                 <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                            Tarif Efektif per Unit
+                            {t('dashboard.subscription.rate_per_vehicle', undefined, 'Tarif Efektif per Unit')}
                         </span>
                         <span className="rounded-full bg-emerald-500/10 p-1.5 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400">
                             🏷️
@@ -241,11 +241,13 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                 : (currentTier ? formatMoney(currentTier.price_per_vehicle, subscription.currency_symbol, localeTag) : '—')}
                         </p>
                         <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-                            / unit / bln
+                            {t('dashboard.subscription.per_vehicle_per_month', undefined, '/ unit / bln')}
                         </span>
                     </div>
                     <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                        {volumeSavingsPercent > 0 ? `✓ Hemat ${volumeSavingsPercent}% dibanding Tier Dasar` : '✓ Seluruh Fitur Modul Lengkap'}
+                        {volumeSavingsPercent > 0
+                            ? `✓ ${t('dashboard.subscription.save_percent', { percent: String(volumeSavingsPercent) }, `Hemat ${volumeSavingsPercent}%`)}`
+                            : `✓ ${t('dashboard.subscription.all_modules_active', undefined, 'Seluruh Fitur Modul Lengkap')}`}
                     </p>
                 </div>
 
@@ -269,7 +271,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                             {formatNumber(actualCount, localeTag)} {t('dashboard.subscription.vehicles', undefined, 'armada')}
                         </span>
                         <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                            {subscription.is_billed_quota ? 'Kuota Berlangganan' : 'Armada Terdaftar'}
+                            {subscription.is_billed_quota ? t('dashboard.subscription.billed_quota_note', undefined, 'Kuota Berlangganan') : t('dashboard.subscription.projected_note', undefined, 'Armada Terdaftar')}
                         </span>
                     </div>
                 </div>
@@ -283,17 +285,20 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                             <div className="flex items-center gap-2">
                                 <span className="text-sm">🎯</span>
                                 <p className="text-xs font-bold text-teal-900 dark:text-teal-200">
-                                    Buka Diskon Lebih Hemat di Tier Berikutnya:{' '}
+                                    {t('dashboard.subscription.next_tier_unlock', undefined, 'Buka Diskon Lebih Hemat di Tier Berikutnya:')}{' '}
                                     <span className="underline decoration-teal-500 underline-offset-2">{nextTier.name}</span>
                                 </p>
                             </div>
                             <p className="text-xs text-slate-600 dark:text-slate-400">
-                                Tambahkan <strong className="text-teal-700 dark:text-teal-300 font-extrabold">{nextTier.vehicles_needed} unit kendaraan lagi</strong> untuk menikmati tarif hemat <strong className="text-slate-900 dark:text-white font-extrabold">{formatMoney(nextTier.price_per_vehicle, subscription.currency_symbol, localeTag)}</strong>/unit/bulan.
+                                {t('dashboard.subscription.next_tier_desc', {
+                                    count: String(nextTier.vehicles_needed),
+                                    price: formatMoney(nextTier.price_per_vehicle, subscription.currency_symbol, localeTag),
+                                }, `Tambahkan ${nextTier.vehicles_needed} unit kendaraan lagi untuk menikmati tarif hemat ${formatMoney(nextTier.price_per_vehicle, subscription.currency_symbol, localeTag)}/unit/bulan.`)}
                             </p>
                         </div>
                         <div className="w-full sm:w-48 shrink-0">
                             <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">
-                                <span>Progress ke {nextTier.name}</span>
+                                <span>{t('dashboard.subscription.next_tier_progress', undefined, 'Progress ke')} {nextTier.name}</span>
                                 <span>{progressPercent}%</span>
                             </div>
                             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
@@ -316,11 +321,11 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                 🎛️
                             </span>
                             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                                Simulator Estimasi Biaya Armada
+                                {t('dashboard.subscription.simulator_title', undefined, 'Simulator Estimasi Biaya Armada')}
                             </h4>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Geser slider atau pilih tombol cepat untuk melihat simulasi kalkulasi tarif dan penghematan.
+                            {t('dashboard.subscription.simulator_subtitle', undefined, 'Geser slider atau pilih tombol cepat untuk melihat simulasi kalkulasi tarif dan penghematan.')}
                         </p>
                     </div>
 
@@ -334,7 +339,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                 }`}
                         >
-                            Bulanan
+                            {t('dashboard.subscription.monthly', undefined, 'Bulanan')}
                         </button>
                         <button
                             type="button"
@@ -344,7 +349,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                 }`}
                         >
-                            <span>Tahunan</span>
+                            <span>{t('dashboard.subscription.annual', undefined, 'Tahunan')}</span>
                             <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.2 text-[9px] font-black text-emerald-700 dark:text-emerald-300">
                                 -20%
                             </span>
@@ -357,20 +362,20 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                     <div className="lg:col-span-7 space-y-4">
                         <div className="flex items-center justify-between">
                             <label htmlFor="fleet-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                Jumlah Armada yang Disimulasikan:
+                                {t('dashboard.subscription.simulated_count_label', undefined, 'Jumlah Armada yang Disimulasikan:')}
                             </label>
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1 text-sm font-black text-white shadow-xs">
-                                    {simulatedCount} Unit
+                                    {simulatedCount} {t('dashboard.subscription.unit', undefined, 'Unit')}
                                 </span>
                                 {actualCount > 0 && simulatedCount !== actualCount && (
                                     <button
                                         type="button"
                                         onClick={() => setSimulatedCount(actualCount)}
                                         className="text-[11px] font-bold text-indigo-600 hover:underline dark:text-indigo-400"
-                                        title="Kembalikan ke jumlah armada saat ini"
+                                        title={t('dashboard.subscription.reset', undefined, 'Reset ke armada aktual')}
                                     >
-                                        ↺ Reset
+                                        ↺ {t('dashboard.subscription.reset', undefined, 'Reset')}
                                     </button>
                                 )}
                             </div>
@@ -390,7 +395,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
 
                         {/* Preset Chips */}
                         <div className="flex flex-wrap items-center gap-2 pt-1">
-                            <span className="text-[11px] font-semibold text-slate-400">Pilihan Cepat:</span>
+                            <span className="text-[11px] font-semibold text-slate-400">{t('dashboard.subscription.quick_select', undefined, 'Pilihan Cepat:')}</span>
                             {presets.map((preset) => (
                                 <button
                                     key={preset.value}
@@ -413,7 +418,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                         : 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                                         }`}
                                 >
-                                    Armada Saya ({actualCount} Unit)
+                                    {t('dashboard.subscription.my_fleet', { count: String(actualCount) }, `Armada Saya (${actualCount} Unit)`)}
                                 </button>
                             )}
                         </div>
@@ -422,7 +427,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                     {/* Simulation Result Card (Right / Bottom) */}
                     <div className="lg:col-span-5 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-indigo-50/30 p-5 dark:border-indigo-900/50 dark:from-slate-800/80 dark:to-slate-900">
                         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                            <span>Tier Hasil Simulasi:</span>
+                            <span>{t('dashboard.subscription.simulated_tier_label', undefined, 'Tier Hasil Simulasi:')}</span>
                             <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-[11px] font-bold text-white">
                                 {simulatedTier?.name ?? 'Tier Standar'}
                             </span>
@@ -430,15 +435,15 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
 
                         <div className="mt-3 border-t border-slate-200/80 pt-3 dark:border-slate-700/80 space-y-2">
                             <div className="flex items-center justify-between text-xs">
-                                <span className="text-slate-600 dark:text-slate-400">Tarif per Kendaraan:</span>
+                                <span className="text-slate-600 dark:text-slate-400">{t('dashboard.subscription.rate_per_vehicle', undefined, 'Tarif per Kendaraan')}:</span>
                                 <span className="font-bold text-slate-900 dark:text-white tabular-nums">
-                                    {formatMoney(simPricePerVehicle, subscription.currency_symbol, localeTag)} / bln
+                                    {formatMoney(simPricePerVehicle, subscription.currency_symbol, localeTag)} {t('dashboard.subscription.per_vehicle_per_month', undefined, '/ bln')}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-slate-600 dark:text-slate-400">
-                                    {billingPeriod === 'annual' ? 'Total Biaya Tahunan (-20%):' : 'Total Estimasi per Bulan:'}
+                                    {billingPeriod === 'annual' ? t('dashboard.subscription.total_annual', undefined, 'Total Biaya Tahunan (-20%):') : t('dashboard.subscription.total_monthly', undefined, 'Total Estimasi per Bulan:')}
                                 </span>
                                 <span className="text-lg font-black text-indigo-700 dark:text-indigo-300 tabular-nums">
                                     {billingPeriod === 'annual'
@@ -449,7 +454,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
 
                             {billingPeriod === 'annual' && (
                                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold text-right">
-                                    (Setara {formatMoney(simEffectivePerMonth, subscription.currency_symbol, localeTag)}/bulan)
+                                    {t('dashboard.subscription.annual_equivalent', { price: formatMoney(simEffectivePerMonth, subscription.currency_symbol, localeTag) }, `(Setara ${formatMoney(simEffectivePerMonth, subscription.currency_symbol, localeTag)}/bulan)`)}
                                 </p>
                             )}
                         </div>
@@ -463,14 +468,14 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                     <div>
                         <h4 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                             <span>📋</span>
-                            <span>Daftar Seluruh Tier Harga Volume</span>
+                            <span>{t('dashboard.subscription.tier_list_title', undefined, 'Daftar Seluruh Tier Harga Volume')}</span>
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Klik pada salah satu kartu tier untuk langsung mensimulasikan biaya pada skala armada tersebut.
+                            {t('dashboard.subscription.tier_list_subtitle', undefined, 'Klik pada salah satu kartu tier untuk langsung mensimulasikan biaya pada skala armada tersebut.')}
                         </p>
                     </div>
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 shrink-0">
-                        {subscription.tiers.length} Level Tarif Tersedia
+                        {t('dashboard.subscription.tiers_available', { count: String(subscription.tiers.length) }, `${subscription.tiers.length} Level Tarif Tersedia`)}
                     </span>
                 </div>
 
@@ -491,28 +496,28 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                         const tierThemes = [
                             {
                                 icon: '🚀',
-                                levelTag: 'Tier 1',
+                                levelTag: `Tier ${idx + 1}`,
                                 badgeBg: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
                                 accentBorder: 'border-slate-300 dark:border-slate-700',
                                 highlightBg: 'from-slate-50 to-white dark:from-slate-900 dark:to-slate-900/90',
                             },
                             {
                                 icon: '⚡',
-                                levelTag: 'Tier 2',
+                                levelTag: `Tier ${idx + 1}`,
                                 badgeBg: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
                                 accentBorder: 'border-blue-300 dark:border-blue-700',
                                 highlightBg: 'from-blue-50/40 to-white dark:from-blue-950/30 dark:to-slate-900',
                             },
                             {
                                 icon: '🏢',
-                                levelTag: 'Tier 3',
+                                levelTag: `Tier ${idx + 1}`,
                                 badgeBg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300',
                                 accentBorder: 'border-indigo-300 dark:border-indigo-700',
                                 highlightBg: 'from-indigo-50/40 to-white dark:from-indigo-950/30 dark:to-slate-900',
                             },
                             {
                                 icon: '👑',
-                                levelTag: 'Tier 4',
+                                levelTag: `Tier ${idx + 1}`,
                                 badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
                                 accentBorder: 'border-amber-300 dark:border-amber-700',
                                 highlightBg: 'from-amber-50/40 to-white dark:from-amber-950/30 dark:to-slate-900',
@@ -558,15 +563,15 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                         {isUserActive ? (
                                             <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs">
                                                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                                                Tier Aktif
+                                                {t('dashboard.subscription.your_tier', undefined, 'Tier Anda')}
                                             </span>
                                         ) : isSimulated ? (
                                             <span className="inline-flex items-center gap-1 rounded-full bg-teal-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
-                                                🎯 Simulasi
+                                                {t('dashboard.subscription.simulated_badge', undefined, '🎯 Simulasi')}
                                             </span>
                                         ) : tierDiscount > 0 ? (
                                             <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 ring-1 ring-emerald-500/20">
-                                                Hemat {tierDiscount}%
+                                                {t('dashboard.subscription.save_percent', { percent: String(tierDiscount) }, `Hemat ${tierDiscount}%`)}
                                             </span>
                                         ) : null}
                                     </div>
@@ -583,7 +588,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                             {formatNumber(tier.min_vehicles, localeTag)} –{' '}
                                             {tier.max_vehicles >= 100000
                                                 ? t('dashboard.subscription.unlimited', undefined, 'Tanpa batas')
-                                                : `${formatNumber(tier.max_vehicles, localeTag)} Unit`}
+                                                : `${formatNumber(tier.max_vehicles, localeTag)} ${t('dashboard.subscription.unit', undefined, 'Unit')}`}
                                         </span>
                                     </div>
                                 </div>
@@ -591,14 +596,14 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                 {/* Price Section */}
                                 <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800/80">
                                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Tarif per Kendaraan
+                                        {t('dashboard.subscription.rate_per_vehicle', undefined, 'Tarif per Kendaraan')}
                                     </p>
                                     <div className="mt-1 flex items-baseline gap-1">
                                         <span className="text-xl sm:text-2xl font-black tabular-nums text-slate-900 dark:text-white">
                                             {formatMoney(tier.price_per_vehicle, subscription.currency_symbol, localeTag)}
                                         </span>
                                         <span className="text-xs font-semibold text-slate-400">
-                                            / unit / bln
+                                            {t('dashboard.subscription.per_vehicle_per_month', undefined, '/ unit / bln')}
                                         </span>
                                     </div>
 
@@ -606,10 +611,10 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                                     <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                         {billingPeriod === 'annual' ? (
                                             <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                                                {formatMoney(tier.price_per_vehicle * 0.8, subscription.currency_symbol, localeTag)} / bln (bayar tahunan)
+                                                {t('dashboard.subscription.annual_equivalent_note', { price: formatMoney(tier.price_per_vehicle * 0.8, subscription.currency_symbol, localeTag) }, `${formatMoney(tier.price_per_vehicle * 0.8, subscription.currency_symbol, localeTag)} / bln (bayar tahunan)`)}
                                             </span>
                                         ) : (
-                                            <span>Semua modul & fitur aktif</span>
+                                            <span>{t('dashboard.subscription.all_modules_active', undefined, 'Semua modul & fitur aktif')}</span>
                                         )}
                                     </p>
                                 </div>
@@ -624,7 +629,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                 <div className="flex items-center gap-2">
                     <span className="text-sm">🛡️</span>
                     <span>
-                        Tanpa biaya lisensi tersembunyi. Skema Pay-As-You-Go berlaku fleksibel per unit aktif.
+                        {t('dashboard.subscription.transparency_note', undefined, 'Tanpa biaya lisensi tersembunyi. Skema Pay-As-You-Go berlaku fleksibel per unit aktif.')}
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -632,7 +637,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                         href={route('module.subscription.index')}
                         className="font-bold text-indigo-600 hover:text-indigo-700 hover:underline dark:text-indigo-400"
                     >
-                        Lihat Rincian Billing & Langganan →
+                        {t('dashboard.subscription.view_billing', undefined, 'Lihat Rincian Billing & Langganan →')}
                     </Link>
                 </div>
             </div>
