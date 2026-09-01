@@ -15,11 +15,9 @@ class DynamicMobileThrottle extends ThrottleRequests
      * Handle an incoming request.
      *
      * @param  Request  $request
-     * @param  Closure  $next
      * @param  int|string  $maxAttempts
      * @param  float|int  $decayMinutes
      * @param  string  $prefix
-     * @return Response
      *
      * @throws ThrottleRequestsException
      */
@@ -32,6 +30,9 @@ class DynamicMobileThrottle extends ThrottleRequests
         if (! $enabled) {
             return $next($request);
         }
+
+        // Distinct prefix per limit configuration to prevent collision on nested groups
+        $prefix = $prefix !== '' ? $prefix : "mobile_{$maxAttempts}_{$decayMinutes}";
 
         return parent::handle($request, $next, $maxAttempts, $decayMinutes, $prefix);
     }

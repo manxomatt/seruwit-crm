@@ -58,6 +58,7 @@ class Setting extends Model
             'rental.public_mask_plates',
             'rental.calendar_click_to_book',
             'rental.document_templates',
+            'rental.mobile_rate_limiting_enabled',
             'maintenance.alert_km_before',
             'maintenance.alert_days_before',
             'maintenance.auto_create_wo',

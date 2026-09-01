@@ -23,6 +23,7 @@
         <env name="APP_URL" value="http://localhost"/>
         <!-- Keep the whole suite past the first-run installer gate; installer tests override this per-test. -->
         <env name="APP_INSTALLED" value="true"/>
+        <env name="CENTRAL_SERVES_APP" value="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

@@ -150,4 +150,68 @@ class VehicleCapacityActivationTest extends TestCase
         $vehicle->refresh();
         $this->assertFalse($vehicle->auto_renew);
     }
+
+    public function test_registration_in_per_vehicle_trial_mode_starts_trial_without_consuming_credit(): void
+    {
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_CAPACITY_BUSINESS_MODEL, \App\Models\PlatformSetting::MODEL_PER_VEHICLE_TRIAL);
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_VEHICLE_TRIAL_DURATION_DAYS, 30);
+
+        $initialCredits = $this->tenant->unit_capacity_credits;
+
+        $response = $this->actingAs($this->user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Toyota Avanza 1.5 G',
+            'plate_number' => 'B 1234 TR',
+            'type' => 'car',
+            'fuel_type' => 'petrol',
+            'status' => Vehicle::STATUS_ACTIVE,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $vehicle = Vehicle::where('plate_number', 'B 1234 TR')->first();
+        $this->assertNotNull($vehicle);
+        $this->assertSame(Vehicle::STATUS_ACTIVE, $vehicle->status);
+        $this->assertTrue($vehicle->is_trial);
+        $this->assertNotNull($vehicle->active_until);
+        $this->assertNotNull($vehicle->trial_ends_at);
+
+        // Tenant credits should remain untouched
+        $this->tenant->refresh();
+        $this->assertSame($initialCredits, $this->tenant->unit_capacity_credits);
+    }
+
+    public function test_renewal_converts_trial_vehicle_to_paid_and_consumes_credit(): void
+    {
+        $vehicle = Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'is_trial' => true,
+            'trial_ends_at' => Carbon::now()->addDays(5),
+            'active_until' => Carbon::now()->addDays(5),
+        ]);
+
+        $service = app(VehicleCapacityService::class);
+        $result = $service->renew($vehicle);
+
+        $this->assertTrue($result['success']);
+        $vehicle->refresh();
+
+        $this->assertSame(Vehicle::STATUS_ACTIVE, $vehicle->status);
+        $this->assertFalse($vehicle->is_trial);
+        $this->assertSame(2, $result['new_balance']);
+    }
+
+    public function test_anti_abuse_prevents_duplicate_plate_from_getting_second_trial(): void
+    {
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_CAPACITY_BUSINESS_MODEL, \App\Models\PlatformSetting::MODEL_PER_VEHICLE_TRIAL);
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_PREVENT_DUPLICATE_PLATE_TRIAL, '1');
+
+        $service = app(VehicleCapacityService::class);
+        $this->assertTrue($service->canClaimTrial('B 9999 XYZ'));
+
+        $service->recordTrialFingerprint('B 9999 XYZ');
+
+        $this->assertFalse($service->canClaimTrial('b-9999-xyz'));
+        $this->assertFalse($service->canClaimTrial('B9999XYZ'));
+    }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Modules\Rental;
 
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Modules\Rental\Support\RentalGeneralSettings;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -18,6 +19,9 @@ class MobileApiRateLimitingSettingTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         $this->setUpRoles();
+
+        Cache::flush();
+        config(['app.central_serves_app' => true]);
 
         Setting::query()->updateOrCreate(
             ['key' => 'rental.passenger_booking_enabled'],

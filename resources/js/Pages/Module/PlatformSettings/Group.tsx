@@ -535,14 +535,14 @@ export default function Group({
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                            Per-Vehicle Free Trial
+                                                            {t('settings.platform.capacity.model_trial_title', undefined, 'Per-Vehicle Free Trial')}
                                                         </span>
                                                         <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                                            Rekomendasi PLG
+                                                            {t('settings.platform.capacity.model_trial_badge', undefined, 'Rekomendasi PLG')}
                                                         </span>
                                                     </div>
                                                     <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                                                        Pendaftaran armada bebas kuota. Setiap kendaraan baru otomatis mendapat masa uji coba 30 hari gratis sebelum wajib diperpanjang/dibayar.
+                                                        {t('settings.platform.capacity.model_trial_desc', undefined, 'Pendaftaran armada bebas kuota. Setiap kendaraan baru otomatis mendapat masa uji coba 30 hari gratis sebelum wajib diperpanjang/dibayar.')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -564,14 +564,14 @@ export default function Group({
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                            Tenant Quota & Upfront Credits
+                                                            {t('settings.platform.capacity.model_quota_title', undefined, 'Tenant Quota & Upfront Credits')}
                                                         </span>
                                                         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                            Tradisional
+                                                            {t('settings.platform.capacity.model_quota_badge', undefined, 'Tradisional')}
                                                         </span>
                                                     </div>
                                                     <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                                                        Kendaraan dibatasi oleh kuota paket langganan (max_vehicles) dan wajib memiliki saldo kredit kapasitas sebelum unit dapat diaktifkan.
+                                                        {t('settings.platform.capacity.model_quota_desc', undefined, 'Kendaraan dibatasi oleh kuota paket langganan (max_vehicles) dan wajib memiliki saldo kredit kapasitas sebelum unit dapat diaktifkan.')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -589,7 +589,7 @@ export default function Group({
                                 <div className="rounded-2xl border border-indigo-100 bg-indigo-50/30 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20 space-y-4">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
-                                            ⚙️ Parameter Uji Coba Kendaraan
+                                            ⚙️ {t('settings.platform.capacity.trial_params_title', undefined, 'Parameter Uji Coba Kendaraan')}
                                         </span>
                                     </div>
 
@@ -598,7 +598,7 @@ export default function Group({
                                             <div>
                                                 <InputLabel
                                                     htmlFor="capacity_vehicle_trial_duration_days"
-                                                    value="Durasi Free Trial per Armada (Hari)"
+                                                    value={t('settings.platform.capacity.trial_duration_label', undefined, 'Durasi Free Trial per Armada (Hari)')}
                                                     className="!text-xs !font-bold"
                                                 />
                                                 <div className="mt-1.5 flex items-center gap-2">
@@ -611,11 +611,11 @@ export default function Group({
                                                         required
                                                     />
                                                     <span className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
-                                                        Hari
+                                                        {t('settings.platform.capacity.days_suffix', undefined, 'Hari')}
                                                     </span>
                                                 </div>
                                                 <p className="mt-1 text-[11px] text-slate-500">
-                                                    Masa aktif gratis saat pertama kali kendaraan didaftarkan oleh tenant.
+                                                    {t('settings.platform.capacity.trial_duration_desc', undefined, 'Masa aktif gratis saat pertama kali kendaraan didaftarkan oleh tenant.')}
                                                 </p>
                                                 <InputError
                                                     message={(errors as Record<string, string>)[`settings.${trialDurationDaysIndex}.value`]}
@@ -627,7 +627,7 @@ export default function Group({
                                         {preventDuplicatePlateIndex >= 0 && (
                                             <div>
                                                 <InputLabel
-                                                    value="Proteksi Anti-Abuse Pelat Nomor"
+                                                    value={t('settings.platform.capacity.anti_abuse_title', undefined, 'Proteksi Anti-Abuse Pelat Nomor')}
                                                     className="!text-xs !font-bold"
                                                 />
                                                 <div
@@ -636,10 +636,10 @@ export default function Group({
                                                 >
                                                     <div>
                                                         <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                            Cegah Duplikasi Trial Pelat Nomor
+                                                            {t('settings.platform.capacity.anti_abuse_label', undefined, 'Cegah Duplikasi Trial Pelat Nomor')}
                                                         </span>
                                                         <p className="text-[10px] text-slate-500">
-                                                            Pelat nomor yang sama tidak bisa di-reset trialnya jika dihapus lalu didaftarkan ulang.
+                                                            {t('settings.platform.capacity.anti_abuse_desc', undefined, 'Pelat nomor yang sama tidak bisa di-reset trialnya jika dihapus lalu didaftarkan ulang.')}
                                                         </p>
                                                     </div>
                                                     <div
