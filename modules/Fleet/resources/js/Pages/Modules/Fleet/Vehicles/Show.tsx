@@ -14,6 +14,7 @@ import { formatDate } from '@/utils/date';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState, type ReactNode } from 'react';
 import FleetNav from '../../../../FleetNav';
+import VehicleCheckoutModal from '../../../../Components/VehicleCheckoutModal';
 
 interface MaintenanceLog {
     id: number;
@@ -229,6 +230,7 @@ export default function Show({
 
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     const [aiDiagnosis, setAiDiagnosis] = useState<{
         health_score: number;
         status: string;
@@ -566,6 +568,17 @@ export default function Show({
                                     <span>🎁</span>
                                     <span>Masa Uji Coba Gratis Aktif</span>
                                 </div>
+                            ) : is_trial_mode ? (
+                                can.update && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCheckoutModal(true)}
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-95"
+                                    >
+                                        <span>⚡</span>
+                                        <span>{vehicle.status === 'active' ? 'Perpanjang Masa Aktif' : 'Aktifkan Masa Operasional'}</span>
+                                    </button>
+                                )
                             ) : (
                                 <div className="flex flex-wrap items-center gap-3">
                                     <label className="inline-flex items-center gap-2 cursor-pointer rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
@@ -1609,6 +1622,12 @@ export default function Show({
                 onConfirm={confirmPendingDelete}
                 processing={processing}
                 message={deleteConfirmMessage()}
+            />
+
+            <VehicleCheckoutModal
+                isOpen={showCheckoutModal}
+                onClose={() => setShowCheckoutModal(false)}
+                vehicles={[vehicle]}
             />
         </DynamicLayout>
     );

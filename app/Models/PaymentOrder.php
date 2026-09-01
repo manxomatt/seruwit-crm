@@ -21,6 +21,8 @@ class PaymentOrder extends Model
 
     const STATUS_CANCELLED = 'cancelled';
 
+    const TYPE_VEHICLE_CHECKOUT = 'vehicle_checkout';
+
     public function getConnectionName(): ?string
     {
         return config('tenancy.database.central_connection');

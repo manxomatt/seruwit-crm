@@ -200,24 +200,29 @@ class PaymentOrderService
             $order->save();
 
             $tenant = Tenant::on($central)->whereKey($order->tenant_id)->firstOrFail();
-            $plan = Plan::on($central)->findOrFail($order->plan_id);
+            $plan = $order->plan_id ? Plan::on($central)->find($order->plan_id) : null;
 
             $subscriptionService = app(SubscriptionService::class);
-            if ($order->type === 'upgrade') {
+            if ($order->type === PaymentOrder::TYPE_VEHICLE_CHECKOUT) {
+                app(\Modules\Fleet\Support\VehicleCheckoutService::class)->confirmCheckoutOrder($order, (string) $admin->id);
+                $subscription = null;
+            } elseif ($order->type === 'upgrade') {
                 $subscription = $subscriptionService->confirmUpgrade($order);
             } else {
                 $isRenewal = in_array($order->type, ['renew', 'renewal'], true);
-                $subscription = $subscriptionService->activate(
+                $subscription = $plan ? $subscriptionService->activate(
                     $tenant,
                     $plan,
                     $isRenewal,
                     $order->billing_interval ?? 'month',
                     (int) $order->subscribed_vehicles
-                );
+                ) : null;
             }
 
-            $order->subscription_id = $subscription->id;
-            $order->save();
+            if ($subscription) {
+                $order->subscription_id = $subscription->id;
+                $order->save();
+            }
 
             $tenant->load('users');
             foreach ($tenant->users as $owner) {

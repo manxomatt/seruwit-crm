@@ -14,6 +14,7 @@ use Modules\Fleet\Http\Controllers\FleetDashboardController;
 use Modules\Fleet\Http\Controllers\FuelAnalyticsController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
 use Modules\Fleet\Http\Controllers\VehicleAiGenerateController;
+use Modules\Fleet\Http\Controllers\VehicleCheckoutController;
 use Modules\Fleet\Http\Controllers\VehicleController;
 use Modules\Fleet\Http\Controllers\VehicleMaintenanceLogController;
 use Modules\Fleet\Models\FleetBase;
@@ -122,6 +123,8 @@ class FleetModule implements ModuleContract
         Route::post('/fleet/vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->middleware('permission:fleet,update')->name('fleet.vehicles.activate');
         Route::post('/fleet/vehicles/{vehicle}/renew', [VehicleController::class, 'renew'])->middleware('permission:fleet,update')->name('fleet.vehicles.renew');
         Route::patch('/fleet/vehicles/{vehicle}/auto-renew', [VehicleController::class, 'toggleAutoRenew'])->middleware('permission:fleet,update')->name('fleet.vehicles.auto-renew');
+        Route::post('/fleet/vehicles/checkout/calculate', [VehicleCheckoutController::class, 'calculate'])->middleware('permission:fleet,update')->name('fleet.vehicles.checkout.calculate');
+        Route::post('/fleet/vehicles/checkout', [VehicleCheckoutController::class, 'checkout'])->middleware('permission:fleet,update')->name('fleet.vehicles.checkout');
 
         Route::post('/fleet/vehicles/{vehicle}/maintenance-logs', [VehicleMaintenanceLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.maintenance-logs.store');
         Route::patch('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.maintenance-logs.update');

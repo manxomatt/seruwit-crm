@@ -12,6 +12,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import UpgradeSlotModal from '../../../../Components/UpgradeSlotModal';
+import VehicleCheckoutModal, { type CheckoutVehicleItem } from '../../../../Components/VehicleCheckoutModal';
 import VehicleQuotaGauge from '../../../../Components/VehicleQuotaGauge';
 import FleetNav from '../../../../FleetNav';
 
@@ -267,6 +268,8 @@ export default function Index({
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
     const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+    const [checkoutVehicles, setCheckoutVehicles] = useState<CheckoutVehicleItem[]>([]);
+    const [showCheckoutModal, setShowCheckoutModal] = useState<boolean>(false);
     const [processing, setProcessing] = useState(false);
     const [selected, setSelected] = useState<number[]>([]);
 
@@ -275,6 +278,15 @@ export default function Index({
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
     const somePageSelected = pageIds.some((id) => selected.includes(id));
     const hasActiveFilters = Boolean(filters.search || filters.status || filters.type || filters.home_base_id);
+
+    const expiredOrDueVehicles = useMemo(() => {
+        return vehicles.data.filter((v) => {
+            if (v.is_trial) return false;
+            if (!v.active_until) return true;
+            const diffDays = (new Date(v.active_until).getTime() - Date.now()) / (1000 * 3600 * 24);
+            return diffDays <= 7;
+        });
+    }, [vehicles.data]);
 
     // KPI stats calculations
     const totalVehicles = vehicles.total;
@@ -662,6 +674,38 @@ export default function Index({
                     </div>
                 </div>
 
+                {/* Expired / Due Soon Vehicles Banner */}
+                {isTrialMode && expiredOrDueVehicles.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200/80 bg-amber-50/70 p-4 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-base text-white shadow-xs">
+                                ⚠️
+                            </span>
+                            <div>
+                                <h4 className="text-xs font-black">
+                                    {expiredOrDueVehicles.length} Armada Membutuhkan Perpanjangan Masa Aktif
+                                </h4>
+                                <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                                    Masa uji coba gratis telah selesai atau masa operasional akan segera kedaluwarsa.
+                                </p>
+                            </div>
+                        </div>
+                        {can.update && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCheckoutVehicles(expiredOrDueVehicles);
+                                    setShowCheckoutModal(true);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-amber-600/20 transition hover:bg-amber-700 active:scale-95"
+                            >
+                                <span>⚡</span>
+                                <span>Perpanjang Sekaligus ({expiredOrDueVehicles.length} Unit)</span>
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {/* Floating Batch Action Toolbar */}
                 {canBatch && selected.length > 0 && (
                     <div className="sticky top-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-600/95 backdrop-blur-md px-5 py-3 text-white shadow-xl ring-1 ring-indigo-500/50">
@@ -673,6 +717,20 @@ export default function Index({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
+                            {can.update && isTrialMode && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCheckoutVehicles(vehicles.data.filter((v) => selected.includes(v.id)));
+                                        setShowCheckoutModal(true);
+                                    }}
+                                    disabled={processing}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-black text-white shadow-2xs transition hover:bg-amber-600 disabled:opacity-50 ring-1 ring-white/30"
+                                >
+                                    <span>⚡</span>
+                                    <span>Perpanjang ({selected.length} Unit)</span>
+                                </button>
+                            )}
                             {can.update && (
                                 <>
                                     <button
@@ -1117,7 +1175,22 @@ export default function Index({
                                                                         <span>Lihat Detail</span>
                                                                     </Link>
                                                                 </MenuItem>
-                                                                {can.update && !vehicle.is_trial && vehicle.status !== 'active' && (
+                                                                {can.update && isTrialMode && !vehicle.is_trial && (
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setCheckoutVehicles([vehicle]);
+                                                                                setShowCheckoutModal(true);
+                                                                            }}
+                                                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
+                                                                        >
+                                                                            <span>⚡</span>
+                                                                            <span>Perpanjang Masa Aktif</span>
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {can.update && !isTrialMode && !vehicle.is_trial && vehicle.status !== 'active' && (
                                                                     <MenuItem>
                                                                         <button
                                                                             type="button"
@@ -1129,7 +1202,7 @@ export default function Index({
                                                                         </button>
                                                                     </MenuItem>
                                                                 )}
-                                                                {can.update && !vehicle.is_trial && vehicle.status === 'active' && (
+                                                                {can.update && !isTrialMode && !vehicle.is_trial && vehicle.status === 'active' && (
                                                                     <MenuItem>
                                                                         <button
                                                                             type="button"
@@ -1239,6 +1312,12 @@ export default function Index({
                         currentUsed={quota.current || 0}
                     />
                 )}
+
+                <VehicleCheckoutModal
+                    isOpen={showCheckoutModal}
+                    onClose={() => setShowCheckoutModal(false)}
+                    vehicles={checkoutVehicles}
+                />
             </div>
         </DynamicLayout>
     );
