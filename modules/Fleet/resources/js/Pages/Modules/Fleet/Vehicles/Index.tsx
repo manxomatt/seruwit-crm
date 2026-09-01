@@ -1074,7 +1074,7 @@ export default function Index({
                                                                     <span className={`rounded-md px-1.5 py-0.5 font-bold border ${expiry.badgeClass}`}>
                                                                         {expiry.label}
                                                                     </span>
-                                                                    {vehicle.auto_renew && (
+                                                                    {!vehicle.is_trial && vehicle.auto_renew && (
                                                                         <span title="Perpanjangan Otomatis Aktif" className="text-emerald-500 font-bold text-[11px]">
                                                                             🔄
                                                                         </span>
@@ -1117,7 +1117,7 @@ export default function Index({
                                                                         <span>Lihat Detail</span>
                                                                     </Link>
                                                                 </MenuItem>
-                                                                {can.update && vehicle.status !== 'active' && (
+                                                                {can.update && !vehicle.is_trial && vehicle.status !== 'active' && (
                                                                     <MenuItem>
                                                                         <button
                                                                             type="button"
@@ -1129,7 +1129,7 @@ export default function Index({
                                                                         </button>
                                                                     </MenuItem>
                                                                 )}
-                                                                {can.update && vehicle.status === 'active' && (
+                                                                {can.update && !vehicle.is_trial && vehicle.status === 'active' && (
                                                                     <MenuItem>
                                                                         <button
                                                                             type="button"

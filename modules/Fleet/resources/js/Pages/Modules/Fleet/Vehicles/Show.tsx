@@ -549,67 +549,76 @@ export default function Show({
                                             Terakhir Diaktifkan: {formatDate(vehicle.activated_at, localeTag)}
                                         </span>
                                     )}
-                                    <span>
-                                        Saldo Workspace:{' '}
-                                        <strong className="text-indigo-600 dark:text-indigo-400">
-                                            {available_credits ?? 0} Unit
-                                        </strong>
-                                    </span>
+                                    {!vehicle.is_trial && (
+                                        <span>
+                                            Saldo Workspace:{' '}
+                                            <strong className="text-indigo-600 dark:text-indigo-400">
+                                                {available_credits ?? 0} Unit
+                                            </strong>
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Actions & Auto-Renew Toggle */}
-                            <div className="flex flex-wrap items-center gap-3">
-                                <label className="inline-flex items-center gap-2 cursor-pointer rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-                                    <input
-                                        type="checkbox"
-                                        checked={Boolean(vehicle.auto_renew)}
-                                        onChange={(e) =>
-                                            router.patch(
-                                                prefixedRoute('fleet.vehicles.auto-renew', vehicle.id),
-                                                { auto_renew: e.target.checked },
-                                                { preserveScroll: true }
-                                            )
-                                        }
-                                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                    />
-                                    <span>Perpanjangan Otomatis</span>
-                                </label>
+                            {vehicle.is_trial ? (
+                                <div className="inline-flex items-center gap-2 rounded-2xl bg-cyan-100/80 px-3.5 py-2 text-xs font-bold text-cyan-900 dark:bg-cyan-950/60 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 shadow-2xs">
+                                    <span>🎁</span>
+                                    <span>Masa Uji Coba Gratis Aktif</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <label className="inline-flex items-center gap-2 cursor-pointer rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(vehicle.auto_renew)}
+                                            onChange={(e) =>
+                                                router.patch(
+                                                    prefixedRoute('fleet.vehicles.auto-renew', vehicle.id),
+                                                    { auto_renew: e.target.checked },
+                                                    { preserveScroll: true }
+                                                )
+                                            }
+                                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span>Perpanjangan Otomatis</span>
+                                    </label>
 
-                                {can.update && (
-                                    vehicle.status === 'active' ? (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.post(
-                                                    prefixedRoute('fleet.vehicles.renew', vehicle.id),
-                                                    {},
-                                                    { preserveScroll: true }
-                                                )
-                                            }
-                                            className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
-                                        >
-                                            <span>🔄</span>
-                                            <span>Perpanjang 1 Bulan (1 Kredit)</span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.post(
-                                                    prefixedRoute('fleet.vehicles.activate', vehicle.id),
-                                                    {},
-                                                    { preserveScroll: true }
-                                                )
-                                            }
-                                            className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
-                                        >
-                                            <span>⚡</span>
-                                            <span>Aktifkan Kendaraan (1 Kredit)</span>
-                                        </button>
-                                    )
-                                )}
-                            </div>
+                                    {can.update && (
+                                        vehicle.status === 'active' ? (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.post(
+                                                        prefixedRoute('fleet.vehicles.renew', vehicle.id),
+                                                        {},
+                                                        { preserveScroll: true }
+                                                    )
+                                                }
+                                                className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+                                            >
+                                                <span>🔄</span>
+                                                <span>Perpanjang 1 Bulan (1 Kredit)</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.post(
+                                                        prefixedRoute('fleet.vehicles.activate', vehicle.id),
+                                                        {},
+                                                        { preserveScroll: true }
+                                                    )
+                                                }
+                                                className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                            >
+                                                <span>⚡</span>
+                                                <span>Aktifkan Kendaraan (1 Kredit)</span>
+                                            </button>
+                                        )
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
