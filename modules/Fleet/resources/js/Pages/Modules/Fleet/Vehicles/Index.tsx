@@ -229,12 +229,8 @@ const getExpiryInfo = (activeUntil: string | null | undefined) => {
             badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
         };
     }
-    return {
-        label: `Sisa ${diffDays} hari`,
-        isExpired: false,
-        isNearExpiry: false,
-        badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-    };
+    // Jika masih aktif normal (> 3 hari), jangan tampilkan badge sisa hari agar tampilan bersih
+    return null;
 };
 
 function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
