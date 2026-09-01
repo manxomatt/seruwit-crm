@@ -720,9 +720,6 @@ export default function SubscriptionActivate({
                     <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-5xl text-white">
                         {t('subscription.hero_title', undefined, 'Tingkatkan Bisnis dengan Paket Lengkap')}
                     </h1>
-                    <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-300 leading-relaxed">
-                        {t('subscription.hero_subtitle', undefined, 'Pilih paket langganan terbaik untuk mengaktifkan seluruh otomasi rental, travel, armada, kasir POS, dan akuntansi terpadu.')}
-                    </p>
 
                     {/* Billing Period Selector */}
                     {hasAnyAnnual && (
