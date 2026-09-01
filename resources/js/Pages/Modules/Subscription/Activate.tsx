@@ -198,6 +198,7 @@ function PlanCard({
     isPopular?: boolean;
     isCurrentPlan?: boolean;
 }) {
+    const { t } = useTrans();
     const [showAllModules, setShowAllModules] = useState(false);
     const popularCard = plan.is_popular ?? isPopular;
 
@@ -241,7 +242,7 @@ function PlanCard({
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-md whitespace-nowrap">
                         <SparklesIcon className="h-3.5 w-3.5" />
-                        {plan.badge || 'Paling Lengkap & Populer'}
+                        {plan.badge || t('subscription.popular_badge', undefined, 'Paling Lengkap & Populer')}
                     </span>
                 </div>
             )}
@@ -258,7 +259,7 @@ function PlanCard({
                             </span>
                             {isCurrentPlan && (
                                 <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                                    ✓ Paket Aktif
+                                    {t('subscription.plan_active_badge', undefined, '✓ Paket Aktif')}
                                 </span>
                             )}
                         </div>
@@ -283,11 +284,15 @@ function PlanCard({
                 {(plan.limits?.max_vehicles !== undefined || plan.limits?.max_users !== undefined) && (
                     <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-700 bg-slate-100/80 p-2.5 rounded-xl border border-slate-200/60">
                         <span>
-                            🚗 {plan.limits?.max_vehicles ? `Maks. ${plan.limits.max_vehicles} Armada` : 'Unlimited Armada'}
+                            🚗 {plan.limits?.max_vehicles
+                                ? t('subscription.max_vehicles_limit', { count: plan.limits.max_vehicles }, `Maks. ${plan.limits.max_vehicles} Armada`)
+                                : t('subscription.unlimited_vehicles_limit', undefined, 'Unlimited Armada')}
                         </span>
                         <span>•</span>
                         <span>
-                            👥 {plan.limits?.max_users ? `Maks. ${plan.limits.max_users} Pengguna` : 'Unlimited Pengguna'}
+                            👥 {plan.limits?.max_users
+                                ? t('subscription.max_users_limit', { count: plan.limits.max_users }, `Maks. ${plan.limits.max_users} Pengguna`)
+                                : t('subscription.unlimited_users_limit', undefined, 'Unlimited Pengguna')}
                         </span>
                     </div>
                 )}
@@ -301,15 +306,19 @@ function PlanCard({
                         </div>
                     ) : !hasMonthly && !hasAnnual ? (
                         <div className="py-2">
-                            <span className="text-3xl font-black text-slate-900">Gratis</span>
-                            <p className="mt-1 text-xs text-slate-500">Tanpa biaya langganan</p>
+                            <span className="text-3xl font-black text-slate-900">
+                                {t('subscription.free_price', undefined, 'Gratis')}
+                            </span>
+                            <p className="mt-1 text-xs text-slate-500">
+                                {t('subscription.no_subscription_fee', undefined, 'Tanpa biaya langganan')}
+                            </p>
                         </div>
                     ) : (
                         <div>
                             {isAnnual && savingPct !== null && savingPct > 0 && (
                                 <div className="mb-2">
                                     <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                                        Hemat {savingPct}%
+                                        {t('subscription.save_percent', { percent: savingPct }, `Hemat ${savingPct}%`)}
                                     </span>
                                 </div>
                             )}
@@ -342,7 +351,7 @@ function PlanCard({
 
                             {!isAnnual && hasAnnual && savingPct !== null && savingPct > 0 && (
                                 <p className="mt-2.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 rounded-lg px-2.5 py-1.5 border border-emerald-200">
-                                    💡 Hemat {savingPct}% jika bayar tahunan ({fmtCurrency(plan.annual_price, plan.currency)}/thn)
+                                    💡 {t('subscription.save_percent', { percent: savingPct }, `Hemat ${savingPct}%`)} jika bayar tahunan ({fmtCurrency(plan.annual_price, plan.currency)}/thn)
                                 </p>
                             )}
                         </div>
@@ -354,7 +363,7 @@ function PlanCard({
                     <div className="space-y-4">
                         <div>
                             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">
-                                Fitur Utama Paket
+                                {t('subscription.included_features', undefined, 'Fitur Utama Paket')}
                             </span>
                             <ul className="space-y-2.5">
                                 {plan.features_list?.map((feature, fIdx) => (
@@ -402,7 +411,7 @@ function PlanCard({
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                Fitur & Modul ({plan.modules.length})
+                                {t('subscription.included_modules', undefined, 'Fitur & Modul')} ({plan.modules.length})
                             </span>
                             {plan.modules.length > 7 && (
                                 <button
@@ -413,7 +422,9 @@ function PlanCard({
                                     }}
                                     className="text-xs font-bold text-teal-600 hover:text-teal-800"
                                 >
-                                    {showAllModules ? 'Tutup Ringkas' : `+${remainingCount} Lainnya`}
+                                    {showAllModules
+                                        ? t('subscription.show_less_modules', undefined, 'Tutup Ringkas')
+                                        : t('subscription.show_all_modules', { count: remainingCount }, `+${remainingCount} Lainnya`)}
                                 </button>
                             )}
                         </div>
@@ -459,8 +470,12 @@ function PlanCard({
                     }`}
                 >
                     {selected
-                        ? (isCurrentPlan ? '✓ Paket Aktif Saat Ini' : '✓ Paket Terpilih')
-                        : (isCurrentPlan ? 'Paket Aktif Saat Ini' : 'Pilih Paket Ini')}
+                        ? (isCurrentPlan
+                            ? t('subscription.current_plan_btn', undefined, '✓ Paket Aktif Saat Ini')
+                            : t('subscription.plan_selected_badge', undefined, '✓ Paket Terpilih'))
+                        : (isCurrentPlan
+                            ? t('subscription.current_plan_btn', undefined, 'Paket Aktif Saat Ini')
+                            : t('subscription.select_plan_btn', undefined, 'Pilih Paket Ini'))}
                 </button>
             </div>
         </div>
@@ -524,38 +539,38 @@ export default function SubscriptionActivate({
                 return (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200/80 px-2.5 py-1 text-xs font-bold text-amber-800">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        Menunggu Transfer
+                        {t('subscription.awaiting_transfer', undefined, 'Menunggu Transfer')}
                     </span>
                 );
             case 'awaiting_confirmation':
                 return (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200/80 px-2.5 py-1 text-xs font-bold text-blue-800">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        Menunggu Konfirmasi
+                        {t('payment_orders.status_awaiting_confirmation', undefined, 'Menunggu Konfirmasi')}
                     </span>
                 );
             case 'confirmed':
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                        ✓ Berhasil / Aktif
+                        {t('payment_orders.status_confirmed', undefined, '✓ Berhasil / Aktif')}
                     </span>
                 );
             case 'rejected':
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200/80 px-2.5 py-1 text-xs font-bold text-rose-800">
-                        ✕ Ditolak
+                        {t('payment_orders.status_rejected', undefined, '✕ Ditolak')}
                     </span>
                 );
             case 'expired':
                 return (
                     <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                        Kedaluwarsa
+                        {t('payment_orders.status_expired', undefined, 'Kedaluwarsa')}
                     </span>
                 );
             case 'cancelled':
                 return (
                     <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-500 line-through">
-                        Dibatalkan
+                        {t('payment_orders.status_cancelled', undefined, 'Dibatalkan')}
                     </span>
                 );
             default:
@@ -643,26 +658,26 @@ export default function SubscriptionActivate({
 
     const faqs = [
         {
-            q: 'Bagaimana cara pembayaran langganan?',
-            a: 'Pembayaran dilakukan via transfer bank manual ke rekening resmi kami. Setelah memilih paket, sistem akan memberikan nominal tepat beserta 3 digit kode unik untuk verifikasi instan.',
+            q: t('subscription.faqs.0.q', undefined, 'Bagaimana cara pembayaran langganan?'),
+            a: t('subscription.faqs.0.a', undefined, 'Pembayaran dilakukan via transfer bank manual ke rekening resmi kami. Setelah memilih paket, sistem akan memberikan nominal tepat beserta 3 digit kode unik untuk verifikasi instan.'),
         },
         {
-            q: 'Kapan paket saya langsung aktif?',
-            a: 'Setelah Anda mengunggah bukti transfer, tim admin akan memverifikasi dalam waktu 5-15 menit pada jam operasional, dan seluruh modul paket akan aktif otomatis.',
+            q: t('subscription.faqs.1.q', undefined, 'Kapan paket saya langsung aktif?'),
+            a: t('subscription.faqs.1.a', undefined, 'Setelah Anda mengunggah bukti transfer, tim admin akan memverifikasi dalam waktu 5-15 menit pada jam operasional, dan seluruh modul paket akan aktif otomatis.'),
         },
         {
-            q: 'Apakah saya bisa upgrade atau perpanjang paket kapan saja?',
-            a: 'Tentu. Anda dapat berpindah ke paket yang lebih tinggi atau memperpanjang masa aktif workspace kapan saja tanpa kehilangan data bisnis Anda.',
+            q: t('subscription.faqs.2.q', undefined, 'Apakah saya bisa upgrade atau perpanjang paket kapan saja?'),
+            a: t('subscription.faqs.2.a', undefined, 'Tentu. Anda dapat berpindah ke paket yang lebih tinggi atau memperpanjang masa aktif workspace kapan saja tanpa kehilangan data bisnis Anda.'),
         },
         {
-            q: 'Bagaimana jika masa trial saya habis?',
-            a: 'Data workspace Anda tetap aman tersimpan. Namun akses ke modul bisnis akan dijeda hingga Anda mengaktifkan salah satu paket langganan.',
+            q: t('subscription.faqs.3.q', undefined, 'Bagaimana jika masa trial saya habis?'),
+            a: t('subscription.faqs.3.a', undefined, 'Data workspace Anda tetap aman tersimpan. Namun akses ke modul bisnis akan dijeda hingga Anda mengaktifkan salah satu paket langganan.'),
         },
     ];
 
     return (
         <DynamicLayout>
-            <Head title="Langganan & Paket Workspace" />
+            <Head title={t('subscription.page_title', undefined, 'Langganan & Paket Workspace')} />
 
             {/* ── Top Hero ── */}
             <div className="relative overflow-hidden bg-slate-900 py-12 sm:py-16 text-white">
@@ -671,14 +686,14 @@ export default function SubscriptionActivate({
                 <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
                     <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-3.5 py-1 text-xs font-semibold text-teal-300 backdrop-blur-sm">
                         <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
-                        Workspace: <strong className="text-white">{tenant.name}</strong>
+                        {t('subscription.workspace_label', undefined, 'Workspace:')} <strong className="text-white">{tenant.name}</strong>
                     </div>
 
                     <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-5xl text-white">
-                        Tingkatkan Bisnis dengan Paket Lengkap
+                        {t('subscription.hero_title', undefined, 'Tingkatkan Bisnis dengan Paket Lengkap')}
                     </h1>
                     <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-300 leading-relaxed">
-                        Pilih paket langganan terbaik untuk mengaktifkan seluruh otomasi rental, travel, armada, kasir POS, dan akuntansi terpadu.
+                        {t('subscription.hero_subtitle', undefined, 'Pilih paket langganan terbaik untuk mengaktifkan seluruh otomasi rental, travel, armada, kasir POS, dan akuntansi terpadu.')}
                     </p>
 
                     {/* Billing Period Selector */}
@@ -694,7 +709,7 @@ export default function SubscriptionActivate({
                                             : 'text-slate-400 hover:text-white'
                                     }`}
                                 >
-                                    Bayar Bulanan
+                                    {t('subscription.monthly_billing', undefined, 'Bayar Bulanan')}
                                 </button>
                                 <button
                                     type="button"
@@ -705,9 +720,9 @@ export default function SubscriptionActivate({
                                             : 'text-slate-400 hover:text-white'
                                     }`}
                                 >
-                                    Bayar Tahunan
+                                    {t('subscription.annual_billing', undefined, 'Bayar Tahunan')}
                                     <span className="rounded-md bg-emerald-500 px-2 py-0.5 text-[10px] font-black uppercase text-slate-900 shadow">
-                                        Hemat 20%
+                                        {t('subscription.annual_save_badge', undefined, 'Hemat 20%')}
                                     </span>
                                 </button>
                             </div>
@@ -738,20 +753,20 @@ export default function SubscriptionActivate({
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
-                                                Menunggu Transfer
+                                                {t('subscription.awaiting_transfer', undefined, 'Menunggu Transfer')}
                                             </span>
                                             <span className="text-xs text-slate-400 font-mono">
                                                 #{activePaymentOrder.id}
                                             </span>
                                         </div>
                                         <h4 className="mt-1 text-base font-black text-slate-900">
-                                            Pesanan Pembayaran #{activePaymentOrder.id} Sedang Aktif
+                                            {t('subscription.active_payment_order_title', { id: activePaymentOrder.id }, `Pesanan Pembayaran #${activePaymentOrder.id} Sedang Aktif`)}
                                         </h4>
                                         <p className="mt-0.5 text-xs sm:text-sm text-slate-600">
                                             {activePaymentOrder.subscribed_vehicles ? (
-                                                <>Kapasitas: <strong className="text-slate-900">{activePaymentOrder.subscribed_vehicles} Unit {activePaymentOrder.type === 'upgrade' && activePaymentOrder.upgrade_from_vehicles ? `(+${Math.max(1, activePaymentOrder.subscribed_vehicles - activePaymentOrder.upgrade_from_vehicles)} upgrade)` : ''}</strong> · </>
+                                                <>{t('subscription.capacity_label', { count: activePaymentOrder.subscribed_vehicles }, `Kapasitas: ${activePaymentOrder.subscribed_vehicles} Unit`)} {activePaymentOrder.type === 'upgrade' && activePaymentOrder.upgrade_from_vehicles ? t('subscription.upgrade_info', { count: Math.max(1, activePaymentOrder.subscribed_vehicles - activePaymentOrder.upgrade_from_vehicles) }, `(+${Math.max(1, activePaymentOrder.subscribed_vehicles - activePaymentOrder.upgrade_from_vehicles)} upgrade)`) : ''} · </>
                                             ) : null}
-                                            Total: <strong className="text-slate-900">{fmtCurrency(activePaymentOrder.total_amount, 'IDR')}</strong> (kode unik <strong className="text-amber-700">+{activePaymentOrder.unique_code}</strong>) · batas waktu <strong className="text-slate-900">{paymentOrderDaysLeft} hari lagi</strong>
+                                            {t('subscription.total_label', undefined, 'Total:')} <strong className="text-slate-900">{fmtCurrency(activePaymentOrder.total_amount, 'IDR')}</strong> ({t('subscription.unique_code_label', undefined, 'kode unik')} <strong className="text-amber-700">+{activePaymentOrder.unique_code}</strong>) · <strong className="text-slate-900">{t('subscription.days_left', { count: paymentOrderDaysLeft }, `${paymentOrderDaysLeft} hari lagi`)}</strong>
                                         </p>
                                     </div>
                                 </div>
@@ -761,13 +776,13 @@ export default function SubscriptionActivate({
                                         onClick={() => handleOpenCancelModal(activePaymentOrder.id)}
                                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-rose-700 hover:bg-rose-50 hover:border-rose-300 transition shadow-2xs active:scale-95"
                                     >
-                                        ✕ Batalkan Transaksi
+                                        {t('subscription.cancel_transaction_btn', undefined, '✕ Batalkan Transaksi')}
                                     </button>
                                     <Link
                                         href={route('module.subscription.payment', activePaymentOrder.id)}
                                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-amber-700 transition active:scale-95"
                                     >
-                                        Lanjutkan Pembayaran →
+                                        {t('subscription.continue_payment_btn', undefined, 'Lanjutkan Pembayaran →')}
                                     </Link>
                                 </div>
                             </div>
@@ -783,13 +798,15 @@ export default function SubscriptionActivate({
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h4 className="font-bold text-teal-950">Masa Trial Aktif: {activePlan?.name || 'Trial'}</h4>
+                                        <h4 className="font-bold text-teal-950">
+                                            {t('subscription.trial_active_title', { plan: activePlan?.name || 'Trial' }, `Masa Trial Aktif: ${activePlan?.name || 'Trial'}`)}
+                                        </h4>
                                         <span className="rounded-full bg-teal-200/80 px-2.5 py-0.5 text-xs font-bold text-teal-900">
-                                            {trialDaysLeft} Hari Tersisa
+                                            {t('subscription.trial_days_remaining', { count: trialDaysLeft }, `${trialDaysLeft} Hari Tersisa`)}
                                         </span>
                                     </div>
                                     <p className="mt-1 text-xs sm:text-sm text-teal-800">
-                                        Berakhir pada <strong>{trialEndsAt ? dateLocale(trialEndsAt) : ''}</strong>. Anda dapat mengaktifkan atau upgrade paket di bawah.
+                                        {t('subscription.trial_ends_desc', { date: trialEndsAt ? dateLocale(trialEndsAt) : '' }, `Berakhir pada ${trialEndsAt ? dateLocale(trialEndsAt) : ''}. Anda dapat mengaktifkan atau upgrade paket di bawah.`)}
                                     </p>
                                 </div>
                             </div>
@@ -805,13 +822,15 @@ export default function SubscriptionActivate({
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h4 className="font-bold text-emerald-950">Paket Aktif: Free Lifetime</h4>
+                                        <h4 className="font-bold text-emerald-950">
+                                            {t('subscription.free_lifetime_title', undefined, 'Paket Aktif: Free Lifetime')}
+                                        </h4>
                                         <span className="rounded-full bg-emerald-200/80 px-2.5 py-0.5 text-xs font-bold text-emerald-900">
-                                            Status: Aktif Selamanya
+                                            {t('subscription.free_lifetime_status', undefined, 'Status: Aktif Selamanya')}
                                         </span>
                                     </div>
                                     <p className="mt-1 text-xs sm:text-sm text-emerald-800">
-                                        Workspace Anda aktif pada paket gratis selamanya (kapasitas maks. 2 kendaraan). Anda dapat upgrade ke paket berbayar kapan saja di bawah.
+                                        {t('subscription.free_lifetime_desc', undefined, 'Workspace Anda aktif pada paket gratis selamanya (kapasitas maks. 2 kendaraan). Anda dapat upgrade ke paket berbayar kapan saja di bawah.')}
                                     </p>
                                 </div>
                             </div>
@@ -827,13 +846,15 @@ export default function SubscriptionActivate({
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h4 className="font-bold text-emerald-950">Paket Aktif: {subscription.plan}</h4>
+                                        <h4 className="font-bold text-emerald-950">
+                                            {t('subscription.active_plan_title', { plan: subscription.plan }, `Paket Aktif: ${subscription.plan}`)}
+                                        </h4>
                                         <span className="rounded-full bg-emerald-200/80 px-2.5 py-0.5 text-xs font-bold text-emerald-900">
-                                            Status: Aktif
+                                            {t('subscription.active_plan_status', undefined, 'Status: Aktif')}
                                         </span>
                                     </div>
                                     <p className="mt-1 text-xs sm:text-sm text-emerald-800">
-                                        Masa berlaku sampai <strong>{subscription.ends_at ? dateLocale(subscription.ends_at) : 'Tidak terbatas'}</strong>. Anda dapat memperpanjang atau upgrade paket di bawah.
+                                        {t('subscription.active_plan_ends_desc', { date: subscription.ends_at ? dateLocale(subscription.ends_at) : 'Tidak terbatas' }, `Masa berlaku sampai ${subscription.ends_at ? dateLocale(subscription.ends_at) : 'Tidak terbatas'}. Anda dapat memperpanjang atau upgrade paket di bawah.`)}
                                     </p>
                                 </div>
                             </div>
@@ -851,16 +872,16 @@ export default function SubscriptionActivate({
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                                        Kapasitas Armada & Status Uji Coba Unit
+                                        {t('subscription.fleet_capacity_hub_title', undefined, 'Kapasitas Armada & Status Uji Coba Unit')}
                                     </h3>
                                     <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                        {is_trial_mode ? 'Mode Per-Vehicle Trial' : 'Mode Kuota Tenant'}
+                                        {is_trial_mode ? t('subscription.mode_per_vehicle_trial', undefined, 'Mode Per-Vehicle Trial') : t('subscription.mode_tenant_quota', undefined, 'Mode Kuota Tenant')}
                                     </span>
                                 </div>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {is_trial_mode
-                                        ? 'Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan 30 hari masa trial gratis.'
-                                        : 'Kapasitas armada dibatasi oleh paket langganan dan saldo kredit aktif.'}
+                                        ? t('subscription.fleet_capacity_desc_trial', undefined, 'Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan 30 hari masa trial gratis.')
+                                        : t('subscription.fleet_capacity_desc_quota', undefined, 'Kapasitas armada dibatasi oleh paket langganan dan saldo kredit aktif.')}
                                 </p>
                             </div>
                         </div>
@@ -870,7 +891,7 @@ export default function SubscriptionActivate({
                                 href={route('module.fleet.vehicles.index')}
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200"
                             >
-                                Kelola Armada ({fleet_summary.total} Unit) →
+                                {t('subscription.manage_fleet_btn', { total: fleet_summary.total }, `Kelola Armada (${fleet_summary.total} Unit) →`)}
                             </Link>
                         </div>
                     </div>
@@ -886,11 +907,11 @@ export default function SubscriptionActivate({
                                             ⚡
                                         </span>
                                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            Saldo Kredit
+                                            {t('subscription.credit_balance_title', undefined, 'Saldo Kredit')}
                                         </span>
                                     </div>
                                     <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                        Lifetime
+                                        {t('subscription.lifetime_badge', undefined, 'Lifetime')}
                                     </span>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
@@ -898,12 +919,12 @@ export default function SubscriptionActivate({
                                         {available_credits}
                                     </span>
                                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                        Unit Kredit
+                                        {t('subscription.unit_credits', undefined, 'Unit Kredit')}
                                     </span>
                                 </div>
                             </div>
                             <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                Saldo aktif untuk aktivasi atau perpanjangan armada.
+                                {t('subscription.credit_balance_desc', undefined, 'Saldo aktif untuk aktivasi atau perpanjangan armada.')}
                             </p>
                         </div>
 
@@ -916,11 +937,11 @@ export default function SubscriptionActivate({
                                             🎁
                                         </span>
                                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            Trial Aktif
+                                            {t('subscription.active_trial_title', undefined, 'Trial Aktif')}
                                         </span>
                                     </div>
                                     <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                                        Gratis 30 Hari
+                                        {t('subscription.trial_badge', undefined, 'Gratis 30 Hari')}
                                     </span>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
@@ -928,12 +949,12 @@ export default function SubscriptionActivate({
                                         {fleet_summary.active_trial}
                                     </span>
                                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                        Armada
+                                        {t('subscription.fleet_units', undefined, 'Armada')}
                                     </span>
                                 </div>
                             </div>
                             <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                Unit armada baru dalam masa uji coba gratis.
+                                {t('subscription.active_trial_desc', undefined, 'Unit armada baru dalam masa uji coba gratis.')}
                             </p>
                         </div>
 
@@ -946,11 +967,11 @@ export default function SubscriptionActivate({
                                             🟢
                                         </span>
                                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            Aktif Berbayar
+                                            {t('subscription.active_paid_title', undefined, 'Aktif Berbayar')}
                                         </span>
                                     </div>
                                     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                        Produksi
+                                        {t('subscription.production_badge', undefined, 'Produksi')}
                                     </span>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
@@ -958,12 +979,12 @@ export default function SubscriptionActivate({
                                         {fleet_summary.active_paid}
                                     </span>
                                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                        Armada
+                                        {t('subscription.fleet_units', undefined, 'Armada')}
                                     </span>
                                 </div>
                             </div>
                             <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                Unit aktif beroperasi penuh dengan masa aktif valid.
+                                {t('subscription.active_paid_desc', undefined, 'Unit aktif beroperasi penuh dengan masa aktif valid.')}
                             </p>
                         </div>
 
@@ -976,11 +997,11 @@ export default function SubscriptionActivate({
                                             ⚠️
                                         </span>
                                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                            Perlu Perhatian
+                                            {t('subscription.attention_required_title', undefined, 'Perlu Perhatian')}
                                         </span>
                                     </div>
                                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                                        Jatuh Tempo
+                                        {t('subscription.due_badge', undefined, 'Jatuh Tempo')}
                                     </span>
                                 </div>
                                 <div className="mt-4 flex items-baseline gap-2">
@@ -988,12 +1009,12 @@ export default function SubscriptionActivate({
                                         {fleet_summary.expiring_soon + fleet_summary.inactive}
                                     </span>
                                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                        Armada
+                                        {t('subscription.fleet_units', undefined, 'Armada')}
                                     </span>
                                 </div>
                             </div>
                             <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                {fleet_summary.expiring_soon} jatuh tempo &le; 7 hari, {fleet_summary.inactive} unit non-aktif.
+                                {t('subscription.attention_required_desc', { expiring: fleet_summary.expiring_soon, inactive: fleet_summary.inactive }, `${fleet_summary.expiring_soon} jatuh tempo ≤ 7 hari, ${fleet_summary.inactive} unit non-aktif.`)}
                             </p>
                         </div>
                     </div>
@@ -1003,10 +1024,10 @@ export default function SubscriptionActivate({
                         <div className="mt-6 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-800/40">
                             <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                                    🚨 Unit Mendekati Jatuh Tempo atau Non-Aktif
+                                    {t('subscription.expiring_list_title', undefined, '🚨 Unit Mendekati Jatuh Tempo atau Non-Aktif')}
                                 </h4>
                                 <span className="text-[11px] text-slate-500">
-                                    Perpanjang unit agar tidak terputus dari jadwal operasional
+                                    {t('subscription.expiring_list_desc', undefined, 'Perpanjang unit agar tidak terputus dari jadwal operasional')}
                                 </span>
                             </div>
 
@@ -1027,20 +1048,20 @@ export default function SubscriptionActivate({
                                                     </span>
                                                     {v.is_trial ? (
                                                         <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                                                            Trial
+                                                            {t('subscription.status_trial', undefined, 'Trial')}
                                                         </span>
                                                     ) : v.status === 'active' ? (
                                                         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                                            Aktif
+                                                            {t('subscription.status_active', undefined, 'Aktif')}
                                                         </span>
                                                     ) : (
                                                         <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-black text-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                                                            Non-Aktif
+                                                            {t('subscription.status_inactive', undefined, 'Non-Aktif')}
                                                         </span>
                                                     )}
                                                 </div>
                                                 <p className="text-[11px] text-slate-500">
-                                                    {v.active_until ? `Masa aktif s/d ${dateLocale(v.active_until)}` : 'Belum pernah diaktifkan'} · Auto-Renew: {v.auto_renew ? 'Aktif' : 'Mati'}
+                                                    {v.active_until ? t('subscription.active_until_label', { date: dateLocale(v.active_until) }, `Masa aktif s/d ${dateLocale(v.active_until)}`) : t('subscription.never_activated_label', undefined, 'Belum pernah diaktifkan')} · {t('subscription.auto_renew_label', { status: v.auto_renew ? 'Aktif' : 'Mati' }, `Auto-Renew: ${v.auto_renew ? 'Aktif' : 'Mati'}`)}
                                                 </p>
                                             </div>
                                         </div>
@@ -1050,7 +1071,7 @@ export default function SubscriptionActivate({
                                                 href={route('module.fleet.vehicles.show', v.id)}
                                                 className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-indigo-700 transition"
                                             >
-                                                Perpanjang / Kelola Unit →
+                                                {t('subscription.manage_unit_btn', undefined, 'Perpanjang / Kelola Unit →')}
                                             </Link>
                                         </div>
                                     </div>
@@ -1126,12 +1147,12 @@ export default function SubscriptionActivate({
                                         {t('subscription.tier_pricing_scheme', undefined, 'Skema Harga Tiering')}
                                     </label>
                                     <div className="divide-y divide-slate-200 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-                                        {tiers.map((t) => {
-                                            const isActive = data.subscribed_vehicles >= t.min_vehicles && data.subscribed_vehicles <= t.max_vehicles;
+                                        {tiers.map((tItem) => {
+                                            const isActive = data.subscribed_vehicles >= tItem.min_vehicles && data.subscribed_vehicles <= tItem.max_vehicles;
                                             return (
-                                                <div key={t.id} className={`flex justify-between items-center p-3.5 text-sm ${isActive ? 'bg-teal-50/75 font-bold text-teal-950' : 'text-slate-600'}`}>
-                                                    <span>{t.min_vehicles} - {t.max_vehicles === 999999 ? '∞' : t.max_vehicles} Unit</span>
-                                                    <span>{fmtCurrency(t.price_per_vehicle, 'IDR')}/unit/bln</span>
+                                                <div key={tItem.id} className={`flex justify-between items-center p-3.5 text-sm ${isActive ? 'bg-teal-50/75 font-bold text-teal-950' : 'text-slate-600'}`}>
+                                                    <span>{tItem.min_vehicles} - {tItem.max_vehicles === 999999 ? '∞' : tItem.max_vehicles} Unit</span>
+                                                    <span>{fmtCurrency(tItem.price_per_vehicle, 'IDR')}/unit/bln</span>
                                                 </div>
                                             );
                                         })}
@@ -1153,16 +1174,20 @@ export default function SubscriptionActivate({
                             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
                                 <div>
                                     <span className="text-[11px] font-extrabold uppercase tracking-widest text-teal-600">
-                                        {isQuotaChanged ? 'Upgrade Kuota Armada' : isPlanDifferent ? 'Upgrade / Ganti Paket' : 'Perpanjangan Paket'}
+                                        {isQuotaChanged
+                                            ? t('subscription.checkout_upgrade_quota', undefined, 'Upgrade Kuota Armada')
+                                            : isPlanDifferent
+                                              ? t('subscription.checkout_upgrade_plan', undefined, 'Upgrade / Ganti Paket')
+                                              : t('subscription.checkout_renewal_plan', undefined, 'Perpanjangan Paket')}
                                     </span>
                                     <h4 className="mt-0.5 text-xl font-black text-slate-900">
-                                        Paket {selectedPlan.name}{' '}
+                                        {t('subscription.checkout_plan_label', { plan: selectedPlan.name }, `Paket ${selectedPlan.name}`)}{' '}
                                         <span className="text-sm font-semibold text-slate-500">
-                                            ({billingInterval === 'annual' ? 'Tahunan' : 'Bulanan'})
+                                            ({billingInterval === 'annual' ? t('subscription.annual', undefined, 'Tahunan') : t('subscription.monthly', undefined, 'Bulanan')})
                                         </span>
                                     </h4>
                                     <p className="mt-0.5 text-sm font-bold text-teal-700">
-                                        Total Tagihan:{' '}
+                                        {t('subscription.total_payment_label', undefined, 'Total Tagihan:')}{' '}
                                         {fmtCurrency(totalAmountValue, selectedPlan.currency)}
                                     </p>
                                 </div>
@@ -1176,14 +1201,14 @@ export default function SubscriptionActivate({
                                         {processing ? (
                                             <>
                                                 <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                                                Memproses...
+                                                {t('subscription.checkout_processing', undefined, 'Memproses...')}
                                             </>
                                         ) : (
                                             isQuotaChanged
-                                                ? 'Upgrade Kuota →'
+                                                ? t('subscription.checkout_upgrade_quota', undefined, 'Upgrade Kuota →')
                                                 : isPlanDifferent
-                                                  ? `Upgrade ke ${selectedPlan.name} →`
-                                                  : 'Lanjutkan ke Pembayaran →'
+                                                  ? `${t('subscription.checkout_upgrade_plan', undefined, 'Upgrade ke')} ${selectedPlan.name} →`
+                                                  : t('subscription.continue_payment_btn', undefined, 'Lanjutkan ke Pembayaran →')
                                         )}
                                     </button>
                                 </div>
@@ -1309,8 +1334,12 @@ export default function SubscriptionActivate({
                             <ShieldCheckIcon className="h-5 w-5" />
                         </div>
                         <div>
-                            <h5 className="text-xs font-bold text-slate-900">Database Terisolasi</h5>
-                            <p className="mt-0.5 text-[11px] text-slate-500">Data tenant aman & mandiri</p>
+                            <h5 className="text-xs font-bold text-slate-900">
+                                {t('subscription.guarantee_isolated_db', undefined, 'Database Terisolasi')}
+                            </h5>
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                                {t('subscription.guarantee_isolated_db_desc', undefined, 'Data tenant aman & mandiri')}
+                            </p>
                         </div>
                     </div>
 
@@ -1319,8 +1348,12 @@ export default function SubscriptionActivate({
                             <LightningIcon className="h-5 w-5" />
                         </div>
                         <div>
-                            <h5 className="text-xs font-bold text-slate-900">Aktivasi Cepat</h5>
-                            <p className="mt-0.5 text-[11px] text-slate-500">Verifikasi instan via kode unik</p>
+                            <h5 className="text-xs font-bold text-slate-900">
+                                {t('subscription.guarantee_instant_act', undefined, 'Aktivasi Cepat')}
+                            </h5>
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                                {t('subscription.guarantee_instant_act_desc', undefined, 'Verifikasi instan via kode unik')}
+                            </p>
                         </div>
                     </div>
 
@@ -1329,8 +1362,12 @@ export default function SubscriptionActivate({
                             <SparklesIcon className="h-5 w-5" />
                         </div>
                         <div>
-                            <h5 className="text-xs font-bold text-slate-900">Update Berkala</h5>
-                            <p className="mt-0.5 text-[11px] text-slate-500">Fitur baru tanpa biaya tambahan</p>
+                            <h5 className="text-xs font-bold text-slate-900">
+                                {t('subscription.guarantee_free_updates', undefined, 'Update Berkala')}
+                            </h5>
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                                {t('subscription.guarantee_free_updates_desc', undefined, 'Fitur baru tanpa biaya tambahan')}
+                            </p>
                         </div>
                     </div>
 
@@ -1339,8 +1376,12 @@ export default function SubscriptionActivate({
                             <CheckIcon className="h-5 w-5" />
                         </div>
                         <div>
-                            <h5 className="text-xs font-bold text-slate-900">Bantuan Prioritas</h5>
-                            <p className="mt-0.5 text-[11px] text-slate-500">Support teknis responsif</p>
+                            <h5 className="text-xs font-bold text-slate-900">
+                                {t('subscription.guarantee_priority_support', undefined, 'Bantuan Prioritas')}
+                            </h5>
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                                {t('subscription.guarantee_priority_support_desc', undefined, 'Support teknis responsif')}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1348,8 +1389,12 @@ export default function SubscriptionActivate({
                 {/* ── FAQ Section ── */}
                 <div className="mt-16 mx-auto max-w-3xl">
                     <div className="text-center mb-8">
-                        <h3 className="text-2xl font-bold text-slate-900">Pertanyaan yang Sering Diajukan</h3>
-                        <p className="mt-1 text-sm text-slate-500">Informasi seputar langganan dan proses aktivasi</p>
+                        <h3 className="text-2xl font-bold text-slate-900">
+                            {t('subscription.faq_title', undefined, 'Pertanyaan Umum (FAQ)')}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                            {t('subscription.faq_subtitle', undefined, 'Informasi seputar langganan dan proses aktivasi')}
+                        </p>
                     </div>
 
                     <div className="space-y-3">
@@ -1388,11 +1433,11 @@ export default function SubscriptionActivate({
                 }}
                 onConfirm={handleConfirmCancel}
                 processing={isCancelling}
-                title={`Batalkan Pesanan Pembayaran #${cancellingOrderId || activePaymentOrder?.id}?`}
-                message="Pesanan pembayaran ini akan dibatalkan dan statusnya ditutup. Kode unik transfer akan dilepaskan sehingga Anda dapat memilih paket langganan lain atau membuat pesanan baru kapan saja."
-                confirmText="Ya, Batalkan Transaksi"
-                cancelText="Kembali"
-                processingText="Membatalkan Transaksi…"
+                title={t('subscription.cancel_modal_title', { id: cancellingOrderId || activePaymentOrder?.id }, `Batalkan Pesanan Pembayaran #${cancellingOrderId || activePaymentOrder?.id}?`)}
+                message={t('subscription.cancel_modal_desc', undefined, 'Pesanan pembayaran ini akan dibatalkan dan statusnya ditutup. Kode unik transfer akan dilepaskan sehingga Anda dapat memilih paket langganan lain atau membuat pesanan baru kapan saja.')}
+                confirmText={t('subscription.cancel_confirm_btn', undefined, 'Ya, Batalkan Transaksi')}
+                cancelText={t('subscription.cancel_abort_btn', undefined, 'Kembali')}
+                processingText={t('subscription.cancel_processing', undefined, 'Membatalkan Transaksi…')}
             />
         </DynamicLayout>
     );
