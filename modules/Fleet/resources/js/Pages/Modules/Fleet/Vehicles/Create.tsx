@@ -408,7 +408,7 @@ export default function Create({ bases = [], available_credits = 0, is_trial_mod
                             <InputError message={errors.fuel_type} className="mt-1" />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="tank_capacity_liters" value="Kapasitas Tangki (Liter)" />
                                 <TextInput
@@ -425,7 +425,7 @@ export default function Create({ bases = [], available_credits = 0, is_trial_mod
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="expected_km_per_liter" value="Target Konsumsi (KM / Liter)" />
+                                <InputLabel htmlFor="expected_km_per_liter" value="Target Konsumsi BBM (KM / Liter)" />
                                 <TextInput
                                     id="expected_km_per_liter"
                                     type="number"
