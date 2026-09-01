@@ -135,7 +135,7 @@ export default function Create({ bases = [], available_credits = 0, is_trial_mod
             <Head title="Tambah Kendaraan Baru · Armada" />
             <FleetNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+            <div className="w-full space-y-6 pb-20">
                 {/* Breadcrumbs */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">
