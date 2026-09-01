@@ -223,6 +223,8 @@ export default function Show({
     aiDiagnoseUrl = null,
     aiCreateWoUrl = null,
     available_credits = 0,
+    business_model = 'per_vehicle_trial',
+    is_trial_mode = true,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
