@@ -521,11 +521,23 @@ export default function Create({ bases = [], available_credits = 0, is_trial_mod
                                     ]}
                                 />
                                 <InputError message={errors.status} className="mt-1" />
-                                {data.status === 'active' && (
+                                {data.status === 'active' && is_trial_mode && (
+                                    <div className="mt-2.5 rounded-2xl bg-cyan-50/70 p-3 text-xs border border-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200">
+                                        <div className="flex items-center justify-between">
+                                            <span>
+                                                🎁 Unit baru akan langsung aktif dengan masa uji coba <strong>Free Trial {trial_duration_days} Hari</strong>.
+                                            </span>
+                                            <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
+                                                Tanpa Potong Kredit
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                                {data.status === 'active' && !is_trial_mode && (
                                     <div className="mt-2.5 rounded-2xl bg-indigo-50/70 p-3 text-xs border border-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center justify-between">
                                             <span>
-                                                🚗 Mendaftarkan unit aktif akan menggunakan <strong>1 Kredit Unit</strong> (30 hari masa aktif).
+                                                🚗 Mendaftarkan unit aktif akan menggunakan <strong>1 Kredit Unit</strong> ({trial_duration_days} hari masa aktif).
                                             </span>
                                             <span className="font-bold text-indigo-600 dark:text-indigo-400">
                                                 Saldo: {available_credits} Unit
