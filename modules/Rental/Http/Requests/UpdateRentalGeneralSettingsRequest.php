@@ -34,6 +34,7 @@ class UpdateRentalGeneralSettingsRequest extends FormRequest
             'ai_inspection_enabled' => ['sometimes', 'boolean'],
             'ai_kyc_enabled' => ['sometimes', 'boolean'],
             'ai_pricing_optimizer_enabled' => ['sometimes', 'boolean'],
+            'mobile_rate_limiting_enabled' => ['sometimes', 'boolean'],
         ];
     }
 

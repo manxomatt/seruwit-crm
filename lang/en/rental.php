@@ -178,6 +178,8 @@ return [
         'public_mask_plates_hint' => 'Hide middle digits in public catalog.',
         'passenger_free_cancel_hours' => 'Free Cancellation Window (Hours)',
         'passenger_free_cancel_hours_hint' => 'Free cancellation window prior to start.',
+        'mobile_rate_limiting_enabled' => 'Mobile API Rate Limiting (Anti-Spam)',
+        'mobile_rate_limiting_enabled_hint' => 'Enable request throttling to prevent OTP spam & brute-force, or disable during testing and development.',
         'fees_section' => 'Cancellation & No-Show Fees',
         'fees_section_hint' => 'Fees applied on Cancelled Paid or No Show Paid.',
         'fee_type_fixed' => 'Fixed Amount (Rp)',

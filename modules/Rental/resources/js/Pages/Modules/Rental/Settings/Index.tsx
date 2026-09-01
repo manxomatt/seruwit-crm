@@ -30,6 +30,7 @@ interface GeneralSettings {
     ai_inspection_enabled: boolean;
     ai_kyc_enabled: boolean;
     ai_pricing_optimizer_enabled: boolean;
+    mobile_rate_limiting_enabled?: boolean;
 }
 
 interface DocumentTemplate {
@@ -62,6 +63,7 @@ const DEFAULT_GENERAL: GeneralSettings = {
     ai_inspection_enabled: true,
     ai_kyc_enabled: true,
     ai_pricing_optimizer_enabled: true,
+    mobile_rate_limiting_enabled: false,
 };
 
 const DEFAULT_DOCUMENTS: Record<string, DocumentTemplate> = {};
@@ -151,6 +153,7 @@ function GeneralPanel({
         ai_inspection_enabled: general.ai_inspection_enabled ?? true,
         ai_kyc_enabled: general.ai_kyc_enabled ?? true,
         ai_pricing_optimizer_enabled: general.ai_pricing_optimizer_enabled ?? true,
+        mobile_rate_limiting_enabled: general.mobile_rate_limiting_enabled ?? false,
     });
 
     const ttlPresets = [
@@ -274,14 +277,21 @@ function GeneralPanel({
                                 />
                             </div>
 
-                            {/* Privacy Switch */}
-                            <div className="pt-1">
+                            {/* Privacy & Rate Limiting Switches */}
+                            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
                                 <ToggleSwitch
                                     id="public_mask_plates"
                                     checked={data.public_mask_plates}
                                     onChange={(checked) => setData('public_mask_plates', checked)}
                                     label={t('rental.settings.public_mask_plates', undefined, 'Sensor Plat Nomor di Halaman Publik')}
                                     description={t('rental.settings.public_mask_plates_hint', undefined, 'Samarkan plat nomor kendaraan (contoh: B 1*** CD) pada katalog publik demi keamanan armada.')}
+                                />
+                                <ToggleSwitch
+                                    id="mobile_rate_limiting_enabled"
+                                    checked={data.mobile_rate_limiting_enabled ?? false}
+                                    onChange={(checked) => setData('mobile_rate_limiting_enabled', checked)}
+                                    label={t('rental.settings.mobile_rate_limiting_enabled', undefined, 'Rate Limiting API Mobile (Anti-Spam)')}
+                                    description={t('rental.settings.mobile_rate_limiting_enabled_hint', undefined, 'Aktifkan pembatasan request untuk mencegah spam OTP & brute-force, atau nonaktifkan saat pengujian & development.')}
                                 />
                             </div>
                         </div>

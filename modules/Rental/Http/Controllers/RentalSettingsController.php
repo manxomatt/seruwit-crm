@@ -58,6 +58,7 @@ class RentalSettingsController extends Controller
         $data = $request->validated();
         $data['passenger_booking_enabled'] = $request->boolean('passenger_booking_enabled');
         $data['calendar_click_to_book'] = $request->boolean('calendar_click_to_book');
+        $data['mobile_rate_limiting_enabled'] = $request->boolean('mobile_rate_limiting_enabled');
 
         RentalGeneralSettings::update($data);
 

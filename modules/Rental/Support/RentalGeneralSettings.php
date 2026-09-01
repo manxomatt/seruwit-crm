@@ -34,6 +34,8 @@ class RentalGeneralSettings
 
     public const KEY_AI_PRICING_OPTIMIZER_ENABLED = 'rental.ai_pricing_optimizer_enabled';
 
+    public const KEY_MOBILE_RATE_LIMITING_ENABLED = 'rental.mobile_rate_limiting_enabled';
+
     /**
      * @return list<string>
      */
@@ -53,6 +55,7 @@ class RentalGeneralSettings
             self::KEY_AI_INSPECTION_ENABLED,
             self::KEY_AI_KYC_ENABLED,
             self::KEY_AI_PRICING_OPTIMIZER_ENABLED,
+            self::KEY_MOBILE_RATE_LIMITING_ENABLED,
         ];
     }
 
@@ -70,7 +73,8 @@ class RentalGeneralSettings
      *     calendar_click_to_book: bool,
      *     ai_inspection_enabled: bool,
      *     ai_kyc_enabled: bool,
-     *     ai_pricing_optimizer_enabled: bool
+     *     ai_pricing_optimizer_enabled: bool,
+     *     mobile_rate_limiting_enabled: bool
      * }
      */
     public static function all(): array
@@ -89,6 +93,7 @@ class RentalGeneralSettings
             'ai_inspection_enabled' => Setting::getValue(self::KEY_AI_INSPECTION_ENABLED, '1') === '1',
             'ai_kyc_enabled' => Setting::getValue(self::KEY_AI_KYC_ENABLED, '1') === '1',
             'ai_pricing_optimizer_enabled' => Setting::getValue(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, '1') === '1',
+            'mobile_rate_limiting_enabled' => Setting::getValue(self::KEY_MOBILE_RATE_LIMITING_ENABLED, '0') === '1',
         ];
     }
 
@@ -106,7 +111,8 @@ class RentalGeneralSettings
      *     calendar_click_to_book: bool,
      *     ai_inspection_enabled?: bool,
      *     ai_kyc_enabled?: bool,
-     *     ai_pricing_optimizer_enabled?: bool
+     *     ai_pricing_optimizer_enabled?: bool,
+     *     mobile_rate_limiting_enabled?: bool
      * }  $data
      */
     public static function update(array $data): void
@@ -124,6 +130,7 @@ class RentalGeneralSettings
         self::put(self::KEY_AI_INSPECTION_ENABLED, ! empty($data['ai_inspection_enabled']) ? '1' : '0', 'boolean', 'AI Visual Inspection (Handover)', 30);
         self::put(self::KEY_AI_KYC_ENABLED, ! empty($data['ai_kyc_enabled']) ? '1' : '0', 'boolean', 'AI Smart KYC & Document OCR', 31);
         self::put(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, ! empty($data['ai_pricing_optimizer_enabled']) ? '1' : '0', 'boolean', 'AI Dynamic Pricing & Fleet Optimizer', 32);
+        self::put(self::KEY_MOBILE_RATE_LIMITING_ENABLED, ! empty($data['mobile_rate_limiting_enabled']) ? '1' : '0', 'boolean', 'Mobile API Rate Limiting (Anti-Spam)', 40);
     }
 
     private static function put(string $key, string $value, string $type, string $label, int $sortOrder): void

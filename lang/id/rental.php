@@ -178,6 +178,8 @@ return [
         'public_mask_plates_hint' => 'Sembunyikan digit tengah di katalog (detail reservasi tetap menampilkan plat penuh).',
         'passenger_free_cancel_hours' => 'Jendela batal gratis (jam sebelum mulai)',
         'passenger_free_cancel_hours_hint' => 'Pembatalan penumpang setelah batas ini dapat dikenakan biaya pembatalan. Hold belum dibayar tetap gratis.',
+        'mobile_rate_limiting_enabled' => 'Rate Limiting API Mobile (Anti-Spam)',
+        'mobile_rate_limiting_enabled_hint' => 'Aktifkan pembatasan request untuk mencegah spam OTP & brute-force, atau nonaktifkan saat pengujian & development.',
         'fees_section' => 'Biaya pembatalan & no-show',
         'fees_section_hint' => 'Biaya saat menandai Cancelled Paid atau No Show Paid. Isi 0 untuk menonaktifkan.',
         'fee_type_fixed' => 'Nominal tetap (Rp)',
