@@ -97,6 +97,7 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
     const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
 
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [proofExpanded, setProofExpanded] = useState(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isExpired: boolean }>({
@@ -577,21 +578,42 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
                 {order.proof_url && (
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
                         <h4 className="font-bold text-slate-900">{t('subscription.payment_uploaded_proof_title', undefined, 'Bukti Pembayaran yang Terunggah')}</h4>
-                        <div className="mt-3 flex items-center gap-4">
-                            <a
-                                href={order.proof_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"
-                            >
-                                {t('subscription.payment_open_proof_file', undefined, '👁️ Buka File Bukti Transfer')}
-                            </a>
-                            {order.transfer_note && (
-                                <p className="text-xs text-slate-600">
-                                    {t('subscription.payment_note_label', undefined, 'Catatan:')}{' '}
-                                    <strong className="text-slate-800">{order.transfer_note}</strong>
-                                </p>
-                            )}
+                        
+                        <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            {order.transfer_proof_path && /\.(jpe?g|png|webp|gif|svg)$/i.test(order.transfer_proof_path) ? (
+                                <div 
+                                    className="relative group cursor-zoom-in rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 w-32 h-32 flex-shrink-0"
+                                    onClick={() => setProofExpanded(true)}
+                                >
+                                    <img
+                                        src={order.proof_url}
+                                        alt="Bukti Transfer"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition">
+                                        <span className="px-2 py-1 rounded-lg bg-white/90 text-slate-900 text-[10px] font-bold shadow">
+                                            🔍 Perbesar
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            <div className="space-y-2">
+                                <a
+                                    href={order.proof_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"
+                                >
+                                    {t('subscription.payment_open_proof_file', undefined, '👁️ Buka File Bukti Transfer')}
+                                </a>
+                                {order.transfer_note && (
+                                    <p className="text-xs text-slate-600">
+                                        {t('subscription.payment_note_label', undefined, 'Catatan:')}{' '}
+                                        <strong className="text-slate-800">{order.transfer_note}</strong>
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -606,6 +628,34 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
                     </Link>
                 </div>
             </div>
+
+            {/* Expanded Proof Lightbox */}
+            {proofExpanded && order.proof_url && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs"
+                    onClick={() => setProofExpanded(false)}
+                >
+                    <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-white shadow-2xl p-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center px-4 py-2 border-b border-slate-100">
+                            <span className="text-xs font-bold text-slate-700">Bukti Pembayaran</span>
+                            <button
+                                type="button"
+                                onClick={() => setProofExpanded(false)}
+                                className="rounded-full p-1 text-slate-400 hover:text-slate-700 transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="p-2 overflow-auto max-h-[calc(90vh-60px)]">
+                            <img
+                                src={order.proof_url}
+                                alt="Bukti Transfer"
+                                className="max-w-full max-h-[75vh] mx-auto object-contain rounded-xl"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Cancel Modal */}
             <ConfirmDeleteDialog

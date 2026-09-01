@@ -162,10 +162,23 @@ class PaymentOrder extends Model
         }
 
         try {
+            if (function_exists('tenant') && tenant()) {
+                return route('module.subscription.proof-file', $this->id);
+            }
+        } catch (\Throwable) {
+        }
+
+        try {
+            return route('payment-orders.proof', $this->id);
+        } catch (\Throwable) {
+        }
+
+        try {
             return route('module.payment-orders.proof', $this->id);
         } catch (\Throwable) {
-            return Storage::disk('payment_proofs')->url($this->transfer_proof_path);
         }
+
+        return Storage::disk('payment_proofs')->url($this->transfer_proof_path);
     }
 
     public static function generateUniqueCode(): int

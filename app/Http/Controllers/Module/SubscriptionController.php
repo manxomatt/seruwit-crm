@@ -371,4 +371,48 @@ class SubscriptionController extends Controller
 
         return redirect()->route('module.subscription.index')->with('success', __('subscription.messages.active_order_cancelled'));
     }
+
+    public function proof(PaymentOrder $order): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    {
+        $tenant = tenant();
+        abort_unless($tenant instanceof Tenant, 404);
+
+        if ((string) $order->tenant_id !== (string) $tenant->getKey()) {
+            abort(403);
+        }
+
+        $path = $order->transfer_proof_path;
+        abort_unless($path, 404, 'Bukti transfer belum diunggah.');
+
+        $cleanPath = ltrim($path, '/');
+
+        if (\Illuminate\Support\Facades\Storage::disk('payment_proofs')->exists($cleanPath)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('payment_proofs')->path($cleanPath));
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($cleanPath)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path($cleanPath));
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($cleanPath)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('local')->path($cleanPath));
+        }
+
+        $candidatePaths = [
+            storage_path('app/public/payment-proofs/'.$cleanPath),
+            storage_path('app/public/'.$cleanPath),
+            storage_path('app/payment-proofs/'.$cleanPath),
+            storage_path('app/'.$cleanPath),
+            public_path('storage/payment-proofs/'.$cleanPath),
+            public_path('storage/'.$cleanPath),
+        ];
+
+        foreach ($candidatePaths as $candidate) {
+            if (file_exists($candidate) && is_file($candidate)) {
+                return response()->file($candidate);
+            }
+        }
+
+        abort(404, 'File bukti transfer tidak ditemukan di storage server.');
+    }
 }

@@ -151,6 +151,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/subscription/upgrade/preview', [ModuleSubscriptionController::class, 'previewUpgrade'])->middleware('permission:subscription,view')->name('subscription.upgrade.preview');
         Route::post('/subscription/order', [ModuleSubscriptionController::class, 'createOrder'])->middleware('permission:subscription,update')->name('subscription.order');
         Route::get('/subscription/payment/{order}', [ModuleSubscriptionController::class, 'payment'])->middleware('permission:subscription,view')->name('subscription.payment');
+        Route::get('/subscription/payment/{order}/proof-file', [ModuleSubscriptionController::class, 'proof'])->middleware('permission:subscription,view')->name('subscription.proof-file');
         Route::post('/subscription/payment/{order}/proof', [ModuleSubscriptionController::class, 'submitProof'])->middleware('permission:subscription,update')->name('subscription.proof');
         Route::post('/subscription/payment/{order}/cancel', [ModuleSubscriptionController::class, 'cancelOrder'])->middleware('permission:subscription,update')->name('subscription.cancel');
         Route::post('/subscription/cancel-active', [ModuleSubscriptionController::class, 'cancelActiveOrder'])->middleware('permission:subscription,update')->name('subscription.cancel-active');
