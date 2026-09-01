@@ -3,6 +3,7 @@
 namespace Modules\Fleet\Support;
 
 use App\Models\PaymentOrder;
+use App\Models\Plan;
 use App\Models\SubscriptionTier;
 use App\Models\Tenant;
 use App\Notifications\PaymentOrderCreatedNotification;
@@ -110,9 +111,15 @@ class VehicleCheckoutService
                 'active_until' => $v->active_until?->toIso8601String(),
             ])->toArray();
 
+            $planId = $tenant->subscription?->plan_id
+                ?? Plan::on($central)->where('key', $tenant->plan)->value('id')
+                ?? Plan::on($central)->where('key', 'pay_as_you_go')->value('id')
+                ?? Plan::on($central)->value('id');
+
             $order = new PaymentOrder;
             $order->setConnection($central);
             $order->tenant_id = $tenantId;
+            $order->plan_id = $planId;
             $order->subscribed_vehicles = $pricing['vehicle_count'];
             $order->price_per_vehicle = $pricing['price_per_vehicle_per_month'];
             $order->total_vehicle_cost = $pricing['total_amount'];
