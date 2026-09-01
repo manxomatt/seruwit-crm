@@ -5,14 +5,19 @@ namespace App\Http\Controllers\Module;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentOrder;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\PaymentOrderService;
 use App\Services\SubscriptionService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\VehicleCapacityService;
 
 class SubscriptionController extends Controller
 {
@@ -21,7 +26,7 @@ class SubscriptionController extends Controller
         private readonly PaymentOrderService $paymentOrderService,
     ) {}
 
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request, VehicleCapacityService $capacityService): Response|RedirectResponse
     {
         if (! tenancy()->initialized) {
             return redirect()->route('central.workspaces.index');
@@ -48,8 +53,61 @@ class SubscriptionController extends Controller
             ->first();
 
         // Get count of registered vehicles in tenant's database
-        $currentVehiclesCount = \Modules\Fleet\Models\Vehicle::billable()->count();
-        $totalVehiclesCount = \Modules\Fleet\Models\Vehicle::count();
+        $currentVehiclesCount = 0;
+        $totalVehiclesCount = 0;
+        $fleetSummary = [
+            'total' => 0,
+            'active_paid' => 0,
+            'active_trial' => 0,
+            'expiring_soon' => 0,
+            'inactive' => 0,
+        ];
+        $expiringVehicles = [];
+
+        if (Schema::hasTable('vehicles')) {
+            $currentVehiclesCount = Vehicle::billable()->count();
+            $totalVehiclesCount = Vehicle::count();
+
+            $now = Carbon::now();
+            $sevenDaysLater = $now->copy()->addDays(7);
+
+            $fleetSummary = [
+                'total' => $totalVehiclesCount,
+                'active_paid' => Vehicle::where('status', Vehicle::STATUS_ACTIVE)->where('is_trial', false)->count(),
+                'active_trial' => Vehicle::where('status', Vehicle::STATUS_ACTIVE)->where('is_trial', true)->count(),
+                'expiring_soon' => Vehicle::where('status', Vehicle::STATUS_ACTIVE)
+                    ->whereNotNull('active_until')
+                    ->where('active_until', '<=', $sevenDaysLater)
+                    ->count(),
+                'inactive' => Vehicle::where('status', Vehicle::STATUS_INACTIVE)->count(),
+            ];
+
+            $expiringVehicles = Vehicle::query()
+                ->where(function ($query) use ($sevenDaysLater): void {
+                    $query->where('status', Vehicle::STATUS_INACTIVE)
+                        ->orWhere(function ($q) use ($sevenDaysLater): void {
+                            $q->where('status', Vehicle::STATUS_ACTIVE)
+                                ->whereNotNull('active_until')
+                                ->where('active_until', '<=', $sevenDaysLater);
+                        });
+                })
+                ->orderBy('active_until')
+                ->limit(10)
+                ->get(['id', 'name', 'plate_number', 'type', 'status', 'is_trial', 'active_until', 'auto_renew'])
+                ->map(fn (Vehicle $v): array => [
+                    'id' => $v->id,
+                    'name' => $v->name,
+                    'plate_number' => $v->plate_number,
+                    'type' => $v->type,
+                    'status' => $v->status,
+                    'is_trial' => (bool) $v->is_trial,
+                    'active_until' => $v->active_until?->toIso8601String(),
+                    'auto_renew' => (bool) $v->auto_renew,
+                ])
+                ->all();
+        }
+
+        $availableCredits = $capacityService->getAvailableCredits($tenant);
 
         // Get subscription tiers from central database
         $tiers = \App\Models\SubscriptionTier::on('central')->orderBy('min_vehicles')->get();
@@ -126,6 +184,11 @@ class SubscriptionController extends Controller
             ])->values()->all(),
             'currentVehiclesCount' => $currentVehiclesCount,
             'totalVehiclesCount' => $totalVehiclesCount,
+            'business_model' => PlatformSetting::getBusinessModel(),
+            'is_trial_mode' => PlatformSetting::isPerVehicleTrialEnabled(),
+            'available_credits' => $availableCredits,
+            'fleet_summary' => $fleetSummary,
+            'expiring_vehicles' => $expiringVehicles,
             'tiers' => $tiers->map(fn ($t) => [
                 'id' => $t->id,
                 'name' => $t->name,

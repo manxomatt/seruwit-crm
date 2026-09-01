@@ -78,6 +78,27 @@ interface Props {
     activePaymentOrder: ActivePaymentOrder | null;
     orders?: OrderItem[];
     currentVehiclesCount: number;
+    totalVehiclesCount?: number;
+    business_model?: string;
+    is_trial_mode?: boolean;
+    available_credits?: number;
+    fleet_summary?: {
+        total: number;
+        active_paid: number;
+        active_trial: number;
+        expiring_soon: number;
+        inactive: number;
+    };
+    expiring_vehicles?: Array<{
+        id: number;
+        name: string;
+        plate_number: string;
+        type: string;
+        status: string;
+        is_trial: boolean;
+        active_until: string | null;
+        auto_renew: boolean;
+    }>;
     tiers: SubscriptionTier[];
 }
 
@@ -446,7 +467,23 @@ function PlanCard({
     );
 }
 
-export default function SubscriptionActivate({ tenant, plans, subscription, isOnTrial, trialEndsAt, activePaymentOrder, orders = [], currentVehiclesCount, tiers }: Props): JSX.Element {
+export default function SubscriptionActivate({
+    tenant,
+    plans,
+    subscription,
+    isOnTrial,
+    trialEndsAt,
+    activePaymentOrder,
+    orders = [],
+    currentVehiclesCount,
+    totalVehiclesCount = 0,
+    business_model = 'per_vehicle_trial',
+    is_trial_mode = true,
+    available_credits = 0,
+    fleet_summary = { total: 0, active_paid: 0, active_trial: 0, expiring_soon: 0, inactive: 0 },
+    expiring_vehicles = [],
+    tiers,
+}: Props): JSX.Element {
     const { t } = useTrans();
     const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
 
@@ -799,6 +836,189 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                         Masa berlaku sampai <strong>{subscription.ends_at ? dateLocale(subscription.ends_at) : 'Tidak terbatas'}</strong>. Anda dapat memperpanjang atau upgrade paket di bawah.
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Fleet Capacity & Trial Health Overview (Mode PLG / Per-Vehicle Trial Hub) ── */}
+                <div className="mb-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 dark:border-slate-800">
+                        <div className="flex items-center gap-3.5">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-2xl text-white shadow-md shadow-indigo-600/20">
+                                🚗
+                            </span>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                                        Kapasitas Armada & Status Uji Coba Unit
+                                    </h3>
+                                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        {is_trial_mode ? 'Mode Per-Vehicle Trial' : 'Mode Kuota Tenant'}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {is_trial_mode
+                                        ? 'Pendaftaran armada bebas kuota. Setiap unit baru otomatis mendapatkan 30 hari masa trial gratis.'
+                                        : 'Kapasitas armada dibatasi oleh paket langganan dan saldo kredit aktif.'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href={route('module.fleet.vehicles.index')}
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200"
+                            >
+                                Kelola Armada ({fleet_summary.total} Unit) →
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* 4 KPI Cards */}
+                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {/* 1. Saldo Kredit Unit */}
+                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4.5 dark:border-indigo-900/40 dark:bg-indigo-950/20">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                                    ⚡ Saldo Kredit Kapasitas
+                                </span>
+                                <span className="rounded-full bg-indigo-200/80 px-2 py-0.5 text-[10px] font-black text-indigo-900 dark:bg-indigo-900 dark:text-indigo-200">
+                                    Lifetime
+                                </span>
+                            </div>
+                            <div className="mt-2 flex items-baseline gap-1.5">
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">
+                                    {available_credits}
+                                </span>
+                                <span className="text-xs font-bold text-slate-500">Unit Kredit</span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                Digunakan untuk mengaktifkan / memperpanjang armada berbayar.
+                            </p>
+                        </div>
+
+                        {/* 2. Armada Masa Trial */}
+                        <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4.5 dark:border-cyan-900/40 dark:bg-cyan-950/20">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">
+                                    🎁 Masa Trial Aktif
+                                </span>
+                                <span className="rounded-full bg-cyan-200/80 px-2 py-0.5 text-[10px] font-black text-cyan-900 dark:bg-cyan-950 dark:text-cyan-300">
+                                    Gratis 30 Hari
+                                </span>
+                            </div>
+                            <div className="mt-2 flex items-baseline gap-1.5">
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">
+                                    {fleet_summary.active_trial}
+                                </span>
+                                <span className="text-xs font-bold text-slate-500">Armada</span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                Unit armada baru yang sedang dalam masa uji coba gratis.
+                            </p>
+                        </div>
+
+                        {/* 3. Armada Berbayar Aktif */}
+                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                    🟢 Aktif Berbayar
+                                </span>
+                                <span className="rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-black text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200">
+                                    Produksi
+                                </span>
+                            </div>
+                            <div className="mt-2 flex items-baseline gap-1.5">
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">
+                                    {fleet_summary.active_paid}
+                                </span>
+                                <span className="text-xs font-bold text-slate-500">Armada</span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                Unit aktif beroperasi penuh dengan masa berlaku valid.
+                            </p>
+                        </div>
+
+                        {/* 4. Perlu Perpanjangan / Expired */}
+                        <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                                    ⚠️ Perlu Perhatian
+                                </span>
+                                <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-black text-amber-900 dark:bg-amber-900 dark:text-amber-200">
+                                    Jatuh Tempo / Non-Aktif
+                                </span>
+                            </div>
+                            <div className="mt-2 flex items-baseline gap-1.5">
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">
+                                    {fleet_summary.expiring_soon + fleet_summary.inactive}
+                                </span>
+                                <span className="text-xs font-bold text-slate-500">Armada</span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                {fleet_summary.expiring_soon} unit kedaluwarsa &le; 7 hari, {fleet_summary.inactive} unit non-aktif.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Expiring / Action-Required Vehicles List */}
+                    {expiring_vehicles.length > 0 && (
+                        <div className="mt-6 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-800/40">
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                                    🚨 Unit Mendekati Jatuh Tempo atau Non-Aktif
+                                </h4>
+                                <span className="text-[11px] text-slate-500">
+                                    Perpanjang unit agar tidak terputus dari jadwal operasional
+                                </span>
+                            </div>
+
+                            <div className="divide-y divide-slate-200/60 dark:divide-slate-700/60">
+                                {expiring_vehicles.map((v) => (
+                                    <div key={v.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 text-sm shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                                                🚘
+                                            </span>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-black font-mono text-slate-900 dark:text-white">
+                                                        {v.plate_number}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                        · {v.name}
+                                                    </span>
+                                                    {v.is_trial ? (
+                                                        <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
+                                                            Trial
+                                                        </span>
+                                                    ) : v.status === 'active' ? (
+                                                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                            Aktif
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-black text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                                                            Non-Aktif
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-slate-500">
+                                                    {v.active_until ? `Masa aktif s/d ${dateLocale(v.active_until)}` : 'Belum pernah diaktifkan'} · Auto-Renew: {v.auto_renew ? 'Aktif' : 'Mati'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={route('module.fleet.vehicles.show', v.id)}
+                                                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-indigo-700 transition"
+                                            >
+                                                Perpanjang / Kelola Unit →
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
