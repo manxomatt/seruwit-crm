@@ -53,6 +53,26 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
     const actualCount = subscription.vehicle_count > 0 ? subscription.vehicle_count : (subscription.total_fleet ?? 0);
     const [simulatedCount, setSimulatedCount] = useState<number>(actualCount > 0 ? actualCount : 5);
     const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+    const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+        try {
+            const saved = localStorage.getItem('dashboard_pricing_expanded');
+            return saved !== null ? saved === 'true' : true;
+        } catch {
+            return true;
+        }
+    });
+
+    const toggleExpanded = () => {
+        setIsExpanded((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('dashboard_pricing_expanded', String(next));
+            } catch {
+                // Ignore storage errors
+            }
+            return next;
+        });
+    };
 
     // Find tier for any vehicle count
     const getTierForCount = (count: number): SubscriptionTierRow | undefined => {
@@ -107,8 +127,8 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
             <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-gradient-to-tr from-emerald-500/10 to-indigo-500/10 blur-3xl dark:from-emerald-600/15 dark:to-indigo-600/15" />
 
             {/* Header section */}
-            <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-6 dark:border-slate-800">
-                <div>
+            <div className={`relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${isExpanded ? 'border-b border-slate-200/80 pb-6 dark:border-slate-800' : ''}`}>
+                <div className="flex-1 cursor-pointer select-none" onClick={toggleExpanded}>
                     <div className="flex flex-wrap items-center gap-2.5">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-black uppercase tracking-wider text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 ring-1 ring-indigo-500/20">
                             <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
@@ -117,28 +137,69 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 ring-1 ring-emerald-500/20">
                             ⚡ Pay As You Go (PAYG)
                         </span>
+
+                        {!isExpanded && currentTier && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-0.5 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                <span>👑 {currentTier.name}</span>
+                                <span>·</span>
+                                <span className="text-emerald-600 dark:text-emerald-400">
+                                    {formatMoney(currentTier.price_per_vehicle, subscription.currency_symbol, localeTag)}/unit
+                                </span>
+                                {subscription.monthly_estimate != null && (
+                                    <>
+                                        <span>·</span>
+                                        <span>Est: {formatMoney(subscription.monthly_estimate, subscription.currency_symbol, localeTag)}/bln</span>
+                                    </>
+                                )}
+                            </span>
+                        )}
                     </div>
-                    <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-                        Tarif Berjenjang Sesuai Skala Armada
-                    </h3>
+                    <div className="flex items-center gap-2 mt-2">
+                        <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+                            Tarif Berjenjang Sesuai Skala Armada
+                        </h3>
+                    </div>
                     <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-2xl">
                         Semakin banyak unit kendaraan terdaftar di sistem, semakin hemat tarif per unitnya secara otomatis tanpa perlu komitmen paket kaku.
                     </p>
                 </div>
 
-                {/* Quick actions button */}
-                <div className="flex items-center gap-2 shrink-0">
+                {/* Quick actions & Collapse Toggle */}
+                <div className="flex items-center gap-2.5 shrink-0">
                     <Link
                         href={route('module.fleet.vehicles.index')}
                         className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/30 active:scale-98 dark:bg-indigo-500 dark:hover:bg-indigo-600"
                     >
-                        <span>⚡ Kelola Armada & Perpanjang</span>
+                        <span>⚡ Kelola Armada</span>
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
                     </Link>
+
+                    {/* Collapse / Expand Toggle Button */}
+                    <button
+                        type="button"
+                        onClick={toggleExpanded}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                        title={isExpanded ? 'Ciutkan Panel' : 'Buka Detail & Simulator'}
+                    >
+                        <span>{isExpanded ? 'Ciutkan' : 'Buka Detail'}</span>
+                        <svg
+                            className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2.5}
+                            stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
                 </div>
             </div>
+
+            {/* Collapsible Body */}
+            {isExpanded && (
+                <div className="transition-all duration-300">
 
             {/* Current Snapshot Metrics */}
             <div className="relative z-10 mt-6 grid gap-4 sm:grid-cols-3">
@@ -575,6 +636,8 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                     </Link>
                 </div>
             </div>
+                </div>
+            )}
         </div>
     );
 }
