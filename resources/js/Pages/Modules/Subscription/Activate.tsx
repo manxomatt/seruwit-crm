@@ -878,86 +878,122 @@ export default function SubscriptionActivate({
                     {/* 4 KPI Cards */}
                     <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         {/* 1. Saldo Kredit Unit */}
-                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4.5 dark:border-indigo-900/40 dark:bg-indigo-950/20">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
-                                    ⚡ Saldo Kredit Kapasitas
-                                </span>
-                                <span className="rounded-full bg-indigo-200/80 px-2 py-0.5 text-[10px] font-black text-indigo-900 dark:bg-indigo-900 dark:text-indigo-200">
-                                    Lifetime
-                                </span>
+                        <div className="flex flex-col justify-between rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-indigo-200 dark:border-indigo-900/30 dark:bg-slate-900/90 dark:hover:border-indigo-800/60">
+                            <div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                            ⚡
+                                        </span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            Saldo Kredit
+                                        </span>
+                                    </div>
+                                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        Lifetime
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex items-baseline gap-2">
+                                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                                        {available_credits}
+                                    </span>
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        Unit Kredit
+                                    </span>
+                                </div>
                             </div>
-                            <div className="mt-2 flex items-baseline gap-1.5">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">
-                                    {available_credits}
-                                </span>
-                                <span className="text-xs font-bold text-slate-500">Unit Kredit</span>
-                            </div>
-                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                Digunakan untuk mengaktifkan / memperpanjang armada berbayar.
+                            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Saldo aktif untuk aktivasi atau perpanjangan armada.
                             </p>
                         </div>
 
                         {/* 2. Armada Masa Trial */}
-                        <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4.5 dark:border-cyan-900/40 dark:bg-cyan-950/20">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">
-                                    🎁 Masa Trial Aktif
-                                </span>
-                                <span className="rounded-full bg-cyan-200/80 px-2 py-0.5 text-[10px] font-black text-cyan-900 dark:bg-cyan-950 dark:text-cyan-300">
-                                    Gratis 30 Hari
-                                </span>
+                        <div className="flex flex-col justify-between rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-cyan-200 dark:border-cyan-900/30 dark:bg-slate-900/90 dark:hover:border-cyan-800/60">
+                            <div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-xs font-bold text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300">
+                                            🎁
+                                        </span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            Trial Aktif
+                                        </span>
+                                    </div>
+                                    <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
+                                        Gratis 30 Hari
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex items-baseline gap-2">
+                                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                                        {fleet_summary.active_trial}
+                                    </span>
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        Armada
+                                    </span>
+                                </div>
                             </div>
-                            <div className="mt-2 flex items-baseline gap-1.5">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">
-                                    {fleet_summary.active_trial}
-                                </span>
-                                <span className="text-xs font-bold text-slate-500">Armada</span>
-                            </div>
-                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                Unit armada baru yang sedang dalam masa uji coba gratis.
+                            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Unit armada baru dalam masa uji coba gratis.
                             </p>
                         </div>
 
                         {/* 3. Armada Berbayar Aktif */}
-                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                                    🟢 Aktif Berbayar
-                                </span>
-                                <span className="rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-black text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200">
-                                    Produksi
-                                </span>
+                        <div className="flex flex-col justify-between rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-emerald-200 dark:border-emerald-900/30 dark:bg-slate-900/90 dark:hover:border-emerald-800/60">
+                            <div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                            🟢
+                                        </span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            Aktif Berbayar
+                                        </span>
+                                    </div>
+                                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                        Produksi
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex items-baseline gap-2">
+                                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                                        {fleet_summary.active_paid}
+                                    </span>
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        Armada
+                                    </span>
+                                </div>
                             </div>
-                            <div className="mt-2 flex items-baseline gap-1.5">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">
-                                    {fleet_summary.active_paid}
-                                </span>
-                                <span className="text-xs font-bold text-slate-500">Armada</span>
-                            </div>
-                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                Unit aktif beroperasi penuh dengan masa berlaku valid.
+                            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Unit aktif beroperasi penuh dengan masa aktif valid.
                             </p>
                         </div>
 
                         {/* 4. Perlu Perpanjangan / Expired */}
-                        <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4.5 dark:border-amber-900/40 dark:bg-amber-950/20">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                                    ⚠️ Perlu Perhatian
-                                </span>
-                                <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-black text-amber-900 dark:bg-amber-900 dark:text-amber-200">
-                                    Jatuh Tempo / Non-Aktif
-                                </span>
+                        <div className="flex flex-col justify-between rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/40 via-white to-transparent p-5 shadow-2xs transition-all hover:border-amber-200 dark:border-amber-900/30 dark:bg-slate-900/90 dark:hover:border-amber-800/60">
+                            <div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                            ⚠️
+                                        </span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            Perlu Perhatian
+                                        </span>
+                                    </div>
+                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                        Jatuh Tempo
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex items-baseline gap-2">
+                                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                                        {fleet_summary.expiring_soon + fleet_summary.inactive}
+                                    </span>
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        Armada
+                                    </span>
+                                </div>
                             </div>
-                            <div className="mt-2 flex items-baseline gap-1.5">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">
-                                    {fleet_summary.expiring_soon + fleet_summary.inactive}
-                                </span>
-                                <span className="text-xs font-bold text-slate-500">Armada</span>
-                            </div>
-                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                {fleet_summary.expiring_soon} unit kedaluwarsa &le; 7 hari, {fleet_summary.inactive} unit non-aktif.
+                            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                {fleet_summary.expiring_soon} jatuh tempo &le; 7 hari, {fleet_summary.inactive} unit non-aktif.
                             </p>
                         </div>
                     </div>
