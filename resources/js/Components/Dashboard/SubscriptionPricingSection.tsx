@@ -398,91 +398,159 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
 
             {/* ── Tier Cards Matrix ── */}
             <div className="relative z-10 mt-8">
-                <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        📋 Daftar Seluruh Tier Harga Volume
-                    </h4>
-                    <span className="text-[11px] text-slate-400">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+                    <div>
+                        <h4 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>📋</span>
+                            <span>Daftar Seluruh Tier Harga Volume</span>
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Klik pada salah satu kartu tier untuk langsung mensimulasikan biaya pada skala armada tersebut.
+                        </p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 shrink-0">
                         {subscription.tiers.length} Level Tarif Tersedia
                     </span>
                 </div>
 
-                <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className={`grid gap-4.5 ${
+                    subscription.tiers.length === 1
+                        ? 'grid-cols-1 max-w-md mx-auto'
+                        : subscription.tiers.length === 2
+                        ? 'grid-cols-1 sm:grid-cols-2 max-w-3xl'
+                        : subscription.tiers.length === 3
+                        ? 'grid-cols-1 md:grid-cols-3'
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                }`}>
                     {subscription.tiers.map((tier, idx) => {
                         const isUserActive = tier.id === subscription.active_tier_id;
                         const isSimulated = simulatedTier?.id === tier.id;
 
-                        // Tier badge color theme
-                        const colors = [
-                            { border: 'border-slate-200', bg: 'bg-white', badge: 'bg-slate-100 text-slate-700', icon: '🚀' },
-                            { border: 'border-blue-200', bg: 'bg-blue-50/30', badge: 'bg-blue-100 text-blue-700', icon: '⚡' },
-                            { border: 'border-indigo-200', bg: 'bg-indigo-50/30', badge: 'bg-indigo-100 text-indigo-700', icon: '🏢' },
-                            { border: 'border-purple-200', bg: 'bg-purple-50/30', badge: 'bg-purple-100 text-purple-700', icon: '👑' },
+                        // Tier level theme configurations
+                        const tierThemes = [
+                            {
+                                icon: '🚀',
+                                levelTag: 'Tier 1',
+                                badgeBg: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                                accentBorder: 'border-slate-300 dark:border-slate-700',
+                                highlightBg: 'from-slate-50 to-white dark:from-slate-900 dark:to-slate-900/90',
+                            },
+                            {
+                                icon: '⚡',
+                                levelTag: 'Tier 2',
+                                badgeBg: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
+                                accentBorder: 'border-blue-300 dark:border-blue-700',
+                                highlightBg: 'from-blue-50/40 to-white dark:from-blue-950/30 dark:to-slate-900',
+                            },
+                            {
+                                icon: '🏢',
+                                levelTag: 'Tier 3',
+                                badgeBg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300',
+                                accentBorder: 'border-indigo-300 dark:border-indigo-700',
+                                highlightBg: 'from-indigo-50/40 to-white dark:from-indigo-950/30 dark:to-slate-900',
+                            },
+                            {
+                                icon: '👑',
+                                levelTag: 'Tier 4',
+                                badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                                accentBorder: 'border-amber-300 dark:border-amber-700',
+                                highlightBg: 'from-amber-50/40 to-white dark:from-amber-950/30 dark:to-slate-900',
+                            },
                         ];
-                        const theme = colors[idx % colors.length];
+                        const theme = tierThemes[idx % tierThemes.length];
+
+                        // Tier discount compared to base tier
+                        const tierDiscount = basePrice > tier.price_per_vehicle
+                            ? Math.round(((basePrice - tier.price_per_vehicle) / basePrice) * 100)
+                            : 0;
+
+                        // Click to simulate middle of range
+                        const handleTierClick = () => {
+                            const target = tier.max_vehicles >= 100000
+                                ? Math.max(tier.min_vehicles, 60)
+                                : Math.round((tier.min_vehicles + tier.max_vehicles) / 2);
+                            setSimulatedCount(target);
+                        };
 
                         return (
                             <div
                                 key={tier.id}
-                                className={`relative flex flex-col justify-between rounded-2xl p-4.5 transition-all duration-200 ${isUserActive
-                                    ? 'border-2 border-indigo-600 bg-indigo-50/50 shadow-md ring-2 ring-indigo-500/20 dark:border-indigo-500 dark:bg-indigo-950/40'
-                                    : isSimulated
-                                        ? 'border-2 border-teal-500 bg-teal-50/40 shadow-md dark:border-teal-500 dark:bg-teal-950/30'
-                                        : 'border border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-slate-700'
-                                    }`}
+                                onClick={handleTierClick}
+                                className={`group relative flex flex-col justify-between rounded-2xl p-5 cursor-pointer transition-all duration-300 ${
+                                    isUserActive
+                                        ? 'border-2 border-indigo-600 bg-gradient-to-b from-indigo-50/80 via-white to-indigo-50/30 shadow-lg ring-4 ring-indigo-500/10 dark:border-indigo-500 dark:from-indigo-950/50 dark:via-slate-900 dark:to-slate-900'
+                                        : isSimulated
+                                        ? 'border-2 border-teal-500 bg-gradient-to-b from-teal-50/70 via-white to-teal-50/20 shadow-md ring-4 ring-teal-500/10 dark:border-teal-500 dark:from-teal-950/40 dark:via-slate-900 dark:to-slate-900'
+                                        : 'border border-slate-200/90 bg-white hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-slate-700'
+                                }`}
                             >
-                                {/* Top Badges */}
+                                {/* Top Header Badge Row */}
                                 <div>
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="text-base">{theme.icon}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-lg">{theme.icon}</span>
+                                            <span className={`rounded-md px-2 py-0.5 text-[11px] font-black uppercase tracking-wider ${theme.badgeBg}`}>
+                                                {theme.levelTag}
+                                            </span>
+                                        </div>
+
                                         {isUserActive ? (
                                             <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs">
                                                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                                                Tier Anda
+                                                Tier Aktif
                                             </span>
                                         ) : isSimulated ? (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-teal-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                                                Simulasi
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-teal-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                                                🎯 Simulasi
+                                            </span>
+                                        ) : tierDiscount > 0 ? (
+                                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 ring-1 ring-emerald-500/20">
+                                                Hemat {tierDiscount}%
                                             </span>
                                         ) : null}
                                     </div>
 
-                                    {/* Tier Title */}
-                                    <h5 className="mt-2 text-base font-black text-slate-900 dark:text-white">
+                                    {/* Tier Name */}
+                                    <h5 className="mt-3 text-base font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                         {tier.name}
                                     </h5>
 
-                                    {/* Range */}
-                                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                        {formatNumber(tier.min_vehicles, localeTag)} –{' '}
-                                        {tier.max_vehicles >= 100000
-                                            ? t('dashboard.subscription.unlimited', undefined, 'Tanpa batas')
-                                            : `${formatNumber(tier.max_vehicles, localeTag)} Unit`}
-                                    </p>
+                                    {/* Capacity Badge */}
+                                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-slate-100/90 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                        <span>🚗</span>
+                                        <span>
+                                            {formatNumber(tier.min_vehicles, localeTag)} –{' '}
+                                            {tier.max_vehicles >= 100000
+                                                ? t('dashboard.subscription.unlimited', undefined, 'Tanpa batas')
+                                                : `${formatNumber(tier.max_vehicles, localeTag)} Unit`}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {/* Price tag */}
-                                <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/80">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-xl font-black tabular-nums text-slate-900 dark:text-white">
+                                {/* Price Section */}
+                                <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800/80">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Tarif per Kendaraan
+                                    </p>
+                                    <div className="mt-1 flex items-baseline gap-1">
+                                        <span className="text-xl sm:text-2xl font-black tabular-nums text-slate-900 dark:text-white">
                                             {formatMoney(tier.price_per_vehicle, subscription.currency_symbol, localeTag)}
                                         </span>
-                                        <span className="text-[11px] font-semibold text-slate-400">
+                                        <span className="text-xs font-semibold text-slate-400">
                                             / unit / bln
                                         </span>
                                     </div>
 
-                                    {/* Features mini checklist */}
-                                    <ul className="mt-2.5 space-y-1 text-[11px] text-slate-600 dark:text-slate-400">
-                                        <li className="flex items-center gap-1.5">
-                                            <span className="text-emerald-500 font-bold text-xs">✓</span>
-                                            <span>Full Akses Rental & Shuttle</span>
-                                        </li>
-                                        <li className="flex items-center gap-1.5">
-                                            <span className="text-emerald-500 font-bold text-xs">✓</span>
-                                            <span>Tracking GPS & Maintenance</span>
-                                        </li>
-                                    </ul>
+                                    {/* Annual equivalent note */}
+                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        {billingPeriod === 'annual' ? (
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                                {formatMoney(tier.price_per_vehicle * 0.8, subscription.currency_symbol, localeTag)} / bln (bayar tahunan)
+                                            </span>
+                                        ) : (
+                                            <span>Semua modul & fitur aktif</span>
+                                        )}
+                                    </p>
                                 </div>
                             </div>
                         );
