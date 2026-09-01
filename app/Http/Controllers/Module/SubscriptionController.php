@@ -260,7 +260,7 @@ class SubscriptionController extends Controller
         $plan = Plan::on('central')->findOrFail($request->input('plan_id'));
 
         if ($plan->is_trial || ! $plan->is_active) {
-            return back()->withErrors(['plan_id' => 'Invalid plan selected.']);
+            return back()->withErrors(['plan_id' => __('subscription.messages.invalid_plan')]);
         }
 
         $billingInterval = $request->input('billing_interval', 'month');
@@ -338,7 +338,7 @@ class SubscriptionController extends Controller
 
         $this->paymentOrderService->submitProof($order, $request->file('proof'), $request->input('transfer_note'));
 
-        return redirect()->route('module.subscription.payment', $order)->with('success', 'Bukti transfer berhasil diunggah.');
+        return redirect()->route('module.subscription.payment', $order)->with('success', __('subscription.messages.proof_uploaded'));
     }
 
     public function cancelOrder(Request $request, PaymentOrder $order): RedirectResponse
@@ -358,7 +358,7 @@ class SubscriptionController extends Controller
             $this->paymentOrderService->cancelActive($tenant);
         }
 
-        return redirect()->route('module.subscription.index')->with('success', 'Transaksi pesanan pembayaran #'.$order->id.' berhasil dibatalkan.');
+        return redirect()->route('module.subscription.index')->with('success', __('subscription.messages.order_cancelled', ['id' => $order->id]));
     }
 
     public function cancelActiveOrder(Request $request): RedirectResponse
@@ -368,6 +368,6 @@ class SubscriptionController extends Controller
 
         $this->paymentOrderService->cancelActive($tenant);
 
-        return redirect()->route('module.subscription.index')->with('success', 'Transaksi pesanan pembayaran aktif berhasil dibatalkan.');
+        return redirect()->route('module.subscription.index')->with('success', __('subscription.messages.active_order_cancelled'));
     }
 }

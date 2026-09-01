@@ -115,6 +115,10 @@ class LocalizationTest extends TestCase
                 ->has('translations.transportation.nav.trips')
                 ->has('translations.users')
                 ->has('translations.users.pages.index.head')
+                ->has('translations.subscription')
+                ->has('translations.subscription.hero_title')
+                ->has('translations.subscription.payment_hero_title')
+                ->has('translations.subscription.modules.accounting')
                 ->has('availableLocales', 2)
             );
     }
@@ -206,6 +210,11 @@ class LocalizationTest extends TestCase
                 ->where('translations.users.pages.index.head', 'User Management')
                 ->where('translations.users.title', 'Users')
                 ->where('translations.modules.sales', 'Sales')
+                ->where('translations.subscription.payment_hero_title', 'Complete Your Subscription Transfer')
+                ->where('translations.subscription.payment_submit_proof_btn', 'Send Payment Proof')
+                ->where('translations.subscription.payg_title', 'Pay As You Go')
+                ->where('translations.subscription.per_month', '/month')
+                ->where('translations.subscription.modules.accounting', 'Accounting & Journals')
             );
 
         $this->patch(route('locale.update'), ['locale' => 'id'])->assertRedirect();
@@ -293,6 +302,11 @@ class LocalizationTest extends TestCase
                 ->where('translations.transportation.actions.dispatch', 'Dispatch Trip')
                 ->where('translations.users.pages.index.head', 'Manajemen Pengguna')
                 ->where('translations.users.title', 'Pengguna')
+                ->where('translations.subscription.payment_hero_title', 'Selesaikan Transfer Langganan')
+                ->where('translations.subscription.payment_submit_proof_btn', 'Kirim Bukti Pembayaran')
+                ->where('translations.subscription.payg_title', 'Pay As You Go')
+                ->where('translations.subscription.per_month', '/bulan')
+                ->where('translations.subscription.modules.accounting', 'Akuntansi & Jurnal')
             );
     }
 

@@ -104,38 +104,53 @@ interface Props {
 
 type BillingInterval = 'month' | 'annual';
 
-const MODULE_DEFINITIONS: Record<string, { label: string; icon: string; category: string }> = {
-    accounting: { label: 'Akuntansi & Jurnal', icon: '📊', category: 'Keuangan' },
-    invoicing: { label: 'Invoicing & Tagihan', icon: '🧾', category: 'Keuangan' },
-    receivables: { label: 'Piutang Usaha (AR)', icon: '💳', category: 'Keuangan' },
-    payables: { label: 'Hutang Usaha (AP)', icon: '📝', category: 'Keuangan' },
-    billing: { label: 'Sistem Penagihan', icon: '💰', category: 'Keuangan' },
-    purchasing: { label: 'Pembelian & PO', icon: '🛍️', category: 'Operasional' },
-    inventory: { label: 'Stok & Inventaris', icon: '📦', category: 'Operasional' },
-    orders: { label: 'Manajemen Pesanan', icon: '📋', category: 'Operasional' },
-    pos: { label: 'Kasir Point of Sale (POS)', icon: '🏪', category: 'Operasional' },
-    fleet: { label: 'Manajemen Armada', icon: '🚗', category: 'Transportasi' },
-    rental: { label: 'Rental & Sewa Mobil', icon: '🔑', category: 'Transportasi' },
-    shuttle: { label: 'Travel & Tiket Shuttle', icon: '🚐', category: 'Transportasi' },
-    tracking: { label: 'Live GPS Tracking', icon: '📍', category: 'Transportasi' },
-    routing: { label: 'Rute & Disparitas', icon: '🗺️', category: 'Transportasi' },
-    maintenance: { label: 'Servis & Perawatan', icon: '🔧', category: 'Transportasi' },
-    transportation: { label: 'Transportation TMS', icon: '🚚', category: 'Transportasi' },
-    scoring: { label: 'Driver Scoring', icon: '⭐', category: 'Transportasi' },
-    partners: { label: 'Database Mitra & CRM', icon: '👥', category: 'Manajemen' },
-    document: { label: 'Dokumen & Kontrak', icon: '📁', category: 'Manajemen' },
-    approvals: { label: 'Sistem Approval', icon: '✅', category: 'Manajemen' },
-    bi: { label: 'Executive Dashboard & BI', icon: '📈', category: 'Manajemen' },
-    canvassing: { label: 'Sales Canvassing', icon: '🎯', category: 'Pemasaran' },
-    promotions: { label: 'Promo & Diskon', icon: '🏷️', category: 'Pemasaran' },
-    outbound: { label: 'Logistik Outbound', icon: '📤', category: 'Logistik' },
-    carousels: { label: 'Banner & Slider Promo', icon: '🖼️', category: 'Konten' },
-    pages: { label: 'Landing Pages Kustom', icon: '🌐', category: 'Konten' },
-    posts: { label: 'Blog & Artikel Berita', icon: '📰', category: 'Konten' },
+const MODULE_DEFINITIONS: Record<string, { label: string; icon: string }> = {
+    accounting: { label: 'Akuntansi & Jurnal', icon: '📊' },
+    invoicing: { label: 'Invoicing & Tagihan', icon: '🧾' },
+    receivables: { label: 'Piutang Usaha (AR)', icon: '💳' },
+    payables: { label: 'Hutang Usaha (AP)', icon: '📝' },
+    billing: { label: 'Sistem Penagihan', icon: '💰' },
+    purchasing: { label: 'Pembelian & PO', icon: '🛍️' },
+    inventory: { label: 'Stok & Inventaris', icon: '📦' },
+    orders: { label: 'Manajemen Pesanan', icon: '📋' },
+    pos: { label: 'Kasir Point of Sale (POS)', icon: '🏪' },
+    fleet: { label: 'Manajemen Armada', icon: '🚗' },
+    rental: { label: 'Rental & Sewa Mobil', icon: '🔑' },
+    shuttle: { label: 'Travel & Tiket Shuttle', icon: '🚐' },
+    tracking: { label: 'Live GPS Tracking', icon: '📍' },
+    routing: { label: 'Rute & Disparitas', icon: '🗺️' },
+    maintenance: { label: 'Servis & Perawatan', icon: '🔧' },
+    transportation: { label: 'Transportation TMS', icon: '🚚' },
+    scoring: { label: 'Driver Scoring', icon: '⭐' },
+    partners: { label: 'Database Mitra & CRM', icon: '👥' },
+    document: { label: 'Dokumen & Kontrak', icon: '📁' },
+    approvals: { label: 'Sistem Approval', icon: '✅' },
+    bi: { label: 'Executive Dashboard & BI', icon: '📈' },
+    canvassing: { label: 'Sales Canvassing', icon: '🎯' },
+    promotions: { label: 'Promo & Diskon', icon: '🏷️' },
+    outbound: { label: 'Logistik Outbound', icon: '📤' },
+    carousels: { label: 'Banner & Slider Promo', icon: '🖼️' },
+    pages: { label: 'Landing Pages Kustom', icon: '🌐' },
+    posts: { label: 'Blog & Artikel Berita', icon: '📰' },
 };
 
-const fmtCurrency = (amount: string | number | null, currency: string): string => {
-    if (!amount || Number(amount) === 0) return 'Gratis';
+type Translator = (key: string, params?: Record<string, string | number>, fallback?: string) => string;
+
+/**
+ * Resolve a module key to its localized label and icon, falling back to the
+ * humanized key for modules that have no definition yet.
+ */
+const moduleDisplay = (key: string, t: Translator): { label: string; icon: string } => {
+    const def = MODULE_DEFINITIONS[key];
+
+    return {
+        icon: def?.icon ?? '✨',
+        label: t(`subscription.modules.${key}`, undefined, def?.label ?? key.replace(/-/g, ' ')),
+    };
+};
+
+const fmtCurrency = (amount: string | number | null, currency: string, freeLabel = 'Gratis'): string => {
+    if (!amount || Number(amount) === 0) return freeLabel;
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: currency || 'IDR', maximumFractionDigits: 0 }).format(Number(amount));
 };
 
@@ -201,6 +216,7 @@ function PlanCard({
     const { t } = useTrans();
     const [showAllModules, setShowAllModules] = useState(false);
     const popularCard = plan.is_popular ?? isPopular;
+    const freeLabel = t('subscription.free_price', undefined, 'Gratis');
 
     const isAnnual = interval === 'annual';
     const hasAnnual = !!(plan.annual_price && Number(plan.annual_price) > 0);
@@ -255,7 +271,12 @@ function PlanCard({
                             <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
                                 popularCard ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700'
                             }`}>
-                                {plan.badge || (plan.key === 'free' ? 'Starter' : plan.key === 'basic' ? 'Standard' : 'Enterprise')}
+                                {plan.badge ||
+                                    (plan.key === 'free'
+                                        ? t('subscription.tier_starter', undefined, 'Starter')
+                                        : plan.key === 'basic'
+                                          ? t('subscription.tier_standard', undefined, 'Standard')
+                                          : t('subscription.tier_enterprise', undefined, 'Enterprise'))}
                             </span>
                             {isCurrentPlan && (
                                 <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-xs font-bold text-emerald-800">
@@ -301,8 +322,10 @@ function PlanCard({
                 <div className="my-6 rounded-2xl bg-slate-50/80 p-5 border border-slate-100">
                     {plan.key === 'pay_as_you_go' ? (
                         <div className="py-2">
-                            <span className="text-3xl font-black text-slate-900">Pay As You Go</span>
-                            <p className="mt-1.5 text-xs text-slate-500 font-bold text-teal-700">Mulai Rp 10.000 / kendaraan / bln</p>
+                            <span className="text-3xl font-black text-slate-900">{t('subscription.payg_title', undefined, 'Pay As You Go')}</span>
+                            <p className="mt-1.5 text-xs text-slate-500 font-bold text-teal-700">
+                                {t('subscription.payg_starting_price', undefined, 'Mulai Rp 10.000 / kendaraan / bln')}
+                            </p>
                         </div>
                     ) : !hasMonthly && !hasAnnual ? (
                         <div className="py-2">
@@ -325,11 +348,11 @@ function PlanCard({
 
                             <div className="flex items-baseline gap-2 flex-wrap">
                                 <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-                                    {fmtCurrency(displayPrice, plan.currency)}
+                                    {fmtCurrency(displayPrice, plan.currency, freeLabel)}
                                 </span>
                                 {strikePrice && (
                                     <span className="text-sm font-medium text-slate-400 line-through">
-                                        {fmtCurrency(strikePrice, plan.currency)}
+                                        {fmtCurrency(strikePrice, plan.currency, freeLabel)}
                                     </span>
                                 )}
                             </div>
@@ -337,21 +360,25 @@ function PlanCard({
                             <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500">
                                 {isAnnual ? (
                                     <>
-                                        /tahun
+                                        {t('subscription.per_year', undefined, '/tahun')}
                                         {perMonth !== null && (
                                             <span className="ml-1 text-teal-700">
-                                                (setara {fmtCurrency(perMonth, plan.currency)}/bln)
+                                                {t('subscription.equivalent_per_month', { amount: fmtCurrency(perMonth, plan.currency, freeLabel) }, `(setara ${fmtCurrency(perMonth, plan.currency, freeLabel)}/bln)`)}
                                             </span>
                                         )}
                                     </>
                                 ) : (
-                                    '/bulan'
+                                    t('subscription.per_month', undefined, '/bulan')
                                 )}
                             </p>
 
                             {!isAnnual && hasAnnual && savingPct !== null && savingPct > 0 && (
                                 <p className="mt-2.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 rounded-lg px-2.5 py-1.5 border border-emerald-200">
-                                    💡 {t('subscription.save_percent', { percent: savingPct }, `Hemat ${savingPct}%`)} jika bayar tahunan ({fmtCurrency(plan.annual_price, plan.currency)}/thn)
+                                    💡 {t(
+                                        'subscription.annual_saving_hint',
+                                        { percent: savingPct, amount: fmtCurrency(plan.annual_price, plan.currency, freeLabel) },
+                                        `Hemat ${savingPct}% jika bayar tahunan (${fmtCurrency(plan.annual_price, plan.currency, freeLabel)}/thn)`,
+                                    )}
                                 </p>
                             )}
                         </div>
@@ -388,13 +415,17 @@ function PlanCard({
                                     }}
                                     className="flex items-center justify-between w-full text-xs font-bold text-teal-600 hover:text-teal-800 py-1"
                                 >
-                                    <span>Modul Teknis ({plan.modules.length})</span>
-                                    <span>{showAllModules ? '▲ Sembunyikan' : '▼ Lihat Detail'}</span>
+                                    <span>{t('subscription.technical_modules', undefined, 'Modul Teknis')} ({plan.modules.length})</span>
+                                    <span>
+                                        {showAllModules
+                                            ? t('subscription.hide_details', undefined, '▲ Sembunyikan')
+                                            : t('subscription.view_details', undefined, '▼ Lihat Detail')}
+                                    </span>
                                 </button>
                                 {showAllModules && (
                                     <ul className="mt-2 space-y-1.5 pl-1">
                                         {plan.modules.map((m) => {
-                                            const def = MODULE_DEFINITIONS[m] || { label: m.replace(/-/g, ' '), icon: '✨' };
+                                            const def = moduleDisplay(m, t);
                                             return (
                                                 <li key={m} className="flex items-center gap-2 text-xs text-slate-600">
                                                     <span>{def.icon}</span>
@@ -430,11 +461,13 @@ function PlanCard({
                         </div>
 
                         {plan.modules.length === 0 ? (
-                            <p className="text-xs italic text-slate-400">Fitur dasar workspace</p>
+                            <p className="text-xs italic text-slate-400">
+                                {t('subscription.basic_workspace_features', undefined, 'Fitur dasar workspace')}
+                            </p>
                         ) : (
                             <ul className="space-y-2.5">
                                 {displayedModules.map((m) => {
-                                    const def = MODULE_DEFINITIONS[m] || { label: m.replace(/-/g, ' '), icon: '✨', category: 'Fitur' };
+                                    const def = moduleDisplay(m, t);
                                     return (
                                         <li key={m} className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700">
                                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100/70 text-teal-700">
@@ -501,6 +534,7 @@ export default function SubscriptionActivate({
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
+    const freeLabel = t('subscription.free_price', undefined, 'Gratis');
 
     const [billingInterval, setBillingInterval] = useState<BillingInterval>('month');
     const [faqOpen, setFaqOpen] = useState<number | null>(null);
@@ -766,7 +800,7 @@ export default function SubscriptionActivate({
                                             {activePaymentOrder.subscribed_vehicles ? (
                                                 <>{t('subscription.capacity_label', { count: activePaymentOrder.subscribed_vehicles }, `Kapasitas: ${activePaymentOrder.subscribed_vehicles} Unit`)} {activePaymentOrder.type === 'upgrade' && activePaymentOrder.upgrade_from_vehicles ? t('subscription.upgrade_info', { count: Math.max(1, activePaymentOrder.subscribed_vehicles - activePaymentOrder.upgrade_from_vehicles) }, `(+${Math.max(1, activePaymentOrder.subscribed_vehicles - activePaymentOrder.upgrade_from_vehicles)} upgrade)`) : ''} · </>
                                             ) : null}
-                                            {t('subscription.total_label', undefined, 'Total:')} <strong className="text-slate-900">{fmtCurrency(activePaymentOrder.total_amount, 'IDR')}</strong> ({t('subscription.unique_code_label', undefined, 'kode unik')} <strong className="text-amber-700">+{activePaymentOrder.unique_code}</strong>) · <strong className="text-slate-900">{t('subscription.days_left', { count: paymentOrderDaysLeft }, `${paymentOrderDaysLeft} hari lagi`)}</strong>
+                                            {t('subscription.total_label', undefined, 'Total:')} <strong className="text-slate-900">{fmtCurrency(activePaymentOrder.total_amount, 'IDR', freeLabel)}</strong> ({t('subscription.unique_code_label', undefined, 'kode unik')} <strong className="text-amber-700">+{activePaymentOrder.unique_code}</strong>) · <strong className="text-slate-900">{t('subscription.days_left', { count: paymentOrderDaysLeft }, `${paymentOrderDaysLeft} hari lagi`)}</strong>
                                         </p>
                                     </div>
                                 </div>
@@ -854,7 +888,13 @@ export default function SubscriptionActivate({
                                         </span>
                                     </div>
                                     <p className="mt-1 text-xs sm:text-sm text-emerald-800">
-                                        {t('subscription.active_plan_ends_desc', { date: subscription.ends_at ? dateLocale(subscription.ends_at) : 'Tidak terbatas' }, `Masa berlaku sampai ${subscription.ends_at ? dateLocale(subscription.ends_at) : 'Tidak terbatas'}. Anda dapat memperpanjang atau upgrade paket di bawah.`)}
+                                        {(() => {
+                                            const endsAt = subscription.ends_at
+                                                ? dateLocale(subscription.ends_at)
+                                                : t('subscription.unlimited_date', undefined, 'Tidak terbatas');
+
+                                            return t('subscription.active_plan_ends_desc', { date: endsAt }, `Masa berlaku sampai ${endsAt}. Anda dapat memperpanjang atau upgrade paket di bawah.`);
+                                        })()}
                                     </p>
                                 </div>
                             </div>
@@ -1151,8 +1191,14 @@ export default function SubscriptionActivate({
                                             const isActive = data.subscribed_vehicles >= tItem.min_vehicles && data.subscribed_vehicles <= tItem.max_vehicles;
                                             return (
                                                 <div key={tItem.id} className={`flex justify-between items-center p-3.5 text-sm ${isActive ? 'bg-teal-50/75 font-bold text-teal-950' : 'text-slate-600'}`}>
-                                                    <span>{tItem.min_vehicles} - {tItem.max_vehicles === 999999 ? '∞' : tItem.max_vehicles} Unit</span>
-                                                    <span>{fmtCurrency(tItem.price_per_vehicle, 'IDR')}/unit/bln</span>
+                                                    <span>
+                                                        {tItem.min_vehicles} - {tItem.max_vehicles === 999999 ? '∞' : tItem.max_vehicles}{' '}
+                                                        {t('subscription.units', undefined, 'Unit')}
+                                                    </span>
+                                                    <span>
+                                                        {fmtCurrency(tItem.price_per_vehicle, 'IDR', freeLabel)}
+                                                        {t('subscription.month_unit', undefined, '/unit/bln')}
+                                                    </span>
                                                 </div>
                                             );
                                         })}
@@ -1188,7 +1234,7 @@ export default function SubscriptionActivate({
                                     </h4>
                                     <p className="mt-0.5 text-sm font-bold text-teal-700">
                                         {t('subscription.total_payment_label', undefined, 'Total Tagihan:')}{' '}
-                                        {fmtCurrency(totalAmountValue, selectedPlan.currency)}
+                                        {fmtCurrency(totalAmountValue, selectedPlan.currency, freeLabel)}
                                     </p>
                                 </div>
 
@@ -1291,7 +1337,7 @@ export default function SubscriptionActivate({
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 font-mono font-bold text-slate-900 whitespace-nowrap">
-                                                {fmtCurrency(o.total_amount, 'IDR')}
+                                                {fmtCurrency(o.total_amount, 'IDR', freeLabel)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {renderOrderStatusBadge(o.status)}
