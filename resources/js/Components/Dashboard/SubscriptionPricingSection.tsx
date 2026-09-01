@@ -413,7 +413,7 @@ export default function SubscriptionPricingSection({ subscription }: Props): JSX
                     </span>
                 </div>
 
-                <div className={`grid gap-4.5 ${
+                <div className={`grid gap-6 sm:gap-6 lg:gap-7 ${
                     subscription.tiers.length === 1
                         ? 'grid-cols-1 max-w-md mx-auto'
                         : subscription.tiers.length === 2
