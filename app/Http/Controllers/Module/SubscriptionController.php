@@ -35,10 +35,16 @@ class SubscriptionController extends Controller
         $tenant = tenant();
         abort_unless($tenant instanceof Tenant, 404);
 
+        $isTrialMode = PlatformSetting::isPerVehicleTrialEnabled();
+
         $plans = Plan::on('central')
-            ->where(function ($query): void {
+            ->where(function ($query) use ($isTrialMode): void {
                 $query->where('is_trial', false)
                     ->where('key', '!=', Plan::KEY_TRIAL);
+
+                if ($isTrialMode) {
+                    $query->where('key', '!=', 'pay_as_you_go');
+                }
             })
             ->active()
             ->ordered()

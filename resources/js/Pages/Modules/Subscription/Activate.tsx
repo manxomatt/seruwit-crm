@@ -1079,7 +1079,7 @@ export default function SubscriptionActivate({
                         ))}
                     </div>
 
-                    {selectedPlan?.key === 'pay_as_you_go' && (
+                    {!is_trial_mode && selectedPlan?.key === 'pay_as_you_go' && (
                         <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
                             <h3 className="text-lg font-black text-slate-900">
                                 {t('subscription.payg_config_title', undefined, 'Konfigurasi Kuota Pay As You Go')}
