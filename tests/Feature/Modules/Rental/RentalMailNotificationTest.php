@@ -24,6 +24,7 @@ class RentalMailNotificationTest extends TestCase
 
         $this->withoutVite();
         $this->setUpRoles();
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
     }
 
     public function test_confirm_emails_staff_and_customer(): void
@@ -55,6 +56,26 @@ class RentalMailNotificationTest extends TestCase
                     && ($notifiable->routes['mail'] ?? null) === 'customer@example.test';
             },
         );
+    }
+
+    public function test_confirm_does_not_send_emails_in_development_mode(): void
+    {
+        Notification::fake();
+
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::DEVELOPMENT);
+
+        $admin = $this->createAdminUser();
+        $partner = Partner::factory()->create(['email' => 'customer@example.test']);
+        $rental = Rental::factory()->create([
+            'partner_id' => $partner->id,
+            'status' => Rental::STATUS_DRAFT,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
+            ->assertRedirect();
+
+        Notification::assertNothingSent();
     }
 
     public function test_checkout_and_return_send_lifecycle_mail(): void
