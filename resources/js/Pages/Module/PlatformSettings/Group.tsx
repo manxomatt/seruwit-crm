@@ -111,6 +111,7 @@ export default function Group({
     const businessModel = businessModelIndex >= 0 ? data.settings[businessModelIndex]?.value || 'per_vehicle_trial' : 'per_vehicle_trial';
 
     const trialDurationDaysIndex = findSettingIndex('capacity.vehicle_trial_duration_days');
+    const maxTrialVehiclesIndex = findSettingIndex('capacity.max_trial_vehicles_per_tenant');
 
     const preventDuplicatePlateIndex = findSettingIndex('capacity.prevent_duplicate_plate_trial');
     const isPreventDuplicatePlate = preventDuplicatePlateIndex >= 0 ? data.settings[preventDuplicatePlateIndex]?.value === '1' : true;
@@ -624,6 +625,39 @@ export default function Group({
                                             </div>
                                         )}
 
+                                        {maxTrialVehiclesIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="capacity_max_trial_vehicles_per_tenant"
+                                                    value={t('settings.platform.capacity.max_trial_vehicles_label', undefined, 'Batas Maksimal Unit Free Trial per Tenant')}
+                                                    className="!text-xs !font-bold"
+                                                />
+                                                <div className="mt-1.5 flex items-center gap-2">
+                                                    <TextInput
+                                                        id="capacity_max_trial_vehicles_per_tenant"
+                                                        type="number"
+                                                        min="0"
+                                                        className="block w-full !rounded-xl !py-2 text-xs font-semibold border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                                        value={data.settings[maxTrialVehiclesIndex]?.value || '5'}
+                                                        onChange={(e) => updateValue(maxTrialVehiclesIndex, e.target.value)}
+                                                        required
+                                                    />
+                                                    <span className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                                                        {t('settings.platform.capacity.units_suffix', undefined, 'Unit')}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    {t('settings.platform.capacity.max_trial_vehicles_desc', undefined, 'Jumlah maksimal unit kendaraan yang dapat menikmati masa uji coba gratis (isi 0 untuk tanpa batas / unlimited).')}
+                                                </p>
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${maxTrialVehiclesIndex}.value`]}
+                                                    className="mt-1.5"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div>
                                         {preventDuplicatePlateIndex >= 0 && (
                                             <div>
                                                 <InputLabel

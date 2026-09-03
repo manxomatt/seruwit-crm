@@ -149,6 +149,7 @@ class PlatformSettingController extends Controller
             'system_mode' => ['required', Rule::in(SystemMode::values())],
             'capacity_business_model' => ['sometimes', Rule::in([PlatformSetting::MODEL_PER_VEHICLE_TRIAL, PlatformSetting::MODEL_TENANT_QUOTA])],
             'vehicle_trial_duration_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
+            'max_trial_vehicles_per_tenant' => ['sometimes', 'integer', 'min:0', 'max:10000'],
             'prevent_duplicate_plate_trial' => ['sometimes', 'boolean'],
             'capacity_credits_lifetime_enabled' => ['sometimes', 'boolean'],
             'vehicle_activation_duration_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
@@ -164,6 +165,9 @@ class PlatformSettingController extends Controller
         }
         if (isset($data['vehicle_trial_duration_days'])) {
             PlatformSetting::setValue(PlatformSetting::KEY_VEHICLE_TRIAL_DURATION_DAYS, (string) $data['vehicle_trial_duration_days']);
+        }
+        if (isset($data['max_trial_vehicles_per_tenant'])) {
+            PlatformSetting::setValue(PlatformSetting::KEY_MAX_TRIAL_VEHICLES_PER_TENANT, (string) $data['max_trial_vehicles_per_tenant']);
         }
         if (isset($data['prevent_duplicate_plate_trial'])) {
             PlatformSetting::setValue(PlatformSetting::KEY_PREVENT_DUPLICATE_PLATE_TRIAL, $data['prevent_duplicate_plate_trial'] ? '1' : '0');

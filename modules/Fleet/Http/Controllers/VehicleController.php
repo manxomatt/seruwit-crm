@@ -93,6 +93,9 @@ class VehicleController extends Controller
             'available_credits' => $availableCredits,
             'business_model' => PlatformSetting::getBusinessModel(),
             'trial_duration_days' => PlatformSetting::getVehicleTrialDurationDays(),
+            'max_trial_vehicles' => $capacityService->getMaxTrialVehicles(),
+            'trial_vehicles_count' => $capacityService->getTrialVehiclesCount(),
+            'has_reached_trial_limit' => $capacityService->hasReachedTrialLimit(),
         ]);
     }
 
@@ -117,6 +120,10 @@ class VehicleController extends Controller
             'available_credits' => $availableCredits,
             'is_trial_mode' => $isPerVehicleTrial,
             'trial_duration_days' => PlatformSetting::getVehicleTrialDurationDays(),
+            'max_trial_vehicles' => $capacityService->getMaxTrialVehicles(),
+            'trial_vehicles_count' => $capacityService->getTrialVehiclesCount(),
+            'has_reached_trial_limit' => $capacityService->hasReachedTrialLimit(),
+            'remaining_trial_slots' => $capacityService->getRemainingTrialSlots(),
         ]);
     }
 
@@ -141,6 +148,7 @@ class VehicleController extends Controller
         $vehicleData = $request->validated();
 
         if ($isPerVehicleTrial) {
+            $hasReachedTrialLimit = $capacityService->hasReachedTrialLimit();
             // Check if vehicle can claim a trial period
             $canClaimTrial = $capacityService->canClaimTrial($request->plate_number, $request->vin_number ?? null);
 
@@ -153,15 +161,19 @@ class VehicleController extends Controller
                     ->with('success', "Kendaraan {$vehicle->plate_number} berhasil didaftarkan dengan masa uji coba gratis {$vehicle->trialDaysRemaining()} hari.");
             }
 
-            // If trial already claimed before, vehicle is created and requires credit activation if ACTIVE
+            // If trial already claimed or quota reached, vehicle is created and requires credit activation if ACTIVE
             if ($status === Vehicle::STATUS_ACTIVE) {
                 $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
                 if ($availableCredits < 1) {
                     $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
                     $vehicle = Vehicle::create($vehicleData);
 
+                    $reasonMsg = $hasReachedTrialLimit
+                        ? "Batas kuota uji coba gratis ({$capacityService->getMaxTrialVehicles()} unit) untuk akun Anda telah terpenuhi. Status kendaraan {$vehicle->plate_number} diset Non-Aktif karena saldo kredit kapasitas 0. Silakan lakukan aktivasi / perpanjangan unit."
+                        : "Kendaraan {$vehicle->plate_number} pernah menggunakan masa uji coba sebelumnya. Status kendaraan diset Non-Aktif karena saldo kredit kapasitas 0. Silakan lakukan aktivasi/top-up kredit.";
+
                     return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-                        ->with('info', "Kendaraan {$vehicle->plate_number} pernah menggunakan masa uji coba sebelumnya. Status kendaraan diset Non-Aktif karena saldo kredit kapasitas 0. Silakan lakukan aktivasi/top-up kredit.");
+                        ->with('info', $reasonMsg);
                 }
 
                 $vehicleData['status'] = Vehicle::STATUS_INACTIVE;

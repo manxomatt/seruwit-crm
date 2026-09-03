@@ -74,10 +74,62 @@ class VehicleCapacityService
     }
 
     /**
+     * Get the count of vehicles that currently have or ever had a trial in the current tenant.
+     */
+    public function getTrialVehiclesCount(): int
+    {
+        return (int) Vehicle::query()
+            ->where(function ($query): void {
+                $query->where('is_trial', true)
+                    ->orWhereNotNull('trial_ends_at');
+            })
+            ->count();
+    }
+
+    /**
+     * Get the maximum number of trial vehicles allowed per tenant.
+     */
+    public function getMaxTrialVehicles(): int
+    {
+        return PlatformSetting::getMaxTrialVehiclesPerTenant();
+    }
+
+    /**
+     * Check whether the current tenant has reached their maximum trial vehicle limit.
+     */
+    public function hasReachedTrialLimit(): bool
+    {
+        $max = $this->getMaxTrialVehicles();
+        if ($max <= 0) {
+            return false; // 0 or negative means unlimited
+        }
+
+        return $this->getTrialVehiclesCount() >= $max;
+    }
+
+    /**
+     * Get the remaining trial slots available for the current tenant.
+     * Returns null if unlimited (max <= 0).
+     */
+    public function getRemainingTrialSlots(): ?int
+    {
+        $max = $this->getMaxTrialVehicles();
+        if ($max <= 0) {
+            return null; // Unlimited
+        }
+
+        return max(0, $max - $this->getTrialVehiclesCount());
+    }
+
+    /**
      * Check if a license plate or VIN is eligible to claim a free trial.
      */
     public function canClaimTrial(string $plateNumber, ?string $vinNumber = null): bool
     {
+        if ($this->hasReachedTrialLimit()) {
+            return false;
+        }
+
         if (! PlatformSetting::isPreventDuplicatePlateTrial()) {
             return true;
         }

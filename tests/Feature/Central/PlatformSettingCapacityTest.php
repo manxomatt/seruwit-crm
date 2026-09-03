@@ -29,6 +29,7 @@ class PlatformSettingCapacityTest extends TestCase
         $this->assertSame(PlatformSetting::MODEL_PER_VEHICLE_TRIAL, PlatformSetting::getBusinessModel());
         $this->assertTrue(PlatformSetting::isPerVehicleTrialEnabled());
         $this->assertSame(30, PlatformSetting::getVehicleTrialDurationDays());
+        $this->assertSame(5, PlatformSetting::getMaxTrialVehiclesPerTenant());
         $this->assertTrue(PlatformSetting::isPreventDuplicatePlateTrial());
         $this->assertTrue(PlatformSetting::isCapacityCreditsLifetime());
         $this->assertSame(30, PlatformSetting::getVehicleActivationDurationDays());
@@ -43,6 +44,7 @@ class PlatformSettingCapacityTest extends TestCase
             'system_mode' => SystemMode::PRODUCTION,
             'capacity_business_model' => PlatformSetting::MODEL_TENANT_QUOTA,
             'vehicle_trial_duration_days' => 14,
+            'max_trial_vehicles_per_tenant' => 8,
             'prevent_duplicate_plate_trial' => false,
             'capacity_credits_lifetime_enabled' => false,
             'vehicle_activation_duration_days' => 45,
@@ -56,6 +58,7 @@ class PlatformSettingCapacityTest extends TestCase
         $this->assertSame(PlatformSetting::MODEL_TENANT_QUOTA, PlatformSetting::getBusinessModel());
         $this->assertFalse(PlatformSetting::isPerVehicleTrialEnabled());
         $this->assertSame(14, PlatformSetting::getVehicleTrialDurationDays());
+        $this->assertSame(8, PlatformSetting::getMaxTrialVehiclesPerTenant());
         $this->assertFalse(PlatformSetting::isPreventDuplicatePlateTrial());
         $this->assertFalse(PlatformSetting::isCapacityCreditsLifetime());
         $this->assertSame(45, PlatformSetting::getVehicleActivationDurationDays());

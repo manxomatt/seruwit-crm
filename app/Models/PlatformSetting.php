@@ -21,6 +21,8 @@ class PlatformSetting extends Model
 
     public const KEY_VEHICLE_TRIAL_DURATION_DAYS = 'capacity.vehicle_trial_duration_days';
 
+    public const KEY_MAX_TRIAL_VEHICLES_PER_TENANT = 'capacity.max_trial_vehicles_per_tenant';
+
     public const KEY_PREVENT_DUPLICATE_PLATE_TRIAL = 'capacity.prevent_duplicate_plate_trial';
 
     public const KEY_CAPACITY_CREDITS_LIFETIME = 'capacity_credits_lifetime_enabled';
@@ -97,6 +99,11 @@ class PlatformSetting extends Model
     public static function getVehicleTrialDurationDays(): int
     {
         return (int) static::getValue(self::KEY_VEHICLE_TRIAL_DURATION_DAYS, 30);
+    }
+
+    public static function getMaxTrialVehiclesPerTenant(): int
+    {
+        return (int) static::getValue(self::KEY_MAX_TRIAL_VEHICLES_PER_TENANT, 5);
     }
 
     public static function isPreventDuplicatePlateTrial(): bool
@@ -256,6 +263,16 @@ class PlatformSetting extends Model
                 'sort_order' => 2,
             ],
             [
+                'key' => self::KEY_MAX_TRIAL_VEHICLES_PER_TENANT,
+                'group' => 'capacity',
+                'value' => '5',
+                'type' => 'number',
+                'label' => 'Batas Maksimal Unit Free Trial per Tenant',
+                'description' => 'Jumlah maksimal unit kendaraan yang dapat menikmati masa uji coba gratis untuk setiap tenant (isi 0 untuk tanpa batas / unlimited).',
+                'is_public' => false,
+                'sort_order' => 3,
+            ],
+            [
                 'key' => self::KEY_PREVENT_DUPLICATE_PLATE_TRIAL,
                 'group' => 'capacity',
                 'value' => '1',
@@ -263,7 +280,7 @@ class PlatformSetting extends Model
                 'label' => 'Cegah Duplikasi Trial Pelat Nomor',
                 'description' => 'Mencegah kendaraan dengan pelat nomor yang sama memperoleh masa trial ulang jika dihapus dan didaftarkan kembali.',
                 'is_public' => false,
-                'sort_order' => 3,
+                'sort_order' => 4,
             ],
             [
                 'key' => self::KEY_CAPACITY_CREDITS_LIFETIME,
@@ -273,7 +290,7 @@ class PlatformSetting extends Model
                 'label' => 'Saldo Kredit Lifetime',
                 'description' => 'Saldo kredit kapasitas unit yang dimiliki tenant akan tersimpan selamanya sampai digunakan (tidak pernah kadaluarsa).',
                 'is_public' => false,
-                'sort_order' => 4,
+                'sort_order' => 5,
             ],
             [
                 'key' => self::KEY_VEHICLE_ACTIVATION_DURATION_DAYS,
@@ -283,7 +300,7 @@ class PlatformSetting extends Model
                 'label' => 'Durasi 1 Siklus Aktivasi (Hari)',
                 'description' => 'Masa aktif yang didapat kendaraan saat mengkonsumsi 1 unit kapasitas kuota armada (default: 30 hari).',
                 'is_public' => false,
-                'sort_order' => 5,
+                'sort_order' => 6,
             ],
             [
                 'key' => self::KEY_VEHICLE_GRACE_PERIOD_DAYS,
@@ -293,7 +310,7 @@ class PlatformSetting extends Model
                 'label' => 'Masa Tenggang / Grace Period (Hari)',
                 'description' => 'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).',
                 'is_public' => false,
-                'sort_order' => 6,
+                'sort_order' => 7,
             ],
             [
                 'key' => self::KEY_PAUSE_DURING_MAINTENANCE,

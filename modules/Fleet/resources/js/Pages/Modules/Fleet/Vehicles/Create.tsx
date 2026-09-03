@@ -51,9 +51,22 @@ interface Props {
     available_credits?: number;
     is_trial_mode?: boolean;
     trial_duration_days?: number;
+    max_trial_vehicles?: number;
+    trial_vehicles_count?: number;
+    has_reached_trial_limit?: boolean;
+    remaining_trial_slots?: number | null;
 }
 
-export default function Create({ bases = [], available_credits = 0, is_trial_mode = false, trial_duration_days = 30 }: Props): JSX.Element {
+export default function Create({
+    bases = [],
+    available_credits = 0,
+    is_trial_mode = false,
+    trial_duration_days = 30,
+    max_trial_vehicles = 5,
+    trial_vehicles_count = 0,
+    has_reached_trial_limit = false,
+    remaining_trial_slots = null,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -153,19 +166,37 @@ export default function Create({ bases = [], available_credits = 0, is_trial_mod
                     {/* Kolom Kiri: Form Utama */}
                     <div className="lg:col-span-8 space-y-6">
                         {is_trial_mode && (
-                            <div className="flex items-center gap-4 rounded-3xl border border-cyan-200/80 bg-cyan-50/60 p-5 shadow-xs dark:border-cyan-800/60 dark:bg-cyan-950/20">
-                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-xl text-white shadow-xs">
-                                    🎁
-                                </span>
-                                <div className="space-y-0.5">
-                                    <h4 className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
-                                        Free Trial {trial_duration_days} Hari untuk Armada Baru
-                                    </h4>
-                                    <p className="text-[11px] leading-relaxed text-cyan-700 dark:text-cyan-300">
-                                        Pendaftaran armada bebas kuota. Setiap unit baru yang didaftarkan otomatis mendapatkan masa uji coba gratis selama {trial_duration_days} hari tanpa memotong saldo kredit kapasitas unit Anda.
-                                    </p>
+                            has_reached_trial_limit ? (
+                                <div className="flex items-center gap-4 rounded-3xl border border-amber-200/80 bg-amber-50/60 p-5 shadow-xs dark:border-amber-800/60 dark:bg-amber-950/20">
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-600 text-xl text-white shadow-xs">
+                                        ⚠️
+                                    </span>
+                                    <div className="space-y-0.5">
+                                        <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                                            Batas Kuota Free Trial Tercapai ({trial_vehicles_count} / {max_trial_vehicles} Unit Digunakan)
+                                        </h4>
+                                        <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
+                                            Akun Anda telah menggunakan seluruh jatah {max_trial_vehicles} unit uji coba gratis. Kendaraan baru ini akan didaftarkan sebagai unit berbayar dan memerlukan 1 saldo kredit kapasitas atau diset Non-Aktif sampai dilakukan aktivasi.
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="flex items-center gap-4 rounded-3xl border border-cyan-200/80 bg-cyan-50/60 p-5 shadow-xs dark:border-cyan-800/60 dark:bg-cyan-950/20">
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-xl text-white shadow-xs">
+                                        🎁
+                                    </span>
+                                    <div className="space-y-0.5">
+                                        <h4 className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
+                                            Free Trial {trial_duration_days} Hari untuk Armada Baru
+                                            {max_trial_vehicles > 0 ? ` (${trial_vehicles_count} / ${max_trial_vehicles} Unit Digunakan)` : ''}
+                                        </h4>
+                                        <p className="text-[11px] leading-relaxed text-cyan-700 dark:text-cyan-300">
+                                            Pendaftaran armada bebas kuota. Setiap unit baru yang didaftarkan otomatis mendapatkan masa uji coba gratis selama {trial_duration_days} hari tanpa memotong saldo kredit kapasitas unit Anda
+                                            {remaining_trial_slots !== null && remaining_trial_slots !== undefined ? ` (Tersisa ${remaining_trial_slots} kuota trial).` : '.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )
                         )}
 
                         <form id="fleet-vehicle-create-form" onSubmit={submit} className="space-y-6">

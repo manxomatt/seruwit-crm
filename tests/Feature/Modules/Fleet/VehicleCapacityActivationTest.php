@@ -214,4 +214,62 @@ class VehicleCapacityActivationTest extends TestCase
         $this->assertFalse($service->canClaimTrial('b-9999-xyz'));
         $this->assertFalse($service->canClaimTrial('B9999XYZ'));
     }
+
+    public function test_trial_quota_limit_prevents_exceeding_max_trial_vehicles_per_tenant(): void
+    {
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_CAPACITY_BUSINESS_MODEL, \App\Models\PlatformSetting::MODEL_PER_VEHICLE_TRIAL);
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_MAX_TRIAL_VEHICLES_PER_TENANT, 2);
+
+        $service = app(VehicleCapacityService::class);
+
+        // Initially 0 trial vehicles
+        $this->assertSame(0, $service->getTrialVehiclesCount());
+        $this->assertFalse($service->hasReachedTrialLimit());
+        $this->assertSame(2, $service->getRemainingTrialSlots());
+
+        // Create 2 trial vehicles (reaching the limit)
+        Vehicle::factory()->create(['is_trial' => true, 'trial_ends_at' => Carbon::now()->addDays(30)]);
+        Vehicle::factory()->create(['is_trial' => true, 'trial_ends_at' => Carbon::now()->addDays(30)]);
+
+        $this->assertSame(2, $service->getTrialVehiclesCount());
+        $this->assertTrue($service->hasReachedTrialLimit());
+        $this->assertSame(0, $service->getRemainingTrialSlots());
+        $this->assertFalse($service->canClaimTrial('B 8888 NEW'));
+
+        // Attempting to register 3rd vehicle when credit is available should consume 1 credit instead of free trial
+        $this->tenant->update(['unit_capacity_credits' => 1]);
+        $response = $this->actingAs($this->user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Toyota Yaris',
+            'plate_number' => 'B 8888 NEW',
+            'type' => 'car',
+            'fuel_type' => 'petrol',
+            'status' => Vehicle::STATUS_ACTIVE,
+        ]);
+
+        $response->assertRedirect();
+        $vehicle3 = Vehicle::where('plate_number', 'B 8888 NEW')->first();
+        $this->assertNotNull($vehicle3);
+        $this->assertFalse($vehicle3->is_trial);
+        $this->assertSame(Vehicle::STATUS_ACTIVE, $vehicle3->status);
+
+        $this->tenant->refresh();
+        $this->assertSame(0, $this->tenant->unit_capacity_credits);
+
+        // Attempting to register 4th vehicle with 0 credits when limit reached should create as INACTIVE
+        $response4 = $this->actingAs($this->user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Honda Civic',
+            'plate_number' => 'B 7777 INACT',
+            'type' => 'car',
+            'fuel_type' => 'petrol',
+            'status' => Vehicle::STATUS_ACTIVE,
+        ]);
+
+        $response4->assertRedirect();
+        $response4->assertSessionHas('info');
+
+        $vehicle4 = Vehicle::where('plate_number', 'B 7777 INACT')->first();
+        $this->assertNotNull($vehicle4);
+        $this->assertSame(Vehicle::STATUS_INACTIVE, $vehicle4->status);
+        $this->assertFalse($vehicle4->is_trial);
+    }
 }

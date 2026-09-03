@@ -200,6 +200,8 @@ return [
             'trial_params_title' => 'Parameter Uji Coba Kendaraan',
             'trial_duration_label' => 'Durasi Free Trial per Armada (Hari)',
             'trial_duration_desc' => 'Masa aktif gratis saat pertama kali kendaraan didaftarkan oleh tenant.',
+            'max_trial_vehicles_label' => 'Batas Maksimal Unit Free Trial per Tenant',
+            'max_trial_vehicles_desc' => 'Jumlah maksimal unit kendaraan yang dapat menikmati masa uji coba gratis (isi 0 untuk tanpa batas / unlimited).',
             'anti_abuse_title' => 'Proteksi Anti-Abuse Pelat Nomor',
             'anti_abuse_label' => 'Cegah Duplikasi Trial Pelat Nomor',
             'anti_abuse_desc' => 'Pelat nomor yang sama tidak bisa di-reset trialnya jika dihapus lalu didaftarkan ulang.',
@@ -212,6 +214,7 @@ return [
             'pause_maintenance_label' => 'Bekukan Masa Aktif Saat Masuk Bengkel',
             'pause_maintenance_desc' => 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
             'days_suffix' => 'Hari',
+            'units_suffix' => 'Unit',
         ],
         'email' => [
             'title' => 'Server SMTP & Pengirim Platform (Root Mailer)',
