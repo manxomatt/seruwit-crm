@@ -344,4 +344,31 @@ class RentalReservationWizardTest extends TestCase
                 ->has('quoteUrl')
                 ->has('walkInUrl'));
     }
+
+    public function test_create_page_provides_all_active_bases_in_locations(): void
+    {
+        FleetBase::factory()->create([
+            'kind' => FleetBaseKind::Yard->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+            'name' => 'Pool Jakarta Barat',
+        ]);
+        FleetBase::factory()->create([
+            'kind' => FleetBaseKind::Satellite->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+            'name' => 'Pos Bandara Soetta',
+        ]);
+        FleetBase::factory()->create([
+            'status' => FleetBase::STATUS_INACTIVE,
+            'name' => 'Base Tutup',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('module.rental.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->has('locations', 2)
+                ->where('locations.0.name', 'Pool Jakarta Barat')
+                ->where('locations.1.name', 'Pos Bandara Soetta'));
+    }
 }

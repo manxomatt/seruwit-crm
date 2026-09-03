@@ -6,7 +6,6 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Modules\Fleet\Models\FleetBase;
-use Modules\Fleet\Support\FleetBaseKind;
 use Modules\Partners\Models\Location;
 
 /**
@@ -85,34 +84,56 @@ class RentalLocationHydrator
     }
 
     /**
-     * Active depot bases for pickup / return branch selects.
+     * Active depot / pool / branch bases for pickup / return branch selects.
      *
      * @return list<array{id: int, code: string, name: string, address: string|null, city: string|null, province: string|null, zip: string|null, latitude: string|null, longitude: string|null}>
      */
     public function depotOptions(): array
     {
-        if (! Schema::hasTable('fleet_bases')) {
-            return [];
+        if (Schema::hasTable('fleet_bases')) {
+            $bases = FleetBase::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'address', 'city', 'province', 'zip', 'latitude', 'longitude']);
+
+            if ($bases->isNotEmpty()) {
+                return $bases->map(fn (FleetBase $base): array => [
+                    'id' => $base->id,
+                    'code' => $base->code,
+                    'name' => $base->name,
+                    'address' => $base->address,
+                    'city' => $base->city,
+                    'province' => $base->province,
+                    'zip' => $base->zip,
+                    'latitude' => $base->latitude !== null ? (string) $base->latitude : null,
+                    'longitude' => $base->longitude !== null ? (string) $base->longitude : null,
+                ])
+                    ->values()
+                    ->all();
+            }
         }
 
-        return FleetBase::query()
-            ->active()
-            ->ofKind(FleetBaseKind::Depot)
-            ->orderBy('name')
-            ->get(['id', 'code', 'name', 'address', 'city', 'province', 'zip', 'latitude', 'longitude'])
-            ->map(fn (FleetBase $base): array => [
-                'id' => $base->id,
-                'code' => $base->code,
-                'name' => $base->name,
-                'address' => $base->address,
-                'city' => $base->city,
-                'province' => $base->province,
-                'zip' => $base->zip,
-                'latitude' => $base->latitude !== null ? (string) $base->latitude : null,
-                'longitude' => $base->longitude !== null ? (string) $base->longitude : null,
-            ])
-            ->values()
-            ->all();
+        if (Schema::hasTable('locations')) {
+            return Location::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'address', 'city', 'province', 'zip', 'latitude', 'longitude'])
+                ->map(fn (Location $location): array => [
+                    'id' => $location->id,
+                    'code' => $location->code,
+                    'name' => $location->name,
+                    'address' => $location->address,
+                    'city' => $location->city,
+                    'province' => $location->province,
+                    'zip' => $location->zip,
+                    'latitude' => $location->latitude !== null ? (string) $location->latitude : null,
+                    'longitude' => $location->longitude !== null ? (string) $location->longitude : null,
+                ])
+                ->values()
+                ->all();
+        }
+
+        return [];
     }
 
     /**
@@ -122,10 +143,12 @@ class RentalLocationHydrator
     {
         $rules = [$required ? 'required' : 'nullable', 'integer'];
 
-        if (Schema::hasTable('fleet_bases')) {
+        if (Schema::hasTable('fleet_bases') && FleetBase::query()->exists()) {
             $rules[] = Rule::exists('fleet_bases', 'id')
-                ->where('kind', FleetBaseKind::Depot->value)
                 ->where('status', FleetBase::STATUS_ACTIVE);
+        } elseif (Schema::hasTable('locations')) {
+            $rules[] = Rule::exists('locations', 'id')
+                ->where('is_active', true);
         }
 
         return $rules;
@@ -158,7 +181,6 @@ class RentalLocationHydrator
         return FleetBase::query()
             ->whereKey($id)
             ->active()
-            ->ofKind(FleetBaseKind::Depot)
             ->exists();
     }
 }

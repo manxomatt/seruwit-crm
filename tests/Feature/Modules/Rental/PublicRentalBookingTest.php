@@ -94,19 +94,23 @@ class PublicRentalBookingTest extends TestCase
             'status' => FleetBase::STATUS_ACTIVE,
             'city' => 'Jakarta',
         ]);
-        FleetBase::factory()->create([
+        $yard = FleetBase::factory()->create([
             'name' => 'Yard Only',
             'kind' => FleetBaseKind::Yard->value,
             'status' => FleetBase::STATUS_ACTIVE,
+        ]);
+        FleetBase::factory()->create([
+            'name' => 'Inactive Base',
+            'status' => FleetBase::STATUS_INACTIVE,
         ]);
 
         $this->get(route('book.rental.search'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Public/Search')
-                ->has('locations', 1)
-                ->where('locations.0.id', $depot->id)
-                ->where('locations.0.name', 'Depot Cakung'));
+                ->has('locations', 2)
+                ->where('locations.0.name', 'Depot Cakung')
+                ->where('locations.1.name', 'Yard Only'));
     }
 
     public function test_search_defaults_dates_and_hides_vehicles_without_rate(): void
