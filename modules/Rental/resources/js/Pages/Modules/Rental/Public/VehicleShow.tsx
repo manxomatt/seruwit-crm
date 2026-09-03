@@ -78,6 +78,7 @@ interface Props {
     insurance_packages: InsurancePackage[];
     hold_ttl_minutes: number;
     gateway_available: boolean;
+    is_dev_mode?: boolean;
 }
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
@@ -94,6 +95,7 @@ export default function VehicleShow({
     locations,
     insurance_packages,
     hold_ttl_minutes,
+    is_dev_mode = false,
 }: Props) {
     const { flash, errors } = usePage().props as {
         flash?: { success?: string; error?: string };
@@ -101,6 +103,7 @@ export default function VehicleShow({
     };
     const [quote, setQuote] = useState(initialQuote);
     const [otpHint, setOtpHint] = useState<string | null>(null);
+    const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
     const [sendingOtp, setSendingOtp] = useState(false);
     const [quoting, setQuoting] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(false);
@@ -178,23 +181,31 @@ export default function VehicleShow({
         }
         setSendingOtp(true);
         setOtpHint(null);
+        setDevOtpCode(null);
         try {
             const { data } = await axios.post(route('book.rental.otp'), {
                 booker_phone: form.data.booker_phone,
             });
             if (data.already_verified) {
                 setPhoneVerified(true);
+                setDevOtpCode(null);
                 form.setData('otp_code', '000000');
                 setOtpHint('Nomor WhatsApp Anda sudah terverifikasi ✓');
             } else {
                 setPhoneVerified(false);
-                setOtpHint(data.debug_code ? `Kode OTP (Dev): ${data.debug_code}` : (data.message || 'OTP berhasil dikirim'));
                 if (data.debug_code) {
-                    form.setData('otp_code', String(data.debug_code));
+                    const codeStr = String(data.debug_code);
+                    setDevOtpCode(codeStr);
+                    form.setData('otp_code', codeStr);
+                    setOtpHint(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`);
+                } else {
+                    setDevOtpCode(null);
+                    setOtpHint(data.message || 'OTP berhasil dikirim ke nomor WhatsApp Anda.');
                 }
             }
         } catch (err: any) {
             setPhoneVerified(false);
+            setDevOtpCode(null);
             setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP. Periksa nomor telepon.');
         } finally {
             setSendingOtp(false);
@@ -604,7 +615,7 @@ export default function VehicleShow({
                                                     type="button"
                                                     onClick={() => void sendOtp()}
                                                     disabled={sendingOtp || !form.data.booker_phone}
-                                                    className="rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                                                    className="rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800 disabled:opacity-50 shadow-2xs"
                                                 >
                                                     {sendingOtp ? 'Mengirim...' : 'Kirim OTP'}
                                                 </button>
@@ -630,7 +641,30 @@ export default function VehicleShow({
                                             />
                                         )}
 
-                                        {otpHint && !phoneVerified && (
+                                        {devOtpCode && !phoneVerified && (
+                                            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 shadow-2xs space-y-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-xs font-black text-white shadow-2xs">
+                                                            ⚡
+                                                        </span>
+                                                        <div>
+                                                            <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
+                                                            <span className="text-[11px] text-amber-700 font-medium">OTP tidak dikirim ke HP. Kode OTP:</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
+                                                        {devOtpCode}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
+                                                    <span>✓</span>
+                                                    <span>Kode OTP telah diisikan otomatis ke kotak input di atas.</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {otpHint && !devOtpCode && !phoneVerified && (
                                             <p className="rounded-lg bg-teal-50 p-2 text-xs font-medium text-teal-800 border border-teal-200">
                                                 {otpHint}
                                             </p>

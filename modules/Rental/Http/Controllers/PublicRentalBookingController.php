@@ -158,6 +158,7 @@ class PublicRentalBookingController extends Controller
                 ->all(),
             'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
             'gateway_available' => $this->gatewayAvailable(),
+            'is_dev_mode' => \App\Support\SystemMode::shouldExposeDebugOtp(),
         ]);
     }
 
@@ -236,8 +237,15 @@ class PublicRentalBookingController extends Controller
         $code = $otp->send($data['booker_phone']);
 
         if ($request->wantsJson()) {
-            $payload = ['ok' => true, 'message' => __('rental.public.otp_sent')];
-            if (\App\Support\SystemMode::shouldExposeDebugOtp()) {
+            $isDev = \App\Support\SystemMode::shouldExposeDebugOtp();
+            $payload = [
+                'ok' => true,
+                'is_development' => $isDev,
+                'message' => $isDev
+                    ? 'Mode Development: Kode OTP adalah '.$code.' (tidak dikirim ke nomor HP).'
+                    : __('rental.public.otp_sent'),
+            ];
+            if ($isDev) {
                 $payload['debug_code'] = $code;
             }
 

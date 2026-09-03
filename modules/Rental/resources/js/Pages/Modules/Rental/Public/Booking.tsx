@@ -222,6 +222,7 @@ export default function BookingView({ brand, booking, gateway_available, company
     };
 
     const [otpHint, setOtpHint] = useState<string | null>(null);
+    const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
     const [showCancel, setShowCancel] = useState(false);
     const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
     const [showExtend, setShowExtend] = useState(false);
@@ -329,6 +330,7 @@ export default function BookingView({ brand, booking, gateway_available, company
         }
         setSendingPageOtp(true);
         setOtpHint(null);
+        setDevOtpCode(null);
         setVerificationError(null);
         try {
             const url = typeof route === 'function' && route().has('book.rental.otp')
@@ -336,15 +338,22 @@ export default function BookingView({ brand, booking, gateway_available, company
                 : '/book/rental/otp';
             const { data } = await axios.post(url, { booker_phone: phone });
             if (data.already_verified) {
+                setDevOtpCode(null);
                 setOtpHint('Nomor WhatsApp Anda sudah terverifikasi ✓');
                 router.reload({ only: ['booking'] });
             } else {
-                setOtpHint(data.debug_code ? `Kode OTP (Dev): ${data.debug_code}` : (data.message || 'OTP berhasil dikirim'));
                 if (data.debug_code) {
-                    setVerificationCode(String(data.debug_code));
+                    const codeStr = String(data.debug_code);
+                    setDevOtpCode(codeStr);
+                    setVerificationCode(codeStr);
+                    setOtpHint(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`);
+                } else {
+                    setDevOtpCode(null);
+                    setOtpHint(data.message || 'OTP berhasil dikirim ke WhatsApp Anda.');
                 }
             }
         } catch (err: any) {
+            setDevOtpCode(null);
             setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP');
         } finally {
             setSendingPageOtp(false);
@@ -763,7 +772,30 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             </button>
                                         </div>
 
-                                        {otpHint && (
+                                        {devOtpCode && (
+                                            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 shadow-2xs space-y-2 text-left">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-xs font-black text-white shadow-2xs">
+                                                            ⚡
+                                                        </span>
+                                                        <div>
+                                                            <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
+                                                            <span className="text-[11px] text-amber-700 font-medium">Kode OTP:</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
+                                                        {devOtpCode}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
+                                                    <span>✓</span>
+                                                    <span>Kode OTP telah diisikan otomatis.</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {otpHint && !devOtpCode && (
                                             <p className="rounded-lg bg-teal-50 p-2 text-xs font-bold text-teal-800 border border-teal-200 text-center">
                                                 {otpHint}
                                             </p>

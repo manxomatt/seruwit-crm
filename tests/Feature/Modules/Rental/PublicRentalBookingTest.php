@@ -238,6 +238,42 @@ class PublicRentalBookingTest extends TestCase
         $this->assertSame(Rental::STATUS_CANCELLED, $rental->fresh()->status);
     }
 
+    public function test_send_otp_exposes_debug_code_in_development_mode(): void
+    {
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::DEVELOPMENT);
+
+        $response = $this->postJson(route('book.rental.otp'), [
+            'booker_phone' => '081234567890',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'ok' => true,
+                'is_development' => true,
+            ])
+            ->assertJsonStructure(['debug_code', 'message']);
+
+        $debugCode = $response->json('debug_code');
+        $this->assertNotEmpty($debugCode);
+        $this->assertSame(6, strlen((string) $debugCode));
+    }
+
+    public function test_send_otp_hides_debug_code_in_production_mode(): void
+    {
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
+
+        $response = $this->postJson(route('book.rental.otp'), [
+            'booker_phone' => '081234567890',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'ok' => true,
+                'is_development' => false,
+            ])
+            ->assertJsonMissing(['debug_code']);
+    }
+
     public function test_store_rejects_invalid_otp(): void
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);

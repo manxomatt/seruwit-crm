@@ -44,6 +44,7 @@ const statusBadgeConfig: Record<string, { label: string; color: string; bg: stri
 
 export default function History({ brand, phone, bookings }: Props) {
     const [otpHint, setOtpHint] = useState<string | null>(null);
+    const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
     const [sendingOtp, setSendingOtp] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(false);
     const form = useForm({ phone: phone || '', otp_code: '' });
@@ -55,21 +56,29 @@ export default function History({ brand, phone, bookings }: Props) {
         }
         setSendingOtp(true);
         setOtpHint(null);
+        setDevOtpCode(null);
         try {
             const { data } = await axios.post(route('book.rental.otp'), { booker_phone: form.data.phone });
             if (data.already_verified) {
                 setPhoneVerified(true);
+                setDevOtpCode(null);
                 form.setData('otp_code', '000000');
                 setOtpHint('Nomor WhatsApp Anda sudah terverifikasi ✓');
             } else {
                 setPhoneVerified(false);
-                setOtpHint(data.debug_code ? `Kode OTP (Dev): ${data.debug_code}` : (data.message || 'OTP berhasil dikirim'));
                 if (data.debug_code) {
-                    form.setData('otp_code', String(data.debug_code));
+                    const codeStr = String(data.debug_code);
+                    setDevOtpCode(codeStr);
+                    form.setData('otp_code', codeStr);
+                    setOtpHint(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`);
+                } else {
+                    setDevOtpCode(null);
+                    setOtpHint(data.message || 'OTP berhasil dikirim ke nomor WhatsApp Anda.');
                 }
             }
         } catch (err: any) {
             setPhoneVerified(false);
+            setDevOtpCode(null);
             setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP');
         } finally {
             setSendingOtp(false);
@@ -210,7 +219,30 @@ export default function History({ brand, phone, bookings }: Props) {
                                         />
                                     )}
 
-                                    {otpHint && !phoneVerified && (
+                                    {devOtpCode && !phoneVerified && (
+                                        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 shadow-2xs space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-xs font-black text-white shadow-2xs">
+                                                        ⚡
+                                                    </span>
+                                                    <div>
+                                                        <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
+                                                        <span className="text-[11px] text-amber-700 font-medium">Kode OTP:</span>
+                                                    </div>
+                                                </div>
+                                                <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
+                                                    {devOtpCode}
+                                                </span>
+                                            </div>
+                                            <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
+                                                <span>✓</span>
+                                                <span>Kode OTP telah diisikan otomatis.</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {otpHint && !devOtpCode && !phoneVerified && (
                                         <p className="rounded-lg bg-teal-50 p-2 text-xs font-bold text-teal-800 border border-teal-200 text-center">
                                             {otpHint}
                                         </p>
