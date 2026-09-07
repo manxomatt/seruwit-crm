@@ -162,7 +162,7 @@ return [
         'enable' => 'Turn this page on',
         'preview' => 'View page',
         'headline' => 'Headline',
-        'headline_placeholder' => 'e.g. Run your business easier with Seruwit CRM',
+        'headline_placeholder' => 'e.g. Run your business easier with Seruwit Biz',
         'subheadline' => 'Subheadline',
         'subheadline_placeholder' => 'A short line on the main benefit',
         'cta_text' => 'Button Text',

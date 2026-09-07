@@ -22,7 +22,7 @@ class TrialSuspendedNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Workspace '.$this->tenant->name.' ditangguhkan')
+            ->subject('[Seruwit Biz] Workspace '.$this->tenant->name.' ditangguhkan')
             ->greeting('Halo,')
             ->line('Workspace **'.$this->tenant->name.'** Anda telah ditangguhkan karena masa trial berakhir tanpa aktivasi paket.')
             ->line('Akses ke workspace saat ini diblokir.')

@@ -162,7 +162,7 @@ return [
         'enable' => 'Aktifkan halaman ini',
         'preview' => 'Lihat halaman',
         'headline' => 'Judul Utama',
-        'headline_placeholder' => 'Mis. Kelola bisnis Anda lebih mudah dengan Seruwit CRM',
+        'headline_placeholder' => 'Mis. Kelola bisnis Anda lebih mudah dengan Seruwit Biz',
         'subheadline' => 'Sub Judul',
         'subheadline_placeholder' => 'Jelaskan singkat manfaat utamanya',
         'cta_text' => 'Teks Tombol',

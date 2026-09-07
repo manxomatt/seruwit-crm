@@ -54,7 +54,7 @@ export default function Wizard(props: Props) {
     });
     const migrateForm = useForm<{ migrate?: string }>({});
     const platformForm = useForm({
-        app_name: props.defaults.app_name || 'Seruwit CRM',
+        app_name: props.defaults.app_name || 'Seruwit Biz',
         app_url: props.defaults.app_url || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost'),
         tenant_base_domain: props.defaults.tenant_base_domain ?? '',
         profile: 'production',
@@ -199,7 +199,7 @@ export default function Wizard(props: Props) {
 
     return (
         <>
-            <Head title={t('install.title', undefined, 'Seruwit CRM Installation')} />
+            <Head title={t('install.title', undefined, 'Seruwit Biz Installation')} />
 
             <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/50 to-indigo-50/70 font-sans text-slate-800 selection:bg-indigo-500 selection:text-white">
                 {/* Background Ambient Soft Pastel Glows */}
@@ -485,7 +485,7 @@ export default function Wizard(props: Props) {
                                                     {t('install.welcome.estimated_time', undefined, 'Estimated time: ~2 mins')}
                                                 </div>
                                                 <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl leading-tight">
-                                                    {t('install.welcome.heading', undefined, 'Welcome to Seruwit CRM')}
+                                                    {t('install.welcome.heading', undefined, 'Welcome to Seruwit Biz')}
                                                 </h2>
                                                 <p className="mt-2 text-sm font-medium text-slate-600 leading-relaxed">
                                                     {t('install.welcome.intro', undefined, 'This wizard will guide you through setting up the platform control plane, database, and primary administrator.')}
@@ -1301,7 +1301,7 @@ export default function Wizard(props: Props) {
                                                     {t('install.complete.heading', undefined, 'Installation Complete & Ready!')}
                                                 </h2>
                                                 <p className="mx-auto mt-2 max-w-md text-xs font-medium text-slate-500">
-                                                    {t('install.complete.intro', undefined, 'All fundamental configurations for Seruwit CRM have been successfully initialized.')}
+                                                    {t('install.complete.intro', undefined, 'All fundamental configurations for Seruwit Biz have been successfully initialized.')}
                                                 </p>
                                             </div>
 

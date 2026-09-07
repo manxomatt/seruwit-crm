@@ -12,7 +12,7 @@ Selamat datang di dokumentasi resmi **Seruwit Rental Mobile JSON API**. API ini 
 
 ## 🌐 Arsitektur Multi-Tenancy & Base URL
 
-Seruwit CRM beroperasi dengan arsitektur **Multi-Tenant**. Setiap tenant rental mobil memiliki subdomain / custom domain tersendiri.
+Seruwit Biz beroperasi dengan arsitektur **Multi-Tenant**. Setiap tenant rental mobil memiliki subdomain / custom domain tersendiri.
 
 * **Base URL Format:**
   `https://{tenant-subdomain}.seruwit.com/api/mobile/v1`

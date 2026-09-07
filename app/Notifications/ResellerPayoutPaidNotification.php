@@ -27,7 +27,7 @@ class ResellerPayoutPaidNotification extends Notification implements ShouldQueue
         $amount = 'Rp '.number_format((float) $this->payout->net_amount, 0, ',', '.');
 
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Komisi Telah Dibayarkan')
+            ->subject('[Seruwit Biz] Komisi Telah Dibayarkan')
             ->greeting('Halo,')
             ->line('Komisi reseller Anda sebesar **'.$amount.'** telah ditransfer.')
             ->line('Nomor referensi: '.$this->payout->reference)

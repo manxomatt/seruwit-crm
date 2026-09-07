@@ -15,7 +15,7 @@ class CentralLandingPageTemplate
         $html = self::html();
 
         return [
-            'title' => 'Seruwit CRM – Platform SaaS Rental Kendaraan & Ekosistem Bisnis Modular',
+            'title' => 'Seruwit Biz – Platform SaaS Rental Kendaraan & Ekosistem Bisnis Modular',
             'slug' => 'home',
             'html' => '<style>'.$css.'</style>'."\n".$html,
             'css' => $css,

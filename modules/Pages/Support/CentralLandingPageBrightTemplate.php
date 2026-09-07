@@ -15,7 +15,7 @@ class CentralLandingPageBrightTemplate
         $html = self::html();
 
         return [
-            'title' => 'Seruwit CRM – Landing Page Varian Cerah & Soft',
+            'title' => 'Seruwit Biz – Landing Page Varian Cerah & Soft',
             'slug' => 'landing-page-cerah',
             'html' => '<style>'.$css.'</style>'."\n".$html,
             'css' => $css,
@@ -913,7 +913,7 @@ CSS;
     <div class="srw-nav-inner">
       <a href="/" class="srw-brand">
         <span class="srw-brand-icon">⚡</span>
-        Seruwit CRM
+        Seruwit Biz
         <span class="srw-brand-badge">Soft Variant</span>
       </a>
       <ul class="srw-nav-links">
@@ -1103,7 +1103,7 @@ CSS;
 <section class="srw-section srw-section-soft" id="keunggulan">
   <div class="srw-container">
     <div class="srw-head">
-      <span class="srw-head-tag">Mengapa Seruwit CRM?</span>
+      <span class="srw-head-tag">Mengapa Seruwit Biz?</span>
       <h2 class="srw-head-title">Fitur Unggulan Berstandar Enterprise</h2>
     </div>
     
@@ -1249,7 +1249,7 @@ CSS;
       <div class="srw-testi-card">
         <div>
           <div class="srw-stars">★★★★★</div>
-          <p class="srw-testi-quote">"Seruwit CRM meningkatkan kecepatan pengiriman logistik kami. Integrasi stok gudang dan pembuatan faktur otomatis sangat praktis."</p>
+          <p class="srw-testi-quote">"Seruwit Biz meningkatkan kecepatan pengiriman logistik kami. Integrasi stok gudang dan pembuatan faktur otomatis sangat praktis."</p>
         </div>
         <div class="srw-testi-user">
           <div class="srw-testi-avatar">BS</div>
@@ -1307,7 +1307,7 @@ CSS;
   <div class="srw-container">
     <div class="srw-footer-grid">
       <div class="srw-footer-brand">
-        <h3>⚡ Seruwit CRM</h3>
+        <h3>⚡ Seruwit Biz</h3>
         <p>Platform Enterprise Modular CRM &amp; ERP terpadu untuk rantai pasok, armada, penjualan, dan akuntansi modern.</p>
       </div>
       
@@ -1343,7 +1343,7 @@ CSS;
     </div>
 
     <div class="srw-footer-bottom">
-      <div>© 2026 Seruwit CRM. Seluruh Hak Cipta Dilindungi.</div>
+      <div>© 2026 Seruwit Biz. Seluruh Hak Cipta Dilindungi.</div>
       <div>Varian Landing Page Bright &amp; Soft.</div>
     </div>
   </div>

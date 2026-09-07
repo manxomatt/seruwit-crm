@@ -24,7 +24,7 @@ class PaymentOrderRejectedNotification extends Notification implements ShouldQue
         $url = route('module.subscription.payment', $this->order);
 
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Pembayaran Ditolak')
+            ->subject('[Seruwit Biz] Pembayaran Ditolak')
             ->greeting('Halo,')
             ->line('Pembayaran untuk paket **'.$this->order->plan->name.'** ditolak.')
             ->line('Alasan: '.($this->order->rejection_reason ?? 'Tidak ada alasan yang diberikan.'))

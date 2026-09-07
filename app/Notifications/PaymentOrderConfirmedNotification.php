@@ -24,12 +24,12 @@ class PaymentOrderConfirmedNotification extends Notification implements ShouldQu
         $url = route('module.dashboard');
 
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Pembayaran Dikonfirmasi')
+            ->subject('[Seruwit Biz] Pembayaran Dikonfirmasi')
             ->greeting('Halo,')
             ->line('Pembayaran untuk paket **'.$this->order->plan->name.'** telah dikonfirmasi.')
             ->line('Langganan Anda sekarang aktif.')
             ->action('Buka Dashboard', $url)
-            ->line('Terima kasih telah menggunakan Seruwit CRM.');
+            ->line('Terima kasih telah menggunakan Seruwit Biz.');
     }
 
     public function toArray($notifiable): array

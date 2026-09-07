@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title' => 'Instalasi Seruwit CRM',
+    'title' => 'Instalasi Seruwit Biz',
     'subtitle' => 'Penyiapan pertama kali platform',
     'step_counter' => 'Langkah :current dari :total',
 
@@ -26,7 +26,7 @@ return [
     ],
 
     'welcome' => [
-        'heading' => 'Selamat Datang di Seruwit CRM',
+        'heading' => 'Selamat Datang di Seruwit Biz',
         'intro' => 'Wizard ini akan memandu Anda dalam menyiapkan control plane platform, basis data, dan akun administrator utama. Workspace tenant dan modul bisnis dapat diaktifkan setelahnya.',
         'start' => 'Mulai Instalasi',
         'estimated_time' => 'Estimasi waktu: ~2 menit',
@@ -119,7 +119,7 @@ return [
 
     'complete' => [
         'heading' => 'Instalasi Berhasil & Siap Diluncurkan!',
-        'intro' => 'Seluruh konfigurasi dasar Seruwit CRM telah selesai dipasang dengan sukses.',
+        'intro' => 'Seluruh konfigurasi dasar Seruwit Biz telah selesai dipasang dengan sukses.',
         'summary_title' => 'Ringkasan Konfigurasi',
         'summary_app' => 'Nama Platform',
         'summary_url' => 'URL Sistem',

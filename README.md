@@ -1,4 +1,4 @@
-# Seruwit CRM
+# Seruwit Biz
 
 A multi-tenant SaaS CMS/CRM built with Laravel 12, Inertia.js, React, and Tailwind CSS. Each tenant gets its own isolated PostgreSQL schema (via `stancl/tenancy`) and a pluggable module system so features can be installed per-tenant according to the subscription plan they're on.
 

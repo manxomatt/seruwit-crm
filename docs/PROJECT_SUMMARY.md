@@ -1,4 +1,4 @@
-# Seruwit CRM — Ringkasan Project
+# Seruwit Biz — Ringkasan Project
 
 CRM multi-tenant berbasis SaaS: setiap perusahaan (tenant) mendapatkan workspace sendiri di subdomain sendiri, dengan CMS + modul bisnis yang datanya terisolasi penuh per tenant di level schema PostgreSQL. Fitur opsional dikemas sebagai **modul** yang bisa dipasang/dicopot per tenant, dan hak pasangnya ditentukan oleh **paket langganan**.
 

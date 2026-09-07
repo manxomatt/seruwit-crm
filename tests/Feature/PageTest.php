@@ -430,7 +430,7 @@ class PageTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('Seruwit CRM');
+        $response->assertSee('Seruwit Biz');
         $response->assertSee('Ekosistem Lengkap');
         $response->assertSee('Supply Chain &amp; Logistik', false);
     }

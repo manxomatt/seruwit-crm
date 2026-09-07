@@ -630,7 +630,7 @@ Ketika tenant suspended, tampilkan:
 
 ### Template Email (contoh)
 
-**Subject:** `[Seruwit CRM] Masa trial {nama_tenant} berakhir dalam {x} hari`
+**Subject:** `[Seruwit Biz] Masa trial {nama_tenant} berakhir dalam {x} hari`
 
 > Halo {nama_owner},
 >

@@ -35,7 +35,7 @@ export default function Home() {
   return (
     <Layout
       title={`Dokumentasi API`}
-      description="Dokumentasi lengkap JSON API Aplikasi Mobile Rental Kendaraan Seruwit CRM">
+      description="Dokumentasi lengkap JSON API Aplikasi Mobile Rental Kendaraan Seruwit Biz">
       <HomepageHeader />
       <main>
         <section style={{ padding: '4rem 0' }}>

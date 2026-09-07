@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title' => 'Seruwit CRM Installation',
+    'title' => 'Seruwit Biz Installation',
     'subtitle' => 'First-time platform setup',
     'step_counter' => 'Step :current of :total',
 
@@ -26,7 +26,7 @@ return [
     ],
 
     'welcome' => [
-        'heading' => 'Welcome to Seruwit CRM',
+        'heading' => 'Welcome to Seruwit Biz',
         'intro' => 'This wizard will guide you through setting up the platform control plane, central database, and primary administrator. Tenant workspaces and business modules can be activated afterwards.',
         'start' => 'Start Installation',
         'estimated_time' => 'Estimated time: ~2 mins',
@@ -119,7 +119,7 @@ return [
 
     'complete' => [
         'heading' => 'Installation Complete & Ready!',
-        'intro' => 'All fundamental configurations for Seruwit CRM have been successfully initialized.',
+        'intro' => 'All fundamental configurations for Seruwit Biz have been successfully initialized.',
         'summary_title' => 'Configuration Summary',
         'summary_app' => 'Platform Name',
         'summary_url' => 'System URL',

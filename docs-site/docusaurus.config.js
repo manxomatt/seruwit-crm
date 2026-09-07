@@ -99,7 +99,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Seruwit CRM. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Seruwit Biz. Built with Docusaurus.`,
       },
       prism: {
         theme: require('prism-react-renderer').themes.github,

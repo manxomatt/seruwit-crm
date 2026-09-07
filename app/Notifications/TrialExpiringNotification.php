@@ -25,13 +25,13 @@ class TrialExpiringNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Masa trial '.$this->tenant->name.' berakhir dalam '.$this->daysLeft.' hari')
+            ->subject('[Seruwit Biz] Masa trial '.$this->tenant->name.' berakhir dalam '.$this->daysLeft.' hari')
             ->greeting('Halo,')
             ->line('Workspace **'.$this->tenant->name.'** Anda masih dalam masa trial gratis.')
             ->line('Trial akan berakhir pada **'.$this->tenant->trial_ends_at->format('d F Y').'**.')
             ->line('Setelah trial berakhir, workspace akan ditangguhkan sampai Anda mengaktivasi paket berlangganan bulanan.')
             ->action('Aktivasi Paket Sekarang', 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription')
-            ->line('Terima kasih telah menggunakan Seruwit CRM.');
+            ->line('Terima kasih telah menggunakan Seruwit Biz.');
     }
 
     public function toArray($notifiable): array

@@ -1,4 +1,4 @@
-# Review Proyek — Seruwit CRM (Fokus: Modul Rental)
+# Review Proyek — Seruwit Biz (Fokus: Modul Rental)
 
 > **Tanggal review:** 31 Agustus 2026
 > **Reviewer:** Claude Code
@@ -9,7 +9,7 @@
 
 ## 1. Ringkasan Eksekutif
 
-Seruwit CRM adalah **SaaS CRM multi-tenant** (Laravel 12 · PHP 8.4 · Inertia + React 18 · PostgreSQL schema-per-tenant via `stancl/tenancy`) dengan **28 modul** opsional. Modul **Rental** adalah salah satu vertikal terbesar dan yang paling aktif dikembangkan — **78 dari 92 commit** yang menyentuhnya terjadi dalam 30 hari terakhir.
+Seruwit Biz adalah **SaaS CRM multi-tenant** (Laravel 12 · PHP 8.4 · Inertia + React 18 · PostgreSQL schema-per-tenant via `stancl/tenancy`) dengan **28 modul** opsional. Modul **Rental** adalah salah satu vertikal terbesar dan yang paling aktif dikembangkan — **78 dari 92 commit** yang menyentuhnya terjadi dalam 30 hari terakhir.
 
 Secara keseluruhan **kualitas modul Rental tinggi**: arsitektur berorientasi service, dependensi antar-modul dijaga secara *soft* (degradasi anggun bila Accounting/Receivables belum terpasang), logika keuangan hati-hati (pembulatan 2 desimal, transaksi DB, `lockForUpdate`, alokasi deposit FIFO, credit note), otorisasi konsisten, dan cakupan test luas (~38 file, 378 metode test). 
 

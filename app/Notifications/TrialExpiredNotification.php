@@ -22,7 +22,7 @@ class TrialExpiredNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Masa trial '.$this->tenant->name.' telah berakhir')
+            ->subject('[Seruwit Biz] Masa trial '.$this->tenant->name.' telah berakhir')
             ->greeting('Halo,')
             ->line('Masa trial workspace **'.$this->tenant->name.'** Anda telah berakhir pada **'.$this->tenant->trial_ends_at->format('d F Y').'**.')
             ->line('Workspace telah ditangguhkan. Untuk melanjutkan menggunakan aplikasi, aktifkan paket berlangganan bulanan.')

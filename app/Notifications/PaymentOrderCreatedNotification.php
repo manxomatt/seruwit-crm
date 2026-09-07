@@ -24,7 +24,7 @@ class PaymentOrderCreatedNotification extends Notification implements ShouldQueu
         $url = route('module.subscription.payment', $this->order);
 
         return (new MailMessage)
-            ->subject('[Seruwit CRM] Pesanan Pembayaran Baru')
+            ->subject('[Seruwit Biz] Pesanan Pembayaran Baru')
             ->greeting('Halo,')
             ->line('Pesanan pembayaran untuk paket **'.$this->order->plan->name.'** telah dibuat.')
             ->line('Nominal transfer: **Rp '.number_format($this->order->total_amount, 0, ',', '.').'**')
