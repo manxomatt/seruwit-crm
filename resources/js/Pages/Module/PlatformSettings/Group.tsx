@@ -499,7 +499,7 @@ export default function Group({
                                                         {t('settings.platform.ai_ocr.label', undefined, 'Fitur AI OCR Dokumen (KTP / SIM)')}
                                                     </h3>
                                                     <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                                                        Tenant Scanner Switch
+                                                        {t('settings.platform.ai_ocr.badge', undefined, 'Tenant Scanner Switch')}
                                                     </span>
                                                 </div>
                                                 <p className="mt-0.5 text-xs text-slate-500">
@@ -523,7 +523,9 @@ export default function Group({
                                                     isAiOcrEnabled && isAiEnabled ? 'bg-emerald-500' : 'bg-slate-400'
                                                 }`}
                                             />
-                                            {isAiOcrEnabled && isAiEnabled ? 'AKTIF DI TENANT' : 'NONAKTIF DI TENANT'}
+                                            {isAiOcrEnabled && isAiEnabled
+                                                ? t('settings.platform.ai_ocr.status_active', undefined, 'AKTIF DI TENANT')
+                                                : t('settings.platform.ai_ocr.status_inactive', undefined, 'NONAKTIF DI TENANT')}
                                         </span>
                                     </div>
 
@@ -546,17 +548,25 @@ export default function Group({
                                                 <div>
                                                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                                                         {!isAiEnabled
-                                                            ? 'Dinonaktifkan oleh Master Switch AI'
+                                                            ? t('settings.platform.ai_ocr.disabled_by_master_label', undefined, 'Dinonaktifkan oleh Master Switch AI')
                                                             : isAiOcrEnabled
-                                                            ? 'Scanner OCR KTP & SIM Muncul di Tenant'
-                                                            : 'Scanner OCR KTP & SIM Disembunyikan dari Tenant'}
+                                                            ? t('settings.platform.ai_ocr.active_label', undefined, 'Scanner OCR KTP & SIM Muncul di Tenant')
+                                                            : t('settings.platform.ai_ocr.inactive_label', undefined, 'Scanner OCR KTP & SIM Disembunyikan dari Tenant')}
                                                     </span>
                                                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                                                         {!isAiEnabled
-                                                            ? 'Aktifkan Master Switch AI terlebih dahulu untuk menggunakan fitur ini.'
+                                                            ? t('settings.platform.ai_ocr.disabled_by_master_desc', undefined, 'Aktifkan Master Switch AI terlebih dahulu untuk menggunakan fitur ini.')
                                                             : isAiOcrEnabled
-                                                            ? 'Form walk-in dan reservasi pelanggan di tenant menampilkan tombol pemindaian foto KTP/SIM otomatis.'
-                                                            : 'Seluruh panel pemindai dan tombol Fast-Scan OCR dihilangkan dari halaman tenant. Petugas mengisi form secara manual.'}
+                                                            ? t(
+                                                                  'settings.platform.ai_ocr.active_desc',
+                                                                  undefined,
+                                                                  'Form walk-in dan reservasi pelanggan di tenant menampilkan tombol pemindaian foto KTP/SIM otomatis.',
+                                                              )
+                                                            : t(
+                                                                  'settings.platform.ai_ocr.inactive_desc',
+                                                                  undefined,
+                                                                  'Seluruh panel pemindai dan tombol Fast-Scan OCR dihilangkan dari halaman tenant. Petugas mengisi form secara manual.',
+                                                              )}
                                                     </p>
                                                 </div>
                                             </div>
