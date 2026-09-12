@@ -53,6 +53,7 @@ export default function LocationMapPicker({
 
     const position = useMemo(() => toLatLng(latitude || null, longitude || null), [latitude, longitude]);
     const center: LatLng = position ?? [-5.3971, 105.2668];
+    const bounds = useMemo(() => (position ? [position] : undefined), [position?.[0], position?.[1]]);
 
     const reverseGeocode = useCallback(
         async (lat: number, lng: number) => {
@@ -128,7 +129,7 @@ export default function LocationMapPicker({
 
     return (
         <div className="space-y-2">
-            <LeafletMap center={center} zoom={position ? 16 : 12} height={height} bounds={position ? [position] : undefined}>
+            <LeafletMap center={center} zoom={position ? 16 : 12} height={height} bounds={bounds}>
                 <MapClickHandler onPick={pick} />
                 {position && (
                     <Marker

@@ -27,4 +27,22 @@ class GeocodeController extends Controller
 
         return response()->json($result);
     }
+
+    public function forward(Request $request, NominatimGeocoder $geocoder): JsonResponse
+    {
+        $validated = $request->validate([
+            'q' => ['required', 'string', 'min:2', 'max:255'],
+        ]);
+
+        try {
+            $result = $geocoder->forward($validated['q']);
+            if (! $result) {
+                return response()->json(['message' => __('common.geocode.not_found')], 404);
+            }
+
+            return response()->json($result);
+        } catch (Throwable) {
+            return response()->json(['message' => __('common.geocode.failed')], 502);
+        }
+    }
 }

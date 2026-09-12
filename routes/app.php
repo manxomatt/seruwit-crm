@@ -58,6 +58,9 @@ Route::middleware('throttle:30,1')->prefix('book/shuttle')->name('book.shuttle.'
     Route::get('/geocode/reverse', [\App\Http\Controllers\GeocodeController::class, 'reverse'])
         ->middleware('throttle:20,1')
         ->name('geocode.reverse');
+    Route::get('/geocode/forward', [\App\Http\Controllers\GeocodeController::class, 'forward'])
+        ->middleware('throttle:20,1')
+        ->name('geocode.forward');
     Route::get('/ticket/{token}', [PublicPassengerBookingController::class, 'ticket'])->name('ticket');
     Route::post('/ticket/{token}/cancel', [PublicPassengerBookingController::class, 'cancel'])->name('cancel');
     Route::post('/ticket/{token}/pay', [PublicPassengerBookingController::class, 'pay'])->name('pay');
@@ -109,6 +112,7 @@ Route::middleware('auth')->group(function () {
 
         // Reverse geocode — shared map-pin helper (auth only, no module gate).
         Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->name('geocode.reverse');
+        Route::get('/geocode/forward', [GeocodeController::class, 'forward'])->name('geocode.forward');
 
         // Notifications — every authenticated user reads their own, no gate.
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

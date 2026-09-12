@@ -281,6 +281,21 @@ export default function FleetBaseAiGeneratePanel({ managers = [], onApply }: Pro
                                                 {extracted.province}
                                             </span>
                                         )}
+                                        {extracted.address && (
+                                            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-1.5 py-0.5 font-medium text-slate-700 border border-slate-200/60 dark:bg-slate-950/50 dark:text-slate-300">
+                                                🏠 {extracted.address}
+                                            </span>
+                                        )}
+                                        {extracted.zip && (
+                                            <span className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-1.5 py-0.5 font-mono font-semibold text-sky-700 border border-sky-200/60 dark:bg-sky-950/50 dark:text-sky-300">
+                                                📮 {extracted.zip}
+                                            </span>
+                                        )}
+                                        {extracted.latitude && extracted.longitude && (
+                                            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-1.5 py-0.5 font-mono font-bold text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                                🗺️ {Number(extracted.latitude).toFixed(4)}, {Number(extracted.longitude).toFixed(4)}
+                                            </span>
+                                        )}
                                         {extracted.vehicle_capacity && (
                                             <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-300">
                                                 🚗 {extracted.vehicle_capacity} Unit

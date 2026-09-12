@@ -9,7 +9,8 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useCallback } from 'react';
+import axios from 'axios';
+import { FormEventHandler, useCallback, useState } from 'react';
 import FleetBaseAiGeneratePanel, { ExtractedBaseData } from '../../../../Components/FleetBaseAiGeneratePanel';
 import FleetNav from '../../../../FleetNav';
 
@@ -114,6 +115,9 @@ export default function Create({
         staff_ids: [] as number[],
     });
 
+    const [searchingAddress, setSearchingAddress] = useState(false);
+    const [searchAddressFeedback, setSearchAddressFeedback] = useState<string | null>(null);
+
     const handleApplyAiData = (generated: ExtractedBaseData) => {
         setData((prev) => ({
             ...prev,
@@ -125,8 +129,8 @@ export default function Create({
             city: generated.city !== undefined && generated.city !== '' ? generated.city : prev.city,
             province: generated.province !== undefined && generated.province !== '' ? generated.province : prev.province,
             zip: generated.zip !== undefined && generated.zip !== '' ? generated.zip : prev.zip,
-            latitude: generated.latitude !== undefined && generated.latitude !== '' ? generated.latitude : prev.latitude,
-            longitude: generated.longitude !== undefined && generated.longitude !== '' ? generated.longitude : prev.longitude,
+            latitude: generated.latitude !== undefined && generated.latitude !== '' ? String(generated.latitude) : prev.latitude,
+            longitude: generated.longitude !== undefined && generated.longitude !== '' ? String(generated.longitude) : prev.longitude,
             phone: generated.phone !== undefined && generated.phone !== '' ? generated.phone : prev.phone,
             email: generated.email !== undefined && generated.email !== '' ? generated.email : prev.email,
             opens_at: generated.opens_at || prev.opens_at,
@@ -138,6 +142,39 @@ export default function Create({
             manager_id: generated.manager_id ? String(generated.manager_id) : prev.manager_id,
             notes: generated.notes ? (prev.notes ? `${prev.notes}\n${generated.notes}` : generated.notes) : prev.notes,
         }));
+    };
+
+    const handleSearchAddressOnMap = async () => {
+        const query = [data.address, data.city, data.province, data.zip].filter(Boolean).join(', ');
+        if (!query.trim()) {
+            return;
+        }
+
+        setSearchingAddress(true);
+        setSearchAddressFeedback(null);
+
+        try {
+            const response = await axios.get(prefixedRoute('geocode.forward'), {
+                params: { q: query },
+            });
+            if (response.data && response.data.latitude && response.data.longitude) {
+                setData((prev) => ({
+                    ...prev,
+                    latitude: String(response.data.latitude),
+                    longitude: String(response.data.longitude),
+                    ...(response.data.city && !prev.city ? { city: response.data.city } : {}),
+                    ...(response.data.province && !prev.province ? { province: response.data.province } : {}),
+                    ...(response.data.zip && !prev.zip ? { zip: response.data.zip } : {}),
+                }));
+                setSearchAddressFeedback('Titik koordinat peta berhasil disinkronkan!');
+                setTimeout(() => setSearchAddressFeedback(null), 4000);
+            }
+        } catch {
+            setSearchAddressFeedback('Lokasi tidak ditemukan di geocoder.');
+            setTimeout(() => setSearchAddressFeedback(null), 4000);
+        } finally {
+            setSearchingAddress(false);
+        }
     };
 
     const submit: FormEventHandler = (e) => {
@@ -374,7 +411,25 @@ export default function Create({
                             </div>
 
                             <div className="sm:col-span-2">
-                                <InputLabel htmlFor="address" value="Alamat Lengkap Base" />
+                                <div className="flex items-center justify-between">
+                                    <InputLabel htmlFor="address" value="Alamat Lengkap Base" />
+                                    {(data.address || data.city) && (
+                                        <button
+                                            type="button"
+                                            onClick={handleSearchAddressOnMap}
+                                            disabled={searchingAddress}
+                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
+                                        >
+                                            {searchingAddress ? (
+                                                <span>Mencari titik peta...</span>
+                                            ) : (
+                                                <>
+                                                    <span>📍 Cari / Sinkronkan ke Peta</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                                 <TextInput
                                     id="address"
                                     className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
@@ -382,6 +437,11 @@ export default function Create({
                                     onChange={(e) => setData('address', e.target.value)}
                                     placeholder="Jl. Raya Bekasi KM 24, Cakung..."
                                 />
+                                {searchAddressFeedback && (
+                                    <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                        {searchAddressFeedback}
+                                    </p>
+                                )}
                                 <InputError message={errors.address} className="mt-1" />
                             </div>
 

@@ -103,6 +103,21 @@ class FleetBaseAiGenerateTest extends TestCase
         $this->assertSame('Surabaya', $resultYard['city']);
         $this->assertSame('Jawa Timur', $resultYard['province']);
         $this->assertSame(100, $resultYard['vehicle_capacity']);
+
+        // 5. Bandar Lampung Way Halim Prompt
+        $resultLampung = $service->parseHeuristically('Depot Utama, Bandar Lampung, Jl Sultan Agung Way halim 35131 open 8 jam code BDL-001');
+        $this->assertSame('depot', $resultLampung['kind']);
+        $this->assertSame('BDL-001', $resultLampung['code']);
+        $this->assertSame('Depot Utama Bandar Lampung', $resultLampung['name']);
+        $this->assertSame('Bandar Lampung', $resultLampung['city']);
+        $this->assertSame('Lampung', $resultLampung['province']);
+        $this->assertSame('35131', $resultLampung['zip']);
+        $this->assertSame('Jl. Sultan Agung Way Halim', $resultLampung['address']);
+        $this->assertSame('-5.3857', $resultLampung['latitude']);
+        $this->assertSame('105.2755', $resultLampung['longitude']);
+        $this->assertSame('08:00', $resultLampung['opens_at']);
+        $this->assertSame('16:00', $resultLampung['closes_at']);
+        $this->assertFalse($resultLampung['allows_overnight']);
     }
 
     public function test_mocked_gemini_base_service_integration(): void

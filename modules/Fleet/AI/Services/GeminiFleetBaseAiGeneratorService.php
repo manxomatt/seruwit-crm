@@ -3,6 +3,8 @@
 namespace Modules\Fleet\AI\Services;
 
 use App\Support\CentralAiSettings;
+use App\Support\IndonesiaGeoData;
+use App\Support\NominatimGeocoder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -15,10 +17,12 @@ class GeminiFleetBaseAiGeneratorService implements FleetBaseAiGeneratorServiceIn
         protected ?string $apiKey = null,
         protected string $model = 'gemini-1.5-flash',
         protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta',
+        protected ?NominatimGeocoder $geocoder = null,
     ) {
         $this->apiKey = $apiKey ?? (string) config('services.gemini.api_key', '');
         $this->model = (string) config('services.gemini.model', 'gemini-1.5-flash');
         $this->baseUrl = (string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta');
+        $this->geocoder = $geocoder ?? app(NominatimGeocoder::class);
     }
 
     /**
@@ -160,84 +164,65 @@ PROMPT;
             $kind = 'satellite';
         }
 
-        // 2. City & Province detection with known Indonesian coordinates
-        $cityCoordinates = [
-            'Jakarta Timur' => ['lat' => '-6.2250', 'lng' => '106.9004', 'province' => 'DKI Jakarta', 'tz' => 'Asia/Jakarta'],
-            'Jakarta Selatan' => ['lat' => '-6.2615', 'lng' => '106.8106', 'province' => 'DKI Jakarta', 'tz' => 'Asia/Jakarta'],
-            'Jakarta Barat' => ['lat' => '-6.1683', 'lng' => '106.7588', 'province' => 'DKI Jakarta', 'tz' => 'Asia/Jakarta'],
-            'Jakarta Utara' => ['lat' => '-6.1384', 'lng' => '106.8640', 'province' => 'DKI Jakarta', 'tz' => 'Asia/Jakarta'],
-            'Jakarta Pusat' => ['lat' => '-6.1805', 'lng' => '106.8284', 'province' => 'DKI Jakarta', 'tz' => 'Asia/Jakarta'],
-            'Jakarta' => ['lat' => '-6.2088', 'lng' => '106.8456', 'province' => 'DKI Jakarta', 'tz' => 'Asia/Jakarta'],
-            'Tangerang Selatan' => ['lat' => '-6.2887', 'lng' => '106.7179', 'province' => 'Banten', 'tz' => 'Asia/Jakarta'],
-            'Tangerang' => ['lat' => '-6.1783', 'lng' => '106.6319', 'province' => 'Banten', 'tz' => 'Asia/Jakarta'],
-            'Bekasi' => ['lat' => '-6.2383', 'lng' => '106.9756', 'province' => 'Jawa Barat', 'tz' => 'Asia/Jakarta'],
-            'Cikarang' => ['lat' => '-6.3039', 'lng' => '107.1537', 'province' => 'Jawa Barat', 'tz' => 'Asia/Jakarta'],
-            'Depok' => ['lat' => '-6.4025', 'lng' => '106.7942', 'province' => 'Jawa Barat', 'tz' => 'Asia/Jakarta'],
-            'Bogor' => ['lat' => '-6.5971', 'lng' => '106.8060', 'province' => 'Jawa Barat', 'tz' => 'Asia/Jakarta'],
-            'Bandung' => ['lat' => '-6.9175', 'lng' => '107.6191', 'province' => 'Jawa Barat', 'tz' => 'Asia/Jakarta'],
-            'Cimahi' => ['lat' => '-6.8723', 'lng' => '107.5422', 'province' => 'Jawa Barat', 'tz' => 'Asia/Jakarta'],
-            'Semarang' => ['lat' => '-6.9667', 'lng' => '110.4167', 'province' => 'Jawa Tengah', 'tz' => 'Asia/Jakarta'],
-            'Solo' => ['lat' => '-7.5755', 'lng' => '110.8243', 'province' => 'Jawa Tengah', 'tz' => 'Asia/Jakarta'],
-            'Surakarta' => ['lat' => '-7.5755', 'lng' => '110.8243', 'province' => 'Jawa Tengah', 'tz' => 'Asia/Jakarta'],
-            'Yogyakarta' => ['lat' => '-7.7956', 'lng' => '110.3695', 'province' => 'DI Yogyakarta', 'tz' => 'Asia/Jakarta'],
-            'Jogja' => ['lat' => '-7.7956', 'lng' => '110.3695', 'province' => 'DI Yogyakarta', 'tz' => 'Asia/Jakarta'],
-            'Surabaya' => ['lat' => '-7.2575', 'lng' => '112.7521', 'province' => 'Jawa Timur', 'tz' => 'Asia/Jakarta'],
-            'Sidoarjo' => ['lat' => '-7.4726', 'lng' => '112.7156', 'province' => 'Jawa Timur', 'tz' => 'Asia/Jakarta'],
-            'Malang' => ['lat' => '-7.9666', 'lng' => '112.6326', 'province' => 'Jawa Timur', 'tz' => 'Asia/Jakarta'],
-            'Denpasar' => ['lat' => '-8.6705', 'lng' => '115.2126', 'province' => 'Bali', 'tz' => 'Asia/Makassar'],
-            'Bali' => ['lat' => '-8.4095', 'lng' => '115.1889', 'province' => 'Bali', 'tz' => 'Asia/Makassar'],
-            'Medan' => ['lat' => '3.5952', 'lng' => '98.6722', 'province' => 'Sumatera Utara', 'tz' => 'Asia/Jakarta'],
-            'Palembang' => ['lat' => '-2.9761', 'lng' => '104.7754', 'province' => 'Sumatera Selatan', 'tz' => 'Asia/Jakarta'],
-            'Batam' => ['lat' => '1.1301', 'lng' => '104.0529', 'province' => 'Kepulauan Riau', 'tz' => 'Asia/Jakarta'],
-            'Makassar' => ['lat' => '-5.1477', 'lng' => '119.4327', 'province' => 'Sulawesi Selatan', 'tz' => 'Asia/Makassar'],
-            'Balikpapan' => ['lat' => '-1.2379', 'lng' => '116.8289', 'province' => 'Kalimantan Timur', 'tz' => 'Asia/Makassar'],
-            'Samarinda' => ['lat' => '-0.5021', 'lng' => '117.1537', 'province' => 'Kalimantan Timur', 'tz' => 'Asia/Makassar'],
-            'Banjarmasin' => ['lat' => '-3.3194', 'lng' => '114.5908', 'province' => 'Kalimantan Selatan', 'tz' => 'Asia/Makassar'],
-            'Pontianak' => ['lat' => '-0.0263', 'lng' => '109.3425', 'province' => 'Kalimantan Barat', 'tz' => 'Asia/Jakarta'],
-            'Jayapura' => ['lat' => '-2.5489', 'lng' => '140.7181', 'province' => 'Papua', 'tz' => 'Asia/Jayapura'],
-        ];
+        // 2. Zip Code regex
+        $zip = '';
+        if (preg_match('/\b([1-9][0-9]{4})\b/', $text, $zipMatches)) {
+            $zip = $zipMatches[1];
+        }
 
+        // 3. City & Province detection with known Indonesian coordinates
         $detectedCity = '';
         $detectedProvince = '';
         $latitude = '';
         $longitude = '';
         $timezone = 'Asia/Jakarta';
 
-        foreach ($cityCoordinates as $cName => $cData) {
-            if (preg_match('/\b'.preg_quote($cName, '/').'\b/i', $text)) {
-                $detectedCity = $cName;
-                $detectedProvince = $cData['province'];
-                $latitude = $cData['lat'];
-                $longitude = $cData['lng'];
-                $timezone = $cData['tz'];
-                break;
+        // Check IndonesiaGeoData first
+        $geo = IndonesiaGeoData::findLocation($text);
+        if ($geo) {
+            $detectedCity = $geo['city'];
+            $detectedProvince = $geo['province'];
+            $latitude = $geo['lat'];
+            $longitude = $geo['lng'];
+            $timezone = $geo['tz'];
+        } elseif ($zip !== '') {
+            $zipGeo = IndonesiaGeoData::findByPostalCode($zip);
+            if ($zipGeo) {
+                $detectedCity = $zipGeo['city'];
+                $detectedProvince = $zipGeo['province'];
+                $latitude = $zipGeo['lat'];
+                $longitude = $zipGeo['lng'];
+                $timezone = $zipGeo['tz'];
             }
         }
 
-        // 3. Zip Code regex
-        $zip = '';
-        if (preg_match('/\b([1-9][0-9]{4})\b/', $text, $zipMatches)) {
-            $zip = $zipMatches[1];
-        }
-
-        // 4. Coordinates override if in text (e.g. -6.1823, 106.9452)
+        // 4. Coordinates override if explicit in text (e.g. -6.1823, 106.9452)
         if (preg_match('/(-?\d{1,2}\.\d{4,8})\s*,\s*(\d{2,3}\.\d{4,8})/', $text, $coordMatches)) {
             $latitude = $coordMatches[1];
             $longitude = $coordMatches[2];
         }
 
-        // 5. Code regex (e.g. JKT-CKG-01, BDG-PST-01, SBY-01)
+        // 5. Code regex (e.g. JKT-CKG-01, BDG-PST-01, SBY-01, BDL-001)
         $code = '';
-        if (preg_match('/\b([A-Z]{2,4}-[A-Z0-9]{2,8}-\d{1,3}|[A-Z]{3,8}-\d{1,3})\b/', $text, $codeMatches)) {
+        if (preg_match('/(?:code|kode)\s*[:=]?\s*([A-Za-z0-9\-]+)/i', $text, $codePrefixMatches)) {
+            $code = strtoupper(trim($codePrefixMatches[1]));
+        } elseif (preg_match('/\b([A-Z]{2,4}-[A-Z0-9]{2,8}-\d{1,3}|[A-Z]{3,8}-\d{1,3})\b/', $text, $codeMatches)) {
             $code = strtoupper($codeMatches[1]);
         }
 
         // 6. Name extraction
         $name = '';
-        if (preg_match('/(?:nama\s*(?:pool|base|pangkalan|cabang)?\s*[:=]?\s*|pool\s+|depot\s+|workshop\s+|cabang\s+)([A-Za-z0-9\s\-]+?)(?:,|\.|\n|kode|alamat|kapasitas|telp|buka|radius|$)/i', $text, $nameMatches)) {
+        if (preg_match('/(?:nama\s*(?:pool|base|pangkalan|cabang)?\s*[:=]\s*)([A-Za-z0-9\s\-]+?)(?=(?:,|\.|\n|kode|code|alamat|kapasitas|telp|buka|open|radius|$))/i', $text, $explicitName)) {
+            $name = Str::title(trim($explicitName[1]));
+        } elseif (preg_match('/(?:nama\s*(?:pool|base|pangkalan|cabang)?\s*[:=]?\s*|pool\s+|depot\s+|workshop\s+|cabang\s+)([A-Za-z0-9\s\-]+?)(?=(?:,|\.|\n|kode|code|alamat|kapasitas|telp|buka|open|radius|$))/i', $text, $nameMatches)) {
             $rawName = trim($nameMatches[1]);
-            if (strlen($rawName) >= 3 && strlen($rawName) <= 60) {
-                // If it doesn't already contain prefix, include prefix
+            $lowerRaw = strtolower($rawName);
+
+            $genericKeywords = ['utama', 'satelit', 'pusat', 'induk', 'parkir', 'bengkel', 'baru'];
+            if (in_array($lowerRaw, $genericKeywords, true)) {
+                $basePrefix = $kind === 'workshop_base' ? 'Workshop' : ($kind === 'satellite' ? 'Cabang Satelit' : ($kind === 'yard' ? 'Pool Parkir' : 'Depot Utama'));
+                $name = $detectedCity !== '' ? "{$basePrefix} {$detectedCity}" : $basePrefix;
+            } elseif (strlen($rawName) >= 3 && strlen($rawName) <= 60) {
                 if (! preg_match('/^(pool|depot|workshop|cabang)/i', $rawName)) {
                     $prefix = $kind === 'workshop_base' ? 'Workshop ' : ($kind === 'satellite' ? 'Cabang Satelit ' : ($kind === 'yard' ? 'Pool Parkir ' : 'Depot Utama '));
                     $name = $prefix.Str::title($rawName);
@@ -260,10 +245,31 @@ PROMPT;
 
         // 7. Address extraction
         $address = '';
-        if (preg_match('/(?:alamat\s*[:=]?\s*|jl\.\s+|jalan\s+)([A-Za-z0-9\s.,\-\/]+?)(?:,|\n|kota|provinsi|telp|email|buka|kapasitas|$)/i', $text, $addrMatches)) {
-            $rawAddr = trim($addrMatches[1]);
-            if (strlen($rawAddr) >= 5) {
-                $address = (! preg_match('/^(jl|jalan)/i', $rawAddr) ? 'Jl. ' : '').$rawAddr;
+        if (preg_match('/(?:alamat\s*[:=]?\s*|(?:jl[n\.]?|jalan|kawasan|komplek|gedung|area)\s+)([A-Za-z0-9\s.,\-\/]+?)(?=(?:,|\n|kota|provinsi|telp|phone|hp|email|buka|open|operasional|jam|kapasitas|radius|kode|code|\b[1-9][0-9]{4}\b|$))/i', $text, $addrMatches)) {
+            $rawAddr = trim($addrMatches[1], " \t\n\r\0\x0B,.-");
+            if (strlen($rawAddr) >= 4) {
+                $address = (! preg_match('/^(jl|jalan|kawasan|komplek|gedung|area)/i', $rawAddr) ? 'Jl. ' : '').Str::title($rawAddr);
+            }
+        }
+
+        // Attempt forward geocoding refinement if address & city exist
+        if ($this->geocoder && ($address !== '' || $detectedCity !== '')) {
+            $searchQuery = trim("{$address}, {$detectedCity}, {$detectedProvince}", ' ,');
+            $forwardResult = $this->geocoder->forward($searchQuery);
+            if ($forwardResult) {
+                if ($latitude === '' || $longitude === '') {
+                    $latitude = (string) $forwardResult['latitude'];
+                    $longitude = (string) $forwardResult['longitude'];
+                }
+                if ($detectedCity === '' && $forwardResult['city'] !== '') {
+                    $detectedCity = $forwardResult['city'];
+                }
+                if ($detectedProvince === '' && $forwardResult['province'] !== '') {
+                    $detectedProvince = $forwardResult['province'];
+                }
+                if ($zip === '' && $forwardResult['zip'] !== '') {
+                    $zip = $forwardResult['zip'];
+                }
             }
         }
 
@@ -304,6 +310,14 @@ PROMPT;
             $opensAt = '00:00';
             $closesAt = '23:59';
             $allowsOvernight = true;
+        } elseif (preg_match('/\b(?:buka|open|operasional)\s*(\d{1,2})\s*jam\b/i', $text, $hrsMatch) || preg_match('/\b(\d{1,2})\s*jam\s*(?:operasional)?\b/i', $text, $hrsMatch)) {
+            $hrs = (int) $hrsMatch[1];
+            $opensAt = '08:00';
+            $closesHour = min(23, 8 + $hrs);
+            $closesAt = sprintf('%02d:00', $closesHour);
+            if ($hrs < 24 && ! preg_match('/\b(inap|overnight)\b/i', $text)) {
+                $allowsOvernight = false;
+            }
         } else {
             if (preg_match('/\b(?:buka|jam|operasional)\s*[:=]?\s*(\d{1,2}[:.]\d{2})\s*(?:s\/?d|-|sampai|hingga)\s*(\d{1,2}[:.]\d{2})\b/i', $text, $timeMatches)) {
                 $opensAt = str_replace('.', ':', str_pad($timeMatches[1], 5, '0', STR_PAD_LEFT));
@@ -391,17 +405,58 @@ PROMPT;
             $managerId = isset($availableManagers[0]['id']) ? (string) $availableManagers[0]['id'] : '';
         }
 
+        $code = strtoupper(trim((string) ($data['code'] ?? '')));
+        $name = (string) ($data['name'] ?? '');
+        $address = (string) ($data['address'] ?? '');
+        $city = (string) ($data['city'] ?? '');
+        $province = (string) ($data['province'] ?? '');
+        $zip = (string) ($data['zip'] ?? '');
+        $latitude = (string) ($data['latitude'] ?? '');
+        $longitude = (string) ($data['longitude'] ?? '');
+
+        // If coordinates missing, resolve using IndonesiaGeoData or geocoder
+        if ($latitude === '' || $longitude === '' || $city === '' || $province === '') {
+            $queryText = trim("{$address} {$city} {$province} {$zip}");
+            $geo = IndonesiaGeoData::findLocation($queryText);
+            if ($geo) {
+                if ($latitude === '' || $longitude === '') {
+                    $latitude = $geo['lat'];
+                    $longitude = $geo['lng'];
+                }
+                if ($city === '') {
+                    $city = $geo['city'];
+                }
+                if ($province === '') {
+                    $province = $geo['province'];
+                }
+            } elseif ($zip !== '') {
+                $zipGeo = IndonesiaGeoData::findByPostalCode($zip);
+                if ($zipGeo) {
+                    if ($latitude === '' || $longitude === '') {
+                        $latitude = $zipGeo['lat'];
+                        $longitude = $zipGeo['lng'];
+                    }
+                    if ($city === '') {
+                        $city = $zipGeo['city'];
+                    }
+                    if ($province === '') {
+                        $province = $zipGeo['province'];
+                    }
+                }
+            }
+        }
+
         return [
-            'code' => strtoupper(trim((string) ($data['code'] ?? ''))),
-            'name' => (string) ($data['name'] ?? ''),
+            'code' => $code,
+            'name' => $name,
             'kind' => $kind,
             'status' => $status,
-            'address' => (string) ($data['address'] ?? ''),
-            'city' => (string) ($data['city'] ?? ''),
-            'province' => (string) ($data['province'] ?? ''),
-            'zip' => (string) ($data['zip'] ?? ''),
-            'latitude' => (string) ($data['latitude'] ?? ''),
-            'longitude' => (string) ($data['longitude'] ?? ''),
+            'address' => $address,
+            'city' => $city,
+            'province' => $province,
+            'zip' => $zip,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'phone' => (string) ($data['phone'] ?? ''),
             'email' => (string) ($data['email'] ?? ''),
             'opens_at' => (string) ($data['opens_at'] ?? '08:00'),

@@ -199,6 +199,7 @@ Route::domain($centralDomain)
 
                     // Reverse geocode — shared map-pin helper (auth only, no module gate).
                     Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->name('geocode.reverse');
+                    Route::get('/geocode/forward', [GeocodeController::class, 'forward'])->name('geocode.forward');
 
                     // Notifications — every authenticated user reads their own, no gate.
                     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
