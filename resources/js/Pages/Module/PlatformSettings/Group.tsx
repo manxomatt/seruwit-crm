@@ -106,6 +106,9 @@ export default function Group({
     const aiFeaturesIndex = findSettingIndex('general.ai_features_enabled');
     const isAiEnabled = aiFeaturesIndex >= 0 ? data.settings[aiFeaturesIndex]?.value === '1' : false;
 
+    const aiOcrIndex = findSettingIndex('general.ai_ocr_enabled');
+    const isAiOcrEnabled = aiOcrIndex >= 0 ? data.settings[aiOcrIndex]?.value === '1' : true;
+
     // Capacity indices
     const businessModelIndex = findSettingIndex('capacity.business_model');
     const businessModel = businessModelIndex >= 0 ? data.settings[businessModelIndex]?.value || 'per_vehicle_trial' : 'per_vehicle_trial';
@@ -477,6 +480,109 @@ export default function Group({
                                     </div>
                                     <InputError
                                         message={(errors as Record<string, string>)[`settings.${aiFeaturesIndex}.value`]}
+                                        className="mt-2"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Dedicated AI OCR Document Switcher Card */}
+                            {aiOcrIndex >= 0 && (
+                                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-xs">
+                                                <span className="material-symbols-outlined text-[20px]">document_scanner</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {t('settings.platform.ai_ocr.label', undefined, 'Fitur AI OCR Dokumen (KTP / SIM)')}
+                                                    </h3>
+                                                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                                                        Tenant Scanner Switch
+                                                    </span>
+                                                </div>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {t(
+                                                        'settings.platform.ai_ocr.description',
+                                                        undefined,
+                                                        'Kontrol ketersediaan tombol & pemindai AI OCR dokumen KTP/SIM di form reservasi dan walk-in pelanggan seluruh tenant.',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                                isAiOcrEnabled && isAiEnabled
+                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`h-1.5 w-1.5 rounded-full ${
+                                                    isAiOcrEnabled && isAiEnabled ? 'bg-emerald-500' : 'bg-slate-400'
+                                                }`}
+                                            />
+                                            {isAiOcrEnabled && isAiEnabled ? 'AKTIF DI TENANT' : 'NONAKTIF DI TENANT'}
+                                        </span>
+                                    </div>
+
+                                    {/* Toggle Bar */}
+                                    <div className="mt-5">
+                                        <div
+                                            onClick={() => isAiEnabled && updateValue(aiOcrIndex, isAiOcrEnabled ? '0' : '1')}
+                                            className={`flex items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                                !isAiEnabled
+                                                    ? 'cursor-not-allowed opacity-60 border-slate-200 bg-slate-100/50 dark:border-slate-800 dark:bg-slate-800/30'
+                                                    : isAiOcrEnabled
+                                                    ? 'cursor-pointer border-purple-200 bg-gradient-to-r from-purple-50/60 via-indigo-50/40 to-white dark:border-purple-900/60 dark:from-purple-950/30 dark:via-indigo-950/20 dark:to-slate-900'
+                                                    : 'cursor-pointer border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:bg-slate-800/90'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-sm text-white shadow-xs">
+                                                    📸
+                                                </span>
+                                                <div>
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {!isAiEnabled
+                                                            ? 'Dinonaktifkan oleh Master Switch AI'
+                                                            : isAiOcrEnabled
+                                                            ? 'Scanner OCR KTP & SIM Muncul di Tenant'
+                                                            : 'Scanner OCR KTP & SIM Disembunyikan dari Tenant'}
+                                                    </span>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                        {!isAiEnabled
+                                                            ? 'Aktifkan Master Switch AI terlebih dahulu untuk menggunakan fitur ini.'
+                                                            : isAiOcrEnabled
+                                                            ? 'Form walk-in dan reservasi pelanggan di tenant menampilkan tombol pemindaian foto KTP/SIM otomatis.'
+                                                            : 'Seluruh panel pemindai dan tombol Fast-Scan OCR dihilangkan dari halaman tenant. Petugas mengisi form secara manual.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Reliable Animated Switch */}
+                                            <div
+                                                role="switch"
+                                                aria-checked={isAiOcrEnabled && isAiEnabled}
+                                                className={`relative inline-flex h-7 w-12 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                    !isAiEnabled
+                                                        ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'
+                                                        : isAiOcrEnabled
+                                                        ? 'bg-purple-600 cursor-pointer'
+                                                        : 'bg-slate-300 dark:bg-slate-700 cursor-pointer'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                        isAiOcrEnabled && isAiEnabled ? 'translate-x-5' : 'translate-x-0'
+                                                    }`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${aiOcrIndex}.value`]}
                                         className="mt-2"
                                     />
                                 </div>

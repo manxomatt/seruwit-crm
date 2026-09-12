@@ -22,8 +22,8 @@ class RentalAiKycController extends Controller
      */
     public function scanRentalDocuments(Request $request, Rental $rental): JsonResponse|RedirectResponse
     {
-        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
-            $message = __('rental.ai.feature_disabled', ['feature' => 'AI Smart KYC']);
+        if (! \App\Support\CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+            $message = __('rental.ai.feature_disabled', ['feature' => 'AI Smart KYC / OCR']);
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 403);
             }
@@ -66,10 +66,10 @@ class RentalAiKycController extends Controller
      */
     public function scanSingleDocument(Request $request): JsonResponse
     {
-        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+        if (! \App\Support\CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
             return response()->json([
                 'success' => false,
-                'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Smart KYC']),
+                'message' => __('rental.ai.feature_disabled', ['feature' => 'AI OCR Dokumen']),
             ], 403);
         }
 

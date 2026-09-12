@@ -122,12 +122,12 @@ class RentalShowPresenter
                 : [],
             'postConfirm' => app(RentalPostConfirmProgress::class)->for($rental),
             'aiInspectionEnabled' => \App\Support\CentralAiSettings::isEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled'],
-            'aiKycEnabled' => \App\Support\CentralAiSettings::isEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'aiKycEnabled' => \App\Support\CentralAiSettings::isOcrEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
             'latestAiInspection' => $rental->latestAiInspection,
             'aiInspectLiveUrl' => route($routePrefix.'.rental.ai_inspect_live', $rental),
             'aiInspectExistingUrl' => route($routePrefix.'.rental.ai_inspect_existing', $rental),
             'aiApplyDamageUrl' => route($routePrefix.'.rental.ai_apply_damage', $rental),
-            'aiScanKycUrl' => route($routePrefix.'.rental.ai_scan_kyc', $rental),
+            'aiScanKycUrl' => \App\Support\CentralAiSettings::isOcrEnabled() ? route($routePrefix.'.rental.ai_scan_kyc', $rental) : null,
             'aiSyncKycPartnerUrl' => route($routePrefix.'.rental.ai_sync_kyc_partner', $rental),
         ];
     }

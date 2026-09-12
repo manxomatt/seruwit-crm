@@ -131,8 +131,8 @@ class RentalController extends Controller
             'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
             'quoteUrl' => route($this->getRoutePrefix().'.rental.reservations.quote'),
             'walkInUrl' => route($this->getRoutePrefix().'.rental.walk_in_customers.store'),
-            'aiKycEnabled' => \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
-            'aiScanDocUrl' => route($this->getRoutePrefix().'.rental.ai_scan_document'),
+            'aiKycEnabled' => \App\Support\CentralAiSettings::isOcrEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'aiScanDocUrl' => \App\Support\CentralAiSettings::isOcrEnabled() ? route($this->getRoutePrefix().'.rental.ai_scan_document') : null,
         ]);
     }
 

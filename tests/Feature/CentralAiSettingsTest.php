@@ -72,8 +72,49 @@ class CentralAiSettingsTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
+    public function test_central_ai_ocr_is_enabled_by_default(): void
+    {
+        $this->assertTrue(CentralAiSettings::isOcrEnabled());
+    }
+
+    public function test_disabling_central_ocr_setting_blocks_ocr_and_hides_tenant_urls(): void
+    {
+        PlatformSetting::setValue(CentralAiSettings::KEY_OCR, '0');
+
+        $this->assertFalse(CentralAiSettings::isOcrEnabled());
+        $this->assertTrue(CentralAiSettings::isEnabled());
+
+        $user = $this->createAdminUser();
+
+        // 1. Rental single document OCR scan blocked
+        $this->actingAs($user)
+            ->postJson(route('module.rental.ai_scan_document'), [
+                'image' => 'data:image/jpeg;base64,sampledoc',
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        // 2. Rental KYC document scan blocked
+        $rental = Rental::factory()->create();
+        $this->actingAs($user)
+            ->postJson(route('module.rental.ai_scan_kyc', $rental))
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        // 3. Rental create page hides aiScanDocUrl and disables aiKycEnabled
+        $this->actingAs($user)
+            ->get(route('module.rental.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->where('aiScanDocUrl', null)
+                ->where('aiKycEnabled', false)
+            );
+    }
+
     public function test_central_ai_setting_is_hidden_from_tenant_generic_settings(): void
     {
         $this->assertContains(CentralAiSettings::KEY, Setting::centralOnlyKeys());
+        $this->assertContains(CentralAiSettings::KEY_OCR, Setting::centralOnlyKeys());
     }
 }
