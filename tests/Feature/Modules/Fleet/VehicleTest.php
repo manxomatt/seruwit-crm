@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Fleet;
 
+use App\Models\PlatformSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Models\Trip;
@@ -394,5 +395,44 @@ class VehicleTest extends TestCase
                 'status' => 'maintenance',
             ])
             ->assertForbidden();
+    }
+
+    public function test_index_passes_accurate_quota_in_per_vehicle_trial_mode(): void
+    {
+        PlatformSetting::setValue(PlatformSetting::KEY_CAPACITY_BUSINESS_MODEL, PlatformSetting::MODEL_PER_VEHICLE_TRIAL);
+        PlatformSetting::setValue(PlatformSetting::KEY_MAX_TRIAL_VEHICLES_PER_TENANT, 5);
+
+        $user = $this->createAdminUser();
+        Vehicle::factory()->create(['status' => 'active', 'is_trial' => true]);
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.vehicles.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Index')
+                ->where('quota.current', 1)
+                ->where('quota.max', 5)
+                ->where('quota.total', 1)
+                ->where('quota.reached', false)
+            );
+    }
+
+    public function test_index_passes_null_max_quota_when_trial_is_unlimited(): void
+    {
+        PlatformSetting::setValue(PlatformSetting::KEY_CAPACITY_BUSINESS_MODEL, PlatformSetting::MODEL_PER_VEHICLE_TRIAL);
+        PlatformSetting::setValue(PlatformSetting::KEY_MAX_TRIAL_VEHICLES_PER_TENANT, 0);
+
+        $user = $this->createAdminUser();
+        Vehicle::factory()->create(['status' => 'active', 'is_trial' => true]);
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.vehicles.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Index')
+                ->where('quota.current', 1)
+                ->where('quota.max', null)
+                ->where('quota.reached', false)
+            );
     }
 }

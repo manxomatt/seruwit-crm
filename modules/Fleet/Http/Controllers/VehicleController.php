@@ -47,9 +47,21 @@ class VehicleController extends Controller
         $isPerVehicleTrial = PlatformSetting::isPerVehicleTrialEnabled();
         $totalVehicles = Vehicle::count();
         $billableVehicles = Vehicle::billable()->count();
-        $isLimitReached = ! $isPerVehicleTrial && $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $billableVehicles);
-        $maxLimit = (! $isPerVehicleTrial && $tenant instanceof Tenant) ? $tenant->planLimit('max_vehicles') : null;
         $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
+
+        if ($isPerVehicleTrial) {
+            $remainingTrial = $capacityService->getRemainingTrialSlots();
+            if ($remainingTrial === null) {
+                $maxLimit = null;
+                $isLimitReached = false;
+            } else {
+                $maxLimit = $billableVehicles + $remainingTrial + $availableCredits;
+                $isLimitReached = ($remainingTrial <= 0 && $availableCredits < 1);
+            }
+        } else {
+            $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_vehicles', $billableVehicles);
+            $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_vehicles') : null;
+        }
 
         $vehicles = Vehicle::query()
             ->with('homeBase:id,code,name')

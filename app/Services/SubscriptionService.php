@@ -165,16 +165,21 @@ class SubscriptionService
     public function getMaxVehiclesAllowed(Tenant $tenant): ?int
     {
         if (PlatformSetting::isPerVehicleTrialEnabled()) {
-            return null;
+            /** @var \Modules\Fleet\Support\VehicleCapacityService $capacityService */
+            $capacityService = app(\Modules\Fleet\Support\VehicleCapacityService::class);
+            $remainingTrial = $capacityService->getRemainingTrialSlots();
+            if ($remainingTrial === null) {
+                return null;
+            }
+
+            $credits = $capacityService->getAvailableCredits($tenant);
+            $billable = \Modules\Fleet\Models\Vehicle::billable()->count();
+
+            return $billable + $remainingTrial + $credits;
         }
 
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
-
-        // On trial = unlimited
-        if ($tenant->isOnTrial) {
-            return null;
-        }
 
         $subscription = Subscription::on($central)
             ->where('tenant_id', $tenantId)
@@ -183,6 +188,22 @@ class SubscriptionService
 
         if ($subscription && $subscription->isActive()) {
             return $subscription->subscribed_vehicles;
+        }
+
+        if ($tenant->max_vehicles_allowed !== null && (int) $tenant->max_vehicles_allowed > 0) {
+            return (int) $tenant->max_vehicles_allowed;
+        }
+
+        $plan = $tenant->planModel();
+        if ($plan && $plan->hasLimit('max_vehicles')) {
+            $limit = $plan->getLimit('max_vehicles');
+
+            return $limit !== null ? (int) $limit : null;
+        }
+
+        // On trial without explicit plan limit:
+        if ($tenant->isOnTrial) {
+            return null;
         }
 
         // Not on trial and no active subscription = blocked

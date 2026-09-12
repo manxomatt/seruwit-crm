@@ -8,6 +8,7 @@ interface Props {
     reached?: boolean;
     onOpenUpgrade?: () => void;
     showUpgradeButton?: boolean;
+    isTrialMode?: boolean;
 }
 
 export default function VehicleQuotaGauge({
@@ -17,6 +18,7 @@ export default function VehicleQuotaGauge({
     reached = false,
     onOpenUpgrade,
     showUpgradeButton = true,
+    isTrialMode = false,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const isUnlimited = max === null;
@@ -59,7 +61,11 @@ export default function VehicleQuotaGauge({
                                 ? t('fleet.quota.unlimited', undefined, 'Unlimited (Trial)')
                                 : max === 0
                                   ? t('fleet.quota.subscription_required', undefined, 'Langganan Diperlukan (Kuota 0)')
-                                  : t('fleet.quota.used_percent', { percent: percentage }, `${percentage}% Terpakai`)}
+                                  : isTrialMode
+                                    ? reached
+                                      ? t('fleet.quota.trial_reached', undefined, 'Batas Kuota Trial')
+                                      : t('fleet.quota.trial_used', { percent: percentage }, `Trial ${percentage}% Terpakai`)
+                                    : t('fleet.quota.used_percent', { percent: percentage }, `${percentage}% Terpakai`)}
                         </span>
                     </div>
 
@@ -89,7 +95,11 @@ export default function VehicleQuotaGauge({
                             className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-95"
                         >
                             <span>⚡</span>
-                            <span>{t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}</span>
+                            <span>
+                                {isTrialMode
+                                    ? t('fleet.quota.topup_btn', undefined, 'Top-Up Saldo Kredit')
+                                    : t('fleet.quota.upgrade_btn', undefined, 'Tambah Kapasitas Unit')}
+                            </span>
                         </button>
                     </div>
                 )}

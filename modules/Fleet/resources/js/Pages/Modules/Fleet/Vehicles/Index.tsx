@@ -463,8 +463,15 @@ export default function Index({
                         max={quota.max}
                         total={quota.total ?? totalVehicles}
                         reached={quota.reached}
-                        onOpenUpgrade={() => setShowUpgradeModal(true)}
-                        showUpgradeButton={!isTrialMode}
+                        onOpenUpgrade={() => {
+                            if (isTrialMode) {
+                                router.visit(prefixedRoute('subscription.index'));
+                            } else {
+                                setShowUpgradeModal(true);
+                            }
+                        }}
+                        showUpgradeButton={true}
+                        isTrialMode={isTrialMode}
                     />
                 )}
 
