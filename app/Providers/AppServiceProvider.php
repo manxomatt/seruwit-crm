@@ -36,7 +36,16 @@ class AppServiceProvider extends ServiceProvider
         );
         $this->app->bind(
             \Modules\Rental\AI\Contracts\DocumentKycServiceInterface::class,
-            \Modules\Rental\AI\Services\GeminiDocumentKycService::class
+            function ($app) {
+                $driver = (string) config('services.kyc.driver', 'auto');
+                $groqKey = (string) config('services.groq.api_key', '');
+
+                if ($driver === 'groq' || ($driver === 'auto' && filled($groqKey))) {
+                    return $app->make(\Modules\Rental\AI\Services\GroqDocumentKycService::class);
+                }
+
+                return $app->make(\Modules\Rental\AI\Services\GeminiDocumentKycService::class);
+            }
         );
         $this->app->bind(
             \Modules\Rental\AI\Contracts\DynamicPricingServiceInterface::class,

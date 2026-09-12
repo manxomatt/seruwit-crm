@@ -66,4 +66,14 @@ return [
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
     ],
 
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_VISION_MODEL', 'llama-3.2-11b-vision-preview'),
+        'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+    ],
+
+    'kyc' => [
+        'driver' => env('KYC_OCR_DRIVER', 'auto'),
+    ],
+
 ];
