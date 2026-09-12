@@ -114,7 +114,7 @@ PROMPT;
         ];
 
         if (filled($ktpPath)) {
-            $ktpDataUrl = $this->resolveDataUrl($ktpPath);
+            $ktpDataUrl = $this->optimizeDataUrl($this->resolveDataUrl($ktpPath));
             if ($ktpDataUrl) {
                 $content[] = [
                     'type' => 'image_url',
@@ -124,7 +124,7 @@ PROMPT;
         }
 
         if (filled($simPath)) {
-            $simDataUrl = $this->resolveDataUrl($simPath);
+            $simDataUrl = $this->optimizeDataUrl($this->resolveDataUrl($simPath));
             if ($simDataUrl) {
                 $content[] = [
                     'type' => 'image_url',
@@ -133,7 +133,7 @@ PROMPT;
             }
         }
 
-        $rawJson = $this->callGroqApi($content, 45, 'Analisis KYC');
+        $rawJson = $this->callGroqApi($content, 45, 'Analisis KYC', 1500);
         $text = $rawJson['choices'][0]['message']['content'] ?? '{}';
         $parsed = json_decode($text, true) ?: [];
 
@@ -171,7 +171,7 @@ PROMPT;
             throw new RuntimeException('Groq API key belum dikonfigurasi. Silakan pasang GROQ_API_KEY di file .env. Dapatkan API key gratis di https://console.groq.com/keys');
         }
 
-        $dataUrl = $this->resolveDataUrl($imageSource);
+        $dataUrl = $this->optimizeDataUrl($this->resolveDataUrl($imageSource));
         if ($dataUrl === null) {
             throw new RuntimeException('Format gambar dokumen tidak valid atau tidak ditemukan.');
         }
@@ -209,7 +209,7 @@ PROMPT;
             ],
         ];
 
-        $rawJson = $this->callGroqApi($content, 35, 'OCR dokumen');
+        $rawJson = $this->callGroqApi($content, 35, 'OCR dokumen', 1024);
         $text = $rawJson['choices'][0]['message']['content'] ?? '{}';
         $parsed = json_decode($text, true) ?: [];
 
@@ -227,14 +227,14 @@ PROMPT;
      * @param  list<array<string, mixed>>  $content
      * @return array<string, mixed>
      */
-    protected function callGroqApi(array $content, int $timeout = 35, string $operationDesc = 'OCR dokumen'): array
+    protected function callGroqApi(array $content, int $timeout = 35, string $operationDesc = 'OCR dokumen', int $maxTokens = 1024): array
     {
         $decommissioned = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
         $candidateModels = array_values(array_unique(array_filter([
             ! in_array($this->model, $decommissioned, true) ? $this->model : null,
             'qwen/qwen3.6-27b',
-            'meta-llama/llama-4-scout-17b-16e-instruct',
             'qwen/qwen3.8-27b',
+            'meta-llama/llama-4-scout-17b-16e-instruct',
         ])));
 
         $lastResponse = null;
@@ -252,7 +252,7 @@ PROMPT;
                 ],
                 'response_format' => ['type' => 'json_object'],
                 'temperature' => 0.1,
-                'max_completion_tokens' => 2048,
+                'max_completion_tokens' => $maxTokens,
             ];
 
             try {
@@ -285,14 +285,115 @@ PROMPT;
             }
 
             if ($statusCode === 429) {
-                throw new RuntimeException('Batas kuota penggunaan Groq API tercapai (Rate Limit). Silakan coba lagi beberapa saat.');
+                // If a retry-after is suggested and short (<= 2.5s), sleep and retry once
+                $retryAfter = (float) ($response->header('retry-after') ?? 0);
+                if ($retryAfter > 0 && $retryAfter <= 2.5) {
+                    usleep((int) ($retryAfter * 1000000));
+                    try {
+                        $retryResp = Http::timeout($timeout)->withToken($this->apiKey)->post($endpoint, $payload);
+                        if ($retryResp->successful()) {
+                            $retryJson = $retryResp->json();
+                            if (is_array($retryJson) && ! empty($retryJson['choices'][0]['message']['content'])) {
+                                return $retryJson;
+                            }
+                        }
+                    } catch (Throwable) {
+                        // ignore and try next candidate model
+                    }
+                }
+
+                // If rate limited on this model, fall through to the next candidate model
+                continue;
             }
         }
 
         $status = $lastResponse ? $lastResponse->status() : 'Unknown';
         $errorMsg = $lastResponse ? ($lastResponse->json('error.message') ?? $lastResponse->body()) : 'Koneksi ke Groq API gagal';
 
+        if ($status === 429) {
+            throw new RuntimeException("Batas kuota Groq API per menit (Rate Limit / TPM) tercapai: {$errorMsg}. Sistem otomatis mengoptimasi resolusi gambar. Silakan tunggu beberapa detik lalu coba kembali.");
+        }
+
         throw new RuntimeException("Gagal melakukan {$operationDesc} dengan Groq AI ({$status}): {$errorMsg}");
+    }
+
+    /**
+     * Downscale and optimize image to keep token usage well within Groq's 8K TPM rate limit.
+     * Max dimension: 1024px, JPEG quality: 82%. Also auto-orients based on EXIF.
+     */
+    protected function optimizeDataUrl(?string $dataUrl, int $maxDimension = 1024, int $quality = 82): ?string
+    {
+        if ($dataUrl === null || ! str_starts_with($dataUrl, 'data:image/')) {
+            return $dataUrl;
+        }
+
+        if (! extension_loaded('gd')) {
+            return $dataUrl;
+        }
+
+        $parts = explode(',', $dataUrl, 2);
+        if (count($parts) !== 2) {
+            return $dataUrl;
+        }
+
+        $binary = base64_decode($parts[1]);
+        if (! $binary) {
+            return $dataUrl;
+        }
+
+        $image = @imagecreatefromstring($binary);
+        if (! $image) {
+            return $dataUrl;
+        }
+
+        // Auto-orient based on EXIF if available
+        if (function_exists('exif_read_data') && function_exists('imagerotate')) {
+            $exif = @exif_read_data('data://image/jpeg;base64,'.base64_encode($binary));
+            $orientation = $exif['Orientation'] ?? 1;
+            if ($orientation === 3) {
+                $image = imagerotate($image, 180, 0);
+            } elseif ($orientation === 6) {
+                $image = imagerotate($image, -90, 0);
+            } elseif ($orientation === 8) {
+                $image = imagerotate($image, 90, 0);
+            }
+        }
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        // If already within bounds and under 300KB, keep original
+        if ($width <= $maxDimension && $height <= $maxDimension && strlen($binary) <= 300000) {
+            imagedestroy($image);
+
+            return $dataUrl;
+        }
+
+        if ($width >= $height) {
+            $newWidth = min($width, $maxDimension);
+            $newHeight = (int) round(($height / $width) * $newWidth);
+        } else {
+            $newHeight = min($height, $maxDimension);
+            $newWidth = (int) round(($width / $height) * $newHeight);
+        }
+
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+        $white = imagecolorallocate($resized, 255, 255, 255);
+        imagefill($resized, 0, 0, $white);
+        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        ob_start();
+        imagejpeg($resized, null, $quality);
+        $compressedBinary = ob_get_clean();
+
+        imagedestroy($image);
+        imagedestroy($resized);
+
+        if ($compressedBinary !== false && strlen($compressedBinary) > 0) {
+            return 'data:image/jpeg;base64,'.base64_encode($compressedBinary);
+        }
+
+        return $dataUrl;
     }
 
     /**

@@ -111,4 +111,49 @@ class GroqDocumentKycServiceTest extends TestCase
         $service2 = new GroqDocumentKycService(apiKey: 'gsk_test', model: 'llama-3.2-90b-vision-preview');
         $this->assertSame('qwen/qwen3.6-27b', $service2->getModel());
     }
+
+    public function test_scan_single_document_optimizes_and_resizes_large_image(): void
+    {
+        $capturedUrl = null;
+        Http::fake([
+            'https://api.groq.com/openai/v1/chat/completions' => function ($request) use (&$capturedUrl) {
+                $payload = $request->data();
+                $capturedUrl = $payload['messages'][0]['content'][1]['image_url']['url'] ?? '';
+
+                return Http::response([
+                    'choices' => [
+                        [
+                            'message' => [
+                                'content' => json_encode([
+                                    'doc_type' => 'ktp',
+                                    'confidence' => 0.99,
+                                    'data' => ['nik' => '1234567890123456'],
+                                ]),
+                            ],
+                        ],
+                    ],
+                ], 200);
+            },
+        ]);
+
+        $im = imagecreatetruecolor(2000, 1500);
+        ob_start();
+        imagejpeg($im, null, 90);
+        $bin = ob_get_clean();
+        imagedestroy($im);
+        $largeDataUrl = 'data:image/jpeg;base64,'.base64_encode($bin);
+
+        $service = new GroqDocumentKycService(apiKey: 'gsk_test_key');
+        $service->scanSingleDocument($largeDataUrl);
+
+        $this->assertNotNull($capturedUrl);
+        $this->assertStringStartsWith('data:image/jpeg;base64,', $capturedUrl);
+
+        // Verify the received image in request was downscaled to max 1024
+        $parts = explode(',', $capturedUrl, 2);
+        $resizedImage = imagecreatefromstring(base64_decode($parts[1]));
+        $this->assertLessThanOrEqual(1024, imagesx($resizedImage));
+        $this->assertLessThanOrEqual(1024, imagesy($resizedImage));
+        imagedestroy($resizedImage);
+    }
 }
