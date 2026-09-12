@@ -159,6 +159,24 @@ class RentalAiKycTest extends TestCase
             ->assertJsonPath('result.data.nik', '3271012345670001');
     }
 
+    public function test_single_document_ocr_returns_error_message_when_service_fails(): void
+    {
+        $this->mock(DocumentKycServiceInterface::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('scanSingleDocument')
+                ->once()
+                ->andThrow(new \RuntimeException('Gagal memproses dokumen dengan Google Gemini AI: Model tidak tersedia.'));
+        });
+
+        $this->actingAs($this->createAdminUser())
+            ->postJson(route('module.rental.ai_scan_document'), [
+                'image' => $this->dummyDataUrl(),
+                'doc_type' => 'auto',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Gagal memproses dokumen dengan Google Gemini AI: Model tidak tersedia.');
+    }
+
     public function test_sync_to_partner_updates_partner_id_and_license(): void
     {
         $partner = Partner::factory()->create([

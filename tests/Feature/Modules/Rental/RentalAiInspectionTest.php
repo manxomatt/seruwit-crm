@@ -91,7 +91,7 @@ class RentalAiInspectionTest extends TestCase
             overallStatus: 'minor_damage',
             damages: [$mockDamage],
             rawResponse: ['status' => 'mocked'],
-            modelUsed: 'gemini-1.5-flash',
+            modelUsed: 'gemini-3.6-flash',
         );
 
         $this->mock(VisionInspectionServiceInterface::class, function (MockInterface $mock) use ($mockResult): void {
@@ -148,7 +148,7 @@ class RentalAiInspectionTest extends TestCase
             overallStatus: 'clean',
             damages: [],
             rawResponse: ['status' => 'mocked'],
-            modelUsed: 'gemini-1.5-flash',
+            modelUsed: 'gemini-3.6-flash',
         );
 
         $this->mock(VisionInspectionServiceInterface::class, function (MockInterface $mock) use ($mockResult): void {

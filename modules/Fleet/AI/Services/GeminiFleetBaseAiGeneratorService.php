@@ -15,12 +15,13 @@ class GeminiFleetBaseAiGeneratorService implements FleetBaseAiGeneratorServiceIn
 {
     public function __construct(
         protected ?string $apiKey = null,
-        protected string $model = 'gemini-1.5-flash',
+        protected string $model = 'gemini-3.6-flash',
         protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta',
         protected ?NominatimGeocoder $geocoder = null,
     ) {
         $this->apiKey = $apiKey ?? (string) config('services.gemini.api_key', '');
-        $this->model = (string) config('services.gemini.model', 'gemini-1.5-flash');
+        $configuredModel = (string) config('services.gemini.model', 'gemini-3.6-flash');
+        $this->model = ($configuredModel === 'gemini-1.5-flash' || blank($configuredModel)) ? 'gemini-3.6-flash' : str_replace('models/', '', $configuredModel);
         $this->baseUrl = (string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta');
         $this->geocoder = $geocoder ?? app(NominatimGeocoder::class);
     }

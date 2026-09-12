@@ -12,11 +12,12 @@ class GeminiRentalRateAiGeneratorService implements RentalRateAiGeneratorService
 {
     public function __construct(
         protected ?string $apiKey = null,
-        protected string $model = 'gemini-1.5-flash',
+        protected string $model = 'gemini-3.6-flash',
         protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta',
     ) {
         $this->apiKey = $apiKey ?? (function_exists('app') && app()->has('config') ? (string) config('services.gemini.api_key', '') : '');
-        $this->model = function_exists('app') && app()->has('config') ? (string) config('services.gemini.model', 'gemini-1.5-flash') : 'gemini-1.5-flash';
+        $configuredModel = function_exists('app') && app()->has('config') ? (string) config('services.gemini.model', 'gemini-3.6-flash') : 'gemini-3.6-flash';
+        $this->model = ($configuredModel === 'gemini-1.5-flash' || blank($configuredModel)) ? 'gemini-3.6-flash' : str_replace('models/', '', $configuredModel);
         $this->baseUrl = function_exists('app') && app()->has('config') ? (string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta') : 'https://generativelanguage.googleapis.com/v1beta';
     }
 

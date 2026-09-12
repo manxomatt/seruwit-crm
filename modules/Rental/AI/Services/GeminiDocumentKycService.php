@@ -15,12 +15,28 @@ class GeminiDocumentKycService implements DocumentKycServiceInterface
 {
     public function __construct(
         protected ?string $apiKey = null,
-        protected string $model = 'gemini-1.5-flash',
+        protected ?string $model = null,
         protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta',
     ) {
         $this->apiKey = $apiKey ?? (string) config('services.gemini.api_key', '');
-        $this->model = (string) config('services.gemini.model', 'gemini-1.5-flash');
+        $configuredModel = $model ?? (string) config('services.gemini.model', 'gemini-3.6-flash');
+        $this->model = $this->resolveModel($configuredModel);
         $this->baseUrl = (string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta');
+    }
+
+    public function getModel(): string
+    {
+        return $this->model;
+    }
+
+    protected function resolveModel(string $model): string
+    {
+        $cleaned = str_replace('models/', '', trim($model));
+        if ($cleaned === 'gemini-1.5-flash' || blank($cleaned)) {
+            return 'gemini-3.6-flash';
+        }
+
+        return $cleaned;
     }
 
     /**
@@ -113,8 +129,6 @@ PROMPT;
             }
         }
 
-        $url = sprintf('%s/models/%s:generateContent?key=%s', $this->baseUrl, $this->model, $this->apiKey);
-
         $payload = [
             'contents' => [
                 [
@@ -128,17 +142,7 @@ PROMPT;
             ],
         ];
 
-        $response = Http::timeout(45)->post($url, $payload);
-
-        if (! $response->successful()) {
-            Log::error('Gemini KYC API error', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-            throw new RuntimeException('Gagal menghubungi AI KYC API: '.($response->json('error.message') ?? $response->body()));
-        }
-
-        $rawJson = $response->json();
+        $rawJson = $this->callGeminiApi($payload, 45, 'verifikasi AI KYC');
         $text = $rawJson['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
         $parsed = json_decode($text, true) ?: [];
 
@@ -198,8 +202,6 @@ Format Output WAJIB JSON:
 }
 PROMPT;
 
-        $url = sprintf('%s/models/%s:generateContent?key=%s', $this->baseUrl, $this->model, $this->apiKey);
-
         $payload = [
             'contents' => [
                 [
@@ -216,13 +218,7 @@ PROMPT;
             ],
         ];
 
-        $response = Http::timeout(35)->post($url, $payload);
-
-        if (! $response->successful()) {
-            throw new RuntimeException('Gagal melakukan OCR dokumen: '.($response->json('error.message') ?? $response->body()));
-        }
-
-        $rawJson = $response->json();
+        $rawJson = $this->callGeminiApi($payload, 35, 'OCR dokumen');
         $text = $rawJson['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
         $parsed = json_decode($text, true) ?: [];
 
@@ -232,6 +228,62 @@ PROMPT;
             'data' => (array) ($parsed['data'] ?? []),
             'raw' => $rawJson,
         ];
+    }
+
+    /**
+     * Call Gemini API with automatic model fallback and clear error reporting.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    protected function callGeminiApi(array $payload, int $timeout = 35, string $operationDesc = 'OCR dokumen'): array
+    {
+        $candidateModels = array_values(array_unique([
+            $this->model,
+            'gemini-3.6-flash',
+            'gemini-2.5-flash',
+            'gemini-flash-latest',
+        ]));
+
+        $lastResponse = null;
+
+        foreach ($candidateModels as $candidateModel) {
+            $url = sprintf('%s/models/%s:generateContent?key=%s', $this->baseUrl, $candidateModel, $this->apiKey);
+            $response = Http::timeout($timeout)->post($url, $payload);
+
+            if ($response->successful()) {
+                return $response->json() ?? [];
+            }
+
+            $lastResponse = $response;
+            $status = $response->status();
+
+            // If 404 (model not found / deprecated), try next model in candidate list
+            if ($status === 404) {
+                Log::info("Gemini model '{$candidateModel}' not available (404), attempting fallback model if available.");
+
+                continue;
+            }
+
+            // For other HTTP errors (403, 401, 400, etc.), do not retry different models
+            break;
+        }
+
+        $errorMessage = $lastResponse ? (string) ($lastResponse->json('error.message') ?? $lastResponse->body()) : 'Unknown error';
+
+        if (str_contains($errorMessage, 'denied access')) {
+            throw new RuntimeException("Gagal melakukan {$operationDesc}: Akses Google Cloud Project ditolak (Your project has been denied access). Silakan periksa status project Google Cloud Anda atau ganti GEMINI_API_KEY di file .env dengan API key yang aktif dari Google AI Studio.");
+        }
+
+        if (str_contains($errorMessage, 'API key not valid') || str_contains($errorMessage, 'API_KEY_INVALID')) {
+            throw new RuntimeException("Gagal melakukan {$operationDesc}: GEMINI_API_KEY tidak valid. Silakan atur API key yang valid di file .env.");
+        }
+
+        if (str_contains($errorMessage, 'is not found for API version') || ($lastResponse && $lastResponse->status() === 404)) {
+            throw new RuntimeException("Gagal melakukan {$operationDesc}: Model AI '{$this->model}' tidak tersedia pada versi API. Silakan atur GEMINI_VISION_MODEL=gemini-3.6-flash di file .env.");
+        }
+
+        throw new RuntimeException("Gagal melakukan {$operationDesc}: ".$errorMessage);
     }
 
     /**

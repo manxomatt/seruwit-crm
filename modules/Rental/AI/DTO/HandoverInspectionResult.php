@@ -15,7 +15,7 @@ class HandoverInspectionResult
         public string $overallStatus,
         public array $damages = [],
         public array $rawResponse = [],
-        public string $modelUsed = 'gemini-1.5-flash',
+        public string $modelUsed = 'gemini-3.6-flash',
     ) {}
 
     /**
