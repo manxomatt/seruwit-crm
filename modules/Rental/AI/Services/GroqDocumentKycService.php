@@ -26,7 +26,9 @@ class GroqDocumentKycService implements DocumentKycServiceInterface
         ?string $baseUrl = null,
     ) {
         $this->apiKey = $apiKey ?? (function_exists('config') ? (string) config('services.groq.api_key', '') : '');
-        $this->model = $model ?? (function_exists('config') ? (string) config('services.groq.model', 'llama-3.2-11b-vision-preview') : 'llama-3.2-11b-vision-preview');
+        $rawModel = $model ?? (function_exists('config') ? (string) config('services.groq.model', 'qwen/qwen3.6-27b') : 'qwen/qwen3.6-27b');
+        $decommissioned = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
+        $this->model = in_array($rawModel, $decommissioned, true) ? 'qwen/qwen3.6-27b' : $rawModel;
         $this->baseUrl = $baseUrl ?? (function_exists('config') ? (string) config('services.groq.base_url', 'https://api.groq.com/openai/v1') : 'https://api.groq.com/openai/v1');
     }
 
@@ -227,11 +229,13 @@ PROMPT;
      */
     protected function callGroqApi(array $content, int $timeout = 35, string $operationDesc = 'OCR dokumen'): array
     {
-        $candidateModels = array_values(array_unique([
-            $this->model,
-            'llama-3.2-11b-vision-preview',
-            'llama-3.2-90b-vision-preview',
-        ]));
+        $decommissioned = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
+        $candidateModels = array_values(array_unique(array_filter([
+            ! in_array($this->model, $decommissioned, true) ? $this->model : null,
+            'qwen/qwen3.6-27b',
+            'meta-llama/llama-4-scout-17b-16e-instruct',
+            'qwen/qwen3.8-27b',
+        ])));
 
         $lastResponse = null;
 
@@ -248,6 +252,7 @@ PROMPT;
                 ],
                 'response_format' => ['type' => 'json_object'],
                 'temperature' => 0.1,
+                'max_completion_tokens' => 2048,
             ];
 
             try {

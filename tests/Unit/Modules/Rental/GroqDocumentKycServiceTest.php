@@ -102,4 +102,13 @@ class GroqDocumentKycServiceTest extends TestCase
         $this->assertSame('920812345678', $result->sim['license_number']);
         $this->assertTrue($result->checks['sim_valid_for_rental']);
     }
+
+    public function test_decommissioned_model_is_normalized_to_qwen_vision(): void
+    {
+        $service = new GroqDocumentKycService(apiKey: 'gsk_test', model: 'llama-3.2-11b-vision-preview');
+        $this->assertSame('qwen/qwen3.6-27b', $service->getModel());
+
+        $service2 = new GroqDocumentKycService(apiKey: 'gsk_test', model: 'llama-3.2-90b-vision-preview');
+        $this->assertSame('qwen/qwen3.6-27b', $service2->getModel());
+    }
 }
