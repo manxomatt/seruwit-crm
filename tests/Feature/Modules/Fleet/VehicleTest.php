@@ -139,9 +139,13 @@ class VehicleTest extends TestCase
             'odometer_km' => 0,
             'model_year' => 2024,
             'color' => 'White',
+            'rental_rate' => [
+                'rate_per_period' => 500000,
+            ],
         ]);
 
         $vehicle = Vehicle::firstWhere('plate_number', 'B 1234 XYZ');
+        $this->assertNotNull($vehicle);
         $response->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
         $this->assertDatabaseHas('vehicles', [
             'plate_number' => 'B 1234 XYZ',
@@ -183,6 +187,9 @@ class VehicleTest extends TestCase
             'status' => 'active',
             'odometer_km' => 1000,
             'photo_url' => $photoUrl,
+            'rental_rate' => [
+                'rate_per_period' => 350000,
+            ],
         ])->assertRedirect();
 
         $this->assertDatabaseHas('vehicles', [
@@ -434,5 +441,90 @@ class VehicleTest extends TestCase
                 ->where('quota.max', null)
                 ->where('quota.reached', false)
             );
+    }
+
+    public function test_creating_vehicle_requires_rental_rate_when_uncovered(): void
+    {
+        $user = $this->createAdminUser();
+
+        $response = $this->actingAs($user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Uncovered Car',
+            'plate_number' => 'B 7777 UNC',
+            'type' => 'car',
+            'rental_class' => 'suv',
+            'fuel_type' => 'petrol',
+            'status' => 'active',
+            'odometer_km' => 0,
+        ]);
+
+        $response->assertSessionHasErrors(['rental_rate.rate_per_period']);
+        $this->assertDatabaseMissing('vehicles', ['plate_number' => 'B 7777 UNC']);
+    }
+
+    public function test_creating_vehicle_creates_rental_rate_when_provided(): void
+    {
+        $user = $this->createAdminUser();
+
+        $response = $this->actingAs($user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Fortuner Black',
+            'plate_number' => 'B 8888 FOR',
+            'type' => 'car',
+            'rental_class' => 'suv',
+            'fuel_type' => 'diesel',
+            'status' => 'active',
+            'odometer_km' => 0,
+            'rental_rate' => [
+                'name' => 'Tarif SUV Khusus',
+                'rate_per_period' => 750000,
+                'deposit_amount' => 1000000,
+                'scope' => 'class',
+                'period_type' => 'daily',
+            ],
+        ]);
+
+        $vehicle = Vehicle::firstWhere('plate_number', 'B 8888 FOR');
+        $this->assertNotNull($vehicle);
+        $response->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
+
+        $this->assertDatabaseHas('rental_rates', [
+            'name' => 'Tarif SUV Khusus',
+            'rental_class' => 'suv',
+            'rate_per_period' => 750000,
+            'deposit_amount' => 1000000,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_creating_vehicle_succeeds_without_rate_when_class_is_already_covered(): void
+    {
+        $user = $this->createAdminUser();
+
+        \Modules\Rental\Models\RentalRate::create([
+            'name' => 'Tarif MPV Komprehensif',
+            'rental_class' => 'mpv',
+            'vehicle_type' => 'car',
+            'period_type' => 'daily',
+            'rate_per_period' => 450000,
+            'deposit_amount' => 500000,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Innova Zenix',
+            'plate_number' => 'B 9999 INO',
+            'type' => 'car',
+            'rental_class' => 'mpv',
+            'fuel_type' => 'hybrid',
+            'status' => 'active',
+            'odometer_km' => 0,
+        ]);
+
+        $vehicle = Vehicle::firstWhere('plate_number', 'B 9999 INO');
+        $this->assertNotNull($vehicle);
+        $response->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
+        $this->assertDatabaseHas('vehicles', [
+            'plate_number' => 'B 9999 INO',
+            'name' => 'Innova Zenix',
+        ]);
     }
 }

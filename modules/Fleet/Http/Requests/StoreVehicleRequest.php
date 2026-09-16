@@ -46,6 +46,12 @@ class StoreVehicleRequest extends FormRequest
             'kir_expires_at' => ['nullable', 'date'],
             'photo_url' => ['nullable', 'string', 'max:2048'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'rental_rate' => ['nullable', 'array'],
+            'rental_rate.name' => ['nullable', 'string', 'max:191'],
+            'rental_rate.rate_per_period' => ['nullable', 'numeric', 'min:0'],
+            'rental_rate.period_type' => ['nullable', 'in:daily,weekly,monthly'],
+            'rental_rate.deposit_amount' => ['nullable', 'numeric', 'min:0'],
+            'rental_rate.scope' => ['nullable', 'in:class,vehicle'],
         ];
     }
 
@@ -84,6 +90,22 @@ class StoreVehicleRequest extends FormRequest
                 if ($tenant instanceof \App\Models\Tenant && $tenant->hasReachedLimit('max_vehicles', \Modules\Fleet\Models\Vehicle::billable()->count())) {
                     $limit = (int) $tenant->planLimit('max_vehicles');
                     $validator->errors()->add('name', __('fleet.messages.limit_reached_vehicles', ['limit' => $limit]));
+                }
+            }
+
+            if (\App\Modules\Facades\Modules::available('rental') && class_exists(\Modules\Rental\Support\RentalRateCoverageChecker::class)) {
+                $rentalClass = $this->input('rental_class');
+                $vehicleType = $this->input('type');
+                $isCovered = \Modules\Rental\Support\RentalRateCoverageChecker::isCovered($rentalClass, $vehicleType);
+
+                if (! $isCovered) {
+                    $ratePerPeriod = $this->input('rental_rate.rate_per_period');
+                    if (blank($ratePerPeriod) || (float) $ratePerPeriod <= 0) {
+                        $validator->errors()->add(
+                            'rental_rate.rate_per_period',
+                            'Unit ini belum memiliki skema tarif sewa yang aktif. Harap tentukan harga sewa pokok (Rp / Hari) untuk kelas/unit ini.'
+                        );
+                    }
                 }
             }
         });

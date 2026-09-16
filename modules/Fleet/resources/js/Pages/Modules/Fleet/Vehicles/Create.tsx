@@ -1,6 +1,7 @@
 import ImageUploader from '@/Components/ImageUploader';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -9,7 +10,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useMemo } from 'react';
 import VehicleAiGeneratePanel, { ExtractedVehicleData } from '../../../../Components/VehicleAiGeneratePanel';
 import FleetNav from '../../../../FleetNav';
 
@@ -46,6 +47,13 @@ interface HomeBaseOption {
     name: string;
 }
 
+interface RentalRateCoverage {
+    has_global_rate: boolean;
+    covered_rental_classes: string[];
+    covered_vehicle_types: string[];
+    sample_rates: Record<string, { name: string; rate_per_period: number; period_type: string }>;
+}
+
 interface Props {
     bases?: HomeBaseOption[];
     available_credits?: number;
@@ -55,6 +63,8 @@ interface Props {
     trial_vehicles_count?: number;
     has_reached_trial_limit?: boolean;
     remaining_trial_slots?: number | null;
+    rental_module_enabled?: boolean;
+    rental_rate_coverage?: RentalRateCoverage | null;
 }
 
 export default function Create({
@@ -66,6 +76,8 @@ export default function Create({
     trial_vehicles_count = 0,
     has_reached_trial_limit = false,
     remaining_trial_slots = null,
+    rental_module_enabled = false,
+    rental_rate_coverage = null,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -91,6 +103,13 @@ export default function Create({
         kir_expires_at: '',
         photo_url: '',
         notes: '',
+        rental_rate: {
+            name: '',
+            rate_per_period: '',
+            period_type: 'daily',
+            deposit_amount: '0',
+            scope: 'class',
+        },
     });
 
     const handleApplyAiData = (generated: ExtractedVehicleData) => {
@@ -118,6 +137,42 @@ export default function Create({
             notes: generated.notes ? (prev.notes ? `${prev.notes}\n${generated.notes}` : generated.notes) : prev.notes,
         }));
     };
+
+    // Evaluasi cakupan tarif sewa secara reaktif
+    const rateCoverageStatus = useMemo(() => {
+        if (!rental_module_enabled || !rental_rate_coverage) {
+            return { isCovered: true, source: null, sample: null };
+        }
+
+        const selectedClass = data.rental_class ? data.rental_class.toLowerCase().trim() : '';
+        const selectedType = data.type ? data.type.toLowerCase().trim() : '';
+
+        if (selectedClass && rental_rate_coverage.covered_rental_classes.includes(selectedClass)) {
+            return {
+                isCovered: true,
+                source: `Kelas Rental (${selectedClass.toUpperCase()})`,
+                sample: rental_rate_coverage.sample_rates[`class:${selectedClass}`] || null,
+            };
+        }
+
+        if (selectedType && rental_rate_coverage.covered_vehicle_types.includes(selectedType)) {
+            return {
+                isCovered: true,
+                source: `Tipe Kendaraan (${selectedType.toUpperCase()})`,
+                sample: rental_rate_coverage.sample_rates[`type:${selectedType}`] || null,
+            };
+        }
+
+        if (rental_rate_coverage.has_global_rate) {
+            return {
+                isCovered: true,
+                source: 'Tarif Umum Global',
+                sample: rental_rate_coverage.sample_rates['global'] || null,
+            };
+        }
+
+        return { isCovered: false, source: null, sample: null };
+    }, [rental_module_enabled, rental_rate_coverage, data.rental_class, data.type]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -637,6 +692,109 @@ export default function Create({
                             </div>
                         </div>
                     </div>
+
+                    {/* 6. Skema Tarif Sewa (Opsi A - Inline Smart Rate Section) */}
+                    {rental_module_enabled && (
+                        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                            <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-base font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                    6
+                                </span>
+                                <div>
+                                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                        Pemeriksaan & Skema Tarif Sewa
+                                    </h3>
+                                    <p className="text-xs text-slate-500">
+                                        Memastikan armada memiliki tarif sewa yang valid agar langsung siap dibooking pada katalog rental.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {rateCoverageStatus.isCovered ? (
+                                <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/70 p-4.5 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                                    <div className="flex items-start gap-3">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-sm">
+                                            ✓
+                                        </span>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                                                Tarif Sewa Sudah Tersedia ({rateCoverageStatus.source})
+                                            </h4>
+                                            <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                                                Unit kendaraan ini otomatis menggunakan skema tarif aktif yang sudah terdaftar
+                                                {rateCoverageStatus.sample ? (
+                                                    <span>
+                                                        {' '}: <strong>{rateCoverageStatus.sample.name}</strong> (Rp {Number(rateCoverageStatus.sample.rate_per_period).toLocaleString('id-ID')} / {rateCoverageStatus.sample.period_type === 'daily' ? 'Hari' : rateCoverageStatus.sample.period_type})
+                                                    </span>
+                                                ) : null}. Anda tidak wajib membuat tarif baru.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="rounded-2xl border border-amber-300/80 bg-amber-50/80 p-4.5 dark:border-amber-800/60 dark:bg-amber-950/30">
+                                        <div className="flex items-start gap-3">
+                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-white font-bold text-sm">
+                                                !
+                                            </span>
+                                            <div className="space-y-1">
+                                                <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                                                    Belum Ada Tarif Sewa untuk Kelas / Tipe Kendaraan Ini
+                                                </h4>
+                                                <p className="text-xs text-amber-800 dark:text-amber-300">
+                                                    Sistem mendeteksi belum ada skema tarif aktif untuk unit ini. <strong>Wajib menentukan tarif sewa pokok</strong> agar kendaraan langsung memiliki harga dan siap disewakan.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sub-form Pembuatan Skema Tarif Langsung */}
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-850/40 space-y-4">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div>
+                                                <InputLabel htmlFor="rate_per_period" value="Harga Sewa Pokok (Rp / Hari) *" />
+                                                <MoneyInput
+                                                    id="rate_per_period"
+                                                    value={data.rental_rate.rate_per_period}
+                                                    onChange={(val) => setData('rental_rate', { ...data.rental_rate, rate_per_period: val })}
+                                                    className="mt-1.5 block w-full !rounded-2xl font-mono font-bold shadow-2xs"
+                                                    placeholder="Contoh: 450.000"
+                                                />
+                                                <InputError message={(errors as any)['rental_rate.rate_per_period']} className="mt-1" />
+                                            </div>
+
+                                            <div>
+                                                <InputLabel htmlFor="rate_deposit" value="Uang Jaminan / Deposit (Opsional)" />
+                                                <MoneyInput
+                                                    id="rate_deposit"
+                                                    value={data.rental_rate.deposit_amount}
+                                                    onChange={(val) => setData('rental_rate', { ...data.rental_rate, deposit_amount: val })}
+                                                    className="mt-1.5 block w-full !rounded-2xl font-mono font-bold shadow-2xs"
+                                                    placeholder="0"
+                                                />
+                                                <InputError message={(errors as any)['rental_rate.deposit_amount']} className="mt-1" />
+                                            </div>
+
+                                            <div className="sm:col-span-2">
+                                                <InputLabel htmlFor="rate_name" value="Nama Skema Tarif (Opsional)" />
+                                                <TextInput
+                                                    id="rate_name"
+                                                    value={data.rental_rate.name}
+                                                    onChange={(e) => setData('rental_rate', { ...data.rental_rate, name: e.target.value })}
+                                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                                    placeholder={data.rental_class ? `Tarif Kelas ${data.rental_class.toUpperCase()}` : (data.name ? `Tarif ${data.name}` : 'Tarif Sewa Harian')}
+                                                />
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    Tarif ini akan otomatis diterapkan untuk <strong>semua armada kelas {data.rental_class ? data.rental_class.toUpperCase() : (data.type ? data.type.toUpperCase() : 'tersebut')}</strong>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Form Action Panel */}
                     <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">

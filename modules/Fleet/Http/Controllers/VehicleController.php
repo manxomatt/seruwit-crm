@@ -127,6 +127,12 @@ class VehicleController extends Controller
 
         $availableCredits = $capacityService->getAvailableCredits($tenant instanceof Tenant ? $tenant : null);
 
+        $rentalEnabled = Modules::available('rental');
+        $rentalRateCoverage = null;
+        if ($rentalEnabled && class_exists(\Modules\Rental\Support\RentalRateCoverageChecker::class)) {
+            $rentalRateCoverage = \Modules\Rental\Support\RentalRateCoverageChecker::getCoverageSummary();
+        }
+
         return Inertia::render('Modules/Fleet/Vehicles/Create', [
             'bases' => $this->homeBaseOptions(),
             'available_credits' => $availableCredits,
@@ -136,6 +142,8 @@ class VehicleController extends Controller
             'trial_vehicles_count' => $capacityService->getTrialVehiclesCount(),
             'has_reached_trial_limit' => $capacityService->hasReachedTrialLimit(),
             'remaining_trial_slots' => $capacityService->getRemainingTrialSlots(),
+            'rental_module_enabled' => $rentalEnabled,
+            'rental_rate_coverage' => $rentalRateCoverage,
         ]);
     }
 
@@ -158,6 +166,37 @@ class VehicleController extends Controller
         }
 
         $vehicleData = $request->validated();
+        $rentalRateData = $vehicleData['rental_rate'] ?? null;
+        unset($vehicleData['rental_rate']);
+
+        $createdRentalRate = null;
+        $createRentalRateCallback = function (Vehicle $vehicle) use ($rentalRateData, &$createdRentalRate): void {
+            if (! Modules::available('rental') || ! is_array($rentalRateData) || empty($rentalRateData['rate_per_period'])) {
+                return;
+            }
+
+            if (! class_exists(\Modules\Rental\Models\RentalRate::class)) {
+                return;
+            }
+
+            $scope = $rentalRateData['scope'] ?? 'class';
+            $name = ! empty($rentalRateData['name'])
+                ? $rentalRateData['name']
+                : ($scope === 'class' && filled($vehicle->rental_class)
+                    ? 'Tarif Kelas '.ucfirst((string) $vehicle->rental_class)
+                    : 'Tarif '.$vehicle->name);
+
+            $createdRentalRate = \Modules\Rental\Models\RentalRate::create([
+                'name' => $name,
+                'vehicle_id' => $scope === 'vehicle' ? $vehicle->id : null,
+                'rental_class' => $scope === 'class' ? $vehicle->rental_class : null,
+                'vehicle_type' => $vehicle->type,
+                'period_type' => $rentalRateData['period_type'] ?? \Modules\Rental\Models\RentalRate::PERIOD_DAILY,
+                'rate_per_period' => $rentalRateData['rate_per_period'],
+                'deposit_amount' => $rentalRateData['deposit_amount'] ?? 0,
+                'is_active' => true,
+            ]);
+        };
 
         if ($isPerVehicleTrial) {
             $hasReachedTrialLimit = $capacityService->hasReachedTrialLimit();
@@ -167,6 +206,7 @@ class VehicleController extends Controller
             if ($canClaimTrial) {
                 $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
                 $vehicle = Vehicle::create($vehicleData);
+                $createRentalRateCallback($vehicle);
                 $capacityService->startTrial($vehicle);
 
                 return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
@@ -179,6 +219,7 @@ class VehicleController extends Controller
                 if ($availableCredits < 1) {
                     $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
                     $vehicle = Vehicle::create($vehicleData);
+                    $createRentalRateCallback($vehicle);
 
                     $reasonMsg = $hasReachedTrialLimit
                         ? "Batas kuota uji coba gratis ({$capacityService->getMaxTrialVehicles()} unit) untuk akun Anda telah terpenuhi. Status kendaraan {$vehicle->plate_number} diset Non-Aktif karena saldo kredit kapasitas 0. Silakan lakukan aktivasi / perpanjangan unit."
@@ -190,6 +231,7 @@ class VehicleController extends Controller
 
                 $vehicleData['status'] = Vehicle::STATUS_INACTIVE;
                 $vehicle = Vehicle::create($vehicleData);
+                $createRentalRateCallback($vehicle);
                 $capacityService->activate($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
 
                 return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
@@ -197,6 +239,7 @@ class VehicleController extends Controller
             }
 
             $vehicle = Vehicle::create($vehicleData);
+            $createRentalRateCallback($vehicle);
 
             return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
                 ->with('success', __('fleet.messages.vehicle_created'));
@@ -217,6 +260,7 @@ class VehicleController extends Controller
         }
 
         $vehicle = Vehicle::create($vehicleData);
+        $createRentalRateCallback($vehicle);
 
         if ($status === Vehicle::STATUS_ACTIVE) {
             $capacityService->activate($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
