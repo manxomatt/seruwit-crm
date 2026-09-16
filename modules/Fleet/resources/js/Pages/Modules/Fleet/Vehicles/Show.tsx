@@ -124,58 +124,6 @@ interface Props {
 
 type ExpiryTone = 'ok' | 'soon' | 'expired' | 'empty';
 
-const getStatusBadge = (status: string) => {
-    switch (status) {
-        case 'active':
-            return {
-                label: 'Siap Operasi',
-                className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
-                dot: 'bg-emerald-500',
-            };
-        case 'maintenance':
-            return {
-                label: 'Perawatan (Servis)',
-                className: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
-                dot: 'bg-amber-500',
-            };
-        case 'out_of_service':
-            return {
-                label: 'Rusak / Non-Aktif',
-                className: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
-                dot: 'bg-rose-500',
-            };
-        case 'retired':
-            return {
-                label: 'Purna Tugas / Dijual',
-                className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-                dot: 'bg-slate-400',
-            };
-        default:
-            return {
-                label: status,
-                className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-                dot: 'bg-slate-400',
-            };
-    }
-};
-
-const getVehicleTypeIcon = (type: string) => {
-    switch (type) {
-        case 'car':
-            return '🚗 Mobil';
-        case 'van':
-            return '🚐 Van';
-        case 'truck':
-            return '🚚 Truk';
-        case 'bus':
-            return '🚌 Bus';
-        case 'motorcycle':
-            return '🏍️ Motor';
-        default:
-            return `🚗 ${type}`;
-    }
-};
-
 const TrashIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -248,6 +196,59 @@ export default function Show({
         | null
     >(null);
     const [processing, setProcessing] = useState(false);
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'active':
+                return {
+                    label: t('fleet.vehicles.show_status_active', undefined, 'Siap Operasi'),
+                    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+                    dot: 'bg-emerald-500',
+                };
+            case 'maintenance':
+                return {
+                    label: t('fleet.vehicles.show_status_maintenance', undefined, 'Perawatan (Servis)'),
+                    className: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                    dot: 'bg-amber-500',
+                };
+            case 'out_of_service':
+                return {
+                    label: t('fleet.vehicles.show_status_out_of_service', undefined, 'Rusak / Non-Aktif'),
+                    className: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                    dot: 'bg-rose-500',
+                };
+            case 'retired':
+                return {
+                    label: t('fleet.vehicles.show_status_retired', undefined, 'Purna Tugas / Dijual'),
+                    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                    dot: 'bg-slate-400',
+                };
+            default:
+                return {
+                    label: status,
+                    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                    dot: 'bg-slate-400',
+                };
+        }
+    };
+
+    const getVehicleTypeIcon = (type: string) => {
+        const typeLabel = t(`fleet.vehicles.types.${type}`, undefined, type);
+        switch (type) {
+            case 'car':
+                return `🚗 ${typeLabel}`;
+            case 'van':
+                return `🚐 ${typeLabel}`;
+            case 'truck':
+                return `🚚 ${typeLabel}`;
+            case 'bus':
+                return `🚌 ${typeLabel}`;
+            case 'motorcycle':
+                return `🏍️ ${typeLabel}`;
+            default:
+                return `🚗 ${typeLabel}`;
+        }
+    };
 
     const statusInfo = getStatusBadge(vehicle.status);
 
@@ -350,12 +351,12 @@ export default function Show({
     const deleteConfirmMessage = (): string | undefined => {
         if (!pendingDelete) return undefined;
         if (pendingDelete.type === 'vehicle') {
-            return `Apakah Anda yakin ingin menghapus unit kendaraan "${vehicle.name}" (${vehicle.plate_number})?`;
+            return t('fleet.vehicles.show_delete_vehicle_confirm', { name: vehicle.name, plate: vehicle.plate_number }, `Apakah Anda yakin ingin menghapus unit kendaraan "${vehicle.name}" (${vehicle.plate_number})?`);
         }
         if (pendingDelete.type === 'maintenance') {
-            return `Hapus log maintenance: ${pendingDelete.label}?`;
+            return t('fleet.vehicles.show_delete_maintenance_confirm', { label: pendingDelete.label }, `Hapus log maintenance: ${pendingDelete.label}?`);
         }
-        return `Hapus log pengisian BBM: ${pendingDelete.label}?`;
+        return t('fleet.vehicles.show_delete_fuel_confirm', { label: pendingDelete.label }, `Hapus log pengisian BBM: ${pendingDelete.label}?`);
     };
 
     const openFuelModal = (): void => {
@@ -372,9 +373,9 @@ export default function Show({
     const kirTone = expiryTone(vehicle.kir_expires_at);
 
     const expiryLabel = (tone: ExpiryTone): string => {
-        if (tone === 'expired') return '⚠️ Telah Lewat Tempo';
-        if (tone === 'soon') return '⚡ Jatuh Tempo Segera (≤30 Hari)';
-        if (tone === 'ok') return '✓ Masih Berlaku Aktif';
+        if (tone === 'expired') return t('fleet.vehicles.show_expiry_expired', undefined, '⚠️ Telah Lewat Tempo');
+        if (tone === 'soon') return t('fleet.vehicles.show_expiry_soon', undefined, '⚡ Jatuh Tempo Segera (≤30 Hari)');
+        if (tone === 'ok') return t('fleet.vehicles.show_expiry_ok', undefined, '✓ Masih Berlaku Aktif');
         return '—';
     };
 
@@ -383,14 +384,17 @@ export default function Show({
             header={
                 <PageHeader
                     title={`${vehicle.name} (${vehicle.plate_number})`}
-                    subtitle={`Tipe: ${getVehicleTypeIcon(vehicle.type)} · Home Base: ${vehicle.home_base?.name || 'Tanpa Home Base'}`}
+                    subtitle={t('fleet.vehicles.show_subtitle', {
+                        type: getVehicleTypeIcon(vehicle.type),
+                        base: vehicle.home_base?.name || t('fleet.vehicles.show_unassigned_base', undefined, 'Tanpa Home Base'),
+                    }, `Tipe: ${getVehicleTypeIcon(vehicle.type)} · Home Base: ${vehicle.home_base?.name || 'Tanpa Home Base'}`)}
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
                                 href={prefixedRoute('fleet.vehicles.index')}
                                 className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             >
-                                ← Kembali ke Daftar Armada
+                                ← {t('fleet.vehicles.show_back_to_index', undefined, 'Kembali ke Daftar Armada')}
                             </Link>
 
                             {can.create && (
@@ -400,7 +404,7 @@ export default function Show({
                                     className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-500 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-amber-500/20 transition hover:bg-amber-600"
                                 >
                                     <span>⛽</span>
-                                    <span>Catat BBM</span>
+                                    <span>{t('fleet.vehicles.show_action_fuel', undefined, 'Catat BBM')}</span>
                                 </button>
                             )}
 
@@ -410,7 +414,7 @@ export default function Show({
                                     className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-800 px-3.5 py-2 text-xs font-black text-white shadow-md transition hover:bg-slate-900"
                                 >
                                     <span>🛠️</span>
-                                    <span>Buat Work Order Servis</span>
+                                    <span>{t('fleet.vehicles.show_action_wo', undefined, 'Buat Work Order Servis')}</span>
                                 </Link>
                             ) : (
                                 can.create && (
@@ -420,7 +424,7 @@ export default function Show({
                                         className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-800 px-3.5 py-2 text-xs font-black text-white shadow-md transition hover:bg-slate-900"
                                     >
                                         <span>🛠️</span>
-                                        <span>Catat Servis</span>
+                                        <span>{t('fleet.vehicles.show_action_service', undefined, 'Catat Servis')}</span>
                                     </button>
                                 )
                             )}
@@ -431,7 +435,7 @@ export default function Show({
                                     className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                                 >
                                     <span>✏️</span>
-                                    <span>Edit Kendaraan</span>
+                                    <span>{t('fleet.vehicles.show_action_edit', undefined, 'Edit Kendaraan')}</span>
                                 </Link>
                             )}
 
@@ -442,7 +446,7 @@ export default function Show({
                                     className="inline-flex items-center gap-1 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300"
                                 >
                                     <TrashIcon />
-                                    <span>Hapus</span>
+                                    <span>{t('fleet.vehicles.show_action_delete', undefined, 'Hapus')}</span>
                                 </button>
                             )}
                         </div>
@@ -468,8 +472,8 @@ export default function Show({
                             ) : (
                                 <div className="flex h-44 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 text-center sm:h-48 sm:w-72 dark:border-slate-700 dark:bg-slate-850">
                                     <span className="text-4xl mb-1">🚗</span>
-                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Belum Ada Foto Unit</p>
-                                    <p className="text-[10px] text-slate-400">Edit kendaraan untuk mengunggah foto.</p>
+                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('fleet.vehicles.show_no_photo', undefined, 'Belum Ada Foto Unit')}</p>
+                                    <p className="text-[10px] text-slate-400">{t('fleet.vehicles.show_no_photo_hint', undefined, 'Edit kendaraan untuk mengunggah foto.')}</p>
                                 </div>
                             )}
                         </div>
@@ -488,7 +492,7 @@ export default function Show({
                                     {getVehicleTypeIcon(vehicle.type)}
                                 </span>
                                 <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 capitalize dark:bg-slate-800 dark:text-slate-300">
-                                    ⛽ {vehicle.fuel_type}
+                                    ⛽ {t(`fleet.vehicles.fuel_types.${vehicle.fuel_type}`, undefined, vehicle.fuel_type)}
                                 </span>
                                 {vehicle.rental_class && (
                                     <span className="inline-flex items-center rounded-xl bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
@@ -500,12 +504,13 @@ export default function Show({
                             <h1 className="text-2xl font-black text-slate-900 dark:text-white">{vehicle.name}</h1>
 
                             <p className="text-xs text-slate-500">
-                                {vehicle.brand || 'Tanpa Merk'} · {vehicle.model_year ? `Tahun ${vehicle.model_year}` : ''}{' '}
-                                {vehicle.color ? `· Warna ${vehicle.color}` : ''}
+                                {vehicle.brand || t('fleet.vehicles.show_unbranded', undefined, 'Tanpa Merk')}
+                                {vehicle.model_year ? ` · ${t('fleet.vehicles.show_year', { year: vehicle.model_year }, `Tahun ${vehicle.model_year}`)}` : ''}
+                                {vehicle.color ? ` · ${t('fleet.vehicles.show_color', { color: vehicle.color }, `Warna ${vehicle.color}`)}` : ''}
                             </p>
 
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                                <span className="text-slate-400">Home Base Pool:</span>
+                                <span className="text-slate-400">{t('fleet.vehicles.show_home_base_label', undefined, 'Home Base Pool:')}</span>
                                 {vehicle.home_base ? (
                                     <Link
                                         href={prefixedRoute('fleet.bases.show', vehicle.home_base.id)}
@@ -514,7 +519,7 @@ export default function Show({
                                         🏢 {vehicle.home_base.code} — {vehicle.home_base.name}
                                     </Link>
                                 ) : (
-                                    <span className="text-slate-400">Belum Ditugaskan ke Pool Khusus</span>
+                                    <span className="text-slate-400">{t('fleet.vehicles.show_unassigned_base', undefined, 'Belum Ditugaskan ke Pool Khusus')}</span>
                                 )}
                             </div>
                         </div>
@@ -527,38 +532,36 @@ export default function Show({
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg">🚗</span>
                                     <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                        Masa Aktif & Kapasitas Unit
+                                        {t('fleet.vehicles.show_active_period_title', undefined, 'Masa Aktif & Kapasitas Unit')}
                                     </h3>
                                     {vehicle.status === 'active' && (
                                         vehicle.is_trial ? (
                                             <span className="rounded-full bg-cyan-100 px-2.5 py-0.5 text-[10px] font-black text-cyan-800 border border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800">
-                                                FREE TRIAL (UJI COBA)
+                                                {t('fleet.vehicles.show_badge_trial', undefined, 'FREE TRIAL (UJI COBA)')}
                                             </span>
                                         ) : (
                                             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                                                AKTIF
+                                                {t('fleet.vehicles.show_badge_active', undefined, 'AKTIF')}
                                             </span>
                                         )
                                     )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
                                     <span>
-                                        Jatuh Tempo:{' '}
-                                        <strong className="text-slate-900 dark:text-white">
-                                            {vehicle.active_until ? formatDate(vehicle.active_until, localeTag) : 'Belum Pernah Diaktifkan'}
-                                        </strong>
+                                        {vehicle.active_until ? (
+                                            t('fleet.vehicles.show_due_date', { date: formatDate(vehicle.active_until, localeTag) }, `Jatuh Tempo: ${formatDate(vehicle.active_until, localeTag)}`)
+                                        ) : (
+                                            t('fleet.vehicles.show_never_activated', undefined, 'Belum Pernah Diaktifkan')
+                                        )}
                                     </span>
                                     {vehicle.activated_at && (
                                         <span>
-                                            Terakhir Diaktifkan: {formatDate(vehicle.activated_at, localeTag)}
+                                            {t('fleet.vehicles.show_last_activated', { date: formatDate(vehicle.activated_at, localeTag) }, `Terakhir Diaktifkan: ${formatDate(vehicle.activated_at, localeTag)}`)}
                                         </span>
                                     )}
                                     {!vehicle.is_trial && (
                                         <span>
-                                            Saldo Workspace:{' '}
-                                            <strong className="text-indigo-600 dark:text-indigo-400">
-                                                {available_credits ?? 0} Unit
-                                            </strong>
+                                            {t('fleet.vehicles.show_workspace_balance', { count: available_credits ?? 0 }, `Saldo Workspace: ${available_credits ?? 0} Unit`)}
                                         </span>
                                     )}
                                 </div>
@@ -568,7 +571,7 @@ export default function Show({
                             {vehicle.is_trial ? (
                                 <div className="inline-flex items-center gap-2 rounded-2xl bg-cyan-100/80 px-3.5 py-2 text-xs font-bold text-cyan-900 dark:bg-cyan-950/60 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 shadow-2xs">
                                     <span>🎁</span>
-                                    <span>Masa Uji Coba Gratis Aktif</span>
+                                    <span>{t('fleet.vehicles.show_trial_active_badge', undefined, 'Masa Uji Coba Gratis Aktif')}</span>
                                 </div>
                             ) : is_trial_mode ? (
                                 can.update && (
@@ -578,7 +581,7 @@ export default function Show({
                                         className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-95"
                                     >
                                         <span>⚡</span>
-                                        <span>{vehicle.status === 'active' ? 'Perpanjang Masa Aktif' : 'Aktifkan Masa Operasional'}</span>
+                                        <span>{vehicle.status === 'active' ? t('fleet.vehicles.show_extend_active', undefined, 'Perpanjang Masa Aktif') : t('fleet.vehicles.show_activate_period', undefined, 'Aktifkan Masa Operasional')}</span>
                                     </button>
                                 )
                             ) : (
@@ -596,7 +599,7 @@ export default function Show({
                                             }
                                             className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                         />
-                                        <span>Perpanjangan Otomatis</span>
+                                        <span>{t('fleet.vehicles.show_auto_renew', undefined, 'Perpanjangan Otomatis')}</span>
                                     </label>
 
                                     {can.update && (
@@ -613,7 +616,7 @@ export default function Show({
                                                 className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                                             >
                                                 <span>🔄</span>
-                                                <span>Perpanjang 1 Bulan (1 Kredit)</span>
+                                                <span>{t('fleet.vehicles.show_renew_1m', undefined, 'Perpanjang 1 Bulan (1 Kredit)')}</span>
                                             </button>
                                         ) : (
                                             <button
@@ -628,7 +631,7 @@ export default function Show({
                                                 className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
                                             >
                                                 <span>⚡</span>
-                                                <span>Aktifkan Kendaraan (1 Kredit)</span>
+                                                <span>{t('fleet.vehicles.show_activate_1credit', undefined, 'Aktifkan Kendaraan (1 Kredit)')}</span>
                                             </button>
                                         )
                                     )}
@@ -640,41 +643,41 @@ export default function Show({
                     {/* 4 KPI Metrics */}
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-850">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Odometer Terkini</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_kpi_odometer', undefined, 'Odometer Terkini')}</p>
                             <p className="mt-1 font-mono text-2xl font-black text-indigo-600 dark:text-indigo-400">
                                 {vehicle.odometer_km.toLocaleString()} KM
                             </p>
-                            <p className="mt-1 text-[10px] text-slate-400">Jarak tempuh akumulatif unit</p>
+                            <p className="mt-1 text-[10px] text-slate-400">{t('fleet.vehicles.show_kpi_odometer_hint', undefined, 'Jarak tempuh akumulatif unit')}</p>
                         </div>
 
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-850">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Efisiensi Konsumsi BBM</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_kpi_fuel_eff', undefined, 'Efisiensi Konsumsi BBM')}</p>
                             <p className="mt-1 font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400">
                                 {fuelSummary.average_km_per_liter != null ? `${fuelSummary.average_km_per_liter} KM/L` : '—'}
                             </p>
                             <p className="mt-1 text-[10px] text-slate-400">
-                                {fuelSummary.expected_km_per_liter ? `Target: ${fuelSummary.expected_km_per_liter} KM/L` : 'Rata-rata pengisian'}
+                                {fuelSummary.expected_km_per_liter ? t('fleet.vehicles.show_kpi_fuel_target', { val: fuelSummary.expected_km_per_liter }, `Target: ${fuelSummary.expected_km_per_liter} KM/L`) : t('fleet.vehicles.show_kpi_fuel_avg', undefined, 'Rata-rata pengisian')}
                             </p>
                         </div>
 
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-850">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Status Pajak STNK</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_kpi_stnk', undefined, 'Status Pajak STNK')}</p>
                             <div className="mt-1 flex items-center gap-1.5">
                                 <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-black ${expiryBadgeClass(stnkTone)}`}>
                                     {expiryLabel(stnkTone)}
                                 </span>
                             </div>
                             <p className="mt-1 text-[10px] text-slate-400">
-                                {vehicle.stnk_expires_at ? formatDate(vehicle.stnk_expires_at, localeTag) : 'Belum diatur'}
+                                {vehicle.stnk_expires_at ? formatDate(vehicle.stnk_expires_at, localeTag) : t('fleet.vehicles.show_kpi_stnk_unset', undefined, 'Belum diatur')}
                             </p>
                         </div>
 
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-850">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Log BBM & Servis</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_kpi_total_logs', undefined, 'Total Log BBM & Servis')}</p>
                             <p className="mt-1 font-mono text-2xl font-black text-slate-800 dark:text-slate-200">
                                 {vehicle.fuel_logs.length} / {serviceHistory?.length ?? vehicle.maintenance_logs?.length ?? 0}
                             </p>
-                            <p className="mt-1 text-[10px] text-slate-400">Pengisian BBM / Riwayat Servis</p>
+                            <p className="mt-1 text-[10px] text-slate-400">{t('fleet.vehicles.show_kpi_logs_hint', undefined, 'Pengisian BBM / Riwayat Servis')}</p>
                         </div>
                     </div>
                 </div>
@@ -688,48 +691,48 @@ export default function Show({
                             <div className="flex items-center gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <span className="text-base">📋</span>
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                    Spesifikasi Fisik & Teknis Kendaraan
+                                    {t('fleet.vehicles.show_specs_title', undefined, 'Spesifikasi Fisik & Teknis Kendaraan')}
                                 </h3>
                             </div>
 
                             <dl className="mt-4 divide-y divide-slate-100 text-xs dark:divide-slate-800">
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Pabrikan / Merk:</dt>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_brand', undefined, 'Pabrikan / Merk:')}</dt>
                                     <dd className="font-bold text-slate-800 dark:text-slate-200">{vehicle.brand || '—'}</dd>
                                 </div>
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Tahun Pembuatan:</dt>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_year', undefined, 'Tahun Pembuatan:')}</dt>
                                     <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.model_year || '—'}</dd>
                                 </div>
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Warna Unit:</dt>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_color', undefined, 'Warna Unit:')}</dt>
                                     <dd className="font-bold text-slate-800 dark:text-slate-200">{vehicle.color || '—'}</dd>
                                 </div>
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Kapasitas Tempat Duduk (Kursi):</dt>
-                                    <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.capacity_seats ? `${vehicle.capacity_seats} Penumpang` : '—'}</dd>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_seats', undefined, 'Kapasitas Tempat Duduk (Kursi):')}</dt>
+                                    <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.capacity_seats ? t('fleet.vehicles.show_specs_seats_val', { count: vehicle.capacity_seats }, `${vehicle.capacity_seats} Penumpang`) : '—'}</dd>
                                 </div>
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Kapasitas Muatan (KG):</dt>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_kg', undefined, 'Kapasitas Muatan (KG):')}</dt>
                                     <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.capacity_kg ? `${vehicle.capacity_kg} KG` : '—'}</dd>
                                 </div>
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Kapasitas Tangki BBM:</dt>
-                                    <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.tank_capacity_liters ? `${vehicle.tank_capacity_liters} Liter` : '—'}</dd>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_tank', undefined, 'Kapasitas Tangki BBM:')}</dt>
+                                    <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.tank_capacity_liters ? t('fleet.vehicles.show_specs_tank_val', { val: vehicle.tank_capacity_liters }, `${vehicle.tank_capacity_liters} Liter`) : '—'}</dd>
                                 </div>
                                 <div className="flex justify-between py-2.5">
-                                    <dt className="text-slate-400">Target Konsumsi BBM:</dt>
-                                    <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.expected_km_per_liter ? `${vehicle.expected_km_per_liter} KM / Liter` : '—'}</dd>
+                                    <dt className="text-slate-400">{t('fleet.vehicles.show_specs_expected_kml', undefined, 'Target Konsumsi BBM:')}</dt>
+                                    <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.expected_km_per_liter ? t('fleet.vehicles.show_specs_expected_kml_val', { val: vehicle.expected_km_per_liter }, `${vehicle.expected_km_per_liter} KM / Liter`) : '—'}</dd>
                                 </div>
                                 {vehicle.cost_per_km && (
                                     <div className="flex justify-between py-2.5">
-                                        <dt className="text-slate-400">Estimasi Biaya Operasional / KM:</dt>
+                                        <dt className="text-slate-400">{t('fleet.vehicles.show_specs_cost_km', undefined, 'Estimasi Biaya Operasional / KM:')}</dt>
                                         <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">Rp {Number(vehicle.cost_per_km).toLocaleString()} / km</dd>
                                     </div>
                                 )}
                                 {vehicle.notes && (
                                     <div className="py-2.5">
-                                        <dt className="text-slate-400 mb-1">Catatan Tambahan:</dt>
+                                        <dt className="text-slate-400 mb-1">{t('fleet.vehicles.show_specs_notes', undefined, 'Catatan Tambahan:')}</dt>
                                         <dd className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-slate-700 leading-relaxed dark:border-slate-800 dark:bg-slate-850 dark:text-slate-300">
                                             {vehicle.notes}
                                         </dd>
@@ -745,9 +748,9 @@ export default function Show({
                                     <span className="text-base">🛠️</span>
                                     <div>
                                         <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                            Riwayat Servis & Perawatan Armada
+                                            {t('fleet.vehicles.show_service_title', undefined, 'Riwayat Servis & Perawatan Armada')}
                                         </h3>
-                                        <p className="text-xs text-slate-400">Log pemeliharaan berkala, perbaikan mesin, dan ganti oli.</p>
+                                        <p className="text-xs text-slate-400">{t('fleet.vehicles.show_service_subtitle', undefined, 'Log pemeliharaan berkala, perbaikan mesin, dan ganti oli.')}</p>
                                     </div>
                                 </div>
 
@@ -756,7 +759,7 @@ export default function Show({
                                         href={`${prefixedRoute('maintenance.work-orders.create')}?vehicle_id=${vehicle.id}`}
                                         className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800"
                                     >
-                                        Buat Work Order
+                                        {t('fleet.vehicles.show_service_btn_create_wo', undefined, 'Buat Work Order')}
                                     </Link>
                                 ) : (
                                     can.create && (
@@ -765,7 +768,7 @@ export default function Show({
                                             onClick={() => setShowMaintenanceModal(true)}
                                             className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800"
                                         >
-                                            ＋ Catat Servis
+                                            {t('fleet.vehicles.show_service_btn_log', undefined, '＋ Catat Servis')}
                                         </button>
                                     )
                                 )}
@@ -774,18 +777,18 @@ export default function Show({
                             <div className="mt-4">
                                 {maintenanceEnabled ? (
                                     !serviceHistory || serviceHistory.length === 0 ? (
-                                        <p className="py-6 text-center text-xs text-slate-400">Belum ada riwayat work order perawatan untuk unit ini.</p>
+                                        <p className="py-6 text-center text-xs text-slate-400">{t('fleet.vehicles.show_service_no_wo', undefined, 'Belum ada riwayat work order perawatan untuk unit ini.')}</p>
                                     ) : (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-slate-100 text-left text-xs dark:divide-slate-800">
                                                 <thead>
                                                     <tr className="bg-slate-50/70 text-slate-400 dark:bg-slate-850">
-                                                        <th className="px-3 py-2 font-bold">No. Ref</th>
-                                                        <th className="px-3 py-2 font-bold">Deskripsi Servis</th>
-                                                        <th className="px-3 py-2 font-bold">Status</th>
-                                                        <th className="px-3 py-2 font-bold">Tanggal</th>
-                                                        <th className="px-3 py-2 font-bold">Total Biaya</th>
-                                                        <th className="px-3 py-2 text-right">Aksi</th>
+                                                        <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_ref', undefined, 'No. Ref')}</th>
+                                                        <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_desc', undefined, 'Deskripsi Servis')}</th>
+                                                        <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_status', undefined, 'Status')}</th>
+                                                        <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_date', undefined, 'Tanggal')}</th>
+                                                        <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_cost', undefined, 'Total Biaya')}</th>
+                                                        <th className="px-3 py-2 text-right">{t('fleet.vehicles.show_service_th_action', undefined, 'Aksi')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 font-medium dark:divide-slate-800">
@@ -814,7 +817,7 @@ export default function Show({
                                                                     href={prefixedRoute('maintenance.work-orders.show', wo.id)}
                                                                     className="font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                                                                 >
-                                                                    Buka WO →
+                                                                    {t('fleet.vehicles.show_service_open_wo', undefined, 'Buka WO →')}
                                                                 </Link>
                                                             </td>
                                                         </tr>
@@ -824,17 +827,17 @@ export default function Show({
                                         </div>
                                     )
                                 ) : (vehicle.maintenance_logs?.length ?? 0) === 0 ? (
-                                    <p className="py-6 text-center text-xs text-slate-400">Belum ada riwayat pemeliharaan tercatat.</p>
+                                    <p className="py-6 text-center text-xs text-slate-400">{t('fleet.vehicles.show_service_no_logs', undefined, 'Belum ada riwayat pemeliharaan tercatat.')}</p>
                                 ) : (
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full divide-y divide-slate-100 text-left text-xs dark:divide-slate-800">
                                             <thead>
                                                 <tr className="bg-slate-50/70 text-slate-400 dark:bg-slate-850">
-                                                    <th className="px-3 py-2 font-bold">Jenis Servis</th>
-                                                    <th className="px-3 py-2 font-bold">Catatan</th>
-                                                    <th className="px-3 py-2 font-bold">Tanggal</th>
-                                                    <th className="px-3 py-2 font-bold">Biaya</th>
-                                                    <th className="px-3 py-2 text-right">Aksi</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_type', undefined, 'Jenis Servis')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_notes', undefined, 'Catatan')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_date', undefined, 'Tanggal')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_service_th_cost', undefined, 'Biaya')}</th>
+                                                    <th className="px-3 py-2 text-right">{t('fleet.vehicles.show_service_th_action', undefined, 'Aksi')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 font-medium dark:divide-slate-800">
@@ -881,10 +884,13 @@ export default function Show({
                                     <span className="text-base">⛽</span>
                                     <div>
                                         <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                            Log Pengisian Bahan Bakar (BBM)
+                                            {t('fleet.vehicles.show_fuel_title', undefined, 'Log Pengisian Bahan Bakar (BBM)')}
                                         </h3>
                                         <p className="text-xs text-slate-400">
-                                            Rata-rata: {fuelSummary.average_km_per_liter ?? '—'} KM/L · Anomali: {fuelSummary.anomaly_count} kejadian
+                                            {t('fleet.vehicles.show_fuel_subtitle', {
+                                                avg: fuelSummary.average_km_per_liter ?? '—',
+                                                anomali: fuelSummary.anomaly_count,
+                                            }, `Rata-rata: ${fuelSummary.average_km_per_liter ?? '—'} KM/L · Anomali: ${fuelSummary.anomaly_count} kejadian`)}
                                         </p>
                                     </div>
                                 </div>
@@ -895,26 +901,26 @@ export default function Show({
                                         onClick={openFuelModal}
                                         className="rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-amber-600"
                                     >
-                                        ＋ Catat BBM
+                                        {t('fleet.vehicles.show_fuel_btn_add', undefined, '＋ Catat BBM')}
                                     </button>
                                 )}
                             </div>
 
                             <div className="mt-4">
                                 {vehicle.fuel_logs.length === 0 ? (
-                                    <p className="py-6 text-center text-xs text-slate-400">Belum ada riwayat pengisian BBM untuk unit ini.</p>
+                                    <p className="py-6 text-center text-xs text-slate-400">{t('fleet.vehicles.show_fuel_empty', undefined, 'Belum ada riwayat pengisian BBM untuk unit ini.')}</p>
                                 ) : (
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full divide-y divide-slate-100 text-left text-xs dark:divide-slate-800">
                                             <thead>
                                                 <tr className="bg-slate-50/70 text-slate-400 dark:bg-slate-850">
-                                                    <th className="px-3 py-2 font-bold">Tanggal</th>
-                                                    <th className="px-3 py-2 font-bold">Volume (L)</th>
-                                                    <th className="px-3 py-2 font-bold">Biaya (Rp)</th>
-                                                    <th className="px-3 py-2 font-bold">Odometer (KM)</th>
-                                                    <th className="px-3 py-2 font-bold">KM / L</th>
-                                                    <th className="px-3 py-2 font-bold">Anomali</th>
-                                                    <th className="px-3 py-2 text-right">Aksi</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_fuel_th_date', undefined, 'Tanggal')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_fuel_th_volume', undefined, 'Volume (L)')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_fuel_th_cost', undefined, 'Biaya (Rp)')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_fuel_th_odometer', undefined, 'Odometer (KM)')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_fuel_th_kml', undefined, 'KM / L')}</th>
+                                                    <th className="px-3 py-2 font-bold">{t('fleet.vehicles.show_fuel_th_anomaly', undefined, 'Anomali')}</th>
+                                                    <th className="px-3 py-2 text-right">{t('fleet.vehicles.show_service_th_action', undefined, 'Aksi')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 font-medium dark:divide-slate-800">
@@ -923,7 +929,7 @@ export default function Show({
                                                         <td className="px-3 py-2.5 text-slate-800 dark:text-slate-200">
                                                             {formatDate(log.filled_at, localeTag)}
                                                             {log.is_full_tank && (
-                                                                <span className="ml-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">(Full)</span>
+                                                                <span className="ml-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{t('fleet.vehicles.show_fuel_full', undefined, '(Full)')}</span>
                                                             )}
                                                         </td>
                                                         <td className="px-3 py-2.5 font-mono font-bold text-slate-800 dark:text-slate-200">{log.liters} L</td>
@@ -978,34 +984,34 @@ export default function Show({
                                 <span className="text-base">📅</span>
                                 <div>
                                     <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                        Kepatuhan Pajak & Uji Berkala
+                                        {t('fleet.vehicles.show_compliance_title', undefined, 'Kepatuhan Pajak & Uji Berkala')}
                                     </h3>
-                                    <p className="text-xs text-slate-400">Jadwal jatuh tempo legalitas berkendara.</p>
+                                    <p className="text-xs text-slate-400">{t('fleet.vehicles.show_compliance_subtitle', undefined, 'Jadwal jatuh tempo legalitas berkendara.')}</p>
                                 </div>
                             </div>
 
                             <div className="mt-4 space-y-3">
                                 <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-500">Masa Berlaku Pajak STNK</span>
+                                        <span className="text-xs font-bold text-slate-500">{t('fleet.vehicles.show_compliance_stnk', undefined, 'Masa Berlaku Pajak STNK')}</span>
                                         <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${expiryBadgeClass(stnkTone)}`}>
                                             {expiryLabel(stnkTone)}
                                         </span>
                                     </div>
                                     <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
-                                        {vehicle.stnk_expires_at ? formatDate(vehicle.stnk_expires_at, localeTag) : 'Belum Diatur'}
+                                        {vehicle.stnk_expires_at ? formatDate(vehicle.stnk_expires_at, localeTag) : t('fleet.vehicles.show_compliance_unset', undefined, 'Belum Diatur')}
                                     </p>
                                 </div>
 
                                 <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-500">Masa Berlaku Uji KIR</span>
+                                        <span className="text-xs font-bold text-slate-500">{t('fleet.vehicles.show_compliance_kir', undefined, 'Masa Berlaku Uji KIR')}</span>
                                         <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${expiryBadgeClass(kirTone)}`}>
                                             {expiryLabel(kirTone)}
                                         </span>
                                     </div>
                                     <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
-                                        {vehicle.kir_expires_at ? formatDate(vehicle.kir_expires_at, localeTag) : 'Tidak Wajib / Belum Diatur'}
+                                        {vehicle.kir_expires_at ? formatDate(vehicle.kir_expires_at, localeTag) : t('fleet.vehicles.show_compliance_kir_optional', undefined, 'Tidak Wajib / Belum Diatur')}
                                     </p>
                                 </div>
                             </div>
@@ -1017,36 +1023,36 @@ export default function Show({
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                                     <div className="flex items-center gap-2">
                                         <span className="text-base">📄</span>
-                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">Dokumen Unit</h3>
+                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">{t('fleet.vehicles.show_docs_title', undefined, 'Dokumen Unit')}</h3>
                                     </div>
 
                                     <Link
                                         href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}
                                         className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                                     >
-                                        Kelola Dokumen →
+                                        {t('fleet.vehicles.show_docs_manage', undefined, 'Kelola Dokumen →')}
                                     </Link>
                                 </div>
 
                                 <div className="mt-4">
                                     {!documentSummary || documentSummary.total === 0 ? (
-                                        <p className="py-4 text-center text-xs text-slate-400">Belum ada file dokumen diunggah.</p>
+                                        <p className="py-4 text-center text-xs text-slate-400">{t('fleet.vehicles.show_docs_empty', undefined, 'Belum ada file dokumen diunggah.')}</p>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
-                                                <p className="text-[10px] text-slate-400 uppercase font-bold">Total Dokumen</p>
+                                                <p className="text-[10px] text-slate-400 uppercase font-bold">{t('fleet.vehicles.show_docs_total', undefined, 'Total Dokumen')}</p>
                                                 <p className="mt-1 font-mono text-xl font-black text-slate-900 dark:text-white">{documentSummary.total}</p>
                                             </div>
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
-                                                <p className="text-[10px] text-slate-400 uppercase font-bold">Jatuh Tempo Terdekat</p>
+                                                <p className="text-[10px] text-slate-400 uppercase font-bold">{t('fleet.vehicles.show_docs_nearest', undefined, 'Jatuh Tempo Terdekat')}</p>
                                                 <p className="mt-1 font-medium text-slate-800 dark:text-slate-200">{formatDate(documentSummary.nearest_expiry, localeTag)}</p>
                                             </div>
                                             <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
-                                                <p className="text-[10px] text-rose-500 uppercase font-bold">Expired</p>
+                                                <p className="text-[10px] text-rose-500 uppercase font-bold">{t('fleet.vehicles.show_docs_expired', undefined, 'Expired')}</p>
                                                 <p className="mt-1 font-mono text-xl font-black text-rose-600 dark:text-rose-400">{documentSummary.expired}</p>
                                             </div>
                                             <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
-                                                <p className="text-[10px] text-amber-500 uppercase font-bold">Habis Segera</p>
+                                                <p className="text-[10px] text-amber-500 uppercase font-bold">{t('fleet.vehicles.show_docs_expiring_soon', undefined, 'Habis Segera')}</p>
                                                 <p className="mt-1 font-mono text-xl font-black text-amber-600 dark:text-amber-400">{documentSummary.expiring_soon}</p>
                                             </div>
                                         </div>
@@ -1061,8 +1067,8 @@ export default function Show({
                                 <div className="flex items-center gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
                                     <span className="text-base">✨</span>
                                     <div>
-                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">AI Health Diagnosis</h3>
-                                        <p className="text-xs text-slate-400">Prediksi keandalan mesin & laju pemakaian armada.</p>
+                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">{t('fleet.vehicles.show_ai_title', undefined, 'AI Health Diagnosis')}</h3>
+                                        <p className="text-xs text-slate-400">{t('fleet.vehicles.show_ai_subtitle', undefined, 'Prediksi keandalan mesin & laju pemakaian armada.')}</p>
                                     </div>
                                 </div>
 
@@ -1081,12 +1087,12 @@ export default function Show({
                                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                                         </svg>
-                                                        <span>Mendiagnosis Unit…</span>
+                                                        <span>{t('fleet.vehicles.show_ai_diagnosing', undefined, 'Mendiagnosis Unit…')}</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <span>🛡️</span>
-                                                        <span>Jalankan Diagnostik AI</span>
+                                                        <span>{t('fleet.vehicles.show_ai_btn_run', undefined, 'Jalankan Diagnostik AI')}</span>
                                                     </>
                                                 )}
                                             </button>
@@ -1095,7 +1101,7 @@ export default function Show({
                                         <div className="space-y-3 text-xs">
                                             <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-3.5 dark:bg-slate-850">
                                                 <div>
-                                                    <span className="text-[10px] text-slate-400 uppercase font-bold">Skor Kesehatan</span>
+                                                    <span className="text-[10px] text-slate-400 uppercase font-bold">{t('fleet.vehicles.show_ai_score', undefined, 'Skor Kesehatan')}</span>
                                                     <p className="text-2xl font-black text-slate-900 dark:text-white">{aiDiagnosis.health_score} / 100</p>
                                                 </div>
                                                 <span
@@ -1107,23 +1113,23 @@ export default function Show({
                                                               : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300'
                                                     }`}
                                                 >
-                                                    {aiDiagnosis.status === 'good' ? 'Kondisi Prima' : aiDiagnosis.status === 'warning' ? 'Perlu Cek' : 'Kritis'}
+                                                    {aiDiagnosis.status === 'good' ? t('fleet.vehicles.show_ai_status_good', undefined, 'Kondisi Prima') : aiDiagnosis.status === 'warning' ? t('fleet.vehicles.show_ai_status_warning', undefined, 'Perlu Cek') : t('fleet.vehicles.show_ai_status_critical', undefined, 'Kritis')}
                                                 </span>
                                             </div>
 
                                             <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-slate-600 dark:border-slate-800 dark:text-slate-300">
-                                                <span>Laju Penambahan KM:</span>
-                                                <span className="font-bold font-mono text-slate-900 dark:text-white">{aiDiagnosis.km_per_day_run_rate} KM/hari</span>
+                                                <span>{t('fleet.vehicles.show_ai_km_rate', undefined, 'Laju Penambahan KM:')}</span>
+                                                <span className="font-bold font-mono text-slate-900 dark:text-white">{t('fleet.vehicles.show_ai_km_rate_val', { val: aiDiagnosis.km_per_day_run_rate }, `${aiDiagnosis.km_per_day_run_rate} KM/hari`)}</span>
                                             </div>
 
                                             {aiDiagnosis.schedule_insights && aiDiagnosis.schedule_insights.length > 0 && (
                                                 <div className="mt-2 space-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
-                                                    <span className="text-[10px] uppercase font-bold text-slate-400">Jadwal Servis Terdekat:</span>
+                                                    <span className="text-[10px] uppercase font-bold text-slate-400">{t('fleet.vehicles.show_ai_schedule_title', undefined, 'Jadwal Servis Terdekat:')}</span>
                                                     {aiDiagnosis.schedule_insights.map((si, idx) => (
                                                         <div key={idx} className="flex items-center justify-between text-[11px]">
                                                             <span className="font-medium text-slate-700 dark:text-slate-300">{si.name}</span>
                                                             <span className={`font-bold ${si.is_overdue ? 'text-rose-600' : 'text-indigo-600 dark:text-indigo-400'}`}>
-                                                                {si.is_overdue ? '🚨 Terlewat' : `~${si.days_to_due} hari lagi`}
+                                                                {si.is_overdue ? t('fleet.vehicles.show_ai_overdue', undefined, '🚨 Terlewat') : t('fleet.vehicles.show_ai_days_left', { days: si.days_to_due }, `~${si.days_to_due} hari lagi`)}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -1141,32 +1147,32 @@ export default function Show({
             {/* Modal Quick Log Maintenance */}
             <Modal show={showMaintenanceModal} onClose={() => setShowMaintenanceModal(false)} maxWidth="lg">
                 <form onSubmit={submitMaintenance} className="p-6">
-                    <h3 className="mb-4 text-base font-black text-slate-900 dark:text-white">Catat Pemeliharaan / Servis Unit</h3>
+                    <h3 className="mb-4 text-base font-black text-slate-900 dark:text-white">{t('fleet.vehicles.show_modal_service_title', undefined, 'Catat Pemeliharaan / Servis Unit')}</h3>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="m_type" value="Jenis Pemeliharaan *" />
+                            <InputLabel htmlFor="m_type" value={t('fleet.vehicles.show_modal_service_type', undefined, 'Jenis Pemeliharaan *')} />
                             <Select
                                 id="m_type"
                                 className="mt-1.5"
                                 value={maintenanceForm.data.type}
                                 onChange={(value) => maintenanceForm.setData('type', value)}
                                 options={[
-                                    { value: 'scheduled_service', label: 'Servis Berkala' },
-                                    { value: 'repair', label: 'Perbaikan Mesin / Kerusakan' },
-                                    { value: 'inspection', label: 'Inspeksi Berkala' },
+                                    { value: 'scheduled_service', label: t('fleet.vehicles.show_modal_service_opt_scheduled', undefined, 'Servis Berkala') },
+                                    { value: 'repair', label: t('fleet.vehicles.show_modal_service_opt_repair', undefined, 'Perbaikan Mesin / Kerusakan') },
+                                    { value: 'inspection', label: t('fleet.vehicles.show_modal_service_opt_inspection', undefined, 'Inspeksi Berkala') },
                                 ]}
                             />
                             <InputError message={maintenanceForm.errors.type} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="m_description" value="Deskripsi Pekerjaan Servis *" />
+                            <InputLabel htmlFor="m_description" value={t('fleet.vehicles.show_modal_service_desc', undefined, 'Deskripsi Pekerjaan Servis *')} />
                             <TextInput
                                 id="m_description"
                                 className="mt-1.5 block w-full !rounded-2xl"
                                 value={maintenanceForm.data.description}
                                 onChange={(e) => maintenanceForm.setData('description', e.target.value)}
-                                placeholder="Ganti oli mesin, kampas rem, tune up..."
+                                placeholder={t('fleet.vehicles.show_modal_service_desc_ph', undefined, 'Ganti oli mesin, kampas rem, tune up...')}
                                 required
                             />
                             <InputError message={maintenanceForm.errors.description} className="mt-1" />
@@ -1174,7 +1180,7 @@ export default function Show({
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="m_scheduled_date" value="Tanggal Dijadwalkan *" />
+                                <InputLabel htmlFor="m_scheduled_date" value={t('fleet.vehicles.show_modal_service_sched_date', undefined, 'Tanggal Dijadwalkan *')} />
                                 <TextInput
                                     id="m_scheduled_date"
                                     type="date"
@@ -1187,7 +1193,7 @@ export default function Show({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="m_completed_date" value="Tanggal Selesai" />
+                                <InputLabel htmlFor="m_completed_date" value={t('fleet.vehicles.show_modal_service_comp_date', undefined, 'Tanggal Selesai')} />
                                 <TextInput
                                     id="m_completed_date"
                                     type="date"
@@ -1199,7 +1205,7 @@ export default function Show({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="m_cost" value="Total Biaya Servis (Rp)" />
+                                <InputLabel htmlFor="m_cost" value={t('fleet.vehicles.show_modal_service_cost', undefined, 'Total Biaya Servis (Rp)')} />
                                 <TextInput
                                     id="m_cost"
                                     type="number"
@@ -1213,7 +1219,7 @@ export default function Show({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="m_odometer_km" value="Odometer Saat Servis (KM)" />
+                                <InputLabel htmlFor="m_odometer_km" value={t('fleet.vehicles.show_modal_service_odo', undefined, 'Odometer Saat Servis (KM)')} />
                                 <TextInput
                                     id="m_odometer_km"
                                     type="number"
@@ -1227,16 +1233,16 @@ export default function Show({
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="m_status" value="Status Pengerjaan *" />
+                            <InputLabel htmlFor="m_status" value={t('fleet.vehicles.show_modal_service_status', undefined, 'Status Pengerjaan *')} />
                             <Select
                                 id="m_status"
                                 className="mt-1.5"
                                 value={maintenanceForm.data.status}
                                 onChange={(value) => maintenanceForm.setData('status', value)}
                                 options={[
-                                    { value: 'scheduled', label: 'Dijadwalkan' },
-                                    { value: 'completed', label: 'Selesai' },
-                                    { value: 'cancelled', label: 'Dibatalkan' },
+                                    { value: 'scheduled', label: t('fleet.vehicles.show_modal_service_opt_status_sched', undefined, 'Dijadwalkan') },
+                                    { value: 'completed', label: t('fleet.vehicles.show_modal_service_opt_status_comp', undefined, 'Selesai') },
+                                    { value: 'cancelled', label: t('fleet.vehicles.show_modal_service_opt_status_canc', undefined, 'Dibatalkan') },
                                 ]}
                             />
                             <InputError message={maintenanceForm.errors.status} className="mt-1" />
@@ -1245,10 +1251,10 @@ export default function Show({
 
                     <div className="mt-6 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setShowMaintenanceModal(false)}>
-                            Batal
+                            {t('fleet.vehicles.show_modal_service_cancel', undefined, 'Batal')}
                         </SecondaryButton>
                         <PrimaryButton disabled={maintenanceForm.processing}>
-                            {maintenanceForm.processing ? 'Menyimpan...' : 'Simpan Log Servis'}
+                            {maintenanceForm.processing ? t('fleet.vehicles.show_modal_service_saving', undefined, 'Menyimpan...') : t('fleet.vehicles.show_modal_service_save', undefined, 'Simpan Log Servis')}
                         </PrimaryButton>
                     </div>
                 </form>
@@ -1266,7 +1272,7 @@ export default function Show({
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                                        Catat Pengisian Bahan Bakar (BBM)
+                                        {t('fleet.vehicles.show_modal_fuel_title', undefined, 'Catat Pengisian Bahan Bakar (BBM)')}
                                     </h3>
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                         <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -1277,7 +1283,7 @@ export default function Show({
                                         </span>
                                         {vehicle.fuel_type && (
                                             <span className="rounded-md bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400">
-                                                {vehicle.fuel_type}
+                                                {t(`fleet.vehicles.fuel_types.${vehicle.fuel_type}`, undefined, vehicle.fuel_type)}
                                             </span>
                                         )}
                                     </div>
@@ -1296,21 +1302,21 @@ export default function Show({
                         {/* Top Context Metric Bar */}
                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5 rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-3 text-xs backdrop-blur-xs">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Odometer Terakhir</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_modal_fuel_last_odo', undefined, 'Odometer Terakhir')}</p>
                                 <p className="mt-0.5 font-mono font-black text-slate-800 dark:text-slate-200">
                                     {(fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0).toLocaleString('id-ID')} KM
                                 </p>
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rata-rata Konsumsi</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_modal_fuel_avg_eff', undefined, 'Rata-rata Konsumsi')}</p>
                                 <p className="mt-0.5 font-mono font-black text-emerald-600 dark:text-emerald-400">
                                     {fuelSummary.average_km_per_liter ? `${fuelSummary.average_km_per_liter} KM/L` : (fuelSummary.expected_km_per_liter ? `~${fuelSummary.expected_km_per_liter} KM/L` : '—')}
                                 </p>
                             </div>
                             <div className="col-span-2 sm:col-span-1">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kapasitas Tangki</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('fleet.vehicles.show_modal_fuel_tank_cap', undefined, 'Kapasitas Tangki')}</p>
                                 <p className="mt-0.5 font-mono font-black text-slate-800 dark:text-slate-200">
-                                    {vehicle.fuel_capacity_liters ? `${vehicle.fuel_capacity_liters} Liter` : '—'}
+                                    {vehicle.fuel_capacity_liters ? `${vehicle.fuel_capacity_liters} ${t('fleet.vehicles.show_liter', undefined, 'Liter')}` : '—'}
                                 </p>
                             </div>
                         </div>
@@ -1322,12 +1328,12 @@ export default function Show({
                         <div>
                             <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                                 <span>💰</span>
-                                <span>Data Bahan Bakar & Biaya</span>
+                                <span>{t('fleet.vehicles.show_modal_fuel_sec1_title', undefined, 'Data Bahan Bakar & Biaya')}</span>
                             </p>
 
                             {/* Quick Fuel Type Presets */}
                             <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                                <span className="text-[11px] font-bold text-slate-400 mr-1">Tipe BBM:</span>
+                                <span className="text-[11px] font-bold text-slate-400 mr-1">{t('fleet.vehicles.show_modal_fuel_type_label', undefined, 'Tipe BBM:')}</span>
                                 {[
                                     { name: 'Pertalite', price: 10000 },
                                     { name: 'Pertamax', price: 12950 },
@@ -1356,7 +1362,7 @@ export default function Show({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel htmlFor="f_liters" value="Volume BBM (Liter) *" />
+                                    <InputLabel htmlFor="f_liters" value={t('fleet.vehicles.show_modal_fuel_vol', undefined, 'Volume BBM (Liter) *')} />
                                     <div className="relative mt-1.5">
                                         <TextInput
                                             id="f_liters"
@@ -1370,7 +1376,7 @@ export default function Show({
                                             required
                                         />
                                         <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">
-                                            Liter
+                                            {t('fleet.vehicles.show_liter', undefined, 'Liter')}
                                         </span>
                                     </div>
                                     <InputError message={fuelForm.errors.liters} className="mt-1" />
@@ -1394,7 +1400,7 @@ export default function Show({
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="f_cost" value="Total Biaya (Rp) *" />
+                                    <InputLabel htmlFor="f_cost" value={t('fleet.vehicles.show_modal_fuel_cost', undefined, 'Total Biaya (Rp) *')} />
                                     <div className="relative mt-1.5">
                                         <TextInput
                                             id="f_cost"
@@ -1433,7 +1439,9 @@ export default function Show({
                                 <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 px-3 py-2 text-xs font-bold text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40">
                                     <span>💡</span>
                                     <span>
-                                        Estimasi Harga: <strong className="font-mono">Rp {Math.round(parseFloat(fuelForm.data.cost) / parseFloat(fuelForm.data.liters)).toLocaleString('id-ID')}</strong> / Liter
+                                        {t('fleet.vehicles.show_modal_fuel_est_price', {
+                                            price: `Rp ${Math.round(parseFloat(fuelForm.data.cost) / parseFloat(fuelForm.data.liters)).toLocaleString('id-ID')}`,
+                                        }, `Estimasi Harga: Rp ${Math.round(parseFloat(fuelForm.data.cost) / parseFloat(fuelForm.data.liters)).toLocaleString('id-ID')} / Liter`)}
                                     </span>
                                 </div>
                             )}
@@ -1443,12 +1451,12 @@ export default function Show({
                         <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
                             <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                                 <span>📍</span>
-                                <span>Odometer & Analisis Jarak Tempuh</span>
+                                <span>{t('fleet.vehicles.show_modal_fuel_sec2_title', undefined, 'Odometer & Analisis Jarak Tempuh')}</span>
                             </p>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel htmlFor="f_odometer_km" value="Odometer Saat Isi (KM) *" />
+                                    <InputLabel htmlFor="f_odometer_km" value={t('fleet.vehicles.show_modal_fuel_odo', undefined, 'Odometer Saat Isi (KM) *')} />
                                     <div className="relative mt-1.5">
                                         <TextInput
                                             id="f_odometer_km"
@@ -1460,14 +1468,14 @@ export default function Show({
                                             placeholder="Contoh: 45200"
                                         />
                                         <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">
-                                            KM
+                                            {t('fleet.vehicles.show_km', undefined, 'KM')}
                                         </span>
                                     </div>
                                     <InputError message={fuelForm.errors.odometer_km} className="mt-1" />
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="f_filled_at" value="Tanggal Pengisian *" />
+                                    <InputLabel htmlFor="f_filled_at" value={t('fleet.vehicles.show_modal_fuel_date', undefined, 'Tanggal Pengisian *')} />
                                     <TextInput
                                         id="f_filled_at"
                                         type="date"
@@ -1486,7 +1494,9 @@ export default function Show({
                                     <span className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
                                         <span>🚗</span>
                                         <span>
-                                            Jarak tempuh: +{(parseInt(fuelForm.data.odometer_km, 10) - (fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0)).toLocaleString('id-ID')} KM sejak pengisian sebelumnya
+                                            {t('fleet.vehicles.show_modal_fuel_delta_km', {
+                                                km: (parseInt(fuelForm.data.odometer_km, 10) - (fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0)).toLocaleString('id-ID'),
+                                            }, `Jarak tempuh: +${(parseInt(fuelForm.data.odometer_km, 10) - (fuelSummary.suggested_odometer_km || vehicle.current_odometer_km || 0)).toLocaleString('id-ID')} KM sejak pengisian sebelumnya`)}
                                         </span>
                                     </span>
                                     {parseFloat(fuelForm.data.liters) > 0 && (
@@ -1502,35 +1512,35 @@ export default function Show({
                         <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
                             <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                                 <span>🏢</span>
-                                <span>Pengemudi & Lokasi SPBU</span>
+                                <span>{t('fleet.vehicles.show_modal_fuel_sec3_title', undefined, 'Pengemudi & Lokasi SPBU')}</span>
                             </p>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel htmlFor="f_driver_id" value="Pengemudi / Driver" />
+                                    <InputLabel htmlFor="f_driver_id" value={t('fleet.vehicles.show_modal_fuel_driver', undefined, 'Pengemudi / Driver')} />
                                     <Select
                                         id="f_driver_id"
                                         className="mt-1.5 !rounded-2xl"
                                         value={fuelForm.data.driver_id}
                                         onChange={(value) => fuelForm.setData('driver_id', value)}
-                                        placeholder="Pilih Pengemudi (Opsional)"
+                                        placeholder={t('fleet.vehicles.show_modal_fuel_driver_ph', undefined, 'Pilih Pengemudi (Opsional)')}
                                         options={drivers.map((d) => ({ value: String(d.id), label: d.name }))}
                                     />
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="f_receipt_number" value="No. Struk / Nota Transaksi" />
+                                    <InputLabel htmlFor="f_receipt_number" value={t('fleet.vehicles.show_modal_fuel_receipt', undefined, 'No. Struk / Nota Transaksi')} />
                                     <TextInput
                                         id="f_receipt_number"
                                         className="mt-1.5 block w-full !rounded-2xl font-mono"
                                         value={fuelForm.data.receipt_number}
                                         onChange={(e) => fuelForm.setData('receipt_number', e.target.value)}
-                                        placeholder="Contoh: STR-98210"
+                                        placeholder={t('fleet.vehicles.show_modal_fuel_receipt_ph', undefined, 'Contoh: STR-98210')}
                                     />
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <InputLabel htmlFor="f_station_name" value="Nama SPBU / Lokasi Pengisian" />
+                                    <InputLabel htmlFor="f_station_name" value={t('fleet.vehicles.show_modal_fuel_station', undefined, 'Nama SPBU / Lokasi Pengisian')} />
                                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 mb-2">
                                         {['Pertamina', 'Shell', 'BP AKR', 'TotalEnergies'].map((brand) => (
                                             <button
@@ -1551,7 +1561,7 @@ export default function Show({
                                         className="block w-full !rounded-2xl"
                                         value={fuelForm.data.station_name}
                                         onChange={(e) => fuelForm.setData('station_name', e.target.value)}
-                                        placeholder="Contoh: SPBU Pertamina 34-12345 Jl. Sudirman"
+                                        placeholder={t('fleet.vehicles.show_modal_fuel_station_ph', undefined, 'Contoh: SPBU Pertamina 34-12345 Jl. Sudirman')}
                                     />
                                 </div>
                             </div>
@@ -1574,10 +1584,10 @@ export default function Show({
                                 </div>
                                 <div>
                                     <p className="text-xs font-black text-slate-900 dark:text-white">
-                                        Isi Tangki Penuh (Full Tank)
+                                        {t('fleet.vehicles.show_modal_fuel_full_tank', undefined, 'Isi Tangki Penuh (Full Tank)')}
                                     </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                        Wajib diaktifkan bila pengisian sampai penuh agar perhitungan efisiensi KM/Liter akurat.
+                                        {t('fleet.vehicles.show_modal_fuel_full_tank_hint', undefined, 'Wajib diaktifkan bila pengisian sampai penuh agar perhitungan efisiensi KM/Liter akurat.')}
                                     </p>
                                 </div>
                             </div>
@@ -1592,13 +1602,13 @@ export default function Show({
 
                         {/* Section 5: Catatan Tambahan */}
                         <div>
-                            <InputLabel htmlFor="f_notes" value="Catatan Tambahan (Opsional)" />
+                            <InputLabel htmlFor="f_notes" value={t('fleet.vehicles.show_modal_fuel_notes', undefined, 'Catatan Tambahan (Opsional)')} />
                             <TextInput
                                 id="f_notes"
                                 className="mt-1.5 block w-full !rounded-2xl"
                                 value={fuelForm.data.notes}
                                 onChange={(e) => fuelForm.setData('notes', e.target.value)}
-                                placeholder="Misal: BBM darurat, jalan menanjak, isi saat perjalanan ke luar kota..."
+                                placeholder={t('fleet.vehicles.show_modal_fuel_notes_ph', undefined, 'Misal: BBM darurat, jalan menanjak, isi saat perjalanan ke luar kota...')}
                             />
                         </div>
                     </div>
@@ -1606,13 +1616,13 @@ export default function Show({
                     {/* Footer Actions */}
                     <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60 px-6 py-4">
                         <SecondaryButton type="button" onClick={() => setShowFuelModal(false)} className="!rounded-2xl text-xs font-bold">
-                            Batal
+                            {t('fleet.vehicles.show_modal_fuel_cancel', undefined, 'Batal')}
                         </SecondaryButton>
                         <PrimaryButton
                             disabled={fuelForm.processing}
                             className="!rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-xs font-black shadow-lg shadow-amber-500/20"
                         >
-                            {fuelForm.processing ? 'Menyimpan Log...' : '⛽ Simpan Log BBM'}
+                            {fuelForm.processing ? t('fleet.vehicles.show_modal_fuel_saving', undefined, 'Menyimpan Log...') : t('fleet.vehicles.show_modal_fuel_save', undefined, '⛽ Simpan Log BBM')}
                         </PrimaryButton>
                     </div>
                 </form>
