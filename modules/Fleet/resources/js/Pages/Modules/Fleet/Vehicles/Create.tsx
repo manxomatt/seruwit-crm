@@ -150,7 +150,7 @@ export default function Create({
         if (selectedClass && rental_rate_coverage.covered_rental_classes.includes(selectedClass)) {
             return {
                 isCovered: true,
-                source: `Kelas Rental (${selectedClass.toUpperCase()})`,
+                source: t('fleet.vehicles.rate_source_class', { class: selectedClass.toUpperCase() }, `Kelas Rental (${selectedClass.toUpperCase()})`),
                 sample: rental_rate_coverage.sample_rates[`class:${selectedClass}`] || null,
             };
         }
@@ -158,7 +158,7 @@ export default function Create({
         if (selectedType && rental_rate_coverage.covered_vehicle_types.includes(selectedType)) {
             return {
                 isCovered: true,
-                source: `Tipe Kendaraan (${selectedType.toUpperCase()})`,
+                source: t('fleet.vehicles.rate_source_type', { type: selectedType.toUpperCase() }, `Tipe Kendaraan (${selectedType.toUpperCase()})`),
                 sample: rental_rate_coverage.sample_rates[`type:${selectedType}`] || null,
             };
         }
@@ -166,13 +166,13 @@ export default function Create({
         if (rental_rate_coverage.has_global_rate) {
             return {
                 isCovered: true,
-                source: 'Tarif Umum Global',
+                source: t('fleet.vehicles.rate_source_global', undefined, 'Tarif Umum Global'),
                 sample: rental_rate_coverage.sample_rates['global'] || null,
             };
         }
 
         return { isCovered: false, source: null, sample: null };
-    }, [rental_module_enabled, rental_rate_coverage, data.rental_class, data.type]);
+    }, [rental_module_enabled, rental_rate_coverage, data.rental_class, data.type, t]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -187,34 +187,36 @@ export default function Create({
         <DynamicLayout
             header={
                 <PageHeader
-                    title="Tambah Unit Kendaraan Baru"
-                    subtitle="Daftarkan kendaraan operasional baru ke dalam armada sistem dengan spesifikasi lengkap, foto unit, dan home base pool."
+                    title={t('fleet.vehicles.create_title', undefined, 'Tambah Unit Kendaraan Baru')}
+                    subtitle={t('fleet.vehicles.create_subtitle', undefined, 'Daftarkan kendaraan operasional baru ke dalam armada sistem dengan spesifikasi lengkap, foto unit, dan home base pool.')}
                     actions={
                         <Link
                             href={prefixedRoute('fleet.vehicles.index')}
                             className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            ← Kembali ke Daftar Kendaraan
+                            ← {t('fleet.vehicles.back_to_index', undefined, 'Kembali ke Daftar Kendaraan')}
                         </Link>
                     }
                 />
             }
         >
-            <Head title="Tambah Kendaraan Baru · Armada" />
+            <Head title={t('fleet.vehicles.head_create_title', undefined, 'Tambah Kendaraan Baru · Armada')} />
             <FleetNav />
 
             <div className="w-full space-y-6 pb-20">
                 {/* Breadcrumbs */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">
-                        Fleet
+                        {t('fleet.vehicles.breadcrumb_root', undefined, 'Armada')}
                     </Link>
                     <span>/</span>
                     <Link href={prefixedRoute('fleet.vehicles.index')} className="hover:text-slate-700 dark:hover:text-slate-200">
-                        Armada Kendaraan
+                        {t('fleet.vehicles.breadcrumb_vehicles', undefined, 'Armada Kendaraan')}
                     </Link>
                     <span>/</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">Tambah Unit Baru</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {t('fleet.vehicles.breadcrumb_create', undefined, 'Tambah Unit Baru')}
+                    </span>
                 </nav>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 items-start">
@@ -228,10 +230,10 @@ export default function Create({
                                     </span>
                                     <div className="space-y-0.5">
                                         <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
-                                            Batas Kuota Free Trial Tercapai ({trial_vehicles_count} / {max_trial_vehicles} Unit Digunakan)
+                                            {t('fleet.vehicles.trial_limit_reached_title', { count: trial_vehicles_count, max: max_trial_vehicles }, `Batas Kuota Free Trial Tercapai (${trial_vehicles_count} / ${max_trial_vehicles} Unit Digunakan)`)}
                                         </h4>
                                         <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
-                                            Akun Anda telah menggunakan seluruh jatah {max_trial_vehicles} unit uji coba gratis. Kendaraan baru ini akan didaftarkan sebagai unit berbayar dan memerlukan 1 saldo kredit kapasitas atau diset Non-Aktif sampai dilakukan aktivasi.
+                                            {t('fleet.vehicles.trial_limit_reached_desc', { max: max_trial_vehicles }, `Akun Anda telah menggunakan seluruh jatah ${max_trial_vehicles} unit uji coba gratis. Kendaraan baru ini akan didaftarkan sebagai unit berbayar dan memerlukan 1 saldo kredit kapasitas atau diset Non-Aktif sampai dilakukan aktivasi.`)}
                                         </p>
                                     </div>
                                 </div>
@@ -242,12 +244,12 @@ export default function Create({
                                     </span>
                                     <div className="space-y-0.5">
                                         <h4 className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
-                                            Free Trial {trial_duration_days} Hari untuk Armada Baru
-                                            {max_trial_vehicles > 0 ? ` (${trial_vehicles_count} / ${max_trial_vehicles} Unit Digunakan)` : ''}
+                                            {t('fleet.vehicles.trial_active_title', { days: trial_duration_days }, `Free Trial ${trial_duration_days} Hari untuk Armada Baru`)}
+                                            {max_trial_vehicles > 0 ? ` ${t('fleet.vehicles.trial_active_units', { count: trial_vehicles_count, max: max_trial_vehicles }, `(${trial_vehicles_count} / ${max_trial_vehicles} Unit Digunakan)`)}` : ''}
                                         </h4>
                                         <p className="text-[11px] leading-relaxed text-cyan-700 dark:text-cyan-300">
-                                            Pendaftaran armada bebas kuota. Setiap unit baru yang didaftarkan otomatis mendapatkan masa uji coba gratis selama {trial_duration_days} hari tanpa memotong saldo kredit kapasitas unit Anda
-                                            {remaining_trial_slots !== null && remaining_trial_slots !== undefined ? ` (Tersisa ${remaining_trial_slots} kuota trial).` : '.'}
+                                            {t('fleet.vehicles.trial_active_desc', { days: trial_duration_days }, `Pendaftaran armada bebas kuota. Setiap unit baru yang didaftarkan otomatis mendapatkan masa uji coba gratis selama ${trial_duration_days} hari tanpa memotong saldo kredit kapasitas unit Anda`)}
+                                            {remaining_trial_slots !== null && remaining_trial_slots !== undefined ? ` ${t('fleet.vehicles.trial_remaining_slots', { slots: remaining_trial_slots }, `(Tersisa ${remaining_trial_slots} kuota trial).`)}` : '.'}
                                         </p>
                                     </div>
                                 </div>
@@ -259,222 +261,238 @@ export default function Create({
                             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                                     <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-100 text-base font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                        1
+                                        {t('fleet.vehicles.section1_num', undefined, '1')}
                                     </span>
                                     <div>
                                         <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    Identitas, Foto & Tipe Kendaraan
-                                </h3>
-                                <p className="text-xs text-slate-500">
-                                    Informasi dasar kendaraan, nomor plat polisi, foto unit, dan kategori jenis armada.
-                                </p>
-                            </div>
-                        </div>
+                                            {t('fleet.vehicles.section1_title', undefined, 'Identitas, Foto & Tipe Kendaraan')}
+                                        </h3>
+                                        <p className="text-xs text-slate-500">
+                                            {t('fleet.vehicles.section1_desc', undefined, 'Informasi dasar kendaraan, nomor plat polisi, foto unit, dan kategori jenis armada.')}
+                                        </p>
+                                    </div>
+                                </div>
 
-                        {/* Photo Uploader */}
-                        <div>
-                            <InputLabel value="Foto Kendaraan (Opsional)" />
-                            <p className="text-xs text-slate-400 mb-2">Upload foto tampak depan/samping kendaraan untuk kemudahan identifikasi.</p>
-                            <ImageUploader value={data.photo_url} onChange={(value) => setData('photo_url', value)} />
-                            <InputError message={errors.photo_url} className="mt-1" />
-                        </div>
+                                {/* Photo Uploader */}
+                                <div>
+                                    <InputLabel value={t('fleet.vehicles.photo_optional', undefined, 'Foto Kendaraan (Opsional)')} />
+                                    <p className="text-xs text-slate-400 mb-2">
+                                        {t('fleet.vehicles.photo_hint_upload', undefined, 'Upload foto tampak depan/samping kendaraan untuk kemudahan identifikasi.')}
+                                    </p>
+                                    <ImageUploader value={data.photo_url} onChange={(value) => setData('photo_url', value)} />
+                                    <InputError message={errors.photo_url} className="mt-1" />
+                                </div>
 
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                            <div>
-                                <InputLabel htmlFor="name" value="Nama / Model Unit *" />
-                                <TextInput
-                                    id="name"
-                                    className="mt-1.5 block w-full !rounded-2xl font-bold shadow-2xs"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    required
-                                    autoFocus
-                                    placeholder="Contoh: Toyota Avanza 1.5 G MT, Isuzu Giga Dump"
-                                />
-                                <InputError message={errors.name} className="mt-1" />
-                            </div>
+                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                    <div>
+                                        <InputLabel htmlFor="name" value={t('fleet.vehicles.name_label', undefined, 'Nama / Model Unit *')} />
+                                        <TextInput
+                                            id="name"
+                                            className="mt-1.5 block w-full !rounded-2xl font-bold shadow-2xs"
+                                            value={data.name}
+                                            onChange={(e) => setData('name', e.target.value)}
+                                            required
+                                            autoFocus
+                                            placeholder={t('fleet.vehicles.name_placeholder', undefined, 'Contoh: Toyota Avanza 1.5 G MT, Isuzu Giga Dump')}
+                                        />
+                                        <InputError message={errors.name} className="mt-1" />
+                                    </div>
 
-                            <div>
-                                <InputLabel htmlFor="plate_number" value="Nomor Polisi (Plat Nomor) *" />
-                                <TextInput
-                                    id="plate_number"
-                                    className="mt-1.5 block w-full !rounded-2xl font-mono uppercase font-black shadow-2xs"
-                                    value={data.plate_number}
-                                    onChange={(e) => setData('plate_number', e.target.value.toUpperCase())}
-                                    required
-                                    placeholder="B 1234 XYZ"
-                                />
-                                <InputError message={errors.plate_number} className="mt-1" />
-                            </div>
+                                    <div>
+                                        <InputLabel htmlFor="plate_number" value={t('fleet.vehicles.plate_number_label', undefined, 'Nomor Polisi (Plat Nomor) *')} />
+                                        <TextInput
+                                            id="plate_number"
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono uppercase font-black shadow-2xs"
+                                            value={data.plate_number}
+                                            onChange={(e) => setData('plate_number', e.target.value.toUpperCase())}
+                                            required
+                                            placeholder={t('fleet.vehicles.plate_number_placeholder', undefined, 'B 1234 XYZ')}
+                                        />
+                                        <InputError message={errors.plate_number} className="mt-1" />
+                                    </div>
 
-                            <div>
-                                <InputLabel htmlFor="brand" value="Merk / Pabrikan (Brand)" />
-                                <TextInput
-                                    id="brand"
-                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
-                                    value={data.brand}
-                                    onChange={(e) => setData('brand', e.target.value)}
-                                    placeholder="Toyota, Daihatsu, Mitsubishi, Hino, Isuzu..."
-                                />
-                                <InputError message={errors.brand} className="mt-1" />
-                            </div>
+                                    <div>
+                                        <InputLabel htmlFor="brand" value={t('fleet.vehicles.brand_label', undefined, 'Merk / Pabrikan (Brand)')} />
+                                        <TextInput
+                                            id="brand"
+                                            className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                            value={data.brand}
+                                            onChange={(e) => setData('brand', e.target.value)}
+                                            placeholder={t('fleet.vehicles.brand_placeholder', undefined, 'Toyota, Daihatsu, Mitsubishi, Hino, Isuzu...')}
+                                        />
+                                        <InputError message={errors.brand} className="mt-1" />
+                                    </div>
 
-                            <div>
-                                <InputLabel htmlFor="rental_class" value="Klasifikasi / Kelas Rental" />
-                                <Select
-                                    id="rental_class"
-                                    className="mt-1.5"
-                                    value={data.rental_class}
-                                    onChange={(value) => setData('rental_class', value)}
-                                    options={RENTAL_CLASSES.map((rc) => ({
-                                        value: rc.value,
-                                        label: rc.label,
-                                    }))}
-                                />
-                                <InputError message={errors.rental_class} className="mt-1" />
-                            </div>
-                        </div>
+                                    <div>
+                                        <InputLabel htmlFor="rental_class" value={t('fleet.vehicles.rental_class_label', undefined, 'Klasifikasi / Kelas Rental')} />
+                                        <Select
+                                            id="rental_class"
+                                            className="mt-1.5"
+                                            value={data.rental_class}
+                                            onChange={(value) => setData('rental_class', value)}
+                                            options={RENTAL_CLASSES.map((rc) => ({
+                                                value: rc.value,
+                                                label: rc.value === ''
+                                                    ? t('fleet.vehicles.rental_class_none', undefined, rc.label)
+                                                    : (rc.value === 'economy'
+                                                        ? `${t('fleet.rental_class.economy', undefined, 'Economy')} (City Car)`
+                                                        : rc.value === 'mpv'
+                                                            ? `${t('fleet.rental_class.mpv', undefined, 'MPV')} (Keluarga)`
+                                                            : rc.value === 'suv'
+                                                                ? `${t('fleet.rental_class.suv', undefined, 'SUV')} (Tangguh / Offroad)`
+                                                                : rc.value === 'van'
+                                                                    ? `${t('fleet.rental_class.van', undefined, 'Van')} / Minibus VIP`
+                                                                    : rc.value === 'premium'
+                                                                        ? `${t('fleet.rental_class.premium', undefined, 'Premium')} / Luxury VIP`
+                                                                        : t('fleet.rental_class.other', undefined, rc.label)),
+                                            }))}
+                                        />
+                                        <InputError message={errors.rental_class} className="mt-1" />
+                                    </div>
+                                </div>
 
-                        {/* Vehicle Type Selector Cards */}
-                        <div>
-                            <InputLabel value="Tipe Kendaraan *" />
-                            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                                {VEHICLE_TYPES.map((vt) => {
-                                    const active = data.type === vt.key;
+                                {/* Vehicle Type Selector Cards */}
+                                <div>
+                                    <InputLabel value={t('fleet.vehicles.type_label', undefined, 'Tipe Kendaraan *')} />
+                                    <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                        {VEHICLE_TYPES.map((vt) => {
+                                            const active = data.type === vt.key;
+                                            const localizedLabel = t(`fleet.vehicles.types.${vt.key}`, undefined, vt.label);
+                                            const localizedHint = t(`fleet.vehicles.type_hints.${vt.key}`, undefined, vt.desc);
 
-                                    return (
-                                        <button
-                                            key={vt.key}
-                                            type="button"
-                                            onClick={() => setData('type', vt.key)}
-                                            className={`flex flex-col items-start rounded-2xl border p-3.5 text-left transition ${
-                                                active
-                                                    ? 'border-indigo-500 bg-indigo-50/70 ring-2 ring-indigo-500/20 dark:border-indigo-500 dark:bg-indigo-950/40'
-                                                    : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 dark:border-slate-800 dark:bg-slate-850/40'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
-                                                <span className="text-base">{vt.icon}</span>
-                                                <span>{vt.label}</span>
-                                            </div>
-                                            <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                                {vt.desc}
-                                            </p>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <InputError message={errors.type} className="mt-1" />
-                        </div>
-                    </div>
-
-                    {/* 2. Spesifikasi Fisik & Kapasitas */}
-                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
-                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-100 text-base font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                                2
-                            </span>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    Spesifikasi Fisik & Daya Tampung
-                                </h3>
-                                <p className="text-xs text-slate-500">
-                                    Tahun perakitan, warna fisik, kapasitas kursi penumpang, dan kapasitas angkut muatan barang.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                            <div>
-                                <InputLabel htmlFor="model_year" value="Tahun Pembuatan (Model Year)" />
-                                <TextInput
-                                    id="model_year"
-                                    type="number"
-                                    min={1990}
-                                    max={2030}
-                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
-                                    value={data.model_year}
-                                    onChange={(e) => setData('model_year', e.target.value)}
-                                    placeholder="2023"
-                                />
-                                <InputError message={errors.model_year} className="mt-1" />
+                                            return (
+                                                <button
+                                                    key={vt.key}
+                                                    type="button"
+                                                    onClick={() => setData('type', vt.key)}
+                                                    className={`flex flex-col items-start rounded-2xl border p-3.5 text-left transition ${
+                                                        active
+                                                            ? 'border-indigo-500 bg-indigo-50/70 ring-2 ring-indigo-500/20 dark:border-indigo-500 dark:bg-indigo-950/40'
+                                                            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 dark:border-slate-800 dark:bg-slate-850/40'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+                                                        <span className="text-base">{vt.icon}</span>
+                                                        <span>{localizedLabel}</span>
+                                                    </div>
+                                                    <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                        {localizedHint}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <InputError message={errors.type} className="mt-1" />
+                                </div>
                             </div>
 
-                            <div>
-                                <InputLabel htmlFor="color" value="Warna Kendaraan" />
-                                <TextInput
-                                    id="color"
-                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
-                                    value={data.color}
-                                    onChange={(e) => setData('color', e.target.value)}
-                                    placeholder="Putih Metalik, Hitam, Silver..."
-                                />
-                                <InputError message={errors.color} className="mt-1" />
-                            </div>
+                            {/* 2. Spesifikasi Fisik & Kapasitas */}
+                            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                                <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-100 text-base font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                        {t('fleet.vehicles.section2_num', undefined, '2')}
+                                    </span>
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                            {t('fleet.vehicles.section2_title', undefined, 'Spesifikasi Fisik & Daya Tampung')}
+                                        </h3>
+                                        <p className="text-xs text-slate-500">
+                                            {t('fleet.vehicles.section2_desc', undefined, 'Tahun perakitan, warna fisik, kapasitas kursi penumpang, dan kapasitas angkut muatan barang.')}
+                                        </p>
+                                    </div>
+                                </div>
 
-                            <div>
-                                <InputLabel htmlFor="capacity_seats" value="Kapasitas Tempat Duduk (Kursi)" />
-                                <TextInput
-                                    id="capacity_seats"
-                                    type="number"
-                                    min={1}
-                                    max={100}
-                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
-                                    value={data.capacity_seats}
-                                    onChange={(e) => setData('capacity_seats', e.target.value)}
-                                    placeholder="Contoh: 7"
-                                />
-                                <InputError message={errors.capacity_seats} className="mt-1" />
-                            </div>
+                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div>
+                                        <InputLabel htmlFor="model_year" value={t('fleet.vehicles.model_year_label', undefined, 'Tahun Pembuatan (Model Year)')} />
+                                        <TextInput
+                                            id="model_year"
+                                            type="number"
+                                            min={1990}
+                                            max={2030}
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                            value={data.model_year}
+                                            onChange={(e) => setData('model_year', e.target.value)}
+                                            placeholder={t('fleet.vehicles.model_year_placeholder', undefined, '2023')}
+                                        />
+                                        <InputError message={errors.model_year} className="mt-1" />
+                                    </div>
 
-                            <div>
-                                <InputLabel htmlFor="capacity_kg" value="Kapasitas Muatan Berat (KG)" />
-                                <TextInput
-                                    id="capacity_kg"
-                                    type="number"
-                                    step="0.01"
-                                    min={0}
-                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
-                                    value={data.capacity_kg}
-                                    onChange={(e) => setData('capacity_kg', e.target.value)}
-                                    placeholder="Contoh: 1500"
-                                />
-                                <InputError message={errors.capacity_kg} className="mt-1" />
-                            </div>
+                                    <div>
+                                        <InputLabel htmlFor="color" value={t('fleet.vehicles.color_label', undefined, 'Warna Kendaraan')} />
+                                        <TextInput
+                                            id="color"
+                                            className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                            value={data.color}
+                                            onChange={(e) => setData('color', e.target.value)}
+                                            placeholder={t('fleet.vehicles.color_placeholder', undefined, 'Putih Metalik, Hitam, Silver...')}
+                                        />
+                                        <InputError message={errors.color} className="mt-1" />
+                                    </div>
 
-                            <div className="sm:col-span-2">
-                                <InputLabel htmlFor="capacity" value="Label Ringkasan Kapasitas (Teks Bebas)" />
-                                <TextInput
-                                    id="capacity"
-                                    className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
-                                    value={data.capacity}
-                                    onChange={(e) => setData('capacity', e.target.value)}
-                                    placeholder="Contoh: 7 Kursi Penumpang + Bagasi Luas"
-                                />
-                                <InputError message={errors.capacity} className="mt-1" />
+                                    <div>
+                                        <InputLabel htmlFor="capacity_seats" value={t('fleet.vehicles.capacity_seats_label', undefined, 'Kapasitas Tempat Duduk (Kursi)')} />
+                                        <TextInput
+                                            id="capacity_seats"
+                                            type="number"
+                                            min={1}
+                                            max={100}
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                            value={data.capacity_seats}
+                                            onChange={(e) => setData('capacity_seats', e.target.value)}
+                                            placeholder={t('fleet.vehicles.capacity_seats_placeholder', undefined, 'Contoh: 7')}
+                                        />
+                                        <InputError message={errors.capacity_seats} className="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="capacity_kg" value={t('fleet.vehicles.capacity_kg_label', undefined, 'Kapasitas Muatan Berat (KG)')} />
+                                        <TextInput
+                                            id="capacity_kg"
+                                            type="number"
+                                            step="0.01"
+                                            min={0}
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                            value={data.capacity_kg}
+                                            onChange={(e) => setData('capacity_kg', e.target.value)}
+                                            placeholder={t('fleet.vehicles.capacity_kg_placeholder', undefined, 'Contoh: 1500')}
+                                        />
+                                        <InputError message={errors.capacity_kg} className="mt-1" />
+                                    </div>
+
+                                    <div className="sm:col-span-2">
+                                        <InputLabel htmlFor="capacity" value={t('fleet.vehicles.capacity_text_label', undefined, 'Label Ringkasan Kapasitas (Teks Bebas)')} />
+                                        <TextInput
+                                            id="capacity"
+                                            className="mt-1.5 block w-full !rounded-2xl shadow-2xs font-medium"
+                                            value={data.capacity}
+                                            onChange={(e) => setData('capacity', e.target.value)}
+                                            placeholder={t('fleet.vehicles.capacity_text_placeholder', undefined, 'Contoh: 7 Kursi Penumpang + Bagasi Luas')}
+                                        />
+                                        <InputError message={errors.capacity} className="mt-1" />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
                     {/* 3. Bahan Bakar & Odometer */}
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                         <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-base font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                                3
+                                {t('fleet.vehicles.section3_num', undefined, '3')}
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    Bahan Bakar, Efisiensi & Odometer
+                                    {t('fleet.vehicles.section3_title', undefined, 'Bahan Bakar, Efisiensi & Odometer')}
                                 </h3>
                                 <p className="text-xs text-slate-500">
-                                    Jenis bahan bakar, kapasitas tangki, estimasi konsumsi BBM, dan catatan kilometer odometer.
+                                    {t('fleet.vehicles.section3_desc', undefined, 'Jenis bahan bakar, kapasitas tangki, estimasi konsumsi BBM, dan catatan kilometer odometer.')}
                                 </p>
                             </div>
                         </div>
 
                         {/* Fuel Type Chips */}
                         <div>
-                            <InputLabel value="Jenis Bahan Bakar *" />
+                            <InputLabel value={t('fleet.vehicles.fuel_type_label', undefined, 'Jenis Bahan Bakar *')} />
                             <div className="mt-2 flex flex-wrap gap-2.5">
                                 {FUEL_TYPES.map((ft) => (
                                     <button
@@ -487,7 +505,13 @@ export default function Create({
                                                 : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                                         }`}
                                     >
-                                        {ft.label}
+                                        {ft.key === 'petrol'
+                                            ? `⛽ ${t('fleet.vehicles.fuel_types.petrol', undefined, 'Bensin (Petrol)')}`
+                                            : ft.key === 'diesel'
+                                                ? `🛢️ ${t('fleet.vehicles.fuel_types.diesel', undefined, 'Solar (Diesel)')}`
+                                                : ft.key === 'electric'
+                                                    ? `⚡ ${t('fleet.vehicles.fuel_types.electric', undefined, 'Listrik (EV)')}`
+                                                    : `🔋 ${t('fleet.vehicles.fuel_types.hybrid', undefined, 'Hybrid')}`}
                                     </button>
                                 ))}
                             </div>
@@ -496,7 +520,7 @@ export default function Create({
 
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="tank_capacity_liters" value="Kapasitas Tangki (Liter)" />
+                                <InputLabel htmlFor="tank_capacity_liters" value={t('fleet.vehicles.tank_capacity_label', undefined, 'Kapasitas Tangki (Liter)')} />
                                 <TextInput
                                     id="tank_capacity_liters"
                                     type="number"
@@ -505,13 +529,13 @@ export default function Create({
                                     className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
                                     value={data.tank_capacity_liters}
                                     onChange={(e) => setData('tank_capacity_liters', e.target.value)}
-                                    placeholder="Contoh: 45"
+                                    placeholder={t('fleet.vehicles.tank_capacity_placeholder', undefined, 'Contoh: 45')}
                                 />
                                 <InputError message={errors.tank_capacity_liters} className="mt-1" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="expected_km_per_liter" value="Target Konsumsi BBM (KM / Liter)" />
+                                <InputLabel htmlFor="expected_km_per_liter" value={t('fleet.vehicles.expected_kml_label', undefined, 'Target Konsumsi BBM (KM / Liter)')} />
                                 <TextInput
                                     id="expected_km_per_liter"
                                     type="number"
@@ -520,13 +544,13 @@ export default function Create({
                                     className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
                                     value={data.expected_km_per_liter}
                                     onChange={(e) => setData('expected_km_per_liter', e.target.value)}
-                                    placeholder="Contoh: 12.5"
+                                    placeholder={t('fleet.vehicles.expected_kml_placeholder', undefined, 'Contoh: 12.5')}
                                 />
                                 <InputError message={errors.expected_km_per_liter} className="mt-1" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="cost_per_km" value="Estimasi Biaya Operasional / KM (Rp)" />
+                                <InputLabel htmlFor="cost_per_km" value={t('fleet.vehicles.cost_per_km_label', undefined, 'Estimasi Biaya Operasional / KM (Rp)')} />
                                 <TextInput
                                     id="cost_per_km"
                                     type="number"
@@ -535,13 +559,13 @@ export default function Create({
                                     className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
                                     value={data.cost_per_km}
                                     onChange={(e) => setData('cost_per_km', e.target.value)}
-                                    placeholder="Contoh: 1800"
+                                    placeholder={t('fleet.vehicles.cost_per_km_placeholder', undefined, 'Contoh: 1800')}
                                 />
                                 <InputError message={errors.cost_per_km} className="mt-1" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="odometer_km" value="Odometer Saat Ini (KM) *" />
+                                <InputLabel htmlFor="odometer_km" value={t('fleet.vehicles.odometer_label', undefined, 'Odometer Saat Ini (KM) *')} />
                                 <TextInput
                                     id="odometer_km"
                                     type="number"
@@ -560,29 +584,29 @@ export default function Create({
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                         <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-purple-100 text-base font-black text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                                4
+                                {t('fleet.vehicles.section4_num', undefined, '4')}
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    Penugasan Home Base Pool & Status Operasional
+                                    {t('fleet.vehicles.section4_title', undefined, 'Penugasan Home Base Pool & Status Operasional')}
                                 </h3>
                                 <p className="text-xs text-slate-500">
-                                    Tentukan titik pangkalan pool tempat unit diparkir dan status kesiapan operasionalnya.
+                                    {t('fleet.vehicles.section4_desc', undefined, 'Tentukan titik pangkalan pool tempat unit diparkir dan status kesiapan operasionalnya.')}
                                 </p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="home_base_id" value="Home Base / Pangkalan Pool" />
+                                <InputLabel htmlFor="home_base_id" value={t('fleet.vehicles.home_base_label', undefined, 'Home Base / Pangkalan Pool')} />
                                 <Select
                                     id="home_base_id"
                                     className="mt-1.5"
                                     value={data.home_base_id}
                                     onChange={(value) => setData('home_base_id', value)}
-                                    placeholder="Pilih Home Base Pool Kendaraan"
+                                    placeholder={t('fleet.vehicles.home_base_placeholder', undefined, 'Pilih Home Base Pool Kendaraan')}
                                     options={[
-                                        { value: '', label: 'Tanpa Home Base Khusus' },
+                                        { value: '', label: t('fleet.vehicles.home_base_none', undefined, 'Tanpa Home Base Khusus') },
                                         ...bases.map((base) => ({
                                             value: String(base.id),
                                             label: `🏢 ${base.name} (${base.code})`,
@@ -593,17 +617,17 @@ export default function Create({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="status" value="Status Kesiapan Operasional *" />
+                                <InputLabel htmlFor="status" value={t('fleet.vehicles.status_label', undefined, 'Status Kesiapan Operasional *')} />
                                 <Select
                                     id="status"
                                     className="mt-1.5"
                                     value={data.status}
                                     onChange={(value) => setData('status', value)}
                                     options={[
-                                        { value: 'active', label: '✓ Siap Operasi (Aktif)' },
-                                        { value: 'maintenance', label: '🛠️ Dalam Perawatan (Servis)' },
-                                        { value: 'out_of_service', label: '✕ Rusak / Non-Aktif' },
-                                        { value: 'retired', label: '⏸ Purna Tugas / Dijual' },
+                                        { value: 'active', label: t('fleet.vehicles.status_opt_active', undefined, '✓ Siap Operasi (Aktif)') },
+                                        { value: 'maintenance', label: t('fleet.vehicles.status_opt_maintenance', undefined, '🛠️ Dalam Perawatan (Servis)') },
+                                        { value: 'out_of_service', label: t('fleet.vehicles.status_opt_out_of_service', undefined, '✕ Rusak / Non-Aktif') },
+                                        { value: 'retired', label: t('fleet.vehicles.status_opt_retired', undefined, '⏸ Purna Tugas / Dijual') },
                                     ]}
                                 />
                                 <InputError message={errors.status} className="mt-1" />
@@ -611,7 +635,7 @@ export default function Create({
                                     <div className="mt-2.5 rounded-2xl bg-cyan-50/70 p-3 text-xs border border-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200">
                                         <div className="flex items-center gap-2">
                                             <span>
-                                                🎁 Unit baru akan langsung aktif dengan masa uji coba <strong>Free Trial {trial_duration_days} Hari</strong>.
+                                                🎁 {t('fleet.vehicles.trial_active_notice', { days: trial_duration_days }, `Unit baru akan langsung aktif dengan masa uji coba Free Trial ${trial_duration_days} Hari.`)}
                                             </span>
                                         </div>
                                     </div>
@@ -620,15 +644,15 @@ export default function Create({
                                     <div className="mt-2.5 rounded-2xl bg-indigo-50/70 p-3 text-xs border border-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center justify-between">
                                             <span>
-                                                🚗 Mendaftarkan unit aktif akan menggunakan <strong>1 Kredit Unit</strong> ({trial_duration_days} hari masa aktif).
+                                                🚗 {t('fleet.vehicles.credit_active_notice', { days: trial_duration_days }, `Mendaftarkan unit aktif akan menggunakan 1 Kredit Unit (${trial_duration_days} hari masa aktif).`)}
                                             </span>
                                             <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                                                Saldo: {available_credits} Unit
+                                                {t('fleet.vehicles.credit_balance', { count: available_credits }, `Saldo: ${available_credits} Unit`)}
                                             </span>
                                         </div>
                                         {available_credits === 0 && (
                                             <p className="mt-1 text-rose-500 font-semibold text-[11px]">
-                                                ⚠️ Saldo kredit unit Anda 0. Simpan unit sebagai Non-Aktif atau hubungi admin central untuk top-up.
+                                                ⚠️ {t('fleet.vehicles.credit_zero_warning', undefined, 'Saldo kredit unit Anda 0. Simpan unit sebagai Non-Aktif atau hubungi admin central untuk top-up.')}
                                             </p>
                                         )}
                                     </div>
@@ -641,21 +665,21 @@ export default function Create({
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                         <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-100 text-base font-black text-sky-700 dark:bg-sky-950 dark:text-sky-300">
-                                5
+                                {t('fleet.vehicles.section5_num', undefined, '5')}
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    Kepatuhan Pajak, Uji KIR & Catatan Unit
+                                    {t('fleet.vehicles.section5_title', undefined, 'Kepatuhan Pajak, Uji KIR & Catatan Unit')}
                                 </h3>
                                 <p className="text-xs text-slate-500">
-                                    Catat tanggal jatuh tempo STNK dan uji berkala KIR agar sistem dapat memberikan peringatan dini.
+                                    {t('fleet.vehicles.section5_desc', undefined, 'Catat tanggal jatuh tempo STNK dan uji berkala KIR agar sistem dapat memberikan peringatan dini.')}
                                 </p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="stnk_expires_at" value="Masa Berlaku STNK / Pajak" />
+                                <InputLabel htmlFor="stnk_expires_at" value={t('fleet.vehicles.stnk_expires_label', undefined, 'Masa Berlaku STNK / Pajak')} />
                                 <TextInput
                                     id="stnk_expires_at"
                                     type="date"
@@ -667,7 +691,7 @@ export default function Create({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="kir_expires_at" value="Masa Berlaku Uji KIR (Opsional)" />
+                                <InputLabel htmlFor="kir_expires_at" value={t('fleet.vehicles.kir_expires_label', undefined, 'Masa Berlaku Uji KIR (Opsional)')} />
                                 <TextInput
                                     id="kir_expires_at"
                                     type="date"
@@ -679,14 +703,14 @@ export default function Create({
                             </div>
 
                             <div className="sm:col-span-2">
-                                <InputLabel htmlFor="notes" value="Catatan Khusus Unit Kendaraan" />
+                                <InputLabel htmlFor="notes" value={t('fleet.vehicles.notes_label', undefined, 'Catatan Khusus Unit Kendaraan')} />
                                 <textarea
                                     id="notes"
                                     rows={3}
                                     className="mt-1.5 block w-full rounded-2xl border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white"
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
-                                    placeholder="Catatan kondisi velg, riwayat baret, perlengkapan dongkrak, atau modifikasi khusus..."
+                                    placeholder={t('fleet.vehicles.notes_placeholder', undefined, 'Catatan kondisi velg, riwayat baret, perlengkapan dongkrak, atau modifikasi khusus...')}
                                 />
                                 <InputError message={errors.notes} className="mt-1" />
                             </div>
@@ -698,52 +722,63 @@ export default function Create({
                         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                             <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-base font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                                    6
+                                    {t('fleet.vehicles.section6_num', undefined, '6')}
                                 </span>
                                 <div>
                                     <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                        Pemeriksaan & Skema Tarif Sewa
+                                        {t('fleet.vehicles.section6_title', undefined, 'Pemeriksaan & Skema Tarif Sewa')}
                                     </h3>
                                     <p className="text-xs text-slate-500">
-                                        Memastikan armada memiliki tarif sewa yang valid agar langsung siap dibooking pada katalog rental.
+                                        {t('fleet.vehicles.section6_desc', undefined, 'Memastikan armada memiliki tarif sewa yang valid agar langsung siap dibooking pada katalog rental.')}
                                     </p>
                                 </div>
                             </div>
 
                             {rateCoverageStatus.isCovered ? (
-                                <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/70 p-4.5 dark:border-emerald-900/60 dark:bg-emerald-950/30">
-                                    <div className="flex items-start gap-3">
-                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-sm">
-                                            ✓
-                                        </span>
-                                        <div className="space-y-1">
-                                            <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                                                Tarif Sewa Sudah Tersedia ({rateCoverageStatus.source})
+                                <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/70 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                                    <div className="flex items-start gap-3.5">
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <div className="space-y-1 pt-0.5">
+                                            <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                                                {t('fleet.vehicles.rate_covered_title', { source: rateCoverageStatus.source }, `Tarif Sewa Sudah Tersedia (${rateCoverageStatus.source})`)}
                                             </h4>
-                                            <p className="text-xs text-emerald-800 dark:text-emerald-300">
-                                                Unit kendaraan ini otomatis menggunakan skema tarif aktif yang sudah terdaftar
+                                            <p className="text-xs leading-relaxed text-emerald-800 dark:text-emerald-300">
                                                 {rateCoverageStatus.sample ? (
                                                     <span>
-                                                        {' '}: <strong>{rateCoverageStatus.sample.name}</strong> (Rp {Number(rateCoverageStatus.sample.rate_per_period).toLocaleString('id-ID')} / {rateCoverageStatus.sample.period_type === 'daily' ? 'Hari' : rateCoverageStatus.sample.period_type})
+                                                        {t('fleet.vehicles.rate_covered_desc', { sample: '' }, 'Unit kendaraan ini otomatis menggunakan skema tarif aktif yang sudah terdaftar')}
+                                                        {' '}: <strong className="font-semibold text-emerald-950 dark:text-emerald-100">{rateCoverageStatus.sample.name}</strong> (Rp {Number(rateCoverageStatus.sample.rate_per_period).toLocaleString('id-ID')} / {rateCoverageStatus.sample.period_type === 'daily' ? 'Hari' : rateCoverageStatus.sample.period_type}). {t('fleet.vehicles.rate_covered_desc_no_sample', undefined, 'Anda tidak wajib membuat tarif baru.')}
                                                     </span>
-                                                ) : null}. Anda tidak wajib membuat tarif baru.
+                                                ) : (
+                                                    t('fleet.vehicles.rate_covered_desc_no_sample', undefined, 'Unit kendaraan ini otomatis menggunakan skema tarif aktif yang sudah terdaftar. Anda tidak wajib membuat tarif baru.')
+                                                )}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <div className="rounded-2xl border border-amber-300/80 bg-amber-50/80 p-4.5 dark:border-amber-800/60 dark:bg-amber-950/30">
-                                        <div className="flex items-start gap-3">
-                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-white font-bold text-sm">
-                                                !
-                                            </span>
-                                            <div className="space-y-1">
-                                                <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
-                                                    Belum Ada Tarif Sewa untuk Kelas / Tipe Kendaraan Ini
-                                                </h4>
-                                                <p className="text-xs text-amber-800 dark:text-amber-300">
-                                                    Sistem mendeteksi belum ada skema tarif aktif untuk unit ini. <strong>Wajib menentukan tarif sewa pokok</strong> agar kendaraan langsung memiliki harga dan siap disewakan.
+                                    <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
+                                        <div className="flex items-start gap-3.5">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                                </svg>
+                                            </div>
+                                            <div className="space-y-1 pt-0.5">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <h4 className="text-sm font-bold text-amber-950 dark:text-amber-200">
+                                                        {t('fleet.vehicles.rate_uncovered_title', undefined, 'Belum Ada Tarif Sewa untuk Kelas / Tipe Kendaraan Ini')}
+                                                    </h4>
+                                                    <span className="inline-flex items-center rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                                                        {t('fleet.vehicles.rate_uncovered_badge', undefined, 'Wajib Diisi')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs leading-relaxed text-amber-800/90 dark:text-amber-300/90">
+                                                    {t('fleet.vehicles.rate_uncovered_desc', undefined, 'Sistem mendeteksi belum ada skema tarif sewa aktif yang mencakup kendaraan ini. Tentukan harga sewa harian pokok pada formulir di bawah agar kendaraan siap disewakan.')}
                                                 </p>
                                             </div>
                                         </div>
@@ -753,19 +788,19 @@ export default function Create({
                                     <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-850/40 space-y-4">
                                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <div>
-                                                <InputLabel htmlFor="rate_per_period" value="Harga Sewa Pokok (Rp / Hari) *" />
+                                                <InputLabel htmlFor="rate_per_period" value={t('fleet.vehicles.rate_price_label', undefined, 'Harga Sewa Pokok (Rp / Hari) *')} />
                                                 <MoneyInput
                                                     id="rate_per_period"
                                                     value={data.rental_rate.rate_per_period}
                                                     onChange={(val) => setData('rental_rate', { ...data.rental_rate, rate_per_period: val })}
                                                     className="mt-1.5 block w-full !rounded-2xl font-mono font-bold shadow-2xs"
-                                                    placeholder="Contoh: 450.000"
+                                                    placeholder={t('fleet.vehicles.rate_price_placeholder', undefined, 'Contoh: 450.000')}
                                                 />
                                                 <InputError message={(errors as any)['rental_rate.rate_per_period']} className="mt-1" />
                                             </div>
 
                                             <div>
-                                                <InputLabel htmlFor="rate_deposit" value="Uang Jaminan / Deposit (Opsional)" />
+                                                <InputLabel htmlFor="rate_deposit" value={t('fleet.vehicles.rate_deposit_label', undefined, 'Uang Jaminan / Deposit (Opsional)')} />
                                                 <MoneyInput
                                                     id="rate_deposit"
                                                     value={data.rental_rate.deposit_amount}
@@ -777,7 +812,7 @@ export default function Create({
                                             </div>
 
                                             <div className="sm:col-span-2">
-                                                <InputLabel htmlFor="rate_name" value="Nama Skema Tarif (Opsional)" />
+                                                <InputLabel htmlFor="rate_name" value={t('fleet.vehicles.rate_name_label', undefined, 'Nama Skema Tarif (Opsional)')} />
                                                 <TextInput
                                                     id="rate_name"
                                                     value={data.rental_rate.name}
@@ -786,7 +821,9 @@ export default function Create({
                                                     placeholder={data.rental_class ? `Tarif Kelas ${data.rental_class.toUpperCase()}` : (data.name ? `Tarif ${data.name}` : 'Tarif Sewa Harian')}
                                                 />
                                                 <p className="mt-1 text-[11px] text-slate-500">
-                                                    Tarif ini akan otomatis diterapkan untuk <strong>semua armada kelas {data.rental_class ? data.rental_class.toUpperCase() : (data.type ? data.type.toUpperCase() : 'tersebut')}</strong>.
+                                                    {t('fleet.vehicles.rate_scope_hint', {
+                                                        class: data.rental_class ? data.rental_class.toUpperCase() : (data.type ? data.type.toUpperCase() : 'tersebut'),
+                                                    }, `Tarif ini akan otomatis diterapkan untuk semua armada kelas ${data.rental_class ? data.rental_class.toUpperCase() : (data.type ? data.type.toUpperCase() : 'tersebut')}.`)}
                                                 </p>
                                             </div>
                                         </div>
@@ -802,7 +839,7 @@ export default function Create({
                             href={prefixedRoute('fleet.vehicles.index')}
                             className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            ← Batal & Kembali
+                            ← {t('fleet.vehicles.cancel_btn', undefined, 'Batal & Kembali')}
                         </Link>
 
                         <PrimaryButton
@@ -810,7 +847,7 @@ export default function Create({
                             disabled={processing}
                             className="rounded-2xl px-6 py-2.5 text-xs font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
                         >
-                            {processing ? 'Menyimpan Unit...' : 'Simpan Kendaraan Baru'}
+                            {processing ? t('fleet.vehicles.saving_btn', undefined, 'Menyimpan Unit...') : t('fleet.vehicles.save_btn', undefined, 'Simpan Kendaraan Baru')}
                         </PrimaryButton>
                     </div>
                 </form>
