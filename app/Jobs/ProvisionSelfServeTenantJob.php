@@ -151,6 +151,21 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                 'rental_model' => $session->rental_model,
                 'module_keys' => SelfServeProvisioningPlan::defaultContentModules(),
                 'pack_keys' => SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []),
+                'main_base' => [
+                    'code' => $session->base_code ?: 'HQ',
+                    'name' => $session->base_name ?: ('Kantor Operasional '.$session->company_name),
+                    'kind' => 'depot',
+                    'status' => 'active',
+                    'address' => $session->base_address,
+                    'city' => $session->base_city ?: $session->city,
+                    'province' => $session->base_province,
+                    'phone' => $session->base_phone ?: $session->phone,
+                    'email' => $session->base_email ?: $owner->email,
+                    'opens_at' => $session->base_opens_at ?: '08:00',
+                    'closes_at' => $session->base_closes_at ?: '20:00',
+                    'vehicle_capacity' => $session->base_vehicle_capacity,
+                    'allows_overnight' => true,
+                ],
             ],
             planKey: $planKey,
             trialEndsAt: $trialEndsAt,
@@ -215,6 +230,43 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         foreach (SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []) as $packKey) {
             $installer->installPack($tenant, $packKey, withDemoSeeders: false);
         }
+
+        $tenant->run(function () use ($session): void {
+            if (! class_exists(\Modules\Fleet\Models\FleetBase::class) || ! \Illuminate\Support\Facades\Schema::hasTable('fleet_bases')) {
+                return;
+            }
+
+            $adminUser = \App\Models\User::query()->first();
+            if ($adminUser === null) {
+                return;
+            }
+
+            $code = ! empty($session->base_code) ? strtoupper(trim($session->base_code)) : 'HQ';
+            $name = ! empty($session->base_name) ? trim($session->base_name) : ('Kantor Operasional '.$session->company_name);
+
+            $base = \Modules\Fleet\Models\FleetBase::query()->firstOrCreate(
+                ['code' => $code],
+                [
+                    'name' => $name,
+                    'kind' => \Modules\Fleet\Support\FleetBaseKind::Depot->value,
+                    'status' => \Modules\Fleet\Models\FleetBase::STATUS_ACTIVE,
+                    'address' => $session->base_address,
+                    'city' => $session->base_city ?: $session->city,
+                    'province' => $session->base_province,
+                    'phone' => $session->base_phone ?: $session->phone,
+                    'email' => $session->base_email ?: $adminUser->email,
+                    'opens_at' => $session->base_opens_at ?: '08:00',
+                    'closes_at' => $session->base_closes_at ?: '20:00',
+                    'timezone' => 'Asia/Jakarta',
+                    'vehicle_capacity' => $session->base_vehicle_capacity,
+                    'allows_overnight' => true,
+                    'manager_id' => $adminUser->id,
+                    'notes' => 'Kantor Operasional Utama (Dibuat otomatis saat Onboarding)',
+                ]
+            );
+
+            $base->users()->syncWithoutDetaching([$adminUser->id]);
+        });
     }
 
     /**

@@ -84,6 +84,17 @@ class OnboardingController extends Controller
         $initialFleetSize = (string) ($session?->fleet_size ?: '1-5');
         $initialRentalModel = (string) ($session?->rental_model ?: 'both');
 
+        $initialBaseName = (string) ($session?->base_name ?: ($initialCompanyName ? "Kantor Operasional {$initialCompanyName}" : ''));
+        $initialBaseCode = (string) ($session?->base_code ?: 'HQ');
+        $initialBaseAddress = (string) ($session?->base_address ?: '');
+        $initialBaseCity = (string) ($session?->base_city ?: $initialCity);
+        $initialBaseProvince = (string) ($session?->base_province ?: '');
+        $initialBasePhone = (string) ($session?->base_phone ?: $initialPhone);
+        $initialBaseEmail = (string) ($session?->base_email ?: $request->user()->email);
+        $initialBaseOpensAt = (string) ($session?->base_opens_at ?: '08:00');
+        $initialBaseClosesAt = (string) ($session?->base_closes_at ?: '20:00');
+        $initialBaseVehicleCapacity = $session?->base_vehicle_capacity;
+
         return Inertia::render('Central/Onboarding', [
             'user' => [
                 'name' => $request->user()->name,
@@ -101,6 +112,16 @@ class OnboardingController extends Controller
             'initialCity' => $initialCity,
             'initialFleetSize' => $initialFleetSize,
             'initialRentalModel' => $initialRentalModel,
+            'initialBaseName' => $initialBaseName,
+            'initialBaseCode' => $initialBaseCode,
+            'initialBaseAddress' => $initialBaseAddress,
+            'initialBaseCity' => $initialBaseCity,
+            'initialBaseProvince' => $initialBaseProvince,
+            'initialBasePhone' => $initialBasePhone,
+            'initialBaseEmail' => $initialBaseEmail,
+            'initialBaseOpensAt' => $initialBaseOpensAt,
+            'initialBaseClosesAt' => $initialBaseClosesAt,
+            'initialBaseVehicleCapacity' => $initialBaseVehicleCapacity,
             'verticalOptions' => collect(SelfServeProvisioningPlan::verticals())
                 ->map(fn (string $vertical): array => [
                     'key' => $vertical,
@@ -118,6 +139,16 @@ class OnboardingController extends Controller
                     'plan_key' => $session->plan_key,
                     'fleet_size' => $session->fleet_size,
                     'rental_model' => $session->rental_model,
+                    'base_name' => $session->base_name,
+                    'base_code' => $session->base_code,
+                    'base_address' => $session->base_address,
+                    'base_city' => $session->base_city,
+                    'base_province' => $session->base_province,
+                    'base_phone' => $session->base_phone,
+                    'base_email' => $session->base_email,
+                    'base_opens_at' => $session->base_opens_at,
+                    'base_closes_at' => $session->base_closes_at,
+                    'base_vehicle_capacity' => $session->base_vehicle_capacity,
                     'verticals' => array_values(array_filter(
                         $session->verticals ?? [],
                         SelfServeProvisioningPlan::isSelectableVertical(...),
@@ -150,24 +181,49 @@ class OnboardingController extends Controller
         $plan = \App\Models\Plan::query()->firstWhere('key', $planKey);
         $isPaidWithoutTrial = $plan && (float) $plan->price > 0 && ((int) ($plan->trial_days ?? 0) <= 0) && ! $plan->is_trial;
 
+        $companyName = $request->validated('company_name');
+        $baseName = $request->validated('base_name') ?: ($companyName ? 'Kantor Operasional '.$companyName : 'Kantor Operasional');
+        $baseCode = $request->validated('base_code') ?: 'HQ';
+        $baseAddress = $request->validated('base_address');
+        $baseCity = $request->validated('base_city') ?: $request->validated('city');
+        $baseProvince = $request->validated('base_province');
+        $basePhone = $request->validated('base_phone') ?: $request->validated('phone');
+        $baseEmail = $request->validated('base_email') ?: $user->email;
+        $baseOpensAt = $request->validated('base_opens_at') ?: '08:00';
+        $baseClosesAt = $request->validated('base_closes_at') ?: '20:00';
+        $baseVehicleCapacity = $request->validated('base_vehicle_capacity');
+
+        $sessionAttributes = [
+            'company_name' => $companyName,
+            'phone' => $request->validated('phone'),
+            'city' => $request->validated('city'),
+            'subdomain' => $subdomain,
+            'verticals' => $verticals,
+            'fleet_size' => $request->validated('fleet_size'),
+            'rental_model' => $request->validated('rental_model'),
+            'base_name' => $baseName,
+            'base_code' => $baseCode,
+            'base_address' => $baseAddress,
+            'base_city' => $baseCity,
+            'base_province' => $baseProvince,
+            'base_phone' => $basePhone,
+            'base_email' => $baseEmail,
+            'base_opens_at' => $baseOpensAt,
+            'base_closes_at' => $baseClosesAt,
+            'base_vehicle_capacity' => $baseVehicleCapacity,
+            'plan_key' => $planKey,
+            'reseller_global_id' => $existing?->reseller_global_id
+                ?? ResellerAttribution::resolveFromRequest($request),
+            'error_message' => null,
+        ];
+
         if ($isPaidWithoutTrial) {
             $session = OnboardingSession::query()->updateOrCreate(
                 ['global_user_id' => $user->global_id],
-                [
-                    'company_name' => $request->validated('company_name'),
-                    'phone' => $request->validated('phone'),
-                    'city' => $request->validated('city'),
-                    'subdomain' => $subdomain,
-                    'verticals' => $verticals,
-                    'fleet_size' => $request->validated('fleet_size'),
-                    'rental_model' => $request->validated('rental_model'),
-                    'plan_key' => $planKey,
+                array_merge($sessionAttributes, [
                     'status' => OnboardingSession::STATUS_AWAITING_PAYMENT,
                     'tenant_id' => null,
-                    'reseller_global_id' => $existing?->reseller_global_id
-                        ?? ResellerAttribution::resolveFromRequest($request),
-                    'error_message' => null,
-                ],
+                ]),
             );
 
             $order = \App\Models\PaymentOrder::on('central')
@@ -194,21 +250,10 @@ class OnboardingController extends Controller
 
         $session = OnboardingSession::query()->updateOrCreate(
             ['global_user_id' => $user->global_id],
-            [
-                'company_name' => $request->validated('company_name'),
-                'phone' => $request->validated('phone'),
-                'city' => $request->validated('city'),
-                'subdomain' => $subdomain,
-                'verticals' => $verticals,
-                'fleet_size' => $request->validated('fleet_size'),
-                'rental_model' => $request->validated('rental_model'),
-                'plan_key' => $planKey,
+            array_merge($sessionAttributes, [
                 'status' => OnboardingSession::STATUS_PENDING,
                 'tenant_id' => $reuseTenantId,
-                'reseller_global_id' => $existing?->reseller_global_id
-                    ?? ResellerAttribution::resolveFromRequest($request),
-                'error_message' => null,
-            ],
+            ]),
         );
 
         ProvisionSelfServeTenantJob::dispatch($session->id);

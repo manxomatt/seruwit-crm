@@ -41,6 +41,16 @@ class OnboardingSession extends Model
         'verticals',
         'fleet_size',
         'rental_model',
+        'base_name',
+        'base_code',
+        'base_address',
+        'base_city',
+        'base_province',
+        'base_phone',
+        'base_email',
+        'base_opens_at',
+        'base_closes_at',
+        'base_vehicle_capacity',
         'plan_key',
         'status',
         'tenant_id',
@@ -55,6 +65,7 @@ class OnboardingSession extends Model
     {
         return [
             'verticals' => 'array',
+            'base_vehicle_capacity' => 'integer',
         ];
     }
 

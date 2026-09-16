@@ -40,6 +40,21 @@ class TenantOnboardingTest extends TestCase
         $this->assertTrue($isAdmin);
     }
 
+    public function test_tenant_is_provisioned_with_main_fleet_base(): void
+    {
+        $tenant = $this->provisionTenant('Armada Utama Co', 'armada-co', 'owner@armada.test');
+
+        $tenant->run(function (): void {
+            $base = \Modules\Fleet\Models\FleetBase::query()->firstWhere('code', 'HQ');
+            $this->assertNotNull($base);
+            $this->assertSame('Kantor Operasional Armada Utama Co', $base->name);
+            $this->assertSame('active', $base->status);
+            $this->assertSame('depot', $base->kind->value);
+            $this->assertNotNull($base->manager_id);
+            $this->assertTrue($base->users()->where('users.id', $base->manager_id)->exists());
+        });
+    }
+
     public function test_registration_rejects_taken_or_reserved_subdomain(): void
     {
         $this->provisionTenant('First Co', 'taken-sub', 'first@example.com');

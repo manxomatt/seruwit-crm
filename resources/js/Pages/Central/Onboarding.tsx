@@ -42,6 +42,16 @@ interface FailedSession {
     subdomain: string;
     fleet_size?: string | null;
     rental_model?: string | null;
+    base_name?: string | null;
+    base_code?: string | null;
+    base_address?: string | null;
+    base_city?: string | null;
+    base_province?: string | null;
+    base_phone?: string | null;
+    base_email?: string | null;
+    base_opens_at?: string | null;
+    base_closes_at?: string | null;
+    base_vehicle_capacity?: number | null;
     plan_key?: string | null;
     verticals: string[];
     error_message: string | null;
@@ -58,6 +68,16 @@ interface Props {
     initialCity?: string;
     initialFleetSize?: string;
     initialRentalModel?: string;
+    initialBaseName?: string;
+    initialBaseCode?: string;
+    initialBaseAddress?: string;
+    initialBaseCity?: string;
+    initialBaseProvince?: string;
+    initialBasePhone?: string;
+    initialBaseEmail?: string;
+    initialBaseOpensAt?: string;
+    initialBaseClosesAt?: string;
+    initialBaseVehicleCapacity?: number | null;
     verticalOptions: VerticalOption[];
     failedSession: FailedSession | null;
     settings?: Record<string, string>;
@@ -74,6 +94,16 @@ export default function Onboarding({
     initialCity = '',
     initialFleetSize = '1-5',
     initialRentalModel = 'both',
+    initialBaseName = '',
+    initialBaseCode = 'HQ',
+    initialBaseAddress = '',
+    initialBaseCity = '',
+    initialBaseProvince = '',
+    initialBasePhone = '',
+    initialBaseEmail = '',
+    initialBaseOpensAt = '08:00',
+    initialBaseClosesAt = '20:00',
+    initialBaseVehicleCapacity = null,
     verticalOptions,
     failedSession,
     settings,
@@ -89,9 +119,40 @@ export default function Onboarding({
         subdomain: failedSession?.subdomain ?? initialSubdomain ?? '',
         fleet_size: failedSession?.fleet_size ?? initialFleetSize ?? '1-5',
         rental_model: failedSession?.rental_model ?? initialRentalModel ?? 'both',
+        base_name: failedSession?.base_name ?? initialBaseName ?? '',
+        base_code: failedSession?.base_code ?? initialBaseCode ?? 'HQ',
+        base_address: failedSession?.base_address ?? initialBaseAddress ?? '',
+        base_city: failedSession?.base_city ?? initialBaseCity ?? initialCity ?? '',
+        base_province: failedSession?.base_province ?? initialBaseProvince ?? '',
+        base_phone: failedSession?.base_phone ?? initialBasePhone ?? initialPhone ?? '',
+        base_email: failedSession?.base_email ?? initialBaseEmail ?? user.email ?? '',
+        base_opens_at: failedSession?.base_opens_at ?? initialBaseOpensAt ?? '08:00',
+        base_closes_at: failedSession?.base_closes_at ?? initialBaseClosesAt ?? '20:00',
+        base_vehicle_capacity: failedSession?.base_vehicle_capacity ?? initialBaseVehicleCapacity ?? '',
         plan_key: failedSession?.plan_key ?? initialPlanKey,
         verticals: failedSession?.verticals ?? (['rental'] as string[]),
     });
+
+    const [is24Hours, setIs24Hours] = useState<boolean>(
+        (data.base_opens_at === '00:00' && data.base_closes_at === '23:59')
+    );
+
+    const toggle24Hours = (enabled: boolean): void => {
+        setIs24Hours(enabled);
+        if (enabled) {
+            setData((prev) => ({
+                ...prev,
+                base_opens_at: '00:00',
+                base_closes_at: '23:59',
+            }));
+        } else {
+            setData((prev) => ({
+                ...prev,
+                base_opens_at: '08:00',
+                base_closes_at: '20:00',
+            }));
+        }
+    };
 
     const slugify = (text: string): string =>
         text
@@ -102,15 +163,15 @@ export default function Onboarding({
     const handleCompanyNameChange = (val: string): void => {
         const prevSlug = slugify(data.company_name);
         const newSlug = slugify(val);
-        if (!data.subdomain || data.subdomain === prevSlug) {
-            setData((prev) => ({
-                ...prev,
-                company_name: val,
-                subdomain: newSlug,
-            }));
-        } else {
-            setData('company_name', val);
-        }
+        const prevDefaultBaseName = data.company_name ? `Kantor Operasional ${data.company_name}` : '';
+        const shouldUpdateBaseName = !data.base_name || data.base_name === prevDefaultBaseName;
+
+        setData((prev) => ({
+            ...prev,
+            company_name: val,
+            subdomain: !data.subdomain || data.subdomain === prevSlug ? newSlug : prev.subdomain,
+            base_name: shouldUpdateBaseName ? (val ? `Kantor Operasional ${val}` : '') : prev.base_name,
+        }));
         if (clientErrors.company_name) {
             setClientErrors((prev) => ({ ...prev, company_name: '' }));
         }
@@ -167,6 +228,18 @@ export default function Onboarding({
 
     const validateStep2 = (): boolean => {
         const errs: Record<string, string> = {};
+        if (!data.base_name.trim()) {
+            errs.base_name = 'Nama kantor operasional atau pool armada wajib diisi.';
+        }
+        if (!data.base_code.trim()) {
+            errs.base_code = 'Kode base wajib diisi (contoh: HQ).';
+        }
+        setClientErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
+    const validateStep3 = (): boolean => {
+        const errs: Record<string, string> = {};
         if (data.verticals.length === 0) {
             errs.verticals = t('central.onboarding.validation.verticals_required');
         }
@@ -177,11 +250,27 @@ export default function Onboarding({
     const handleNext = (): void => {
         if (currentStep === 1) {
             if (validateStep1()) {
+                if (!data.base_name.trim() && data.company_name) {
+                    setData('base_name', `Kantor Operasional ${data.company_name}`);
+                }
+                if (!data.base_code.trim()) {
+                    setData('base_code', 'HQ');
+                }
+                if (!data.base_city && data.city) {
+                    setData('base_city', data.city.split(',')[0].trim());
+                }
+                if (!data.base_phone && data.phone) {
+                    setData('base_phone', data.phone);
+                }
                 setCurrentStep(2);
             }
         } else if (currentStep === 2) {
             if (validateStep2()) {
                 setCurrentStep(3);
+            }
+        } else if (currentStep === 3) {
+            if (validateStep3()) {
+                setCurrentStep(4);
             }
         }
     };
@@ -198,10 +287,12 @@ export default function Onboarding({
             onError: (errs) => {
                 if (errs.company_name || errs.subdomain || errs.phone || errs.city) {
                     setCurrentStep(1);
-                } else if (errs.verticals || errs.fleet_size || errs.rental_model) {
+                } else if (errs.base_name || errs.base_code || errs.base_address || errs.base_city || errs.base_phone) {
                     setCurrentStep(2);
-                } else if (errs.plan_key) {
+                } else if (errs.verticals || errs.fleet_size || errs.rental_model) {
                     setCurrentStep(3);
+                } else if (errs.plan_key) {
+                    setCurrentStep(4);
                 }
             },
         });
@@ -294,21 +385,24 @@ export default function Onboarding({
 
                             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
                                 {currentStep === 1 && '1. Identitas & Domain'}
-                                {currentStep === 2 && '2. Skala & Modul Bisnis'}
-                                {currentStep === 3 && '3. Konfirmasi & Peluncuran'}
+                                {currentStep === 2 && '2. Kantor Operasional'}
+                                {currentStep === 3 && '3. Skala & Modul Bisnis'}
+                                {currentStep === 4 && '4. Konfirmasi & Peluncuran'}
                             </h1>
                             <p className="mt-3 text-sm font-medium text-slate-600 leading-relaxed">
                                 {currentStep === 1 && 'Tentukan nama usaha rental dan alamat domain workspace khusus untuk bisnis Anda.'}
-                                {currentStep === 2 && 'Pilih modul operasional armada dan estimasi kendaraan agar kapasitas sistem terkalibrasi presisi.'}
-                                {currentStep === 3 && 'Tinjau ringkasan workspace dan pilih paket langganan terbaik untuk memulai operasional.'}
+                                {currentStep === 2 && 'Atur identitas kantor pusat dan pool armada utama yang akan otomatis didaftarkan ke sistem.'}
+                                {currentStep === 3 && 'Pilih modul operasional armada dan estimasi kendaraan agar kapasitas sistem terkalibrasi presisi.'}
+                                {currentStep === 4 && 'Tinjau ringkasan workspace dan pilih paket langganan terbaik untuk memulai operasional.'}
                             </p>
 
                             {/* Live Step Progress Guide */}
                             <div className="mt-8 space-y-3">
                                 {[
                                     { step: 1, title: 'Identitas & Subdomain', icon: 'business', desc: 'Nama usaha & URL workspace' },
-                                    { step: 2, title: 'Skala & Modul Armada', icon: 'tune', desc: 'Rental, shuttle & jumlah unit' },
-                                    { step: 3, title: 'Pilihan Paket & Launching', icon: 'rocket_launch', desc: 'Skema paket & database tenant' },
+                                    { step: 2, title: 'Kantor Operasional', icon: 'apartment', desc: 'Pool armada & kantor pusat' },
+                                    { step: 3, title: 'Skala & Modul Armada', icon: 'tune', desc: 'Rental, shuttle & jumlah unit' },
+                                    { step: 4, title: 'Pilihan Paket & Launching', icon: 'rocket_launch', desc: 'Skema paket & database tenant' },
                                 ].map((item) => {
                                     const isDone = currentStep > item.step;
                                     const isCurrent = currentStep === item.step;
@@ -376,7 +470,7 @@ export default function Onboarding({
                             <div className="mb-6">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-black uppercase tracking-wider text-indigo-600">
-                                        Langkah {currentStep} dari 3
+                                        Langkah {currentStep} dari 4
                                     </span>
                                     <span className="text-xs font-medium text-slate-400">
                                         {user.email}
@@ -384,10 +478,11 @@ export default function Onboarding({
                                 </div>
 
                                 {/* Visual Progress Bar */}
-                                <div className="mt-2.5 grid grid-cols-3 gap-2">
+                                <div className="mt-2.5 grid grid-cols-4 gap-2">
                                     <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
                                     <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
                                     <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 3 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+                                    <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 4 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
                                 </div>
                             </div>
 
@@ -546,6 +641,275 @@ export default function Onboarding({
                                                 onClick={handleNext}
                                                 className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 active:from-indigo-700 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition"
                                             >
+                                                <span>Lanjut: Kantor Operasional</span>
+                                                <span className="material-symbols-outlined text-base">arrow_forward</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* STEP 2: KANTOR OPERASIONAL (BASE UTAMA) */}
+                                {currentStep === 2 && (
+                                    <div className="space-y-4">
+                                        <div className="mb-2">
+                                            <h3 className="text-lg font-extrabold text-slate-900">
+                                                {t('central.onboarding.step2_title')}
+                                            </h3>
+                                            <p className="text-xs text-slate-500">
+                                                Tentukan identitas kantor pusat dan pool armada utama yang akan otomatis didaftarkan ke sistem.
+                                            </p>
+                                        </div>
+
+                                        {/* Base Name & Code */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div className="sm:col-span-2">
+                                                <label htmlFor="base_name" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                    {t('central.onboarding.base_name')} <span className="text-rose-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                        <span className="material-symbols-outlined text-xl">apartment</span>
+                                                    </div>
+                                                    <input
+                                                        id="base_name"
+                                                        type="text"
+                                                        value={data.base_name}
+                                                        required
+                                                        onChange={(e) => {
+                                                            setData('base_name', e.target.value);
+                                                            if (clientErrors.base_name) {
+                                                                setClientErrors((prev) => ({ ...prev, base_name: '' }));
+                                                            }
+                                                        }}
+                                                        className="block w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                        placeholder={t('central.onboarding.base_name_placeholder')}
+                                                    />
+                                                </div>
+                                                <InputError message={errors.base_name || clientErrors.base_name} className="mt-1.5" />
+                                            </div>
+
+                                            <div>
+                                                <label htmlFor="base_code" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                    {t('central.onboarding.base_code')} <span className="text-rose-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                        <span className="material-symbols-outlined text-xl">tag</span>
+                                                    </div>
+                                                    <input
+                                                        id="base_code"
+                                                        type="text"
+                                                        value={data.base_code}
+                                                        required
+                                                        onChange={(e) => {
+                                                            setData('base_code', e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''));
+                                                            if (clientErrors.base_code) {
+                                                                setClientErrors((prev) => ({ ...prev, base_code: '' }));
+                                                            }
+                                                        }}
+                                                        className="block w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-xs font-mono uppercase text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                        placeholder="HQ"
+                                                        maxLength={16}
+                                                    />
+                                                </div>
+                                                <InputError message={errors.base_code || clientErrors.base_code} className="mt-1.5" />
+                                            </div>
+                                        </div>
+
+                                        {/* Base Address */}
+                                        <div>
+                                            <label htmlFor="base_address" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                {t('central.onboarding.base_address')}
+                                            </label>
+                                            <div className="relative">
+                                                <div className="pointer-events-none absolute top-3.5 left-0 flex items-center pl-4 text-slate-400">
+                                                    <span className="material-symbols-outlined text-xl">pin_drop</span>
+                                                </div>
+                                                <textarea
+                                                    id="base_address"
+                                                    rows={2}
+                                                    value={data.base_address}
+                                                    onChange={(e) => setData('base_address', e.target.value)}
+                                                    className="block w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                    placeholder={t('central.onboarding.base_address_placeholder')}
+                                                />
+                                            </div>
+                                            <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.base_address_hint')}</p>
+                                            <InputError message={errors.base_address} className="mt-1.5" />
+                                        </div>
+
+                                        {/* City & Province */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label htmlFor="base_city" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                    {t('central.onboarding.base_city')}
+                                                </label>
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                        <span className="material-symbols-outlined text-xl">location_city</span>
+                                                    </div>
+                                                    <input
+                                                        id="base_city"
+                                                        type="text"
+                                                        value={data.base_city}
+                                                        onChange={(e) => setData('base_city', e.target.value)}
+                                                        className="block w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                        placeholder="Contoh: Jakarta Selatan"
+                                                    />
+                                                </div>
+                                                <InputError message={errors.base_city} className="mt-1.5" />
+                                            </div>
+
+                                            <div>
+                                                <label htmlFor="base_province" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                    {t('central.onboarding.base_province')}
+                                                </label>
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                        <span className="material-symbols-outlined text-xl">map</span>
+                                                    </div>
+                                                    <input
+                                                        id="base_province"
+                                                        type="text"
+                                                        value={data.base_province}
+                                                        onChange={(e) => setData('base_province', e.target.value)}
+                                                        className="block w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                        placeholder="Contoh: DKI Jakarta"
+                                                    />
+                                                </div>
+                                                <InputError message={errors.base_province} className="mt-1.5" />
+                                            </div>
+                                        </div>
+
+                                        {/* Phone & Parking Capacity */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label htmlFor="base_phone" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                    {t('central.onboarding.base_phone')}
+                                                </label>
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                        <span className="material-symbols-outlined text-xl">call</span>
+                                                    </div>
+                                                    <input
+                                                        id="base_phone"
+                                                        type="tel"
+                                                        value={data.base_phone}
+                                                        onChange={(e) => setData('base_phone', e.target.value)}
+                                                        className="block w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                        placeholder="081234567890"
+                                                    />
+                                                </div>
+                                                <InputError message={errors.base_phone} className="mt-1.5" />
+                                            </div>
+
+                                            <div>
+                                                <label htmlFor="base_vehicle_capacity" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                                                    {t('central.onboarding.base_capacity')}
+                                                </label>
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                        <span className="material-symbols-outlined text-xl">directions_car</span>
+                                                    </div>
+                                                    <input
+                                                        id="base_vehicle_capacity"
+                                                        type="number"
+                                                        min="1"
+                                                        max="9999"
+                                                        value={data.base_vehicle_capacity ?? ''}
+                                                        onChange={(e) => setData('base_vehicle_capacity', e.target.value ? parseInt(e.target.value, 10) : null)}
+                                                        className="block w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                        placeholder={t('central.onboarding.base_capacity_placeholder')}
+                                                    />
+                                                </div>
+                                                <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.base_capacity_hint')}</p>
+                                                <InputError message={errors.base_vehicle_capacity} className="mt-1.5" />
+                                            </div>
+                                        </div>
+
+                                        {/* Operating Hours */}
+                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                                    <span className="material-symbols-outlined text-base text-indigo-600">schedule</span>
+                                                    {t('central.onboarding.base_operating_hours')}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggle24Hours(!is24Hours)}
+                                                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold border transition ${
+                                                        is24Hours
+                                                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                                            : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                                                    }`}
+                                                >
+                                                    {is24Hours ? '✓ ' : ''}{t('central.onboarding.base_24_hours')}
+                                                </button>
+                                            </div>
+
+                                            {!is24Hours ? (
+                                                <div className="grid grid-cols-2 gap-3 pt-1">
+                                                    <div>
+                                                        <label htmlFor="base_opens_at" className="mb-1 block text-[11px] font-bold text-slate-500">
+                                                            {t('central.onboarding.base_opens_at')}
+                                                        </label>
+                                                        <input
+                                                            id="base_opens_at"
+                                                            type="time"
+                                                            value={data.base_opens_at}
+                                                            onChange={(e) => setData('base_opens_at', e.target.value)}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="base_closes_at" className="mb-1 block text-[11px] font-bold text-slate-500">
+                                                            {t('central.onboarding.base_closes_at')}
+                                                        </label>
+                                                        <input
+                                                            id="base_closes_at"
+                                                            type="time"
+                                                            value={data.base_closes_at}
+                                                            onChange={(e) => setData('base_closes_at', e.target.value)}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[11px] text-emerald-700 font-medium">
+                                                    Base beroperasi penuh 24 jam setiap hari untuk serah terima armada.
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Live Preview Info Box */}
+                                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs text-slate-600 flex items-center gap-2.5">
+                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                                                <span className="material-symbols-outlined text-lg">verified</span>
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-[11px] font-bold text-indigo-950 truncate">
+                                                    {data.base_name || 'Kantor Operasional'} ({data.base_code || 'HQ'})
+                                                </p>
+                                                <p className="text-[10px] text-indigo-700/80">
+                                                    Otomatis tercatat sebagai Base Utama di modul Armada (Fleet) dengan Admin Anda sebagai pengelola.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Navigation Buttons */}
+                                        <div className="flex gap-2.5 pt-2">
+                                            <button
+                                                type="button"
+                                                onClick={handleBack}
+                                                className="w-1/3 rounded-2xl border border-slate-300 bg-white py-3.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                                            >
+                                                ← {t('central.onboarding.btn_back')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleNext}
+                                                className="w-2/3 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 active:from-indigo-700 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition"
+                                            >
                                                 <span>Lanjut: Skala & Modul Bisnis</span>
                                                 <span className="material-symbols-outlined text-base">arrow_forward</span>
                                             </button>
@@ -553,8 +917,8 @@ export default function Onboarding({
                                     </div>
                                 )}
 
-                                {/* STEP 2: SKALA OPERASIONAL & MODUL BISNIS */}
-                                {currentStep === 2 && (
+                                {/* STEP 3: SKALA OPERASIONAL & MODUL BISNIS */}
+                                {currentStep === 3 && (
                                     <div className="space-y-5">
                                         <div className="mb-2">
                                             <h3 className="text-lg font-extrabold text-slate-900">
@@ -705,12 +1069,12 @@ export default function Onboarding({
                                     </div>
                                 )}
 
-                                {/* STEP 3: PILIHAN PAKET & LAUNCHING WORKSPACE */}
-                                {currentStep === 3 && (
+                                {/* STEP 4: PILIHAN PAKET & LAUNCHING WORKSPACE */}
+                                {currentStep === 4 && (
                                     <div className="space-y-4">
                                         <div className="mb-2">
                                             <h3 className="text-lg font-extrabold text-slate-900">
-                                                {t('central.onboarding.step3_title')}
+                                                {t('central.onboarding.step4_title')}
                                             </h3>
                                             <p className="text-xs text-slate-500">
                                                 Pilih paket langganan dan luncurkan workspace database terisolasi Anda.
@@ -733,10 +1097,14 @@ export default function Onboarding({
                                                     <span className="font-bold text-indigo-600 font-mono">{data.subdomain}.{centralHost}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-slate-400 block">{t('central.onboarding.summary_location')}:</span>
-                                                    <span className="font-bold text-slate-800">{data.city || '-'} {data.phone ? `(${data.phone})` : ''}</span>
+                                                    <span className="text-slate-400 block">{t('central.onboarding.summary_base')}:</span>
+                                                    <span className="font-bold text-slate-800">{data.base_name || 'Kantor Operasional'} ({data.base_code || 'HQ'})</span>
                                                 </div>
                                                 <div>
+                                                    <span className="text-slate-400 block">{t('central.onboarding.summary_location')}:</span>
+                                                    <span className="font-bold text-slate-800">{data.base_city || data.city || '-'} {data.phone || data.base_phone ? `(${data.phone || data.base_phone})` : ''}</span>
+                                                </div>
+                                                <div className="col-span-2 pt-1 border-t border-indigo-100/60">
                                                     <span className="text-slate-400 block">{t('central.onboarding.summary_services')}:</span>
                                                     <span className="font-bold text-slate-800">{data.verticals.join(' + ')} ({data.fleet_size} unit)</span>
                                                 </div>

@@ -137,6 +137,47 @@ class FinalizeTenantSetupJob implements ShouldQueue
             }
         }
 
+        $this->tenant->run(function () use ($ownerGlobalId, $setup): void {
+            if (! class_exists(\Modules\Fleet\Models\FleetBase::class) || ! \Illuminate\Support\Facades\Schema::hasTable('fleet_bases')) {
+                return;
+            }
+
+            $adminUser = $ownerGlobalId !== null
+                ? User::query()->firstWhere('global_id', $ownerGlobalId)
+                : User::query()->first();
+
+            if ($adminUser === null) {
+                return;
+            }
+
+            $baseData = $setup['main_base'] ?? [];
+            $code = ! empty($baseData['code']) ? strtoupper(trim($baseData['code'])) : 'HQ';
+            $name = ! empty($baseData['name']) ? trim($baseData['name']) : ('Kantor Operasional '.$this->tenant->name);
+
+            $base = \Modules\Fleet\Models\FleetBase::query()->firstOrCreate(
+                ['code' => $code],
+                [
+                    'name' => $name,
+                    'kind' => \Modules\Fleet\Support\FleetBaseKind::Depot->value,
+                    'status' => \Modules\Fleet\Models\FleetBase::STATUS_ACTIVE,
+                    'address' => $baseData['address'] ?? null,
+                    'city' => $baseData['city'] ?? $setup['city'] ?? null,
+                    'province' => $baseData['province'] ?? null,
+                    'phone' => $baseData['phone'] ?? $setup['phone'] ?? null,
+                    'email' => $baseData['email'] ?? $adminUser->email,
+                    'opens_at' => $baseData['opens_at'] ?? '08:00',
+                    'closes_at' => $baseData['closes_at'] ?? '20:00',
+                    'timezone' => 'Asia/Jakarta',
+                    'vehicle_capacity' => ! empty($baseData['vehicle_capacity']) ? (int) $baseData['vehicle_capacity'] : null,
+                    'allows_overnight' => true,
+                    'manager_id' => $adminUser->id,
+                    'notes' => 'Kantor Operasional Utama (Dibuat otomatis saat Onboarding)',
+                ]
+            );
+
+            $base->users()->syncWithoutDetaching([$adminUser->id]);
+        });
+
         if ($sessionId !== null) {
             OnboardingSession::query()->find($sessionId)?->update([
                 'status' => OnboardingSession::STATUS_READY,

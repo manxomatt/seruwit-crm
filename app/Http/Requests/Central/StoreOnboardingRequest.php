@@ -36,7 +36,26 @@ class StoreOnboardingRequest extends FormRequest
                 'string',
                 Rule::in(SelfServeProvisioningPlan::selectableVerticals()),
             ],
+            'base_name' => ['nullable', 'string', 'max:120'],
+            'base_code' => ['nullable', 'string', 'max:32', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'base_address' => ['nullable', 'string', 'max:255'],
+            'base_city' => ['nullable', 'string', 'max:100'],
+            'base_province' => ['nullable', 'string', 'max:100'],
+            'base_phone' => ['nullable', 'string', 'max:50'],
+            'base_email' => ['nullable', 'email', 'max:120'],
+            'base_opens_at' => ['nullable', 'string', 'max:10'],
+            'base_closes_at' => ['nullable', 'string', 'max:10'],
+            'base_vehicle_capacity' => ['nullable', 'integer', 'min:1', 'max:65535'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->base_code) && trim($this->base_code) !== '') {
+            $this->merge([
+                'base_code' => strtoupper(trim($this->base_code)),
+            ]);
+        }
     }
 
     /**

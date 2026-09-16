@@ -120,6 +120,47 @@ class SelfServeOnboardingProvisionTest extends TestCase
         );
     }
 
+    public function test_submitting_onboarding_saves_main_base_details(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('central.onboarding.store'), [
+                'company_name' => 'Bintang Rental',
+                'subdomain' => 'bintang-rental',
+                'verticals' => ['rental'],
+                'base_name' => 'Pool Pusat Bintang',
+                'base_code' => 'HQ-01',
+                'base_address' => 'Jl. Sudirman No. 10',
+                'base_city' => 'Jakarta Selatan',
+                'base_province' => 'DKI Jakarta',
+                'base_phone' => '081234567890',
+                'base_email' => 'pool@bintang.test',
+                'base_opens_at' => '07:00',
+                'base_closes_at' => '22:00',
+                'base_vehicle_capacity' => 25,
+            ])
+            ->assertRedirect(route('central.onboarding.status', absolute: false));
+
+        $session = OnboardingSession::query()
+            ->where('global_user_id', $user->global_id)
+            ->first();
+
+        $this->assertNotNull($session);
+        $this->assertSame('Pool Pusat Bintang', $session->base_name);
+        $this->assertSame('HQ-01', $session->base_code);
+        $this->assertSame('Jl. Sudirman No. 10', $session->base_address);
+        $this->assertSame('Jakarta Selatan', $session->base_city);
+        $this->assertSame('DKI Jakarta', $session->base_province);
+        $this->assertSame('081234567890', $session->base_phone);
+        $this->assertSame('pool@bintang.test', $session->base_email);
+        $this->assertSame('07:00', $session->base_opens_at);
+        $this->assertSame('22:00', $session->base_closes_at);
+        $this->assertSame(25, $session->base_vehicle_capacity);
+    }
+
     public function test_status_page_is_shown_while_provisioning(): void
     {
         $user = User::factory()->create();
