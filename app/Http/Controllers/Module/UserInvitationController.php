@@ -67,4 +67,36 @@ class UserInvitationController extends Controller
 
         return back()->with('success', __('users.messages.invitation_sent', ['email' => $email]));
     }
+
+    /**
+     * Resend an existing pending invitation.
+     */
+    public function resend(Invitation $invitation): RedirectResponse
+    {
+        abort_unless(tenancy()->initialized, 404);
+        abort_unless($invitation->tenant_id === tenant('id'), 403);
+        abort_if($invitation->accepted_at !== null, 422, __('users.messages.invitation_already_accepted'));
+
+        $invitation->update([
+            'token' => Str::random(64),
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        Notification::route('mail', $invitation->email)->notify(new TenantInvitationNotification($invitation));
+
+        return back()->with('success', __('users.messages.invitation_resent', ['email' => $invitation->email]));
+    }
+
+    /**
+     * Revoke / cancel a pending invitation.
+     */
+    public function destroy(Invitation $invitation): RedirectResponse
+    {
+        abort_unless(tenancy()->initialized, 404);
+        abort_unless($invitation->tenant_id === tenant('id'), 403);
+
+        $invitation->delete();
+
+        return back()->with('success', __('users.messages.invitation_revoked'));
+    }
 }

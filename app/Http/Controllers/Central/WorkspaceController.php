@@ -45,8 +45,24 @@ class WorkspaceController extends Controller
                 ];
             });
 
+        $invitations = \App\Models\Invitation::query()
+            ->where('email', $request->user()->email)
+            ->pending()
+            ->with(['tenant.domains'])
+            ->latest()
+            ->get()
+            ->map(fn (\App\Models\Invitation $inv): array => [
+                'id' => $inv->id,
+                'token' => $inv->token,
+                'tenant_name' => $inv->tenant?->name ?? 'Workspace',
+                'role_slug' => $inv->role_slug,
+                'expires_at' => $inv->expires_at->toIso8601String(),
+                'accept_url' => route('central.invitations.show', $inv->token),
+            ]);
+
         return Inertia::render('Central/Workspaces', [
             'workspaces' => $workspaces,
+            'invitations' => $invitations,
             'settings' => Setting::getPublic()
                 ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
                 ->toArray(),

@@ -162,6 +162,8 @@ Route::middleware('auth')->group(function () {
 
         // Module User Management Routes
         Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');
+        Route::post('/users/invitations/{invitation}/resend', [\App\Http\Controllers\Module\UserInvitationController::class, 'resend'])->middleware('permission:users,create')->name('users.invitations.resend');
+        Route::delete('/users/invitations/{invitation}', [\App\Http\Controllers\Module\UserInvitationController::class, 'destroy'])->middleware('permission:users,create')->name('users.invitations.destroy');
         Route::get('/users', [ModuleUserController::class, 'index'])->middleware('permission:users,view')->name('users.index');
         Route::get('/users/create', [ModuleUserController::class, 'create'])->middleware('permission:users,create')->name('users.create');
         Route::post('/users', [ModuleUserController::class, 'store'])->middleware('permission:users,create')->name('users.store');

@@ -1,7 +1,9 @@
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { DEFAULT_SITE_NAME } from '@/constants/brand';
-import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Workspace {
     id: string;
@@ -16,14 +18,29 @@ interface Workspace {
     is_on_trial?: boolean;
 }
 
+interface IncomingInvitation {
+    id: number;
+    token: string;
+    tenant_name: string;
+    role_slug: string;
+    expires_at: string;
+    accept_url: string;
+}
+
 interface Props {
     workspaces: Workspace[];
+    invitations?: IncomingInvitation[];
     settings?: Record<string, string>;
 }
 
-export default function Workspaces({ workspaces, settings }: Props): JSX.Element {
+export default function Workspaces({ workspaces, invitations = [], settings }: Props): JSX.Element {
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const { auth } = usePage().props as { auth?: { user?: { email?: string; name?: string } } };
+    const [invitationToDecline, setInvitationToDecline] = useState<IncomingInvitation | null>(null);
+    const [showDeclineDialog, setShowDeclineDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const [acceptingToken, setAcceptingToken] = useState<string | null>(null);
 
     const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
     const siteLogo = settings?.['site.logo'];
@@ -90,6 +107,85 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                             </p>
                         )}
                     </div>
+
+                    {/* Incoming Invitations Banner */}
+                    {invitations.length > 0 && (
+                        <div className="mb-8 rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/90 p-6 shadow-sm shadow-indigo-100 backdrop-blur-sm">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20 text-lg">
+                                    ✉️
+                                </span>
+                                <div>
+                                    <h2 className="font-display text-lg font-bold text-slate-900">
+                                        {t('central.invitation.incoming_title')}
+                                    </h2>
+                                    <p className="text-xs text-slate-600">
+                                        {t('central.invitation.incoming_desc', { count: invitations.length })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                                {invitations.map((inv) => {
+                                    const isAccepting = acceptingToken === inv.token;
+
+                                    return (
+                                        <div
+                                            key={inv.id}
+                                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-sm"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-bold text-slate-900 text-sm">
+                                                        {inv.tenant_name}
+                                                    </span>
+                                                    <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                                                        {t('central.invitation.incoming_role', { role: inv.role_slug })}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    {t('central.invitation.incoming_expires', {
+                                                        date: new Date(inv.expires_at).toLocaleDateString(localeTag, {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                        }),
+                                                    })}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={isAccepting || processing}
+                                                    onClick={() => {
+                                                        setAcceptingToken(inv.token);
+                                                        router.post(`/invitations/${inv.token}`, {}, {
+                                                            onFinish: () => setAcceptingToken(null),
+                                                        });
+                                                    }}
+                                                    className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 disabled:opacity-50 transition"
+                                                >
+                                                    {isAccepting ? '...' : t('central.invitation.btn_accept')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isAccepting || processing}
+                                                    onClick={() => {
+                                                        setInvitationToDecline(inv);
+                                                        setShowDeclineDialog(true);
+                                                    }}
+                                                    className="inline-flex items-center justify-center rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 transition"
+                                                >
+                                                    {t('central.invitation.btn_decline')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {workspaces.length > 0 ? (
                         <ul className="space-y-3">
@@ -222,6 +318,36 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                     )}
                 </div>
             </main>
+
+            <ConfirmDeleteDialog
+                show={showDeclineDialog}
+                onClose={() => {
+                    setShowDeclineDialog(false);
+                    setInvitationToDecline(null);
+                }}
+                onConfirm={() => {
+                    if (!invitationToDecline) return;
+                    setProcessing(true);
+                    router.post(
+                        `/invitations/${invitationToDecline.token}/decline`,
+                        {},
+                        {
+                            onSuccess: () => {
+                                setShowDeclineDialog(false);
+                                setInvitationToDecline(null);
+                            },
+                            onFinish: () => setProcessing(false),
+                        }
+                    );
+                }}
+                processing={processing}
+                title={t('central.invitation.decline_confirm_title')}
+                message={
+                    invitationToDecline
+                        ? t('central.invitation.decline_confirm_message', { tenant: invitationToDecline.tenant_name })
+                        : ''
+                }
+            />
         </div>
     );
 }

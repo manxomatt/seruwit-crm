@@ -91,6 +91,22 @@ class InvitationController extends Controller
         return redirect()->route('central.workspaces.enter', $tenant);
     }
 
+    /**
+     * Decline an invitation: remove the pending invitation record.
+     */
+    public function decline(Request $request, string $token): RedirectResponse
+    {
+        $invitation = $this->pendingInvitation($token);
+
+        if ($request->user() && $request->user()->email !== $invitation->email) {
+            abort(403);
+        }
+
+        $invitation->delete();
+
+        return redirect()->route('central.workspaces.index')->with('success', __('central.invitation.declined_success'));
+    }
+
     private function pendingInvitation(string $token): Invitation
     {
         return Invitation::query()

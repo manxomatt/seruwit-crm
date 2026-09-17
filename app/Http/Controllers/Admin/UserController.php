@@ -73,10 +73,17 @@ class UserController extends Controller
 
         $roles = Role::query()->orderBy('name')->get(['id', 'name', 'slug']);
 
+        $pendingInvitations = \App\Models\Invitation::query()
+            ->where('tenant_id', tenant('id'))
+            ->pending()
+            ->latest()
+            ->get(['id', 'email', 'role_slug', 'expires_at', 'created_at']);
+
         return Inertia::render('Modules/Users/Index', [
             'users' => $users,
             'stats' => $stats,
             'roles' => $roles,
+            'pendingInvitations' => $pendingInvitations,
             'filters' => [
                 'search' => request('search'),
                 'status' => $statusFilter,

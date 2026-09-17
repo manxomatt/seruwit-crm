@@ -62,16 +62,25 @@ interface Stats {
     admin_users: number;
 }
 
+interface PendingInvitation {
+    id: number;
+    email: string;
+    role_slug: string;
+    expires_at: string;
+    created_at: string;
+}
+
 interface Props {
     users: PaginatedUsers;
     stats: Stats;
     roles?: Role[];
+    pendingInvitations?: PendingInvitation[];
     filters: Filters;
     can?: { create: boolean };
     quota?: { max: number | null; current: number; reached: boolean };
 }
 
-export default function Index({ users, stats, roles = [], filters, can, quota }: Props): JSX.Element {
+export default function Index({ users, stats, roles = [], pendingInvitations = [], filters, can, quota }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -81,7 +90,10 @@ export default function Index({ users, stats, roles = [], filters, can, quota }:
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [invitationToRevoke, setInvitationToRevoke] = useState<PendingInvitation | null>(null);
+    const [showRevokeDialog, setShowRevokeDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [resendingId, setResendingId] = useState<number | null>(null);
 
     const EyeIcon = () => (
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -170,6 +182,39 @@ export default function Index({ users, stats, roles = [], filters, can, quota }:
         setProcessing(true);
         router.delete(prefixedRoute('users.destroy', userToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessing(false),
+        });
+    };
+
+    const handleResendInvitation = (invitation: PendingInvitation) => {
+        setResendingId(invitation.id);
+        router.post(
+            prefixedRoute('users.invitations.resend', invitation.id),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setResendingId(null),
+            }
+        );
+    };
+
+    const openRevokeDialog = (invitation: PendingInvitation) => {
+        setInvitationToRevoke(invitation);
+        setShowRevokeDialog(true);
+    };
+
+    const closeRevokeDialog = () => {
+        setShowRevokeDialog(false);
+        setInvitationToRevoke(null);
+    };
+
+    const confirmRevoke = () => {
+        if (!invitationToRevoke) return;
+
+        setProcessing(true);
+        router.delete(prefixedRoute('users.invitations.destroy', invitationToRevoke.id), {
+            preserveScroll: true,
+            onSuccess: () => closeRevokeDialog(),
             onFinish: () => setProcessing(false),
         });
     };
@@ -715,6 +760,111 @@ export default function Index({ users, stats, roles = [], filters, can, quota }:
                         </div>
                     </div>
                 )}
+
+                {/* Pending Invitations Section */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    ✉️ {t('users.invite.pending_title')}
+                                </h3>
+                                {pendingInvitations.length > 0 && (
+                                    <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400">
+                                        {t('users.invite.pending_badge', { count: pendingInvitations.length })}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">
+                                {t('users.invite.pending_desc')}
+                            </p>
+                        </div>
+                        {can?.create !== false && (
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setShowInviteModal(true)}
+                                className="!rounded-xl text-xs shadow-sm self-start sm:self-auto flex items-center gap-1.5"
+                            >
+                                <span>✉️</span>
+                                <span>{t('users.invite.button')}</span>
+                            </SecondaryButton>
+                        )}
+                    </div>
+
+                    {pendingInvitations.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-slate-400">
+                            {t('users.invite.no_pending')}
+                        </div>
+                    ) : (
+                        <div className="mt-4 overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase tracking-wider">
+                                            {t('users.invite.col_email')}
+                                        </th>
+                                        <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase tracking-wider">
+                                            {t('users.invite.col_role')}
+                                        </th>
+                                        <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase tracking-wider">
+                                            {t('users.invite.col_sent_at')}
+                                        </th>
+                                        <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase tracking-wider">
+                                            {t('users.invite.col_expires_at')}
+                                        </th>
+                                        <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase tracking-wider">
+                                            {t('common.actions')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-900 dark:text-white">
+                                    {pendingInvitations.map((inv) => {
+                                        const role = roles.find((r) => r.slug === inv.role_slug);
+                                        const isResending = resendingId === inv.id;
+
+                                        return (
+                                            <tr key={inv.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td className="px-4 py-3 whitespace-nowrap font-medium text-slate-900 dark:text-white">
+                                                    {inv.email}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(inv.role_slug)}`}>
+                                                        {role?.name || inv.role_slug}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-slate-500">
+                                                    {formatDate(inv.created_at)}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-amber-600 dark:text-amber-400 font-medium">
+                                                    {formatDate(inv.expires_at)}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-right space-x-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleResendInvitation(inv)}
+                                                        disabled={isResending}
+                                                        className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        <span>🔄</span>
+                                                        <span>{isResending ? '...' : t('users.invite.resend')}</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openRevokeDialog(inv)}
+                                                        className="inline-flex items-center gap-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
+                                                    >
+                                                        <span>✕</span>
+                                                        <span>{t('users.invite.revoke')}</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <ConfirmDeleteDialog
@@ -727,6 +877,19 @@ export default function Index({ users, stats, roles = [], filters, can, quota }:
                     userToDelete
                         ? t('users.delete_confirm.message', { name: userToDelete.name, email: userToDelete.email })
                         : t('users.delete_confirm.message_generic')
+                }
+            />
+
+            <ConfirmDeleteDialog
+                show={showRevokeDialog}
+                onClose={closeRevokeDialog}
+                onConfirm={confirmRevoke}
+                processing={processing}
+                title={t('users.invite.revoke_confirm_title')}
+                message={
+                    invitationToRevoke
+                        ? t('users.invite.revoke_confirm_message', { email: invitationToRevoke.email })
+                        : ''
                 }
             />
 

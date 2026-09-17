@@ -161,6 +161,7 @@ Route::domain($centralDomain)
         // Invitation acceptance (guest-accessible; account may not exist yet)
         Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
         Route::post('/invitations/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
+        Route::post('/invitations/{token}/decline', [InvitationController::class, 'decline'])->name('invitations.decline');
 
         // A reseller's own public pitch page, shared under their referral code.
         Route::get('/r/{code}', [ResellerLandingPageController::class, 'show'])->name('reseller.landing');
@@ -233,6 +234,8 @@ Route::domain($centralDomain)
 
                     // Module User Management Routes
                     Route::post('/users/invite', [ModuleUserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');
+                    Route::post('/users/invitations/{invitation}/resend', [ModuleUserInvitationController::class, 'resend'])->middleware('permission:users,create')->name('users.invitations.resend');
+                    Route::delete('/users/invitations/{invitation}', [ModuleUserInvitationController::class, 'destroy'])->middleware('permission:users,create')->name('users.invitations.destroy');
                     Route::get('/users', [ModuleUserController::class, 'index'])->middleware('permission:users,view')->name('users.index');
                     Route::get('/users/create', [ModuleUserController::class, 'create'])->middleware('permission:users,create')->name('users.create');
                     Route::post('/users', [ModuleUserController::class, 'store'])->middleware('permission:users,create')->name('users.store');
