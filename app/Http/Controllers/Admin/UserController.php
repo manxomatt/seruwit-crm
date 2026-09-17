@@ -126,32 +126,42 @@ class UserController extends Controller
         $validated = $request->validated();
         $validated['password'] = Hash::make($validated['password']);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-        ]);
-
-        if (isset($validated['roles'])) {
-            $user->syncRoles($validated['roles']);
-        }
-
-        $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
-        $this->syncUserFleetBases($user, $validated['roles'] ?? [], $validated['fleet_base_ids'] ?? []);
-
-        // Create user profile if any profile data is provided
-        if (
-            ! empty($validated['first_name']) ||
-            ! empty($validated['last_name']) ||
-            ! empty($validated['phone_number']) ||
-            ! empty($validated['avatar_url'])
-        ) {
-            $user->profile()->create([
-                'first_name' => $validated['first_name'] ?? null,
-                'last_name' => $validated['last_name'] ?? null,
-                'phone_number' => $validated['phone_number'] ?? null,
-                'avatar_url' => $validated['avatar_url'] ?? null,
+        try {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
             ]);
+
+            if (isset($validated['roles'])) {
+                $user->syncRoles($validated['roles']);
+            }
+
+            $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
+            $this->syncUserFleetBases($user, $validated['roles'] ?? [], $validated['fleet_base_ids'] ?? []);
+
+            // Create user profile if any profile data is provided
+            if (
+                ! empty($validated['first_name']) ||
+                ! empty($validated['last_name']) ||
+                ! empty($validated['phone_number']) ||
+                ! empty($validated['avatar_url'])
+            ) {
+                $user->profile()->create([
+                    'first_name' => $validated['first_name'] ?? null,
+                    'last_name' => $validated['last_name'] ?? null,
+                    'phone_number' => $validated['phone_number'] ?? null,
+                    'avatar_url' => $validated['avatar_url'] ?? null,
+                ]);
+            }
+        } catch (\Illuminate\Database\UniqueConstraintViolationException|\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'users_email_unique') || $e->getCode() === '23505') {
+                throw ValidationException::withMessages([
+                    'email' => __('users.validation.email_central_exists'),
+                ]);
+            }
+
+            throw $e;
         }
 
         return redirect()->route($this->getRoutePrefix().'.users.index')
@@ -211,29 +221,39 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'] ?? $user->password,
-        ]);
+        try {
+            $user->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'] ?? $user->password,
+            ]);
 
-        if (isset($validated['roles'])) {
-            $user->syncRoles($validated['roles']);
+            if (isset($validated['roles'])) {
+                $user->syncRoles($validated['roles']);
+            }
+
+            $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
+            $this->syncUserFleetBases($user, $validated['roles'] ?? [], $validated['fleet_base_ids'] ?? []);
+
+            // Update or create user profile
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'first_name' => $validated['first_name'] ?? null,
+                    'last_name' => $validated['last_name'] ?? null,
+                    'phone_number' => $validated['phone_number'] ?? null,
+                    'avatar_url' => $validated['avatar_url'] ?? null,
+                ]
+            );
+        } catch (\Illuminate\Database\UniqueConstraintViolationException|\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'users_email_unique') || $e->getCode() === '23505') {
+                throw ValidationException::withMessages([
+                    'email' => __('users.validation.email_central_exists'),
+                ]);
+            }
+
+            throw $e;
         }
-
-        $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
-        $this->syncUserFleetBases($user, $validated['roles'] ?? [], $validated['fleet_base_ids'] ?? []);
-
-        // Update or create user profile
-        $user->profile()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'first_name' => $validated['first_name'] ?? null,
-                'last_name' => $validated['last_name'] ?? null,
-                'phone_number' => $validated['phone_number'] ?? null,
-                'avatar_url' => $validated['avatar_url'] ?? null,
-            ]
-        );
 
         return redirect()->route($this->getRoutePrefix().'.users.index')
             ->with('success', __('users.messages.updated'));

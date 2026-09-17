@@ -116,6 +116,7 @@ return [
         'email_required' => 'The email address is required.',
         'email_valid' => 'Please enter a valid email address.',
         'email_unique' => 'This email address is already in use.',
+        'email_central_exists' => 'This email address is already registered on the platform. Please use the Invite User feature to add existing accounts.',
         'password_required' => 'The password is required.',
         'password_confirmed' => 'The password confirmation does not match.',
         'roles_array' => 'Roles must be an array.',

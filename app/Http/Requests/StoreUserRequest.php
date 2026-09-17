@@ -91,6 +91,13 @@ class StoreUserRequest extends FormRequest
                 $limit = (int) $tenant->planLimit('max_users');
                 $validator->errors()->add('email', __('users.messages.limit_reached_users', ['limit' => $limit]));
             }
+
+            if (! $validator->errors()->has('email') && $this->filled('email')) {
+                $email = (string) $this->input('email');
+                if (\App\Models\CentralUser::query()->where('email', $email)->exists()) {
+                    $validator->errors()->add('email', __('users.validation.email_central_exists'));
+                }
+            }
         });
     }
 }

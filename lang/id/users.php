@@ -116,6 +116,7 @@ return [
         'email_required' => 'Alamat email wajib diisi.',
         'email_valid' => 'Masukkan alamat email yang valid.',
         'email_unique' => 'Alamat email ini sudah digunakan.',
+        'email_central_exists' => 'Alamat email ini sudah terdaftar di platform. Gunakan fitur Undang Pengguna untuk menambahkan akun yang sudah ada.',
         'password_required' => 'Kata sandi wajib diisi.',
         'password_confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         'roles_array' => 'Peran harus berupa array.',

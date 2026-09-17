@@ -89,6 +89,18 @@ class UpdateUserRequest extends FormRequest
                     array_map('intval', $this->input('fleet_base_ids', [])),
                 );
             }
+
+            if (! $validator->errors()->has('email') && $this->filled('email')) {
+                $targetUser = $this->route('user');
+                $email = (string) $this->input('email');
+                $query = \App\Models\CentralUser::query()->where('email', $email);
+                if ($targetUser instanceof \App\Models\User && ! blank($targetUser->global_id)) {
+                    $query->where('global_id', '!=', $targetUser->global_id);
+                }
+                if ($query->exists()) {
+                    $validator->errors()->add('email', __('users.validation.email_central_exists'));
+                }
+            }
         });
     }
 }
