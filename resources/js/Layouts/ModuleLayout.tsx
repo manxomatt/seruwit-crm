@@ -620,6 +620,13 @@ export default function ModuleLayout({ header, children }: Props) {
 
     const moduleLabel = (module: string): string => t(`modules.${module}`, undefined, moduleDisplayNames[module] || module);
 
+    const hasModulePermission = (module: string, action = 'view'): boolean => {
+        if (!user) return false;
+        if (isAdmin) return true;
+        const perms = user.permissions?.[module];
+        return Array.isArray(perms) && perms.includes(action);
+    };
+
     // Build navigation from the user's permissions in the active schema.
     const navigation = useMemo(() => {
         const dashboardRoute = getDashboardRoute(user);
@@ -1320,7 +1327,7 @@ export default function ModuleLayout({ header, children }: Props) {
                                     </MenuItem>
 
                                     {/* Subscription — tenant only */}
-                                    {!isCentral && routeExists('module.subscription.index') && (
+                                    {!isCentral && routeExists('module.subscription.index') && hasModulePermission('subscription', 'view') && (
                                         <MenuItem>
                                             <Link
                                                 href={route('module.subscription.index')}
@@ -1340,7 +1347,7 @@ export default function ModuleLayout({ header, children }: Props) {
                                     )}
 
                                     {/* System Settings — if available */}
-                                    {routeExists('module.settings.index') && (
+                                    {routeExists('module.settings.index') && hasModulePermission('settings', 'view') && (
                                         <MenuItem>
                                             <Link
                                                 href={route('module.settings.index')}
