@@ -3,6 +3,9 @@
 return [
     'dashboard' => 'Dashboard',
     'profile' => 'Profil',
+    'active_workspace' => 'Workspace Aktif',
+    'switch_workspace' => 'Pindah Workspace',
+    'central_console' => 'Central Platform',
     'log_out' => 'Keluar',
     'language' => 'Bahasa',
     'notifications' => 'Notifikasi',

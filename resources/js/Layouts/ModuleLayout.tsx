@@ -606,7 +606,9 @@ export default function ModuleLayout({ header, children }: Props) {
     usePoll(60000, { only: ['notificationCenter', 'pendingPaymentOrdersCount', 'pendingRentalApprovalsCount'] });
 
     // No current-tenant domain context means we are on the central domain (the SaaS control plane).
-    const isCentral = !pageProps.currentTenant;
+    const currentTenant = pageProps.currentTenant as { id: string; name: string } | null;
+    const workspacesUrl = (pageProps.workspacesUrl as string | undefined) || '/workspaces';
+    const isCentral = !currentTenant;
     const isAdmin = user?.is_admin || false;
     const isReseller = user?.is_reseller || false;
     const theme = getThemeColors();
@@ -1042,14 +1044,32 @@ export default function ModuleLayout({ header, children }: Props) {
                             {renderNavigation()}
                         </SidebarNavScroll>
                         {/* Mobile sidebar user section */}
-                        <div className={`shrink-0 border-t ${theme.border} p-4`}>
-                            <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
-                                <UserAvatar user={user} size="md" />
-                                <div className="ml-3">
-                                    <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
-                                    <p className={`text-xs ${theme.text}`}>{user?.email || 'user@example.com'}</p>
-                                </div>
-                            </Link>
+                        <div className={`shrink-0 border-t ${theme.border} p-3.5 space-y-2`}>
+                            <div className="flex items-center justify-between">
+                                <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity min-w-0 flex-1">
+                                    <UserAvatar user={user} size="md" />
+                                    <div className="ml-3 min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-white truncate">{user?.name || 'User'}</p>
+                                        <p className={`text-xs ${theme.text} truncate`}>{user?.email || 'user@example.com'}</p>
+                                    </div>
+                                </Link>
+                            </div>
+                            {/* Workspace indicator with quick switch link */}
+                            <a
+                                href={workspacesUrl}
+                                className="flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/15 px-2.5 py-1.5 text-xs text-white transition group"
+                                title={t('shell.switch_workspace')}
+                            >
+                                <span className="flex items-center gap-1.5 truncate">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
+                                    <span className="font-semibold truncate">
+                                        {currentTenant ? currentTenant.name : t('shell.central_console')}
+                                    </span>
+                                </span>
+                                <span className="text-[11px] opacity-70 group-hover:opacity-100 shrink-0 ml-1">
+                                    🔄
+                                </span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -1072,14 +1092,32 @@ export default function ModuleLayout({ header, children }: Props) {
                         {renderNavigation()}
                     </SidebarNavScroll>
                     {/* Desktop sidebar user section (kiri bawah) */}
-                    <div className={`shrink-0 border-t ${theme.border} p-4`}>
-                        <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
-                            <UserAvatar user={user} size="md" />
-                            <div className="ml-3">
-                                <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
-                                <p className={`text-xs ${theme.text}`}>{user?.email || 'user@example.com'}</p>
-                            </div>
-                        </Link>
+                    <div className={`shrink-0 border-t ${theme.border} p-3.5 space-y-2`}>
+                        <div className="flex items-center justify-between">
+                            <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity min-w-0 flex-1">
+                                <UserAvatar user={user} size="md" />
+                                <div className="ml-3 min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-white truncate">{user?.name || 'User'}</p>
+                                    <p className={`text-xs ${theme.text} truncate`}>{user?.email || 'user@example.com'}</p>
+                                </div>
+                            </Link>
+                        </div>
+                        {/* Workspace indicator with quick switch link */}
+                        <a
+                            href={workspacesUrl}
+                            className="flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/15 px-2.5 py-1.5 text-xs text-white transition group"
+                            title={t('shell.switch_workspace')}
+                        >
+                            <span className="flex items-center gap-1.5 truncate">
+                                <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
+                                <span className="font-semibold truncate">
+                                    {currentTenant ? currentTenant.name : t('shell.central_console')}
+                                </span>
+                            </span>
+                            <span className="text-[11px] opacity-70 group-hover:opacity-100 shrink-0 ml-1">
+                                🔄
+                            </span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1199,14 +1237,24 @@ export default function ModuleLayout({ header, children }: Props) {
                             <Menu as="div" className="relative">
                                 <MenuButton className="-m-1.5 flex items-center gap-2 rounded-2xl p-1.5 transition hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                                     <UserAvatar user={user} size="sm" />
-                                    <span className="hidden lg:flex lg:items-center">
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                    <span className="hidden lg:flex lg:flex-col lg:items-start text-left">
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                                             {user?.name || t('shell.user')}
                                         </span>
-                                        <svg className="ml-1.5 h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                                        </svg>
+                                        {currentTenant ? (
+                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 dark:text-teal-400 leading-tight">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                                                <span className="truncate max-w-[110px]">{currentTenant.name}</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-medium text-slate-400 leading-tight">
+                                                {t('shell.central_console')}
+                                            </span>
+                                        )}
                                     </span>
+                                    <svg className="ml-0.5 h-4 w-4 text-slate-400 hidden lg:block" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                                    </svg>
                                 </MenuButton>
 
                                 <MenuItems
@@ -1224,6 +1272,35 @@ export default function ModuleLayout({ header, children }: Props) {
                                                 </span>
                                             </div>
                                             <p className="truncate text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{user?.email || ''}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Active Tenant / Workspace Switcher */}
+                                    <div className="mt-2 rounded-xl border border-teal-200/70 bg-teal-50/70 dark:border-teal-900/60 dark:bg-teal-950/30 p-2.5">
+                                        <div className="flex items-center justify-between gap-1 text-[10px] font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+                                            <span>{t('shell.active_workspace')}</span>
+                                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        </div>
+                                        <div className="mt-1 flex items-center justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                    {currentTenant ? currentTenant.name : t('shell.central_console')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 pt-2 border-t border-teal-200/60 dark:border-teal-900/50">
+                                            <MenuItem>
+                                                <a
+                                                    href={workspacesUrl}
+                                                    className="flex items-center justify-between rounded-lg bg-teal-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition"
+                                                >
+                                                    <span className="flex items-center gap-1.5">
+                                                        <span>🔄</span>
+                                                        <span>{t('shell.switch_workspace')}</span>
+                                                    </span>
+                                                    <span className="text-[10px] opacity-80">↗</span>
+                                                </a>
+                                            </MenuItem>
                                         </div>
                                     </div>
 

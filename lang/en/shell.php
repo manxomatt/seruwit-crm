@@ -3,6 +3,9 @@
 return [
     'dashboard' => 'Dashboard',
     'profile' => 'Profile',
+    'active_workspace' => 'Active Workspace',
+    'switch_workspace' => 'Switch Workspace',
+    'central_console' => 'Central Platform',
     'log_out' => 'Log Out',
     'language' => 'Language',
     'notifications' => 'Notifications',

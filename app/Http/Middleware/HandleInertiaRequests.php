@@ -119,6 +119,7 @@ class HandleInertiaRequests extends Middleware
                 'id' => tenant('id'),
                 'name' => tenant('name'),
             ] : null,
+            'workspacesUrl' => rtrim(config('app.url'), '/').'/workspaces',
             'subscriptionSummary' => fn () => $this->resolveSubscriptionSummary(),
         ];
     }
