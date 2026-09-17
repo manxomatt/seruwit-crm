@@ -47,7 +47,7 @@ export default function Create({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm('module.users.create', {
         name: '',
         email: '',
         password: '',

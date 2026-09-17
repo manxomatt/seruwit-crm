@@ -74,7 +74,7 @@ export default function Edit({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const { data, setData, patch, processing, errors } = useForm({
+    const { data, setData, patch, processing, errors } = useForm(`module.users.edit.${user.id}`, {
         name: user.name,
         email: user.email,
         password: '',

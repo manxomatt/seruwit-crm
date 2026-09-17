@@ -22,7 +22,7 @@ export default function LanguageSwitcher({ className = '', compact = false }: Pr
 
         router.patch(route('locale.update'), { locale: next }, {
             preserveScroll: true,
-            preserveState: false,
+            preserveState: true,
         });
     };
 

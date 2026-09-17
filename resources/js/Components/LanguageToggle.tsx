@@ -32,7 +32,7 @@ export default function LanguageToggle({ className = '' }: { className?: string 
 
         router.patch(route('locale.update'), { locale: code }, {
             preserveScroll: true,
-            preserveState: false,
+            preserveState: true,
         });
     };
 
