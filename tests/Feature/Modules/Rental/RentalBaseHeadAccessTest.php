@@ -130,11 +130,11 @@ class RentalBaseHeadAccessTest extends TestCase
         $head = $this->createHeadUser([$baseA->id]);
 
         $this->actingAs($head)
-            ->get(route('module.rental.checkout.page', $rentalConfirmed))
+            ->get(route('module.rental.checkout_page', $rentalConfirmed))
             ->assertForbidden();
 
         $this->actingAs($head)
-            ->get(route('module.rental.return.page', $rentalActive))
+            ->get(route('module.rental.return_page', $rentalActive))
             ->assertForbidden();
     }
 
@@ -265,7 +265,7 @@ class RentalBaseHeadAccessTest extends TestCase
 
         // Can access checkout page
         $this->actingAs($head)
-            ->get(route('module.rental.checkout.page', $rental))
+            ->get(route('module.rental.checkout_page', $rental))
             ->assertOk();
 
         // Can checkout
@@ -281,7 +281,7 @@ class RentalBaseHeadAccessTest extends TestCase
 
         // Can access return page
         $this->actingAs($head)
-            ->get(route('module.rental.return.page', $rental))
+            ->get(route('module.rental.return_page', $rental))
             ->assertOk();
     }
 
