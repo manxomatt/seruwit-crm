@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Rental\Models\Rental;
 
 class RentalUsageCalendar
@@ -67,11 +68,11 @@ class RentalUsageCalendar
             ->values()
             ->all();
 
-        $vehicles = Vehicle::query()
+        $vehicles = AccessibleFleetBases::scopeVehicles(Vehicle::query())
             ->orderBy('name')
             ->get(['id', 'name', 'plate_number', 'type', 'rental_class', 'status', 'photo_url']);
 
-        $rentals = Rental::query()
+        $rentals = AccessibleFleetBases::scopeRentals(Rental::query())
             ->with('partner:id,name')
             ->whereIn('status', [
                 Rental::STATUS_DRAFT,

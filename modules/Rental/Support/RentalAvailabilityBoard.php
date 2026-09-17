@@ -5,6 +5,7 @@ namespace Modules\Rental\Support;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Rental\Models\Rental;
 
 class RentalAvailabilityBoard
@@ -43,11 +44,11 @@ class RentalAvailabilityBoard
         $fromDate = Carbon::parse($from)->toDateString();
         $toDate = Carbon::parse($to)->toDateString();
 
-        $vehicles = Vehicle::query()
+        $vehicles = AccessibleFleetBases::scopeVehicles(Vehicle::query())
             ->orderBy('name')
             ->get(['id', 'name', 'plate_number', 'type', 'status', 'photo_url', 'rental_class']);
 
-        $rentals = Rental::query()
+        $rentals = AccessibleFleetBases::scopeRentals(Rental::query())
             ->with('partner:id,name')
             ->whereIn('status', [
                 Rental::STATUS_DRAFT,

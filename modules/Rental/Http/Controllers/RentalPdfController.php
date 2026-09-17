@@ -15,6 +15,8 @@ class RentalPdfController extends Controller
 {
     public function contract(Rental $rental): Response|RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         if (in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CANCELLED], true)) {
             return back()->with('error', __('rental.errors.pdf_contract_confirmed_only'));
         }
@@ -44,6 +46,8 @@ class RentalPdfController extends Controller
 
     public function handover(Rental $rental): Response|RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         if (! in_array($rental->status, [
             Rental::STATUS_ACTIVE,
             Rental::STATUS_RETURNED,
@@ -98,5 +102,12 @@ class RentalPdfController extends Controller
         }
 
         return $labels;
+    }
+
+    private function ensureAccessibleRental(Rental $rental): void
+    {
+        if (! \Modules\Fleet\Support\AccessibleFleetBases::allowsRental(auth()->user(), $rental)) {
+            abort(403, __('rental.errors.rental_access_denied'));
+        }
     }
 }

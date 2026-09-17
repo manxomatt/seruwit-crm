@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\PayRentalInvoicesRequest;
 use Modules\Rental\Http\Requests\ReceiveRentalDepositRequest;
@@ -47,11 +48,20 @@ class RentalActionController extends Controller
         return 'module';
     }
 
+    protected function ensureAccessibleRental(Rental $rental): void
+    {
+        if (! AccessibleFleetBases::allowsRental(request()->user(), $rental)) {
+            abort(403, __('rental.errors.rental_access_denied'));
+        }
+    }
+
     /**
      * Confirm a draft / pending rental — blocks the vehicle and raises the base invoice.
      */
     public function confirm(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, Rental::confirmableStatuses(), true),
             422,
@@ -90,6 +100,8 @@ class RentalActionController extends Controller
      */
     public function payDepositOnline(Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_unless(
             class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class),
             404,
@@ -107,6 +119,8 @@ class RentalActionController extends Controller
      */
     public function checkout(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, __('rental.errors.checkout_confirmed_only'));
 
         if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
@@ -184,6 +198,8 @@ class RentalActionController extends Controller
      */
     public function return(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, __('rental.errors.return_active_only'));
 
         $request->validate([
@@ -271,6 +287,8 @@ class RentalActionController extends Controller
      */
     public function receiveDeposit(ReceiveRentalDepositRequest $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, [
                 Rental::STATUS_PENDING,
@@ -305,6 +323,8 @@ class RentalActionController extends Controller
      */
     public function settleDeposit(SettleRentalDepositRequest $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true),
             422,
@@ -320,6 +340,8 @@ class RentalActionController extends Controller
 
     public function payInvoices(PayRentalInvoicesRequest $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         $data = $request->validated();
         $allocations = collect($data['allocations'])->map(fn (array $row): array => [
             'invoice_id' => (int) $row['invoice_id'],
@@ -374,6 +396,8 @@ class RentalActionController extends Controller
      */
     public function complete(Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if($rental->status !== Rental::STATUS_RETURNED, 422, __('rental.errors.complete_returned_only'));
         abort_if(! $rental->isDepositSettled(), 422, __('rental.errors.complete_deposit_unsettled'));
 
@@ -392,6 +416,8 @@ class RentalActionController extends Controller
      */
     public function cancel(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, Rental::cancellableStatuses(), true),
             422,
@@ -423,6 +449,8 @@ class RentalActionController extends Controller
      */
     public function markNoShow(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         $request->validate([
             'charge_fee' => ['sometimes', 'boolean'],
             'cancelled_reason' => ['nullable', 'string', 'max:500'],
@@ -446,6 +474,8 @@ class RentalActionController extends Controller
      */
     public function markFeePaid(Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         try {
             $this->confirmation->markFeePaid($rental);
         } catch (ValidationException $e) {
@@ -460,6 +490,8 @@ class RentalActionController extends Controller
      */
     public function extend(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         $request->validate([
             'new_end_date' => ['required', 'date', 'after:end_date'],
             'notes' => ['nullable', 'string'],
@@ -480,6 +512,8 @@ class RentalActionController extends Controller
 
     public function approveExtensionRequest(Request $request, Rental $rental, RentalExtensionRequest $extensionRequest): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_unless((int) $extensionRequest->rental_id === (int) $rental->id, 404);
 
         $data = $request->validate([
@@ -501,6 +535,8 @@ class RentalActionController extends Controller
 
     public function rejectExtensionRequest(Request $request, Rental $rental, RentalExtensionRequest $extensionRequest): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_unless((int) $extensionRequest->rental_id === (int) $rental->id, 404);
 
         $data = $request->validate([
@@ -525,6 +561,8 @@ class RentalActionController extends Controller
      */
     public function swapVehicle(SwapRentalVehicleRequest $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, __('rental.errors.swap_active_only'));
 
         $toVehicle = Vehicle::query()->findOrFail($request->integer('to_vehicle_id'));
@@ -561,6 +599,8 @@ class RentalActionController extends Controller
      */
     public function storeDamage(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED]),
             422,
@@ -592,6 +632,8 @@ class RentalActionController extends Controller
      */
     public function destroyDamage(Rental $rental, RentalDamage $damage): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if($damage->rental_id !== $rental->id, 403);
 
         $damage->load('charge.invoiceLine.invoice');
@@ -627,6 +669,8 @@ class RentalActionController extends Controller
      */
     public function storeAddon(StoreRentalAddonChargeRequest $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, [
                 Rental::STATUS_CONFIRMED,
@@ -664,6 +708,8 @@ class RentalActionController extends Controller
      */
     public function destroyAddon(Rental $rental, RentalCharge $charge): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if($charge->rental_id !== $rental->id, 403);
         abort_if($charge->kind !== RentalCharge::KIND_ADDON, 422, __('rental.errors.addon_only'));
 
@@ -732,6 +778,8 @@ class RentalActionController extends Controller
      */
     public function approveDepositProof(Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_unless(
             $rental->deposit_proof_status === 'pending',
             422,
@@ -765,6 +813,8 @@ class RentalActionController extends Controller
      */
     public function rejectDepositProof(Request $request, Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_unless(
             $rental->deposit_proof_status === 'pending',
             422,

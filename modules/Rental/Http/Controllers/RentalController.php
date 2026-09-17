@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Http\Requests\StoreRentalRequest;
 use Modules\Rental\Http\Requests\StoreWalkInCustomerRequest;
@@ -34,7 +35,7 @@ class RentalController extends Controller
 
     public function index(): Response
     {
-        $rentals = Rental::query()
+        $rentals = AccessibleFleetBases::scopeRentals(Rental::query(), auth()->user())
             ->with([
                 'vehicle:id,name,plate_number,type',
                 'partner:id,name,code',
@@ -93,7 +94,7 @@ class RentalController extends Controller
         }
 
         return Inertia::render('Modules/Rental/Create', [
-            'vehicles' => Vehicle::query()
+            'vehicles' => AccessibleFleetBases::scopeVehicles(Vehicle::query(), auth()->user())
                 ->where('status', Vehicle::STATUS_ACTIVE)
                 ->orderBy('name')
                 ->get(['id', 'name', 'plate_number', 'type', 'rental_class']),
@@ -148,17 +149,22 @@ class RentalController extends Controller
             ? __('rental.messages.walk_in_created', ['name' => $partner->name])
             : __('rental.messages.walk_in_reused', ['name' => $partner->name]);
 
-        if ($request->wantsJson() || $request->expectsJson() || $request->header('X-Reservation-Wizard') === '1') {
+        if ($request->wantsJson()) {
             return response()->json([
-                'partner' => $this->partnerOption($partner),
+                'success' => true,
                 'created' => $result['created'],
+                'partner' => $this->partnerOption($partner),
                 'message' => $message,
             ]);
         }
 
-        return redirect()
-            ->route($this->getRoutePrefix().'.rental.create', ['partner_id' => $partner->id])
-            ->with('success', $message);
+        return redirect()->route($this->getRoutePrefix().'.rental.create', [
+            'partner_id' => $partner->id,
+            'vehicle_id' => $request->integer('vehicle_id') ?: null,
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'period_type' => $request->input('period_type'),
+        ])->with('success', $message);
     }
 
     public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator, RentalPriceEngine $priceEngine): RedirectResponse
@@ -186,6 +192,8 @@ class RentalController extends Controller
 
     public function show(Rental $rental, RentalShowPresenter $presenter): Response
     {
+        $this->ensureAccessibleRental($rental);
+
         return Inertia::render(
             'Modules/Rental/Show',
             $presenter->props($rental, $this->getRoutePrefix()),
@@ -194,6 +202,8 @@ class RentalController extends Controller
 
     public function edit(Rental $rental): Response
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, Rental::editableStatuses(), true),
             403,
@@ -204,7 +214,7 @@ class RentalController extends Controller
 
         return Inertia::render('Modules/Rental/Edit', [
             'rental' => $rental,
-            'vehicles' => Vehicle::query()
+            'vehicles' => AccessibleFleetBases::scopeVehicles(Vehicle::query(), auth()->user())
                 ->where('status', Vehicle::STATUS_ACTIVE)
                 ->orderBy('name')
                 ->get(['id', 'name', 'plate_number', 'type', 'rental_class']),
@@ -228,6 +238,8 @@ class RentalController extends Controller
 
     public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator, RentalPriceEngine $priceEngine): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             ! in_array($rental->status, Rental::editableStatuses(), true),
             403,
@@ -255,6 +267,8 @@ class RentalController extends Controller
 
     public function destroy(Rental $rental): RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         abort_if(
             $rental->status !== Rental::STATUS_DRAFT,
             403,
@@ -427,6 +441,8 @@ class RentalController extends Controller
      */
     public function checkoutPage(Rental $rental): Response|RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         if ($rental->status !== Rental::STATUS_CONFIRMED) {
             return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
                 ->with('error', __('rental.errors.checkout_confirmed_only'));
@@ -477,6 +493,8 @@ class RentalController extends Controller
      */
     public function returnPage(Rental $rental): Response|RedirectResponse
     {
+        $this->ensureAccessibleRental($rental);
+
         if ($rental->status !== Rental::STATUS_ACTIVE) {
             return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
                 ->with('error', __('rental.errors.return_active_only'));
@@ -497,5 +515,12 @@ class RentalController extends Controller
             'aiInspectionEnabled' => (bool) $aiInspectionEnabled,
             'aiInspectLiveUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental),
         ]);
+    }
+
+    protected function ensureAccessibleRental(Rental $rental): void
+    {
+        if (! AccessibleFleetBases::allowsRental(auth()->user(), $rental)) {
+            abort(403, __('rental.errors.rental_access_denied'));
+        }
     }
 }

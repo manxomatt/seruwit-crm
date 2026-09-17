@@ -125,6 +125,59 @@ final class AccessibleFleetBases
         return in_array((int) $vehicle->home_base_id, $ids, true);
     }
 
+    /**
+     * Scope a rental query to only include rentals belonging to accessible fleet bases.
+     *
+     * @param  Builder<\Modules\Rental\Models\Rental>  $query
+     * @return Builder<\Modules\Rental\Models\Rental>
+     */
+    public static function scopeRentals(Builder $query, ?User $user = null): Builder
+    {
+        $ids = self::ids($user);
+
+        if ($ids === null) {
+            return $query;
+        }
+
+        if ($ids === []) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->where(function (Builder $q) use ($ids): void {
+            $q->whereHas('vehicle', fn ($vq) => $vq->whereIn('home_base_id', $ids))
+                ->orWhereIn('pickup_fleet_base_id', $ids)
+                ->orWhereIn('return_fleet_base_id', $ids);
+        });
+    }
+
+    /**
+     * Check if a rental is associated with an accessible base.
+     */
+    public static function allowsRental(?User $user, mixed $rental): bool
+    {
+        $ids = self::ids($user);
+
+        if ($ids === null) {
+            return true;
+        }
+
+        if ($ids === []) {
+            return false;
+        }
+
+        if ($rental->pickup_fleet_base_id !== null && in_array((int) $rental->pickup_fleet_base_id, $ids, true)) {
+            return true;
+        }
+
+        if ($rental->return_fleet_base_id !== null && in_array((int) $rental->return_fleet_base_id, $ids, true)) {
+            return true;
+        }
+
+        $vehicle = $rental->relationLoaded('vehicle') ? $rental->vehicle : $rental->vehicle()->first();
+
+        return $vehicle !== null && self::allowsVehicle($user, $vehicle);
+    }
+
     public static function rejectIfDenied(Validator $validator, mixed $fleetBaseId, string $attribute = 'home_base_id'): void
     {
         if ($fleetBaseId === null || $fleetBaseId === '') {

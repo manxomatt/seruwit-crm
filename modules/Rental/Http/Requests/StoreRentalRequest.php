@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Requests;
 use App\Modules\Facades\Modules;
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Support\RentalRateResolver;
 
@@ -41,6 +42,12 @@ class StoreRentalRequest extends FormRequest
             $vehicle = Vehicle::find($this->vehicle_id);
 
             if (! $vehicle) {
+                return;
+            }
+
+            if (! AccessibleFleetBases::allowsVehicle($this->user(), $vehicle)) {
+                $v->errors()->add('vehicle_id', __('rental.validation.vehicle_access_denied'));
+
                 return;
             }
 

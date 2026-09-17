@@ -820,6 +820,7 @@ return [
     ],
 
     'errors' => [
+        'rental_access_denied' => 'You do not have access to rentals outside your assigned fleet base.',
         'edit_draft_confirmed_only' => 'Only Quote, Pending, Pending Reserved, or Open rentals can be edited.',
         'delete_draft_only' => 'Only Quote (draft) rentals can be deleted.',
         'confirm_draft_only' => 'Only Quote, Pending, or Pending Reserved rentals can be confirmed.',
@@ -928,6 +929,7 @@ return [
     ],
 
     'validation' => [
+        'vehicle_access_denied' => 'You cannot select a vehicle outside your assigned fleet base.',
         'storefront_color_invalid' => 'Color must be a 6-digit hex code, e.g. #0f766e.',
         'vehicle_not_active' => 'Vehicle :name is :status, not active.',
         'vehicle_capacity_expired' => 'Operational capacity for vehicle :name has expired (:date). Please renew vehicle capacity first.',

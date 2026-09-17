@@ -39,4 +39,14 @@ class SwapRentalVehicleRequest extends FormRequest
             'to_vehicle_id.not_in' => __('rental.validation.swap_vehicle_same'),
         ];
     }
+
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function (\Illuminate\Validation\Validator $v): void {
+            $toVehicle = \Modules\Fleet\Models\Vehicle::find($this->to_vehicle_id);
+            if ($toVehicle && ! \Modules\Fleet\Support\AccessibleFleetBases::allowsVehicle($this->user(), $toVehicle)) {
+                $v->errors()->add('to_vehicle_id', __('rental.validation.vehicle_access_denied'));
+            }
+        });
+    }
 }

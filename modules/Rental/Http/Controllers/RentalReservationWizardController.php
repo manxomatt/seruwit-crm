@@ -7,6 +7,7 @@ use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\MobileRentalBookingService;
@@ -43,7 +44,7 @@ class RentalReservationWizardController extends Controller
         $periodType = $data['period_type'];
         $periods = Rental::computePeriods($start, $end, $periodType);
 
-        $vehicles = Vehicle::query()
+        $vehicles = AccessibleFleetBases::scopeVehicles(Vehicle::query(), $request->user())
             ->where('status', Vehicle::STATUS_ACTIVE)
             ->orderBy('name')
             ->get(['id', 'name', 'plate_number', 'type', 'rental_class', 'status', 'photo_url', 'stnk_expires_at', 'kir_expires_at']);
