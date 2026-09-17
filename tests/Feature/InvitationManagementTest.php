@@ -27,9 +27,14 @@ class InvitationManagementTest extends TestCase
     public function test_tenant_admin_can_view_pending_invitations_in_users_index(): void
     {
         $admin = $this->createAdminUser();
+        $tenantId = 'test-tenant-1';
+        Tenant::withoutEvents(fn () => Tenant::create(['id' => $tenantId, 'name' => 'Test Tenant']));
+
+        // Initialize tenant context for the test
+        tenancy()->initialize(Tenant::find($tenantId));
 
         $invitation = Invitation::create([
-            'tenant_id' => tenant('id'),
+            'tenant_id' => $tenantId,
             'email' => 'pending.user@example.com',
             'role_slug' => 'user',
             'token' => Str::random(64),
@@ -46,15 +51,21 @@ class InvitationManagementTest extends TestCase
             ->has('pendingInvitations', 1)
             ->where('pendingInvitations.0.email', 'pending.user@example.com')
         );
+
+        tenancy()->end();
     }
 
     public function test_tenant_admin_can_resend_pending_invitation(): void
     {
         Notification::fake();
         $admin = $this->createAdminUser();
+        $tenantId = 'test-tenant-2';
+        Tenant::withoutEvents(fn () => Tenant::create(['id' => $tenantId, 'name' => 'Test Tenant']));
+
+        tenancy()->initialize(Tenant::find($tenantId));
 
         $invitation = Invitation::create([
-            'tenant_id' => tenant('id'),
+            'tenant_id' => $tenantId,
             'email' => 'pending.user@example.com',
             'role_slug' => 'user',
             'token' => 'old-token-value',
@@ -72,14 +83,20 @@ class InvitationManagementTest extends TestCase
         $this->assertTrue($invitation->expires_at->gt(now()->addDays(6)));
 
         Notification::assertSentOnDemand(TenantInvitationNotification::class);
+
+        tenancy()->end();
     }
 
     public function test_tenant_admin_can_revoke_pending_invitation(): void
     {
         $admin = $this->createAdminUser();
+        $tenantId = 'test-tenant-3';
+        Tenant::withoutEvents(fn () => Tenant::create(['id' => $tenantId, 'name' => 'Test Tenant']));
+
+        tenancy()->initialize(Tenant::find($tenantId));
 
         $invitation = Invitation::create([
-            'tenant_id' => tenant('id'),
+            'tenant_id' => $tenantId,
             'email' => 'pending.user@example.com',
             'role_slug' => 'user',
             'token' => Str::random(64),
@@ -94,6 +111,8 @@ class InvitationManagementTest extends TestCase
         $this->assertDatabaseMissing('invitations', [
             'id' => $invitation->id,
         ]);
+
+        tenancy()->end();
     }
 
     public function test_central_user_can_view_and_decline_incoming_invitations(): void
@@ -104,13 +123,11 @@ class InvitationManagementTest extends TestCase
             'password' => bcrypt('secret123'),
         ]);
 
-        $tenant = Tenant::create([
-            'id' => 'acme-corp',
-            'name' => 'Acme Corp',
-        ]);
+        $tenantId = 'acme-corp';
+        Tenant::withoutEvents(fn () => Tenant::create(['id' => $tenantId, 'name' => 'Acme Corp']));
 
         $invitation = Invitation::create([
-            'tenant_id' => $tenant->id,
+            'tenant_id' => $tenantId,
             'email' => $user->email,
             'role_slug' => 'user',
             'token' => 'test-invitation-token-123',
