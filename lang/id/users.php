@@ -136,4 +136,17 @@ return [
         'already_member' => 'Pengguna ini sudah menjadi anggota workspace.',
         'limit_reached_users' => 'Tenant telah mencapai batas maksimal :limit pengguna sesuai paket langganan.',
     ],
+
+    'invite' => [
+        'button' => 'Undang Pengguna',
+        'title' => 'Undang Pengguna ke Workspace',
+        'desc' => 'Kirimkan email undangan untuk menambahkan pengguna yang sudah terdaftar di platform atau anggota baru.',
+        'email_label' => 'Alamat Email',
+        'email_placeholder' => 'nama@contoh.com',
+        'role_label' => 'Peran (Role)',
+        'role_select' => 'Pilih Peran',
+        'submit' => 'Kirim Undangan',
+        'sending' => 'Mengirim...',
+        'cta_from_create' => 'Klik di sini untuk mengundang pengguna ini',
+    ],
 ];

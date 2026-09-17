@@ -3,11 +3,13 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import InviteUserModal from './Partials/InviteUserModal';
 
 interface Role {
     id: number;
@@ -63,12 +65,13 @@ interface Stats {
 interface Props {
     users: PaginatedUsers;
     stats: Stats;
+    roles?: Role[];
     filters: Filters;
     can?: { create: boolean };
     quota?: { max: number | null; current: number; reached: boolean };
 }
 
-export default function Index({ users, stats, filters, can, quota }: Props): JSX.Element {
+export default function Index({ users, stats, roles = [], filters, can, quota }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -76,6 +79,7 @@ export default function Index({ users, stats, filters, can, quota }: Props): JSX
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
     const [activeStatus, setActiveStatus] = useState<string>(filters.status || 'all');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [processing, setProcessing] = useState(false);
 
@@ -203,11 +207,21 @@ export default function Index({ users, stats, filters, can, quota }: Props): JSX
                     title={t('users.pages.index.head')}
                     actions={
                         can?.create !== false ? (
-                            <Link href={prefixedRoute('users.create')}>
-                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">
-                                    {t('users.pages.index.new')}
-                                </PrimaryButton>
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <SecondaryButton
+                                    type="button"
+                                    onClick={() => setShowInviteModal(true)}
+                                    className="!rounded-xl text-xs shadow-sm flex items-center gap-1.5"
+                                >
+                                    <span>✉️</span>
+                                    <span>{t('users.invite.button')}</span>
+                                </SecondaryButton>
+                                <Link href={prefixedRoute('users.create')}>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                        {t('users.pages.index.new')}
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
                         ) : undefined
                     }
                 />
@@ -399,7 +413,15 @@ export default function Index({ users, stats, filters, can, quota }: Props): JSX
                         <p className="mt-1 text-xs text-slate-500">
                             {t('users.pages.index.empty_hint')}
                         </p>
-                        <div className="mt-6">
+                        <div className="mt-6 flex items-center justify-center gap-3">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setShowInviteModal(true)}
+                                className="!rounded-xl text-xs shadow-sm flex items-center gap-1.5"
+                            >
+                                <span>✉️</span>
+                                <span>{t('users.invite.button')}</span>
+                            </SecondaryButton>
                             <Link href={prefixedRoute('users.create')}>
                                 <PrimaryButton className="!rounded-xl text-xs shadow-sm">
                                     {t('users.pages.index.new')}
@@ -706,6 +728,12 @@ export default function Index({ users, stats, filters, can, quota }: Props): JSX
                         ? t('users.delete_confirm.message', { name: userToDelete.name, email: userToDelete.email })
                         : t('users.delete_confirm.message_generic')
                 }
+            />
+
+            <InviteUserModal
+                show={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                roles={roles}
             />
         </DynamicLayout>
     );

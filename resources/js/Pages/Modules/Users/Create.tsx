@@ -7,8 +7,9 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import InviteUserModal from './Partials/InviteUserModal';
 
 interface Role {
     id: number;
@@ -47,6 +48,7 @@ export default function Create({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const { data, setData, post, processing, errors } = useForm('module.users.create', {
         name: '',
         email: '',
@@ -110,11 +112,21 @@ export default function Create({
                 <PageHeader
                     title={t('users.pages.create.head')}
                     actions={
-                        <Link href={prefixedRoute('users.index')}>
-                            <SecondaryButton className="!rounded-xl text-xs">
-                                ← {t('users.pages.show.back')}
+                        <div className="flex items-center gap-2">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setShowInviteModal(true)}
+                                className="!rounded-xl text-xs shadow-sm flex items-center gap-1.5"
+                            >
+                                <span>✉️</span>
+                                <span>{t('users.invite.button')}</span>
                             </SecondaryButton>
-                        </Link>
+                            <Link href={prefixedRoute('users.index')}>
+                                <SecondaryButton className="!rounded-xl text-xs">
+                                    ← {t('users.pages.show.back')}
+                                </SecondaryButton>
+                            </Link>
+                        </div>
                     }
                 />
             }
@@ -157,6 +169,16 @@ export default function Create({
                                     onChange={(e) => setData('email', e.target.value)}
                                 />
                                 <InputError message={errors.email} className="mt-1.5" />
+                                {errors.email && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInviteModal(true)}
+                                        className="mt-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 text-left"
+                                    >
+                                        <span>✉️</span>
+                                        <span>{t('users.invite.cta_from_create')} →</span>
+                                    </button>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -396,6 +418,13 @@ export default function Create({
                     </div>
                 </form>
             </div>
+
+            <InviteUserModal
+                show={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                roles={roles}
+                initialEmail={data.email}
+            />
         </DynamicLayout>
     );
 }

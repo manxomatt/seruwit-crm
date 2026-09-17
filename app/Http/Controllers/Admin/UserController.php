@@ -71,9 +71,12 @@ class UserController extends Controller
             'admin_users' => User::whereHas('roles', fn ($q) => $q->where('slug', 'admin'))->count(),
         ];
 
+        $roles = Role::query()->orderBy('name')->get(['id', 'name', 'slug']);
+
         return Inertia::render('Modules/Users/Index', [
             'users' => $users,
             'stats' => $stats,
+            'roles' => $roles,
             'filters' => [
                 'search' => request('search'),
                 'status' => $statusFilter,

@@ -136,4 +136,17 @@ return [
         'already_member' => 'This user is already a member of the workspace.',
         'limit_reached_users' => 'Tenant has reached the maximum limit of :limit users allowed by your subscription plan.',
     ],
+
+    'invite' => [
+        'button' => 'Invite User',
+        'title' => 'Invite User to Workspace',
+        'desc' => 'Send an email invitation to add existing platform users or new team members to this workspace.',
+        'email_label' => 'Email Address',
+        'email_placeholder' => 'name@example.com',
+        'role_label' => 'Role',
+        'role_select' => 'Select Role',
+        'submit' => 'Send Invitation',
+        'sending' => 'Sending...',
+        'cta_from_create' => 'Click here to invite this user instead',
+    ],
 ];
