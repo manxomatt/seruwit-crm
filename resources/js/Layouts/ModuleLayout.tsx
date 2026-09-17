@@ -1050,17 +1050,8 @@ export default function ModuleLayout({ header, children }: Props) {
                         <SidebarNavScroll>
                             {renderNavigation()}
                         </SidebarNavScroll>
-                        {/* Mobile sidebar user section */}
-                        <div className={`shrink-0 border-t ${theme.border} p-3.5 space-y-2`}>
-                            <div className="flex items-center justify-between">
-                                <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity min-w-0 flex-1">
-                                    <UserAvatar user={user} size="md" />
-                                    <div className="ml-3 min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-white truncate">{user?.name || 'User'}</p>
-                                        <p className={`text-xs ${theme.text} truncate`}>{user?.email || 'user@example.com'}</p>
-                                    </div>
-                                </Link>
-                            </div>
+                        {/* Mobile sidebar workspace section */}
+                        <div className={`shrink-0 border-t ${theme.border} p-3.5`}>
                             {/* Workspace indicator with quick switch link */}
                             <a
                                 href={workspacesUrl}
@@ -1098,17 +1089,8 @@ export default function ModuleLayout({ header, children }: Props) {
                     <SidebarNavScroll>
                         {renderNavigation()}
                     </SidebarNavScroll>
-                    {/* Desktop sidebar user section (kiri bawah) */}
-                    <div className={`shrink-0 border-t ${theme.border} p-3.5 space-y-2`}>
-                        <div className="flex items-center justify-between">
-                            <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity min-w-0 flex-1">
-                                <UserAvatar user={user} size="md" />
-                                <div className="ml-3 min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-white truncate">{user?.name || 'User'}</p>
-                                    <p className={`text-xs ${theme.text} truncate`}>{user?.email || 'user@example.com'}</p>
-                                </div>
-                            </Link>
-                        </div>
+                    {/* Desktop sidebar workspace section (kiri bawah) */}
+                    <div className={`shrink-0 border-t ${theme.border} p-3.5`}>
                         {/* Workspace indicator with quick switch link */}
                         <a
                             href={workspacesUrl}
