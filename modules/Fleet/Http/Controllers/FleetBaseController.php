@@ -68,9 +68,12 @@ class FleetBaseController extends Controller
             ],
             'kinds' => FleetBaseKind::values(),
             'can' => [
-                'create' => $user->hasPermissionFor('fleet', 'create') && ! $isLimitReached,
+                'create' => $user->hasPermissionFor('fleet', 'create')
+                    && ! ($user->hasRole(AccessibleFleetBases::ROLE_HEAD) && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER) && ! $user->isAdmin())
+                    && ! $isLimitReached,
                 'update' => $user->hasPermissionFor('fleet', 'update'),
-                'delete' => $user->hasPermissionFor('fleet', 'delete'),
+                'delete' => $user->hasPermissionFor('fleet', 'delete')
+                    && ! ($user->hasRole(AccessibleFleetBases::ROLE_HEAD) && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER) && ! $user->isAdmin()),
             ],
             'quota' => [
                 'max' => $maxLimit !== null ? (int) $maxLimit : null,
@@ -82,6 +85,16 @@ class FleetBaseController extends Controller
 
     public function create(): Response|RedirectResponse
     {
+        $user = Auth::user();
+        if (
+            $user
+            && $user->hasRole(AccessibleFleetBases::ROLE_HEAD)
+            && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER)
+            && ! $user->isAdmin()
+        ) {
+            abort(403, __('fleet.messages.base_create_forbidden_for_head'));
+        }
+
         $tenant = tenant();
         if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_branches', FleetBase::count())) {
             $limit = (int) $tenant->planLimit('max_branches');
@@ -95,6 +108,16 @@ class FleetBaseController extends Controller
 
     public function store(StoreFleetBaseRequest $request): RedirectResponse
     {
+        $user = Auth::user();
+        if (
+            $user
+            && $user->hasRole(AccessibleFleetBases::ROLE_HEAD)
+            && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER)
+            && ! $user->isAdmin()
+        ) {
+            abort(403, __('fleet.messages.base_create_forbidden_for_head'));
+        }
+
         $tenant = tenant();
         if ($tenant instanceof Tenant && $tenant->hasReachedLimit('max_branches', FleetBase::count())) {
             $limit = (int) $tenant->planLimit('max_branches');
@@ -188,6 +211,16 @@ class FleetBaseController extends Controller
 
     public function destroy(FleetBase $fleetBase): RedirectResponse
     {
+        $user = Auth::user();
+        if (
+            $user
+            && $user->hasRole(AccessibleFleetBases::ROLE_HEAD)
+            && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER)
+            && ! $user->isAdmin()
+        ) {
+            abort(403, __('fleet.messages.base_delete_forbidden_for_head'));
+        }
+
         $this->ensureAccessible($fleetBase);
 
         try {
@@ -228,6 +261,16 @@ class FleetBaseController extends Controller
      */
     public function batchDestroy(BatchDeleteFleetBasesRequest $request): RedirectResponse
     {
+        $user = Auth::user();
+        if (
+            $user
+            && $user->hasRole(AccessibleFleetBases::ROLE_HEAD)
+            && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER)
+            && ! $user->isAdmin()
+        ) {
+            abort(403, __('fleet.messages.base_delete_forbidden_for_head'));
+        }
+
         /** @var list<int> $ids */
         $ids = array_map('intval', $request->validated('ids'));
 

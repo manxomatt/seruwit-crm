@@ -11,6 +11,7 @@ use Inertia\Response;
 use Modules\Fleet\Http\Requests\StoreFuelLogRequest;
 use Modules\Fleet\Models\FuelLog;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Fleet\Support\FuelLogRecorder;
 
 class FuelLogController extends Controller
@@ -25,8 +26,17 @@ class FuelLogController extends Controller
      */
     public function index(Request $request): Response
     {
+        $accessibleBaseIds = AccessibleFleetBases::ids($request->user());
+
         $logs = FuelLog::query()
             ->with(['vehicle:id,name,plate_number', 'driver:id,name'])
+            ->when($accessibleBaseIds !== null, function ($q) use ($accessibleBaseIds) {
+                if ($accessibleBaseIds === []) {
+                    $q->whereRaw('0 = 1');
+                } else {
+                    $q->whereHas('vehicle', fn ($vq) => $vq->whereIn('home_base_id', $accessibleBaseIds));
+                }
+            })
             ->when($request->integer('vehicle_id'), fn ($q, $id) => $q->where('vehicle_id', $id))
             ->when($request->boolean('anomalies_only'), fn ($q) => $q->whereNotNull('anomaly_flags'))
             ->latest('filled_at')
@@ -36,7 +46,9 @@ class FuelLogController extends Controller
 
         return Inertia::render('Modules/Fleet/Fuel/Index', [
             'logs' => $logs,
-            'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'plate_number']),
+            'vehicles' => AccessibleFleetBases::scopeVehicles(Vehicle::query(), $request->user())
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number']),
             'filters' => [
                 'vehicle_id' => $request->integer('vehicle_id') ?: null,
                 'anomalies_only' => $request->boolean('anomalies_only'),
@@ -52,6 +64,10 @@ class FuelLogController extends Controller
         Vehicle $vehicle,
         FuelLogRecorder $recorder,
     ): RedirectResponse {
+        if (! AccessibleFleetBases::allowsVehicle($request->user(), $vehicle)) {
+            abort(403, __('fleet.messages.vehicle_access_denied'));
+        }
+
         $log = $recorder->record($vehicle, $request->validated());
 
         $message = $log->hasAnomalies()
@@ -64,6 +80,10 @@ class FuelLogController extends Controller
 
     public function destroy(Vehicle $vehicle, FuelLog $fuelLog): RedirectResponse
     {
+        if (! AccessibleFleetBases::allowsVehicle(auth()->user(), $vehicle)) {
+            abort(403, __('fleet.messages.vehicle_access_denied'));
+        }
+
         if ($fuelLog->vehicle_id !== $vehicle->id) {
             abort(404);
         }
@@ -81,6 +101,10 @@ class FuelLogController extends Controller
      */
     public function suggestOdometer(Vehicle $vehicle, FuelLogRecorder $recorder): array
     {
+        if (! AccessibleFleetBases::allowsVehicle(auth()->user(), $vehicle)) {
+            abort(403, __('fleet.messages.vehicle_access_denied'));
+        }
+
         $trackingEnabled = Modules::available('tracking');
         if ($trackingEnabled) {
             $vehicle->loadMissing('gpsDevice');

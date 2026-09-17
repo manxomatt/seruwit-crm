@@ -874,6 +874,9 @@ return [
         'fuel_deleted' => 'Fuel log deleted.',
         'limit_reached_bases' => 'Tenant has reached the maximum limit of :limit fleet bases allowed by your subscription plan.',
         'limit_reached_vehicles' => 'Tenant has reached the maximum limit of :limit vehicles allowed by your subscription plan.',
+        'base_create_forbidden_for_head' => 'Fleet Base Heads cannot create new bases. They only manage their assigned base.',
+        'base_delete_forbidden_for_head' => 'Fleet Base Heads cannot delete bases.',
+        'vehicle_access_denied' => 'You do not have access to vehicles outside your assigned fleet base.',
     ],
 
     'validation' => [

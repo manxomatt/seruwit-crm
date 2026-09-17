@@ -154,8 +154,21 @@ class SystemRolePermissions
                 ->pluck('id')
                 ->map(fn ($id): int => (int) $id)
                 ->all(),
-            'fleet_base_head', 'fleet_base_manager' => Permission::query()
-                ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
+            'fleet_base_manager' => Permission::query()
+                ->where(function ($query): void {
+                    $query
+                        ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
+                        ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
+                })
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all(),
+            'fleet_base_head' => Permission::query()
+                ->where(function ($query): void {
+                    $query
+                        ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
+                        ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
+                })
                 ->pluck('id')
                 ->map(fn ($id): int => (int) $id)
                 ->all(),

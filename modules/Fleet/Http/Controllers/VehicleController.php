@@ -63,21 +63,24 @@ class VehicleController extends Controller
             $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_vehicles') : null;
         }
 
-        $vehicles = Vehicle::query()
-            ->with('homeBase:id,code,name')
-            ->when(request('search'), function ($query, $search) {
-                $like = "%{$search}%";
+        $vehicles = AccessibleFleetBases::scopeVehicles(
+            Vehicle::query()
+                ->with('homeBase:id,code,name')
+                ->when(request('search'), function ($query, $search) {
+                    $like = "%{$search}%";
 
-                $query->where(function ($q) use ($like) {
-                    $q->where('name', 'ilike', $like)
-                        ->orWhere('plate_number', 'ilike', $like)
-                        ->orWhere('brand', 'ilike', $like)
-                        ->orWhere('color', 'ilike', $like);
-                });
-            })
-            ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
-            ->when(request('type'), fn ($query, $type) => $query->where('type', $type))
-            ->when(request('home_base_id'), fn ($query, $baseId) => $query->where('home_base_id', $baseId))
+                    $query->where(function ($q) use ($like) {
+                        $q->where('name', 'ilike', $like)
+                            ->orWhere('plate_number', 'ilike', $like)
+                            ->orWhere('brand', 'ilike', $like)
+                            ->orWhere('color', 'ilike', $like);
+                    });
+                })
+                ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
+                ->when(request('type'), fn ($query, $type) => $query->where('type', $type))
+                ->when(request('home_base_id'), fn ($query, $baseId) => $query->where('home_base_id', $baseId)),
+            $user
+        )
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -275,6 +278,8 @@ class VehicleController extends Controller
      */
     public function show(Vehicle $vehicle, FuelConsumptionCalculator $calculator, FuelLogRecorder $recorder, VehicleCapacityService $capacityService): Response
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         $user = Auth::user();
 
         $maintenanceEnabled = Modules::available('maintenance');
@@ -361,6 +366,8 @@ class VehicleController extends Controller
      */
     public function activate(Vehicle $vehicle, VehicleCapacityService $capacityService): RedirectResponse
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         try {
             $result = $capacityService->activate($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
 
@@ -375,6 +382,8 @@ class VehicleController extends Controller
      */
     public function renew(Vehicle $vehicle, VehicleCapacityService $capacityService): RedirectResponse
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         try {
             $result = $capacityService->renew($vehicle, actorGlobalId: Auth::user()?->global_id ?? (string) Auth::id());
 
@@ -389,6 +398,8 @@ class VehicleController extends Controller
      */
     public function toggleAutoRenew(Request $request, Vehicle $vehicle, VehicleCapacityService $capacityService): RedirectResponse
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         $autoRenew = $request->boolean('auto_renew', ! $vehicle->auto_renew);
         $capacityService->toggleAutoRenew($vehicle, $autoRenew);
 
@@ -451,6 +462,8 @@ class VehicleController extends Controller
      */
     public function edit(Vehicle $vehicle): Response
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         return Inertia::render('Modules/Fleet/Vehicles/Edit', [
             'vehicle' => $vehicle,
             'bases' => $this->homeBaseOptions(),
@@ -479,6 +492,8 @@ class VehicleController extends Controller
      */
     public function update(UpdateVehicleRequest $request, Vehicle $vehicle): RedirectResponse
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         $vehicle->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
@@ -497,6 +512,8 @@ class VehicleController extends Controller
      */
     public function destroy(Vehicle $vehicle): RedirectResponse
     {
+        $this->ensureAccessibleVehicle($vehicle);
+
         try {
             DB::transaction(fn () => $vehicle->delete());
         } catch (QueryException) {
@@ -516,7 +533,7 @@ class VehicleController extends Controller
         $ids = array_map('intval', $request->validated('ids'));
         $status = $request->validated('status');
 
-        $updated = Vehicle::query()
+        $updated = AccessibleFleetBases::scopeVehicles(Vehicle::query())
             ->whereIn('id', $ids)
             ->update(['status' => $status]);
 
@@ -537,7 +554,9 @@ class VehicleController extends Controller
         $deleted = 0;
         $blocked = 0;
 
-        $vehicles = Vehicle::query()->whereIn('id', $ids)->get();
+        $vehicles = AccessibleFleetBases::scopeVehicles(Vehicle::query())
+            ->whereIn('id', $ids)
+            ->get();
 
         foreach ($vehicles as $vehicle) {
             try {
@@ -564,5 +583,12 @@ class VehicleController extends Controller
         return back()->with('success', __('fleet.messages.vehicles_batch_deleted', [
             'count' => $deleted,
         ]));
+    }
+
+    protected function ensureAccessibleVehicle(Vehicle $vehicle): void
+    {
+        if (! AccessibleFleetBases::allowsVehicle(Auth::user(), $vehicle)) {
+            abort(403, __('fleet.messages.vehicle_access_denied'));
+        }
     }
 }

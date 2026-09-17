@@ -874,6 +874,9 @@ return [
         'fuel_deleted' => 'Log BBM dihapus.',
         'limit_reached_bases' => 'Tenant telah mencapai batas maksimal :limit base armada sesuai paket langganan.',
         'limit_reached_vehicles' => 'Tenant telah mencapai batas maksimal :limit kendaraan sesuai paket langganan.',
+        'base_create_forbidden_for_head' => 'Fleet Base Head tidak diizinkan membuat base baru. Hanya mengelola base yang telah ditugaskan.',
+        'base_delete_forbidden_for_head' => 'Fleet Base Head tidak diizinkan menghapus base armada.',
+        'vehicle_access_denied' => 'Anda tidak memiliki akses ke kendaraan di luar base armada yang ditugaskan.',
     ],
 
     'validation' => [

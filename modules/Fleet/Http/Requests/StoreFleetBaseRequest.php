@@ -12,6 +12,16 @@ class StoreFleetBaseRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        $user = $this->user();
+        if (
+            $user
+            && $user->hasRole(\Modules\Fleet\Support\AccessibleFleetBases::ROLE_HEAD)
+            && ! $user->hasRole(\Modules\Fleet\Support\AccessibleFleetBases::ROLE_MANAGER)
+            && ! $user->isAdmin()
+        ) {
+            return false;
+        }
+
         return true;
     }
 

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Fleet\Support\FuelAnalyticsAggregator;
 
 class FuelAnalyticsController extends Controller
@@ -19,10 +20,18 @@ class FuelAnalyticsController extends Controller
         }
 
         $vehicleId = $request->integer('vehicle_id') ?: null;
+        if ($vehicleId !== null) {
+            $vehicle = Vehicle::query()->find($vehicleId);
+            if ($vehicle !== null && ! AccessibleFleetBases::allowsVehicle($request->user(), $vehicle)) {
+                abort(403, __('fleet.messages.vehicle_access_denied'));
+            }
+        }
 
         return Inertia::render('Modules/Fleet/Fuel/Analytics', [
             'analytics' => $analytics->build($vehicleId, $period),
-            'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'plate_number']),
+            'vehicles' => AccessibleFleetBases::scopeVehicles(Vehicle::query(), $request->user())
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number']),
             'filters' => [
                 'vehicle_id' => $vehicleId,
                 'period' => $period,

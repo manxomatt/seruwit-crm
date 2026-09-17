@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Validator;
 use Modules\Fleet\Models\FleetBase;
+use Modules\Fleet\Models\Vehicle;
 
 /**
  * Row-level fleet base access for fleet_base_head (one base) and
@@ -83,6 +84,45 @@ final class AccessibleFleetBases
         $ids = self::ids($user);
 
         return $ids === null || in_array($fleetBaseId, $ids, true);
+    }
+
+    /**
+     * Scope a vehicle query to only include vehicles belonging to accessible bases.
+     *
+     * @param  Builder<Vehicle>  $query
+     * @return Builder<Vehicle>
+     */
+    public static function scopeVehicles(Builder $query, ?User $user = null): Builder
+    {
+        $ids = self::ids($user);
+
+        if ($ids === null) {
+            return $query;
+        }
+
+        if ($ids === []) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->whereIn($query->getModel()->getTable().'.home_base_id', $ids);
+    }
+
+    /**
+     * Check if a vehicle belongs to an accessible base.
+     */
+    public static function allowsVehicle(?User $user, Vehicle $vehicle): bool
+    {
+        $ids = self::ids($user);
+
+        if ($ids === null) {
+            return true;
+        }
+
+        if ($vehicle->home_base_id === null) {
+            return false;
+        }
+
+        return in_array((int) $vehicle->home_base_id, $ids, true);
     }
 
     public static function rejectIfDenied(Validator $validator, mixed $fleetBaseId, string $attribute = 'home_base_id'): void
