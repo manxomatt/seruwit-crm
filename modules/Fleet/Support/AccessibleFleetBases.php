@@ -19,12 +19,14 @@ final class AccessibleFleetBases
 
     public const ROLE_MANAGER = 'fleet_base_manager';
 
+    public const ROLE_OPERATOR = 'rental_operator';
+
     /**
      * @return list<string>
      */
     public static function scopedRoleSlugs(): array
     {
-        return [self::ROLE_HEAD, self::ROLE_MANAGER];
+        return [self::ROLE_HEAD, self::ROLE_MANAGER, self::ROLE_OPERATOR];
     }
 
     public static function isScoped(?User $user = null): bool
@@ -35,7 +37,17 @@ final class AccessibleFleetBases
             return false;
         }
 
-        return $user->hasAnyRole(self::scopedRoleSlugs());
+        if ($user->hasAnyRole([self::ROLE_HEAD, self::ROLE_MANAGER])) {
+            return true;
+        }
+
+        if ($user->hasRole(self::ROLE_OPERATOR)) {
+            return $user->relationLoaded('fleetBases')
+                ? (bool) $user->getRelation('fleetBases')?->isNotEmpty()
+                : $user->fleetBases()->exists();
+        }
+
+        return false;
     }
 
     /**
@@ -201,12 +213,14 @@ final class AccessibleFleetBases
 
         $isHead = in_array(self::ROLE_HEAD, $slugs, true);
         $isManager = in_array(self::ROLE_MANAGER, $slugs, true);
+        $isOperator = in_array(self::ROLE_OPERATOR, $slugs, true);
 
-        if (! $isHead && ! $isManager) {
+        if (! $isHead && ! $isManager && ! $isOperator) {
             return;
         }
 
-        if ($fleetBaseIds === []) {
+        // Fleet Base Head and Manager must be assigned to at least one base
+        if (($isHead || $isManager) && $fleetBaseIds === []) {
             $validator->errors()->add('fleet_base_ids', __('users.validation.fleet_base_ids_required'));
 
             return;
@@ -215,5 +229,7 @@ final class AccessibleFleetBases
         if ($isHead && ! $isManager && count($fleetBaseIds) > 1) {
             $validator->errors()->add('fleet_base_ids', __('users.validation.fleet_base_head_single_base'));
         }
+
+        // Pure Rental Operator: fleet_base_ids is optional (empty = global, filled = base-scoped)
     }
 }

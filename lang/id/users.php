@@ -53,6 +53,7 @@ return [
     'fleet_bases_selected' => 'Dipilih: :count base armada',
     'fleet_bases_hint_head' => 'Fleet Base Head harus di-assign ke tepat satu base.',
     'fleet_bases_hint_manager' => 'Fleet Base Manager bisa di-assign ke satu atau lebih base.',
+    'fleet_bases_hint_operator' => 'Operator Rental: Kosongkan untuk akses ke semua cabang (Global), atau pilih cabang tertentu untuk membatasi akses operasional.',
     'system_badge' => 'Sistem',
 
     'pages' => [

@@ -53,6 +53,7 @@ return [
     'fleet_bases_selected' => 'Selected: :count fleet base(s)',
     'fleet_bases_hint_head' => 'Fleet Base Head must be assigned to exactly one base.',
     'fleet_bases_hint_manager' => 'Fleet Base Manager can be assigned to one or more bases.',
+    'fleet_bases_hint_operator' => 'Rental Operator: Leave unselected for access across all bases (Global), or select specific base(s) to restrict access.',
     'system_badge' => 'System',
 
     'pages' => [

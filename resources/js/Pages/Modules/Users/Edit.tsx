@@ -133,6 +133,10 @@ export default function Edit({
     const needsFleetBases = selectedRoleSlugs.some((slug) => fleetBaseScopedRoleSlugs.includes(slug));
     const isFleetHeadOnly =
         selectedRoleSlugs.includes('fleet_base_head') && !selectedRoleSlugs.includes('fleet_base_manager');
+    const isFleetOperatorOnly =
+        selectedRoleSlugs.includes('rental_operator') &&
+        !selectedRoleSlugs.includes('fleet_base_head') &&
+        !selectedRoleSlugs.includes('fleet_base_manager');
 
     return (
         <DynamicLayout
@@ -378,7 +382,9 @@ export default function Edit({
                                     <p className="text-xs text-slate-500">
                                         {isFleetHeadOnly
                                             ? t('users.fleet_bases_hint_head')
-                                            : t('users.fleet_bases_hint_manager')}
+                                            : isFleetOperatorOnly
+                                                ? t('users.fleet_bases_hint_operator')
+                                                : t('users.fleet_bases_hint_manager')}
                                     </p>
                                     <div className="max-h-[200px] divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                                         {fleetBases.map((base) => (

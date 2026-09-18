@@ -79,6 +79,13 @@ class SystemRolePermissions
                 'is_system' => true,
                 'dashboard_path' => '/module/fleet/bases',
             ],
+            'rental_operator' => [
+                'slug' => 'rental_operator',
+                'name' => 'Rental Operator',
+                'description' => 'Handles day-to-day rental bookings, handovers, returns, and deposit collection',
+                'is_system' => true,
+                'dashboard_path' => '/module/rental/dashboard',
+            ],
             default => null,
         };
     }
@@ -94,7 +101,8 @@ class SystemRolePermissions
 
         $roleSlugs = match ($moduleKey) {
             'inventory' => ['warehouse_head', 'warehouse_manager'],
-            'fleet', 'rental' => ['fleet_base_head', 'fleet_base_manager'],
+            'fleet' => ['fleet_base_head', 'fleet_base_manager'],
+            'rental' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
             'canvassing' => ['salesperson'],
             'transportation', 'driver_scoring', 'orders' => ['driver'],
             default => [],
@@ -169,6 +177,15 @@ class SystemRolePermissions
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
+                        ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
+                })
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all(),
+            'rental_operator' => Permission::query()
+                ->where(function ($query): void {
+                    $query
+                        ->where(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')

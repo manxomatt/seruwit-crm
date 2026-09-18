@@ -49,6 +49,7 @@ class RoleSeeder extends Seeder
             'warehouse_manager',
             'fleet_base_head',
             'fleet_base_manager',
+            'rental_operator',
         ];
 
         foreach ($slugs as $slug) {
