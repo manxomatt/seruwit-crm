@@ -16,6 +16,7 @@ interface Props {
     errors: Partial<Record<keyof ReservationFormData, string>>;
     drivers: DriverOption[];
     insurancePackages: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
     isOneWay: boolean;
     selectedVehicle: AvailableVehicle | null;
 }
@@ -26,6 +27,7 @@ export default function StepExtras({
     errors,
     drivers,
     insurancePackages,
+    insurancePackagesEnabled = true,
     isOneWay,
     selectedVehicle,
 }: Props): JSX.Element {
@@ -53,17 +55,22 @@ export default function StepExtras({
         <div className="space-y-6">
             <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                    {t('rental.wizard.steps.4', undefined, 'Layanan Tambahan & Asuransi')}
+                    {insurancePackagesEnabled
+                        ? t('rental.wizard.steps.4', undefined, 'Layanan Tambahan & Asuransi')
+                        : t('rental.wizard.steps.4_no_insurance', undefined, 'Layanan Tambahan')}
                 </h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Lengkapi paket proteksi kendaraan, layanan supir, serta catatan operasional sewa.
+                    {insurancePackagesEnabled
+                        ? 'Lengkapi paket proteksi kendaraan, layanan supir, serta catatan operasional sewa.'
+                        : 'Lengkapi layanan supir serta catatan operasional sewa.'}
                 </p>
             </div>
 
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
                     {/* 1. Insurance Package Selection Cards */}
-                    <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    {insurancePackagesEnabled && (
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                         <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3 dark:border-slate-800">
                             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-base font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
                                 🛡️
@@ -146,6 +153,7 @@ export default function StepExtras({
                         </div>
                         <InputError message={errors.insurance_package_id} className="mt-1.5" />
                     </div>
+                    )}
 
                     {/* 2. Driver Service & Route Fee */}
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
@@ -245,7 +253,11 @@ export default function StepExtras({
                 </div>
 
                 {/* Right Summary Sidebar */}
-                <PreviousStepsSummary data={data} selectedVehicle={selectedVehicle} />
+                <PreviousStepsSummary
+                    data={data}
+                    selectedVehicle={selectedVehicle}
+                    insurancePackagesEnabled={insurancePackagesEnabled}
+                />
             </div>
         </div>
     );

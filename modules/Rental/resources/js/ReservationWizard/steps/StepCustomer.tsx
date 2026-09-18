@@ -31,6 +31,7 @@ interface Props {
     selectedVehicle: AvailableVehicle | null;
     drivers: DriverOption[];
     insurancePackages: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
     isOneWay: boolean;
 }
 
@@ -124,6 +125,7 @@ export default function StepCustomer({
     selectedVehicle,
     drivers,
     insurancePackages,
+    insurancePackagesEnabled = true,
     isOneWay,
 }: Props): JSX.Element {
     const { t } = useTrans();
@@ -374,6 +376,7 @@ export default function StepCustomer({
                     includeExtras={true}
                     drivers={drivers}
                     insurancePackages={insurancePackages}
+                    insurancePackagesEnabled={insurancePackagesEnabled}
                     isOneWay={isOneWay}
                 />
             </div>

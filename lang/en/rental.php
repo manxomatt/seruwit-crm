@@ -176,6 +176,8 @@ return [
         'pending_reserved_ttl_minutes_hint' => 'Duration to hold unpaid online reservations before release.',
         'public_mask_plates' => 'Mask License Plates Publicly',
         'public_mask_plates_hint' => 'Hide middle digits in public catalog.',
+        'insurance_packages_enabled' => 'Insurance Packages & Protection',
+        'insurance_packages_enabled_hint' => 'Enable vehicle insurance and protection package selection on reservation form.',
         'passenger_free_cancel_hours' => 'Free Cancellation Window (Hours)',
         'passenger_free_cancel_hours_hint' => 'Free cancellation window prior to start.',
         'mobile_rate_limiting_enabled' => 'Mobile API Rate Limiting (Anti-Spam)',

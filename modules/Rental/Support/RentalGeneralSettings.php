@@ -36,6 +36,8 @@ class RentalGeneralSettings
 
     public const KEY_MOBILE_RATE_LIMITING_ENABLED = 'rental.mobile_rate_limiting_enabled';
 
+    public const KEY_INSURANCE_PACKAGES_ENABLED = 'rental.insurance_packages_enabled';
+
     /**
      * @return list<string>
      */
@@ -56,6 +58,7 @@ class RentalGeneralSettings
             self::KEY_AI_KYC_ENABLED,
             self::KEY_AI_PRICING_OPTIMIZER_ENABLED,
             self::KEY_MOBILE_RATE_LIMITING_ENABLED,
+            self::KEY_INSURANCE_PACKAGES_ENABLED,
         ];
     }
 
@@ -74,7 +77,8 @@ class RentalGeneralSettings
      *     ai_inspection_enabled: bool,
      *     ai_kyc_enabled: bool,
      *     ai_pricing_optimizer_enabled: bool,
-     *     mobile_rate_limiting_enabled: bool
+     *     mobile_rate_limiting_enabled: bool,
+     *     insurance_packages_enabled: bool
      * }
      */
     public static function all(): array
@@ -94,6 +98,7 @@ class RentalGeneralSettings
             'ai_kyc_enabled' => Setting::getValue(self::KEY_AI_KYC_ENABLED, '1') === '1',
             'ai_pricing_optimizer_enabled' => Setting::getValue(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, '1') === '1',
             'mobile_rate_limiting_enabled' => Setting::getValue(self::KEY_MOBILE_RATE_LIMITING_ENABLED, '0') === '1',
+            'insurance_packages_enabled' => Setting::getValue(self::KEY_INSURANCE_PACKAGES_ENABLED, '1') === '1',
         ];
     }
 
@@ -112,7 +117,8 @@ class RentalGeneralSettings
      *     ai_inspection_enabled?: bool,
      *     ai_kyc_enabled?: bool,
      *     ai_pricing_optimizer_enabled?: bool,
-     *     mobile_rate_limiting_enabled?: bool
+     *     mobile_rate_limiting_enabled?: bool,
+     *     insurance_packages_enabled?: bool
      * }  $data
      */
     public static function update(array $data): void
@@ -127,6 +133,7 @@ class RentalGeneralSettings
         self::put(self::KEY_PASSENGER_FREE_CANCEL_HOURS, (string) $data['passenger_free_cancel_hours'], 'number', 'Passenger free-cancel window (hours)', 15);
         self::put(self::KEY_PUBLIC_MASK_PLATES, $data['public_mask_plates'] ? '1' : '0', 'boolean', 'Mask plates on public booking pages', 16);
         self::put(self::KEY_CALENDAR_CLICK_TO_BOOK, $data['calendar_click_to_book'] ? '1' : '0', 'boolean', 'Calendar click to book', 20);
+        self::put(self::KEY_INSURANCE_PACKAGES_ENABLED, ! empty($data['insurance_packages_enabled']) ? '1' : '0', 'boolean', 'Insurance Packages & Protection', 25);
         self::put(self::KEY_AI_INSPECTION_ENABLED, ! empty($data['ai_inspection_enabled']) ? '1' : '0', 'boolean', 'AI Visual Inspection (Handover)', 30);
         self::put(self::KEY_AI_KYC_ENABLED, ! empty($data['ai_kyc_enabled']) ? '1' : '0', 'boolean', 'AI Smart KYC & Document OCR', 31);
         self::put(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, ! empty($data['ai_pricing_optimizer_enabled']) ? '1' : '0', 'boolean', 'AI Dynamic Pricing & Fleet Optimizer', 32);

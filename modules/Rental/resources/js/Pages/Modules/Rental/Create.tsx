@@ -20,6 +20,7 @@ interface Props {
     selectedPartnerId?: number | null;
     locations?: LocationOption[];
     insurancePackages?: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
     defaultOneWayFee?: number;
     availableVehiclesUrl: string;
     quoteUrl: string;
@@ -45,6 +46,7 @@ export default function Create({
     selectedPartnerId = null,
     locations = [],
     insurancePackages = [],
+    insurancePackagesEnabled = true,
     defaultOneWayFee = 150000,
     availableVehiclesUrl,
     quoteUrl,
@@ -126,6 +128,7 @@ export default function Create({
                     drivers={drivers}
                     locations={locations}
                     insurancePackages={insurancePackages}
+                    insurancePackagesEnabled={insurancePackagesEnabled}
                     defaultOneWayFee={defaultOneWayFee}
                     availableVehiclesUrl={availableVehiclesUrl}
                     quoteUrl={quoteUrl}

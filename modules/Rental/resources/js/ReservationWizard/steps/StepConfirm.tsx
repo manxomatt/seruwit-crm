@@ -18,6 +18,7 @@ interface Props {
     partners: PartnerOption[];
     drivers?: DriverOption[];
     insurancePackages?: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
 }
 
 export default function StepConfirm({
@@ -29,6 +30,7 @@ export default function StepConfirm({
     partners,
     drivers = [],
     insurancePackages = [],
+    insurancePackagesEnabled = true,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const partner = partners.find((p) => String(p.id) === data.partner_id) ?? null;
@@ -164,20 +166,22 @@ export default function StepConfirm({
                                     }
                                     secondary={selectedDriver?.phone ?? undefined}
                                 />
-                                <InfoTile
-                                    icon="🛡️"
-                                    title={t('rental.fields.insurance_package', undefined, 'Asuransi & Proteksi')}
-                                    primary={
-                                        selectedInsurance
-                                            ? selectedInsurance.name
-                                            : t('rental.placeholders.no_insurance', undefined, 'Tanpa Asuransi Tambahan')
-                                    }
-                                    secondary={
-                                        selectedInsurance
-                                            ? `${formatMoney(selectedInsurance.amount)}/hari`
-                                            : undefined
-                                    }
-                                />
+                                {(insurancePackagesEnabled || selectedInsurance) && (
+                                    <InfoTile
+                                        icon="🛡️"
+                                        title={t('rental.fields.insurance_package', undefined, 'Asuransi & Proteksi')}
+                                        primary={
+                                            selectedInsurance
+                                                ? selectedInsurance.name
+                                                : t('rental.placeholders.no_insurance', undefined, 'Tanpa Asuransi Tambahan')
+                                        }
+                                        secondary={
+                                            selectedInsurance
+                                                ? `${formatMoney(selectedInsurance.amount)}/hari`
+                                                : undefined
+                                        }
+                                    />
+                                )}
                             </div>
 
                             {/* Operational Notes */}

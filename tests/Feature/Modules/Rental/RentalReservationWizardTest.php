@@ -371,4 +371,32 @@ class RentalReservationWizardTest extends TestCase
                 ->where('locations.0.name', 'Pool Jakarta Barat')
                 ->where('locations.1.name', 'Pos Bandara Soetta'));
     }
+
+    public function test_create_page_reflects_insurance_packages_enabled_setting(): void
+    {
+        \Modules\Rental\Support\RentalGeneralSettings::update(array_merge(
+            \Modules\Rental\Support\RentalGeneralSettings::all(),
+            ['insurance_packages_enabled' => true]
+        ));
+
+        $this->actingAs($this->user)
+            ->get(route('module.rental.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->where('insurancePackagesEnabled', true));
+
+        \Modules\Rental\Support\RentalGeneralSettings::update(array_merge(
+            \Modules\Rental\Support\RentalGeneralSettings::all(),
+            ['insurance_packages_enabled' => false]
+        ));
+
+        $this->actingAs($this->user)
+            ->get(route('module.rental.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->where('insurancePackagesEnabled', false)
+                ->has('insurancePackages', 0));
+    }
 }

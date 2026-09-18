@@ -14,6 +14,7 @@ interface Props {
     includeExtras?: boolean;
     drivers?: DriverOption[];
     insurancePackages?: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
     isOneWay?: boolean;
 }
 
@@ -23,6 +24,7 @@ export default function PreviousStepsSummary({
     includeExtras = false,
     drivers = [],
     insurancePackages = [],
+    insurancePackagesEnabled = true,
     isOneWay = false,
 }: Props): JSX.Element {
     const { t } = useTrans();
@@ -153,14 +155,16 @@ export default function PreviousStepsSummary({
                     {/* Extras Summary if available */}
                     {includeExtras && (
                         <dl className="space-y-2 rounded-2xl border border-slate-200/80 bg-white p-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-                            <SummaryRow
-                                label={t('rental.fields.insurance_package', undefined, 'Asuransi')}
-                                value={
-                                    selectedInsurance
-                                        ? `${selectedInsurance.name}${insuranceAmount > 0 ? ` (${formatMoney(insuranceAmount)})` : ''}`
-                                        : 'Tanpa Asuransi'
-                                }
-                            />
+                            {(insurancePackagesEnabled || selectedInsurance) && (
+                                <SummaryRow
+                                    label={t('rental.fields.insurance_package', undefined, 'Asuransi')}
+                                    value={
+                                        selectedInsurance
+                                            ? `${selectedInsurance.name}${insuranceAmount > 0 ? ` (${formatMoney(insuranceAmount)})` : ''}`
+                                            : 'Tanpa Asuransi'
+                                    }
+                                />
+                            )}
                             <SummaryRow
                                 label={t('rental.fields.driver', undefined, 'Layanan Supir')}
                                 value={selectedDriver ? selectedDriver.name : 'Lepas Kunci (Tanpa Supir)'}

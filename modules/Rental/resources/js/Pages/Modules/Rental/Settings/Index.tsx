@@ -31,6 +31,7 @@ interface GeneralSettings {
     ai_kyc_enabled: boolean;
     ai_pricing_optimizer_enabled: boolean;
     mobile_rate_limiting_enabled?: boolean;
+    insurance_packages_enabled?: boolean;
 }
 
 interface DocumentTemplate {
@@ -64,6 +65,7 @@ const DEFAULT_GENERAL: GeneralSettings = {
     ai_kyc_enabled: true,
     ai_pricing_optimizer_enabled: true,
     mobile_rate_limiting_enabled: false,
+    insurance_packages_enabled: true,
 };
 
 const DEFAULT_DOCUMENTS: Record<string, DocumentTemplate> = {};
@@ -154,6 +156,7 @@ function GeneralPanel({
         ai_kyc_enabled: general.ai_kyc_enabled ?? true,
         ai_pricing_optimizer_enabled: general.ai_pricing_optimizer_enabled ?? true,
         mobile_rate_limiting_enabled: general.mobile_rate_limiting_enabled ?? false,
+        insurance_packages_enabled: general.insurance_packages_enabled ?? true,
     });
 
     const ttlPresets = [
@@ -292,6 +295,13 @@ function GeneralPanel({
                                     onChange={(checked) => setData('mobile_rate_limiting_enabled', checked)}
                                     label={t('rental.settings.mobile_rate_limiting_enabled', undefined, 'Rate Limiting API Mobile (Anti-Spam)')}
                                     description={t('rental.settings.mobile_rate_limiting_enabled_hint', undefined, 'Aktifkan pembatasan request untuk mencegah spam OTP & brute-force, atau nonaktifkan saat pengujian & development.')}
+                                />
+                                <ToggleSwitch
+                                    id="insurance_packages_enabled"
+                                    checked={data.insurance_packages_enabled ?? true}
+                                    onChange={(checked) => setData('insurance_packages_enabled', checked)}
+                                    label={t('rental.settings.insurance_packages_enabled', undefined, 'Paket Proteksi & Asuransi')}
+                                    description={t('rental.settings.insurance_packages_enabled_hint', undefined, 'Aktifkan seksi pemilihan paket asuransi & proteksi kendaraan pada form reservasi sewa.')}
                                 />
                             </div>
                         </div>

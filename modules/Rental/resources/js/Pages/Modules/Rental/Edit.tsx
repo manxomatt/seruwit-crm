@@ -45,6 +45,7 @@ interface Props {
     partners: PartnerOption[];
     locations?: LocationOption[];
     insurancePackages?: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
     defaultOneWayFee?: number;
     availableVehiclesUrl: string;
     quoteUrl: string;
@@ -57,6 +58,7 @@ export default function Edit({
     partners,
     locations = [],
     insurancePackages = [],
+    insurancePackagesEnabled = true,
     defaultOneWayFee = 150000,
     availableVehiclesUrl,
     quoteUrl,
@@ -104,6 +106,7 @@ export default function Edit({
                 drivers={drivers}
                 locations={locations}
                 insurancePackages={insurancePackages}
+                insurancePackagesEnabled={insurancePackagesEnabled}
                 defaultOneWayFee={defaultOneWayFee}
                 availableVehiclesUrl={availableVehiclesUrl}
                 quoteUrl={quoteUrl}

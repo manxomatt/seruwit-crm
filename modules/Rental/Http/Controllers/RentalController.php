@@ -17,6 +17,7 @@ use Modules\Rental\Http\Requests\UpdateRentalRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLocationHydrator;
@@ -127,6 +128,7 @@ class RentalController extends Controller
                 ]),
             'locations' => $this->locationOptions(),
             'insurancePackages' => $this->insurancePackageOptions(),
+            'insurancePackagesEnabled' => (bool) RentalGeneralSettings::all()['insurance_packages_enabled'],
             'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
             'suggestRateUrl' => route($this->getRoutePrefix().'.rental.rates.suggest'),
             'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
@@ -229,6 +231,7 @@ class RentalController extends Controller
                 ->get(),
             'locations' => $this->locationOptions(),
             'insurancePackages' => $this->insurancePackageOptions(),
+            'insurancePackagesEnabled' => (bool) RentalGeneralSettings::all()['insurance_packages_enabled'],
             'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
             'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
             'quoteUrl' => route($this->getRoutePrefix().'.rental.reservations.quote'),
@@ -373,6 +376,10 @@ class RentalController extends Controller
     private function insurancePackageOptions()
     {
         if (! Schema::hasTable('rental_insurance_packages')) {
+            return collect();
+        }
+
+        if (! RentalGeneralSettings::all()['insurance_packages_enabled']) {
             return collect();
         }
 

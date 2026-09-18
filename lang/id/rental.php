@@ -176,6 +176,8 @@ return [
         'pending_reserved_ttl_minutes_hint' => 'Lama booking online belum dibayar menahan kendaraan sebelum dilepas.',
         'public_mask_plates' => 'Samarkan plat di halaman publik',
         'public_mask_plates_hint' => 'Sembunyikan digit tengah di katalog (detail reservasi tetap menampilkan plat penuh).',
+        'insurance_packages_enabled' => 'Paket Proteksi & Asuransi',
+        'insurance_packages_enabled_hint' => 'Aktifkan seksi pemilihan paket asuransi & proteksi kendaraan pada form reservasi sewa.',
         'passenger_free_cancel_hours' => 'Jendela batal gratis (jam sebelum mulai)',
         'passenger_free_cancel_hours_hint' => 'Pembatalan penumpang setelah batas ini dapat dikenakan biaya pembatalan. Hold belum dibayar tetap gratis.',
         'mobile_rate_limiting_enabled' => 'Rate Limiting API Mobile (Anti-Spam)',

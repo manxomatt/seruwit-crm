@@ -32,6 +32,7 @@ interface Props {
     drivers: DriverOption[];
     locations: LocationOption[];
     insurancePackages: InsurancePackage[];
+    insurancePackagesEnabled?: boolean;
     defaultOneWayFee: number;
     availableVehiclesUrl: string;
     quoteUrl: string;
@@ -54,6 +55,7 @@ export default function ReservationForm({
     drivers,
     locations,
     insurancePackages,
+    insurancePackagesEnabled = true,
     defaultOneWayFee,
     availableVehiclesUrl,
     quoteUrl,
@@ -316,7 +318,7 @@ export default function ReservationForm({
                     pickup_location_id: data.pickup_location_id || null,
                     return_location_id: data.return_location_id || null,
                     one_way_fee_amount: data.one_way_fee_amount || null,
-                    insurance_package_id: data.insurance_package_id || null,
+                    insurance_package_id: insurancePackagesEnabled ? (data.insurance_package_id || null) : null,
                     exclude_rental_id: excludeRentalId,
                 }),
             });
@@ -443,7 +445,7 @@ export default function ReservationForm({
             pickup_location_id: form.pickup_location_id || null,
             return_location_id: form.return_location_id || null,
             one_way_fee_amount: form.one_way_fee_amount || null,
-            insurance_package_id: form.insurance_package_id || null,
+            insurance_package_id: insurancePackagesEnabled ? (form.insurance_package_id || null) : null,
         }));
 
         if (mode === 'edit') {
@@ -495,6 +497,7 @@ export default function ReservationForm({
                             errors={errors}
                             drivers={drivers}
                             insurancePackages={insurancePackages}
+                            insurancePackagesEnabled={insurancePackagesEnabled}
                             isOneWay={isOneWay}
                             selectedVehicle={selectedVehicle}
                         />
@@ -512,6 +515,7 @@ export default function ReservationForm({
                             selectedVehicle={selectedVehicle}
                             drivers={drivers}
                             insurancePackages={insurancePackages}
+                            insurancePackagesEnabled={insurancePackagesEnabled}
                             isOneWay={isOneWay}
                         />
                     )}
@@ -525,6 +529,7 @@ export default function ReservationForm({
                             partners={partners}
                             drivers={drivers}
                             insurancePackages={insurancePackages}
+                            insurancePackagesEnabled={insurancePackagesEnabled}
                         />
                     )}
                 </div>
