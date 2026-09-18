@@ -40,16 +40,39 @@ class RentalBaseHeadAccessTest extends TestCase
         SystemRolePermissions::syncAllSystemRoles();
     }
 
-    public function test_fleet_base_head_has_rental_permissions_except_delete(): void
+    public function test_fleet_base_head_has_operational_rental_permissions_without_rates_and_settings(): void
     {
         $headRole = Role::query()->where('slug', AccessibleFleetBases::ROLE_HEAD)->firstOrFail();
         $permissionSlugs = $headRole->permissions()->pluck('slug')->all();
 
         $this->assertContains('rental.view', $permissionSlugs);
-        $this->assertContains('rental.create', $permissionSlugs);
-        $this->assertContains('rental.update', $permissionSlugs);
-        $this->assertContains('rental.approve', $permissionSlugs);
-        $this->assertNotContains('rental.delete', $permissionSlugs);
+        $this->assertContains('rental.bookings', $permissionSlugs);
+        $this->assertContains('rental.dispatch', $permissionSlugs);
+        $this->assertContains('rental.damages', $permissionSlugs);
+        $this->assertContains('rental.finance', $permissionSlugs);
+        $this->assertNotContains('rental.rates', $permissionSlugs);
+        $this->assertNotContains('rental.settings', $permissionSlugs);
+    }
+
+    public function test_fleet_base_head_cannot_access_rates_or_settings(): void
+    {
+        $admin = $this->createAdminUser();
+        $baseA = FleetBase::factory()->create(['manager_id' => $admin->id, 'code' => 'BASE-A']);
+        $head = $this->createHeadUser([$baseA->id]);
+
+        $this->actingAs($head)
+            ->get(route('module.rental.rates.index'))
+            ->assertForbidden();
+
+        $this->actingAs($head)
+            ->get(route('module.rental.settings.index'))
+            ->assertForbidden();
+
+        $this->actingAs($head)
+            ->patch(route('module.rental.settings.general.update'), [
+                'default_one_way_fee' => 200000,
+            ])
+            ->assertForbidden();
     }
 
     public function test_fleet_base_head_only_sees_rentals_for_own_base_in_index(): void

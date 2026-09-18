@@ -66,6 +66,21 @@ class Permission extends Model
     ];
 
     /**
+     * Rental uses a feature-level action set. Seeded when Rental module is installed.
+     *
+     * @var array<string, string>
+     */
+    public const RENTAL_ACTIONS = [
+        'view' => 'View (Dashboard & Calendar)',
+        'bookings' => 'Bookings & Reservations',
+        'dispatch' => 'Fleet Dispatch & Handover',
+        'damages' => 'Damages & Claims',
+        'finance' => 'Finance & Security Deposits',
+        'rates' => 'Tariff Rates & Pricing',
+        'settings' => 'Module Settings & Templates',
+    ];
+
+    /**
      * Available actions for permissions.
      *
      * @var array<string, string>
@@ -104,9 +119,11 @@ class Permission extends Model
     public static function generateName(string $module, string $action): string
     {
         $moduleName = self::MODULES[$module] ?? ucfirst($module);
-        $actionName = self::ACTIONS[$action]
-            ?? self::ACCOUNTING_ACTIONS[$action]
-            ?? ucfirst($action);
+        $actionName = match ($module) {
+            'accounting' => self::ACCOUNTING_ACTIONS[$action] ?? self::ACTIONS[$action] ?? ucfirst($action),
+            'rental' => self::RENTAL_ACTIONS[$action] ?? self::ACTIONS[$action] ?? ucfirst($action),
+            default => self::ACTIONS[$action] ?? self::ACCOUNTING_ACTIONS[$action] ?? ucfirst($action),
+        };
 
         return "{$actionName} {$moduleName}";
     }
@@ -128,7 +145,7 @@ class Permission extends Model
      */
     public static function getActions(): array
     {
-        return self::ACTIONS;
+        return array_merge(self::ACTIONS, self::ACCOUNTING_ACTIONS, self::RENTAL_ACTIONS);
     }
 
     /**

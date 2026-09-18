@@ -197,7 +197,7 @@ class HandleInertiaRequests extends Middleware
             return 0;
         }
 
-        if (! $user->hasPermissionFor('rental', 'approve')) {
+        if (! $user->hasPermissionFor('rental', 'finance')) {
             return 0;
         }
 

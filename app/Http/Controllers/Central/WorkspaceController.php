@@ -58,6 +58,10 @@ class WorkspaceController extends Controller
                     });
                 } catch (\Throwable) {
                     $roles = [];
+                } finally {
+                    if (tenancy()->initialized) {
+                        tenancy()->end();
+                    }
                 }
 
                 return [

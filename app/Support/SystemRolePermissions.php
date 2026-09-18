@@ -158,7 +158,7 @@ class SystemRolePermissions
                 ->where(function ($query): void {
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
-                        ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'create', 'update', 'delete', 'approve']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')
@@ -168,7 +168,7 @@ class SystemRolePermissions
                 ->where(function ($query): void {
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
-                        ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'create', 'update', 'approve']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')

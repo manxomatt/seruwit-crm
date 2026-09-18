@@ -45,7 +45,7 @@ class RentalSettingsNavTest extends TestCase
 
     public function test_settings_documents_tab_renders(): void
     {
-        $this->actingAs($this->createUserWithRole())
+        $this->actingAs($this->createAdminUser())
             ->get(route('module.rental.settings.index', ['tab' => 'documents']))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -57,9 +57,16 @@ class RentalSettingsNavTest extends TestCase
             );
     }
 
-    public function test_settings_invalid_tab_defaults_to_general(): void
+    public function test_settings_forbidden_for_user_without_settings_permission(): void
     {
         $this->actingAs($this->createUserWithRole())
+            ->get(route('module.rental.settings.index'))
+            ->assertForbidden();
+    }
+
+    public function test_settings_invalid_tab_defaults_to_general(): void
+    {
+        $this->actingAs($this->createAdminUser())
             ->get(route('module.rental.settings.index', ['tab' => 'rates']))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -180,14 +187,14 @@ class RentalSettingsNavTest extends TestCase
 
     public function test_settings_index_without_tab_redirects_to_general(): void
     {
-        $this->actingAs($this->createUserWithRole())
+        $this->actingAs($this->createAdminUser())
             ->get(route('module.rental.settings.index'))
             ->assertRedirect(route('module.rental.settings.index', ['tab' => 'general']));
     }
 
     public function test_rates_index_renders_standalone_page(): void
     {
-        $this->actingAs($this->createUserWithRole())
+        $this->actingAs($this->createAdminUser())
             ->get(route('module.rental.rates.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -196,6 +203,13 @@ class RentalSettingsNavTest extends TestCase
                 ->has('rentalClasses')
                 ->has('vehicles')
             );
+    }
+
+    public function test_rates_forbidden_for_user_without_rates_permission(): void
+    {
+        $this->actingAs($this->createUserWithRole())
+            ->get(route('module.rental.rates.index'))
+            ->assertForbidden();
     }
 
     public function test_availability_remains_standalone_page(): void

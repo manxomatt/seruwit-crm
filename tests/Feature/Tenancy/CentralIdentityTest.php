@@ -215,18 +215,23 @@ class CentralIdentityTest extends TestCase
             $user->assignRole(Role::query()->where('slug', 'user')->firstOrFail());
         });
 
-        $centralUser = CentralUser::query()->where('email', 'multi-roles@example.com')->firstOrFail();
+        $user = User::query()->where('email', 'multi-roles@example.com')->firstOrFail();
 
-        $response = $this->actingAs($centralUser)->get(route('central.workspaces.index'));
+        $response = $this->actingAs($user)->get(route('central.workspaces.index'));
 
         $response->assertOk();
         $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->component('Central/Workspaces')
             ->has('workspaces', 2)
-            ->where('workspaces.0.name', 'Company Alpha')
-            ->where('workspaces.0.roles.0.slug', 'admin')
-            ->where('workspaces.1.name', 'Company Beta')
-            ->where('workspaces.1.roles.0.slug', 'user')
+            ->where('workspaces', function ($workspaces): bool {
+                $alpha = collect($workspaces)->firstWhere('name', 'Company Alpha');
+                $beta = collect($workspaces)->firstWhere('name', 'Company Beta');
+
+                return $alpha !== null
+                    && data_get($alpha, 'roles.0.slug') === 'admin'
+                    && $beta !== null
+                    && data_get($beta, 'roles.0.slug') === 'user';
+            })
         );
     }
 }

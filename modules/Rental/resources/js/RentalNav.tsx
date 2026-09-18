@@ -1,24 +1,54 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
-const TABS: Array<{ icon: string; labelKey: string; fallbackLabel: string; route: string; pattern: string }> = [
-    { icon: '📊', labelKey: 'rental.nav.dashboard', fallbackLabel: 'Dashboard', route: 'rental.dashboard', pattern: 'rental.dashboard' },
-    { icon: '📋', labelKey: 'rental.nav.bookings', fallbackLabel: 'Bookings', route: 'rental.index', pattern: 'rental.index' },
-    { icon: '📅', labelKey: 'rental.nav.calendar', fallbackLabel: 'Calendar', route: 'rental.calendar.index', pattern: 'rental.calendar.*' },
-    { icon: '🚗', labelKey: 'rental.nav.availability', fallbackLabel: 'Availability', route: 'rental.availability.index', pattern: 'rental.availability.*' },
-    { icon: '💰', labelKey: 'rental.nav.rates', fallbackLabel: 'Tariff Rates', route: 'rental.rates.index', pattern: 'rental.rates.*' },
-    { icon: '⚙️', labelKey: 'rental.nav.settings', fallbackLabel: 'Settings', route: 'rental.settings.index', pattern: 'rental.settings.*' },
+interface TabItem {
+    icon: string;
+    labelKey: string;
+    fallbackLabel: string;
+    route: string;
+    pattern: string;
+    permissionAction?: string;
+}
+
+const TABS: Array<TabItem> = [
+    { icon: '📊', labelKey: 'rental.nav.dashboard', fallbackLabel: 'Dashboard', route: 'rental.dashboard', pattern: 'rental.dashboard', permissionAction: 'view' },
+    { icon: '📋', labelKey: 'rental.nav.bookings', fallbackLabel: 'Bookings', route: 'rental.index', pattern: 'rental.index', permissionAction: 'view' },
+    { icon: '📅', labelKey: 'rental.nav.calendar', fallbackLabel: 'Calendar', route: 'rental.calendar.index', pattern: 'rental.calendar.*', permissionAction: 'view' },
+    { icon: '🚗', labelKey: 'rental.nav.availability', fallbackLabel: 'Availability', route: 'rental.availability.index', pattern: 'rental.availability.*', permissionAction: 'view' },
+    { icon: '💰', labelKey: 'rental.nav.rates', fallbackLabel: 'Tariff Rates', route: 'rental.rates.index', pattern: 'rental.rates.*', permissionAction: 'rates' },
+    { icon: '⚙️', labelKey: 'rental.nav.settings', fallbackLabel: 'Settings', route: 'rental.settings.index', pattern: 'rental.settings.*', permissionAction: 'settings' },
 ];
 
 export default function RentalNav(): JSX.Element {
     const { routePrefix, prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const { auth } = usePage().props as {
+        auth?: {
+            user?: {
+                is_admin?: boolean;
+                permissions?: Record<string, string[]>;
+            };
+        };
+    };
 
     const tabs = TABS.filter((tab) => {
         const name = `${routePrefix}.${tab.route}`;
+        const hasRoute = route().has(name) || route().has(`central.${name}`);
+        if (!hasRoute) {
+            return false;
+        }
 
-        return route().has(name) || route().has(`central.${name}`);
+        if (auth?.user?.is_admin) {
+            return true;
+        }
+
+        if (tab.permissionAction) {
+            const rentalPerms = auth?.user?.permissions?.rental || [];
+            return rentalPerms.includes(tab.permissionAction);
+        }
+
+        return true;
     });
 
     return (
