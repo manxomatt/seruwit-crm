@@ -407,6 +407,7 @@ type ModuleSidebarChild = {
     routePatterns: string[];
     icon: ReactNode;
     params?: Record<string, string>;
+    permissionAction?: string;
 };
 
 const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
@@ -417,6 +418,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             route: 'module.rental.dashboard',
             routePatterns: ['module.rental.dashboard', 'module.rental.dashboard.*'],
             icon: <DashboardIcon />,
+            permissionAction: 'view',
         },
         {
             key: 'rental-reservation',
@@ -429,6 +431,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
                 'module.rental.edit',
             ],
             icon: <ReservationIcon />,
+            permissionAction: 'view',
         },
         {
             key: 'rental-availability',
@@ -436,6 +439,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             route: 'module.rental.availability.index',
             routePatterns: ['module.rental.availability.*'],
             icon: <AvailabilityIcon />,
+            permissionAction: 'view',
         },
         {
             key: 'rental-calendar',
@@ -443,6 +447,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             route: 'module.rental.calendar.index',
             routePatterns: ['module.rental.calendar.*'],
             icon: <RentalCalendarIcon />,
+            permissionAction: 'view',
         },
         {
             key: 'rental-settings',
@@ -451,6 +456,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             routePatterns: ['module.rental.settings.*', 'module.rental.rates.*'],
             params: { tab: 'general' },
             icon: <SettingsIcon />,
+            permissionAction: 'settings',
         },
     ],
 };
@@ -669,6 +675,10 @@ export default function ModuleLayout({ header, children }: Props) {
             if (children) {
                 children.forEach((child) => {
                     if (! routeExists(child.route)) {
+                        return;
+                    }
+
+                    if (child.permissionAction && ! hasModulePermission(module, child.permissionAction)) {
                         return;
                     }
 
