@@ -64,6 +64,43 @@ class GlobalSearchService
     private const LIMIT = 5;
 
     /**
+     * Central-only platform management modules never accessible inside tenant workspaces.
+     *
+     * @var list<string>
+     */
+    private const CENTRAL_ONLY_MODULES = [
+        'tenants',
+        'plans',
+        'subscription-tiers',
+        'platform-settings',
+        'module-registry',
+        'central-modules',
+    ];
+
+    /**
+     * Built-in and core modules allowed on the central dashboard by default.
+     *
+     * @var list<string>
+     */
+    private const CENTRAL_ALLOWED_MODULES = [
+        'users',
+        'roles',
+        'settings',
+        'media',
+        'posts',
+        'pages',
+        'carousels',
+        'accounting',
+        'payment-orders',
+        'tenants',
+        'plans',
+        'subscription-tiers',
+        'platform-settings',
+        'module-registry',
+        'central-modules',
+    ];
+
+    /**
      * @return list<array{id: int|string, title: string, subtitle: string, type: string, icon: string, url: string, thumbnail?: string|null}>
      */
     public function search(User $user, string $query): array
@@ -142,7 +179,7 @@ class GlobalSearchService
     /** @return list<array<string, mixed>> */
     private function users(User $user, string $query): array
     {
-        if (! $user->hasPermissionFor('users', 'view')) {
+        if (! $this->canSearch($user, 'users', User::class, 'users')) {
             return [];
         }
 
@@ -166,7 +203,7 @@ class GlobalSearchService
     /** @return list<array<string, mixed>> */
     private function roles(User $user, string $query): array
     {
-        if (! $user->hasPermissionFor('roles', 'view')) {
+        if (! $this->canSearch($user, 'roles', Role::class, 'roles')) {
             return [];
         }
 
@@ -190,7 +227,7 @@ class GlobalSearchService
     /** @return list<array<string, mixed>> */
     private function settings(User $user, string $query): array
     {
-        if (! $user->hasPermissionFor('settings', 'view')) {
+        if (! $this->canSearch($user, 'settings', Setting::class, 'settings')) {
             return [];
         }
 
@@ -217,7 +254,7 @@ class GlobalSearchService
     /** @return list<array<string, mixed>> */
     private function media(User $user, string $query): array
     {
-        if (! $user->hasPermissionFor('media', 'view')) {
+        if (! $this->canSearch($user, 'media', Media::class, 'media')) {
             return [];
         }
 
@@ -1188,8 +1225,8 @@ class GlobalSearchService
                 ->orWhereHas('documentType', fn (Builder $type) => $type->where('name', 'ilike', "%{$query}%")))
             ->limit(self::LIMIT)
             ->get()
-            ->map(function (Document $document): ?array {
-                $url = $this->documentUrl($document);
+            ->map(function (Document $document) use ($user): ?array {
+                $url = $this->documentUrl($document, $user);
 
                 if ($url === null) {
                     return null;
@@ -1435,15 +1472,23 @@ class GlobalSearchService
             ->all();
     }
 
-    private function documentUrl(Document $document): ?string
+    private function documentUrl(Document $document, User $user): ?string
     {
         $type = $document->documentable_type;
 
         if (in_array($type, ['vehicle', Vehicle::class], true) && $document->documentable_id) {
+            if (! $this->canAccessModule($user, 'fleet')) {
+                return null;
+            }
+
             return route('module.fleet.vehicles.documents.show', [$document->documentable_id, $document]);
         }
 
         if (in_array($type, ['driver', Driver::class], true) && $document->documentable_id) {
+            if (! $this->canAccessModule($user, 'fleet')) {
+                return null;
+            }
+
             return route('module.fleet.drivers.documents.show', [$document->documentable_id, $document]);
         }
 
@@ -1451,12 +1496,46 @@ class GlobalSearchService
     }
 
     /**
+     * Check whether the user is authorized to access records belonging to $moduleKey.
+     */
+    public function canAccessModule(User $user, string $moduleKey): bool
+    {
+        // 1. Permission check:
+        // Workspace/system admin has full permissions across all available features in the active context.
+        // Non-admin user must hold 'view' permission for this specific module.
+        if (! $user->isAdmin() && ! $user->hasPermissionFor($moduleKey, 'view')) {
+            return false;
+        }
+
+        // 2. Context availability check:
+        $isTenant = function_exists('tenancy') && tenancy()->initialized;
+
+        if ($isTenant) {
+            if (in_array($moduleKey, self::CENTRAL_ONLY_MODULES, true)) {
+                return false;
+            }
+
+            if (Modules::has($moduleKey) && ! Modules::available($moduleKey)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Central context:
+        if (in_array($moduleKey, self::CENTRAL_ALLOWED_MODULES, true) || in_array($moduleKey, config('modules.central_modules', []), true)) {
+            return true;
+        }
+
+        return in_array($moduleKey, Modules::centralInstalled(), true);
+    }
+
+    /**
      * @param  class-string  $modelClass
      */
     private function canSearch(User $user, string $moduleKey, string $modelClass, string $table): bool
     {
-        return Modules::available($moduleKey)
-            && $user->hasPermissionFor($moduleKey, 'view')
+        return $this->canAccessModule($user, $moduleKey)
             && class_exists($modelClass)
             && Schema::hasTable($table);
     }

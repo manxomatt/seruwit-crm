@@ -5,6 +5,12 @@ import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+interface WorkspaceRole {
+    id?: number;
+    name: string;
+    slug: string;
+}
+
 interface Workspace {
     id: string;
     name: string;
@@ -16,6 +22,27 @@ interface Workspace {
     trial_ends_at?: string | null;
     trial_days_left?: number;
     is_on_trial?: boolean;
+    roles?: WorkspaceRole[];
+}
+
+function getRoleBadgeStyle(slug: string): string {
+    switch (slug) {
+        case 'admin':
+            return 'bg-rose-50 text-rose-700 border border-rose-200';
+        case 'user':
+            return 'bg-sky-50 text-sky-700 border border-sky-200';
+        case 'warehouse_head':
+        case 'warehouse_manager':
+            return 'bg-amber-50 text-amber-700 border border-amber-200';
+        case 'fleet_base_head':
+        case 'fleet_base_manager':
+        case 'driver':
+            return 'bg-purple-50 text-purple-700 border border-purple-200';
+        case 'salesperson':
+            return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+        default:
+            return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+    }
 }
 
 interface IncomingInvitation {
@@ -210,6 +237,17 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                                                 <span className="rounded-md bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">
                                                                     {workspace.plan_name || 'Trial'}
                                                                 </span>
+                                                                {workspace.roles?.map((role) => (
+                                                                    <span
+                                                                        key={role.id ? `${role.id}-${role.slug}` : role.slug}
+                                                                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[12px]">
+                                                                            {role.slug === 'admin' ? 'shield_person' : 'person'}
+                                                                        </span>
+                                                                        <span>{role.name}</span>
+                                                                    </span>
+                                                                ))}
                                                             </div>
                                                             {workspace.domain && (
                                                                 <p className="truncate text-sm text-slate-500">
@@ -258,6 +296,17 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                                                     Free Lifetime
                                                                 </span>
                                                             )}
+                                                            {workspace.roles?.map((role) => (
+                                                                <span
+                                                                    key={role.id ? `${role.id}-${role.slug}` : role.slug}
+                                                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[12px]">
+                                                                        {role.slug === 'admin' ? 'shield_person' : 'person'}
+                                                                    </span>
+                                                                    <span>{role.name}</span>
+                                                                </span>
+                                                            ))}
                                                         </div>
                                                         {workspace.domain && (
                                                             <p className="truncate text-sm text-slate-500">
@@ -278,9 +327,22 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                                             {workspace.name.charAt(0).toUpperCase()}
                                                         </span>
                                                         <div className="min-w-0">
-                                                            <p className="truncate font-semibold text-slate-700">
-                                                                {workspace.name}
-                                                            </p>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <p className="truncate font-semibold text-slate-700">
+                                                                    {workspace.name}
+                                                                </p>
+                                                                {workspace.roles?.map((role) => (
+                                                                    <span
+                                                                        key={role.id ? `${role.id}-${role.slug}` : role.slug}
+                                                                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[12px]">
+                                                                            {role.slug === 'admin' ? 'shield_person' : 'person'}
+                                                                        </span>
+                                                                        <span>{role.name}</span>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                             {workspace.domain && (
                                                                 <p className="truncate text-sm text-slate-400">
                                                                     {workspace.domain}

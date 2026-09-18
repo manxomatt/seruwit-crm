@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
 use App\Models\CentralUser;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
@@ -20,16 +21,44 @@ class WorkspaceController extends Controller
      */
     public function index(Request $request): Response
     {
-        $workspaces = $this->centralUser($request)
+        $centralUser = $this->centralUser($request);
+
+        $workspaces = $centralUser
             ->tenants()
             ->with('domains')
             ->get()
-            ->map(function (Tenant $tenant): array {
+            ->map(function (Tenant $tenant) use ($centralUser): array {
                 $planModel = $tenant->planModel();
                 $isOnTrial = (bool) ($tenant->isOnTrial ?? false);
                 $trialDaysLeft = $isOnTrial && $tenant->trial_ends_at && $tenant->trial_ends_at->isFuture()
                     ? max(1, (int) ceil(now()->diffInSeconds($tenant->trial_ends_at, false) / 86400))
                     : 0;
+
+                $roles = [];
+                try {
+                    $roles = $tenant->run(function () use ($centralUser): array {
+                        $tenantUser = User::query()
+                            ->select(['id', 'global_id'])
+                            ->where('global_id', $centralUser->global_id)
+                            ->with('roles:id,name,slug')
+                            ->first();
+
+                        if (! $tenantUser) {
+                            return [];
+                        }
+
+                        return $tenantUser->roles
+                            ->map(fn (Role $role): array => [
+                                'id' => $role->id,
+                                'name' => $role->name,
+                                'slug' => $role->slug,
+                            ])
+                            ->values()
+                            ->all();
+                    });
+                } catch (\Throwable) {
+                    $roles = [];
+                }
 
                 return [
                     'id' => $tenant->id,
@@ -42,6 +71,7 @@ class WorkspaceController extends Controller
                     'trial_ends_at' => $isOnTrial ? $tenant->trial_ends_at?->toIso8601String() : null,
                     'trial_days_left' => $trialDaysLeft,
                     'is_on_trial' => $isOnTrial,
+                    'roles' => $roles,
                 ];
             });
 

@@ -2,9 +2,14 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Models\InstalledModule;
+use App\Models\Role;
 use App\Models\User;
+use App\Modules\ModuleRegistry;
+use App\Support\SystemRolePermissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Accounting\Models\Account;
+use Modules\Document\Models\Document;
 use Modules\DriverScoring\Models\DriverIncentiveRule;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
@@ -18,6 +23,7 @@ use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAttribute;
 use Modules\Product\Models\ProductTag;
 use Modules\Product\Models\ProductType;
+use Modules\Rental\Models\Rental;
 use Modules\Sales\Models\SalesOrder;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -32,7 +38,18 @@ class GlobalSearchTest extends TestCase
         parent::setUp();
 
         $this->withoutVite();
+        $this->withoutMiddleware(\App\Http\Middleware\RedirectUnfinishedSignup::class);
         $this->setUpRoles();
+
+        InstalledModule::query()->firstOrCreate(['key' => 'partners'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'products'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'fleet'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'orders'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'sales'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'payables'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'scoring'], ['installed_at' => now()]);
+        InstalledModule::query()->firstOrCreate(['key' => 'document'], ['installed_at' => now()]);
+        app(ModuleRegistry::class)->flushInstalledState();
     }
 
     public function test_guests_cannot_search(): void
@@ -227,5 +244,75 @@ class GlobalSearchTest extends TestCase
 
         $accountHit = collect($response->json('results'))->firstWhere('type', 'account');
         $this->assertStringContainsString($account->code, $accountHit['title']);
+    }
+
+    public function test_search_does_not_return_data_from_uninstalled_modules_on_central(): void
+    {
+        $user = $this->createAdminUser();
+
+        // Rental module is not installed on central
+        Rental::factory()->create([
+            'code' => 'RENT-UNINSTALLED-01',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('module.search', ['q' => 'RENT-UNINSTALLED']))
+            ->assertOk();
+
+        $this->assertEmpty($response->json('results'));
+    }
+
+    public function test_search_only_returns_data_from_modules_user_is_permitted_to_access(): void
+    {
+        // Driver role only has permissions for orders and transportation
+        SystemRolePermissions::seedRolesForModule('orders');
+        $driverRole = Role::query()->firstWhere('slug', 'driver');
+        $driverRole->permissions()->sync(SystemRolePermissions::defaultIdsFor($driverRole));
+
+        $user = $this->createUserWithRole();
+        $user->roles()->sync([$driverRole->id]);
+
+        $partner = Partner::factory()->create(['name' => 'Falcon Logistics Partner']);
+        $order = DeliveryOrder::factory()->create([
+            'code' => 'DO-FALCON-01',
+            'partner_id' => $partner->id,
+        ]);
+        Vehicle::factory()->create([
+            'name' => 'Falcon Express Van',
+            'plate_number' => 'B 9999 FAL',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('module.search', ['q' => 'Falcon']))
+            ->assertOk();
+
+        $types = collect($response->json('results'))->pluck('type')->all();
+
+        $this->assertContains('order', $types);
+        $this->assertNotContains('vehicle', $types);
+    }
+
+    public function test_search_does_not_leak_fleet_documents_without_fleet_access(): void
+    {
+        // Driver role only has orders and transportation permissions, not fleet
+        SystemRolePermissions::seedRolesForModule('orders');
+        $driverRole = Role::query()->firstWhere('slug', 'driver');
+        $driverRole->permissions()->sync(SystemRolePermissions::defaultIdsFor($driverRole));
+
+        $user = $this->createUserWithRole();
+        $user->roles()->sync([$driverRole->id]);
+
+        $vehicle = Vehicle::factory()->create(['name' => 'Secret Fleet Vehicle']);
+        Document::factory()->create([
+            'document_number' => 'DOC-SECRET-FLEET-01',
+            'documentable_type' => Vehicle::class,
+            'documentable_id' => $vehicle->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('module.search', ['q' => 'DOC-SECRET-FLEET']))
+            ->assertOk();
+
+        $this->assertEmpty($response->json('results'));
     }
 }

@@ -59,7 +59,7 @@ class CentralIdentityTest extends TestCase
         $tenantB = $this->makeTenant('Company B');
 
         $tenantA->run(function (): void {
-            $this->seed(RoleSeeder::class);
+            RoleSeeder::seedAllSystemRoles();
             $user = User::factory()->create(['email' => 'multi@example.com']);
             $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
         });
@@ -67,7 +67,7 @@ class CentralIdentityTest extends TestCase
         $globalId = CentralUser::query()->where('email', 'multi@example.com')->firstOrFail()->global_id;
 
         $tenantB->run(function () use ($globalId): void {
-            $this->seed(RoleSeeder::class);
+            RoleSeeder::seedAllSystemRoles();
             $user = User::factory()->create(['email' => 'multi@example.com', 'global_id' => $globalId]);
             $user->assignRole(Role::query()->where('slug', 'user')->firstOrFail());
         });
@@ -194,5 +194,39 @@ class CentralIdentityTest extends TestCase
                 ->component('Errors/WorkspaceSuspended')
                 ->where('workspace.name', 'Company A')
                 ->has('workspacesUrl'));
+    }
+
+    public function test_workspaces_index_displays_user_roles_for_each_tenant(): void
+    {
+        $tenantA = $this->makeTenant('Company Alpha', 'alpha.localhost');
+        $tenantB = $this->makeTenant('Company Beta', 'beta.localhost');
+
+        $tenantA->run(function (): void {
+            RoleSeeder::seedAllSystemRoles();
+            $user = User::factory()->create(['email' => 'multi-roles@example.com']);
+            $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
+        });
+
+        $globalId = CentralUser::query()->where('email', 'multi-roles@example.com')->firstOrFail()->global_id;
+
+        $tenantB->run(function () use ($globalId): void {
+            RoleSeeder::seedAllSystemRoles();
+            $user = User::factory()->create(['email' => 'multi-roles@example.com', 'global_id' => $globalId]);
+            $user->assignRole(Role::query()->where('slug', 'user')->firstOrFail());
+        });
+
+        $centralUser = CentralUser::query()->where('email', 'multi-roles@example.com')->firstOrFail();
+
+        $response = $this->actingAs($centralUser)->get(route('central.workspaces.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Central/Workspaces')
+            ->has('workspaces', 2)
+            ->where('workspaces.0.name', 'Company Alpha')
+            ->where('workspaces.0.roles.0.slug', 'admin')
+            ->where('workspaces.1.name', 'Company Beta')
+            ->where('workspaces.1.roles.0.slug', 'user')
+        );
     }
 }
