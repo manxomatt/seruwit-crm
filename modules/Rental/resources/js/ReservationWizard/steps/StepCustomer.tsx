@@ -471,6 +471,16 @@ export default function StepCustomer({
                         <InputError message={walkInErrors.name} className="mt-1" />
                     </div>
                     <div>
+                        <InputLabel htmlFor="walk_in_id_number" value={t('partners.fields.id_number', undefined, 'NIK / No. KTP')} />
+                        <TextInput
+                            id="walk_in_id_number"
+                            className="mt-1 block w-full text-xs"
+                            value={walkIn.id_number}
+                            onChange={(e) => setWalkIn((c) => ({ ...c, id_number: e.target.value }))}
+                        />
+                        <InputError message={walkInErrors.id_number} className="mt-1" />
+                    </div>
+                    <div>
                         <InputLabel htmlFor="walk_in_phone" value={`${t('partners.fields.phone', undefined, 'No. Telepon / WhatsApp')} *`} />
                         <TextInput
                             id="walk_in_phone"
@@ -491,15 +501,6 @@ export default function StepCustomer({
                             onChange={(e) => setWalkIn((c) => ({ ...c, email: e.target.value }))}
                         />
                         <InputError message={walkInErrors.email} className="mt-1" />
-                    </div>
-                    <div>
-                        <InputLabel htmlFor="walk_in_id_number" value={t('partners.fields.id_number', undefined, 'NIK / No. KTP')} />
-                        <TextInput
-                            id="walk_in_id_number"
-                            className="mt-1 block w-full text-xs"
-                            value={walkIn.id_number}
-                            onChange={(e) => setWalkIn((c) => ({ ...c, id_number: e.target.value }))}
-                        />
                     </div>
                     <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
                         <SecondaryButton type="button" onClick={() => setShowWalkIn(false)} disabled={processing}>
