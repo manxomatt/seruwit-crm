@@ -29,6 +29,7 @@ use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Rental\Support\RentalPlateMasker;
 use Modules\Rental\Support\RentalRateResolver;
+use Modules\Rental\Support\RentalStatusHint;
 use Modules\Shuttle\Support\PassengerOtpService;
 use Throwable;
 
@@ -971,6 +972,7 @@ class PublicRentalBookingController extends Controller
             'pickup_location' => $rental->pickup_location ?? $rental->pickupLocation?->name,
             'return_location' => $rental->return_location ?? $rental->returnLocation?->name,
             'reserved_until' => $rental->reserved_until?->toIso8601String(),
+            'status_hint' => app(RentalStatusHint::class)->for($rental, RentalStatusHint::AUDIENCE_PASSENGER),
             'cancelled_reason' => $rental->cancelled_reason,
             'vehicle' => $rental->vehicle ? [
                 'id' => $rental->vehicle->id,

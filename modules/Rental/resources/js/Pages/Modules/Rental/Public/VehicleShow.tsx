@@ -680,7 +680,7 @@ export default function VehicleShow({
                                     className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:opacity-95 disabled:opacity-50"
                                     style={{ backgroundColor: 'var(--brand-color)' }}
                                 >
-                                    {form.processing ? 'Memproses Pesanan...' : 'Konfirmasi & Pesan Sekarang'}
+                                    {form.processing ? 'Memproses pesanan...' : 'Pesan sekarang'}
                                 </button>
                             </form>
                         </div>

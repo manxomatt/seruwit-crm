@@ -50,10 +50,10 @@ export default function StepConfirm({
         <div className="space-y-6">
             <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                    {t('rental.wizard.steps.6', undefined, 'Review & Konfirmasi Reservasi')}
+                    {t('rental.wizard.steps.6', undefined, 'Tinjau & simpan')}
                 </h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    {t('rental.wizard.confirm.subtitle', undefined, 'Periksa detail pemesanan di bawah ini, lalu buat reservasi sebagai draft Quote.')}
+                    {t('rental.wizard.confirm.subtitle', undefined, 'Periksa detail di bawah, lalu simpan sebagai draft. Booking belum terbit dan unit belum diserahkan.')}
                 </p>
             </div>
 

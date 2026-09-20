@@ -29,7 +29,7 @@ export default function HandoverSection({
         <SectionCard title={t('rental.sections.handover', undefined, 'Serah Terima & BAST Kendaraan')} icon="🚗">
             <dl>
                 {rental.start_odometer != null && (
-                    <DetailRow label={t('rental.fields.checkout', undefined, 'Odometer Berangkat')}>
+                    <DetailRow label={t('rental.fields.start_odometer', undefined, 'Odometer Berangkat')}>
                         <span className="tabular-nums font-bold">
                             {t('rental.rates.km', { km: rental.start_odometer.toLocaleString() }, `${rental.start_odometer.toLocaleString()} km`)}
                         </span>
@@ -41,7 +41,7 @@ export default function HandoverSection({
                     </DetailRow>
                 )}
                 {rental.end_odometer != null && (
-                    <DetailRow label={t('rental.fields.return', undefined, 'Odometer Kembali')}>
+                    <DetailRow label={t('rental.fields.end_odometer', undefined, 'Odometer Kembali')}>
                         <span className="tabular-nums font-bold">
                             {t('rental.rates.km', { km: rental.end_odometer.toLocaleString() }, `${rental.end_odometer.toLocaleString()} km`)}
                         </span>
@@ -56,7 +56,7 @@ export default function HandoverSection({
             {rental.checkout_checklist && (
                 <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
                     <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {t('rental.checklist.checkout', undefined, 'Checklist Saat Penyerahan (Checkout)')}
+                        {t('rental.checklist.checkout', undefined, 'Checklist saat penyerahan')}
                     </p>
                     <ul className="grid gap-1.5 sm:grid-cols-2">
                         {checklistItems.map((key) => (

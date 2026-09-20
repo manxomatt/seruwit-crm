@@ -129,6 +129,7 @@ interface RentalRateTierSnapshot {
 
 export interface Rental {
     id: number; code: string; status: string; is_overdue: boolean;
+    status_hint?: string | null;
     start_date: string; end_date: string; actual_return_date: string | null;
     period_type: string; total_periods: number;
     rate_per_period: string; km_limit_per_period: number | null; excess_km_rate: string | null;

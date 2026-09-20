@@ -37,6 +37,7 @@ interface Booking {
     pickup_location: string | null;
     return_location: string | null;
     reserved_until: string | null;
+    status_hint?: string | null;
     cancelled_reason: string | null;
     vehicle: { id: number; name: string; plate_number: string; photo_url: string | null } | null;
     insurance_package: { id: number; name: string; amount: number } | null;
@@ -115,8 +116,8 @@ const fieldClassName =
 const statusBadgeConfig: Record<string, { label: string; color: string; bg: string; dot: string }> = {
     pending_reserved: { label: 'Menunggu Deposit', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' },
     pending: { label: 'Kedaluwarsa', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-400' },
-    confirmed: { label: 'Reservasi Dikonfirmasi', color: 'text-emerald-800', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
-    active: { label: 'Sedang Disewa (Aktif)', color: 'text-blue-800', bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500' },
+    confirmed: { label: 'Siap diambil', color: 'text-emerald-800', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
+    active: { label: 'Sedang disewa', color: 'text-blue-800', bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500' },
     returned: { label: 'Telah Dikembalikan', color: 'text-indigo-800', bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500' },
     completed: { label: 'Sewa Selesai', color: 'text-slate-800', bg: 'bg-slate-100 border-slate-200', dot: 'bg-slate-500' },
     cancelled: { label: 'Reservasi Dibatalkan', color: 'text-rose-800', bg: 'bg-rose-50 border-rose-200', dot: 'bg-rose-500' },
@@ -560,7 +561,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                             </div>
                             <div className={`p-3 rounded-xl border space-y-0.5 ${booking.pickup_request?.requested_at ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Tahap 4</span>
-                                <div className="text-xs font-black">{booking.pickup_request?.requested_at ? 'Siap Serah Terima ✓' : 'Serah Terima Unit'}</div>
+                                <div className="text-xs font-black">{booking.pickup_request?.requested_at ? 'Kontrak ditandatangani ✓' : 'Tanda tangan kontrak'}</div>
                             </div>
                         </div>
                     </div>
@@ -583,11 +584,16 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block">KODE BOOKING</span>
                                     <h2 className="text-3xl font-mono font-black tracking-wider text-slate-900 mt-0.5">{booking.code}</h2>
                                 </div>
-                                <div className="flex items-center gap-2.5">
+                                <div className="flex flex-col items-center gap-1 sm:items-end">
                                     <span className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black border ${statusBadge.bg} ${statusBadge.color}`}>
                                         <span className={`h-2 w-2 rounded-full ${statusBadge.dot}`} />
                                         {statusBadge.label}
                                     </span>
+                                    {booking.status_hint && (
+                                        <p className="max-w-[16rem] text-center text-[11px] font-semibold leading-snug text-slate-500 sm:text-right">
+                                            {booking.status_hint}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -979,8 +985,8 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                                     {booking.pickup_request?.requested_at ? (
                                         <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs text-emerald-900 space-y-2">
-                                            <div className="font-bold text-emerald-900">Permohonan Serah Terima Terkirim ✓</div>
-                                            <p className="leading-relaxed">Tunjukkan layar ini kepada petugas cabang untuk serah terima kunci kendaraan.</p>
+                                            <div className="font-bold text-emerald-900">Kontrak ditandatangani ✓</div>
+                                            <p className="leading-relaxed">Tunjukkan layar ini kepada staf depot. Unit belum diserahkan.</p>
                                         </div>
                                     ) : !isVerified ? (
                                         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4 font-semibold text-center">
@@ -1013,7 +1019,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                 disabled={pickupForm.processing}
                                                 className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
                                             >
-                                                {pickupForm.processing ? 'Mengirim...' : 'Submit Tanda Tangan & Ambil Unit'}
+                                                {pickupForm.processing ? 'Mengirim...' : 'Tanda tangani kontrak — saya siap mengambil unit'}
                                             </button>
                                         </form>
                                     )}

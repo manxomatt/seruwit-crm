@@ -51,7 +51,7 @@
         </tr>
     </table>
 
-    <h2>{{ $template['content']['checkout_label'] ?? 'Checkout (Serah ke Penyewa)' }}</h2>
+    <h2>{{ $template['content']['checkout_label'] ?? 'Serah terima ke penyewa' }}</h2>
     <table class="meta">
         <tr>
             <td class="label">Waktu</td><td class="sep">:</td>
@@ -87,7 +87,7 @@
     @endif
 
     @if ($rental->returned_at)
-        <h2>{{ $template['content']['return_label'] ?? 'Return (Kembali dari Penyewa)' }}</h2>
+        <h2>{{ $template['content']['return_label'] ?? 'Pengembalian dari penyewa' }}</h2>
         <table class="meta">
             <tr>
                 <td class="label">Waktu</td><td class="sep">:</td>

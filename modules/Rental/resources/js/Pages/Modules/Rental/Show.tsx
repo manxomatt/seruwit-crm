@@ -29,6 +29,7 @@ import {
     SectionCard,
     StatCard,
     StatusBadge,
+    StatusHint,
 } from './ShowUi';
 import LifecycleModals from './Show/modals/LifecycleModals';
 import type { LifecycleModalName } from './Show/modals/LifecycleModals';
@@ -311,6 +312,7 @@ export default function Show({
                                 </span>
                             )}
                         </div>
+                        <StatusHint hint={rental.status_hint} />
                     </div>
                     <Link href={prefixedRoute('rental.index')}>
                         <SecondaryButton type="button" className="rounded-xl px-3 py-1.5 text-xs font-bold shadow-2xs">
@@ -373,6 +375,7 @@ export default function Show({
                                         </span>
                                     )}
                                 </div>
+                                <StatusHint hint={rental.status_hint} />
 
                                 <div>
                                     <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
@@ -448,7 +451,7 @@ export default function Show({
                             )}
                             {canConfirm && !showConfirmPayment && (
                                 <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-indigo-600 hover:bg-indigo-700 shadow-2xs" onClick={openConfirmPayment}>
-                                    ✓ {t('rental.actions.confirm', undefined, 'Konfirmasi Sewa')}
+                                    ✓ {t('rental.actions.confirm', undefined, 'Terbitkan booking')}
                                 </PrimaryButton>
                             )}
                             {is('confirmed') && (
@@ -474,12 +477,12 @@ export default function Show({
                                             disabled
                                             title={checkoutBlockedReason || undefined}
                                         >
-                                            🚗 {t('rental.actions.checkout', undefined, 'Checkout (Serah Terima)')}
+                                            🚗 {t('rental.actions.checkout', undefined, 'Serahkan unit')}
                                         </PrimaryButton>
                                     ) : (
                                         <Link href={prefixedRoute('rental.checkout_page', rental.id)} className="shrink-0">
                                             <PrimaryButton className="shrink-0 whitespace-nowrap text-xs font-bold bg-blue-600 hover:bg-blue-700 shadow-2xs">
-                                                🚗 {t('rental.actions.checkout', undefined, 'Checkout (Serah Terima)')}
+                                                🚗 {t('rental.actions.checkout', undefined, 'Serahkan unit')}
                                             </PrimaryButton>
                                         </Link>
                                     )}
@@ -725,10 +728,10 @@ export default function Show({
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/80 pb-3 dark:border-blue-800/80">
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center rounded-xl bg-blue-200/80 px-2.5 py-0.5 text-xs font-black text-blue-900 dark:bg-blue-900/60 dark:text-blue-200">
-                                    Siap Serah Terima (Pickup)
+                                    Siap diambil — menunggu serah terima
                                 </span>
                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                                    Permohonan Pickup & Kontrak Digital Pelanggan
+                                    Kontrak Digital Pelanggan — unit belum diserahkan
                                 </h3>
                             </div>
                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -778,7 +781,7 @@ export default function Show({
                                 onClick={() => setModal('checkout')}
                                 className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-xs font-bold"
                             >
-                                🚗 Proses Pickup & Serahkan Kendaraan (Checkout)
+                                🚗 Serahkan unit
                             </PrimaryButton>
                         </div>
                     </div>

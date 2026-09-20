@@ -537,22 +537,22 @@ function SingleDocumentEditor({ code, template, prefixedRoute }: SingleFormProps
                             {code === 'rental_handover' && (
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-800/40">
                                     <div>
-                                        <InputLabel htmlFor="content_checkout_label" value="Label Bagian Checkout" />
+                                        <InputLabel htmlFor="content_checkout_label" value="Label bagian serah terima" />
                                         <TextInput
                                             id="content_checkout_label"
                                             value={data.content.checkout_label}
                                             onChange={(e) => updateContentField('checkout_label', e.target.value)}
-                                            placeholder="Contoh: Checkout (Serah ke Penyewa)"
+                                            placeholder="Contoh: Serah terima ke penyewa"
                                             className="mt-1.5 w-full text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <InputLabel htmlFor="content_return_label" value="Label Bagian Return" />
+                                        <InputLabel htmlFor="content_return_label" value="Label bagian pengembalian" />
                                         <TextInput
                                             id="content_return_label"
                                             value={data.content.return_label}
                                             onChange={(e) => updateContentField('return_label', e.target.value)}
-                                            placeholder="Contoh: Return (Kembali dari Penyewa)"
+                                            placeholder="Contoh: Pengembalian dari penyewa"
                                             className="mt-1.5 w-full text-sm"
                                         />
                                     </div>

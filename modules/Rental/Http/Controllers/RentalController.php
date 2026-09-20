@@ -49,7 +49,8 @@ class RentalController extends Controller
             }))
             ->latest()
             ->paginate(15)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Rental $rental): Rental => $rental->append(['is_overdue', 'status_hint']));
 
         return Inertia::render('Modules/Rental/Index', [
             'rentals' => $rentals,

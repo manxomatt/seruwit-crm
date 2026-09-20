@@ -105,8 +105,8 @@ export default function Checkout({
         <DynamicLayout
             header={
                 <PageHeader
-                    title={t('rental.pages.checkout.title', undefined, 'Serah Terima & Checkout Unit')}
-                    subtitle={`Proses serah terima kendaraan kepada pelanggan untuk Booking ${rental.code}`}
+                    title={t('rental.pages.checkout.title', undefined, 'Serah terima unit')}
+                    subtitle={t('rental.pages.checkout.subtitle', { code: rental.code }, `Serahkan kendaraan kepada pelanggan untuk booking ${rental.code}`)}
                     actions={
                         <Link href={prefixedRoute('rental.show', rental.id)}>
                             <SecondaryButton type="button" className="rounded-xl px-4 py-2 shadow-2xs font-bold text-xs">
@@ -117,7 +117,7 @@ export default function Checkout({
                 />
             }
         >
-            <Head title={`Checkout ${rental.code} - ${rental.vehicle.name}`} />
+            <Head title={`${t('rental.pages.checkout.title', undefined, 'Serah terima unit')} ${rental.code} - ${rental.vehicle.name}`} />
 
             <form onSubmit={handleSubmit} className="space-y-6 pb-20">
                 {/* Validation / Submission Error Summary */}
@@ -126,7 +126,7 @@ export default function Checkout({
                         <div className="flex items-start gap-2">
                             <span className="text-base leading-none">⛔</span>
                             <div className="min-w-0">
-                                <p className="text-sm font-bold">Checkout gagal diproses</p>
+                                <p className="text-sm font-bold">{t('rental.pages.checkout.failed', undefined, 'Serah terima gagal diproses')}</p>
                                 <ul className="mt-1 list-disc space-y-0.5 pl-4 opacity-90">
                                     {errorMessages.map((message, index) => (
                                         <li key={index}>{message}</li>
@@ -404,7 +404,7 @@ export default function Checkout({
                         <div className="flex items-center gap-3">
                             {depositBlocksCheckout ? (
                                 <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                    ⚠️ Deposit harus diterima sebelum checkout
+                                    ⚠️ {t('rental.pages.checkout.deposit_required', undefined, 'Deposit harus diterima sebelum unit diserahkan')}
                                 </p>
                             ) : null}
                             <PrimaryButton
@@ -413,8 +413,8 @@ export default function Checkout({
                                 className="rounded-2xl px-6 py-3 text-sm font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
                             >
                                 {form.processing
-                                    ? 'Menyimpan Serah Terima...'
-                                    : '🚗 Selesaikan Serah Terima Unit (Checkout)'}
+                                    ? t('rental.pages.checkout.submitting', undefined, 'Menyimpan serah terima…')
+                                    : t('rental.pages.checkout.submit', undefined, 'Serahkan unit')}
                             </PrimaryButton>
                         </div>
                     </div>

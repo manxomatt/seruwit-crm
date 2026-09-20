@@ -3,6 +3,7 @@
 namespace Tests\Feature\Modules\Rental;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Location;
@@ -330,6 +331,22 @@ class RentalCrudTest extends TestCase
                 ->has('fuelLevels')
                 ->has('companyBankAccounts')
                 ->where('rental.vehicle.photo_url', 'https://cdn.example.test/vehicles/rental-show.jpg')
+            );
+    }
+
+    public function test_rental_show_includes_status_hint_explaining_the_vehicle_is_still_at_the_depot(): void
+    {
+        App::setLocale('id');
+
+        $rental = Rental::factory()->confirmed()->create();
+
+        $this->actingAs($this->createUserWithRole())
+            ->get(route('module.rental.show', $rental))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Show')
+                ->where('rental.status', Rental::STATUS_CONFIRMED)
+                ->where('rental.status_hint', 'Jadwal terkunci · unit masih di pool')
             );
     }
 

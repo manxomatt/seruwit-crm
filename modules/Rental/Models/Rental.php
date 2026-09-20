@@ -13,6 +13,7 @@ use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Database\Factories\RentalFactory;
+use Modules\Rental\Support\RentalStatusHint;
 
 class Rental extends Model
 {
@@ -413,6 +414,14 @@ class Rental extends Model
     {
         return $this->status === self::STATUS_ACTIVE
             && now()->toDateString() > $this->end_date->toDateString();
+    }
+
+    /**
+     * Staff-facing one-liner next to the status badge.
+     */
+    public function getStatusHintAttribute(): ?string
+    {
+        return app(RentalStatusHint::class)->for($this);
     }
 
     /**

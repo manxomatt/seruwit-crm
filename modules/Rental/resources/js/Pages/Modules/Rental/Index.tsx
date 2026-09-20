@@ -36,6 +36,7 @@ interface Rental {
     code: string;
     channel?: string | null;
     status: string;
+    status_hint?: string | null;
     start_date: string;
     end_date: string;
     period_type: string;
@@ -380,14 +381,21 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                                         {t(`rental.period_type.${periodUnit(rental.period_type)}`, undefined, rental.period_type)}
                                                     </div>
                                                 </td>
-                                                <td className="whitespace-nowrap px-4 py-3">
-                                                    <span
-                                                        className={`inline-flex items-center rounded-xl px-2.5 py-1 text-[11px] font-bold ${statusBadgeClass(
-                                                            rental.status,
-                                                        )}`}
-                                                    >
-                                                        {t(`rental.status.${rental.status}`, undefined, rental.status)}
-                                                    </span>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span
+                                                            className={`inline-flex w-fit items-center rounded-xl px-2.5 py-1 text-[11px] font-bold ${statusBadgeClass(
+                                                                rental.status,
+                                                            )}`}
+                                                        >
+                                                            {t(`rental.status.${rental.status}`, undefined, rental.status)}
+                                                        </span>
+                                                        {rental.status_hint && (
+                                                            <span className="max-w-[13rem] text-[10px] font-medium leading-snug text-slate-400 dark:text-slate-500">
+                                                                {rental.status_hint}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-xs font-black text-slate-900 dark:text-white">
                                                     {formatMoney(rental.total_amount)}
@@ -473,6 +481,11 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                             {t(`rental.status.${previewRental.status}`, undefined, previewRental.status)}
                                         </span>
                                     </div>
+                                    {previewRental.status_hint && (
+                                        <p className="mt-1 text-[11px] font-medium leading-snug text-slate-500 dark:text-slate-400">
+                                            {previewRental.status_hint}
+                                        </p>
+                                    )}
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
                                         {previewRental.partner.name}
                                     </p>

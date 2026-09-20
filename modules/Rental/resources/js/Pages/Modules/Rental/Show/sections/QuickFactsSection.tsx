@@ -1,5 +1,5 @@
 import { useTrans } from '@/hooks/useTrans';
-import { DetailRow, SectionCard, StatusBadge } from '../../ShowUi';
+import { DetailRow, SectionCard, StatusBadge, StatusHint } from '../../ShowUi';
 import type { Rental } from '../types';
 
 interface Props {
@@ -16,10 +16,13 @@ export default function QuickFactsSection({ rental }: Props): JSX.Element {
                     <span className="font-mono">{rental.code}</span>
                 </DetailRow>
                 <DetailRow label={t('rental.fields.status', undefined, 'Status')} compact>
-                    <StatusBadge
-                        status={rental.status}
-                        label={t(`rental.status.${rental.status}`, undefined, rental.status)}
-                    />
+                    <div className="flex flex-col gap-1 sm:items-end">
+                        <StatusBadge
+                            status={rental.status}
+                            label={t(`rental.status.${rental.status}`, undefined, rental.status)}
+                        />
+                        <StatusHint hint={rental.status_hint} />
+                    </div>
                 </DetailRow>
                 {rental.confirmed_by && (
                     <DetailRow label={t('rental.timeline.confirmed', undefined, 'Dikonfirmasi')} compact>{rental.confirmed_by.name}</DetailRow>

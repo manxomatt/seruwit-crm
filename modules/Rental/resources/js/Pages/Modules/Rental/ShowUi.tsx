@@ -139,6 +139,18 @@ export function StatusBadge({ status, label }: { status: string; label: string }
     );
 }
 
+export function StatusHint({ hint }: { hint?: string | null }): JSX.Element | null {
+    if (!hint) {
+        return null;
+    }
+
+    return (
+        <p className="mt-0.5 text-[11px] font-medium leading-snug text-slate-500 dark:text-slate-400">
+            {hint}
+        </p>
+    );
+}
+
 export function PaymentBadge({ status, label }: { status: string; label: string }): JSX.Element {
     const config = PAYMENT_CONFIG[status] ?? PAYMENT_CONFIG.none;
 

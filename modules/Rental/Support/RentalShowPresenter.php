@@ -97,7 +97,7 @@ class RentalShowPresenter
         [$trackingEnabled, $hasGpsDevice, $livePosition, $gpsSummary] = $this->trackingData($rental);
 
         return [
-            'rental' => $rental->append('is_overdue'),
+            'rental' => $rental->append(['is_overdue', 'status_hint']),
             'addonCharges' => $rental->charges->map(fn (RentalCharge $charge): array => [
                 'id' => $charge->id,
                 'addon_code' => $charge->addon_code,

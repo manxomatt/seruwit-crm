@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Resources\Mobile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Support\RentalStatusHint;
 
 /**
  * @mixin Rental
@@ -24,6 +25,7 @@ class MobileRentalBookingResource extends JsonResource
             'code' => $rental->code,
             'public_token' => $token,
             'status' => $rental->status,
+            'status_hint' => app(RentalStatusHint::class)->for($rental, RentalStatusHint::AUDIENCE_PASSENGER),
             'channel' => $rental->channel,
             'booker_phone' => $rental->booker_phone,
             'start_date' => $rental->start_date?->toDateString(),

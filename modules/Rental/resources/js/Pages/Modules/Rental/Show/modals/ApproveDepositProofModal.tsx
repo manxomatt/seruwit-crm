@@ -65,7 +65,7 @@ export default function ApproveDepositProofModal({ rental, onClose }: Props): JS
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
-                        <span>Status reservasi otomatis berubah menjadi <b>Dikonfirmasi (Open)</b></span>
+                        <span>Status reservasi otomatis berubah menjadi <b>Siap diambil</b> — unit masih di pool</span>
                     </div>
                 </div>
 
