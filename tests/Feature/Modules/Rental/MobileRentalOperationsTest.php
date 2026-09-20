@@ -124,7 +124,11 @@ class MobileRentalOperationsTest extends TestCase
 
         $phone = '081234567890';
         $token = $this->issueToken($phone);
-        $partner = Partner::query()->where('phone', '6281234567890')->first();
+        $partner = Partner::query()->where('phone', '6281234567890')->first()
+            ?? Partner::factory()->create([
+                'phone' => '6281234567890',
+                'mobile' => '6281234567890',
+            ]);
 
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
 
@@ -132,6 +136,8 @@ class MobileRentalOperationsTest extends TestCase
             'partner_id' => $partner->id,
             'vehicle_id' => $vehicle->id,
             'booker_phone' => '6281234567890',
+            'public_token' => 'tokencheckin'.str_repeat('a', 20),
+            'channel' => Rental::CHANNEL_MOBILE,
             'status' => Rental::STATUS_CONFIRMED,
             'deposit_amount' => 500000,
             'deposit_received_at' => now(),
@@ -149,14 +155,56 @@ class MobileRentalOperationsTest extends TestCase
             ]);
 
         $response->assertOk()
+            ->assertJsonPath('booking.status', Rental::STATUS_CONFIRMED)
             ->assertJsonPath('booking.pickup_request.status', 'pending')
-            ->assertJsonPath('booking.pickup_request.terms_agreed', true);
+            ->assertJsonPath('booking.pickup_request.terms_agreed', true)
+            ->assertJsonPath('booking.pickup_request.can_sign_contract', false);
 
         $rental->refresh();
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+        $this->assertNull($rental->checked_out_at);
         $this->assertSame('pending', $rental->pickup_request_status);
         $this->assertTrue($rental->pickup_terms_agreed);
         $this->assertNotNull($rental->pickup_customer_signature_path);
         Storage::disk('public')->assertExists($rental->pickup_customer_signature_path);
+    }
+
+    public function test_digital_check_in_is_rejected_until_the_booking_is_issued(): void
+    {
+        Storage::fake('public');
+
+        $phone = '081234567890';
+        $token = $this->issueToken($phone);
+        $partner = Partner::query()->where('phone', '6281234567890')->first()
+            ?? Partner::factory()->create([
+                'phone' => '6281234567890',
+                'mobile' => '6281234567890',
+            ]);
+
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+
+        $rental = Rental::factory()->create([
+            'partner_id' => $partner->id,
+            'vehicle_id' => $vehicle->id,
+            'booker_phone' => '6281234567890',
+            'public_token' => 'tokendraftin'.str_repeat('a', 20),
+            'channel' => Rental::CHANNEL_MOBILE,
+            'status' => Rental::STATUS_DRAFT,
+        ]);
+
+        $signatureBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+        $this->withToken($token)
+            ->postJson(route('mobile.v1.rental.bookings.check_in', $rental->public_token), [
+                'terms_agreed' => true,
+                'customer_signature' => $signatureBase64,
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'booking_not_confirmed');
+
+        $this->assertSame(Rental::STATUS_DRAFT, $rental->fresh()->status);
+        $this->assertNull($rental->fresh()->checked_out_at);
+        $this->assertNull($rental->fresh()->pickup_requested_at);
     }
 
     private function issueToken(string $phone): string

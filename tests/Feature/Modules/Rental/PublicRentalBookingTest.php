@@ -912,9 +912,11 @@ class PublicRentalBookingTest extends TestCase
                 'pickup_notes' => 'Tiba di depot pukul 10:00',
             ])
             ->assertRedirect(route('book.rental.booking.show', $rental->public_token))
-            ->assertSessionHas('success');
+            ->assertSessionHas('success', __('rental.public.pickup_requested'));
 
         $rental->refresh();
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+        $this->assertNull($rental->checked_out_at);
         $this->assertNotNull($rental->pickup_requested_at);
         $this->assertSame('pending', $rental->pickup_request_status);
         $this->assertTrue($rental->pickup_terms_agreed);

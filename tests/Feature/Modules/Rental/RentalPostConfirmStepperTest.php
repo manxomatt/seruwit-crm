@@ -63,6 +63,24 @@ class RentalPostConfirmStepperTest extends TestCase
         $this->assertTrue(collect($progress['steps'])->firstWhere('id', 8)['available']);
     }
 
+    public function test_confirmed_with_signed_contract_points_staff_to_handover_without_marking_it_done(): void
+    {
+        $rental = Rental::factory()->confirmed()->create([
+            'deposit_amount' => 500000,
+            'deposit_received_at' => now(),
+            'deposit_payment_method' => 'cash',
+            'pickup_requested_at' => now(),
+            'pickup_request_status' => 'pending',
+        ]);
+
+        $progress = app(RentalPostConfirmProgress::class)->for($rental);
+
+        $this->assertTrue($progress['visible']);
+        $this->assertSame(RentalPostConfirmProgress::STEP_PICKUP, $progress['current_step']);
+        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 8)['available']);
+        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 8)['done']);
+    }
+
     public function test_active_rental_defaults_to_changes_step(): void
     {
         $rental = Rental::factory()->active()->create();

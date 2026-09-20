@@ -212,7 +212,7 @@ function DigitalSignaturePad({
                 className="w-full h-28 rounded-xl border border-slate-300 bg-white touch-none cursor-crosshair shadow-inner"
             />
             <p className="text-[10px] text-slate-400">
-                Gunakan jari atau kursor Anda pada kotak di atas untuk membubuhkan tanda tangan serah terima unit.
+                Gunakan jari atau kursor Anda pada kotak di atas untuk menandatangani kontrak.
             </p>
         </div>
     );
@@ -480,6 +480,14 @@ export default function BookingView({ brand, booking, gateway_available, company
     const statusBadge = getStatusBadge();
     const brandColor = brand.color || '#0f766e';
     const isVerified = booking.booker_phone_verified;
+    const paymentSettled =
+        booking.deposit_received ||
+        (Number(booking.deposit_amount) <= 0 &&
+            booking.payment.balance_due <= 0 &&
+            !['unpaid', 'partial', 'draft'].includes(booking.payment.status));
+    const documentsReady = Boolean(booking.documents?.ktp_uploaded || booking.documents?.sim_uploaded);
+    const contractSigned = Boolean(booking.pickup_request?.requested_at);
+    const unitHandedOver = ['active', 'returned', 'completed'].includes(booking.status);
 
     return (
         <div 
@@ -544,25 +552,51 @@ export default function BookingView({ brand, booking, gateway_available, company
                 {/* Dashboard Layout Container */}
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
                     
-                    {/* Visual 4-Stage Stepper */}
+                    {/* Visual 4-Stage Stepper: pay → documents → contract → depot handover */}
                     <div className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-0.5">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">Tahap 1</span>
-                                <div className="text-xs font-black">Booking Dibuat ✓</div>
-                            </div>
-                            <div className={`p-3 rounded-xl border space-y-0.5 ${isVerified ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'}`}>
-                                <span className={`text-[10px] font-black uppercase tracking-widest block ${isVerified ? 'text-emerald-600' : 'text-amber-600'}`}>Tahap 2</span>
-                                <div className="text-xs font-black">{isVerified ? 'Verifikasi Selesai ✓' : 'Verifikasi WhatsApp'}</div>
-                            </div>
-                            <div className={`p-3 rounded-xl border space-y-0.5 ${booking.deposit_received ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Tahap 3</span>
-                                <div className="text-xs font-black">{booking.deposit_received ? 'Deposit Diterima ✓' : 'Pelunasan Deposit'}</div>
-                            </div>
-                            <div className={`p-3 rounded-xl border space-y-0.5 ${booking.pickup_request?.requested_at ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Tahap 4</span>
-                                <div className="text-xs font-black">{booking.pickup_request?.requested_at ? 'Kontrak ditandatangani ✓' : 'Tanda tangan kontrak'}</div>
-                            </div>
+                            {[
+                                {
+                                    done: paymentSettled,
+                                    current: false,
+                                    label: paymentSettled ? 'Pembayaran selesai ✓' : 'Bayar',
+                                },
+                                {
+                                    done: documentsReady,
+                                    current: false,
+                                    label: documentsReady ? 'Dokumen diunggah ✓' : 'Unggah KTP/SIM',
+                                },
+                                {
+                                    done: contractSigned,
+                                    current: paymentSettled && !contractSigned && booking.status === 'confirmed',
+                                    label: contractSigned ? 'Kontrak ditandatangani ✓' : 'Tanda tangan kontrak',
+                                },
+                                {
+                                    done: unitHandedOver,
+                                    current: contractSigned && !unitHandedOver,
+                                    label: unitHandedOver ? 'Unit sudah diserahkan ✓' : 'Datang ke depot',
+                                },
+                            ].map((stage, index) => (
+                                <div
+                                    key={`stage-${index}`}
+                                    className={`p-3 rounded-xl border space-y-0.5 ${
+                                        stage.done
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                            : stage.current
+                                              ? 'bg-amber-50 border-amber-200 text-amber-900'
+                                              : 'bg-slate-50 border-slate-200 text-slate-500'
+                                    }`}
+                                >
+                                    <span
+                                        className={`text-[10px] font-black uppercase tracking-widest block ${
+                                            stage.done ? 'text-emerald-600' : stage.current ? 'text-amber-600' : 'text-slate-400'
+                                        }`}
+                                    >
+                                        Tahap {index + 1}
+                                    </span>
+                                    <div className="text-xs font-black">{stage.label}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -976,17 +1010,23 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             )}
 
-                            {/* Pickup Request & Digital Signature */}
+                            {/* Contract signature — not the physical handover */}
                             {booking.status === 'confirmed' && (
                                 <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                        Kontrak & Serah Terima Unit
-                                    </h3>
+                                    <div className="space-y-1">
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                            Tanda tangan kontrak
+                                        </h3>
+                                        <p className="text-[11px] font-medium leading-relaxed text-slate-500">
+                                            Unit baru diserahkan setelah staf depot menyelesaikan serah terima.
+                                        </p>
+                                    </div>
 
                                     {booking.pickup_request?.requested_at ? (
-                                        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs text-emerald-900 space-y-2">
-                                            <div className="font-bold text-emerald-900">Kontrak ditandatangani ✓</div>
+                                        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-950 space-y-2">
+                                            <div className="font-bold">Kontrak ditandatangani ✓</div>
                                             <p className="leading-relaxed">Tunjukkan layar ini kepada staf depot. Unit belum diserahkan.</p>
+                                            <p className="leading-relaxed font-medium">Datang ke depot sesuai jadwal. Staf yang akan menyerahkan kunci.</p>
                                         </div>
                                     ) : !isVerified ? (
                                         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4 font-semibold text-center">
@@ -1019,7 +1059,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                 disabled={pickupForm.processing}
                                                 className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
                                             >
-                                                {pickupForm.processing ? 'Mengirim...' : 'Tanda tangani kontrak — saya siap mengambil unit'}
+                                                {pickupForm.processing ? 'Mengirim...' : 'Tanda tangani kontrak'}
                                             </button>
                                         </form>
                                     )}

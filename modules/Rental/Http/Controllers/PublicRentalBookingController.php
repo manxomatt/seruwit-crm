@@ -25,6 +25,7 @@ use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
+use Modules\Rental\Support\RentalLifecycleGate;
 use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Rental\Support\RentalPlateMasker;
@@ -608,6 +609,7 @@ class PublicRentalBookingController extends Controller
         string $token,
         PassengerOtpService $otp,
         RentalHandoverMedia $handoverMedia,
+        RentalLifecycleGate $lifecycle,
     ): RedirectResponse {
         $this->ensureAvailable();
 
@@ -618,6 +620,8 @@ class PublicRentalBookingController extends Controller
             422,
             __('rental.public.pickup_confirmed_only'),
         );
+
+        $lifecycle->assertCanSignContract($rental);
 
         if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
             return back()->with('error', __('rental.public.pickup_deposit_unsettled'));

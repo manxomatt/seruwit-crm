@@ -137,7 +137,14 @@ export default function Checkout({
                     </div>
                 )}
 
-                {/* Warning / Deposit Alert */}
+                {pickupCustomerSignatureUrl && (
+                    <div className="rounded-2xl border border-blue-200/80 bg-blue-50/90 p-4 text-xs font-semibold text-blue-950 shadow-2xs dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-100">
+                        <p className="font-bold">
+                            {t('rental.pages.checkout.customer_signed', undefined, 'Pelanggan sudah menandatangani kontrak. Lengkapi odometer, foto kondisi, dan tanda tangan staf untuk menyerahkan unit.')}
+                        </p>
+                    </div>
+                )}
+
                 {depositBlocksCheckout && (
                     <div className="rounded-2xl border border-amber-300/80 bg-amber-50/90 p-4 text-xs font-semibold text-amber-900 shadow-2xs dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
                         <div className="flex items-center gap-2">

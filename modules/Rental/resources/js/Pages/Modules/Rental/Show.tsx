@@ -213,7 +213,7 @@ export default function Show({
     const canSettleDeposit = depositHeld && !!rental.deposit_received_at && (is('returned') || is('completed'));
     const depositBlocksCheckout = is('confirmed') && ((depositHeld && !rental.deposit_received_at) || upfrontPaymentPending);
     const checkoutBlockedReason = upfrontPaymentPending
-        ? 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.'
+        ? t('rental.errors.checkout_prepayment_required', undefined, 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum unit diserahkan.')
         : t('rental.errors.checkout_deposit_required');
     const canPrintContract = is('confirmed') || is('active') || is('returned') || is('completed');
     const canConfirm = (is('draft') || is('pending') || is('pending_reserved')) && rental.deposit_proof_status !== 'pending';
@@ -630,7 +630,7 @@ export default function Show({
                             </p>
                         ) : (
                             <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
-                                Selesaikan pelunasan tagihan pembayaran di muka di bawah ini agar proses checkout dapat dilakukan.
+                                {t('rental.pages.show.prepayment_before_handover', undefined, 'Selesaikan pelunasan tagihan pembayaran di muka di bawah ini agar unit dapat diserahkan.')}
                             </p>
                         )}
                     </div>
@@ -722,22 +722,26 @@ export default function Show({
                     </div>
                 )}
 
-                {/* Customer Pickup Request & Contract Signature Card */}
+                {/* Customer signed the contract — still waiting for depot handover */}
                 {rental.pickup_requested_at && rental.status === 'confirmed' && (
                     <div className="rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-sky-50/90 p-6 dark:border-blue-800/80 dark:bg-slate-900 shadow-xs space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/80 pb-3 dark:border-blue-800/80">
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center rounded-xl bg-blue-200/80 px-2.5 py-0.5 text-xs font-black text-blue-900 dark:bg-blue-900/60 dark:text-blue-200">
-                                    Siap diambil — menunggu serah terima
+                                    {t('rental.pages.show.awaiting_handover_badge', undefined, 'Menunggu serah terima')}
                                 </span>
                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                                    Kontrak Digital Pelanggan — unit belum diserahkan
+                                    {t('rental.pages.show.awaiting_handover_title', undefined, 'Pelanggan sudah menandatangani kontrak')}
                                 </h3>
                             </div>
                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                Waktu Pengajuan: {formatDateTimeDmYHi(rental.pickup_requested_at)}
+                                {t('rental.pages.show.contract_signed_at', undefined, 'Kontrak ditandatangani')}: {formatDateTimeDmYHi(rental.pickup_requested_at)}
                             </span>
                         </div>
+
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                            {t('rental.pages.show.awaiting_handover_hint', undefined, 'Unit masih di pool. Serahkan unit saat pelanggan tiba di depot.')}
+                        </p>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">

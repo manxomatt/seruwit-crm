@@ -69,6 +69,7 @@ class MobileRentalBookingResource extends JsonResource
                 'terms_agreed' => (bool) $rental->pickup_terms_agreed,
                 'notes' => $rental->pickup_notes,
                 'can_check_in' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at) && $this->isUpfrontPaid($rental),
+                'can_sign_contract' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at) && $this->isUpfrontPaid($rental),
             ],
             'pending_extension_request' => $this->pendingExtensionRequest($rental),
             'payment' => $this->paymentSummary($rental),

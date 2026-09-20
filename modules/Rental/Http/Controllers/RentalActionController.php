@@ -29,6 +29,7 @@ use Modules\Rental\Support\RentalConfirmationService;
 use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
+use Modules\Rental\Support\RentalHandoverService;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalMailer;
 
@@ -41,6 +42,7 @@ class RentalActionController extends Controller
         private readonly RentalHandoverMedia $handoverMedia,
         private readonly RentalConfirmationService $confirmation,
         private readonly RentalExtensionService $extensions,
+        private readonly RentalHandoverService $handover,
     ) {}
 
     protected function getRoutePrefix(): string
@@ -115,7 +117,7 @@ class RentalActionController extends Controller
     }
 
     /**
-     * Mark vehicle as checked out — rental becomes active.
+     * Hand over the vehicle — rental becomes on hire. Requires an issued booking.
      */
     public function checkout(Request $request, Rental $rental): RedirectResponse
     {
@@ -123,19 +125,10 @@ class RentalActionController extends Controller
 
         abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, __('rental.errors.checkout_confirmed_only'));
 
-        if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
-            throw ValidationException::withMessages([
-                'deposit' => __('rental.errors.checkout_deposit_required'),
-            ]);
-        }
-
-        if ((float) $rental->deposit_amount <= 0 && $rental->deposit_proof_status !== Rental::PROOF_APPROVED) {
-            $paymentSummary = $this->invoices->paymentSummary($rental);
-            if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
-                throw ValidationException::withMessages([
-                    'payment' => __('rental.errors.checkout_prepayment_required'),
-                ]);
-            }
+        try {
+            $this->handover->assertPaymentAllowsHandover($rental);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
         }
 
         $hasCustomerSignature = filled($rental->pickup_customer_signature_path) || filled($rental->checkout_signature_path);
@@ -174,20 +167,19 @@ class RentalActionController extends Controller
             ? $this->handoverMedia->storeSignature($rawStaffSig)
             : null;
 
-        $rental->update([
-            'status' => Rental::STATUS_ACTIVE,
-            'checked_out_at' => now(),
-            'start_odometer' => $request->start_odometer,
-            'start_fuel_level' => $request->start_fuel_level,
-            'checkout_checklist' => RentalHandoverChecklist::normalize($request->input('checkout_checklist')),
-            'checkout_notes' => $request->checkout_notes,
-            'checkout_photos' => $photos,
-            'checkout_signature_path' => $signaturePath ?: ($rental->pickup_customer_signature_path ?: $rental->checkout_signature_path),
-            'checkout_staff_signature_path' => $staffSignaturePath,
-            'checkout_signed_at' => now(),
-        ]);
-
-        $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CHECKED_OUT);
+        try {
+            $this->handover->handOver($rental, [
+                'start_odometer' => $request->filled('start_odometer') ? $request->integer('start_odometer') : null,
+                'start_fuel_level' => $request->input('start_fuel_level'),
+                'checkout_checklist' => $request->input('checkout_checklist'),
+                'checkout_notes' => $request->input('checkout_notes'),
+                'checkout_photos' => $photos,
+                'checkout_signature_path' => $signaturePath,
+                'checkout_staff_signature_path' => $staffSignaturePath,
+            ]);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
 
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
             ->with('success', __('rental.messages.checked_out'));
@@ -445,11 +437,13 @@ class RentalActionController extends Controller
     }
 
     /**
-     * Mark a confirmed (Open) booking as no-show, optionally charging the no-show fee.
+     * Mark an issued booking as no-show — only between confirm and handover.
      */
     public function markNoShow(Request $request, Rental $rental): RedirectResponse
     {
         $this->ensureAccessibleRental($rental);
+
+        abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, __('rental.errors.no_show_confirmed_only'));
 
         $request->validate([
             'charge_fee' => ['sometimes', 'boolean'],

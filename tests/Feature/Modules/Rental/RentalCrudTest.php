@@ -479,6 +479,8 @@ class RentalCrudTest extends TestCase
 
         $rental->refresh();
         $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+        $this->assertNotSame(Rental::STATUS_ACTIVE, $rental->status);
+        $this->assertNull($rental->checked_out_at);
         $this->assertNotNull($rental->confirmed_at);
         $this->assertNotNull($rental->confirmed_by);
     }

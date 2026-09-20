@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Controllers\Api\Mobile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Modules\Accounting\Models\CompanyBankAccount;
 use Modules\Rental\Http\Controllers\Api\Mobile\Concerns\InteractsWithMobileRentalApi;
 use Modules\Rental\Http\Requests\Mobile\CancelMobileRentalBookingRequest;
@@ -19,6 +20,7 @@ use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalHandoverMedia;
+use Modules\Rental\Support\RentalLifecycleGate;
 use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Shuttle\Support\MobileApiIdempotency;
 use Throwable;
@@ -438,22 +440,25 @@ class BookingController extends Controller
         RentalCheckInRequest $request,
         string $token,
         RentalHandoverMedia $handoverMedia,
+        RentalLifecycleGate $lifecycle,
     ): JsonResponse {
         $this->ensurePassengerChannelEnabled();
 
         $rental = $this->findMobileBooking($token);
         $this->assertOwnership($request, $rental);
 
-        if ($rental->status !== Rental::STATUS_CONFIRMED) {
+        try {
+            $lifecycle->assertCanSignContract($rental);
+        } catch (ValidationException) {
             return response()->json([
-                'message' => __('rental.public.pickup_confirmed_only', ['default' => 'Digital check-in is only available for confirmed rentals.']),
+                'message' => __('rental.public.pickup_confirmed_only'),
                 'code' => 'booking_not_confirmed',
             ], 422);
         }
 
         if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
             return response()->json([
-                'message' => __('rental.public.pickup_deposit_unsettled', ['default' => 'Deposit must be paid before check-in.']),
+                'message' => __('rental.public.pickup_deposit_unsettled'),
                 'code' => 'deposit_unsettled',
             ], 400);
         }
@@ -469,7 +474,7 @@ class BookingController extends Controller
         ]);
 
         return response()->json([
-            'message' => __('rental.public.pickup_requested', ['default' => 'Check-in request submitted successfully.']),
+            'message' => __('rental.public.pickup_requested'),
             'booking' => (new MobileRentalBookingResource($rental->fresh(['vehicle', 'partner', 'insurancePackage'])))->resolve(),
         ]);
     }

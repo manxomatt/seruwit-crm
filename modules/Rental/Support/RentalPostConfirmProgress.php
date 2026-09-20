@@ -149,6 +149,10 @@ class RentalPostConfirmProgress
         }
 
         if ($rental->status === Rental::STATUS_CONFIRMED) {
+            if ($rental->pickup_requested_at !== null && $this->isPaymentsDone($rental)) {
+                return self::STEP_PICKUP;
+            }
+
             return self::STEP_PAYMENTS;
         }
 

@@ -21,20 +21,18 @@ class RentalConfirmationService
         private readonly RentalEligibility $eligibility,
         private readonly RentalMailer $mailer,
         private readonly RentalBookingPolicy $policy,
+        private readonly RentalLifecycleGate $lifecycle,
     ) {}
 
     /**
-     * Confirm a draft / pending / pending_reserved rental into Open (confirmed).
+     * Issue a booking (draft / pending / pending_reserved → confirmed).
+     * Does not hand over the vehicle — that is {@see RentalHandoverService::handOver()}.
      *
      * @param  array{payment_method?: string|null, company_bank_account_id?: int|null, deposit_collected?: bool, confirmed_by?: int|null}  $options
      */
     public function confirm(Rental $rental, array $options = []): Rental
     {
-        if (! in_array($rental->status, Rental::confirmableStatuses(), true)) {
-            throw ValidationException::withMessages([
-                'status' => __('rental.errors.confirm_draft_only'),
-            ]);
-        }
+        $this->lifecycle->assertCanIssueBooking($rental);
 
         $rental->loadMissing(['partner', 'vehicle']);
         $this->eligibility->assertCanConfirm($rental->partner);
@@ -58,6 +56,7 @@ class RentalConfirmationService
                 'confirmed_by' => $options['confirmed_by'] ?? null,
                 'confirmed_at' => now(),
                 'reserved_until' => null,
+                'checked_out_at' => null,
             ]);
 
             if ((float) $rental->deposit_amount <= 0) {
@@ -88,7 +87,7 @@ class RentalConfirmationService
     }
 
     /**
-     * After online deposit payment, promote pending holds to Open.
+     * After online deposit payment, promote pending holds to an issued booking.
      */
     public function confirmAfterPaymentIfPending(Rental $rental): Rental
     {
@@ -173,15 +172,11 @@ class RentalConfirmationService
     }
 
     /**
-     * Mark no-show (optionally charge fee) from confirmed Open bookings.
+     * Mark no-show from an issued booking that has not been handed over.
      */
     public function markNoShow(Rental $rental, bool $chargeFee = false, ?string $reason = null): Rental
     {
-        if ($rental->status !== Rental::STATUS_CONFIRMED) {
-            throw ValidationException::withMessages([
-                'status' => __('rental.errors.no_show_confirmed_only'),
-            ]);
-        }
+        $this->lifecycle->assertCanMarkNoShow($rental);
 
         return DB::transaction(function () use ($rental, $chargeFee, $reason): Rental {
             $this->accounting->refundDepositOnCancel($rental->fresh());

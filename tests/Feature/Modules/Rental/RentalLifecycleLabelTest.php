@@ -24,6 +24,10 @@ class RentalLifecycleLabelTest extends TestCase
         $this->assertSame('Unit diserahkan. Sewa sedang berjalan.', __('rental.messages.checked_out'));
         $this->assertSame('Hanya rental Siap diambil yang dapat diserahkan.', __('rental.errors.checkout_confirmed_only'));
         $this->assertSame('Kontrak ditandatangani. Tunjukkan layar ini kepada staf depot. Unit belum diserahkan.', __('rental.public.pickup_requested'));
+        $this->assertSame('Tanda tangani kontrak', __('rental.public.sign_contract'));
+        $this->assertSame('Unit baru diserahkan setelah staf depot menyelesaikan serah terima.', __('rental.public.sign_contract_hint'));
+        $this->assertSame('Datang ke depot', __('rental.public.come_to_depot'));
+        $this->assertSame('Menunggu serah terima', __('rental.pages.show.awaiting_handover_badge'));
         $this->assertSame('Jadwal terkunci · unit masih di pool', __('rental.status_hint.confirmed'));
         $this->assertSame('Pelanggan sudah ttd kontrak · serahkan unit', __('rental.status_hint.confirmed_awaiting_handover'));
         $this->assertSame('Kontrak sudah ditandatangani · unit belum diserahkan', __('rental.status_hint.confirmed_awaiting_handover_passenger'));
@@ -43,6 +47,10 @@ class RentalLifecycleLabelTest extends TestCase
         $this->assertSame('Vehicle handed over. The rental is now on hire.', __('rental.messages.checked_out'));
         $this->assertSame('Only Ready for pickup rentals can be handed over.', __('rental.errors.checkout_confirmed_only'));
         $this->assertSame('Contract signed. Show this screen to depot staff. The vehicle has not been handed over yet.', __('rental.public.pickup_requested'));
+        $this->assertSame('Sign the contract', __('rental.public.sign_contract'));
+        $this->assertSame('The vehicle is handed over only after depot staff complete handover.', __('rental.public.sign_contract_hint'));
+        $this->assertSame('Come to the depot', __('rental.public.come_to_depot'));
+        $this->assertSame('Awaiting handover', __('rental.pages.show.awaiting_handover_badge'));
         $this->assertSame('Dates locked · vehicle still at the depot', __('rental.status_hint.confirmed'));
         $this->assertSame('Customer signed the contract · hand over the vehicle', __('rental.status_hint.confirmed_awaiting_handover'));
         $this->assertSame('Contract signed · vehicle has not been handed over yet', __('rental.status_hint.confirmed_awaiting_handover_passenger'));
