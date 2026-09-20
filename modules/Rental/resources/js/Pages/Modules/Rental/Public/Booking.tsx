@@ -61,6 +61,7 @@ interface Booking {
         estimated_periods: number;
         estimated_amount: number;
         status: string;
+        has_conflict?: boolean;
     } | null;
     documents: {
         ktp_uploaded: boolean;
@@ -1019,8 +1020,38 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             )}
 
+                            {/* Pending Extension Request Card */}
+                            {booking.extend_request && (
+                                <div className={`rounded-2xl p-5 border shadow-xs space-y-2.5 ${
+                                    booking.extend_request.has_conflict
+                                        ? 'bg-amber-50/80 border-amber-200 text-amber-950'
+                                        : 'bg-indigo-50/80 border-indigo-200 text-indigo-950'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                                            <span>{booking.extend_request.has_conflict ? '⚠️' : '⏱️'}</span>
+                                            <span>{booking.extend_request.has_conflict ? 'Perpanjangan Menunggu Review Armada' : 'Perpanjangan Sedang Ditinjau'}</span>
+                                        </h3>
+                                        <span className="rounded-md bg-white px-2 py-0.5 text-[10px] font-black uppercase shadow-2xs">
+                                            {booking.extend_request.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs leading-relaxed">
+                                        Pengajuan perpanjangan s/d <strong>{booking.extend_request.requested_end_date}</strong> (+{booking.extend_request.estimated_periods} hari).
+                                    </p>
+                                    {booking.extend_request.has_conflict && (
+                                        <div className="rounded-xl bg-amber-100/90 border border-amber-300 p-3 text-[11px] leading-relaxed text-amber-950 font-medium space-y-1">
+                                            <p className="font-bold">🛑 PENTING: Mohon Jangan Transfer Sekarang</p>
+                                            <p>
+                                                Kendaraan ini memiliki jadwal pemesanan pelanggan lain pada tanggal tersebut. Tim kami sedang menyiapkan opsi armada pengganti. <strong>Mohon TIDAK melakukan pembayaran atau transfer manual sebelum pengajuan ini disetujui staf.</strong>
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Additional Actions: Request Extend */}
-                            {booking.can_request_extend && (
+                            {booking.can_request_extend && !booking.extend_request && (
                                 <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-xs space-y-3">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Perpanjangan Sewa</h3>
@@ -1041,6 +1072,9 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                                     {showExtend && isVerified && (
                                         <form onSubmit={requestExtend} className="mt-3 pt-3 border-t border-slate-100 space-y-3">
+                                            <p className="text-[11px] text-slate-500">
+                                                💡 <em>Jika tanggal perpanjangan berbenturan dengan jadwal penyewa lain, pengajuan akan ditinjau tim operasional untuk alokasi unit.</em>
+                                            </p>
                                             <div>
                                                 <label className="text-[11px] font-bold text-slate-700 block">Tanggal Selesai Baru</label>
                                                 <input

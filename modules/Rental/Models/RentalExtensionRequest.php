@@ -21,6 +21,10 @@ class RentalExtensionRequest extends Model
         'estimated_periods',
         'estimated_amount',
         'status',
+        'has_conflict',
+        'conflicting_rental_id',
+        'refund_status',
+        'transfer_amount_reported',
         'channel',
         'notes',
         'staff_notes',
@@ -35,6 +39,8 @@ class RentalExtensionRequest extends Model
             'requested_end_date' => 'date:Y-m-d',
             'estimated_periods' => 'integer',
             'estimated_amount' => 'decimal:2',
+            'has_conflict' => 'boolean',
+            'transfer_amount_reported' => 'decimal:2',
             'reviewed_at' => 'datetime',
         ];
     }
@@ -43,6 +49,12 @@ class RentalExtensionRequest extends Model
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
+    }
+
+    /** @return BelongsTo<Rental, $this> */
+    public function conflictingRental(): BelongsTo
+    {
+        return $this->belongsTo(Rental::class, 'conflicting_rental_id');
     }
 
     /** @return BelongsTo<User, $this> */

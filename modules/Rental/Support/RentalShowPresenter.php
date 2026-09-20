@@ -50,6 +50,50 @@ class RentalShowPresenter
                 ->orderBy('id'),
         ]);
 
+        $enrichedRequests = $rental->extensionRequests->map(function ($req) use ($rental) {
+            $startDate = $rental->end_date ? $rental->end_date->copy()->addDay()->toDateString() : now()->toDateString();
+            $conflicts = $rental->vehicle_id ? Rental::findConflictingRentals(
+                (int) $rental->vehicle_id,
+                $startDate,
+                $req->requested_end_date->toDateString(),
+                $rental->id,
+            ) : collect();
+
+            $hasConflict = (bool) ($req->has_conflict || $conflicts->isNotEmpty());
+
+            $firstConflict = $conflicts->first();
+            $alternatives = ($hasConflict && $firstConflict && $rental->vehicle)
+                ? Rental::findAlternativeVehicles(
+                    $rental->vehicle,
+                    $firstConflict->start_date->toDateString(),
+                    $firstConflict->end_date->toDateString(),
+                    $firstConflict->id,
+                )
+                : collect();
+
+            $req->has_conflict = $hasConflict;
+            $req->conflicting_rentals = $conflicts->map(fn ($c) => [
+                'id' => $c->id,
+                'code' => $c->code,
+                'customer_name' => $c->partner?->name,
+                'customer_phone' => $c->partner?->phone ?: $c->partner?->mobile,
+                'start_date' => $c->start_date?->toDateString(),
+                'end_date' => $c->end_date?->toDateString(),
+                'status' => $c->status,
+            ])->values()->all();
+
+            $req->alternative_vehicles = $alternatives->map(fn ($v) => [
+                'id' => $v->id,
+                'name' => $v->name,
+                'plate_number' => $v->plate_number,
+                'rental_class' => $v->rental_class,
+                'is_same_class' => ($rental->vehicle?->rental_class && $v->rental_class === $rental->vehicle->rental_class),
+            ])->values()->all();
+
+            return $req;
+        });
+        $rental->setRelation('extensionRequests', $enrichedRequests);
+
         [$trackingEnabled, $hasGpsDevice, $livePosition, $gpsSummary] = $this->trackingData($rental);
 
         return [

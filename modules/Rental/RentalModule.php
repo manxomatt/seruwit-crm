@@ -190,6 +190,9 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/extension-requests/{extensionRequest}/reject', [RentalActionController::class, 'rejectExtensionRequest'])
             ->middleware('permission:rental,bookings')
             ->name('rental.extension_requests.reject');
+        Route::post('/rental/{rental}/reassign-conflicting-booking', [RentalActionController::class, 'reassignConflictingBooking'])
+            ->middleware('permission:rental,dispatch')
+            ->name('rental.reassign_conflicting_booking');
         Route::post('/rental/{rental}/swap-vehicle', [RentalActionController::class, 'swapVehicle'])->middleware('permission:rental,dispatch')->name('rental.swap');
         Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,finance')->name('rental.deposit.receive');
         Route::post('/rental/{rental}/deposit-pay-online', [RentalActionController::class, 'payDepositOnline'])->middleware('permission:rental,finance')->name('rental.deposit.pay_online');

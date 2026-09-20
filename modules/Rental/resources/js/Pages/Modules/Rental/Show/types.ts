@@ -15,12 +15,36 @@ export interface Extension {
     notes: string | null;
 }
 
+export interface ConflictingRentalSummary {
+    id: number;
+    code: string;
+    customer_name: string | null;
+    customer_phone: string | null;
+    start_date: string;
+    end_date: string;
+    status: string;
+}
+
+export interface AlternativeVehicleOption {
+    id: number;
+    name: string;
+    plate_number: string;
+    rental_class: string | null;
+    is_same_class: boolean;
+}
+
 export interface ExtensionRequest {
     id: number;
     requested_end_date: string;
     estimated_periods: number;
-    estimated_amount: string;
+    estimated_amount: string | number;
     status: string;
+    has_conflict?: boolean;
+    conflicting_rental_id?: number | null;
+    conflicting_rentals?: ConflictingRentalSummary[];
+    alternative_vehicles?: AlternativeVehicleOption[];
+    refund_status?: string | null;
+    transfer_amount_reported?: string | number | null;
     channel: string | null;
     notes: string | null;
 }

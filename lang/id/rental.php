@@ -818,6 +818,8 @@ return [
         'extended' => 'Rental diperpanjang.',
         'extend_request_approved' => 'Permintaan perpanjangan disetujui.',
         'extend_request_rejected' => 'Permintaan perpanjangan ditolak.',
+        'extend_request_rejected_with_refund' => 'Permintaan perpanjangan ditolak dan catatan refund/deposit berhasil disimpan.',
+        'conflicting_booking_reassigned' => 'Booking bentrok :code berhasil dipindahkan ke armada :vehicle. Jadwal unit kini siap.',
         'vehicle_swapped' => 'Kendaraan diganti.',
         'damage_recorded' => 'Damage dicatat.',
         'damage_removed' => 'Catatan damage dihapus.',
@@ -884,6 +886,7 @@ return [
         'handover_signature_required' => 'Tanda tangan pelanggan wajib.',
         'checkout_prepayment_required' => 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.',
         'deposit_proof_not_pending' => 'Bukti transfer deposit tidak dalam status pending.',
+        'reassign_status_invalid' => 'Booking hanya dapat dipindahkan jika berstatus draft, pending, atau confirmed.',
     ],
 
     'portal' => [
@@ -927,6 +930,8 @@ return [
         'extend_active_only' => 'Hanya rental aktif yang dapat mengajukan perpanjangan.',
         'extend_request_pending' => 'Sudah ada permintaan perpanjangan yang menunggu review staf.',
         'extend_requested' => 'Permintaan perpanjangan dikirim. Staf akan meninjau segera.',
+        'extend_requested_with_conflict' => 'Permintaan perpanjangan dikirim. Karena unit memiliki booking lain, staf sedang meninjau unit pengganti. Mohon TIDAK melakukan transfer pembayaran sebelum disetujui.',
+        'extend_conflict_notice' => 'Unit telah terisi reservasi lain pada tanggal tersebut. Pengajuan akan ditinjau oleh staf. Jangan melakukan transfer dana terlebih dahulu.',
         'documents_required' => 'Unggah minimal satu dokumen (KTP atau SIM).',
         'documents_uploaded' => 'Dokumen berhasil diunggah.',
         'invoice_not_found' => 'Invoice tidak ditemukan untuk pemesanan ini.',

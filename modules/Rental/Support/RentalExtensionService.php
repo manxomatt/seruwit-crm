@@ -78,6 +78,12 @@ class RentalExtensionService
             ]);
         }
 
+        if ($rental->end_date === null || $newEndDate <= $rental->end_date->toDateString()) {
+            throw ValidationException::withMessages([
+                'new_end_date' => __('rental.validation.extend_end_after_current'),
+            ]);
+        }
+
         $pending = RentalExtensionRequest::query()
             ->where('rental_id', $rental->id)
             ->where('status', RentalExtensionRequest::STATUS_PENDING)
@@ -89,14 +95,28 @@ class RentalExtensionService
             ]);
         }
 
-        $quote = $this->quote($rental, $newEndDate);
+        $conflicts = Rental::findConflictingRentals(
+            (int) $rental->vehicle_id,
+            $rental->end_date->copy()->addDay()->toDateString(),
+            $newEndDate,
+            $rental->id,
+        );
+
+        $extendedPeriods = Rental::computePeriods(
+            $rental->end_date->copy()->addDay()->toDateString(),
+            $newEndDate,
+            $rental->period_type,
+        );
+        $additionalAmount = round($extendedPeriods * (float) $rental->rate_per_period, 2);
 
         return RentalExtensionRequest::query()->create([
             'rental_id' => $rental->id,
             'requested_end_date' => $newEndDate,
-            'estimated_periods' => $quote['extended_periods'],
-            'estimated_amount' => $quote['additional_amount'],
+            'estimated_periods' => $extendedPeriods,
+            'estimated_amount' => $additionalAmount,
             'status' => RentalExtensionRequest::STATUS_PENDING,
+            'has_conflict' => $conflicts->isNotEmpty(),
+            'conflicting_rental_id' => $conflicts->first()?->id,
             'channel' => $channel,
             'notes' => $notes,
         ]);
@@ -127,8 +147,13 @@ class RentalExtensionService
         return $extension;
     }
 
-    public function rejectRequest(RentalExtensionRequest $request, ?int $reviewedBy = null, ?string $staffNotes = null): RentalExtensionRequest
-    {
+    public function rejectRequest(
+        RentalExtensionRequest $request,
+        ?int $reviewedBy = null,
+        ?string $staffNotes = null,
+        ?string $refundStatus = null,
+        ?float $transferAmountReported = null,
+    ): RentalExtensionRequest {
         if ($request->status !== RentalExtensionRequest::STATUS_PENDING) {
             throw ValidationException::withMessages([
                 'request' => __('rental.errors.extend_request_not_pending'),
@@ -138,6 +163,8 @@ class RentalExtensionService
         $request->update([
             'status' => RentalExtensionRequest::STATUS_REJECTED,
             'staff_notes' => $staffNotes,
+            'refund_status' => $refundStatus,
+            'transfer_amount_reported' => $transferAmountReported,
             'reviewed_by' => $reviewedBy,
             'reviewed_at' => now(),
         ]);

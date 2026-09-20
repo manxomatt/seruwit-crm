@@ -536,7 +536,7 @@ class PublicRentalBookingController extends Controller
         }
 
         try {
-            $extensions->requestFromPassenger(
+            $extRequest = $extensions->requestFromPassenger(
                 $rental,
                 $data['new_end_date'],
                 Rental::CHANNEL_WEB,
@@ -550,9 +550,13 @@ class PublicRentalBookingController extends Controller
             return back()->with('error', $message);
         }
 
+        $message = $extRequest->has_conflict
+            ? __('rental.public.extend_requested_with_conflict')
+            : __('rental.public.extend_requested');
+
         return redirect()
             ->route('book.rental.booking.show', $token)
-            ->with('success', __('rental.public.extend_requested'));
+            ->with('success', $message);
     }
 
     public function uploadDocuments(
@@ -1070,6 +1074,7 @@ class PublicRentalBookingController extends Controller
             'estimated_periods' => (int) $request->estimated_periods,
             'estimated_amount' => (float) $request->estimated_amount,
             'status' => $request->status,
+            'has_conflict' => (bool) $request->has_conflict,
         ];
     }
 

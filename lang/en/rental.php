@@ -797,6 +797,8 @@ return [
         'extended' => 'Rental extended.',
         'extend_request_approved' => 'Extension request approved.',
         'extend_request_rejected' => 'Extension request rejected.',
+        'extend_request_rejected_with_refund' => 'Extension request rejected and refund/deposit note recorded.',
+        'conflicting_booking_reassigned' => 'Conflicting booking :code successfully reassigned to vehicle :vehicle.',
         'vehicle_swapped' => 'Vehicle swapped.',
         'damage_recorded' => 'Damage recorded.',
         'damage_removed' => 'Damage record removed.',
@@ -863,6 +865,7 @@ return [
         'handover_signature_required' => 'Customer signature is required.',
         'checkout_prepayment_required' => 'Upfront invoice payment must be settled before checking out the vehicle.',
         'deposit_proof_not_pending' => 'The deposit transfer proof is not in a pending state.',
+        'reassign_status_invalid' => 'Booking can only be reassigned if in draft, pending, or confirmed status.',
     ],
 
     'portal' => [
@@ -906,6 +909,8 @@ return [
         'extend_active_only' => 'Only an active rental can request an extension.',
         'extend_request_pending' => 'An extension request is already pending staff review.',
         'extend_requested' => 'Extension request submitted. Staff will review it shortly.',
+        'extend_requested_with_conflict' => 'Extension request submitted. Because the unit has other bookings, staff are reviewing alternative units. Please DO NOT make payment until approved.',
+        'extend_conflict_notice' => 'Vehicle is already reserved on the requested dates. Your request will be reviewed by staff. Please do not transfer funds until approved.',
         'documents_required' => 'Upload at least one document (KTP or SIM).',
         'documents_uploaded' => 'Documents uploaded.',
         'invoice_not_found' => 'Invoice not found for this booking.',

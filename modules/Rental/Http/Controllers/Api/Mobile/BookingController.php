@@ -373,14 +373,19 @@ class BookingController extends Controller
             return $this->jsonFromThrowable($e);
         }
 
+        $message = $extensionRequest->has_conflict
+            ? __('rental.public.extend_requested_with_conflict')
+            : __('rental.public.extend_requested');
+
         return response()->json([
-            'message' => __('rental.public.extend_requested', ['default' => 'Rental extension request submitted successfully.']),
+            'message' => $message,
             'extension_request' => [
                 'id' => $extensionRequest->id,
                 'requested_end_date' => $extensionRequest->requested_end_date?->toDateString(),
                 'estimated_periods' => (int) $extensionRequest->estimated_periods,
                 'estimated_amount' => (float) $extensionRequest->estimated_amount,
                 'status' => $extensionRequest->status,
+                'has_conflict' => (bool) $extensionRequest->has_conflict,
                 'notes' => $extensionRequest->notes,
                 'created_at' => $extensionRequest->created_at?->toIso8601String(),
             ],

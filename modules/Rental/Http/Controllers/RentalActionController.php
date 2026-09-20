@@ -541,6 +541,8 @@ class RentalActionController extends Controller
 
         $data = $request->validate([
             'staff_notes' => ['nullable', 'string', 'max:1000'],
+            'refund_status' => ['nullable', 'string', 'in:none,pending_refund,refunded,credited_to_deposit'],
+            'transfer_amount_reported' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         try {
@@ -548,12 +550,99 @@ class RentalActionController extends Controller
                 $extensionRequest,
                 reviewedBy: $request->user()?->id,
                 staffNotes: $data['staff_notes'] ?? null,
+                refundStatus: $data['refund_status'] ?? null,
+                transferAmountReported: isset($data['transfer_amount_reported']) ? (float) $data['transfer_amount_reported'] : null,
             );
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors());
         }
 
-        return back()->with('success', __('rental.messages.extend_request_rejected'));
+        $message = ! empty($data['refund_status']) && $data['refund_status'] !== 'none'
+            ? __('rental.messages.extend_request_rejected_with_refund')
+            : __('rental.messages.extend_request_rejected');
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Reassign a conflicting booking to an alternative vehicle to resolve an extension conflict.
+     */
+    public function reassignConflictingBooking(Request $request, Rental $rental): RedirectResponse
+    {
+        $this->ensureAccessibleRental($rental);
+
+        $data = $request->validate([
+            'conflicting_rental_id' => ['required', 'integer', 'exists:rentals,id'],
+            'to_vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $conflictingRental = Rental::query()->findOrFail((int) $data['conflicting_rental_id']);
+        $this->ensureAccessibleRental($conflictingRental);
+
+        abort_if(
+            ! in_array($conflictingRental->status, Rental::editableStatuses(), true),
+            422,
+            __('rental.errors.reassign_status_invalid')
+        );
+
+        $toVehicle = Vehicle::query()->findOrFail((int) $data['to_vehicle_id']);
+        $reasons = Rental::vehicleAvailabilityReasons(
+            $toVehicle,
+            $conflictingRental->start_date->toDateString(),
+            $conflictingRental->end_date->toDateString(),
+            $conflictingRental->id,
+        );
+
+        if ($reasons !== []) {
+            return back()->withErrors(['to_vehicle_id' => $reasons[0]]);
+        }
+
+        $fromVehicleName = $conflictingRental->vehicle?->name ?? 'Unit Lama';
+        $conflictingRental->update([
+            'vehicle_id' => $toVehicle->id,
+            'notes' => trim(($conflictingRental->notes ? $conflictingRental->notes."\n" : '').
+                sprintf('[%s] Reassigned from %s to %s by %s to resolve extension collision on %s. %s',
+                    now()->toDateTimeString(),
+                    $fromVehicleName,
+                    $toVehicle->name,
+                    $request->user()?->name ?? 'Staff',
+                    $rental->code,
+                    $data['notes'] ?? ''
+                )),
+        ]);
+
+        // Re-evaluate pending extension requests for $rental
+        $pendingRequests = RentalExtensionRequest::query()
+            ->where('rental_id', $rental->id)
+            ->where('status', RentalExtensionRequest::STATUS_PENDING)
+            ->get();
+
+        foreach ($pendingRequests as $pendingReq) {
+            $remainingConflicts = Rental::findConflictingRentals(
+                (int) $rental->vehicle_id,
+                $rental->end_date->copy()->addDay()->toDateString(),
+                $pendingReq->requested_end_date->toDateString(),
+                $rental->id,
+            );
+
+            if ($remainingConflicts->isEmpty()) {
+                $pendingReq->update([
+                    'has_conflict' => false,
+                    'conflicting_rental_id' => null,
+                ]);
+            } else {
+                $pendingReq->update([
+                    'has_conflict' => true,
+                    'conflicting_rental_id' => $remainingConflicts->first()?->id,
+                ]);
+            }
+        }
+
+        return back()->with('success', __('rental.messages.conflicting_booking_reassigned', [
+            'code' => $conflictingRental->code,
+            'vehicle' => $toVehicle->name.' ('.$toVehicle->plate_number.')',
+        ]));
     }
 
     /**

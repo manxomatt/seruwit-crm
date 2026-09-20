@@ -572,6 +572,48 @@ class Rental extends Model
     }
 
     /**
+     * Conflicting rentals for a vehicle within [$start, $end].
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, self>
+     */
+    public static function findConflictingRentals(int $vehicleId, string $start, string $end, ?int $excludingId = null)
+    {
+        return static::query()
+            ->with(['partner:id,name,phone,mobile', 'vehicle:id,name,plate_number,type,rental_class'])
+            ->where('vehicle_id', $vehicleId)
+            ->whereIn('status', self::blockingStatuses())
+            ->where('start_date', '<=', $end)
+            ->where('end_date', '>=', $start)
+            ->when($excludingId, fn (Builder $q) => $q->where('id', '!=', $excludingId))
+            ->orderBy('start_date')
+            ->get();
+    }
+
+    /**
+     * Find available alternative vehicles for [$start, $end], prioritized by same rental class.
+     *
+     * @return \Illuminate\Support\Collection<int, Vehicle>
+     */
+    public static function findAlternativeVehicles(Vehicle $vehicle, string $start, string $end, ?int $excludingRentalId = null): \Illuminate\Support\Collection
+    {
+        $candidates = Vehicle::query()
+            ->where('status', Vehicle::STATUS_ACTIVE)
+            ->where('id', '!=', $vehicle->id)
+            ->orderBy('name')
+            ->get();
+
+        return $candidates->filter(function (Vehicle $candidate) use ($start, $end, $excludingRentalId): bool {
+            return self::vehicleAvailabilityReasons($candidate, $start, $end, $excludingRentalId) === [];
+        })->sortByDesc(function (Vehicle $candidate) use ($vehicle): int {
+            if ($vehicle->rental_class && $candidate->rental_class === $vehicle->rental_class) {
+                return 2;
+            }
+
+            return 1;
+        })->values();
+    }
+
+    /**
      * Reasons a vehicle cannot be rented for [$start, $end], empty when it can.
      *
      * Reads Fleet's own columns (status, STNK/KIR expiry) — downward dependency,
