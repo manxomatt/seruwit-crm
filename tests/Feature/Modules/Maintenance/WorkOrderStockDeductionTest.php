@@ -197,4 +197,36 @@ class WorkOrderStockDeductionTest extends TestCase
         $this->assertEquals(1, StockMovement::where('source_id', $workOrder->id)->count());
         $this->assertEquals(45, StockLevel::where('product_id', $product->id)->value('on_hand'));
     }
+
+    public function test_deleting_a_completed_work_order_returns_the_stock(): void
+    {
+        $warehouse = Warehouse::factory()->create();
+        $product = $this->sparepart($warehouse, 50);
+        $vehicle = Vehicle::factory()->create();
+        $category = $this->category();
+
+        $workOrder = WorkOrder::factory()->completed()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+        ]);
+        $workOrder->items()->create([
+            'item_type' => 'part',
+            'product_id' => $product->id,
+            'name' => 'Filter oli',
+            'quantity' => 6,
+            'unit_price' => 0,
+            'total_price' => 0,
+        ]);
+
+        MaintenanceStockRecorder::deduct($workOrder->load('items.product'));
+        $this->assertEquals(44, StockLevel::where('product_id', $product->id)->value('on_hand'));
+
+        $this->actingAs($this->createAdminUser())
+            ->delete(route('module.maintenance.work-orders.destroy', $workOrder))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted('work_orders', ['id' => $workOrder->id]);
+        $this->assertEquals(50, StockLevel::where('product_id', $product->id)->value('on_hand'));
+        $this->assertEquals(1, StockMovement::where('source_id', $workOrder->id)->where('type', 'in')->count());
+    }
 }

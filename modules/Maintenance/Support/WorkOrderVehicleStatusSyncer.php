@@ -45,6 +45,27 @@ class WorkOrderVehicleStatusSyncer
     }
 
     /**
+     * Restore the vehicle when an in-progress work order is deleted,
+     * unless another in-progress WO still holds the unit.
+     */
+    public static function releaseOnDelete(WorkOrder $workOrder): void
+    {
+        if ($workOrder->status !== WorkOrder::STATUS_IN_PROGRESS) {
+            return;
+        }
+
+        $workOrder->loadMissing('vehicle');
+
+        $vehicle = $workOrder->vehicle;
+
+        if ($vehicle === null) {
+            return;
+        }
+
+        self::restoreVehicleIfIdle($workOrder, $vehicle);
+    }
+
+    /**
      * Reject starting a second in-progress WO for the same vehicle.
      */
     public static function vehicleHasOtherInProgress(WorkOrder $workOrder): bool

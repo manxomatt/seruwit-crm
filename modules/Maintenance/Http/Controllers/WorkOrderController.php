@@ -422,7 +422,11 @@ class WorkOrderController extends Controller
 
     public function destroy(WorkOrder $workOrder): RedirectResponse
     {
-        $workOrder->delete();
+        DB::transaction(function () use ($workOrder): void {
+            WorkOrderVehicleStatusSyncer::releaseOnDelete($workOrder);
+            MaintenanceStockRecorder::reverse($workOrder->load('items.product'));
+            $workOrder->delete();
+        });
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.index')
             ->with('success', __('maintenance.messages.wo_deleted'));

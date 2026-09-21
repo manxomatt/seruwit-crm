@@ -73,7 +73,7 @@ class MaintenanceSchedule extends Model
             $this->next_service_date = null;
         } else {
             $this->next_service_date = $this->last_service_date !== null
-                ? $this->last_service_date->addDays($this->interval_value)
+                ? $this->last_service_date->copy()->addDays($this->interval_value)
                 : null;
             $this->next_service_odometer = null;
         }

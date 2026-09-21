@@ -136,6 +136,91 @@ class WorkOrderVehicleStatusTest extends TestCase
         $this->assertSame(15_200, $schedule->next_service_odometer);
     }
 
+    public function test_completing_work_order_advances_matching_calendar_schedule_without_mutating_last_service_date(): void
+    {
+        $this->travelTo('2026-09-21 08:00:00');
+
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $category = $this->category();
+
+        $schedule = MaintenanceSchedule::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'name' => 'Servis 90 hari',
+            'interval_type' => MaintenanceSchedule::INTERVAL_CALENDAR,
+            'interval_value' => 90,
+            'last_service_date' => '2026-06-01',
+            'next_service_date' => '2026-08-30',
+            'is_active' => true,
+        ]);
+
+        $workOrder = WorkOrder::factory()->inProgress()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'vehicle_status_before' => Vehicle::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('module.maintenance.work-orders.update-status', $workOrder), [
+                'status' => WorkOrder::STATUS_COMPLETED,
+            ])
+            ->assertRedirect();
+
+        $schedule->refresh();
+        $this->assertSame('2026-09-21', $schedule->last_service_date?->toDateString());
+        $this->assertSame('2026-12-20', $schedule->next_service_date?->toDateString());
+        $this->assertNull($schedule->next_service_odometer);
+    }
+
+    public function test_deleting_in_progress_work_order_restores_vehicle_status(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $category = $this->category();
+
+        $workOrder = WorkOrder::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_APPROVED,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('module.maintenance.work-orders.update-status', $workOrder), [
+                'status' => WorkOrder::STATUS_IN_PROGRESS,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(Vehicle::STATUS_MAINTENANCE, $vehicle->fresh()->status);
+
+        $this->actingAs($user)
+            ->delete(route('module.maintenance.work-orders.destroy', $workOrder))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted('work_orders', ['id' => $workOrder->id]);
+        $this->assertSame(Vehicle::STATUS_ACTIVE, $vehicle->fresh()->status);
+    }
+
+    public function test_deleting_draft_work_order_does_not_change_vehicle_status(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $category = $this->category();
+
+        $workOrder = WorkOrder::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_DRAFT,
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('module.maintenance.work-orders.destroy', $workOrder))
+            ->assertRedirect();
+
+        $this->assertSame(Vehicle::STATUS_ACTIVE, $vehicle->fresh()->status);
+    }
+
     public function test_store_denormalizes_vendor_and_mechanic_labels(): void
     {
         $user = $this->createAdminUser();

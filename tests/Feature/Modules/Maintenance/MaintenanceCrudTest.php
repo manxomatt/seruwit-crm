@@ -564,6 +564,7 @@ class MaintenanceCrudTest extends TestCase
 
         $schedule = MaintenanceSchedule::where('name', 'Oil change every 90 days')->first();
         $this->assertNotNull($schedule);
+        $this->assertEquals('2026-06-01', $schedule->last_service_date->toDateString());
         $this->assertEquals('2026-08-30', $schedule->next_service_date->toDateString());
         $this->assertNull($schedule->next_service_odometer);
     }
