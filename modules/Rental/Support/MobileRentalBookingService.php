@@ -129,6 +129,14 @@ class MobileRentalBookingService
             ]);
         }
 
+        $requested = Vehicle::query()->findOrFail((int) $input['vehicle_id']);
+        $picked = PublicRentalCatalog::pickAvailable(
+            $requested,
+            (string) $input['start_date'],
+            (string) $input['end_date'],
+        );
+        $input['vehicle_id'] = $picked->id;
+
         $quote = $this->quote($input);
 
         if (! $quote['available'] || $quote['rate'] === null) {
@@ -176,7 +184,9 @@ class MobileRentalBookingService
                 'status' => Rental::STATUS_PENDING_RESERVED,
                 'reserved_until' => $reservedUntil,
                 'start_date' => $input['start_date'],
+                'pickup_time' => $input['pickup_time'] ?? '08:00',
                 'end_date' => $input['end_date'],
+                'return_time' => $input['return_time'] ?? '17:00',
                 'period_type' => $input['period_type'],
                 'rate_per_period' => $ratePerPeriod,
                 'km_limit_per_period' => $rate->km_limit_per_period,

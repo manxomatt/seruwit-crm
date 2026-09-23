@@ -19,18 +19,22 @@ class StorePublicRentalBookingRequest extends FormRequest
     {
         $phone = $this->input('booker_phone') ?? '';
         $isVerified = $phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone);
+        $hydrator = app(\Modules\Rental\Support\RentalLocationHydrator::class);
+        $depotRequired = $hydrator->depotOptions() !== [];
 
         return [
             'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'pickup_time' => ['nullable', 'date_format:H:i'],
+            'return_time' => ['nullable', 'date_format:H:i'],
             'period_type' => ['required', 'string', Rule::in(['daily', 'weekly', 'monthly'])],
             'customer_name' => ['required', 'string', 'max:120'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'booker_phone' => ['required', 'string', 'max:32'],
             'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
-            'pickup_location_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
-            'return_location_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
+            'pickup_location_id' => $hydrator->depotIdRules($depotRequired),
+            'return_location_id' => $hydrator->depotIdRules(),
             'pickup_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
             'return_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
@@ -51,6 +55,9 @@ class StorePublicRentalBookingRequest extends FormRequest
             'booker_phone.required' => __('rental.public.validation.booker_phone_required'),
             'otp_code.required' => __('rental.public.validation.otp_required'),
             'otp_code.size' => __('rental.public.validation.otp_size'),
+            'pickup_location_id.required' => __('rental.public.validation.pickup_required'),
+            'pickup_time.date_format' => __('rental.public.validation.pickup_time'),
+            'return_time.date_format' => __('rental.public.validation.return_time'),
             'vehicle_id.required' => __('rental.public.validation.vehicle_required'),
             'start_date.required' => __('rental.public.validation.start_date_required'),
             'end_date.required' => __('rental.public.validation.end_date_required'),

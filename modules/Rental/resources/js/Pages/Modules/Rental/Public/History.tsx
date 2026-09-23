@@ -7,6 +7,8 @@ interface Brand {
     color: string;
     support_phone: string | null;
     logo_url?: string | null;
+    terms_url?: string | null;
+    privacy_url?: string | null;
 }
 
 interface Booking {
@@ -402,8 +404,8 @@ export default function History({ brand, phone, bookings }: Props) {
                             © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
                         </div>
                         <div className="flex gap-4">
-                            <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>
-                            <span className="hover:text-slate-300 cursor-pointer">Kebijakan Privasi</span>
+                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">Syarat & Ketentuan</a>
+                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">Kebijakan Privasi</a>
                         </div>
                     </div>
                 </div>

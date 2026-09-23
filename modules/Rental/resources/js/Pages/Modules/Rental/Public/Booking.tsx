@@ -8,6 +8,8 @@ interface Brand {
     color: string;
     support_phone: string | null;
     logo_url?: string | null;
+    terms_url?: string | null;
+    privacy_url?: string | null;
 }
 
 interface CompanyBankAccount {
@@ -27,6 +29,8 @@ interface Booking {
     booker_phone_verified: boolean;
     start_date: string | null;
     end_date: string | null;
+    pickup_time?: string | null;
+    return_time?: string | null;
     period_type: string;
     total_periods: number;
     rate_per_period: number;
@@ -232,6 +236,7 @@ export default function BookingView({ brand, booking, gateway_available, company
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
     const [depositTab, setDepositTab] = useState<'transfer' | 'online'>('transfer');
     const [copiedAccount, setCopiedAccount] = useState<boolean>(false);
+    const [linkCopied, setLinkCopied] = useState(false);
 
     // Page-level central OTP verification state
     const [verifyingOtp, setVerifyingOtp] = useState(false);
@@ -485,7 +490,7 @@ export default function BookingView({ brand, booking, gateway_available, company
         (Number(booking.deposit_amount) <= 0 &&
             booking.payment.balance_due <= 0 &&
             !['unpaid', 'partial', 'draft'].includes(booking.payment.status));
-    const documentsReady = Boolean(booking.documents?.ktp_uploaded || booking.documents?.sim_uploaded);
+    const documentsReady = Boolean(booking.documents?.ktp_uploaded && booking.documents?.sim_uploaded);
     const contractSigned = Boolean(booking.pickup_request?.requested_at);
     const unitHandedOver = ['active', 'returned', 'completed'].includes(booking.status);
 
@@ -617,6 +622,27 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 <div className="text-center sm:text-left">
                                     <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block">KODE BOOKING</span>
                                     <h2 className="text-3xl font-mono font-black tracking-wider text-slate-900 mt-0.5">{booking.code}</h2>
+                                    <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:justify-start">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                void navigator.clipboard.writeText(window.location.href);
+                                                setLinkCopied(true);
+                                                window.setTimeout(() => setLinkCopied(false), 2000);
+                                            }}
+                                            className="text-xs font-bold text-slate-600 underline"
+                                        >
+                                            {linkCopied ? 'Tautan tersalin' : 'Salin tautan pesanan'}
+                                        </button>
+                                        <a
+                                            href={`https://wa.me/?text=${encodeURIComponent(`Kode booking ${booking.code}. Buka pesanan: ${window.location.href}`)}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-xs font-bold text-slate-600 underline"
+                                        >
+                                            Kirim ke WhatsApp saya
+                                        </a>
+                                    </div>
                                 </div>
                                 <div className="flex flex-col items-center gap-1 sm:items-end">
                                     <span className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black border ${statusBadge.bg} ${statusBadge.color}`}>
@@ -678,7 +704,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
                                             <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Mulai Sewa</span>
-                                            <span className="font-black text-slate-900 text-sm block">{booking.start_date ?? '—'}</span>
+                                            <span className="font-black text-slate-900 text-sm block">{booking.start_date ?? '—'}{booking.pickup_time ? ` · ${booking.pickup_time}` : ''}</span>
                                             {booking.pickup_location && (
                                                 <span className="block text-[11px] text-slate-500 font-medium">{booking.pickup_location}</span>
                                             )}
@@ -686,7 +712,7 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                                         <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
                                             <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Selesai Sewa</span>
-                                            <span className="font-black text-slate-900 text-sm block">{booking.end_date ?? '—'}</span>
+                                            <span className="font-black text-slate-900 text-sm block">{booking.end_date ?? '—'}{booking.return_time ? ` · ${booking.return_time}` : ''}</span>
                                             {booking.return_location && (
                                                 <span className="block text-[11px] text-slate-500 font-medium">{booking.return_location}</span>
                                             )}
@@ -707,7 +733,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Dokumen Verifikasi (KTP & SIM)</h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">Wajib diunggah sebelum serah terima unit di cabang.</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">KTP dan SIM keduanya wajib. Foto harus utuh, terang, dan tulisan masih terbaca.</p>
                                     </div>
                                     <button
                                         type="button"
@@ -864,7 +890,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </h3>
                                 <div className="space-y-3 text-xs">
                                     <div className="flex justify-between text-slate-600 font-medium">
-                                        <span>Sewa ({booking.total_periods} hari)</span>
+                                        <span>Sewa ({booking.total_periods} {booking.period_type === 'weekly' ? 'minggu' : booking.period_type === 'monthly' ? 'bulan' : 'hari'})</span>
                                         <span className="font-black text-slate-900">{money(booking.base_amount)}</span>
                                     </div>
 
@@ -914,7 +940,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                     onClick={() => setDepositTab('online')}
                                                     className={`rounded-lg px-3 py-1.5 transition ${depositTab === 'online' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
                                                 >
-                                                    Midtrans Snap
+                                                    Bayar online
                                                 </button>
                                             )}
                                         </div>
@@ -1001,7 +1027,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                         className="w-full h-11 flex items-center justify-center rounded-xl text-xs font-black uppercase text-white shadow-sm transition"
                                                         style={{ backgroundColor: 'var(--brand-color)' }}
                                                     >
-                                                        Bayar Online ({money(booking.deposit_amount)})
+                                                        Bayar online ({money(Number(booking.deposit_amount) > 0 ? booking.deposit_amount : booking.total_amount)})
                                                     </button>
                                                 </form>
                                             )}
@@ -1256,8 +1282,8 @@ export default function BookingView({ brand, booking, gateway_available, company
                             © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
                         </div>
                         <div className="flex gap-4">
-                            <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>
-                            <span className="hover:text-slate-300 cursor-pointer">Kebijakan Privasi</span>
+                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">Syarat & Ketentuan</a>
+                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">Kebijakan Privasi</a>
                         </div>
                     </div>
                 </div>

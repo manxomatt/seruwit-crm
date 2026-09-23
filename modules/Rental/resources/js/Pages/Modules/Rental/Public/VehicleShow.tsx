@@ -8,12 +8,13 @@ interface Brand {
     color: string;
     support_phone: string | null;
     logo_url?: string | null;
+    terms_url?: string | null;
+    privacy_url?: string | null;
 }
 
 interface Vehicle {
     id: number;
     name: string;
-    plate_number: string;
     type: string | null;
     rental_class: string | null;
     rental_class_label: string | null;
@@ -22,7 +23,9 @@ interface Vehicle {
     color: string | null;
     capacity_seats: number | null;
     fuel_type: string | null;
+    fuel_label: string | null;
     photo_url: string | null;
+    similar_available: number;
 }
 
 interface Quote {
@@ -115,6 +118,8 @@ export default function VehicleShow({
         period_type: filters.period_type,
         pickup_location_id: filters.pickup_location_id ? String(filters.pickup_location_id) : '',
         return_location_id: filters.return_location_id ? String(filters.return_location_id) : '',
+        pickup_time: '08:00',
+        return_time: '17:00',
         insurance_package_id: filters.insurance_package_id ? String(filters.insurance_package_id) : '',
         customer_name: '',
         customer_email: '',
@@ -212,8 +217,14 @@ export default function VehicleShow({
         }
     };
 
+    const periodUnit = form.data.period_type === 'weekly' ? 'minggu' : form.data.period_type === 'monthly' ? 'bulan' : 'hari';
+
     const submit = (e: FormEvent) => {
         e.preventDefault();
+        if (locations.length > 0 && !form.data.pickup_location_id) {
+            form.setError('pickup_location_id', 'Pilih lokasi jemput.');
+            return;
+        }
         form.post(route('book.rental.bookings.store'), {
             preserveScroll: true,
             onError: () => {
@@ -343,7 +354,7 @@ export default function VehicleShow({
                     )}
 
                     {/* Split Layout: Showcase Left + Checkout Right */}
-                    <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    <div className="flex flex-col-reverse lg:flex-row gap-8 items-start">
                         
                         {/* Left Column: Showcase & Specs */}
                         <div className="flex-1 w-full space-y-6">
@@ -358,7 +369,7 @@ export default function VehicleShow({
                                             <svg className="h-16 w-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            <span className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Foto Unit Menyesuaikan</span>
+                                            <span className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Foto unit menyusul</span>
                                         </div>
                                     )}
 
@@ -381,12 +392,11 @@ export default function VehicleShow({
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
                                             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{vehicle.name}</h2>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plat Nomor:</span>
-                                                <span className="font-mono text-xs font-black text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                                                    {vehicle.plate_number}
-                                                </span>
-                                            </div>
+                                            {vehicle.similar_available > 1 && (
+                                                <p className="mt-2 text-sm font-medium text-slate-600">
+                                                    Ada {vehicle.similar_available} unit sejenis. Kami pilihkan yang siap pada tanggal ini. Nomor plat muncul setelah pesanan dibuat.
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -400,7 +410,7 @@ export default function VehicleShow({
                                             </div>
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
                                                 <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Bahan Bakar</span>
-                                                <div className="text-sm font-black text-slate-900">{vehicle.fuel_type || 'Bensin / Hybrid'}</div>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.fuel_label || '—'}</div>
                                             </div>
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
                                                 <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Tahun Rilis</span>
@@ -408,7 +418,7 @@ export default function VehicleShow({
                                             </div>
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
                                                 <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Warna</span>
-                                                <div className="text-sm font-black text-slate-900">{vehicle.color || 'Standar'}</div>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.color || '—'}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -480,12 +490,38 @@ export default function VehicleShow({
                                         </label>
                                     </div>
 
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className="text-[11px] font-bold text-slate-700">
+                                            Jam jemput
+                                            <input
+                                                type="time"
+                                                className={fieldClassName}
+                                                value={form.data.pickup_time}
+                                                onChange={(e) => form.setData('pickup_time', e.target.value)}
+                                                required
+                                            />
+                                        </label>
+                                        <label className="text-[11px] font-bold text-slate-700">
+                                            Jam kembali
+                                            <input
+                                                type="time"
+                                                className={fieldClassName}
+                                                value={form.data.return_time}
+                                                onChange={(e) => form.setData('return_time', e.target.value)}
+                                                required
+                                            />
+                                        </label>
+                                    </div>
+
                                     <div>
-                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Lokasi Jemput</label>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                            Lokasi Jemput {locations.length > 0 && <span className="text-rose-500">*</span>}
+                                        </label>
                                         <PublicSelect
                                             value={form.data.pickup_location_id}
                                             onChange={(val) => {
                                                 const newReturn = form.data.return_location_id || val;
+                                                form.clearErrors('pickup_location_id');
                                                 form.setData({
                                                     ...form.data,
                                                     pickup_location_id: val,
@@ -498,6 +534,22 @@ export default function VehicleShow({
                                             }}
                                             options={pickupOptions}
                                             placeholder="Pilih Lokasi Depot"
+                                        />
+                                        {form.errors.pickup_location_id && (
+                                            <p className="text-[10px] text-rose-600 font-bold mt-1">{form.errors.pickup_location_id}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Lokasi Kembali</label>
+                                        <PublicSelect
+                                            value={form.data.return_location_id}
+                                            onChange={(val) => {
+                                                form.setData('return_location_id', val);
+                                                void refreshQuote({ return_location_id: val });
+                                            }}
+                                            options={returnOptions}
+                                            placeholder="Sama dengan lokasi jemput"
                                         />
                                     </div>
 
@@ -531,7 +583,7 @@ export default function VehicleShow({
 
                                     <div className="flex items-center justify-between text-xs font-extrabold text-slate-900 border-b border-slate-200 pb-2">
                                         <span>Rincian Estimasi Biaya</span>
-                                        <span className="text-[11px] text-slate-700 font-bold">{quote.total_periods} Hari Sewa</span>
+                                        <span className="text-[11px] text-slate-700 font-bold">{quote.total_periods} {periodUnit}</span>
                                     </div>
 
                                     {!quote.available ? (
@@ -552,20 +604,31 @@ export default function VehicleShow({
                                                 </div>
                                             )}
 
+                                            {quote.one_way_fee_amount != null && quote.one_way_fee_amount > 0 && (
+                                                <div className="flex justify-between text-slate-600 font-medium">
+                                                    <span>Biaya antar cabang</span>
+                                                    <span className="font-bold text-slate-900">{money(quote.one_way_fee_amount)}</span>
+                                                </div>
+                                            )}
+
                                             <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-xs font-extrabold text-slate-900">
-                                                <span>Total Estimasi Sewa</span>
+                                                <span>Total sewa</span>
                                                 <span className="text-sm text-slate-900 font-black">{quote.total_amount ? money(quote.total_amount) : '—'}</span>
                                             </div>
 
-                                            <div className="rounded-lg bg-white p-3 border border-slate-200 flex items-center justify-between text-xs font-bold mt-1 shadow-2xs">
-                                                <div>
-                                                    <div className="text-slate-900 font-black">Deposit Penahanan Unit</div>
-                                                    <div className="text-[9px] text-slate-400 font-normal">Batas bayar {hold_ttl_minutes} menit</div>
+                                            <p className="text-[11px] font-medium text-slate-500">Tanggal selesai ikut dihitung.</p>
+
+                                            {quote.deposit_amount != null && quote.deposit_amount > 0 && (
+                                                <div className="rounded-lg bg-white p-3 border border-slate-200 flex items-center justify-between text-xs font-bold mt-1 shadow-2xs">
+                                                    <div>
+                                                        <div className="text-slate-900 font-black">Deposit untuk menahan mobil</div>
+                                                        <div className="text-[9px] text-slate-400 font-normal">Bayar dalam {hold_ttl_minutes} menit</div>
+                                                    </div>
+                                                    <div className="text-sm font-black text-slate-900">
+                                                        {money(quote.deposit_amount)}
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm font-black text-slate-900">
-                                                    {quote.deposit_amount ? money(quote.deposit_amount) : 'Rp 0'}
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -752,8 +815,8 @@ export default function VehicleShow({
                             © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
                         </div>
                         <div className="flex gap-4">
-                            <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>
-                            <span className="hover:text-slate-300 cursor-pointer">Kebijakan Privasi</span>
+                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">Syarat & Ketentuan</a>
+                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">Kebijakan Privasi</a>
                         </div>
                     </div>
                 </div>

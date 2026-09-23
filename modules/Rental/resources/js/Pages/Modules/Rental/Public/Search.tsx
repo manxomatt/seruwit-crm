@@ -4,6 +4,12 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 
+interface HelpLocation {
+    name: string;
+    address: string | null;
+    city: string | null;
+}
+
 interface Brand {
     name: string;
     color: string;
@@ -12,6 +18,9 @@ interface Brand {
     hero_title?: string | null;
     hero_subtitle?: string | null;
     hero_image_url?: string | null;
+    terms_url?: string | null;
+    privacy_url?: string | null;
+    help_locations?: HelpLocation[];
 }
 
 interface LocationOption {
@@ -29,14 +38,16 @@ interface ClassOption {
 interface VehicleCard {
     id: number;
     name: string;
-    plate_number: string;
+    available_count: number;
     rental_class: string | null;
     rental_class_label: string | null;
     capacity_seats: number | null;
-    color: string | null;
+    fuel_label: string | null;
     model_year: number | null;
     photo_url: string | null;
     from_price: number | null;
+    total_periods: number;
+    total_amount: number | null;
     deposit_amount: number | null;
 }
 
@@ -49,11 +60,13 @@ interface Props {
         pickup_location_id: number | null;
         return_location_id: number | null;
         rental_class: string | null;
+        total_periods?: number;
     };
     classes: ClassOption[];
     locations: LocationOption[];
     vehicles: VehicleCard[];
     searched: boolean;
+    needs_depot?: boolean;
     hold_ttl_minutes: number;
     gateway_available: boolean;
 }
@@ -67,10 +80,13 @@ export default function Search({
     locations,
     vehicles,
     searched,
+    needs_depot = false,
     hold_ttl_minutes,
 }: Props) {
     const { t } = useTrans();
     const [selectedCategory, setSelectedCategory] = useState<string>(filters.rental_class ?? '');
+    const [searching, setSearching] = useState(false);
+    const [depotError, setDepotError] = useState(false);
 
     const periodOptions = [
         { value: 'daily', label: t('rental.storefront_ui.period_daily', undefined, 'Harian') },
@@ -106,18 +122,41 @@ export default function Search({
         [depotOptions],
     );
 
-    const daysDuration = useMemo(() => {
-        if (!form.data.start_date || !form.data.end_date) return null;
-        const start = new Date(form.data.start_date);
-        const end = new Date(form.data.end_date);
-        const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 ? diffDays : null;
-    }, [form.data.start_date, form.data.end_date]);
+    const periodCount = useMemo(() => {
+        if (!form.data.start_date || !form.data.end_date) {
+            return null;
+        }
+        const start = new Date(`${form.data.start_date}T00:00:00`);
+        const end = new Date(`${form.data.end_date}T00:00:00`);
+        const days = Math.round((end.getTime() - start.getTime()) / 86400000);
+        if (days < 0) {
+            return null;
+        }
+        const inclusive = days + 1;
+        if (form.data.period_type === 'weekly') {
+            return Math.max(1, Math.ceil(inclusive / 7));
+        }
+        if (form.data.period_type === 'monthly') {
+            return Math.max(1, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1);
+        }
+        return inclusive;
+    }, [form.data.end_date, form.data.period_type, form.data.start_date]);
+
+    const periodUnit = form.data.period_type === 'weekly'
+        ? t('rental.storefront_ui.unit_week', undefined, 'minggu')
+        : form.data.period_type === 'monthly'
+          ? t('rental.storefront_ui.unit_month', undefined, 'bulan')
+          : t('rental.storefront_ui.unit_day', undefined, 'hari');
 
     const submit = (e?: FormEvent, classOverride?: string) => {
         if (e) e.preventDefault();
+        if (locations.length > 0 && !form.data.pickup_location_id) {
+            setDepotError(true);
+            return;
+        }
+        setDepotError(false);
         const activeClass = classOverride !== undefined ? classOverride : form.data.rental_class;
+        setSearching(true);
         router.get(
             route('book.rental.search'),
             {
@@ -128,7 +167,10 @@ export default function Search({
                 return_location_id: form.data.return_location_id || undefined,
                 rental_class: activeClass || undefined,
             },
-            { preserveState: true },
+            {
+                preserveState: true,
+                onFinish: () => setSearching(false),
+            },
         );
     };
 
@@ -233,7 +275,7 @@ export default function Search({
                                     <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_clean', undefined, 'Unit Bersih & Higienis')}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_otp', undefined, 'Booking Cepat WhatsApp OTP')}
+                                    <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_otp', undefined, 'Verifikasi nomor sebelum pesan')}
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-emerald-600 text-sm font-black">✓</span> {t('rental.storefront_ui.trust_depot', undefined, 'Serah Terima Depot Resmi')}
@@ -281,9 +323,9 @@ export default function Search({
                                             <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
                                                 {t('rental.storefront_ui.end_date', undefined, 'Tanggal Selesai')}
                                             </label>
-                                            {daysDuration !== null && (
+                                            {periodCount !== null && (
                                                 <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                                                    {t('rental.storefront_ui.duration_days', { count: daysDuration }, `${daysDuration} Hari`)}
+                                                    {periodCount} {periodUnit}
                                                 </span>
                                             )}
                                         </div>
@@ -300,10 +342,12 @@ export default function Search({
                                     <div className="space-y-1">
                                         <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
                                             {t('rental.storefront_ui.pickup_location', undefined, 'Lokasi Penjemputan')}
+                                            {locations.length > 0 && <span className="text-rose-500"> *</span>}
                                         </label>
                                         <PublicSelect
                                             value={form.data.pickup_location_id}
                                             onChange={(val) => {
+                                                setDepotError(false);
                                                 form.setData({
                                                     ...form.data,
                                                     pickup_location_id: val,
@@ -311,21 +355,39 @@ export default function Search({
                                                 });
                                             }}
                                             options={pickupOptions}
-                                            placeholder="Pilih Lokasi Depot"
+                                            placeholder={t('rental.storefront_ui.pickup_placeholder', undefined, 'Pilih Lokasi Depot')}
+                                        />
+                                        {depotError && (
+                                            <p className="text-[11px] font-bold text-rose-600">Pilih lokasi jemput terlebih dahulu.</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                                            {t('rental.storefront_ui.return_location', undefined, 'Lokasi Kembali')}
+                                        </label>
+                                        <PublicSelect
+                                            value={form.data.return_location_id}
+                                            onChange={(val) => form.setData('return_location_id', val)}
+                                            options={returnOptions}
+                                            placeholder={t('rental.storefront_ui.return_placeholder', undefined, 'Sama dengan lokasi jemput')}
                                         />
                                     </div>
 
                                     {/* Submit Button */}
-                                    <div className="space-y-1 flex flex-col justify-end">
+                                    <div className="space-y-1 flex flex-col justify-end sm:col-span-2 lg:col-span-1">
                                         <button
                                             type="submit"
-                                            className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:opacity-95 active:scale-[0.98]"
+                                            disabled={searching}
+                                            className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:opacity-95 active:scale-[0.98] disabled:opacity-60"
                                             style={{ backgroundColor: 'var(--brand-color)' }}
                                         >
                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                             </svg>
-                                            {t('rental.storefront_ui.search_availability', undefined, 'Cari Ketersediaan')}
+                                            {searching
+                                                ? t('rental.storefront_ui.searching', undefined, 'Mencari mobil...')
+                                                : t('rental.storefront_ui.search_availability', undefined, 'Cari Ketersediaan')}
                                         </button>
                                     </div>
                                 </div>
@@ -396,9 +458,15 @@ export default function Search({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 text-base font-black text-slate-900">{t('rental.storefront_ui.empty_start_title', undefined, 'Mulai Pencarian Kendaraan')}</h3>
+                            <h3 className="mt-4 text-base font-black text-slate-900">
+                                {needs_depot
+                                    ? t('rental.storefront_ui.needs_depot_title', undefined, 'Pilih lokasi jemput dulu')
+                                    : t('rental.storefront_ui.empty_start_title', undefined, 'Mulai Pencarian Kendaraan')}
+                            </h3>
                             <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto font-medium leading-relaxed">
-                                {t('rental.storefront_ui.empty_start_body', undefined, 'Tentukan tanggal sewa dan lokasi depot di atas untuk menampilkan seluruh unit mobil yang siap disewa.')}
+                                {needs_depot
+                                    ? t('rental.storefront_ui.needs_depot_body', undefined, 'Pilih cabang tempat Anda mengambil mobil, lalu cari ketersediaan. Harga yang tampil sudah termasuk tanggal mulai dan tanggal selesai.')
+                                    : t('rental.storefront_ui.empty_start_body', undefined, 'Tentukan tanggal sewa dan lokasi depot di atas untuk menampilkan seluruh unit mobil yang siap disewa.')}
                             </p>
                         </div>
                     )}
@@ -468,8 +536,9 @@ export default function Search({
                                                     <h4 className="text-base font-black text-slate-900 group-hover:text-slate-950 transition-colors line-clamp-1">
                                                         {vehicle.name}
                                                     </h4>
-                                                    <span className="font-mono text-[10px] font-bold text-slate-400 mt-0.5 block">
-                                                        {vehicle.plate_number}
+                                                    <span className="text-[11px] font-bold text-slate-500 mt-0.5 block">
+                                                        {t('rental.storefront_ui.card_units', { count: vehicle.available_count }, `${vehicle.available_count} unit siap`)}
+                                                        {vehicle.fuel_label ? ` · ${vehicle.fuel_label}` : ''}
                                                     </span>
                                                 </div>
                                             </div>
@@ -499,11 +568,14 @@ export default function Search({
                                     {/* Card Footer Price & Action */}
                                     <div className="border-t border-slate-100 p-5 flex items-center justify-between bg-slate-50/50">
                                         <div>
-                                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t('rental.storefront_ui.card_from', undefined, 'Mulai Dari')}</div>
-                                            {vehicle.from_price != null ? (
-                                                <div className="text-base font-black text-slate-900">
-                                                    {money(vehicle.from_price)}
-                                                    <span className="text-[10px] font-normal text-slate-500"> / {form.data.period_type === 'daily' ? t('rental.storefront_ui.card_per_day', undefined, 'hari') : t('rental.storefront_ui.card_per_period', undefined, 'periode')}</span>
+                                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t('rental.storefront_ui.card_total', undefined, 'Total sewa')}</div>
+                                            {vehicle.total_amount != null ? (
+                                                <div>
+                                                    <div className="text-base font-black text-slate-900">{money(vehicle.total_amount)}</div>
+                                                    <div className="text-[10px] font-medium text-slate-500">
+                                                        {vehicle.total_periods} {periodUnit}
+                                                        {vehicle.from_price != null ? ` · ${money(vehicle.from_price)}/${periodUnit}` : ''}
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="text-xs text-slate-400 font-bold">{t('rental.storefront_ui.card_contact_cs', undefined, 'Hubungi CS')}</div>
@@ -526,6 +598,20 @@ export default function Search({
                     )}
                 </main>
             </div>
+
+            <section id="ketentuan" className="mx-auto max-w-7xl px-4 sm:px-6 pb-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+                    <h3 className="text-sm font-black text-slate-900">Ketentuan singkat sewa</h3>
+                    <ul className="mt-3 space-y-1.5 list-disc pl-5">
+                        <li>Tanggal selesai ikut dihitung sebagai hari sewa.</li>
+                        <li>Mobil ditahan selama {hold_ttl_minutes} menit setelah Anda memesan. Lewat waktu itu, pesanan bisa batal.</li>
+                        <li>Saat mengambil mobil, bawa KTP dan SIM yang masih berlaku.</li>
+                        <li>Lokasi kembali yang berbeda dapat menambah biaya antar cabang.</li>
+                    </ul>
+                    <h3 id="privasi" className="mt-5 text-sm font-black text-slate-900">Data yang kami simpan</h3>
+                    <p className="mt-2">Nama, nomor WhatsApp, dan foto KTP/SIM hanya dipakai untuk pesanan ini dan serah terima mobil.</p>
+                </div>
+            </section>
 
             {/* Grounded Deep Slate Footer */}
             <footer className="mt-16 bg-slate-900 text-slate-400 border-t border-slate-800">
@@ -579,6 +665,16 @@ export default function Search({
                                         <span className="h-2 w-2 rounded-full bg-emerald-400" />
                                         {t('rental.storefront_ui.footer_hotline', undefined, 'WhatsApp Hotline:')} {brand.support_phone} ↗
                                     </a>
+                                ) : (brand.help_locations ?? []).length > 0 ? (
+                                    <ul className="space-y-2">
+                                        {(brand.help_locations ?? []).map((location) => (
+                                            <li key={location.name}>
+                                                <span className="font-bold text-slate-200">{location.name}</span>
+                                                {location.city ? ` · ${location.city}` : ''}
+                                                {location.address ? <span className="block text-slate-400">{location.address}</span> : null}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 ) : (
                                     <span className="font-bold text-slate-300">{t('rental.storefront_ui.footer_no_phone', undefined, 'Silakan hubungi cabang terdekat.')}</span>
                                 )}
@@ -591,8 +687,8 @@ export default function Search({
                             © 2026 {brand.name}. {t('rental.storefront_ui.rights', undefined, 'Seluruh Hak Cipta Dilindungi.')}
                         </div>
                         <div className="flex gap-4">
-                            <span className="hover:text-slate-300 cursor-pointer">Syarat & Ketentuan</span>
-                            <span className="hover:text-slate-300 cursor-pointer">Kebijakan Privasi</span>
+                            <a href={brand.terms_url || '#ketentuan'} className="hover:text-slate-300">Syarat & Ketentuan</a>
+                            <a href={brand.privacy_url || '#privasi'} className="hover:text-slate-300">Kebijakan Privasi</a>
                         </div>
                     </div>
                 </div>

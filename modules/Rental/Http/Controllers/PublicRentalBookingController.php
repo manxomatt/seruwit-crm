@@ -20,6 +20,7 @@ use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalExtensionRequest;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Support\MobileRentalBookingService;
+use Modules\Rental\Support\PublicRentalCatalog;
 use Modules\Rental\Support\RentalBookingPolicy;
 use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
@@ -28,7 +29,6 @@ use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLifecycleGate;
 use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPassengerDocMedia;
-use Modules\Rental\Support\RentalPlateMasker;
 use Modules\Rental\Support\RentalRateResolver;
 use Modules\Rental\Support\RentalStatusHint;
 use Modules\Shuttle\Support\PassengerOtpService;
@@ -55,23 +55,28 @@ class PublicRentalBookingController extends Controller
         $start = $validated['start_date'] ?? now()->toDateString();
         $end = $validated['end_date'] ?? now()->addDays(2)->toDateString();
         $periodType = $validated['period_type'] ?? 'daily';
-        $searched = true;
+        $locations = app(RentalLocationHydrator::class)->depotOptions();
+        $needsDepot = $locations !== [] && empty($validated['pickup_location_id']);
+        $searched = ! $needsDepot;
 
-        $vehicles = Vehicle::query()
-            ->where('status', Vehicle::STATUS_ACTIVE)
-            ->when($validated['rental_class'] ?? null, fn ($q, $class) => $q->where('rental_class', $class))
-            ->orderBy('name')
-            ->get()
-            ->filter(function (Vehicle $vehicle) use ($start, $end, $periodType, $rates): bool {
-                if (Rental::vehicleAvailabilityReasons($vehicle, $start, $end) !== []) {
-                    return false;
-                }
+        $vehicles = $needsDepot
+            ? []
+            : PublicRentalCatalog::groupCards(
+                Vehicle::query()
+                    ->where('status', Vehicle::STATUS_ACTIVE)
+                    ->when($validated['rental_class'] ?? null, fn ($q, $class) => $q->where('rental_class', $class))
+                    ->orderBy('name')
+                    ->get()
+                    ->filter(function (Vehicle $vehicle) use ($start, $end, $periodType, $rates): bool {
+                        if (Rental::vehicleAvailabilityReasons($vehicle, $start, $end) !== []) {
+                            return false;
+                        }
 
-                // Only list units that can actually be quoted/booked for this period.
-                return $rates->suggest($vehicle, $start, $end, $periodType) !== null;
-            })
-            ->values()
-            ->map(fn (Vehicle $vehicle): array => $this->vehicleCard($vehicle, $rates, $start, $end, $periodType));
+                        return $rates->suggest($vehicle, $start, $end, $periodType) !== null;
+                    })
+                    ->values()
+                    ->map(fn (Vehicle $vehicle): array => $this->vehicleCard($vehicle, $rates, $start, $end, $periodType))
+            );
 
         return Inertia::render('Modules/Rental/Public/Search', [
             'brand' => $this->brand(),
@@ -82,30 +87,25 @@ class PublicRentalBookingController extends Controller
                 'pickup_location_id' => $validated['pickup_location_id'] ?? null,
                 'return_location_id' => $validated['return_location_id'] ?? ($validated['pickup_location_id'] ?? null),
                 'rental_class' => $validated['rental_class'] ?? null,
+                'total_periods' => Rental::computePeriods($start, $end, $periodType),
             ],
             'classes' => collect(VehicleRentalClass::values())
                 ->map(fn (string $value): array => [
                     'value' => $value,
-                    'label' => match ($value) {
-                        VehicleRentalClass::ECONOMY => 'Economy',
-                        VehicleRentalClass::MPV => 'MPV',
-                        VehicleRentalClass::SUV => 'SUV',
-                        VehicleRentalClass::PREMIUM => 'Premium',
-                        VehicleRentalClass::OTHER => 'Lainnya',
-                        default => VehicleRentalClass::label($value) ?: ucfirst($value),
-                    },
+                    'label' => VehicleRentalClass::label($value) ?: ucfirst($value),
                 ])
                 ->values()
                 ->all(),
-            'locations' => app(RentalLocationHydrator::class)->depotOptions(),
+            'locations' => $locations,
             'vehicles' => $vehicles,
             'searched' => $searched,
+            'needs_depot' => $needsDepot,
             'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
             'gateway_available' => $this->gatewayAvailable(),
         ]);
     }
 
-    public function showVehicle(Request $request, Vehicle $vehicle, MobileRentalBookingService $bookings): Response
+    public function showVehicle(Request $request, Vehicle $vehicle, MobileRentalBookingService $bookings, RentalRateResolver $rates): Response
     {
         $this->ensureAvailable();
         abort_unless($vehicle->status === Vehicle::STATUS_ACTIVE, 404);
@@ -132,7 +132,7 @@ class PublicRentalBookingController extends Controller
 
         return Inertia::render('Modules/Rental/Public/VehicleShow', [
             'brand' => $this->brand(),
-            'vehicle' => $this->vehicleDetail($vehicle),
+            'vehicle' => $this->vehicleDetail($vehicle, $validated['start_date'], $validated['end_date'], $periodType, $rates),
             'seo' => $this->vehicleSeo($request, $vehicle, $quote),
             'filters' => [
                 'start_date' => $validated['start_date'],
@@ -208,9 +208,13 @@ class PublicRentalBookingController extends Controller
             return back()->with('error', $message ?: __('rental.public.quote_unavailable'))->withInput();
         }
 
+        $message = (float) $rental->deposit_amount > 0
+            ? __('rental.public.booking_created')
+            : __('rental.public.booking_created_pay_rent');
+
         return redirect()
             ->route('book.rental.booking.show', $rental->public_token)
-            ->with('success', __('rental.public.booking_created'));
+            ->with('success', $message);
     }
 
     public function sendOtp(Request $request, PassengerOtpService $otp): JsonResponse|RedirectResponse
@@ -694,6 +698,8 @@ class PublicRentalBookingController extends Controller
 
     private function ensureAvailable(): void
     {
+        $this->preferIndonesianForFirstVisit();
+
         if (! tenancy()->initialized && ! app()->runningUnitTests()) {
             abort(404);
         }
@@ -744,7 +750,51 @@ class PublicRentalBookingController extends Controller
                 'tiktok' => $nullable($storefront['social_tiktok']),
             ],
             'business_hours' => $nullable($storefront['business_hours']),
+            'terms_url' => $this->publishedPageUrl(['syarat-ketentuan', 'syarat', 'terms']),
+            'privacy_url' => $this->publishedPageUrl(['kebijakan-privasi', 'privasi', 'privacy']),
+            'help_locations' => collect(app(RentalLocationHydrator::class)->depotOptions())
+                ->take(4)
+                ->map(fn (array $location): array => [
+                    'name' => $location['name'],
+                    'address' => $location['address'] ?? null,
+                    'city' => $location['city'] ?? null,
+                ])
+                ->values()
+                ->all(),
         ];
+    }
+
+    /**
+     * @param  list<string>  $slugs
+     */
+    private function publishedPageUrl(array $slugs): ?string
+    {
+        if (! class_exists(\Modules\Pages\Models\Page::class) || ! Schema::hasTable('pages')) {
+            return null;
+        }
+
+        $published = \Modules\Pages\Models\Page::query()
+            ->where('is_published', true)
+            ->whereIn('slug', $slugs)
+            ->pluck('slug');
+
+        foreach ($slugs as $candidate) {
+            if ($published->contains($candidate)) {
+                return route('pages.render', $candidate);
+            }
+        }
+
+        return null;
+    }
+
+    private function preferIndonesianForFirstVisit(): void
+    {
+        $request = request();
+        $key = (string) config('localization.session_key', 'locale');
+
+        if ($request->hasSession() && ! $request->session()->has($key)) {
+            app(\App\Support\LocaleResolver::class)->persist($request, 'id');
+        }
     }
 
     private function gatewayAvailable(): bool
@@ -818,19 +868,21 @@ class PublicRentalBookingController extends Controller
     ): array {
         $rate = $rates->suggest($vehicle, $start, $end, $periodType);
 
+        $periods = Rental::computePeriods($start, $end, $periodType);
+
         return [
             'id' => $vehicle->id,
             'name' => $vehicle->name,
-            'plate_number' => RentalPlateMasker::mask((string) $vehicle->plate_number),
             'rental_class' => $vehicle->rental_class,
             'rental_class_label' => $vehicle->rental_class
                 ? VehicleRentalClass::label((string) $vehicle->rental_class)
                 : null,
             'capacity_seats' => $vehicle->capacity_seats,
-            'color' => $vehicle->color,
+            'fuel_label' => PublicRentalCatalog::fuelLabel($vehicle->fuel_type),
             'model_year' => $vehicle->model_year,
             'photo_url' => $vehicle->photo_url,
             'from_price' => $rate ? (float) $rate->rate_per_period : null,
+            'total_periods' => $periods,
             'deposit_amount' => $rate && $rate->deposit_amount !== null ? (float) $rate->deposit_amount : null,
         ];
     }
@@ -857,7 +909,7 @@ class PublicRentalBookingController extends Controller
             $price !== null ? 'mulai Rp '.number_format((float) $price, 0, ',', '.').'/hari' : null,
         ]);
 
-        $description = 'Sewa '.$vehicle->name.' di '.$brand['name'].'. '
+        $description = 'Sewa '.PublicRentalCatalog::displayName((string) $vehicle->name).' di '.$brand['name'].'. '
             .implode(' · ', $facts)
             .'. Booking online cepat dengan verifikasi WhatsApp.';
 
@@ -880,7 +932,7 @@ class PublicRentalBookingController extends Controller
         ], fn ($value): bool => $value !== null);
 
         return [
-            'title' => $vehicle->name.' — Sewa di '.$brand['name'],
+            'title' => PublicRentalCatalog::displayName((string) $vehicle->name).' — Sewa di '.$brand['name'],
             'description' => $description,
             'image' => $vehicle->photo_url,
             'url' => $request->fullUrl(),
@@ -891,12 +943,11 @@ class PublicRentalBookingController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function vehicleDetail(Vehicle $vehicle): array
+    private function vehicleDetail(Vehicle $vehicle, string $start, string $end, string $periodType, RentalRateResolver $rates): array
     {
         return [
             'id' => $vehicle->id,
-            'name' => $vehicle->name,
-            'plate_number' => RentalPlateMasker::mask((string) $vehicle->plate_number),
+            'name' => PublicRentalCatalog::displayName((string) $vehicle->name),
             'type' => $vehicle->type,
             'rental_class' => $vehicle->rental_class,
             'rental_class_label' => $vehicle->rental_class
@@ -907,8 +958,21 @@ class PublicRentalBookingController extends Controller
             'color' => $vehicle->color,
             'capacity_seats' => $vehicle->capacity_seats,
             'fuel_type' => $vehicle->fuel_type,
+            'fuel_label' => PublicRentalCatalog::fuelLabel($vehicle->fuel_type),
             'photo_url' => $vehicle->photo_url,
+            'similar_available' => PublicRentalCatalog::similarAvailableCount($vehicle, $start, $end, $periodType, $rates),
         ];
+    }
+
+    private function clock(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $text = $value instanceof \DateTimeInterface ? $value->format('H:i:s') : (string) $value;
+
+        return strlen($text) >= 5 ? substr($text, 0, 5) : $text;
     }
 
     /**
@@ -966,6 +1030,8 @@ class PublicRentalBookingController extends Controller
             'booker_phone_verified' => $phoneVerified,
             'start_date' => $rental->start_date?->toDateString(),
             'end_date' => $rental->end_date?->toDateString(),
+            'pickup_time' => $this->clock($rental->pickup_time),
+            'return_time' => $this->clock($rental->return_time),
             'period_type' => $rental->period_type,
             'total_periods' => (int) $rental->total_periods,
             'rate_per_period' => (float) $rental->rate_per_period,
@@ -980,7 +1046,7 @@ class PublicRentalBookingController extends Controller
             'cancelled_reason' => $rental->cancelled_reason,
             'vehicle' => $rental->vehicle ? [
                 'id' => $rental->vehicle->id,
-                'name' => $rental->vehicle->name,
+                'name' => PublicRentalCatalog::displayName((string) $rental->vehicle->name),
                 'plate_number' => (string) $rental->vehicle->plate_number,
                 'photo_url' => $rental->vehicle->photo_url,
             ] : null,

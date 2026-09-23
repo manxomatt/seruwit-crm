@@ -82,8 +82,123 @@ class PublicRentalBookingTest extends TestCase
                 ->where('searched', true)
                 ->has('vehicles', 1)
                 ->where('vehicles.0.id', $vehicle->id)
+                ->where('vehicles.0.name', 'Avanza Silver')
+                ->where('vehicles.0.available_count', 1)
                 ->where('vehicles.0.from_price', 350000)
-                ->where('vehicles.0.plate_number', 'B **** XYZ'));
+                ->where('vehicles.0.total_periods', 3)
+                ->where('vehicles.0.total_amount', 1050000)
+                ->missing('vehicles.0.plate_number'));
+    }
+
+    public function test_search_groups_units_of_the_same_model(): void
+    {
+        Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'name' => 'Box Mitsubishi L300 #06',
+            'rental_class' => 'van',
+        ]);
+        Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'name' => 'Box Mitsubishi L300 #16',
+            'rental_class' => 'van',
+        ]);
+
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => null,
+            'rental_class' => 'van',
+            'rate_per_period' => 315000,
+            'deposit_amount' => 0,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $start = now()->addDay()->toDateString();
+        $end = now()->addDays(2)->toDateString();
+
+        $this->get(route('book.rental.search', [
+            'start_date' => $start,
+            'end_date' => $end,
+        ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('vehicles', 1)
+                ->where('vehicles.0.name', 'Box Mitsubishi L300')
+                ->where('vehicles.0.available_count', 2)
+                ->where('vehicles.0.total_periods', 2)
+                ->where('vehicles.0.total_amount', 630000));
+    }
+
+    public function test_public_booking_requires_a_depot_when_branches_exist(): void
+    {
+        FleetBase::factory()->create([
+            'name' => 'Depot Cakung',
+            'kind' => FleetBaseKind::Depot->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+        ]);
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'rate_per_period' => 100000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $phone = '081200000001';
+        $otp = app(PassengerOtpService::class)->send($phone);
+
+        $this->from(route('book.rental.search'))
+            ->post(route('book.rental.bookings.store'), [
+                'vehicle_id' => $vehicle->id,
+                'start_date' => now()->addDay()->toDateString(),
+                'end_date' => now()->addDays(2)->toDateString(),
+                'period_type' => 'daily',
+                'customer_name' => 'Sari',
+                'booker_phone' => $phone,
+                'otp_code' => $otp,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('pickup_location_id');
+
+        $this->assertSame(0, Rental::query()->count());
+    }
+
+    public function test_public_booking_stores_pickup_and_return_times(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'rate_per_period' => 100000,
+            'deposit_amount' => 0,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $phone = '081200000002';
+        $otp = app(PassengerOtpService::class)->send($phone);
+
+        $this->post(route('book.rental.bookings.store'), [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => now()->addDay()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+            'pickup_time' => '09:30',
+            'return_time' => '18:00',
+            'period_type' => 'daily',
+            'customer_name' => 'Dewi',
+            'booker_phone' => $phone,
+            'otp_code' => $otp,
+        ])->assertRedirect();
+
+        $rental = Rental::query()->first();
+        $this->assertNotNull($rental);
+        $this->assertStringStartsWith('09:30', (string) $rental->pickup_time);
+        $this->assertStringStartsWith('18:00', (string) $rental->return_time);
+    }
+
+    public function test_public_rental_opens_in_indonesian_until_the_visitor_chooses(): void
+    {
+        $this->get(route('book.rental.search'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('locale', 'id'));
     }
 
     public function test_search_lists_depot_bases_as_branch_options(): void
@@ -470,6 +585,7 @@ class PublicRentalBookingTest extends TestCase
 
     public function test_booking_with_email_sends_booked_mail(): void
     {
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
         \Illuminate\Support\Facades\Notification::fake();
 
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'plate_number' => 'B 1234 XYZ']);
