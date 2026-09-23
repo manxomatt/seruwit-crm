@@ -197,6 +197,8 @@ return [
         'mobile_rate_limiting_enabled_hint' => 'Enable request throttling to prevent OTP spam & brute-force, or disable during testing and development.',
         'fees_section' => 'Cancellation Policy & No-Show Fees',
         'fees_section_hint' => 'Set cancellation fees, no-show penalties, and free cancellation grace periods.',
+        'cancellation_section' => 'Cancellation Policy & No-Show Fees',
+        'cancellation_section_hint' => 'Set cancellation fees, no-show penalties, and free cancellation grace periods.',
         'fee_type_fixed' => 'Fixed Amount (Rp)',
         'fee_type_percent' => 'Percentage of Base Amount',
         'fee_mode_nominal' => 'Fixed (Rp)',

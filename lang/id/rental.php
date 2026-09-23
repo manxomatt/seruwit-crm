@@ -197,6 +197,8 @@ return [
         'mobile_rate_limiting_enabled_hint' => 'Aktifkan pembatasan request untuk mencegah spam OTP & brute-force, atau nonaktifkan saat pengujian & development.',
         'fees_section' => 'Kebijakan Pembatalan & Denda No-Show',
         'fees_section_hint' => 'Tentukan denda pembatalan dan jangka waktu pembatalan gratis untuk pelanggan.',
+        'cancellation_section' => 'Kebijakan Pembatalan & Denda No-Show',
+        'cancellation_section_hint' => 'Tentukan denda pembatalan dan jangka waktu pembatalan gratis untuk pelanggan.',
         'fee_type_fixed' => 'Nominal tetap (Rp)',
         'fee_type_percent' => 'Persen dari base amount',
         'fee_mode_nominal' => 'Nominal (Rp)',
