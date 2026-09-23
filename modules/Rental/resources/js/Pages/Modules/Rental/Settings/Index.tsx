@@ -3,6 +3,7 @@ import PageHeader from '@/Components/PageHeader';
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -160,17 +161,17 @@ function GeneralPanel({
     });
 
     const ttlPresets = [
-        { label: '30m', minutes: '30' },
-        { label: '1 Jam', minutes: '60' },
-        { label: '2 Jam', minutes: '120' },
-        { label: '6 Jam', minutes: '360' },
-        { label: '24 Jam', minutes: '1440' },
+        { label: t('rental.settings.preset_30_min', undefined, '30m'), minutes: '30' },
+        { label: t('rental.settings.preset_1_hour', undefined, '1 Jam'), minutes: '60' },
+        { label: t('rental.settings.preset_2_hours', undefined, '2 Jam'), minutes: '120' },
+        { label: t('rental.settings.preset_6_hours', undefined, '6 Jam'), minutes: '360' },
+        { label: t('rental.settings.preset_24_hours', undefined, '24 Jam'), minutes: '1440' },
     ];
 
     const freeCancelPresets = [
-        { label: '12 Jam', hours: '12' },
-        { label: '24 Jam (1 Hari)', hours: '24' },
-        { label: '48 Jam (2 Hari)', hours: '48' },
+        { label: t('rental.settings.preset_12_hours', undefined, '12 Jam'), hours: '12' },
+        { label: t('rental.settings.preset_24_hours_day', undefined, '24 Jam (1 Hari)'), hours: '24' },
+        { label: t('rental.settings.preset_48_hours_days', undefined, '48 Jam (2 Hari)'), hours: '48' },
     ];
 
     const submit: FormEventHandler = (e) => {
@@ -222,7 +223,7 @@ function GeneralPanel({
 
                             {/* Pending TTL */}
                             <div className="pt-2">
-                                <InputLabel htmlFor="pending_reserved_ttl_minutes" value={t('rental.settings.pending_reserved_ttl', undefined, 'Batas Waktu Penahanan Booking Pending (TTL Menit)')} />
+                                <InputLabel htmlFor="pending_reserved_ttl_minutes" value={t('rental.settings.pending_reserved_ttl_minutes', undefined, 'Batas Waktu Penahanan Booking Pending (TTL Menit)')} />
                                 <div className="mt-1.5 flex flex-wrap items-center gap-3">
                                     <div className="relative w-36">
                                         <TextInput
@@ -235,11 +236,11 @@ function GeneralPanel({
                                             className="w-full pr-12 text-sm font-semibold"
                                         />
                                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-slate-400 font-medium">
-                                            menit
+                                            {t('rental.settings.minutes_unit', undefined, 'menit')}
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-1.5">
-                                        <span className="text-xs text-slate-400 font-medium">Pilihan Cepat:</span>
+                                        <span className="text-xs text-slate-400 font-medium">{t('rental.settings.quick_presets', undefined, 'Pilihan Cepat:')}</span>
                                         {ttlPresets.map((preset) => (
                                             <button
                                                 key={preset.minutes}
@@ -257,7 +258,7 @@ function GeneralPanel({
                                     </div>
                                 </div>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {t('rental.settings.pending_reserved_ttl_hint', undefined, 'Pemesanan berstatus Reserved Pending yang tidak dibayar depositnya akan kadaluarsa otomatis.')}
+                                    {t('rental.settings.pending_reserved_ttl_minutes_hint', undefined, 'Pemesanan berstatus Reserved Pending yang tidak dibayar depositnya akan kedaluwarsa otomatis.')}
                                 </p>
                                 <InputError message={errors.pending_reserved_ttl_minutes} className="mt-1" />
                             </div>
@@ -355,7 +356,7 @@ function GeneralPanel({
                                                             : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                                                     }`}
                                                 >
-                                                    Nominal (Rp)
+                                                    {t('rental.settings.fee_mode_nominal', undefined, 'Nominal (Rp)')}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -366,7 +367,7 @@ function GeneralPanel({
                                                             : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                                                     }`}
                                                 >
-                                                    Persen (%)
+                                                    {t('rental.settings.fee_mode_percent', undefined, 'Persen (%)')}
                                                 </button>
                                             </div>
                                         </div>
@@ -409,9 +410,9 @@ function GeneralPanel({
 
                                     {/* Bottom indicator */}
                                     <div className="mt-4 flex items-center justify-between border-t border-slate-200/60 pt-3 text-[11px] text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
-                                        <span>Skema Denda:</span>
+                                        <span>{t('rental.settings.fee_scheme_label', undefined, 'Skema Denda:')}</span>
                                         <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                            {data.cancellation_fee_type === 'fixed' ? 'Nominal Tetap (Rp)' : 'Persentase Total Sewa (%)'}
+                                            {data.cancellation_fee_type === 'fixed' ? t('rental.settings.fee_scheme_fixed', undefined, 'Nominal Tetap (Rp)') : t('rental.settings.fee_scheme_percent', undefined, 'Persentase Total Sewa (%)')}
                                         </span>
                                     </div>
                                 </div>
@@ -445,7 +446,7 @@ function GeneralPanel({
                                                             : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                                                     }`}
                                                 >
-                                                    Nominal (Rp)
+                                                    {t('rental.settings.fee_mode_nominal', undefined, 'Nominal (Rp)')}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -456,7 +457,7 @@ function GeneralPanel({
                                                             : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                                                     }`}
                                                 >
-                                                    Persen (%)
+                                                    {t('rental.settings.fee_mode_percent', undefined, 'Persen (%)')}
                                                 </button>
                                             </div>
                                         </div>
@@ -499,9 +500,9 @@ function GeneralPanel({
 
                                     {/* Bottom indicator */}
                                     <div className="mt-4 flex items-center justify-between border-t border-slate-200/60 pt-3 text-[11px] text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
-                                        <span>Skema Denda:</span>
+                                        <span>{t('rental.settings.fee_scheme_label', undefined, 'Skema Denda:')}</span>
                                         <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                            {data.no_show_fee_type === 'fixed' ? 'Nominal Tetap (Rp)' : 'Persentase Total Sewa (%)'}
+                                            {data.no_show_fee_type === 'fixed' ? t('rental.settings.fee_scheme_fixed', undefined, 'Nominal Tetap (Rp)') : t('rental.settings.fee_scheme_percent', undefined, 'Persentase Total Sewa (%)')}
                                         </span>
                                     </div>
                                 </div>
@@ -525,11 +526,11 @@ function GeneralPanel({
                                             className="w-full pr-10 text-sm font-semibold"
                                         />
                                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-slate-400 font-medium">
-                                            jam
+                                            {t('rental.settings.hours_unit', undefined, 'jam')}
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-1.5">
-                                        <span className="text-xs text-slate-400 font-medium">Preset:</span>
+                                        <span className="text-xs text-slate-400 font-medium">{t('rental.settings.preset_label', undefined, 'Preset:')}</span>
                                         {freeCancelPresets.map((preset) => (
                                             <button
                                                 key={preset.hours}
@@ -579,8 +580,8 @@ function GeneralPanel({
                                     id="ai_inspection_enabled"
                                     checked={data.ai_inspection_enabled}
                                     onChange={(checked) => setData('ai_inspection_enabled', checked)}
-                                    label={t('rental.settings.ai_inspection_enabled', undefined, '📸 AI Visual Inspection')}
-                                    description={t('rental.settings.ai_inspection_enabled_hint', undefined, 'Deteksi goresan baru, pembacaan KM & BBM saat serah terima.')}
+                                    label={t('rental.settings.ai_inspection_title', undefined, '📸 AI Visual Inspection')}
+                                    description={t('rental.settings.ai_inspection_hint', undefined, 'Deteksi goresan baru, pembacaan KM & BBM saat serah terima.')}
                                     badge="Gemini Vision"
                                 />
 
@@ -588,8 +589,8 @@ function GeneralPanel({
                                     id="ai_kyc_enabled"
                                     checked={data.ai_kyc_enabled}
                                     onChange={(checked) => setData('ai_kyc_enabled', checked)}
-                                    label={t('rental.settings.ai_kyc_enabled', undefined, '🪪 AI Smart KYC & OCR')}
-                                    description={t('rental.settings.ai_kyc_enabled_hint', undefined, 'Ekstraksi data KTP/SIM instan & evaluasi skor risiko fraud.')}
+                                    label={t('rental.settings.ai_kyc_title', undefined, '🪪 AI Smart KYC & OCR')}
+                                    description={t('rental.settings.ai_kyc_hint', undefined, 'Ekstraksi data KTP/SIM instan & evaluasi skor risiko fraud.')}
                                     badge="OCR & Risk"
                                 />
 
@@ -597,8 +598,8 @@ function GeneralPanel({
                                     id="ai_pricing_optimizer_enabled"
                                     checked={data.ai_pricing_optimizer_enabled}
                                     onChange={(checked) => setData('ai_pricing_optimizer_enabled', checked)}
-                                    label={t('rental.settings.ai_pricing_optimizer_enabled', undefined, '⚡ AI Dynamic Pricing')}
-                                    description={t('rental.settings.ai_pricing_optimizer_enabled_hint', undefined, 'Optimasi okupansi armada & saran tarif surge akhir pekan.')}
+                                    label={t('rental.settings.ai_pricing_title', undefined, '⚡ AI Dynamic Pricing')}
+                                    description={t('rental.settings.ai_pricing_hint', undefined, 'Optimasi okupansi armada & saran tarif surge akhir pekan.')}
                                     badge="Optimizer"
                                 />
                             </div>
@@ -610,10 +611,12 @@ function GeneralPanel({
                         <div className="flex items-center justify-between">
                             <div>
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                                    Konfirmasi Pengaturan
+                                    {t('rental.settings.confirmation_title', undefined, 'Konfirmasi Pengaturan')}
                                 </h4>
                                 <p className="text-xs text-slate-500">
-                                    {isDirty ? '⚠️ Ada perubahan yang belum disimpan' : 'Semua perubahan tersimpan'}
+                                    {isDirty
+                                        ? t('rental.settings.unsaved_changes', undefined, '⚠️ Ada perubahan yang belum disimpan')
+                                        : t('rental.settings.all_saved', undefined, 'Semua perubahan tersimpan')}
                                 </p>
                             </div>
                             {isDirty && (
@@ -633,7 +636,7 @@ function GeneralPanel({
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                         </svg>
-                                        <span>Menyimpan…</span>
+                                        <span>{t('rental.settings.saving', undefined, 'Menyimpan…')}</span>
                                     </>
                                 ) : (
                                     <>
@@ -676,8 +679,15 @@ export default function Index({
     ];
 
     return (
-        <DynamicLayout header={<PageHeader title={t('rental.settings.title')} />}>
-            <Head title={t('rental.settings.title')} />
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('rental.settings.title', undefined, 'Pengaturan Rental')}
+                    actions={<LanguageSwitcher compact />}
+                />
+            }
+        >
+            <Head title={t('rental.settings.title', undefined, 'Pengaturan Rental')} />
             <RentalNav />
 
             <div className="mb-6 border-b border-gray-200">
