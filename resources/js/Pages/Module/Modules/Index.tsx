@@ -165,12 +165,16 @@ export default function Index({
                             </div>
                             <div>
                                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('platform.modules_catalog.plan_label')}</span>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{plan.label}</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{plan.description}</p>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                    {t(`platform.modules_catalog.plans.${plan.key.toLowerCase()}.name`, undefined, plan.label)}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {t(`platform.modules_catalog.plans.${plan.key.toLowerCase()}.description`, undefined, plan.description)}
+                                </p>
                             </div>
                         </div>
                         <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-3.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/50">
-                            Plan: {plan.key}
+                            {t('platform.modules_catalog.plan_badge', { plan: plan.key }, `Plan: ${plan.key}`)}
                         </span>
                     </div>
                 </div>
@@ -422,7 +426,14 @@ export default function Index({
 
                                             {!isDisabled(module.state) && !module.entitled && module.plans_offering.length > 0 && (
                                                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-2">
-                                                    💡 {t('platform.modules_catalog.plans_offering_hint', { plans: module.plans_offering.join(', ') })}
+                                                    💡 {t('platform.modules_catalog.plans_offering_hint', {
+                                                        plans: module.plans_offering
+                                                            .map((p) => {
+                                                                const normKey = p.toLowerCase().replace(/[\s-]+/g, '_');
+                                                                return t(`platform.modules_catalog.plans.${normKey}.name`, undefined, p);
+                                                            })
+                                                            .join(', '),
+                                                    })}
                                                 </p>
                                             )}
 

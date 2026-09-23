@@ -23,6 +23,41 @@ return [
         'title' => 'Modul',
         'description' => 'Kelola modul operasional dan data demo untuk ruang kerja Anda',
         'plan_label' => 'Paket Langganan',
+        'plan_badge' => 'Paket: :plan',
+        'plans' => [
+            'trial' => [
+                'name' => 'Trial 30 Hari',
+                'description' => 'Masa uji coba mandiri: mencakup modul rental & travel serta CMS konten (akuntansi & mitra bawaan).',
+            ],
+            'free' => [
+                'name' => 'Free Lifetime',
+                'description' => 'Gratis selamanya untuk rental mobil pemula dengan armada hingga 2 unit.',
+            ],
+            'basic' => [
+                'name' => 'Starter Rental',
+                'description' => 'Solusi ideal untuk bisnis rental mobil rintisan dengan armada hingga 5 unit.',
+            ],
+            'starter_rental' => [
+                'name' => 'Starter Rental',
+                'description' => 'Solusi ideal untuk bisnis rental mobil rintisan dengan armada hingga 5 unit.',
+            ],
+            'pro' => [
+                'name' => 'Pro Rental',
+                'description' => 'Paket terlengkap untuk rental berkembang: servis armada, reminder pajak, dan pelacakan GPS.',
+            ],
+            'pro_rental' => [
+                'name' => 'Pro Rental',
+                'description' => 'Paket terlengkap untuk rental berkembang: servis armada, reminder pajak, dan pelacakan GPS.',
+            ],
+            'pay_as_you_go' => [
+                'name' => 'Pay As You Go',
+                'description' => 'Fleksibel bayar per armada kendaraan aktif tanpa biaya langganan bulanan tetap.',
+            ],
+            'enterprise' => [
+                'name' => 'Enterprise',
+                'description' => 'Kapasitas armada tak terbatas dengan seluruh modul operasional dan fitur prioritas.',
+            ],
+        ],
         'available_heading' => 'Modul yang Tersedia',
         'available_hint' => 'Mencopot modul tidak menghapus datanya. Data disimpan :days hari — pasang lagi sebelum itu dan semuanya kembali seperti semula.',
         'empty' => 'Belum ada modul opsional yang terdaftar.',

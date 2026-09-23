@@ -23,6 +23,41 @@ return [
         'title' => 'Modules',
         'description' => 'Manage operational modules and demo datasets for your workspace',
         'plan_label' => 'Subscription Plan',
+        'plan_badge' => 'Plan: :plan',
+        'plans' => [
+            'trial' => [
+                'name' => '30-Day Free Trial',
+                'description' => 'Self-serve onboarding trial: content CMS plus rental/travel packs (accounting & partners are core).',
+            ],
+            'free' => [
+                'name' => 'Free Lifetime',
+                'description' => 'Free forever for starter car rentals with a fleet of up to 2 units.',
+            ],
+            'basic' => [
+                'name' => 'Starter Rental',
+                'description' => 'Ideal solution for startup car rental businesses with up to 5 units.',
+            ],
+            'starter_rental' => [
+                'name' => 'Starter Rental',
+                'description' => 'Ideal solution for startup car rental businesses with up to 5 units.',
+            ],
+            'pro' => [
+                'name' => 'Pro Rental',
+                'description' => 'Most complete package for growing rentals: fleet service, tax reminders, and GPS tracking.',
+            ],
+            'pro_rental' => [
+                'name' => 'Pro Rental',
+                'description' => 'Most complete package for growing rentals: fleet service, tax reminders, and GPS tracking.',
+            ],
+            'pay_as_you_go' => [
+                'name' => 'Pay As You Go',
+                'description' => 'Flexible pay-per-active-vehicle pricing with no fixed monthly subscription fee.',
+            ],
+            'enterprise' => [
+                'name' => 'Enterprise',
+                'description' => 'Unlimited fleet capacity with all operational modules and priority features.',
+            ],
+        ],
         'available_heading' => 'Available Modules',
         'available_hint' => 'Uninstalling a module does not delete its data. Data is kept for :days days — install it again before then and everything comes back as it was.',
         'empty' => 'No optional modules registered yet.',
