@@ -321,6 +321,9 @@ return [
         'customer' => 'Pelanggan',
         'phone' => 'Telepon',
         'vehicle' => 'Kendaraan',
+        'rental_schedule' => 'Jadwal Sewa',
+        'duration' => 'Durasi',
+        'actions' => 'Aksi',
         'driver' => 'Driver',
         'driver_optional' => 'Driver (opsional)',
         'start_date' => 'Tanggal Mulai',
@@ -345,7 +348,7 @@ return [
         'applies_to' => 'Berlaku Untuk',
         'actual_return' => 'Pengembalian Aktual',
         'base_amount' => 'Jumlah Dasar',
-        'total_amount' => 'Total',
+        'total_amount' => 'Total Biaya',
         'excess_km' => 'KM Lebih (:km km)',
         'late_fee' => 'Denda keterlambatan (:days hari)',
         'late_fee_per_day' => 'Denda per hari (Rp)',
@@ -481,6 +484,14 @@ return [
         'approve' => 'Setujui',
         'reject' => 'Tolak',
         'pay_invoices' => 'Bayar Invoice',
+        'quick_preview' => 'Lihat Cepat (Quick Preview)',
+        'open' => 'Buka',
+        'open_full_details' => 'Buka Halaman Detail Lengkap ➔',
+        'reset_filter' => 'Reset Filter',
+    ],
+
+    'filters' => [
+        'quick_filter' => 'Filter Cepat:',
     ],
 
     'sections' => [
@@ -838,10 +849,12 @@ return [
 
     'pages' => [
         'index' => [
-            'title' => 'Rental Kendaraan',
-            'head' => 'Rental',
+            'title' => 'Manajemen Rental',
+            'head' => 'Daftar Rental',
+            'subtitle' => 'Kelola seluruh transaksi sewa kendaraan, jadwal serah terima, dan status pengembalian.',
             'total' => ':count total rental',
-            'empty' => 'Tidak ada rental.',
+            'empty' => 'Belum ada data rental.',
+            'empty_hint' => 'Coba sesuaikan pencarian atau tambahkan rental baru.',
         ],
         'create' => [
             'title' => 'Reservasi Baru',

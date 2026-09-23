@@ -3,6 +3,8 @@
 return [
     'save' => 'Simpan',
     'cancel' => 'Batal',
+    'close' => 'Tutup',
+    'empty_hint' => 'Coba sesuaikan pencarian atau filter.',
     'delete' => 'Hapus',
     'edit' => 'Ubah',
     'create' => 'Buat',

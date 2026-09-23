@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PageHeader from '@/Components/PageHeader';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Modal from '@/Components/Modal';
@@ -10,7 +11,7 @@ import TextInput from '@/Components/TextInput';
 import { formatDateDmY } from '@/utils/date';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useMemo, useState } from 'react';
 import RentalNav from '../../../RentalNav';
 
 interface Vehicle {
@@ -130,16 +131,6 @@ const EyeIcon = () => (
     </svg>
 );
 
-const QUICK_FILTERS = [
-    { label: 'Semua', value: '' },
-    { label: 'Aktif', value: 'active' },
-    { label: 'Dikonfirmasi', value: 'confirmed' },
-    { label: 'Pending', value: 'pending' },
-    { label: 'Returned', value: 'returned' },
-    { label: 'Selesai', value: 'completed' },
-    { label: 'Overdue', value: 'overdue' },
-];
-
 export default function Index({ rentals, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -148,6 +139,19 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
     const [search, setSearch] = useState(filters.search ?? '');
     const [previewRental, setPreviewRental] = useState<Rental | null>(null);
     const hasActiveFilters = Boolean(filters.search || filters.status);
+
+    const quickFilters = useMemo(
+        () => [
+            { label: t('common.all', undefined, 'Semua'), value: '' },
+            { label: t('rental.status.active', undefined, 'Aktif'), value: 'active' },
+            { label: t('rental.status.confirmed', undefined, 'Dikonfirmasi'), value: 'confirmed' },
+            { label: t('rental.status.pending', undefined, 'Pending'), value: 'pending' },
+            { label: t('rental.status.returned', undefined, 'Returned'), value: 'returned' },
+            { label: t('rental.status.completed', undefined, 'Selesai'), value: 'completed' },
+            { label: t('rental.status.overdue', undefined, 'Overdue'), value: 'overdue' },
+        ],
+        [t],
+    );
 
     const applyFilters = (overrides: Record<string, string>): void => {
         router.get(
@@ -175,13 +179,16 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
             header={
                 <PageHeader
                     title={t('rental.pages.index.title', undefined, 'Manajemen Rental')}
-                    subtitle="Kelola seluruh transaksi sewa kendaraan, jadwal serah terima, dan status pengembalian."
+                    subtitle={t('rental.pages.index.subtitle', undefined, 'Kelola seluruh transaksi sewa kendaraan, jadwal serah terima, dan status pengembalian.')}
                     actions={
-                        <Link href={prefixedRoute('rental.create')}>
-                            <PrimaryButton className="rounded-xl shadow-sm">
-                                {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
-                            </PrimaryButton>
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <LanguageSwitcher compact />
+                            <Link href={prefixedRoute('rental.create')}>
+                                <PrimaryButton className="rounded-xl shadow-sm">
+                                    {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
+                                </PrimaryButton>
+                            </Link>
+                        </div>
                     }
                 />
             }
@@ -245,15 +252,15 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                     onClick={clearFilters}
                                     className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition"
                                 >
-                                    ✕ Reset
+                                    ✕ {t('rental.actions.reset_filter', undefined, 'Reset')}
                                 </button>
                             )}
                         </form>
 
                         {/* Quick filter chips */}
                         <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                            <span className="text-[11px] font-bold text-slate-400 mr-1">Filter Cepat:</span>
-                            {QUICK_FILTERS.map((chip) => {
+                            <span className="text-[11px] font-bold text-slate-400 mr-1">{t('rental.filters.quick_filter', undefined, 'Filter Cepat:')}</span>
+                            {quickFilters.map((chip) => {
                                 const isActive = (filters.status || '') === chip.value;
                                 return (
                                     <button
@@ -285,7 +292,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                 {t('rental.pages.index.empty', undefined, 'Belum ada data rental')}
                             </h3>
                             <p className="mt-1 text-xs text-slate-500">
-                                {t('common.empty_hint', undefined, 'Coba sesuaikan pencarian atau tambahkan rental baru.')}
+                                {t('rental.pages.index.empty_hint', undefined, 'Coba sesuaikan pencarian atau tambahkan rental baru.')}
                             </p>
                             {hasActiveFilters && (
                                 <button
@@ -293,7 +300,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                     onClick={clearFilters}
                                     className="mt-3 inline-flex items-center rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 transition"
                                 >
-                                    ✕ Reset Filter
+                                    ✕ {t('rental.actions.reset_filter', undefined, 'Reset Filter')}
                                 </button>
                             )}
                         </div>
@@ -322,7 +329,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                                 {t('rental.fields.amount', undefined, 'Total Biaya')}
                                             </th>
                                             <th className="w-28 px-4 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                Aksi
+                                                {t('rental.fields.actions', undefined, 'Aksi')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -406,7 +413,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                                             type="button"
                                                             onClick={() => setPreviewRental(rental)}
                                                             className="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition"
-                                                            title="Lihat Cepat (Quick Preview)"
+                                                            title={t('rental.actions.quick_preview', undefined, 'Lihat Cepat (Quick Preview)')}
                                                         >
                                                             <EyeIcon />
                                                         </button>
@@ -414,7 +421,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                                             href={prefixedRoute('rental.show', rental.id)}
                                                             className="rounded-xl bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 transition"
                                                         >
-                                                            Buka
+                                                            {t('rental.actions.open', undefined, 'Buka')}
                                                         </Link>
                                                     </div>
                                                 </td>
@@ -503,31 +510,31 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                         {/* Quick Stats */}
                         <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-850/50 space-y-2.5 text-xs">
                             <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700">
-                                <span className="text-slate-500">Kendaraan:</span>
+                                <span className="text-slate-500">{t('rental.fields.vehicle', undefined, 'Kendaraan')}:</span>
                                 <span className="font-bold text-slate-900 dark:text-white">
                                     {previewRental.vehicle.name} ({previewRental.vehicle.plate_number})
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-500">Pelanggan:</span>
+                                <span className="text-slate-500">{t('rental.fields.customer', undefined, 'Pelanggan')}:</span>
                                 <span className="font-semibold text-slate-900 dark:text-white">
                                     {previewRental.partner.name} ({previewRental.partner.code})
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-500">Jadwal Sewa:</span>
+                                <span className="text-slate-500">{t('rental.fields.rental_schedule', undefined, 'Jadwal Sewa')}:</span>
                                 <span className="font-bold text-slate-800 dark:text-slate-200">
                                     {formatDateDmY(previewRental.start_date)} → {formatDateDmY(previewRental.end_date)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-500">Durasi:</span>
+                                <span className="text-slate-500">{t('rental.fields.duration', undefined, 'Durasi')}:</span>
                                 <span className="font-semibold text-slate-800 dark:text-slate-200">
                                     {previewRental.total_periods} {t(`rental.period_type.${periodUnit(previewRental.period_type)}`, undefined, previewRental.period_type)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center pt-2 border-t border-slate-200/80 dark:border-slate-700">
-                                <span className="text-slate-500 font-bold">Total Biaya:</span>
+                                <span className="text-slate-500 font-bold">{t('rental.fields.total_amount', undefined, 'Total Biaya')}:</span>
                                 <span className="font-mono text-sm font-black text-indigo-600 dark:text-indigo-400">
                                     {formatMoney(previewRental.total_amount)}
                                 </span>
@@ -536,11 +543,11 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
 
                         <div className="flex justify-end gap-2.5 pt-2">
                             <SecondaryButton type="button" onClick={() => setPreviewRental(null)} className="rounded-xl px-4 py-2">
-                                Tutup
+                                {t('common.close', undefined, 'Tutup')}
                             </SecondaryButton>
                             <Link href={prefixedRoute('rental.show', previewRental.id)}>
                                 <PrimaryButton className="rounded-xl px-5 py-2">
-                                    Buka Halaman Detail Lengkap ➔
+                                    {t('rental.actions.open_full_details', undefined, 'Buka Halaman Detail Lengkap ➔')}
                                 </PrimaryButton>
                             </Link>
                         </div>

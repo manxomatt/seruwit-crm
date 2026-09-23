@@ -3,6 +3,8 @@
 return [
     'save' => 'Save',
     'cancel' => 'Cancel',
+    'close' => 'Close',
+    'empty_hint' => 'Try adjusting your search or filters.',
     'delete' => 'Delete',
     'edit' => 'Edit',
     'create' => 'Create',

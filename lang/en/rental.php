@@ -300,6 +300,9 @@ return [
         'customer' => 'Customer',
         'phone' => 'Phone',
         'vehicle' => 'Vehicle',
+        'rental_schedule' => 'Rental Schedule',
+        'duration' => 'Duration',
+        'actions' => 'Actions',
         'driver' => 'Driver',
         'driver_optional' => 'Driver (optional)',
         'start_date' => 'Start Date',
@@ -460,6 +463,14 @@ return [
         'approve' => 'Approve',
         'reject' => 'Reject',
         'pay_invoices' => 'Pay Invoices',
+        'quick_preview' => 'Quick Preview',
+        'open' => 'Open',
+        'open_full_details' => 'View Full Details ➔',
+        'reset_filter' => 'Reset Filter',
+    ],
+
+    'filters' => [
+        'quick_filter' => 'Quick Filter:',
     ],
 
     'sections' => [
@@ -817,10 +828,12 @@ return [
 
     'pages' => [
         'index' => [
-            'title' => 'Vehicle Rentals',
-            'head' => 'Rental',
+            'title' => 'Rental Management',
+            'head' => 'Rental List',
+            'subtitle' => 'Manage all vehicle rental transactions, handover schedules, and return statuses.',
             'total' => ':count total rentals',
-            'empty' => 'No rentals found.',
+            'empty' => 'No rental bookings found.',
+            'empty_hint' => 'Try adjusting your search or filters, or create a new reservation.',
         ],
         'create' => [
             'title' => 'New Reservation',
