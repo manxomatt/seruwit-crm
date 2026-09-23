@@ -31,7 +31,10 @@ class PageController extends Controller
     {
         $user = Auth::user();
 
-        $pages = Page::query()->latest()->get();
+        $pages = Page::query()
+            ->select(['id', 'user_id', 'title', 'slug', 'html', 'css', 'is_published', 'is_homepage', 'created_at', 'updated_at'])
+            ->latest()
+            ->get();
 
         return Inertia::render('Modules/Pages/Index', [
             'pages' => $pages,

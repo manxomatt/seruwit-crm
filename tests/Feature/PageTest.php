@@ -22,11 +22,27 @@ class PageTest extends TestCase
     {
         $user = User::factory()->admin()->create();
 
+        Page::factory()->create([
+            'user_id' => $user->id,
+            'title' => 'Thumbnail Test Page',
+            'html' => '<div class="banner">Hello World</div>',
+            'css' => '.banner { color: blue; }',
+        ]);
+
         $response = $this
             ->actingAs($user)
             ->get('/module/pages');
 
         $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Modules/Pages/Index')
+            ->has('pages', 1, fn ($item) => $item
+                ->where('title', 'Thumbnail Test Page')
+                ->where('html', '<div class="banner">Hello World</div>')
+                ->where('css', '.banner { color: blue; }')
+                ->etc()
+            )
+        );
     }
 
     public function test_pages_index_requires_authentication(): void
