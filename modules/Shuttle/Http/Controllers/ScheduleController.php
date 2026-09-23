@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Shuttle\Http\Requests\StoreScheduleRequest;
 use Modules\Shuttle\Http\Requests\UpdateScheduleRequest;
 use Modules\Shuttle\Models\ShuttleCorridor;
@@ -99,7 +100,9 @@ class ScheduleController extends Controller
     {
         return [
             'corridors' => ShuttleCorridor::query()->where('is_active', true)->orderBy('code')->get(['id', 'code', 'name']),
-            'vehicles' => Vehicle::query()->where('status', Vehicle::STATUS_ACTIVE)->orderBy('name')->get(['id', 'name', 'plate_number', 'capacity_seats']),
+            'vehicles' => WorkOrderShopHold::excludeHeldVehicles(
+                Vehicle::query()->where('status', Vehicle::STATUS_ACTIVE),
+            )->orderBy('name')->get(['id', 'name', 'plate_number', 'capacity_seats']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name']),
         ];
     }

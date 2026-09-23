@@ -869,6 +869,8 @@ return [
         'maintenance_added' => 'Log perawatan ditambahkan.',
         'maintenance_updated' => 'Log perawatan diperbarui.',
         'maintenance_deleted' => 'Log perawatan dihapus.',
+        'maintenance_log_use_work_orders' => 'Riwayat servis dikelola sebagai work order. Buat work order, bukan log perawatan Fleet.',
+        'vehicle_status_locked_by_work_order' => 'Kendaraan ini punya work order yang sedang dikerjakan. Selesaikan atau batalkan dulu sebelum mengubah status.',
         'fuel_added' => 'Log BBM ditambahkan.',
         'fuel_added_anomaly' => 'Log BBM ditambahkan. Anomali terdeteksi — tinjau detail pengisian.',
         'fuel_deleted' => 'Log BBM dihapus.',

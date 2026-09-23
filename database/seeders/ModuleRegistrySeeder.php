@@ -21,7 +21,7 @@ class ModuleRegistrySeeder extends Seeder
     {
         foreach (Modules::all() as $module) {
             foreach ($module->permissions() as $action) {
-                $actionName = Permission::ACTIONS[$action] ?? ucfirst($action);
+                $actionName = Permission::getActions()[$action] ?? ucfirst(str_replace('_', ' ', $action));
 
                 Permission::query()->firstOrCreate(
                     ['module' => $module->key(), 'action' => $action],

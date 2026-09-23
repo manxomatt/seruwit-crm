@@ -5,6 +5,9 @@ namespace Tests\Feature\Modules\Fleet;
 use App\Models\PlatformSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Models\VehicleMaintenanceLog;
+use Modules\Maintenance\Models\MaintenanceCategory;
+use Modules\Maintenance\Models\WorkOrder;
 use Modules\TransportationManagement\Models\Trip;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -277,7 +280,7 @@ class VehicleTest extends TestCase
         $this->assertDatabaseHas('vehicles', ['id' => $vehicle->id]);
     }
 
-    public function test_maintenance_log_can_be_added_and_removed_from_a_vehicle(): void
+    public function test_maintenance_log_writes_are_blocked_when_maintenance_module_is_available(): void
     {
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
@@ -287,15 +290,58 @@ class VehicleTest extends TestCase
             'description' => 'Brake pad replacement',
             'scheduled_date' => now()->toDateString(),
             'status' => 'scheduled',
-        ])->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
+        ])->assertRedirect(route('module.fleet.vehicles.show', $vehicle))
+            ->assertSessionHas('error');
 
-        $this->assertDatabaseHas('vehicle_maintenance_logs', ['vehicle_id' => $vehicle->id, 'description' => 'Brake pad replacement']);
+        $this->assertDatabaseMissing('vehicle_maintenance_logs', [
+            'vehicle_id' => $vehicle->id,
+            'description' => 'Brake pad replacement',
+        ]);
 
-        $log = $vehicle->maintenanceLogs()->first();
+        $log = VehicleMaintenanceLog::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'description' => 'Legacy log',
+        ]);
+
         $this->actingAs($user)->delete(route('module.fleet.vehicles.maintenance-logs.destroy', [$vehicle, $log]))
             ->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
 
         $this->assertDatabaseMissing('vehicle_maintenance_logs', ['id' => $log->id]);
+    }
+
+    public function test_in_progress_work_order_locks_vehicle_status_changes(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_MAINTENANCE]);
+        $category = MaintenanceCategory::query()->create([
+            'key' => 'general',
+            'name' => 'General',
+            'sort_order' => 1,
+        ]);
+
+        WorkOrder::factory()->inProgress()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'vehicle_status_before' => Vehicle::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)->patch(route('module.fleet.vehicles.update', $vehicle), [
+            'name' => $vehicle->name,
+            'plate_number' => $vehicle->plate_number,
+            'type' => $vehicle->type,
+            'fuel_type' => $vehicle->fuel_type,
+            'status' => Vehicle::STATUS_ACTIVE,
+            'odometer_km' => $vehicle->odometer_km,
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(Vehicle::STATUS_MAINTENANCE, $vehicle->fresh()->status);
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.vehicles.batch-status'), [
+                'ids' => [$vehicle->id],
+                'status' => Vehicle::STATUS_ACTIVE,
+            ])
+            ->assertSessionHasErrors('status');
     }
 
     public function test_fuel_log_can_be_added_and_removed_from_a_vehicle(): void

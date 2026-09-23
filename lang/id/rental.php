@@ -999,6 +999,7 @@ return [
         'vehicle_access_denied' => 'Anda tidak dapat memilih kendaraan di luar base armada yang ditugaskan.',
         'storefront_color_invalid' => 'Warna harus berupa kode heksadesimal 6 digit, mis. #0f766e.',
         'vehicle_not_active' => 'Kendaraan :name berstatus :status, bukan aktif.',
+        'vehicle_queued_for_workshop' => 'Kendaraan :name sedang mengantri servis di bengkel.',
         'vehicle_capacity_expired' => 'Masa operasional kendaraan :name telah kedaluwarsa (:date). Silakan perpanjang masa aktif unit terlebih dahulu.',
         'vehicle_capacity_expired_for_booking' => 'Masa aktif kendaraan :name (s/d :date) berakhir sebelum tanggal sewa (:start).',
         'vehicle_rental_overlap' => 'Kendaraan :name sudah memiliki rental pada periode ini.',

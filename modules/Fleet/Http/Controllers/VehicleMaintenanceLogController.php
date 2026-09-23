@@ -3,6 +3,7 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Modules\Fleet\Http\Requests\StoreMaintenanceLogRequest;
 use Modules\Fleet\Http\Requests\UpdateMaintenanceLogRequest;
@@ -24,6 +25,11 @@ class VehicleMaintenanceLogController extends Controller
      */
     public function store(StoreMaintenanceLogRequest $request, Vehicle $vehicle): RedirectResponse
     {
+        if (Modules::available('maintenance')) {
+            return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
+                ->with('error', __('fleet.messages.maintenance_log_use_work_orders'));
+        }
+
         $vehicle->maintenanceLogs()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
@@ -37,6 +43,11 @@ class VehicleMaintenanceLogController extends Controller
     {
         if ($maintenanceLog->vehicle_id !== $vehicle->id) {
             abort(404);
+        }
+
+        if (Modules::available('maintenance')) {
+            return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
+                ->with('error', __('fleet.messages.maintenance_log_use_work_orders'));
         }
 
         $maintenanceLog->update($request->validated());

@@ -237,6 +237,7 @@ return [
         'vehicle_shuttle_conflict' => 'Kendaraan sudah dipakai keberangkatan travel lain di hari yang sama.',
         'vehicle_trip_conflict' => 'Kendaraan punya trip kargo aktif di tanggal tersebut.',
         'vehicle_rental_conflict' => 'Kendaraan sedang dalam rental aktif di tanggal tersebut.',
+        'vehicle_queued_for_workshop' => 'Kendaraan sedang mengantri servis di bengkel.',
     ],
     'invoice' => [
         'line' => 'Travel :corridor · :date · :pax pax',

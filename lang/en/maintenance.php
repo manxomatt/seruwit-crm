@@ -330,6 +330,7 @@ return [
         'wo_status_updated' => 'Work order status updated to :status.',
         'status_required' => 'Status is required.',
         'status_invalid' => 'Invalid status.',
+        'create_status_invalid' => 'New work orders must start as draft or pending.',
         'status_transition_invalid' => 'That status transition is not allowed.',
         'vehicle_already_in_workshop' => 'This vehicle already has another work order in progress.',
         'bay_already_busy' => 'This bay already has another work order in progress.',

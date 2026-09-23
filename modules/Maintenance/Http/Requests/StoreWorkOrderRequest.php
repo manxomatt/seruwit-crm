@@ -21,7 +21,7 @@ class StoreWorkOrderRequest extends FormRequest
             'category_id' => ['required', 'exists:maintenance_categories,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'status' => ['required', 'string', 'in:draft,pending,approved,in_progress,completed,cancelled'],
+            'status' => ['required', 'string', 'in:draft,pending'],
             'priority' => ['required', 'string', 'in:low,normal,high,urgent'],
             'type' => ['required', 'string', 'in:scheduled,corrective,preventive,emergency'],
             'service_location' => ['nullable', 'string', 'in:in_house,outsource'],
@@ -59,7 +59,7 @@ class StoreWorkOrderRequest extends FormRequest
             'vehicle_id.exists' => 'Kendaraan tidak ditemukan.',
             'category_id.required' => 'Pilih kategori perawatan.',
             'title.required' => 'Judul pekerjaan wajib diisi.',
-            'status.in' => 'Status tidak valid.',
+            'status.in' => __('maintenance.messages.create_status_invalid'),
             'priority.in' => 'Prioritas tidak valid.',
             'type.in' => 'Tipe tidak valid.',
         ];

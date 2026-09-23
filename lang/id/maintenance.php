@@ -330,6 +330,7 @@ return [
         'wo_status_updated' => 'Status work order diperbarui menjadi :status.',
         'status_required' => 'Status wajib diisi.',
         'status_invalid' => 'Status tidak valid.',
+        'create_status_invalid' => 'Work order baru harus dimulai sebagai draft atau pending.',
         'status_transition_invalid' => 'Perubahan status tersebut tidak diizinkan.',
         'vehicle_already_in_workshop' => 'Kendaraan ini sudah memiliki work order lain yang sedang dikerjakan.',
         'bay_already_busy' => 'Bay ini sudah digunakan work order lain yang sedang dikerjakan.',

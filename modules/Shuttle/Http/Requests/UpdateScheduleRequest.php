@@ -4,6 +4,7 @@ namespace Modules\Shuttle\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 
 class UpdateScheduleRequest extends FormRequest
 {
@@ -47,5 +48,16 @@ class UpdateScheduleRequest extends FormRequest
             'starts_on' => $this->starts_on ?: null,
             'ends_on' => $this->ends_on ?: null,
         ]);
+    }
+
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function (\Illuminate\Validation\Validator $v): void {
+            $vehicleId = $this->input('vehicle_id');
+
+            if ($vehicleId && WorkOrderShopHold::isHeld((int) $vehicleId)) {
+                $v->errors()->add('vehicle_id', __('shuttle.validation.vehicle_queued_for_workshop'));
+            }
+        });
     }
 }

@@ -869,6 +869,8 @@ return [
         'maintenance_added' => 'Maintenance log added.',
         'maintenance_updated' => 'Maintenance log updated.',
         'maintenance_deleted' => 'Maintenance log deleted.',
+        'maintenance_log_use_work_orders' => 'Service history is managed as work orders. Create a work order instead of a fleet maintenance log.',
+        'vehicle_status_locked_by_work_order' => 'This vehicle has an in-progress work order. Finish or cancel it before changing status.',
         'fuel_added' => 'Fuel log added.',
         'fuel_added_anomaly' => 'Fuel log added. Anomaly detected — review the fill details.',
         'fuel_deleted' => 'Fuel log deleted.',

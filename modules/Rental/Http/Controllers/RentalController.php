@@ -10,6 +10,7 @@ use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\AccessibleFleetBases;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Http\Requests\StoreRentalRequest;
 use Modules\Rental\Http\Requests\StoreWalkInCustomerRequest;
@@ -96,8 +97,10 @@ class RentalController extends Controller
         }
 
         return Inertia::render('Modules/Rental/Create', [
-            'vehicles' => AccessibleFleetBases::scopeVehicles(Vehicle::query(), auth()->user())
-                ->where('status', Vehicle::STATUS_ACTIVE)
+            'vehicles' => WorkOrderShopHold::excludeHeldVehicles(
+                AccessibleFleetBases::scopeVehicles(Vehicle::query(), auth()->user())
+                    ->where('status', Vehicle::STATUS_ACTIVE),
+            )
                 ->orderBy('name')
                 ->get(['id', 'name', 'plate_number', 'type', 'rental_class']),
             'drivers' => Driver::query()

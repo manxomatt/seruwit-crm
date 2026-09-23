@@ -114,7 +114,11 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
         Object.entries(permissions).forEach(([mod, perms]) => {
             const moduleName = (modules[mod] || mod).toLowerCase();
             const matchingPerms = perms.filter((p) => {
-                const actionLabel = (actions[p.action] || p.action).toLowerCase();
+                const actionLabel = (
+                    p.module === 'rental' && p.action === 'view'
+                        ? 'View (Dashboard & Calendar)'
+                        : actions[p.action] || p.action
+                ).toLowerCase();
                 const permSlug = p.slug.toLowerCase();
                 return (
                     moduleName.includes(query) ||
@@ -432,7 +436,9 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                                                         />
                                                                         <div className="min-w-0">
                                                                             <p className="truncate">
-                                                                                {actions[permission.action] || permission.action}
+                                                                                {permission.module === 'rental' && permission.action === 'view'
+                                                                                    ? 'View (Dashboard & Calendar)'
+                                                                                    : actions[permission.action] || permission.action}
                                                                             </p>
                                                                             {permission.description && (
                                                                                 <p className="text-[10px] font-normal text-slate-400 truncate">

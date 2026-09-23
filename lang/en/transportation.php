@@ -226,6 +226,7 @@ return [
         'cargo_removed' => 'Cargo item removed.',
         'already_generated' => 'A trip for this date was already generated.',
         'vehicle_not_active' => 'Vehicle :name is :status, not active.',
+        'vehicle_queued_for_workshop' => 'Vehicle :name is queued for workshop service.',
         'vehicle_capacity_expired' => 'Operational capacity for vehicle :name has expired (:date). Please renew vehicle capacity first.',
         'vehicle_capacity_expired_for_trip' => 'Operational capacity for vehicle :name (until :date) expires before the trip departure (:start).',
         'vehicle_has_trip' => 'Vehicle :name already has an overlapping trip in this time window.',

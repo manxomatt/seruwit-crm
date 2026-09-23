@@ -4,8 +4,10 @@ namespace Modules\Fleet\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Fleet\Support\VehicleRentalClass;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 
 class UpdateVehicleRequest extends FormRequest
 {
@@ -84,6 +86,19 @@ class UpdateVehicleRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             AccessibleFleetBases::rejectIfDenied($validator, $this->input('home_base_id'));
+
+            if ($this->has('status')) {
+                $vehicleParam = $this->route('vehicle');
+                $vehicle = $vehicleParam instanceof Vehicle
+                    ? $vehicleParam
+                    : Vehicle::query()->find($vehicleParam);
+
+                if ($vehicle !== null
+                    && $this->input('status') !== Vehicle::STATUS_MAINTENANCE
+                    && WorkOrderShopHold::hasInProgress((int) $vehicle->id)) {
+                    $validator->errors()->add('status', __('fleet.messages.vehicle_status_locked_by_work_order'));
+                }
+            }
 
             if ($this->has('status') && ! \App\Models\PlatformSetting::isPerVehicleTrialEnabled()) {
                 $newStatus = $this->input('status');

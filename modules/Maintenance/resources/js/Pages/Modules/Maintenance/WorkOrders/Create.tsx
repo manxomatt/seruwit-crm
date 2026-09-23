@@ -24,7 +24,7 @@ import {
     itemTypeOptions,
     locationOptions,
     priorityOptions,
-    statusOptions,
+    createStatusOptions,
     typeOptions,
 } from '../../../../maintenanceUtils';
 
@@ -259,7 +259,7 @@ export default function Create({ vehicles, categories, spareParts, vendors, mech
                                     className="mt-1.5 w-full"
                                     value={data.status}
                                     onChange={(val) => setData('status', val)}
-                                    options={statusOptions(t)}
+                                    options={createStatusOptions(t)}
                                 />
                                 <InputError message={errors.status} className="mt-1" />
                             </div>

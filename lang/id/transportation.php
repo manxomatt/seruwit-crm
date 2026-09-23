@@ -226,6 +226,7 @@ return [
         'cargo_removed' => 'Item kargo dihapus.',
         'already_generated' => 'Trip untuk tanggal ini sudah digenerate.',
         'vehicle_not_active' => 'Kendaraan :name berstatus :status, bukan aktif.',
+        'vehicle_queued_for_workshop' => 'Kendaraan :name sedang mengantri servis di bengkel.',
         'vehicle_capacity_expired' => 'Masa operasional kendaraan :name telah kedaluwarsa (:date). Silakan perpanjang masa aktif unit.',
         'vehicle_capacity_expired_for_trip' => 'Masa aktif kendaraan :name (s/d :date) telah berakhir sebelum jadwal keberangkatan (:start).',
         'vehicle_has_trip' => 'Kendaraan :name sudah punya trip yang bentrok pada jendela waktu ini.',

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Database\Factories\RentalFactory;
 use Modules\Rental\Support\RentalStatusHint;
@@ -639,6 +640,12 @@ class Rental extends Model
             $reasons[] = __('rental.validation.vehicle_not_active', [
                 'name' => $vehicle->name,
                 'status' => $vehicle->status,
+            ]);
+        }
+
+        if (WorkOrderShopHold::isHeld((int) $vehicle->id)) {
+            $reasons[] = __('rental.validation.vehicle_queued_for_workshop', [
+                'name' => $vehicle->name,
             ]);
         }
 

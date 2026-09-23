@@ -7,6 +7,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\AccessibleFleetBases;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Rental\Models\Rental;
 
 class RentalUsageCalendar
@@ -72,6 +73,8 @@ class RentalUsageCalendar
             ->orderBy('name')
             ->get(['id', 'name', 'plate_number', 'type', 'rental_class', 'status', 'photo_url']);
 
+        $shopHeldVehicleIds = array_fill_keys(WorkOrderShopHold::vehicleIds(), true);
+
         $rentals = AccessibleFleetBases::scopeRentals(Rental::query())
             ->with('partner:id,name')
             ->whereIn('status', [
@@ -106,7 +109,7 @@ class RentalUsageCalendar
         foreach ($vehicles as $vehicle) {
             /** @var Collection<int, Rental> $bookings */
             $bookings = $rentals->get($vehicle->id, collect());
-            $periodAvailability = $this->resolvePeriodAvailability($vehicle, $bookings);
+            $periodAvailability = $this->resolvePeriodAvailability($vehicle, $bookings, $shopHeldVehicleIds);
 
             match ($periodAvailability) {
                 'unavailable' => $unavailable++,
@@ -122,10 +125,10 @@ class RentalUsageCalendar
                     ->filter(fn (Rental $rental): bool => $this->coversDay($rental, $day))
                     ->values();
 
-                $dayStatus = $this->resolveDayStatus($vehicle, $dayBookings);
+                $dayStatus = $this->resolveDayStatus($vehicle, $dayBookings, $shopHeldVehicleIds);
                 $dayTallies[$day][$dayStatus]++;
 
-                if ($vehicle->status === Vehicle::STATUS_ACTIVE) {
+                if ($vehicle->status === Vehicle::STATUS_ACTIVE && ! isset($shopHeldVehicleIds[$vehicle->id])) {
                     $availableVehicleDays++;
                     if (in_array($dayStatus, ['booked', 'in_use'], true)) {
                         $occupiedVehicleDays++;
@@ -241,10 +244,11 @@ class RentalUsageCalendar
 
     /**
      * @param  Collection<int, Rental>  $dayBookings
+     * @param  array<int, true>  $shopHeldVehicleIds
      */
-    private function resolveDayStatus(Vehicle $vehicle, Collection $dayBookings): string
+    private function resolveDayStatus(Vehicle $vehicle, Collection $dayBookings, array $shopHeldVehicleIds): string
     {
-        if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
             return 'unavailable';
         }
 
@@ -264,10 +268,11 @@ class RentalUsageCalendar
 
     /**
      * @param  Collection<int, Rental>  $bookings
+     * @param  array<int, true>  $shopHeldVehicleIds
      */
-    private function resolvePeriodAvailability(Vehicle $vehicle, Collection $bookings): string
+    private function resolvePeriodAvailability(Vehicle $vehicle, Collection $bookings, array $shopHeldVehicleIds): string
     {
-        if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
             return 'unavailable';
         }
 

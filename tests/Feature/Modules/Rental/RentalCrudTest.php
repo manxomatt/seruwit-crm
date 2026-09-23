@@ -6,6 +6,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Models\MaintenanceCategory;
+use Modules\Maintenance\Models\WorkOrder;
 use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
@@ -205,6 +207,88 @@ class RentalCrudTest extends TestCase
                 'rate_per_period' => 400000,
             ])
             ->assertSessionHasErrors('end_date');
+    }
+
+    public function test_approved_work_order_blocks_rental_create(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create();
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 400000,
+            'deposit_amount' => 800000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $category = MaintenanceCategory::query()->create([
+            'key' => 'general',
+            'name' => 'General',
+            'sort_order' => 1,
+        ]);
+
+        WorkOrder::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.store'), [
+                'vehicle_id' => $vehicle->id,
+                'partner_id' => $partner->id,
+                'start_date' => '2027-01-10',
+                'end_date' => '2027-01-14',
+                'period_type' => 'daily',
+                'rate_per_period' => 400000,
+                'deposit_amount' => 800000,
+            ])
+            ->assertSessionHasErrors('vehicle_id');
+
+        $this->assertDatabaseCount('rentals', 0);
+    }
+
+    public function test_draft_work_order_does_not_block_rental_create(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create();
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 400000,
+            'deposit_amount' => 800000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $category = MaintenanceCategory::query()->create([
+            'key' => 'general',
+            'name' => 'General',
+            'sort_order' => 1,
+        ]);
+
+        WorkOrder::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_DRAFT,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.store'), [
+                'vehicle_id' => $vehicle->id,
+                'partner_id' => $partner->id,
+                'start_date' => '2027-01-10',
+                'end_date' => '2027-01-14',
+                'period_type' => 'daily',
+                'rate_per_period' => 1,
+                'deposit_amount' => 1,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('rentals', 1);
     }
 
     public function test_walk_in_customer_can_be_quick_created_from_rental_form(): void

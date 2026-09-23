@@ -237,6 +237,7 @@ return [
         'vehicle_shuttle_conflict' => 'Vehicle is already assigned to another shuttle departure that day.',
         'vehicle_trip_conflict' => 'Vehicle has an active cargo trip on that date.',
         'vehicle_rental_conflict' => 'Vehicle is under an active rental on that date.',
+        'vehicle_queued_for_workshop' => 'Vehicle is queued for workshop service.',
     ],
     'invoice' => [
         'line' => 'Travel :corridor · :date · :pax pax',

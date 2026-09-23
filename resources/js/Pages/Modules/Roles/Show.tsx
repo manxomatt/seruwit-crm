@@ -141,14 +141,21 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                                         🧩 {modules[module] || module}
                                     </h5>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {modulePermissions.map((permission) => (
-                                            <span
-                                                key={permission.id}
-                                                className="inline-flex items-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2.5 py-1 text-[11px] font-semibold"
-                                            >
-                                                {actions[permission.action] || permission.action}
-                                            </span>
-                                        ))}
+                                        {modulePermissions.map((permission) => {
+                                            const actionLabel =
+                                                permission.module === 'rental' && permission.action === 'view'
+                                                    ? 'View (Dashboard & Calendar)'
+                                                    : actions[permission.action] || permission.action;
+
+                                            return (
+                                                <span
+                                                    key={permission.id}
+                                                    className="inline-flex items-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2.5 py-1 text-[11px] font-semibold"
+                                                >
+                                                    {actionLabel}
+                                                </span>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))}

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\AccessibleFleetBases;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Rental\Models\Rental;
 
 class RentalAvailabilityBoard
@@ -67,6 +68,7 @@ class RentalAvailabilityBoard
         $free = 0;
         $booked = 0;
         $inUse = 0;
+        $shopHeldVehicleIds = array_fill_keys(WorkOrderShopHold::vehicleIds(), true);
 
         foreach ($vehicles as $vehicle) {
             /** @var Collection<int, Rental> $bookings */
@@ -81,7 +83,7 @@ class RentalAvailabilityBoard
                 'partner' => $rental->partner?->name,
             ])->values()->all();
 
-            $availability = $this->resolveAvailability($vehicle, $bookings);
+            $availability = $this->resolveAvailability($vehicle, $bookings, $shopHeldVehicleIds);
             $hasRate = $this->rates->hasMatchingRate($vehicle, $fromDate, $toDate);
 
             match ($availability) {
@@ -118,9 +120,13 @@ class RentalAvailabilityBoard
         ];
     }
 
-    private function resolveAvailability(Vehicle $vehicle, Collection $bookings): string
+    /**
+     * @param  Collection<int, Rental>  $bookings
+     * @param  array<int, true>  $shopHeldVehicleIds
+     */
+    private function resolveAvailability(Vehicle $vehicle, Collection $bookings, array $shopHeldVehicleIds): string
     {
-        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || ! $vehicle->hasActiveCapacity()) {
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || ! $vehicle->hasActiveCapacity() || isset($shopHeldVehicleIds[$vehicle->id])) {
             return 'unavailable';
         }
 

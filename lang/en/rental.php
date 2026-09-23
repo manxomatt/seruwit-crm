@@ -978,6 +978,7 @@ return [
         'vehicle_access_denied' => 'You cannot select a vehicle outside your assigned fleet base.',
         'storefront_color_invalid' => 'Color must be a 6-digit hex code, e.g. #0f766e.',
         'vehicle_not_active' => 'Vehicle :name is :status, not active.',
+        'vehicle_queued_for_workshop' => 'Vehicle :name is queued for workshop service.',
         'vehicle_capacity_expired' => 'Operational capacity for vehicle :name has expired (:date). Please renew vehicle capacity first.',
         'vehicle_capacity_expired_for_booking' => 'Operational capacity for vehicle :name (until :date) expires before the rental date (:start).',
         'vehicle_rental_overlap' => 'Vehicle :name already has a rental in this period.',

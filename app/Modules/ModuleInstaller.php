@@ -508,7 +508,7 @@ class ModuleInstaller
     private function seedPermissions(ModuleContract $module): void
     {
         foreach ($module->permissions() as $action) {
-            $actionName = Permission::ACTIONS[$action] ?? ucfirst($action);
+            $actionName = Permission::getActions()[$action] ?? ucfirst(str_replace('_', ' ', $action));
 
             Permission::query()->firstOrCreate(
                 ['module' => $module->key(), 'action' => $action],

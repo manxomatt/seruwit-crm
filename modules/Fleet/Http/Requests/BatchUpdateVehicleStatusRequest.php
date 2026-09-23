@@ -3,6 +3,8 @@
 namespace Modules\Fleet\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 
 class BatchUpdateVehicleStatusRequest extends FormRequest
 {
@@ -31,14 +33,20 @@ class BatchUpdateVehicleStatusRequest extends FormRequest
             }
 
             $status = $this->input('status');
-            if (! \App\Models\PlatformSetting::isPerVehicleTrialEnabled() && in_array($status, \Modules\Fleet\Models\Vehicle::billableStatuses(), true)) {
+            $ids = array_map('intval', (array) $this->input('ids', []));
+
+            if ($status !== Vehicle::STATUS_MAINTENANCE && WorkOrderShopHold::inProgressVehicleIdsAmong($ids) !== []) {
+                $validator->errors()->add('status', __('fleet.messages.vehicle_status_locked_by_work_order'));
+            }
+
+            if (! \App\Models\PlatformSetting::isPerVehicleTrialEnabled() && in_array($status, Vehicle::billableStatuses(), true)) {
                 $tenant = tenant();
                 if ($tenant instanceof \App\Models\Tenant && $tenant->hasFiniteLimit('max_vehicles')) {
                     $limit = (int) $tenant->planLimit('max_vehicles');
                     $ids = array_map('intval', (array) $this->input('ids', []));
 
-                    $currentBillable = \Modules\Fleet\Models\Vehicle::billable()->count();
-                    $newlyBillable = \Modules\Fleet\Models\Vehicle::whereIn('id', $ids)
+                    $currentBillable = Vehicle::billable()->count();
+                    $newlyBillable = Vehicle::whereIn('id', $ids)
                         ->whereNotIn('status', \Modules\Fleet\Models\Vehicle::billableStatuses())
                         ->count();
 

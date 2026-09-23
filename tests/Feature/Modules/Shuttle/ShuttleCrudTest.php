@@ -4,6 +4,9 @@ namespace Tests\Feature\Modules\Shuttle;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Models\MaintenanceCategory;
+use Modules\Maintenance\Models\WorkOrder;
 use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Shuttle\Models\ShuttleBooking;
@@ -246,6 +249,35 @@ class ShuttleCrudTest extends TestCase
             ->assertRedirect();
 
         $this->assertGreaterThan(0, ShuttleDeparture::query()->where('schedule_id', $schedule->id)->count());
+    }
+
+    public function test_cannot_assign_vehicle_with_approved_work_order_to_schedule(): void
+    {
+        $corridor = ShuttleCorridor::factory()->create(['code' => 'JKT-BDG']);
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $category = MaintenanceCategory::query()->create([
+            'key' => 'general',
+            'name' => 'General',
+            'sort_order' => 1,
+        ]);
+
+        WorkOrder::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.shuttle.schedules.store'), [
+                'corridor_id' => $corridor->id,
+                'code' => 'JKT-BDG-SORE',
+                'days_of_week' => [1, 2, 3, 4, 5],
+                'departure_time' => '15:00',
+                'vehicle_id' => $vehicle->id,
+                'seat_capacity' => 7,
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors('vehicle_id');
     }
 
     public function test_booking_confirm_locks_seats_and_rejects_overbook(): void

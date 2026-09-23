@@ -188,6 +188,13 @@ export function statusOptions(t: Translate): { value: WorkOrderStatus; label: st
     return STATUS_VALUES.map((value) => ({ value, label: t(`maintenance.status.${value}`) }));
 }
 
+export function createStatusOptions(t: Translate): { value: WorkOrderStatus; label: string }[] {
+    return (['draft', 'pending'] as const).map((value) => ({
+        value,
+        label: t(`maintenance.status.${value}`),
+    }));
+}
+
 export function priorityOptions(t: Translate): { value: WorkOrderPriority; label: string }[] {
     return PRIORITY_VALUES.map((value) => ({ value, label: t(`maintenance.priority.${value}`) }));
 }

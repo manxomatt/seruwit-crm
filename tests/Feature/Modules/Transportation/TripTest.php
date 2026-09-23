@@ -5,6 +5,8 @@ namespace Tests\Feature\Modules\Transportation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Models\MaintenanceCategory;
+use Modules\Maintenance\Models\WorkOrder;
 use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
 use Tests\TestCase;
@@ -173,6 +175,28 @@ class TripTest extends TestCase
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_MAINTENANCE]);
         $driver = Driver::factory()->create();
         $partner = Partner::factory()->create();
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
+            ->assertSessionHasErrors('vehicle_id');
+    }
+
+    public function test_a_vehicle_with_an_approved_work_order_cannot_be_dispatched(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $driver = Driver::factory()->create();
+        $partner = Partner::factory()->create();
+        $category = MaintenanceCategory::query()->create([
+            'key' => 'general',
+            'name' => 'General',
+            'sort_order' => 1,
+        ]);
+
+        WorkOrder::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_APPROVED,
+        ]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
             ->assertSessionHasErrors('vehicle_id');

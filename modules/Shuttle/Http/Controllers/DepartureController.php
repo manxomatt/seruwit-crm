@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Shuttle\Models\ShuttleDeparture;
 
 class DepartureController extends Controller
@@ -49,7 +50,9 @@ class DepartureController extends Controller
 
         return Inertia::render('Modules/Shuttle/Departures/Show', [
             'departure' => $departure,
-            'vehicles' => Vehicle::query()->where('status', Vehicle::STATUS_ACTIVE)->orderBy('name')->get(['id', 'name', 'plate_number', 'capacity_seats']),
+            'vehicles' => WorkOrderShopHold::excludeHeldVehicles(
+                Vehicle::query()->where('status', Vehicle::STATUS_ACTIVE),
+            )->orderBy('name')->get(['id', 'name', 'plate_number', 'capacity_seats']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name']),
             'can' => [
                 'update' => auth()->user()?->hasPermissionFor('shuttle', 'update') ?? false,

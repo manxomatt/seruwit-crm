@@ -135,7 +135,11 @@ export default function Edit({
         Object.entries(permissions).forEach(([mod, perms]) => {
             const moduleName = (modules[mod] || mod).toLowerCase();
             const matchingPerms = perms.filter((p) => {
-                const actionLabel = (actions[p.action] || p.action).toLowerCase();
+                const actionLabel = (
+                    p.module === 'rental' && p.action === 'view'
+                        ? 'View (Dashboard & Calendar)'
+                        : actions[p.action] || p.action
+                ).toLowerCase();
                 const permSlug = p.slug.toLowerCase();
                 return (
                     moduleName.includes(query) ||
@@ -509,7 +513,9 @@ export default function Edit({
                                                                         <div className="min-w-0 flex-1">
                                                                             <div className="flex items-center gap-1.5">
                                                                                 <p className="truncate">
-                                                                                    {actions[permission.action] || permission.action}
+                                                                                    {permission.module === 'rental' && permission.action === 'view'
+                                                                                        ? 'View (Dashboard & Calendar)'
+                                                                                        : actions[permission.action] || permission.action}
                                                                                 </p>
                                                                                 {locked && (
                                                                                     <span className="rounded bg-amber-500/10 px-1 py-0.2 text-[9px] font-bold uppercase text-amber-600 dark:text-amber-400">

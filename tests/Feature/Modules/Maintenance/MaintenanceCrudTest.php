@@ -149,6 +149,24 @@ class MaintenanceCrudTest extends TestCase
         ])->assertSessionHasErrors('status');
     }
 
+    public function test_store_rejects_in_progress_status(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $category = $this->category();
+
+        $this->actingAs($user)->post(route('module.maintenance.work-orders.store'), [
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'title' => 'Test',
+            'status' => WorkOrder::STATUS_IN_PROGRESS,
+            'priority' => 'normal',
+            'type' => 'corrective',
+        ])->assertSessionHasErrors('status');
+
+        $this->assertDatabaseMissing('work_orders', ['title' => 'Test']);
+    }
+
     public function test_admin_can_view_work_order(): void
     {
         $user = $this->createAdminUser();
