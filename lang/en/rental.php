@@ -252,6 +252,7 @@ return [
         'rates' => 'Rates',
         'settings' => 'Settings',
         'back_to_list' => 'Back to Rentals',
+        'back_to_rates' => 'Back to Rates',
         'back' => 'Back',
     ],
 
@@ -735,6 +736,83 @@ return [
         'type_prefix' => 'Type: :type',
         'class_prefix' => 'Class: :class',
         'km' => ':km km',
+
+        // KPIs
+        'total_schemes' => 'Total Rate Schemes',
+        'active_rates' => 'Active Rates',
+        'with_tiered_discounts' => 'With Tiered Discounts',
+
+        // Search & Filters
+        'search_placeholder' => 'Search rate name, vehicle, class...',
+        'all_periods' => 'All Periods',
+        'period_daily' => '📅 Daily',
+        'period_weekly' => '📆 Weekly',
+        'period_monthly' => '🗓️ Monthly',
+        'filter_all' => 'All',
+        'status_active' => 'Active',
+        'status_inactive' => 'Inactive',
+
+        // Batch Action Bar
+        'selected_count' => 'rates selected',
+        'btn_activate' => '✓ Activate',
+        'btn_deactivate' => '⏸ Deactivate',
+        'btn_batch_delete' => 'Delete (:count)',
+        'btn_cancel' => '✕ Cancel',
+
+        // Empty States
+        'empty_title' => 'No Rental Rate Schemes Yet',
+        'empty_search_title' => 'No Matching Rates Found',
+        'empty_desc' => 'Create base rental rate configurations for daily, weekly, or monthly fleets with tiered discounts.',
+        'empty_search_desc' => 'Try changing search keywords or adjusting the period and status filters above.',
+        'create_first' => 'Create First Rate',
+
+        // Table Columns
+        'th_name' => 'Rate Name & Discounts',
+        'th_vehicle' => 'Vehicle Coverage',
+        'th_period' => 'Period',
+        'th_rate' => 'Rental Rate',
+        'th_distance_penalty' => 'Distance & Penalty',
+        'th_deposit' => 'Deposit',
+        'th_status' => 'Status',
+        'th_actions' => 'Actions',
+
+        // Table Rows & Badges
+        'overlap_priority' => 'Overlap Priority',
+        'view_period_tiers' => 'View rental duration tier details',
+        'duration_tier_count' => ':count Duration Tier|:count Duration Tiers',
+        'view_loyalty_tiers' => 'View loyal customer tier details',
+        'loyalty_tier_count' => ':count Loyalty Tier|:count Loyalty Tiers',
+        'inactive_tier_count' => ':count inactive tier|:count inactive tiers',
+        'flat_rate_hint' => 'Flat Rate (No Tiered Discount)',
+        'class_coverage' => 'Class :class',
+        'type_coverage' => 'Type :type',
+        'all_fleet_global' => 'All Fleet (Global)',
+        'per_day' => 'per day',
+        'per_week' => 'per week',
+        'per_month' => 'per month',
+        'km_limit_period' => ':limit KM / period',
+        'unlimited_km' => 'Unlimited KM',
+        'excess_km_rate' => 'Excess: :rate/KM',
+        'no_deposit' => 'No Deposit',
+        'toggle_status_title' => 'Click to toggle active status',
+
+        // Row Action Menu
+        'more_actions' => 'More Actions',
+        'tier_details' => 'Tier Discount Details',
+        'activate' => '✓ Activate',
+        'deactivate' => '⏸ Deactivate',
+        'delete_rate' => 'Delete Rate',
+
+        // Modal Preview Tier
+        'tier_modal_title' => '⭐ Tiered Discount & Loyalty Details',
+        'base_rate_sub' => '(Base: :amount)',
+        'tier_period_volume' => '📅 Rental Duration Tier',
+        'tier_loyalty_count' => '⭐ Customer Loyalty Tier',
+        'threshold_label' => 'Threshold:',
+        'unit_periods' => 'periods',
+        'unit_completed_rentals' => 'completed rentals',
+        'btn_edit_scheme' => 'Edit This Scheme',
+        'btn_close' => 'Close',
     ],
 
     'pages' => [
@@ -781,17 +859,19 @@ return [
             'head' => 'Calendar',
         ],
         'rates' => [
-            'title' => 'Tariff Rates',
+            'title' => 'Vehicle Rental Rates',
             'head' => 'Rental Rates',
             'empty' => 'No rates yet. Create one to get started.',
             'new' => 'New Rate',
             'create' => 'Create New Rate',
+            'create_subtitle' => 'Configure base rental rates, kilometer limits, penalties, and tiered discount schemes.',
             'edit' => 'Edit Rate',
-            'delete_title' => 'Delete rate',
-            'delete_confirm' => 'Delete rate “:name”? This action cannot be undone.',
+            'edit_subtitle' => 'Adjust rental pricing configuration and tiered discounts for this rate scheme.',
+            'delete_title' => 'Delete Rental Rate',
+            'delete_confirm' => 'Are you sure you want to delete rate ":name"? This action cannot be undone.',
             'batch_selected' => ':count rates selected',
             'batch_delete_title' => 'Batch Delete Rates',
-            'batch_delete_confirm' => 'Delete :count rates at once? Rates still referenced by active data will not be deleted.',
+            'batch_delete_confirm' => 'Delete :count rates at once? Rates still referenced by active transactions will not be deleted.',
         ],
     ],
 

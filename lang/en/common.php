@@ -19,6 +19,8 @@ return [
     'confirm_delete_message' => 'Are you sure you want to delete this? This action cannot be undone.',
     'confirm_delete_confirm' => 'Delete',
     'confirm_delete_cancel' => 'Cancel',
+    'select' => 'Select',
+    'select_all' => 'Select all',
     'saved' => 'Saved.',
     'loading' => 'Loading…',
     'deleting' => 'Deleting…',

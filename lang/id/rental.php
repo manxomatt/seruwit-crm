@@ -273,6 +273,7 @@ return [
         'rates' => 'Tarif',
         'settings' => 'Pengaturan',
         'back_to_list' => 'Kembali ke Rental',
+        'back_to_rates' => 'Kembali ke Daftar Tarif',
         'back' => 'Kembali',
     ],
 
@@ -756,6 +757,83 @@ return [
         'type_prefix' => 'Tipe: :type',
         'class_prefix' => 'Kelas: :class',
         'km' => ':km km',
+
+        // KPIs
+        'total_schemes' => 'Total Skema Tarif',
+        'active_rates' => 'Tarif Aktif',
+        'with_tiered_discounts' => 'Dengan Diskon Bertingkat',
+
+        // Search & Filters
+        'search_placeholder' => 'Cari nama tarif, kendaraan, kelas...',
+        'all_periods' => 'Semua Periode',
+        'period_daily' => '📅 Harian',
+        'period_weekly' => '📆 Mingguan',
+        'period_monthly' => '🗓️ Bulanan',
+        'filter_all' => 'Semua',
+        'status_active' => 'Aktif',
+        'status_inactive' => 'Non Aktif',
+
+        // Batch Action Bar
+        'selected_count' => 'tarif dipilih',
+        'btn_activate' => '✓ Aktifkan',
+        'btn_deactivate' => '⏸ Nonaktifkan',
+        'btn_batch_delete' => 'Hapus (:count)',
+        'btn_cancel' => '✕ Batal',
+
+        // Empty States
+        'empty_title' => 'Belum Ada Skema Tarif Rental',
+        'empty_search_title' => 'Tidak Ditemukan Tarif yang Cocok',
+        'empty_desc' => 'Buat konfigurasi tarif dasar sewa untuk armada harian, mingguan, atau bulanan dengan diskon bertingkat.',
+        'empty_search_desc' => 'Coba ubah kata kunci pencarian atau sesuaikan filter periode dan status di atas.',
+        'create_first' => 'Buat Tarif Pertama',
+
+        // Table Columns
+        'th_name' => 'Nama Tarif & Diskon',
+        'th_vehicle' => 'Cakupan Kendaraan',
+        'th_period' => 'Periode',
+        'th_rate' => 'Harga Sewa',
+        'th_distance_penalty' => 'Jarak & Denda',
+        'th_deposit' => 'Deposit',
+        'th_status' => 'Status',
+        'th_actions' => 'Aksi',
+
+        // Table Rows & Badges
+        'overlap_priority' => 'Prioritas Overlap',
+        'view_period_tiers' => 'Lihat rincian Tier Periode Sewa',
+        'duration_tier_count' => ':count Tier Durasi',
+        'view_loyalty_tiers' => 'Lihat rincian Tier Pelanggan Loyal',
+        'loyalty_tier_count' => ':count Tier Loyalty',
+        'inactive_tier_count' => ':count tier nonaktif',
+        'flat_rate_hint' => 'Tarif Flat (Tanpa Diskon Bertingkat)',
+        'class_coverage' => 'Kelas :class',
+        'type_coverage' => 'Tipe :type',
+        'all_fleet_global' => 'Semua Armada (Global)',
+        'per_day' => 'per hari',
+        'per_week' => 'per minggu',
+        'per_month' => 'per bulan',
+        'km_limit_period' => ':limit KM / periode',
+        'unlimited_km' => 'Unlimited KM',
+        'excess_km_rate' => 'Kelebihan: :rate/KM',
+        'no_deposit' => 'Tanpa Deposit',
+        'toggle_status_title' => 'Klik untuk mengubah status aktif',
+
+        // Row Action Menu
+        'more_actions' => 'Menu Aksi Lainnya',
+        'tier_details' => 'Rincian Tier Diskon',
+        'activate' => '✓ Aktifkan',
+        'deactivate' => '⏸ Nonaktifkan',
+        'delete_rate' => 'Hapus Tarif',
+
+        // Modal Preview Tier
+        'tier_modal_title' => '⭐ Rincian Tier Diskon & Loyalty',
+        'base_rate_sub' => '(Pokok: :amount)',
+        'tier_period_volume' => '📅 Tier Durasi Sewa',
+        'tier_loyalty_count' => '⭐ Tier Customer Loyalty',
+        'threshold_label' => 'Batas:',
+        'unit_periods' => 'periode',
+        'unit_completed_rentals' => 'rental selesai',
+        'btn_edit_scheme' => 'Edit Skema Ini',
+        'btn_close' => 'Tutup',
     ],
 
     'pages' => [
@@ -802,17 +880,19 @@ return [
             'head' => 'Kalender',
         ],
         'rates' => [
-            'title' => 'Tarif',
+            'title' => 'Tarif Rental Kendaraan',
             'head' => 'Tarif Rental',
             'empty' => 'Belum ada tarif. Buat satu untuk mulai.',
             'new' => 'Tarif Baru',
             'create' => 'Buat Tarif Baru',
+            'create_subtitle' => 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.',
             'edit' => 'Edit Tarif',
-            'delete_title' => 'Hapus tarif',
-            'delete_confirm' => 'Hapus tarif “:name”? Tindakan ini tidak dapat dibatalkan.',
+            'edit_subtitle' => 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.',
+            'delete_title' => 'Hapus Tarif Rental',
+            'delete_confirm' => 'Apakah Anda yakin ingin menghapus tarif ":name"? Tindakan ini tidak dapat dibatalkan.',
             'batch_selected' => ':count tarif dipilih',
-            'batch_delete_title' => 'Hapus Banyak Tarif',
-            'batch_delete_confirm' => 'Hapus :count tarif sekaligus? Tarif yang masih terhubung dengan data aktif tidak akan terhapus.',
+            'batch_delete_title' => 'Hapus Banyak Tarif Sekaligus',
+            'batch_delete_confirm' => 'Anda akan menghapus :count tarif sekaligus. Data yang sudah dipakai oleh transaksi aktif tidak akan terhapus.',
         ],
     ],
 

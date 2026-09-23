@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useTrans } from '@/hooks/useTrans';
 import { Head } from '@inertiajs/react';
 import RentalNav from '../../../../RentalNav';
@@ -26,7 +27,14 @@ export default function RatesIndex({
     const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<PageHeader title={t('rental.pages.rates.title', undefined, 'Tarif Rental Kendaraan')} />}>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('rental.pages.rates.title', undefined, 'Tarif Rental Kendaraan')}
+                    actions={<LanguageSwitcher compact />}
+                />
+            }
+        >
             <Head title={t('rental.pages.rates.head', undefined, 'Tarif Rental')} />
             <RentalNav />
 

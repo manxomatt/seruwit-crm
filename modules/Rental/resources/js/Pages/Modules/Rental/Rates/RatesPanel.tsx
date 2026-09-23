@@ -216,7 +216,7 @@ export default function RatesIndex({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Skema Tarif</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('rental.rates.total_schemes', undefined, 'Total Skema Tarif')}</p>
                         <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{totalCount}</p>
                     </div>
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
@@ -226,7 +226,7 @@ export default function RatesIndex({
 
                 <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tarif Aktif</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('rental.rates.active_rates', undefined, 'Tarif Aktif')}</p>
                         <p className="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">{activeCount}</p>
                     </div>
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-xl font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
@@ -236,7 +236,7 @@ export default function RatesIndex({
 
                 <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Dengan Diskon Bertingkat</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('rental.rates.with_tiered_discounts', undefined, 'Dengan Diskon Bertingkat')}</p>
                         <p className="mt-1 text-2xl font-black text-purple-600 dark:text-purple-400">{tieredCount}</p>
                     </div>
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-xl font-bold text-purple-600 dark:bg-purple-950/60 dark:text-purple-400">
@@ -259,7 +259,7 @@ export default function RatesIndex({
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Cari nama tarif, kendaraan, kelas..."
+                                placeholder={t('rental.rates.search_placeholder', undefined, 'Cari nama tarif, kendaraan, kelas...')}
                                 className="w-full rounded-2xl border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-850/50 dark:text-white shadow-2xs"
                             />
                             {searchQuery && (
@@ -276,10 +276,10 @@ export default function RatesIndex({
                         {/* Period Filter Tabs */}
                         <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
                             {[
-                                { key: 'all', label: 'Semua Periode' },
-                                { key: 'daily', label: '📅 Harian' },
-                                { key: 'weekly', label: '📆 Mingguan' },
-                                { key: 'monthly', label: '🗓️ Bulanan' },
+                                { key: 'all', label: t('rental.rates.all_periods', undefined, 'Semua Periode') },
+                                { key: 'daily', label: t('rental.rates.period_daily', undefined, '📅 Harian') },
+                                { key: 'weekly', label: t('rental.rates.period_weekly', undefined, '📆 Mingguan') },
+                                { key: 'monthly', label: t('rental.rates.period_monthly', undefined, '🗓️ Bulanan') },
                             ].map((tab) => (
                                 <button
                                     key={tab.key}
@@ -299,9 +299,9 @@ export default function RatesIndex({
                         {/* Status Filter */}
                         <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
                             {[
-                                { key: 'all', label: 'Semua' },
-                                { key: 'active', label: 'Aktif' },
-                                { key: 'inactive', label: 'Non Aktif' },
+                                { key: 'all', label: t('rental.rates.filter_all', undefined, 'Semua') },
+                                { key: 'active', label: t('rental.rates.status_active', undefined, 'Aktif') },
+                                { key: 'inactive', label: t('rental.rates.status_inactive', undefined, 'Non Aktif') },
                             ].map((tab) => (
                                 <button
                                     key={tab.key}
@@ -352,7 +352,7 @@ export default function RatesIndex({
                         <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 text-xs font-black">
                             {selected.length}
                         </span>
-                        <span>Tarif dipilih</span>
+                        <span>{t('rental.rates.selected_count', undefined, 'tarif dipilih')}</span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -362,7 +362,7 @@ export default function RatesIndex({
                             disabled={processing}
                             className="inline-flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-emerald-600 disabled:opacity-50"
                         >
-                            ✓ Aktifkan
+                            {t('rental.rates.btn_activate', undefined, '✓ Aktifkan')}
                         </button>
                         <button
                             type="button"
@@ -370,7 +370,7 @@ export default function RatesIndex({
                             disabled={processing}
                             className="inline-flex items-center gap-1 rounded-xl bg-slate-700 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800 disabled:opacity-50"
                         >
-                            ⏸ Nonaktifkan
+                            {t('rental.rates.btn_deactivate', undefined, '⏸ Nonaktifkan')}
                         </button>
                         <button
                             type="button"
@@ -379,7 +379,7 @@ export default function RatesIndex({
                             className="inline-flex items-center gap-1 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-rose-600 disabled:opacity-50"
                         >
                             <TrashIcon />
-                            <span>Hapus ({selected.length})</span>
+                            <span>{t('rental.rates.btn_batch_delete', { count: selected.length }, `Hapus (${selected.length})`)}</span>
                         </button>
                         <button
                             type="button"
@@ -387,7 +387,7 @@ export default function RatesIndex({
                             disabled={processing}
                             className="rounded-xl bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/20 disabled:opacity-50"
                         >
-                            ✕ Batal
+                            {t('rental.rates.btn_cancel', undefined, '✕ Batal')}
                         </button>
                     </div>
                 </div>
@@ -399,19 +399,21 @@ export default function RatesIndex({
                             <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
                                 <span className="text-4xl mb-3">🏷️</span>
                                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    {rates.data.length === 0 ? 'Belum Ada Skema Tarif Rental' : 'Tidak Ditemukan Tarif yang Cocok'}
+                                    {rates.data.length === 0
+                                        ? t('rental.rates.empty_title', undefined, 'Belum Ada Skema Tarif Rental')
+                                        : t('rental.rates.empty_search_title', undefined, 'Tidak Ditemukan Tarif yang Cocok')}
                                 </h3>
                                 <p className="mt-1 text-xs text-slate-500 max-w-md">
                                     {rates.data.length === 0
-                                        ? 'Buat konfigurasi tarif dasar sewa untuk armada harian, mingguan, atau bulanan dengan diskon bertingkat.'
-                                        : 'Coba ubah kata kunci pencarian atau sesuaikan filter periode dan status di atas.'}
+                                        ? t('rental.rates.empty_desc', undefined, 'Buat konfigurasi tarif dasar sewa untuk armada harian, mingguan, atau bulanan dengan diskon bertingkat.')
+                                        : t('rental.rates.empty_search_desc', undefined, 'Coba ubah kata kunci pencarian atau sesuaikan filter periode dan status di atas.')}
                                 </p>
                                 {rates.data.length === 0 && (
                                     <Link
                                         href={prefixedRoute('rental.rates.create')}
                                         className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
                                     >
-                                        Buat Tarif Pertama
+                                        {t('rental.rates.create_first', undefined, 'Buat Tarif Pertama')}
                                     </Link>
                                 )}
                             </div>
@@ -436,28 +438,28 @@ export default function RatesIndex({
                                                     />
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Nama Tarif & Diskon
+                                                    {t('rental.rates.th_name', undefined, 'Nama Tarif & Diskon')}
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Cakupan Kendaraan
+                                                    {t('rental.rates.th_vehicle', undefined, 'Cakupan Kendaraan')}
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Periode
+                                                    {t('rental.rates.th_period', undefined, 'Periode')}
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Harga Sewa
+                                                    {t('rental.rates.th_rate', undefined, 'Harga Sewa')}
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Jarak & Denda
+                                                    {t('rental.rates.th_distance_penalty', undefined, 'Jarak & Denda')}
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Deposit
+                                                    {t('rental.rates.th_deposit', undefined, 'Deposit')}
                                                 </th>
                                                 <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Status
+                                                    {t('rental.rates.th_status', undefined, 'Status')}
                                                 </th>
                                                 <th className="w-24 px-4 py-3.5 text-right font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    Aksi
+                                                    {t('rental.rates.th_actions', undefined, 'Aksi')}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -498,7 +500,7 @@ export default function RatesIndex({
                                                                         {rate.name}
                                                                     </Link>
                                                                     {Number(rate.priority) > 0 && (
-                                                                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300" title="Prioritas Overlap">
+                                                                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300" title={t('rental.rates.overlap_priority', undefined, 'Prioritas Overlap')}>
                                                                             P:{rate.priority}
                                                                         </span>
                                                                     )}
@@ -512,10 +514,10 @@ export default function RatesIndex({
                                                                                 type="button"
                                                                                 onClick={() => setPreviewTierRate(rate)}
                                                                                 className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700 ring-1 ring-sky-200/60 hover:bg-sky-100 transition dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-800"
-                                                                                title="Lihat rincian Tier Periode Sewa"
+                                                                                title={t('rental.rates.view_period_tiers', undefined, 'Lihat rincian Tier Periode Sewa')}
                                                                             >
                                                                                 <span>📅</span>
-                                                                                <span>{periodTiersCount} Tier Durasi</span>
+                                                                                <span>{t('rental.rates.duration_tier_count', { count: periodTiersCount }, `${periodTiersCount} Tier Durasi`)}</span>
                                                                             </button>
                                                                         )}
                                                                         {loyaltyTiersCount > 0 && (
@@ -523,20 +525,20 @@ export default function RatesIndex({
                                                                                 type="button"
                                                                                 onClick={() => setPreviewTierRate(rate)}
                                                                                 className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200/60 hover:bg-amber-100 transition dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800"
-                                                                                title="Lihat rincian Tier Pelanggan Loyal"
+                                                                                title={t('rental.rates.view_loyalty_tiers', undefined, 'Lihat rincian Tier Pelanggan Loyal')}
                                                                             >
                                                                                 <span>⭐</span>
-                                                                                <span>{loyaltyTiersCount} Tier Loyalty</span>
+                                                                                <span>{t('rental.rates.loyalty_tier_count', { count: loyaltyTiersCount }, `${loyaltyTiersCount} Tier Loyalty`)}</span>
                                                                             </button>
                                                                         )}
                                                                         {activeTiers.length === 0 && (
                                                                             <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800">
-                                                                                {tiers.length} tier nonaktif
+                                                                                {t('rental.rates.inactive_tier_count', { count: tiers.length }, `${tiers.length} tier nonaktif`)}
                                                                             </span>
                                                                         )}
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-[11px] text-slate-400">Tarif Flat (Tanpa Diskon Bertingkat)</p>
+                                                                    <p className="text-[11px] text-slate-400">{t('rental.rates.flat_rate_hint', undefined, 'Tarif Flat (Tanpa Diskon Bertingkat)')}</p>
                                                                 )}
                                                             </div>
                                                         </td>
@@ -552,17 +554,17 @@ export default function RatesIndex({
                                                             ) : rate.rental_class ? (
                                                                 <div className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/60 px-2.5 py-1 text-xs font-bold text-purple-800 dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-300">
                                                                     <span>🏷️</span>
-                                                                    <span>Kelas {rate.rental_class}</span>
+                                                                    <span>{t('rental.rates.class_coverage', { class: rate.rental_class }, `Kelas ${rate.rental_class}`)}</span>
                                                                 </div>
                                                             ) : rate.vehicle_type ? (
                                                                 <div className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/60 px-2.5 py-1 text-xs font-bold text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300">
                                                                     <span>🚙</span>
-                                                                    <span>Tipe {rate.vehicle_type}</span>
+                                                                    <span>{t('rental.rates.type_coverage', { type: rate.vehicle_type }, `Tipe ${rate.vehicle_type}`)}</span>
                                                                 </div>
                                                             ) : (
                                                                 <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                                     <span>🌐</span>
-                                                                    <span>Semua Armada (Global)</span>
+                                                                    <span>{t('rental.rates.all_fleet_global', undefined, 'Semua Armada (Global)')}</span>
                                                                 </div>
                                                             )}
                                                         </td>
@@ -578,7 +580,7 @@ export default function RatesIndex({
                                                                             : 'bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-300'
                                                                 }`}
                                                             >
-                                                                {rate.period_type === 'daily' ? '📅 Harian' : rate.period_type === 'weekly' ? '📆 Mingguan' : '🗓️ Bulanan'}
+                                                                {rate.period_type === 'daily' ? t('rental.rates.period_daily', undefined, '📅 Harian') : rate.period_type === 'weekly' ? t('rental.rates.period_weekly', undefined, '📆 Mingguan') : t('rental.rates.period_monthly', undefined, '🗓️ Bulanan')}
                                                             </span>
                                                         </td>
 
@@ -588,18 +590,18 @@ export default function RatesIndex({
                                                                 {formatMoney(rate.rate_per_period)}
                                                             </div>
                                                             <span className="text-[10px] text-slate-400">
-                                                                per {rate.period_type === 'daily' ? 'hari' : rate.period_type === 'weekly' ? 'minggu' : 'bulan'}
+                                                                {rate.period_type === 'daily' ? t('rental.rates.per_day', undefined, 'per hari') : rate.period_type === 'weekly' ? t('rental.rates.per_week', undefined, 'per minggu') : t('rental.rates.per_month', undefined, 'per bulan')}
                                                             </span>
                                                         </td>
 
                                                         {/* Jarak & Denda */}
                                                         <td className="whitespace-nowrap px-4 py-3.5">
                                                             <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                {rate.km_limit_per_period ? `${rate.km_limit_per_period} KM / periode` : 'Unlimited KM'}
+                                                                {rate.km_limit_per_period ? t('rental.rates.km_limit_period', { limit: rate.km_limit_per_period }, `${rate.km_limit_per_period} KM / periode`) : t('rental.rates.unlimited_km', undefined, 'Unlimited KM')}
                                                             </div>
                                                             {Number(rate.excess_km_rate) > 0 && (
                                                                 <div className="text-[10px] text-slate-400">
-                                                                    Kelebihan: {formatMoney(rate.excess_km_rate)}/KM
+                                                                    {t('rental.rates.excess_km_rate', { rate: formatMoney(rate.excess_km_rate) }, `Kelebihan: ${formatMoney(rate.excess_km_rate)}/KM`)}
                                                                 </div>
                                                             )}
                                                         </td>
@@ -612,7 +614,7 @@ export default function RatesIndex({
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-xs text-slate-400">
-                                                                    Tanpa Deposit
+                                                                    {t('rental.rates.no_deposit', undefined, 'Tanpa Deposit')}
                                                                 </span>
                                                             )}
                                                         </td>
@@ -628,10 +630,10 @@ export default function RatesIndex({
                                                                         ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
                                                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
                                                                 }`}
-                                                                title="Klik untuk mengubah status aktif"
+                                                                title={t('rental.rates.toggle_status_title', undefined, 'Klik untuk mengubah status aktif')}
                                                             >
                                                                 <span className={`h-2 w-2 rounded-full ${rate.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                                                                <span>{rate.is_active ? 'Aktif' : 'Non Aktif'}</span>
+                                                                <span>{rate.is_active ? t('rental.rates.status_active', undefined, 'Aktif') : t('rental.rates.status_inactive', undefined, 'Non Aktif')}</span>
                                                             </button>
                                                         </td>
 
@@ -641,16 +643,16 @@ export default function RatesIndex({
                                                                 <Link
                                                                     href={prefixedRoute('rental.rates.edit', { rate: rate.id })}
                                                                     className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                                                    title="Edit Tarif"
+                                                                    title={t('rental.pages.rates.edit', undefined, 'Edit Tarif')}
                                                                 >
                                                                     <PencilIcon />
-                                                                    <span>Edit</span>
+                                                                    <span>{t('common.edit', undefined, 'Edit')}</span>
                                                                 </Link>
 
                                                                 <Menu as="div" className="relative inline-block text-left">
                                                                     <MenuButton
                                                                         className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                                                                        title="Menu Aksi Lainnya"
+                                                                        title={t('rental.rates.more_actions', undefined, 'Menu Aksi Lainnya')}
                                                                     >
                                                                         <EllipsisVerticalIcon />
                                                                     </MenuButton>
@@ -667,7 +669,7 @@ export default function RatesIndex({
                                                                                     className={menuItemClassName}
                                                                                 >
                                                                                     <span>⭐</span>
-                                                                                    <span>Rincian Tier Diskon</span>
+                                                                                    <span>{t('rental.rates.tier_details', undefined, 'Rincian Tier Diskon')}</span>
                                                                                 </button>
                                                                             </MenuItem>
                                                                         )}
@@ -677,7 +679,7 @@ export default function RatesIndex({
                                                                                 onClick={() => toggleSingleStatus(rate)}
                                                                                 className={menuItemClassName}
                                                                             >
-                                                                                <span>{rate.is_active ? '⏸ Nonaktifkan' : '✓ Aktifkan'}</span>
+                                                                                <span>{rate.is_active ? t('rental.rates.deactivate', undefined, '⏸ Nonaktifkan') : t('rental.rates.activate', undefined, '✓ Aktifkan')}</span>
                                                                             </button>
                                                                         </MenuItem>
                                                                         <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
@@ -688,7 +690,7 @@ export default function RatesIndex({
                                                                                 className={menuItemDangerClassName}
                                                                             >
                                                                                 <TrashIcon />
-                                                                                <span>{t('common.delete', undefined, 'Hapus Tarif')}</span>
+                                                                                <span>{t('rental.rates.delete_rate', undefined, 'Hapus Tarif')}</span>
                                                                             </button>
                                                                         </MenuItem>
                                                                     </MenuItems>
@@ -769,10 +771,10 @@ export default function RatesIndex({
                         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                             <div>
                                 <DialogTitle className="text-base font-black text-slate-900 dark:text-white">
-                                    ⭐ Rincian Tier Diskon & Loyalty
+                                    {t('rental.rates.tier_modal_title', undefined, '⭐ Rincian Tier Diskon & Loyalty')}
                                 </DialogTitle>
                                 <p className="text-xs text-slate-500">
-                                    {previewTierRate?.name} (Pokok: {previewTierRate ? formatMoney(previewTierRate.rate_per_period) : ''})
+                                    {previewTierRate?.name} {previewTierRate ? t('rental.rates.base_rate_sub', { amount: formatMoney(previewTierRate.rate_per_period) }, `(Pokok: ${formatMoney(previewTierRate.rate_per_period)})`) : ''}
                                 </p>
                             </div>
                             <button
@@ -796,12 +798,12 @@ export default function RatesIndex({
                                         </span>
                                         <div>
                                             <p className="font-bold text-slate-900 dark:text-white">
-                                                {tier.tier_type === 'period_volume' ? '📅 Tier Durasi Sewa' : '⭐ Tier Customer Loyalty'}
+                                                {tier.tier_type === 'period_volume' ? t('rental.rates.tier_period_volume', undefined, '📅 Tier Durasi Sewa') : t('rental.rates.tier_loyalty_count', undefined, '⭐ Tier Customer Loyalty')}
                                             </p>
                                             <p className="text-[11px] text-slate-500">
-                                                Batas:{' '}
+                                                {t('rental.rates.threshold_label', undefined, 'Batas:')}{' '}
                                                 <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
-                                                    {tier.min_threshold}{tier.max_threshold ? ` - ${tier.max_threshold}` : '+'} {tier.tier_type === 'period_volume' ? 'periode' : 'rental selesai'}
+                                                    {tier.min_threshold}{tier.max_threshold ? ` - ${tier.max_threshold}` : '+'} {tier.tier_type === 'period_volume' ? t('rental.rates.unit_periods', undefined, 'periode') : t('rental.rates.unit_completed_rentals', undefined, 'rental selesai')}
                                                 </span>
                                             </p>
                                         </div>
@@ -822,14 +824,14 @@ export default function RatesIndex({
                                 className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-sm hover:bg-indigo-700"
                             >
                                 <PencilIcon />
-                                <span>Edit Skema Ini</span>
+                                <span>{t('rental.rates.btn_edit_scheme', undefined, 'Edit Skema Ini')}</span>
                             </Link>
                             <button
                                 type="button"
                                 onClick={() => setPreviewTierRate(null)}
                                 className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                             >
-                                Tutup
+                                {t('rental.rates.btn_close', undefined, 'Tutup')}
                             </button>
                         </div>
                     </DialogPanel>

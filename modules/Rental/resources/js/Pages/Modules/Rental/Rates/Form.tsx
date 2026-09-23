@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { Link, router, useForm, type InertiaFormProps } from '@inertiajs/react';
 import { Head, usePage } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
@@ -186,9 +187,14 @@ export default function FormPage({
             header={
                 <PageHeader
                     title={pageTitle}
-                    subtitle={mode === 'create' ? 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.' : 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.'}
+                    subtitle={
+                        mode === 'create'
+                            ? t('rental.pages.rates.create_subtitle', undefined, 'Buat konfigurasi harga pokok sewa, batasan kilometer, denda, dan skema diskon bertingkat.')
+                            : t('rental.pages.rates.edit_subtitle', undefined, 'Sesuaikan konfigurasi harga sewa dan diskon untuk skema tarif ini.')
+                    }
                     actions={
                         <div className="flex items-center gap-2">
+                            <LanguageSwitcher compact />
                             {mode === 'create' && (
                                 <button
                                     type="button"

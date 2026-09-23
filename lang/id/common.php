@@ -19,6 +19,8 @@ return [
     'confirm_delete_message' => 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',
     'confirm_delete_confirm' => 'Hapus',
     'confirm_delete_cancel' => 'Batal',
+    'select' => 'Pilih',
+    'select_all' => 'Pilih semua',
     'saved' => 'Tersimpan.',
     'loading' => 'Memuat…',
     'deleting' => 'Menghapus…',
