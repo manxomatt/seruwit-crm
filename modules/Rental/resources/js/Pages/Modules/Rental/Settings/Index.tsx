@@ -327,121 +327,183 @@ function GeneralPanel({
                             {/* Cancellation Fee & No-Show Fee Grid */}
                             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                                 {/* Cancellation Fee Card */}
-                                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4.5 dark:border-slate-800 dark:bg-slate-800/40">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                            {t('rental.settings.cancellation_fee', undefined, 'Denda Pembatalan')}
-                                        </span>
-                                        {/* Type Selector Tabs */}
-                                        <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
-                                            <button
-                                                type="button"
-                                                onClick={() => setData('cancellation_fee_type', 'fixed')}
-                                                className={`rounded-md px-2.5 py-0.5 text-xs font-bold transition ${
-                                                    data.cancellation_fee_type === 'fixed'
-                                                        ? 'bg-indigo-600 text-white shadow-xs'
-                                                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                                                }`}
-                                            >
-                                                Nominal (Rp)
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setData('cancellation_fee_type', 'percent')}
-                                                className={`rounded-md px-2.5 py-0.5 text-xs font-bold transition ${
-                                                    data.cancellation_fee_type === 'percent'
-                                                        ? 'bg-indigo-600 text-white shadow-xs'
-                                                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                                                }`}
-                                            >
-                                                Persen (%)
-                                            </button>
+                                <div className="flex h-full flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+                                    <div>
+                                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-xs font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+                                                        ✕
+                                                    </span>
+                                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {t('rental.settings.cancellation_fee', undefined, 'Denda Pembatalan')}
+                                                    </h4>
+                                                </div>
+                                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                    {t('rental.settings.cancellation_fee_hint', undefined, 'Dikenakan saat pembatalan melewati batas waktu bebas denda.')}
+                                                </p>
+                                            </div>
+
+                                            {/* Type Selector Tabs */}
+                                            <div className="inline-flex shrink-0 self-start rounded-xl border border-slate-200 bg-white p-1 shadow-2xs dark:border-slate-700 dark:bg-slate-800">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('cancellation_fee_type', 'fixed')}
+                                                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                                                        data.cancellation_fee_type === 'fixed'
+                                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                                            : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                                                    }`}
+                                                >
+                                                    Nominal (Rp)
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('cancellation_fee_type', 'percent')}
+                                                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                                                        data.cancellation_fee_type === 'percent'
+                                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                                            : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                                                    }`}
+                                                >
+                                                    Persen (%)
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4">
+                                            {data.cancellation_fee_type === 'fixed' ? (
+                                                <div className="relative">
+                                                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
+                                                        Rp
+                                                    </span>
+                                                    <MoneyInput
+                                                        id="cancellation_fee_amount"
+                                                        value={data.cancellation_fee_amount}
+                                                        onChange={(val) => setData('cancellation_fee_amount', val)}
+                                                        className="w-full rounded-xl pl-11 text-sm font-semibold"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="relative">
+                                                    <TextInput
+                                                        id="cancellation_fee_amount"
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        step="any"
+                                                        value={data.cancellation_fee_amount}
+                                                        onChange={(e) => setData('cancellation_fee_amount', e.target.value)}
+                                                        className="w-full rounded-xl pr-9 text-sm font-semibold"
+                                                        placeholder="0 - 100"
+                                                    />
+                                                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs font-bold text-slate-400">
+                                                        %
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <InputError message={errors.cancellation_fee_amount} className="mt-1" />
                                         </div>
                                     </div>
 
-                                    <div className="relative mt-3">
-                                        {data.cancellation_fee_type === 'fixed' && (
-                                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
-                                                Rp
-                                            </span>
-                                        )}
-                                        <TextInput
-                                            id="cancellation_fee_amount"
-                                            type="number"
-                                            min="0"
-                                            step="any"
-                                            value={data.cancellation_fee_amount}
-                                            onChange={(e) => setData('cancellation_fee_amount', e.target.value)}
-                                            className={`block w-full text-sm font-semibold ${
-                                                data.cancellation_fee_type === 'fixed' ? 'pl-11' : 'pr-9'
-                                            }`}
-                                        />
-                                        {data.cancellation_fee_type === 'percent' && (
-                                            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs font-bold text-slate-400">
-                                                %
-                                            </span>
-                                        )}
+                                    {/* Bottom indicator */}
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-200/60 pt-3 text-[11px] text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
+                                        <span>Skema Denda:</span>
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                            {data.cancellation_fee_type === 'fixed' ? 'Nominal Tetap (Rp)' : 'Persentase Total Sewa (%)'}
+                                        </span>
                                     </div>
-                                    <InputError message={errors.cancellation_fee_amount} className="mt-1" />
                                 </div>
 
                                 {/* No-Show Fee Card */}
-                                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4.5 dark:border-slate-800 dark:bg-slate-800/40">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                            {t('rental.settings.no_show_fee', undefined, 'Denda Tidak Hadir (No-Show)')}
-                                        </span>
-                                        {/* Type Selector Tabs */}
-                                        <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
-                                            <button
-                                                type="button"
-                                                onClick={() => setData('no_show_fee_type', 'fixed')}
-                                                className={`rounded-md px-2.5 py-0.5 text-xs font-bold transition ${
-                                                    data.no_show_fee_type === 'fixed'
-                                                        ? 'bg-indigo-600 text-white shadow-xs'
-                                                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                                                }`}
-                                            >
-                                                Nominal (Rp)
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setData('no_show_fee_type', 'percent')}
-                                                className={`rounded-md px-2.5 py-0.5 text-xs font-bold transition ${
-                                                    data.no_show_fee_type === 'percent'
-                                                        ? 'bg-indigo-600 text-white shadow-xs'
-                                                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                                                }`}
-                                            >
-                                                Persen (%)
-                                            </button>
+                                <div className="flex h-full flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+                                    <div>
+                                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-xs font-bold text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+                                                        ⚠️
+                                                    </span>
+                                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {t('rental.settings.no_show_fee', undefined, 'Denda Tidak Hadir (No-Show)')}
+                                                    </h4>
+                                                </div>
+                                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                    {t('rental.settings.no_show_fee_hint', undefined, 'Dikenakan jika pelanggan tidak hadir mengambil armada.')}
+                                                </p>
+                                            </div>
+
+                                            {/* Type Selector Tabs */}
+                                            <div className="inline-flex shrink-0 self-start rounded-xl border border-slate-200 bg-white p-1 shadow-2xs dark:border-slate-700 dark:bg-slate-800">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('no_show_fee_type', 'fixed')}
+                                                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                                                        data.no_show_fee_type === 'fixed'
+                                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                                            : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                                                    }`}
+                                                >
+                                                    Nominal (Rp)
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('no_show_fee_type', 'percent')}
+                                                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                                                        data.no_show_fee_type === 'percent'
+                                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                                            : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                                                    }`}
+                                                >
+                                                    Persen (%)
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4">
+                                            {data.no_show_fee_type === 'fixed' ? (
+                                                <div className="relative">
+                                                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
+                                                        Rp
+                                                    </span>
+                                                    <MoneyInput
+                                                        id="no_show_fee_amount"
+                                                        value={data.no_show_fee_amount}
+                                                        onChange={(val) => setData('no_show_fee_amount', val)}
+                                                        className="w-full rounded-xl pl-11 text-sm font-semibold"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="relative">
+                                                    <TextInput
+                                                        id="no_show_fee_amount"
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        step="any"
+                                                        value={data.no_show_fee_amount}
+                                                        onChange={(e) => setData('no_show_fee_amount', e.target.value)}
+                                                        className="w-full rounded-xl pr-9 text-sm font-semibold"
+                                                        placeholder="0 - 100"
+                                                    />
+                                                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs font-bold text-slate-400">
+                                                        %
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <InputError message={errors.no_show_fee_amount} className="mt-1" />
                                         </div>
                                     </div>
 
-                                    <div className="relative mt-3">
-                                        {data.no_show_fee_type === 'fixed' && (
-                                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
-                                                Rp
-                                            </span>
-                                        )}
-                                        <TextInput
-                                            id="no_show_fee_amount"
-                                            type="number"
-                                            min="0"
-                                            step="any"
-                                            value={data.no_show_fee_amount}
-                                            onChange={(e) => setData('no_show_fee_amount', e.target.value)}
-                                            className={`block w-full text-sm font-semibold ${
-                                                data.no_show_fee_type === 'fixed' ? 'pl-11' : 'pr-9'
-                                            }`}
-                                        />
-                                        {data.no_show_fee_type === 'percent' && (
-                                            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs font-bold text-slate-400">
-                                                %
-                                            </span>
-                                        )}
+                                    {/* Bottom indicator */}
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-200/60 pt-3 text-[11px] text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
+                                        <span>Skema Denda:</span>
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                            {data.no_show_fee_type === 'fixed' ? 'Nominal Tetap (Rp)' : 'Persentase Total Sewa (%)'}
+                                        </span>
                                     </div>
-                                    <InputError message={errors.no_show_fee_amount} className="mt-1" />
                                 </div>
                             </div>
 
