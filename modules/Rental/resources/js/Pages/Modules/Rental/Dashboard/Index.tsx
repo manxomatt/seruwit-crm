@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
@@ -85,22 +86,23 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
             header={
                 <PageHeader
                     title={t('rental.dashboard.title', undefined, 'Cockpit Operasional Rental')}
-                    subtitle="Monitor utilisasi armada, transaksi berjalan, pendapatan MTD, dan tindak lanjut operasional unit."
+                    subtitle={t('rental.dashboard.subtitle', undefined, 'Monitor utilisasi armada, transaksi berjalan, pendapatan MTD, dan tindak lanjut operasional unit.')}
                     actions={
                         <div className="flex items-center gap-2">
+                            <LanguageSwitcher compact />
                             <Link
                                 href={prefixedRoute('rental.create')}
                                 className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                             >
                                 <span>🚗</span>
-                                <span>Buat Sewa Baru</span>
+                                <span>{t('rental.dashboard.create_rental', undefined, 'Buat Sewa Baru')}</span>
                             </Link>
 
                             {/* Export CSV Dropdown */}
                             <Menu as="div" className="relative inline-block text-left">
                                 <MenuButton className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                     <span>📥</span>
-                                    <span>Export CSV</span>
+                                    <span>{t('rental.dashboard.export_csv', undefined, 'Export CSV')}</span>
                                     <span className="text-[10px] text-slate-400">▼</span>
                                 </MenuButton>
 
@@ -114,7 +116,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                                         >
                                             <span>⚠️</span>
-                                            <span>Export Unit Terlambat</span>
+                                            <span>{t('rental.dashboard.export_overdue', undefined, 'Export Unit Terlambat')}</span>
                                         </a>
                                     </MenuItem>
                                     <MenuItem>
@@ -123,7 +125,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                                         >
                                             <span>⏳</span>
-                                            <span>Export Segera Berakhir</span>
+                                            <span>{t('rental.dashboard.export_ending_soon', undefined, 'Export Segera Berakhir')}</span>
                                         </a>
                                     </MenuItem>
                                     <MenuItem>
@@ -132,7 +134,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                                         >
                                             <span>💰</span>
-                                            <span>Export Pendapatan MTD</span>
+                                            <span>{t('rental.dashboard.export_revenue_mtd', undefined, 'Export Pendapatan MTD')}</span>
                                         </a>
                                     </MenuItem>
                                     <MenuItem>
@@ -141,7 +143,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                                         >
                                             <span>🅿️</span>
-                                            <span>Export Unit Idle (Tersedia)</span>
+                                            <span>{t('rental.dashboard.export_idle', undefined, 'Export Unit Idle (Tersedia)')}</span>
                                         </a>
                                     </MenuItem>
                                 </MenuItems>
@@ -151,7 +153,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                 />
             }
         >
-            <Head title={t('rental.dashboard.title', undefined, 'Dashboard Rental')} />
+            <Head title={t('rental.dashboard.head', undefined, 'Dashboard Rental')} />
             <RentalNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
@@ -160,7 +162,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                     {/* Active Rentals */}
                     <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Unit Sedang Disewa</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                {t('rental.dashboard.on_hire_title', undefined, 'Unit Sedang Disewa')}
+                            </span>
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-50 text-base font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
                                 🚗
                             </span>
@@ -169,20 +173,24 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">
                                 {counts.active}
                             </span>
-                            <span className="text-xs font-bold text-slate-500">Unit Berjalan</span>
+                            <span className="text-xs font-bold text-slate-500">
+                                {t('rental.dashboard.active_units', undefined, 'Unit Berjalan')}
+                            </span>
                         </div>
                         <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800">
                             <span className="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
-                                {counts.confirmed} Dikonfirmasi
+                                {counts.confirmed} {t('rental.status.confirmed', undefined, 'Dikonfirmasi')}
                             </span>
-                            <span>siap serah terima</span>
+                            <span>{t('rental.dashboard.ready_for_handover', undefined, 'siap serah terima')}</span>
                         </div>
                     </div>
 
                     {/* Fleet Utilisation */}
                     <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Utilisasi Armada</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                {t('rental.dashboard.utilisation_title', undefined, 'Utilisasi Armada')}
+                            </span>
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-50 text-base font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
                                 📈
                             </span>
@@ -192,7 +200,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                 {utilisation.percent}%
                             </span>
                             <span className="text-xs font-bold text-slate-500">
-                                ({utilisation.on_rent}/{utilisation.fleet_active} Unit)
+                                ({utilisation.on_rent}/{utilisation.fleet_active} {t('rental.dashboard.units', undefined, 'Unit')})
                             </span>
                         </div>
                         {/* Progress Bar */}
@@ -203,14 +211,18 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                     style={{ width: `${Math.min(100, utilisation.percent)}%` }}
                                 />
                             </div>
-                            <p className="text-[11px] text-slate-400">{utilisation.idle} unit siap disewakan</p>
+                            <p className="text-[11px] text-slate-400">
+                                {t('rental.dashboard.idle_ready_units', { count: utilisation.idle }, `${utilisation.idle} unit siap disewakan`)}
+                            </p>
                         </div>
                     </div>
 
                     {/* Revenue MTD */}
                     <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Pendapatan Bulan Ini</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                {t('rental.dashboard.revenue_mtd_title', undefined, 'Pendapatan Bulan Ini')}
+                            </span>
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-50 text-base font-bold text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
                                 💰
                             </span>
@@ -221,7 +233,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             </span>
                         </div>
                         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800">
-                            <span>ADR (Rata-rata/Hari):</span>
+                            <span>{t('rental.dashboard.adr_label', undefined, 'ADR (Rata-rata/Hari):')}</span>
                             <span className="font-mono font-bold text-slate-900 dark:text-slate-200">
                                 {kpis ? formatMoney(kpis.adr) : '—'}
                             </span>
@@ -242,7 +254,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                     counts.overdue > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-slate-400'
                                 }`}
                             >
-                                Unit Terlambat (Overdue)
+                                {t('rental.dashboard.overdue_title', undefined, 'Unit Terlambat (Overdue)')}
                             </span>
                             <span
                                 className={`flex h-9 w-9 items-center justify-center rounded-2xl text-base font-bold ${
@@ -262,12 +274,14 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             >
                                 {counts.overdue}
                             </span>
-                            <span className="text-xs font-bold text-slate-500">Unit Melewati Batas</span>
+                            <span className="text-xs font-bold text-slate-500">
+                                {t('rental.dashboard.overdue_units', undefined, 'Unit Melewati Batas')}
+                            </span>
                         </div>
                         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800">
-                            <span>Segera berakhir (≤3 hari):</span>
+                            <span>{t('rental.dashboard.ending_soon_sub', undefined, 'Segera berakhir (≤3 hari):')}</span>
                             <span className="font-bold text-amber-600 dark:text-amber-400">
-                                {counts.ending_soon} Unit
+                                {counts.ending_soon} {t('rental.dashboard.units', undefined, 'Unit')}
                             </span>
                         </div>
                     </div>
@@ -276,35 +290,51 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                 {/* 2. Secondary Metrics Row */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-[11px] font-bold text-slate-400">RevPAC (Per Mobil Aktif)</p>
+                        <p className="text-[11px] font-bold text-slate-400">
+                            {t('rental.dashboard.revpac_title', undefined, 'RevPAC (Per Mobil Aktif)')}
+                        </p>
                         <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
                             {kpis ? formatMoney(kpis.revpac) : '—'}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">Efisiensi unit MTD</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-[11px] font-bold text-slate-400">Deposit Tertahan (Held)</p>
-                        <p className="mt-1 font-mono text-base font-black text-amber-600 dark:text-amber-400">
-                            {counts.unsettled_deposits} Transaksi
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                            {t('rental.dashboard.revpac_hint', undefined, 'Efisiensi unit MTD')}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">Perlu pengembalian</p>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-[11px] font-bold text-slate-400">Tingkat Kerusakan</p>
+                        <p className="text-[11px] font-bold text-slate-400">
+                            {t('rental.dashboard.unsettled_deposits_title', undefined, 'Deposit Tertahan (Held)')}
+                        </p>
+                        <p className="mt-1 font-mono text-base font-black text-amber-600 dark:text-amber-400">
+                            {counts.unsettled_deposits} {t('rental.dashboard.transactions', undefined, 'Transaksi')}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                            {t('rental.dashboard.unsettled_deposits_hint', undefined, 'Perlu pengembalian')}
+                        </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-[11px] font-bold text-slate-400">
+                            {t('rental.dashboard.damage_rate_title', undefined, 'Tingkat Kerusakan')}
+                        </p>
                         <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
                             {kpis ? `${kpis.damage_rate}%` : '0%'}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">Rasio klaim kerusakan</p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                            {t('rental.dashboard.damage_rate_hint', undefined, 'Rasio klaim kerusakan')}
+                        </p>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-[11px] font-bold text-slate-400">Selesai & Dikembalikan</p>
-                        <p className="mt-1 font-mono text-base font-black text-emerald-600 dark:text-emerald-400">
-                            {counts.returned + counts.completed} Unit
+                        <p className="text-[11px] font-bold text-slate-400">
+                            {t('rental.dashboard.completed_returned_title', undefined, 'Selesai & Dikembalikan')}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">Total transaksi rampung</p>
+                        <p className="mt-1 font-mono text-base font-black text-emerald-600 dark:text-emerald-400">
+                            {counts.returned + counts.completed} {t('rental.dashboard.units', undefined, 'Unit')}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                            {t('rental.dashboard.completed_returned_hint', undefined, 'Total transaksi rampung')}
+                        </p>
                     </div>
                 </div>
 
@@ -314,9 +344,12 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                         <div className="flex items-center gap-2.5">
                             <span className="text-lg">📄</span>
                             <div>
-                                <span className="font-bold">Peringatan Dokumen Armada: </span>
+                                <span className="font-bold">{t('rental.dashboard.compliance_docs_title', undefined, 'Peringatan Dokumen Armada: ')}</span>
                                 <span>
-                                    {compliance.documents.expired} dokumen STNK/KIR kadaluwarsa, {compliance.documents.expiring_30} jatuh tempo dalam 30 hari.
+                                    {t('rental.dashboard.compliance_docs_body', {
+                                        expired: compliance.documents.expired,
+                                        expiring: compliance.documents.expiring_30,
+                                    }, `${compliance.documents.expired} dokumen STNK/KIR kadaluwarsa, ${compliance.documents.expiring_30} jatuh tempo dalam 30 hari.`)}
                                 </span>
                             </div>
                         </div>
@@ -324,7 +357,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             href={prefixedRoute('documents.index')}
                             className="rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 transition hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-200"
                         >
-                            Buka Dokumen →
+                            {t('rental.dashboard.compliance_docs_btn', undefined, 'Buka Dokumen →')}
                         </Link>
                     </div>
                 )}
@@ -335,9 +368,12 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             <div className="flex items-center gap-2.5">
                                 <span className="text-lg">🛠️</span>
                                 <div>
-                                    <span className="font-bold">Jadwal Servis & Perawatan: </span>
+                                    <span className="font-bold">{t('rental.dashboard.compliance_maint_title', undefined, 'Jadwal Servis & Perawatan: ')}</span>
                                     <span>
-                                        {compliance.maintenance.overdue_work_orders} SPK terlambat, {compliance.maintenance.due_schedules} servis berkala jatuh tempo.
+                                        {t('rental.dashboard.compliance_maint_body', {
+                                            overdue: compliance.maintenance.overdue_work_orders,
+                                            due: compliance.maintenance.due_schedules,
+                                        }, `${compliance.maintenance.overdue_work_orders} SPK terlambat, ${compliance.maintenance.due_schedules} servis berkala jatuh tempo.`)}
                                     </span>
                                 </div>
                             </div>
@@ -345,7 +381,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                 href={prefixedRoute('maintenance.schedules.index')}
                                 className="rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 transition hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-200"
                             >
-                                Buka Perawatan →
+                                {t('rental.dashboard.compliance_maint_btn', undefined, 'Buka Perawatan →')}
                             </Link>
                         </div>
                     )}
@@ -360,22 +396,26 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                     ⚠️
                                 </span>
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                    Perlu Tindakan: Unit Terlambat ({overdue.length})
+                                    {t('rental.dashboard.overdue_action_title', { count: overdue.length }, `Perlu Tindakan: Unit Terlambat (${overdue.length})`)}
                                 </h3>
                             </div>
                             <Link
                                 href={prefixedRoute('rental.index')}
                                 className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                             >
-                                Lihat Semua
+                                {t('rental.dashboard.view_all', undefined, 'Lihat Semua')}
                             </Link>
                         </div>
 
                         {overdue.length === 0 ? (
                             <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
                                 <span className="text-3xl mb-2">🎉</span>
-                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Semua Unit Tepat Waktu</p>
-                                <p className="mt-0.5 text-[11px] text-slate-400">Tidak ada pengembalian yang melewati batas waktu.</p>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    {t('rental.dashboard.overdue_all_ontime', undefined, 'Semua Unit Tepat Waktu')}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                    {t('rental.dashboard.overdue_none_sub', undefined, 'Tidak ada pengembalian yang melewati batas waktu.')}
+                                </p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -393,26 +433,26 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                                     {row.code}
                                                 </Link>
                                                 <span className="rounded-md bg-rose-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-300">
-                                                    Terlambat
+                                                    {t('rental.status.overdue', undefined, 'Terlambat')}
                                                 </span>
                                             </div>
 
                                             <div className="text-xs text-slate-700 dark:text-slate-300">
-                                                <span className="font-bold">{row.vehicle?.name ?? 'Unit'}</span>
+                                                <span className="font-bold">{row.vehicle?.name ?? t('rental.fields.unit', undefined, 'Unit')}</span>
                                                 <span className="font-mono text-[11px] text-slate-400"> ({row.vehicle?.plate_number})</span>
-                                                <span className="text-slate-400"> · {row.partner?.name ?? 'Pelanggan'}</span>
+                                                <span className="text-slate-400"> · {row.partner?.name ?? t('rental.fields.customer', undefined, 'Pelanggan')}</span>
                                             </div>
                                         </div>
 
                                         <div className="text-right">
                                             <div className="font-mono text-xs font-bold text-rose-600 dark:text-rose-400">
-                                                Jatuh Tempo: {row.end_date}
+                                                {t('rental.dashboard.due_date_label', undefined, 'Jatuh Tempo:')} {row.end_date}
                                             </div>
                                             <Link
                                                 href={prefixedRoute('rental.show', row.id)}
                                                 className="mt-1 inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
                                             >
-                                                Proses Return →
+                                                {t('rental.dashboard.process_return_btn', undefined, 'Proses Return →')}
                                             </Link>
                                         </div>
                                     </div>
@@ -429,22 +469,26 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                     ⏳
                                 </span>
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                    Berakhir Dalam 3 Hari ({ending_soon.length})
+                                    {t('rental.dashboard.ending_soon_title', { count: ending_soon.length }, `Berakhir Dalam 3 Hari (${ending_soon.length})`)}
                                 </h3>
                             </div>
                             <Link
                                 href={prefixedRoute('rental.index')}
                                 className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                             >
-                                Lihat Semua
+                                {t('rental.dashboard.view_all', undefined, 'Lihat Semua')}
                             </Link>
                         </div>
 
                         {ending_soon.length === 0 ? (
                             <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
                                 <span className="text-3xl mb-2">📅</span>
-                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Tidak Ada Sewa Segera Berakhir</p>
-                                <p className="mt-0.5 text-[11px] text-slate-400">Tidak ada pengembalian unit dalam 3 hari ke depan.</p>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    {t('rental.dashboard.ending_soon_none_title', undefined, 'Tidak Ada Sewa Segera Berakhir')}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                    {t('rental.dashboard.ending_soon_none_sub', undefined, 'Tidak ada pengembalian unit dalam 3 hari ke depan.')}
+                                </p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -462,20 +506,20 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                                     {row.code}
                                                 </Link>
                                                 <span className="rounded-md bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
-                                                    Segera Kembali
+                                                    {t('rental.dashboard.returning_soon_badge', undefined, 'Segera Kembali')}
                                                 </span>
                                             </div>
 
                                             <div className="text-xs text-slate-700 dark:text-slate-300">
-                                                <span className="font-bold">{row.vehicle?.name ?? 'Unit'}</span>
+                                                <span className="font-bold">{row.vehicle?.name ?? t('rental.fields.unit', undefined, 'Unit')}</span>
                                                 <span className="font-mono text-[11px] text-slate-400"> ({row.vehicle?.plate_number})</span>
-                                                <span className="text-slate-400"> · {row.partner?.name ?? 'Pelanggan'}</span>
+                                                <span className="text-slate-400"> · {row.partner?.name ?? t('rental.fields.customer', undefined, 'Pelanggan')}</span>
                                             </div>
                                         </div>
 
                                         <div className="text-right">
                                             <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                Kembali: {row.end_date}
+                                                {t('rental.dashboard.return_date_label', undefined, 'Kembali:')} {row.end_date}
                                             </div>
                                             <div className="mt-0.5 font-mono text-[11px] text-slate-400">
                                                 {formatMoney(row.total_amount)}
@@ -497,18 +541,20 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             </span>
                             <div>
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                    Analitik Pendapatan Sewa (MTD)
+                                    {t('rental.dashboard.revenue_analytics_title', undefined, 'Analitik Pendapatan Sewa (MTD)')}
                                 </h3>
-                                <p className="text-xs text-slate-400">Rincian pendapatan berdasarkan unit armada, partner, dan jenis sewa.</p>
+                                <p className="text-xs text-slate-400">
+                                    {t('rental.dashboard.revenue_analytics_subtitle', undefined, 'Rincian pendapatan berdasarkan unit armada, partner, dan jenis sewa.')}
+                                </p>
                             </div>
                         </div>
 
                         {/* Tabs */}
                         <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-850">
                             {[
-                                { key: 'vehicle', label: '🚗 Per Armada' },
-                                { key: 'partner', label: '👥 Per Pelanggan' },
-                                { key: 'type', label: '⏱️ Jenis Sewa' },
+                                { key: 'vehicle', label: t('rental.dashboard.tab_vehicle', undefined, '🚗 Per Armada') },
+                                { key: 'partner', label: t('rental.dashboard.tab_partner', undefined, '👥 Per Pelanggan') },
+                                { key: 'type', label: t('rental.dashboard.tab_type', undefined, '⏱️ Jenis Sewa') },
                             ].map((tab) => (
                                 <button
                                     key={tab.key}
@@ -530,7 +576,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                         {revenueTab === 'vehicle' && (
                             <div className="space-y-3">
                                 {revenue.by_vehicle.length === 0 ? (
-                                    <p className="py-8 text-center text-xs text-slate-400">Belum ada data pendapatan per armada bulan ini.</p>
+                                    <p className="py-8 text-center text-xs text-slate-400">
+                                        {t('rental.dashboard.empty_rev_vehicle', undefined, 'Belum ada data pendapatan per armada bulan ini.')}
+                                    </p>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                         {revenue.by_vehicle.map((row) => (
@@ -540,7 +588,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             >
                                                 <div className="min-w-0">
                                                     <p className="truncate font-bold text-slate-900 dark:text-white">{row.name}</p>
-                                                    <p className="font-mono text-[11px] text-slate-400">{row.plate_number} · ×{row.count} sewa</p>
+                                                    <p className="font-mono text-[11px] text-slate-400">
+                                                        {row.plate_number} · {t('rental.dashboard.rentals_count', { count: row.count }, `×${row.count} sewa`)}
+                                                    </p>
                                                 </div>
                                                 <span className="font-mono text-xs font-black text-indigo-600 dark:text-indigo-400">
                                                     {formatMoney(row.total)}
@@ -555,7 +605,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                         {revenueTab === 'partner' && (
                             <div className="space-y-3">
                                 {revenue.by_partner.length === 0 ? (
-                                    <p className="py-8 text-center text-xs text-slate-400">Belum ada data pendapatan per partner bulan ini.</p>
+                                    <p className="py-8 text-center text-xs text-slate-400">
+                                        {t('rental.dashboard.empty_rev_partner', undefined, 'Belum ada data pendapatan per partner bulan ini.')}
+                                    </p>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                         {revenue.by_partner.map((row) => (
@@ -565,7 +617,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             >
                                                 <div className="min-w-0">
                                                     <p className="truncate font-bold text-slate-900 dark:text-white">{row.name}</p>
-                                                    <p className="text-[11px] text-slate-400">×{row.count} transaksi</p>
+                                                    <p className="text-[11px] text-slate-400">
+                                                        {t('rental.dashboard.transactions_count', { count: row.count }, `×${row.count} transaksi`)}
+                                                    </p>
                                                 </div>
                                                 <span className="font-mono text-xs font-black text-indigo-600 dark:text-indigo-400">
                                                     {formatMoney(row.total)}
@@ -580,7 +634,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                         {revenueTab === 'type' && (
                             <div className="space-y-3">
                                 {revenue.by_type.length === 0 ? (
-                                    <p className="py-8 text-center text-xs text-slate-400">Belum ada data pendapatan per jenis sewa bulan ini.</p>
+                                    <p className="py-8 text-center text-xs text-slate-400">
+                                        {t('rental.dashboard.empty_rev_type', undefined, 'Belum ada data pendapatan per jenis sewa bulan ini.')}
+                                    </p>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                         {revenue.by_type.map((row) => (
@@ -589,8 +645,12 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                                 className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-850"
                                             >
                                                 <div>
-                                                    <p className="font-bold uppercase tracking-wider text-slate-900 dark:text-white">{row.type}</p>
-                                                    <p className="text-[11px] text-slate-400">×{row.count} penyewaan</p>
+                                                    <p className="font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                                                        {t(`rental.period_type.${row.type}`, undefined, row.type)}
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-400">
+                                                        {t('rental.dashboard.hires_count', { count: row.count }, `×${row.count} penyewaan`)}
+                                                    </p>
                                                 </div>
                                                 <span className="font-mono text-sm font-black text-indigo-600 dark:text-indigo-400">
                                                     {formatMoney(row.total)}
@@ -613,22 +673,26 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                             </span>
                             <div>
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                    Armada Tersedia / Siap Disewakan ({idle_vehicles.length})
+                                    {t('rental.dashboard.idle_fleet_title', { count: idle_vehicles.length }, `Armada Tersedia / Siap Disewakan (${idle_vehicles.length})`)}
                                 </h3>
-                                <p className="text-xs text-slate-400">Unit dalam kondisi aktif yang siap diambil untuk sewa baru.</p>
+                                <p className="text-xs text-slate-400">
+                                    {t('rental.dashboard.idle_fleet_subtitle', undefined, 'Unit dalam kondisi aktif yang siap diambil untuk sewa baru.')}
+                                </p>
                             </div>
                         </div>
                         <Link
                             href={prefixedRoute('rental.availability.index')}
                             className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                         >
-                            Cek Kalender Ketersediaan →
+                            {t('rental.dashboard.check_availability_btn', undefined, 'Cek Kalender Ketersediaan →')}
                         </Link>
                     </div>
 
                     <div className="p-5">
                         {idle_vehicles.length === 0 ? (
-                            <p className="py-8 text-center text-xs text-slate-400">Seluruh armada sedang dalam masa sewa (utilisasi 100%).</p>
+                            <p className="py-8 text-center text-xs text-slate-400">
+                                {t('rental.dashboard.idle_all_rented', undefined, 'Seluruh armada sedang dalam masa sewa (utilisasi 100%).')}
+                            </p>
                         ) : (
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 {idle_vehicles.map((vehicle) => (
@@ -640,7 +704,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                             <div className="flex items-center justify-between">
                                                 <span className="font-mono text-xs font-bold text-slate-500">{vehicle.plate_number}</span>
                                                 <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                                    Tersedia
+                                                    {t('rental.dashboard.available_badge', undefined, 'Tersedia')}
                                                 </span>
                                             </div>
                                             <p className="mt-1 font-bold text-slate-900 dark:text-white truncate">{vehicle.name}</p>
@@ -654,7 +718,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                                 href={prefixedRoute('rental.create', { vehicle_id: vehicle.id })}
                                                 className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-indigo-700"
                                             >
-                                                <span>Sewa Sekarang</span>
+                                                <span>{t('rental.dashboard.rent_now_btn', undefined, 'Sewa Sekarang')}</span>
                                             </Link>
                                         </div>
                                     </div>
