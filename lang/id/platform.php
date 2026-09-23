@@ -21,6 +21,7 @@ return [
 
     'modules_catalog' => [
         'title' => 'Modul',
+        'description' => 'Kelola modul operasional dan data demo untuk ruang kerja Anda',
         'plan_label' => 'Paket Langganan',
         'available_heading' => 'Modul yang Tersedia',
         'available_hint' => 'Mencopot modul tidak menghapus datanya. Data disimpan :days hari — pasang lagi sebelum itu dan semuanya kembali seperti semula.',

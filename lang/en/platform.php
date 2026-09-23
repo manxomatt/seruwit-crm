@@ -21,6 +21,7 @@ return [
 
     'modules_catalog' => [
         'title' => 'Modules',
+        'description' => 'Manage operational modules and demo datasets for your workspace',
         'plan_label' => 'Subscription Plan',
         'available_heading' => 'Available Modules',
         'available_hint' => 'Uninstalling a module does not delete its data. Data is kept for :days days — install it again before then and everything comes back as it was.',

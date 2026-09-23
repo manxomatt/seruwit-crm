@@ -7,6 +7,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 
 type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data' | 'disabled' | 'disabled_with_data';
 
@@ -71,6 +72,7 @@ export default function Index({
     const [busyKey, setBusyKey] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [isDemoSectionOpen, setIsDemoSectionOpen] = useState(false);
 
     const filteredModules = useMemo(() => {
         return modules.filter((module) => {
@@ -132,7 +134,8 @@ export default function Index({
             header={
                 <PageHeader
                     title={t('platform.modules_catalog.title')}
-                    description="Kelola modul operasional dan data demo untuk ruang kerja Anda"
+                    description={t('platform.modules_catalog.description', undefined, 'Kelola modul operasional dan data demo untuk ruang kerja Anda')}
+                    actions={<LanguageSwitcher compact />}
                 />
             }
         >
@@ -172,79 +175,114 @@ export default function Index({
                     </div>
                 </div>
 
-                {/* Demo Datasets Section */}
+                {/* Demo Datasets Section (Collapsible) */}
                 {canInstallDemoData && demos.length > 0 && (
-                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-                        <div className="border-b border-slate-100 dark:border-slate-800/60 pb-4 mb-6 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">{t('platform.modules_catalog.demos_heading')}</h3>
-                                <p className="text-xs text-slate-400">{t('platform.modules_catalog.demos_hint')}</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {demos.map((demo) => {
-                                const busy = busyKey === `demo:${demo.key}` || busyKey === `demo-uninstall:${demo.key}`;
-
-                                return (
-                                    <div
-                                        key={demo.key}
-                                        className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-5 flex flex-col justify-between"
-                                    >
-                                        <div>
-                                            <div className="flex items-center justify-between gap-2 mb-2">
-                                                <h4 className="text-xs font-bold text-slate-900 dark:text-white">{demo.label}</h4>
-                                                {demo.installed && (
-                                                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
-                                                        {t('platform.modules_catalog.states.installed')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{demo.description}</p>
-                                            {demo.includes && demo.includes.length > 0 && (
-                                                <p className="text-[11px] font-mono text-slate-400 dark:text-slate-500 mb-2">
-                                                    📦 {t('platform.modules_catalog.demos_includes_prefix')} {demo.includes.join(', ')}
-                                                </p>
-                                            )}
-                                            {demo.requires_module && !demo.module_available && (
-                                                <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-2">
-                                                    ⚠️ {t('platform.modules_catalog.demos_requires_module', { module: demo.requires_module })}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800 flex justify-end">
-                                            {demo.installed ? (
-                                                <SecondaryButton
-                                                    disabled={busy}
-                                                    onClick={() => uninstallDemo(demo.key)}
-                                                    className="!rounded-xl text-xs"
-                                                >
-                                                    {busyKey === `demo-uninstall:${demo.key}`
-                                                        ? t('platform.modules_catalog.actions.uninstalling')
-                                                        : t('platform.modules_catalog.actions.uninstall_demo')}
-                                                </SecondaryButton>
-                                            ) : (
-                                                <PrimaryButton
-                                                    disabled={busy || demo.module_available === false}
-                                                    onClick={() => installDemo(demo.key)}
-                                                    className="!rounded-xl text-xs shadow-sm"
-                                                >
-                                                    {busyKey === `demo:${demo.key}`
-                                                        ? t('platform.modules_catalog.actions.installing')
-                                                        : t('platform.modules_catalog.actions.install_demo')}
-                                                </PrimaryButton>
-                                            )}
-                                        </div>
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all">
+                        <button
+                            type="button"
+                            onClick={() => setIsDemoSectionOpen((prev) => !prev)}
+                            className="flex w-full items-center justify-between gap-4 p-6 text-left transition hover:bg-slate-50/60 dark:hover:bg-slate-850/40"
+                            aria-expanded={isDemoSectionOpen}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                                            {t('platform.modules_catalog.demos_heading')}
+                                        </h3>
+                                        {demos.filter((d) => d.installed).length > 0 && (
+                                            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
+                                                {demos.filter((d) => d.installed).length} {t('platform.modules_catalog.states.installed')}
+                                            </span>
+                                        )}
                                     </div>
-                                );
-                            })}
-                        </div>
+                                    <p className="text-xs text-slate-400">{t('platform.modules_catalog.demos_hint')}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <span className="hidden sm:inline-block text-[11px] font-bold text-slate-400">
+                                    {isDemoSectionOpen ? t('common.close', undefined, 'Tutup') : t('common.view', undefined, 'Buka')}
+                                </span>
+                                <div
+                                    className={`flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${
+                                        isDemoSectionOpen ? 'rotate-180' : ''
+                                    }`}
+                                >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </button>
+
+                        {isDemoSectionOpen && (
+                            <div className="border-t border-slate-100 dark:border-slate-800/60 p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {demos.map((demo) => {
+                                        const busy = busyKey === `demo:${demo.key}` || busyKey === `demo-uninstall:${demo.key}`;
+
+                                        return (
+                                            <div
+                                                key={demo.key}
+                                                className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-5 flex flex-col justify-between"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">{demo.label}</h4>
+                                                        {demo.installed && (
+                                                            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
+                                                                {t('platform.modules_catalog.states.installed')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{demo.description}</p>
+                                                    {demo.includes && demo.includes.length > 0 && (
+                                                        <p className="text-[11px] font-mono text-slate-400 dark:text-slate-500 mb-2">
+                                                            📦 {t('platform.modules_catalog.demos_includes_prefix')} {demo.includes.join(', ')}
+                                                        </p>
+                                                    )}
+                                                    {demo.requires_module && !demo.module_available && (
+                                                        <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-2">
+                                                            ⚠️ {t('platform.modules_catalog.demos_requires_module', { module: demo.requires_module })}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800 flex justify-end">
+                                                    {demo.installed ? (
+                                                        <SecondaryButton
+                                                            disabled={busy}
+                                                            onClick={() => uninstallDemo(demo.key)}
+                                                            className="!rounded-xl text-xs"
+                                                        >
+                                                            {busyKey === `demo-uninstall:${demo.key}`
+                                                                ? t('platform.modules_catalog.actions.uninstalling')
+                                                                : t('platform.modules_catalog.actions.uninstall_demo')}
+                                                        </SecondaryButton>
+                                                    ) : (
+                                                        <PrimaryButton
+                                                            disabled={busy || demo.module_available === false}
+                                                            onClick={() => installDemo(demo.key)}
+                                                            className="!rounded-xl text-xs shadow-sm"
+                                                        >
+                                                            {busyKey === `demo:${demo.key}`
+                                                                ? t('platform.modules_catalog.actions.installing')
+                                                                : t('platform.modules_catalog.actions.install_demo')}
+                                                        </PrimaryButton>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
