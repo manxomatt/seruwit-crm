@@ -78,8 +78,9 @@ class MobileRentalBookingService
             'one_way_fee_amount' => $input['one_way_fee_amount'] ?? null,
         ]);
 
+        $insuranceEnabled = (bool) RentalGeneralSettings::all()['insurance_packages_enabled'];
         $insuranceAmount = null;
-        if (filled($input['insurance_package_id'] ?? null)) {
+        if ($insuranceEnabled && filled($input['insurance_package_id'] ?? null)) {
             $package = RentalInsurancePackage::query()
                 ->where('is_active', true)
                 ->find((int) $input['insurance_package_id']);
@@ -208,7 +209,7 @@ class MobileRentalBookingService
                 'pickup_location' => $hydrated['pickup_location'] ?? ($input['pickup_location'] ?? null),
                 'return_location' => $hydrated['return_location'] ?? ($input['return_location'] ?? null),
                 'one_way_fee_amount' => $hydrated['one_way_fee_amount'] ?? null,
-                'insurance_package_id' => $input['insurance_package_id'] ?? null,
+                'insurance_package_id' => ((bool) RentalGeneralSettings::all()['insurance_packages_enabled']) ? ($input['insurance_package_id'] ?? null) : null,
                 'fuel_policy_notes' => $input['fuel_policy_notes'] ?? null,
                 'notes' => $input['notes'] ?? null,
             ]);

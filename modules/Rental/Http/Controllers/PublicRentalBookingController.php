@@ -24,6 +24,7 @@ use Modules\Rental\Support\PublicRentalCatalog;
 use Modules\Rental\Support\RentalBookingPolicy;
 use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
+use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLifecycleGate;
@@ -120,6 +121,9 @@ class PublicRentalBookingController extends Controller
         ]);
 
         $periodType = $validated['period_type'] ?? 'daily';
+        $insurancePackagesEnabled = (bool) RentalGeneralSettings::all()['insurance_packages_enabled'];
+        $insurancePackageId = $insurancePackagesEnabled ? ($validated['insurance_package_id'] ?? null) : null;
+
         $quote = $bookings->quote([
             'vehicle_id' => $vehicle->id,
             'start_date' => $validated['start_date'],
@@ -127,7 +131,7 @@ class PublicRentalBookingController extends Controller
             'period_type' => $periodType,
             'pickup_location_id' => $validated['pickup_location_id'] ?? null,
             'return_location_id' => $validated['return_location_id'] ?? null,
-            'insurance_package_id' => $validated['insurance_package_id'] ?? null,
+            'insurance_package_id' => $insurancePackageId,
         ]);
 
         return Inertia::render('Modules/Rental/Public/VehicleShow', [
@@ -140,24 +144,27 @@ class PublicRentalBookingController extends Controller
                 'period_type' => $periodType,
                 'pickup_location_id' => $validated['pickup_location_id'] ?? null,
                 'return_location_id' => $validated['return_location_id'] ?? ($validated['pickup_location_id'] ?? null),
-                'insurance_package_id' => $validated['insurance_package_id'] ?? null,
+                'insurance_package_id' => $insurancePackageId,
             ],
             'quote' => $this->quotePayload($quote),
             'locations' => app(RentalLocationHydrator::class)->depotOptions(),
-            'insurance_packages' => RentalInsurancePackage::query()
-                ->where('is_active', true)
-                ->where('period_type', $periodType)
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->get(['id', 'code', 'name', 'amount', 'description'])
-                ->map(fn (RentalInsurancePackage $package): array => [
-                    'id' => $package->id,
-                    'code' => $package->code,
-                    'name' => $package->name,
-                    'amount' => (float) $package->amount,
-                    'description' => $package->description,
-                ])
-                ->all(),
+            'insurance_packages_enabled' => $insurancePackagesEnabled,
+            'insurance_packages' => $insurancePackagesEnabled
+                ? RentalInsurancePackage::query()
+                    ->where('is_active', true)
+                    ->where('period_type', $periodType)
+                    ->orderBy('sort_order')
+                    ->orderBy('id')
+                    ->get(['id', 'code', 'name', 'amount', 'description'])
+                    ->map(fn (RentalInsurancePackage $package): array => [
+                        'id' => $package->id,
+                        'code' => $package->code,
+                        'name' => $package->name,
+                        'amount' => (float) $package->amount,
+                        'description' => $package->description,
+                    ])
+                    ->all()
+                : [],
             'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
             'gateway_available' => $this->gatewayAvailable(),
             'is_dev_mode' => \App\Support\SystemMode::shouldExposeDebugOtp(),
@@ -178,6 +185,10 @@ class PublicRentalBookingController extends Controller
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
         ]);
 
+        if (! RentalGeneralSettings::all()['insurance_packages_enabled']) {
+            $data['insurance_package_id'] = null;
+        }
+
         return response()->json([
             'quote' => $this->quotePayload($bookings->quote($data)),
         ]);
@@ -191,6 +202,10 @@ class PublicRentalBookingController extends Controller
         $this->ensureAvailable();
 
         $data = $request->validated();
+
+        if (! RentalGeneralSettings::all()['insurance_packages_enabled']) {
+            $data['insurance_package_id'] = null;
+        }
 
         if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
             return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')])->withInput();

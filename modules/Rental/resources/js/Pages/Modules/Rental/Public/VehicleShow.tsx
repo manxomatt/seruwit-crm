@@ -79,6 +79,7 @@ interface Props {
     quote: Quote;
     locations: LocationOption[];
     insurance_packages: InsurancePackage[];
+    insurance_packages_enabled?: boolean;
     hold_ttl_minutes: number;
     gateway_available: boolean;
     is_dev_mode?: boolean;
@@ -97,6 +98,7 @@ export default function VehicleShow({
     quote: initialQuote,
     locations,
     insurance_packages,
+    insurance_packages_enabled = true,
     hold_ttl_minutes,
     is_dev_mode = false,
 }: Props) {
@@ -120,7 +122,7 @@ export default function VehicleShow({
         return_location_id: filters.return_location_id ? String(filters.return_location_id) : '',
         pickup_time: '08:00',
         return_time: '17:00',
-        insurance_package_id: filters.insurance_package_id ? String(filters.insurance_package_id) : '',
+        insurance_package_id: insurance_packages_enabled && filters.insurance_package_id ? String(filters.insurance_package_id) : '',
         customer_name: '',
         customer_email: '',
         booker_phone: '',
@@ -169,7 +171,7 @@ export default function VehicleShow({
                 period_type: payload.period_type,
                 pickup_location_id: payload.pickup_location_id || null,
                 return_location_id: payload.return_location_id || null,
-                insurance_package_id: payload.insurance_package_id || null,
+                insurance_package_id: insurance_packages_enabled ? (payload.insurance_package_id || null) : null,
             });
             setQuote(data.quote);
         } catch {
@@ -553,18 +555,20 @@ export default function VehicleShow({
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Paket Asuransi Tambahan</label>
-                                        <PublicSelect
-                                            value={form.data.insurance_package_id}
-                                            onChange={(val) => {
-                                                form.setData('insurance_package_id', val);
-                                                void refreshQuote({ insurance_package_id: val });
-                                            }}
-                                            options={insuranceOptions}
-                                            placeholder="Tanpa Asuransi Tambahan"
-                                        />
-                                    </div>
+                                    {insurance_packages_enabled && insurance_packages.length > 0 && (
+                                        <div>
+                                            <label className="text-[11px] font-bold text-slate-700 block mb-1">Paket Asuransi Tambahan</label>
+                                            <PublicSelect
+                                                value={form.data.insurance_package_id}
+                                                onChange={(val) => {
+                                                    form.setData('insurance_package_id', val);
+                                                    void refreshQuote({ insurance_package_id: val });
+                                                }}
+                                                options={insuranceOptions}
+                                                placeholder="Tanpa Asuransi Tambahan"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Live Quote Breakdown Card */}
@@ -597,7 +601,7 @@ export default function VehicleShow({
                                                 <span className="font-bold text-slate-900">{quote.base_amount ? money(quote.base_amount) : '—'}</span>
                                             </div>
 
-                                            {quote.insurance_amount != null && quote.insurance_amount > 0 && (
+                                            {insurance_packages_enabled && quote.insurance_amount != null && quote.insurance_amount > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
                                                     <span>Proteksi Asuransi</span>
                                                     <span className="font-bold text-slate-900">{money(quote.insurance_amount)}</span>
