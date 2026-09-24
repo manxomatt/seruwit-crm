@@ -122,7 +122,9 @@ class PublicRentalBookingController extends Controller
 
         $periodType = $validated['period_type'] ?? 'daily';
         $insurancePackagesEnabled = (bool) RentalGeneralSettings::all()['insurance_packages_enabled'];
-        $insurancePackageId = $insurancePackagesEnabled ? ($validated['insurance_package_id'] ?? null) : null;
+        $insurancePackageId = ($insurancePackagesEnabled && ! empty($validated['insurance_package_id']))
+            ? (int) $validated['insurance_package_id']
+            : null;
 
         $quote = $bookings->quote([
             'vehicle_id' => $vehicle->id,

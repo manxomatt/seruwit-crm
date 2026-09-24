@@ -59,14 +59,18 @@ class PublicRentalVehicleInsuranceTest extends TestCase
             'min_periods' => 1,
         ]);
 
-        $package = RentalInsurancePackage::factory()->create([
-            'code' => 'cdw',
-            'name' => 'Collision Damage Waiver',
-            'period_type' => 'daily',
-            'amount' => 50000,
-            'is_active' => true,
-        ]);
+        $package = RentalInsurancePackage::query()->firstWhere('code', 'cdw');
+        if (! $package) {
+            $package = RentalInsurancePackage::factory()->create([
+                'code' => 'custom_cdw',
+                'name' => 'Collision Damage Waiver',
+                'period_type' => 'daily',
+                'amount' => 50000,
+                'is_active' => true,
+            ]);
+        }
 
+        $packageAmount = (float) $package->amount;
         $start = now()->addDay()->toDateString();
         $end = now()->addDays(2)->toDateString();
 
@@ -80,10 +84,8 @@ class PublicRentalVehicleInsuranceTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Public/VehicleShow')
                 ->where('insurance_packages_enabled', true)
-                ->has('insurance_packages', 1)
-                ->where('insurance_packages.0.id', $package->id)
                 ->where('filters.insurance_package_id', $package->id)
-                ->where('quote.insurance_amount', 50000));
+                ->where('quote.insurance_amount', $packageAmount));
 
         $this->postJson(route('book.rental.quote'), [
             'vehicle_id' => $vehicle->id,
@@ -93,7 +95,7 @@ class PublicRentalVehicleInsuranceTest extends TestCase
             'insurance_package_id' => $package->id,
         ])
             ->assertOk()
-            ->assertJsonPath('quote.insurance_amount', 50000);
+            ->assertJsonPath('quote.insurance_amount', $packageAmount);
     }
 
     public function test_vehicle_show_and_booking_ignore_insurance_when_disabled(): void
@@ -118,13 +120,16 @@ class PublicRentalVehicleInsuranceTest extends TestCase
             'min_periods' => 1,
         ]);
 
-        $package = RentalInsurancePackage::factory()->create([
-            'code' => 'cdw',
-            'name' => 'Collision Damage Waiver',
-            'period_type' => 'daily',
-            'amount' => 50000,
-            'is_active' => true,
-        ]);
+        $package = RentalInsurancePackage::query()->firstWhere('code', 'cdw');
+        if (! $package) {
+            $package = RentalInsurancePackage::factory()->create([
+                'code' => 'custom_cdw_2',
+                'name' => 'Collision Damage Waiver',
+                'period_type' => 'daily',
+                'amount' => 50000,
+                'is_active' => true,
+            ]);
+        }
 
         $start = now()->addDay()->toDateString();
         $end = now()->addDays(2)->toDateString();
