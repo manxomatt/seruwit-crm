@@ -77,7 +77,11 @@ interface Props {
     handoverEvidence?: HandoverEvidence;
     depositProofUrl?: string | null;
     pickupCustomerSignatureUrl?: string | null;
+    passengerKtpUrl?: string | null;
+    passengerSimUrl?: string | null;
+    uploadDocumentsUrl?: string | null;
     gatewayEnabled?: boolean;
+
     canPayDepositOnline?: boolean;
     companyBankAccounts?: CompanyBankAccountOption[];
     postConfirm?: PostConfirmProgress;
@@ -117,7 +121,11 @@ export default function Show({
     },
     depositProofUrl = null,
     pickupCustomerSignatureUrl = null,
+    passengerKtpUrl = null,
+    passengerSimUrl = null,
+    uploadDocumentsUrl = null,
     canPayDepositOnline = false,
+
     companyBankAccounts = [],
     postConfirm = { visible: false, current_step: null, steps: [] },
     aiInspectionEnabled = true,
@@ -886,6 +894,9 @@ export default function Show({
                     vehicleSwaps={vehicleSwaps}
                     checklistItems={checklistItems}
                     handoverEvidence={handoverEvidence}
+                    passengerKtpUrl={passengerKtpUrl}
+                    passengerSimUrl={passengerSimUrl}
+                    uploadDocumentsUrl={uploadDocumentsUrl}
                     aiKycEnabled={aiKycEnabled}
                     aiInspectionEnabled={aiInspectionEnabled}
                     latestAiInspection={latestAiInspection}

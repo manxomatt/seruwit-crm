@@ -204,6 +204,7 @@ class RentalModule implements ModuleContract
         Route::delete('/rental/{rental}/damages/{damage}', [RentalActionController::class, 'destroyDamage'])->middleware('permission:rental,damages')->name('rental.damages.destroy');
         Route::post('/rental/{rental}/addons', [RentalActionController::class, 'storeAddon'])->middleware('permission:rental,finance')->name('rental.addons.store');
         Route::delete('/rental/{rental}/addons/{charge}', [RentalActionController::class, 'destroyAddon'])->middleware('permission:rental,finance')->name('rental.addons.destroy');
+        Route::post('/rental/{rental}/documents', [RentalActionController::class, 'uploadDocuments'])->middleware('permission:rental,bookings')->name('rental.documents.upload');
 
         // AI Handover Inspection
         Route::post('/rental/{rental}/ai-inspect-live', [RentalAiInspectionController::class, 'inspectLive'])

@@ -915,4 +915,39 @@ class RentalActionController extends Controller
 
         return back()->with('success', __('rental.messages.deposit_proof_rejected'));
     }
+
+    /**
+     * Upload or update customer identity documents (KTP & SIM) from staff view.
+     */
+    public function uploadDocuments(
+        Request $request,
+        Rental $rental,
+        \Modules\Rental\Support\RentalPassengerDocMedia $docs,
+    ): RedirectResponse {
+        $this->ensureAccessibleRental($rental);
+
+        $request->validate([
+            'ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'passenger_ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'passenger_sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        $updates = [];
+        $ktpFile = $request->file('ktp') ?? $request->file('passenger_ktp');
+        if ($ktpFile) {
+            $updates['passenger_ktp_path'] = $docs->storeUpload($ktpFile, $rental->id, 'ktp');
+        }
+
+        $simFile = $request->file('sim') ?? $request->file('passenger_sim');
+        if ($simFile) {
+            $updates['passenger_sim_path'] = $docs->storeUpload($simFile, $rental->id, 'sim');
+        }
+
+        if ($updates !== []) {
+            $rental->update($updates);
+        }
+
+        return back()->with('success', __('rental.public.documents_uploaded'));
+    }
 }

@@ -21,6 +21,24 @@ export default function BookingDetailsSection({ rental, periodLabel }: Props): J
                     <span className="font-mono text-slate-500">({rental.vehicle.plate_number})</span>
                 </DetailRow>
                 <DetailRow label={t('rental.fields.customer', undefined, 'Penyewa / Pelanggan')}>{rental.partner.name}</DetailRow>
+                <DetailRow label={t('rental.fields.identity_documents', undefined, 'Dokumen Identitas')}>
+                    {rental.passenger_ktp_path && rental.passenger_sim_path ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            KTP & SIM Terunggah
+                        </span>
+                    ) : rental.passenger_ktp_path || rental.passenger_sim_path ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                            <span className="h-2 w-2 rounded-full bg-amber-500" />
+                            {rental.passenger_ktp_path ? 'KTP Terunggah (SIM Belum)' : 'SIM Terunggah (KTP Belum)'}
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+                            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                            Belum Diunggah
+                        </span>
+                    )}
+                </DetailRow>
                 {rental.driver && (
                     <DetailRow label={t('rental.fields.driver', undefined, 'Supir (Driver)')}>{rental.driver.name}</DetailRow>
                 )}

@@ -148,6 +148,10 @@ class RentalShowPresenter
             ],
             'depositProofUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->deposit_proof_path),
             'pickupCustomerSignatureUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->pickup_customer_signature_path),
+            'passengerKtpUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
+            'passengerSimUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
+            'uploadDocumentsUrl' => route($routePrefix.'.rental.documents.upload', $rental),
+
             'gatewayEnabled' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
                 && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable(),
             'canPayDepositOnline' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)

@@ -3,6 +3,8 @@
 namespace Tests\Feature\Modules\Rental;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
@@ -230,5 +232,59 @@ class RentalAiKycTest extends TestCase
             ->postJson(route('module.rental.ai_scan_kyc', $rental))
             ->assertStatus(403)
             ->assertJsonPath('success', false);
+    }
+
+    public function test_staff_can_upload_passenger_documents(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_ACTIVE,
+            'passenger_ktp_path' => null,
+            'passenger_sim_path' => null,
+        ]);
+
+        $ktpFile = UploadedFile::fake()->image('ktp.jpg');
+        $simFile = UploadedFile::fake()->image('sim.png');
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.documents.upload', $rental), [
+                'passenger_ktp' => $ktpFile,
+                'passenger_sim' => $simFile,
+            ])
+            ->assertRedirect();
+
+        $rental->refresh();
+        $this->assertNotNull($rental->passenger_ktp_path);
+        $this->assertNotNull($rental->passenger_sim_path);
+        Storage::disk('public')->assertExists($rental->passenger_ktp_path);
+        Storage::disk('public')->assertExists($rental->passenger_sim_path);
+    }
+
+    public function test_show_page_includes_document_urls(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_ACTIVE,
+            'passenger_ktp_path' => 'rental-docs/test_ktp.jpg',
+            'passenger_sim_path' => 'rental-docs/test_sim.jpg',
+        ]);
+
+        Storage::disk('public')->put('rental-docs/test_ktp.jpg', 'ktp content');
+        Storage::disk('public')->put('rental-docs/test_sim.jpg', 'sim content');
+
+        $response = $this->actingAs($this->createAdminUser())
+            ->get(route('module.rental.show', $rental));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Modules/Rental/Show')
+            ->has('passengerKtpUrl')
+            ->has('passengerSimUrl')
+            ->has('uploadDocumentsUrl')
+            ->whereNot('passengerKtpUrl', null)
+            ->whereNot('passengerSimUrl', null)
+        );
     }
 }

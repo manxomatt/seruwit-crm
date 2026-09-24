@@ -1,8 +1,8 @@
-import AiKycVerificationCard from '../../../../Components/AiKycVerificationCard';
 import { type AiInspectionData } from '../../../../Components/AiHandoverInspectionPanel';
 import AddonsSection from './sections/AddonsSection';
 import BillingSection from './sections/BillingSection';
 import BookingDetailsSection from './sections/BookingDetailsSection';
+import CustomerDocumentsSection from './sections/CustomerDocumentsSection';
 import DamagesSection from './sections/DamagesSection';
 import ExtensionRequestsSection from './sections/ExtensionRequestsSection';
 import ExtensionsHistorySection from './sections/ExtensionsHistorySection';
@@ -24,6 +24,9 @@ interface Props {
     vehicleSwaps: VehicleSwapRow[];
     checklistItems: string[];
     handoverEvidence: HandoverEvidence;
+    passengerKtpUrl?: string | null;
+    passengerSimUrl?: string | null;
+    uploadDocumentsUrl?: string | null;
     aiKycEnabled: boolean;
     aiInspectionEnabled: boolean;
     latestAiInspection: AiInspectionData | null;
@@ -32,6 +35,7 @@ interface Props {
     aiInspectExistingUrl?: string;
     aiApplyDamageUrl?: string;
 }
+
 
 /**
  * Two-column detail grid for the rental Show page. Each child is a display
@@ -47,6 +51,9 @@ export default function RentalSections({
     vehicleSwaps,
     checklistItems,
     handoverEvidence,
+    passengerKtpUrl,
+    passengerSimUrl,
+    uploadDocumentsUrl,
     aiKycEnabled,
     aiInspectionEnabled,
     latestAiInspection,
@@ -67,16 +74,16 @@ export default function RentalSections({
             <div className="space-y-6 lg:col-span-3">
                 <BookingDetailsSection rental={rental} periodLabel={periodLabel} />
 
-                {aiKycEnabled && (
-                    <AiKycVerificationCard
-                        assessment={rental.ai_kyc_assessment ?? null}
-                        hasKtp={Boolean(rental.passenger_ktp_path)}
-                        hasSim={Boolean(rental.passenger_sim_path)}
-                        aiScanKycUrl={aiScanKycUrl || ''}
-                        aiSyncKycPartnerUrl={aiSyncKycPartnerUrl}
-                        canUpdate={rental.status !== 'cancelled' && rental.status !== 'cancelled_paid'}
-                    />
-                )}
+                <CustomerDocumentsSection
+                    rental={rental}
+                    passengerKtpUrl={passengerKtpUrl}
+                    passengerSimUrl={passengerSimUrl}
+                    uploadDocumentsUrl={uploadDocumentsUrl}
+                    aiKycEnabled={aiKycEnabled}
+                    aiScanKycUrl={aiScanKycUrl}
+                    aiSyncKycPartnerUrl={aiSyncKycPartnerUrl}
+                />
+
 
                 <PricingSnapshotSection rental={rental} periodLabel={periodLabel} />
 
