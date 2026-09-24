@@ -444,8 +444,11 @@ class PublicRentalBookingController extends Controller
             return $guardResponse;
         }
 
-        $isAlreadyPaid = (float) $rental->deposit_amount > 0 ? $rental->isDepositReceived() : $rental->status === Rental::STATUS_CONFIRMED;
-        if ($isAlreadyPaid) {
+        $paymentSummary = app(RentalInvoiceService::class)->paymentSummary($rental);
+        $hasUnpaidBalance = ((float) $paymentSummary['balance_due']) > 0;
+        $isDepositSettled = (float) $rental->deposit_amount > 0 ? $rental->isDepositReceived() : $rental->status === Rental::STATUS_CONFIRMED;
+
+        if ($isDepositSettled && ! $hasUnpaidBalance) {
             return back()->with('error', __('rental.public.deposit_already_received'));
         }
 
@@ -1137,7 +1140,7 @@ class PublicRentalBookingController extends Controller
         return [
             'status' => $summary['status'],
             'balance_due' => (float) $summary['balance_due'],
-            'can_pay_balance' => $payable !== [] && $this->gatewayAvailable(),
+            'can_pay_balance' => (float) $summary['balance_due'] > 0,
             'invoices' => $payable,
         ];
     }

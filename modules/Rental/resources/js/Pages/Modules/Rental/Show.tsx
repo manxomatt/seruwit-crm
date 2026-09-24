@@ -653,9 +653,11 @@ export default function Show({
                                     Pending Verification
                                 </span>
                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                                    {Number(rental.deposit_amount) > 0
-                                        ? `Verifikasi Bukti Transfer Manual Deposit (${formatMoney(rental.deposit_amount)})`
-                                        : `Verifikasi Bukti Transfer Pembayaran Sewa (${formatMoney(rental.total_amount)})`}
+                                    {rental.status === 'active' && payment.balance_due > 0
+                                        ? `Verifikasi Bukti Transfer Perpanjangan / Pelunasan Sewa (${formatMoney(payment.balance_due)})`
+                                        : Number(rental.deposit_amount) > 0
+                                            ? `Verifikasi Bukti Transfer Manual Deposit (${formatMoney(rental.deposit_amount)})`
+                                            : `Verifikasi Bukti Transfer Pembayaran Sewa (${formatMoney(rental.total_amount)})`}
                                 </h3>
                             </div>
                             {rental.deposit_proof_uploaded_at && (
@@ -677,10 +679,16 @@ export default function Show({
                                 </div>
                                 <div>
                                     <span className="font-semibold text-slate-500">
-                                        {Number(rental.deposit_amount) > 0 ? 'Jumlah Deposit:' : 'Jumlah Pembayaran Sewa:'}
+                                        {rental.status === 'active' && payment.balance_due > 0
+                                            ? 'Jumlah Pelunasan / Tagihan:'
+                                            : Number(rental.deposit_amount) > 0 ? 'Jumlah Deposit:' : 'Jumlah Pembayaran Sewa:'}
                                     </span>{' '}
                                     <span className="font-black text-indigo-700 dark:text-indigo-400 text-sm">
-                                        {formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}
+                                        {formatMoney(
+                                            rental.status === 'active' && payment.balance_due > 0
+                                                ? payment.balance_due
+                                                : Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount
+                                        )}
                                     </span>
                                 </div>
                                 <div>

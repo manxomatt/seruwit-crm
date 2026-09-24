@@ -389,8 +389,23 @@ export default function BookingView({ brand, booking, gateway_available, company
         }
     };
 
+    const isBalancePayable =
+        (booking.status === 'active' || booking.status === 'confirmed') &&
+        Number(booking.payment?.balance_due ?? 0) > 0;
+
     const pay = (e: FormEvent) => {
         e.preventDefault();
+        if (isBalancePayable && booking.payment.invoices?.[0]?.id) {
+            const url = typeof route === 'function' && route().has('book.rental.booking.pay_invoice')
+                ? route('book.rental.booking.pay_invoice', booking.public_token)
+                : `/book/rental/booking/${booking.public_token}/pay-invoice`;
+            router.post(url, {
+                booker_phone: booking.booker_phone,
+                invoice_id: booking.payment.invoices[0].id,
+            });
+            return;
+        }
+
         const url = typeof route === 'function' && route().has('book.rental.booking.pay_deposit')
             ? route('book.rental.booking.pay_deposit', booking.public_token)
             : `/book/rental/booking/${booking.public_token}/pay-deposit`;
@@ -683,6 +698,44 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             )}
 
+                            {/* Transfer Proof Pending Verification Banner */}
+                            {booking.deposit_proof?.status === 'pending' && (
+                                <div className="overflow-hidden rounded-2xl bg-amber-50 border border-amber-200 p-5 text-amber-950 shadow-xs space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-200/60 text-lg">
+                                            ⏳
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black text-amber-900">
+                                                Bukti Transfer Sedang Diverifikasi
+                                            </h3>
+                                            <p className="text-xs text-amber-800">
+                                                Bukti pembayaran Anda telah kami terima dan sedang diverifikasi oleh staf operasional.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Transfer Proof Rejected Banner */}
+                            {booking.deposit_proof?.status === 'rejected' && (
+                                <div className="overflow-hidden rounded-2xl bg-rose-50 border border-rose-200 p-5 text-rose-950 shadow-xs space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-200/60 text-lg">
+                                            ⚠️
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black text-rose-900">
+                                                Bukti Transfer Ditolak
+                                            </h3>
+                                            <p className="text-xs text-rose-800">
+                                                {booking.deposit_proof.rejected_reason || 'Mohon unggah kembali bukti transfer yang valid dan sesuai nominal.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Vehicle Detail Card */}
                             <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-xs">
                                 <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center gap-5">
@@ -919,12 +972,14 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             </div>
 
-                            {/* Deposit Payment Box */}
-                            {booking.can_pay_deposit && booking.deposit_proof?.status !== 'pending' && (
+                            {/* Payment Box (Deposit / Extension / Balance) */}
+                            {(booking.can_pay_deposit || isBalancePayable) && booking.deposit_proof?.status !== 'pending' && (
                                 <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                            Pembayaran {Number(booking.deposit_amount) > 0 ? 'Deposit' : 'Sewa'}
+                                            {isBalancePayable
+                                                ? 'Pembayaran Tagihan / Perpanjangan Sewa'
+                                                : (Number(booking.deposit_amount) > 0 ? 'Pembayaran Deposit' : 'Pembayaran Sewa')}
                                         </h3>
                                         <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[10px] font-bold">
                                             <button
@@ -961,6 +1016,10 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                                                         if (!selectedBank) return null;
 
+                                                        const payableAmount = isBalancePayable
+                                                            ? Number(booking.payment.balance_due)
+                                                            : (Number(booking.deposit_amount) > 0 ? Number(booking.deposit_amount) : Number(booking.total_amount));
+
                                                         return (
                                                             <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-2">
                                                                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
@@ -988,7 +1047,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                                     )}
                                                                 </div>
                                                                 <p className="text-[11px] text-slate-600 font-semibold leading-relaxed">
-                                                                    Transfer nominal: <b className="text-slate-950 font-black">{money(Number(booking.deposit_amount) > 0 ? booking.deposit_amount : booking.total_amount)}</b>
+                                                                    Transfer nominal: <b className="text-slate-950 font-black">{money(payableAmount)}</b>
                                                                 </p>
                                                             </div>
                                                         );
@@ -1027,7 +1086,11 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                         className="w-full h-11 flex items-center justify-center rounded-xl text-xs font-black uppercase text-white shadow-sm transition"
                                                         style={{ backgroundColor: 'var(--brand-color)' }}
                                                     >
-                                                        Bayar online ({money(Number(booking.deposit_amount) > 0 ? booking.deposit_amount : booking.total_amount)})
+                                                        Bayar online ({money(
+                                                            isBalancePayable
+                                                                ? Number(booking.payment.balance_due)
+                                                                : (Number(booking.deposit_amount) > 0 ? Number(booking.deposit_amount) : Number(booking.total_amount))
+                                                        )})
                                                     </button>
                                                 </form>
                                             )}

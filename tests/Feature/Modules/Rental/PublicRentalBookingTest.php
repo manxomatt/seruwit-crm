@@ -723,6 +723,28 @@ class PublicRentalBookingTest extends TestCase
             \Modules\Rental\Models\RentalExtensionRequest::STATUS_APPROVED,
             $request->fresh()->status,
         );
+
+        $pageResponse = $this->get(route('book.rental.booking.show', $rental->public_token))->assertOk();
+        $this->assertTrue($pageResponse->viewData('page')['props']['booking']['payment']['balance_due'] > 0);
+        $this->assertTrue($pageResponse->viewData('page')['props']['booking']['payment']['can_pay_balance']);
+
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('extension_proof.jpg', 500, 'image/jpeg');
+        $this->post(route('book.rental.booking.upload_deposit_proof', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $otp,
+            'deposit_proof' => $file,
+        ])->assertRedirect();
+
+        $this->assertSame('pending', $rental->fresh()->deposit_proof_status);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.approve_deposit_proof', $rental->id))
+            ->assertRedirect();
+
+        $this->assertSame('approved', $rental->fresh()->deposit_proof_status);
+        $paymentSummary = app(\Modules\Rental\Support\RentalInvoiceService::class)->paymentSummary($rental->fresh());
+        $this->assertSame(0.0, (float) $paymentSummary['balance_due']);
     }
 
     public function test_passenger_can_upload_ktp_and_sim(): void

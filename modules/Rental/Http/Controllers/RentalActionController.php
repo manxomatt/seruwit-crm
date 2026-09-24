@@ -884,7 +884,7 @@ class RentalActionController extends Controller
             $this->confirmation->confirmAfterPaymentIfPending($rental->fresh());
         }
 
-        if ((float) $rental->deposit_amount <= 0) {
+        if ((float) $rental->deposit_amount <= 0 || in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_CONFIRMED], true)) {
             $this->accounting->payRentalInvoicesFromProof($rental->fresh());
         }
 
