@@ -25,7 +25,7 @@ class LocaleResolver
         $queryLang = $request->query('lang') ?? $request->query('locale');
         if (is_string($queryLang) && in_array($queryLang, $supported, true)) {
             $request->session()->put(config('localization.session_key', 'locale'), $queryLang);
-            if ($user = $request->user()) {
+            if (($user = $request->user()) && $user instanceof \App\Models\User) {
                 $user->forceFill(['locale' => $queryLang])->save();
             }
 
@@ -68,7 +68,7 @@ class LocaleResolver
 
         $user = $request->user();
 
-        if ($user && $user->locale !== $locale) {
+        if ($user instanceof \App\Models\User && $user->locale !== $locale) {
             $user->forceFill(['locale' => $locale])->save();
         }
 

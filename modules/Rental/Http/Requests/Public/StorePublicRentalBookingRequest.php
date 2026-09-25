@@ -18,7 +18,7 @@ class StorePublicRentalBookingRequest extends FormRequest
     public function rules(): array
     {
         $phone = $this->input('booker_phone') ?? '';
-        $isVerified = $phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone);
+        $isVerified = ($phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone)) || auth('customer')->check();
         $hydrator = app(\Modules\Rental\Support\RentalLocationHydrator::class);
         $depotRequired = $hydrator->depotOptions() !== [];
 

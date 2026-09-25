@@ -209,7 +209,7 @@ class PublicRentalBookingController extends Controller
             $data['insurance_package_id'] = null;
         }
 
-        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
+        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'] ?? null)) {
             return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')])->withInput();
         }
 
@@ -243,7 +243,7 @@ class PublicRentalBookingController extends Controller
         ]);
 
         $phone = $otp->normalize($data['booker_phone']);
-        $alreadyVerified = $otp->isVerified($phone);
+        $alreadyVerified = $otp->isVerified($phone) || (auth('customer')->check() && auth('customer')->user()->phone === $phone);
 
         if ($alreadyVerified) {
             if ($request->wantsJson()) {
@@ -825,6 +825,10 @@ class PublicRentalBookingController extends Controller
 
     private function assertOtp(PassengerOtpService $otp, string $phone, ?string $code): bool
     {
+        if (auth('customer')->check()) {
+            return true;
+        }
+
         if ($otp->isVerified($phone)) {
             return true;
         }

@@ -210,6 +210,8 @@ class MobileRentalBookingService
                 'return_location' => $hydrated['return_location'] ?? ($input['return_location'] ?? null),
                 'one_way_fee_amount' => $hydrated['one_way_fee_amount'] ?? null,
                 'insurance_package_id' => ((bool) RentalGeneralSettings::all()['insurance_packages_enabled']) ? ($input['insurance_package_id'] ?? null) : null,
+                'passenger_ktp_path' => $partner->id_card_photo_path,
+                'passenger_sim_path' => $partner->driver_license_photo_path,
                 'fuel_policy_notes' => $input['fuel_policy_notes'] ?? null,
                 'notes' => $input['notes'] ?? null,
             ]);

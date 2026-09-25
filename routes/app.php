@@ -87,6 +87,32 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
     Route::post('/booking/{token}/request-pickup', [PublicRentalBookingController::class, 'requestPickup'])->name('booking.request_pickup');
     Route::post('/booking/{token}/documents', [PublicRentalBookingController::class, 'uploadDocuments'])->name('booking.documents');
     Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
+
+    // Customer Authentication (Option A+C)
+    Route::middleware('guest:customer')->group(function (): void {
+        Route::get('/login', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'showLogin'])->name('login');
+        Route::post('/login/otp', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'sendOtp'])->name('login.otp');
+        Route::post('/login/verify-otp', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'verifyOtp'])->name('login.verify_otp');
+        Route::post('/login/password', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'loginWithPassword'])->name('login.password');
+        Route::get('/register', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'register'])->name('register.submit');
+    });
+
+    Route::post('/logout', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'logout'])
+        ->middleware('auth:customer')
+        ->name('logout');
+
+    // Customer Portal (Option A+C)
+    Route::middleware('auth:customer')->prefix('portal')->name('portal.')->group(function (): void {
+        Route::get('/', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/rentals', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'rentals'])->name('rentals.index');
+        Route::get('/rentals/{code}', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'showRental'])->name('rentals.show');
+        Route::get('/documents', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'documents'])->name('documents.index');
+        Route::post('/documents', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateDocuments'])->name('documents.update');
+        Route::get('/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'profile'])->name('profile');
+        Route::put('/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateProfile'])->name('profile.update');
+        Route::put('/profile/password', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updatePassword'])->name('profile.password');
+    });
 });
 
 // Capacitor / native passenger API (JSON). CSRF exempt — see bootstrap/app.php.

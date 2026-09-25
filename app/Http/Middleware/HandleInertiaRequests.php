@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use App\Support\LocaleResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -33,12 +34,17 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
+        $rawUser = $request->user();
+        $user = ($rawUser instanceof \App\Models\User) ? $rawUser : $request->user('web');
+        $customer = Auth::guard('customer')->user() ?: ($rawUser instanceof \Modules\Rental\Models\Customer ? $rawUser : $request->user('customer'));
+        if ($customer) {
+            $customer->loadMissing('partner');
+        }
         $routePrefix = $this->getRoutePrefix($request);
         $locales = app(LocaleResolver::class);
 
         // Eager load profile and roles with permissions to avoid N+1 query
-        if ($user) {
+        if ($user instanceof \App\Models\User) {
             $user->load(['profile', 'roles.permissions']);
         }
 
@@ -67,6 +73,16 @@ class HandleInertiaRequests extends Middleware
                         'avatar_url' => $user->profile->avatar_url,
                     ] : null,
                     'permissions' => $this->getUserPermissions($user),
+                ] : null,
+                'customer' => $customer ? [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'phone' => $customer->phone,
+                    'email' => $customer->email,
+                    'partner_id' => $customer->partner_id,
+                    'kyc_status' => $customer->partner?->kyc_status ?? 'unverified',
+                    'has_id_card' => filled($customer->partner?->id_card_photo_path),
+                    'has_driver_license' => filled($customer->partner?->driver_license_photo_path),
                 ] : null,
             ],
             'locale' => app()->getLocale(),

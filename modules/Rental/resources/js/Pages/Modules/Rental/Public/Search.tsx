@@ -1,7 +1,7 @@
 import LanguageToggle from '@/Components/LanguageToggle';
 import PublicSelect from '@/Components/PublicSelect';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 
 interface HelpLocation {
@@ -109,6 +109,7 @@ export default function Search({
     hold_ttl_minutes,
 }: Props) {
     const { t } = useTrans();
+    const customer = (usePage().props as any)?.auth?.customer;
     const [selectedCategory, setSelectedCategory] = useState<string>(filters.rental_class ?? '');
     const [searching, setSearching] = useState(false);
     const [depotError, setDepotError] = useState(false);
@@ -332,6 +333,30 @@ export default function Search({
 
                         <div className="flex items-center gap-2 sm:gap-3">
                             <LanguageToggle />
+
+                            {customer ? (
+                                <Link
+                                    href={route('book.rental.portal.dashboard')}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800"
+                                >
+                                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-[9px] font-black text-white">
+                                        {customer.name?.charAt(0).toUpperCase() || 'P'}
+                                    </div>
+                                    <span className="hidden sm:inline">Portal Pelanggan</span>
+                                    <span className="sm:hidden">Portal</span>
+                                </Link>
+                            ) : (
+                                <Link
+                                    href={route('book.rental.login')}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 shadow-2xs transition hover:bg-slate-50 hover:text-slate-950"
+                                >
+                                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                    </svg>
+                                    <span className="hidden sm:inline">Masuk / Daftar</span>
+                                    <span className="sm:hidden">Masuk</span>
+                                </Link>
+                            )}
 
                             <Link
                                 href={route('book.rental.history')}
