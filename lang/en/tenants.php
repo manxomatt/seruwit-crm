@@ -153,6 +153,9 @@ return [
         'subdomain_format' => 'Subdomain may only contain lowercase letters, numbers, and hyphens (3–30 characters).',
         'subdomain_reserved' => 'This subdomain is not available.',
         'subdomain_taken' => 'This subdomain is already in use.',
+        'custom_domain_format' => 'Invalid domain format (example: app.yourdomain.com or yourdomain.com).',
+        'custom_domain_reserved' => 'This domain cannot be used as it is a system platform domain.',
+        'custom_domain_taken' => 'This domain is already registered in the system.',
     ],
 
     'messages' => [
@@ -167,6 +170,11 @@ return [
         'module_uninstalled' => 'Module :module uninstalled from :tenant. Its data is retained for :days days.',
         'setup_retried' => 'Setup re-queued. The workspace will be ready shortly.',
         'setup_retry_no_provision' => 'No provisioning data found for this tenant.',
+        'domain_created' => 'Custom domain added successfully.',
+        'domain_verified' => 'Domain successfully verified and active.',
+        'domain_verify_failed' => 'DNS not detected. Please verify your DNS settings.',
+        'domain_primary_updated' => 'Primary domain updated successfully.',
+        'domain_deleted' => 'Custom domain removed successfully.',
     ],
 
     'activity' => [

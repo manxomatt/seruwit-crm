@@ -224,7 +224,8 @@ class TenantController extends Controller
         $this->authorizeOwnership($request, $tenant);
 
         $tenant->loadCount('users');
-        $domain = $tenant->domains()->first()?->domain;
+        $domain = $tenant->domains()->where('is_custom', false)->first()?->domain
+            ?? $tenant->domains()->first()?->domain;
 
         $members = $tenant->run(fn (): array => User::query()
             ->with('roles')
@@ -358,7 +359,8 @@ class TenantController extends Controller
     {
         $this->authorizeOwnership($request, $tenant);
 
-        $currentDomain = $tenant->domains()->first();
+        $currentDomain = $tenant->domains()->where('is_custom', false)->first()
+            ?? $tenant->domains()->first();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -391,7 +393,7 @@ class TenantController extends Controller
         $newDomain = CreateTenantAction::fullDomain($request->string('subdomain')->value());
 
         if ($currentDomain === null) {
-            $tenant->domains()->create(['domain' => $newDomain]);
+            $tenant->domains()->create(['domain' => $newDomain, 'is_custom' => false, 'status' => 'active']);
         } elseif ($currentDomain->domain !== $newDomain) {
             $currentDomain->update(['domain' => $newDomain]);
         }

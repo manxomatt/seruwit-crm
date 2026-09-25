@@ -153,6 +153,9 @@ return [
         'subdomain_format' => 'Subdomain hanya boleh berisi huruf kecil, angka, dan tanda hubung (3–30 karakter).',
         'subdomain_reserved' => 'Subdomain ini tidak tersedia.',
         'subdomain_taken' => 'Subdomain ini sudah digunakan.',
+        'custom_domain_format' => 'Format domain tidak valid (contoh: sewa.domainanda.com atau domainanda.com).',
+        'custom_domain_reserved' => 'Domain ini tidak dapat digunakan karena merupakan domain sistem platform.',
+        'custom_domain_taken' => 'Domain ini sudah terdaftar di sistem.',
     ],
 
     'messages' => [
@@ -167,6 +170,11 @@ return [
         'module_uninstalled' => 'Modul :module dicopot dari :tenant. Datanya disimpan :days hari.',
         'setup_retried' => 'Setup dijadwalkan ulang. Workspace akan siap dalam beberapa saat.',
         'setup_retry_no_provision' => 'Tidak ada data provisioning untuk tenant ini.',
+        'domain_created' => 'Custom domain berhasil ditambahkan.',
+        'domain_verified' => 'Domain berhasil diverifikasi dan aktif.',
+        'domain_verify_failed' => 'DNS belum terdeteksi. Silakan periksa kembali pengaturan DNS Anda.',
+        'domain_primary_updated' => 'Domain utama berhasil diperbarui.',
+        'domain_deleted' => 'Custom domain berhasil dihapus.',
     ],
 
     'activity' => [

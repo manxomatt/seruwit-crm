@@ -35,6 +35,12 @@ return [
         ],
     ],
 
+    'cloudflare' => [
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'fallback_origin' => env('CLOUDFLARE_FALLBACK_ORIGIN'),
+    ],
+
     /*
      * Default Traccar server for the Tracking module. Base URL only: every
      * tenant points at the same company-run server, so defaulting it saves

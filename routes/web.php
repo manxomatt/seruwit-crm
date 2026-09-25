@@ -14,6 +14,7 @@ use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController;
 use App\Http\Controllers\Module\CentralModuleController;
+use App\Http\Controllers\Module\CustomDomainController;
 use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
 use App\Http\Controllers\Module\GlobalSearchController as ModuleGlobalSearchController;
 use App\Http\Controllers\Module\MailConfigController as ModuleMailConfigController;
@@ -230,6 +231,11 @@ Route::domain($centralDomain)
                     Route::post('/settings/bulk-update', [ModuleSettingController::class, 'bulkUpdate'])->middleware('permission:settings,update')->name('settings.bulk-update');
                     Route::post('/settings/appearance/reset', [ModuleSettingController::class, 'resetAppearance'])->middleware('permission:settings,update')->name('settings.appearance.reset');
                     Route::patch('/settings/mail', [ModuleMailConfigController::class, 'update'])->middleware('permission:settings,update')->name('settings.mail.update');
+                    Route::get('/settings/domain', [CustomDomainController::class, 'index'])->middleware('permission:settings,view')->name('settings.domain');
+                    Route::post('/settings/domain', [CustomDomainController::class, 'store'])->middleware('permission:settings,update')->name('settings.domain.store');
+                    Route::post('/settings/domain/{domain}/verify', [CustomDomainController::class, 'verify'])->middleware('permission:settings,update')->name('settings.domain.verify');
+                    Route::post('/settings/domain/{domain}/primary', [CustomDomainController::class, 'setPrimary'])->middleware('permission:settings,update')->name('settings.domain.primary');
+                    Route::delete('/settings/domain/{domain}', [CustomDomainController::class, 'destroy'])->middleware('permission:settings,update')->name('settings.domain.destroy');
                     Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
 
                     // Module User Management Routes
