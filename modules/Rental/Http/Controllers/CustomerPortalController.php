@@ -3,6 +3,8 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\CentralAiSettings;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,10 +16,12 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Partners\Models\Partner;
 use Modules\Receivables\Support\GatewayCheckoutService;
+use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
 use Modules\Rental\Models\Customer;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Support\RentalBookingPolicy;
+use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalStorefrontSettings;
 
 class CustomerPortalController extends Controller
@@ -150,6 +154,7 @@ class CustomerPortalController extends Controller
         return Inertia::render('Modules/Rental/Public/Customer/Documents', [
             'brand' => $this->brand(),
             'customer' => $customer->only(['id', 'name', 'phone']),
+            'ocrEnabled' => CentralAiSettings::isOcrEnabled() && RentalGeneralSettings::all()['ai_kyc_enabled'],
             'partner' => [
                 'kyc_status' => $partner?->kyc_status ?? Partner::KYC_STATUS_UNVERIFIED,
                 'kyc_rejected_reason' => $partner?->kyc_rejected_reason,
@@ -164,6 +169,64 @@ class CustomerPortalController extends Controller
                 'emergency_contact_phone' => $partner?->emergency_contact_phone,
             ],
         ]);
+    }
+
+    public function scanDocument(Request $request, DocumentKycServiceInterface $kycService): JsonResponse
+    {
+        if (! CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.ai.feature_disabled', ['feature' => 'AI OCR Dokumen']),
+            ], 403);
+        }
+
+        $request->validate([
+            'image' => ['nullable'],
+            'file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'doc_type' => ['nullable', 'string', 'in:ktp,sim,auto'],
+            'source' => ['nullable', 'string', 'in:upload,saved_ktp,saved_sim'],
+        ]);
+
+        $customer = $this->activeCustomer();
+        $partner = $customer->partner;
+
+        $imageSource = null;
+        if ($request->hasFile('file')) {
+            $imageSource = $request->file('file')->getRealPath();
+        } elseif ($request->hasFile('image')) {
+            $imageSource = $request->file('image')->getRealPath();
+        } elseif ($request->filled('image')) {
+            $imageSource = (string) $request->input('image');
+        } elseif ($request->input('source') === 'saved_ktp' && filled($partner?->id_card_photo_path)) {
+            $imageSource = (string) $partner->id_card_photo_path;
+        } elseif ($request->input('source') === 'saved_sim' && filled($partner?->driver_license_photo_path)) {
+            $imageSource = (string) $partner->driver_license_photo_path;
+        }
+
+        if (blank($imageSource)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.ai.no_documents_uploaded'),
+            ], 422);
+        }
+
+        try {
+            $extracted = $kycService->scanSingleDocument(
+                imageSource: $imageSource,
+                docType: $request->input('doc_type', 'auto'),
+            );
+
+            return response()->json([
+                'success' => true,
+                'result' => $extracted,
+                'message' => __('rental.ai.ocr_success'),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     public function updateDocuments(Request $request): RedirectResponse

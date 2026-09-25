@@ -7,8 +7,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Mockery\MockInterface;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
+use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
 use Modules\Rental\Models\Customer;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
@@ -325,5 +327,105 @@ class CustomerPortalTest extends TestCase
         $response = $this->post(route('book.rental.logout'));
         $response->assertRedirect(route('book.rental.search'));
         $this->assertFalse(auth('customer')->check());
+    }
+
+    public function test_customer_can_scan_ktp_document_via_ocr(): void
+    {
+        $partner = Partner::query()->create([
+            'code' => Partner::nextCode(),
+            'name' => 'Budi Santoso',
+            'phone' => '628112233445',
+            'sub_type' => 'customer',
+            'account_type' => 'individual',
+            'is_active' => true,
+        ]);
+
+        $customer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Budi Santoso',
+            'phone' => '628112233445',
+            'is_active' => true,
+        ]);
+
+        $this->mock(DocumentKycServiceInterface::class, function (MockInterface $mock) {
+            $mock->shouldReceive('scanSingleDocument')
+                ->once()
+                ->andReturn([
+                    'doc_type' => 'ktp',
+                    'confidence' => 0.94,
+                    'data' => [
+                        'nik' => '3271012345670001',
+                        'name' => 'BUDI SANTOSO',
+                        'birth_date' => '1990-05-12',
+                        'address' => 'Jl. Sudirman No. 45, Jakarta',
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->actingAs($customer, 'customer');
+
+        $file = UploadedFile::fake()->image('ktp.jpg');
+
+        $response = $this->postJson(route('book.rental.portal.documents.scan'), [
+            'file' => $file,
+            'doc_type' => 'ktp',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('result.doc_type', 'ktp')
+            ->assertJsonPath('result.data.nik', '3271012345670001')
+            ->assertJsonPath('result.data.name', 'BUDI SANTOSO');
+    }
+
+    public function test_customer_can_scan_sim_document_via_ocr(): void
+    {
+        $partner = Partner::query()->create([
+            'code' => Partner::nextCode(),
+            'name' => 'Budi Santoso',
+            'phone' => '628112233445',
+            'sub_type' => 'customer',
+            'account_type' => 'individual',
+            'is_active' => true,
+        ]);
+
+        $customer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Budi Santoso',
+            'phone' => '628112233445',
+            'is_active' => true,
+        ]);
+
+        $this->mock(DocumentKycServiceInterface::class, function (MockInterface $mock) {
+            $mock->shouldReceive('scanSingleDocument')
+                ->once()
+                ->andReturn([
+                    'doc_type' => 'sim',
+                    'confidence' => 0.92,
+                    'data' => [
+                        'license_number' => '900512345678',
+                        'license_type' => 'SIM A',
+                        'name' => 'BUDI SANTOSO',
+                        'expires_at' => '2028-11-15',
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->actingAs($customer, 'customer');
+
+        $file = UploadedFile::fake()->image('sim.jpg');
+
+        $response = $this->postJson(route('book.rental.portal.documents.scan'), [
+            'file' => $file,
+            'doc_type' => 'sim',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('result.doc_type', 'sim')
+            ->assertJsonPath('result.data.license_number', '900512345678')
+            ->assertJsonPath('result.data.license_type', 'SIM A');
     }
 }

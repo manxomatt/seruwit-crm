@@ -412,6 +412,18 @@ PROMPT;
             ];
         }
 
+        if (file_exists($photo) && is_readable($photo)) {
+            $bytes = (string) file_get_contents($photo);
+            $mimeType = mime_content_type($photo) ?: 'image/jpeg';
+
+            return [
+                'inline_data' => [
+                    'mime_type' => $mimeType,
+                    'data' => base64_encode($bytes),
+                ],
+            ];
+        }
+
         return null;
     }
 }

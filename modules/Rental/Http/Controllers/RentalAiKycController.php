@@ -74,13 +74,30 @@ class RentalAiKycController extends Controller
         }
 
         $request->validate([
-            'image' => ['required', 'string'],
+            'image' => ['nullable'],
+            'file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
             'doc_type' => ['nullable', 'string', 'in:ktp,sim,auto'],
         ]);
 
+        $imageSource = null;
+        if ($request->hasFile('file')) {
+            $imageSource = $request->file('file')->getRealPath();
+        } elseif ($request->hasFile('image')) {
+            $imageSource = $request->file('image')->getRealPath();
+        } elseif ($request->filled('image')) {
+            $imageSource = (string) $request->input('image');
+        }
+
+        if (blank($imageSource)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.ai.no_documents_uploaded'),
+            ], 422);
+        }
+
         try {
             $extracted = $this->kycService->scanSingleDocument(
-                imageSource: $request->input('image'),
+                imageSource: $imageSource,
                 docType: $request->input('doc_type', 'auto'),
             );
 
