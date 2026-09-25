@@ -344,11 +344,11 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     isError: true,
                 });
             }
-        } catch (err: unknown) {
-            const axiosErr = err as { response?: { data?: { message?: string } } };
+        } catch (err: any) {
+            const message = err?.response?.data?.message || err?.message || 'Gagal menjalankan pemindaian OCR KTP.';
             setOcrFeedback({
                 type: 'ktp',
-                message: axiosErr?.response?.data?.message || 'Gagal menjalankan pemindaian OCR KTP.',
+                message,
                 isError: true,
             });
         } finally {
@@ -413,11 +413,11 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     isError: true,
                 });
             }
-        } catch (err: unknown) {
-            const axiosErr = err as { response?: { data?: { message?: string } } };
+        } catch (err: any) {
+            const message = err?.response?.data?.message || err?.message || 'Gagal menjalankan pemindaian OCR SIM.';
             setOcrFeedback({
                 type: 'sim',
-                message: axiosErr?.response?.data?.message || 'Gagal menjalankan pemindaian OCR SIM.',
+                message,
                 isError: true,
             });
         } finally {

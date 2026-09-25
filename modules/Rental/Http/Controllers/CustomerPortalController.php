@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -222,6 +223,8 @@ class CustomerPortalController extends Controller
                 'message' => __('rental.ai.ocr_success'),
             ]);
         } catch (\Throwable $e) {
+            Log::error('[CustomerPortal OCR] '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

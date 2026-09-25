@@ -229,12 +229,10 @@ PROMPT;
      */
     protected function callGroqApi(array $content, int $timeout = 35, string $operationDesc = 'OCR dokumen', int $maxTokens = 1024): array
     {
-        $decommissioned = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
+        $decommissioned = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview', 'qwen/qwen3.6-27b'];
         $candidateModels = array_values(array_unique(array_filter([
             ! in_array($this->model, $decommissioned, true) ? $this->model : null,
-            'qwen/qwen3.6-27b',
             'qwen/qwen3.8-27b',
-            'meta-llama/llama-4-scout-17b-16e-instruct',
         ])));
 
         $lastResponse = null;
@@ -282,6 +280,12 @@ PROMPT;
 
             if ($statusCode === 401) {
                 throw new RuntimeException('Groq API Key tidak valid. Harap periksa kembali GROQ_API_KEY di file .env Anda.');
+            }
+
+            if ($statusCode === 404 || ($statusCode === 400 && str_contains(strtolower($errorMessage), 'model'))) {
+                Log::warning("[GroqDocumentKyc] Groq model {$candidateModel} not available ({$statusCode}), attempting fallback model if available.");
+
+                continue;
             }
 
             if ($statusCode === 429) {
