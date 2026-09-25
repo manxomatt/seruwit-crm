@@ -105,12 +105,12 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
         <DynamicLayout
             header={
                 <PageHeader
-                    title="Pengaturan Domain & Branding"
-                    subtitle="Kelola domain workspace sistem dan hubungkan custom domain bisnis Anda sendiri."
+                    title={t('settings.domain.title')}
+                    subtitle={t('settings.domain.subtitle')}
                 />
             }
         >
-            <Head title="Pengaturan Domain Workspace" />
+            <Head title={t('settings.domain.head')} />
 
             <div className="space-y-6 max-w-5xl">
                 {/* Flash Messages */}
@@ -139,11 +139,11 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                         className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                     >
                         <span>⚙️</span>
-                        <span>Pengaturan Umum</span>
+                        <span>{t('settings.domain.nav_general')}</span>
                     </Link>
                     <span className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold bg-indigo-600 text-white shadow-sm">
                         <span>🌐</span>
-                        <span>Domain Kustom</span>
+                        <span>{t('settings.domain.nav_custom_domain')}</span>
                     </span>
                 </div>
 
@@ -153,19 +153,19 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                         <div className="space-y-1">
                             <div className="flex items-center gap-2.5">
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    Subdomain Sistem
+                                    {t('settings.domain.system_subdomain')}
                                 </h3>
                                 <span className="rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-0.5 text-[11px] font-bold">
-                                    Bawaan Platform
+                                    {t('settings.domain.badge_default')}
                                 </span>
                                 {systemDomain?.is_primary && (
                                     <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold">
-                                        Domain Utama
+                                        {t('settings.domain.badge_primary')}
                                     </span>
                                 )}
                             </div>
                             <p className="text-xs text-slate-500">
-                                Domain bawaan ini disediakan langsung oleh platform dan selalu siap digunakan sebagai jalur akses alternatif.
+                                {t('settings.domain.system_subdomain_hint')}
                             </p>
                         </div>
                         {systemDomain && (
@@ -188,10 +188,10 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                 <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-6">
                     <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
                         <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                            Custom Domain Milik Anda
+                            {t('settings.domain.custom_domain_title')}
                         </h3>
                         <p className="mt-1 text-xs text-slate-500">
-                            Gunakan domain website atau subdomain bisnis Anda sendiri (misal: <code className="text-indigo-600 dark:text-indigo-400 font-mono">sewa.bisnisanda.com</code>) agar merek usaha Anda tampil profesional. Dilengkapi sertifikat SSL otomatis gratis via Cloudflare.
+                            {t('settings.domain.custom_domain_desc', { example: 'sewa.bisnisanda.com' })}
                         </p>
                     </div>
 
@@ -217,18 +217,18 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                 {isVerified ? (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-bold">
                                                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                        Terverifikasi & SSL Aktif
+                                                        {t('settings.domain.badge_verified')}
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 text-xs font-bold">
                                                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                                        Menunggu Pengaturan DNS
+                                                        {t('settings.domain.badge_pending')}
                                                     </span>
                                                 )}
 
                                                 {cd.is_primary && (
                                                     <span className="rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2.5 py-0.5 text-[11px] font-bold">
-                                                        Domain Utama
+                                                        {t('settings.domain.badge_primary')}
                                                     </span>
                                                 )}
                                             </div>
@@ -241,7 +241,7 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                         disabled={settingPrimaryId === cd.id}
                                                         className="text-xs !py-1.5"
                                                     >
-                                                        {settingPrimaryId === cd.id ? 'Memproses...' : 'Jadikan Utama'}
+                                                        {settingPrimaryId === cd.id ? t('settings.domain.btn_processing') : t('settings.domain.btn_make_primary')}
                                                     </SecondaryButton>
                                                 )}
 
@@ -251,7 +251,7 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                         disabled={verifyingId === cd.id}
                                                         className="text-xs !py-1.5"
                                                     >
-                                                        {verifyingId === cd.id ? 'Mengecek...' : 'Cek Status DNS'}
+                                                        {verifyingId === cd.id ? t('settings.domain.btn_checking') : t('settings.domain.btn_check_dns')}
                                                     </PrimaryButton>
                                                 )}
 
@@ -259,7 +259,7 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                     onClick={() => setDomainToDelete(cd)}
                                                     className="text-xs !py-1.5"
                                                 >
-                                                    Hapus
+                                                    {t('settings.domain.btn_delete')}
                                                 </DangerButton>
                                             </div>
                                         </div>
@@ -269,10 +269,10 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                             <div className="mt-4 rounded-xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-500/5 p-4 space-y-3">
                                                 <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
                                                     <span>⚠️</span>
-                                                    <span>Langkah Konfigurasi DNS:</span>
+                                                    <span>{t('settings.domain.dns_guide_title')}</span>
                                                 </div>
                                                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                                                    Buka panel DNS domain Anda (Cloudflare, cPanel, atau registrar domain), lalu tambahkan record berikut:
+                                                    {t('settings.domain.dns_guide_desc')}
                                                 </p>
 
                                                 {/* DNS Table */}
@@ -280,11 +280,11 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                     <table className="w-full text-left text-xs">
                                                         <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-700">
                                                             <tr>
-                                                                <th className="px-3 py-2">Tipe Record</th>
-                                                                <th className="px-3 py-2">Nama / Host</th>
-                                                                <th className="px-3 py-2">Nilai / Target (Points To)</th>
-                                                                <th className="px-3 py-2">TTL</th>
-                                                                <th className="px-3 py-2 text-right">Aksi</th>
+                                                                <th className="px-3 py-2">{t('settings.domain.th_record_type')}</th>
+                                                                <th className="px-3 py-2">{t('settings.domain.th_host')}</th>
+                                                                <th className="px-3 py-2">{t('settings.domain.th_target')}</th>
+                                                                <th className="px-3 py-2">{t('settings.domain.th_ttl')}</th>
+                                                                <th className="px-3 py-2 text-right">{t('settings.domain.th_action')}</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -305,14 +305,14 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                                         onClick={() => handleCopy(dnsTarget, `cname-${cd.id}`)}
                                                                         className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
                                                                     >
-                                                                        {copiedField === `cname-${cd.id}` ? '✓ Tersalin' : 'Salin Target'}
+                                                                        {copiedField === `cname-${cd.id}` ? t('settings.domain.copied') : t('settings.domain.btn_copy_target')}
                                                                     </button>
                                                                 </td>
                                                             </tr>
                                                             {cd.verification_token && (
                                                                 <tr>
                                                                     <td className="px-3 py-2.5 font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                                                                        TXT <span className="text-[10px] text-slate-400 font-normal">(opsional)</span>
+                                                                        TXT <span className="text-[10px] text-slate-400 font-normal">{t('settings.domain.optional_label')}</span>
                                                                     </td>
                                                                     <td className="px-3 py-2.5 font-mono text-slate-800 dark:text-slate-200">
                                                                         _seruwit-challenge
@@ -332,7 +332,7 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                                             }
                                                                             className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
                                                                         >
-                                                                            {copiedField === `txt-${cd.id}` ? '✓ Tersalin' : 'Salin Nilai'}
+                                                                            {copiedField === `txt-${cd.id}` ? t('settings.domain.copied') : t('settings.domain.btn_copy_value')}
                                                                         </button>
                                                                     </td>
                                                                 </tr>
@@ -344,7 +344,7 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                                 {/* Error Message if DNS query failed */}
                                                 {cd.last_error && (
                                                     <div className="rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 p-2.5 text-xs text-rose-700 dark:text-rose-300">
-                                                        <strong>Hasil Pengecekan Terakhir:</strong> {cd.last_error}
+                                                        <strong>{t('settings.domain.last_check_result')}</strong> {cd.last_error}
                                                     </div>
                                                 )}
                                             </div>
@@ -357,7 +357,7 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                         /* Form to Connect a New Custom Domain */
                         <form onSubmit={submitAddDomain} className="max-w-xl space-y-4">
                             <div>
-                                <InputLabel htmlFor="domain" value="Nama Domain / Subdomain Anda" />
+                                <InputLabel htmlFor="domain" value={t('settings.domain.input_label')} />
                                 <div className="mt-1 flex rounded-xl shadow-sm">
                                     <span className="inline-flex items-center rounded-l-xl border border-r-0 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-xs text-slate-500">
                                         https://
@@ -367,19 +367,19 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                                         type="text"
                                         value={data.domain}
                                         onChange={(e) => setData('domain', e.target.value.toLowerCase().trim())}
-                                        placeholder="sewa.domainanda.com"
+                                        placeholder={t('settings.domain.input_placeholder')}
                                         className="!rounded-l-none font-mono text-xs w-full"
                                         required
                                     />
                                 </div>
                                 <InputError message={errors.domain} className="mt-1.5" />
                                 <p className="mt-1.5 text-xs text-slate-500">
-                                    Disarankan menggunakan subdomain seperti <code className="font-mono text-indigo-600">sewa.domainanda.com</code> atau <code className="font-mono text-indigo-600">app.domainanda.com</code> agar mudah diarahkan via CNAME.
+                                    {t('settings.domain.input_hint', { subdomain: 'sewa.domainanda.com', app: 'app.domainanda.com' })}
                                 </p>
                             </div>
 
                             <PrimaryButton type="submit" disabled={processing} className="text-xs">
-                                {processing ? 'Menghubungkan...' : 'Hubungkan Domain'}
+                                {processing ? t('settings.domain.btn_connecting') : t('settings.domain.btn_connect')}
                             </PrimaryButton>
                         </form>
                     )}
@@ -389,13 +389,13 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                 <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 p-6 space-y-3">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                         <span>💡</span>
-                        <span>Panduan Singkat Setup DNS</span>
+                        <span>{t('settings.domain.guide_title')}</span>
                     </h4>
                     <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
-                        <li>Buka panel DNS registrar atau DNS management domain Anda (seperti Cloudflare, Niagahoster, DomaiNesia, dll).</li>
-                        <li>Tambahkan DNS record bertipe <strong>CNAME</strong> dengan target <strong>{dnsTarget}</strong>.</li>
-                        <li>Tunggu 5-15 menit agar DNS menyebar (propagasi), lalu tekan tombol <strong>"Cek Status DNS"</strong>.</li>
-                        <li>Sertifikat SSL Let's Encrypt / Cloudflare otomatis aktif tanpa konfigurasi tambahan.</li>
+                        <li>{t('settings.domain.guide_step1')}</li>
+                        <li>{t('settings.domain.guide_step2', { target: dnsTarget })}</li>
+                        <li>{t('settings.domain.guide_step3')}</li>
+                        <li>{t('settings.domain.guide_step4')}</li>
                     </ol>
                 </div>
             </div>
@@ -405,8 +405,8 @@ export default function DomainSettings({ systemDomain, customDomains, dnsTarget 
                 isOpen={domainToDelete !== null}
                 onClose={() => setDomainToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Hapus Custom Domain"
-                message={`Apakah Anda yakin ingin menghapus domain "${domainToDelete?.domain}"? Domain ini tidak akan lagi mengarah ke workspace Anda.`}
+                title={t('settings.domain.delete_modal_title')}
+                message={t('settings.domain.delete_modal_message', { domain: domainToDelete?.domain ?? '' })}
             />
         </DynamicLayout>
     );
