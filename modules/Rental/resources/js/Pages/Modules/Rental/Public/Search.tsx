@@ -358,17 +358,6 @@ export default function Search({
                                 </Link>
                             )}
 
-                            <Link
-                                href={route('book.rental.history')}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900"
-                            >
-                                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="hidden sm:inline">{t('rental.storefront_ui.check_history', undefined, 'Cek Riwayat')}</span>
-                                <span className="sm:hidden">Riwayat</span>
-                            </Link>
-
                             {brand.support_phone && (
                                 <a
                                     href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}?text=${encodeURIComponent('Halo ' + brand.name + ', saya ingin bertanya mengenai ketersediaan sewa mobil.')}`}
