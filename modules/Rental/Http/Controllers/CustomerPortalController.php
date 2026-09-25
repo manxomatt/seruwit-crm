@@ -157,6 +157,8 @@ class CustomerPortalController extends Controller
                 'license_number' => $partner?->license_number,
                 'id_card_photo_path' => $partner?->id_card_photo_path,
                 'driver_license_photo_path' => $partner?->driver_license_photo_path,
+                'id_card_url' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($partner?->id_card_photo_path),
+                'driver_license_url' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($partner?->driver_license_photo_path),
                 'selfie_photo_path' => $partner?->selfie_photo_path,
                 'emergency_contact_name' => $partner?->emergency_contact_name,
                 'emergency_contact_phone' => $partner?->emergency_contact_phone,
