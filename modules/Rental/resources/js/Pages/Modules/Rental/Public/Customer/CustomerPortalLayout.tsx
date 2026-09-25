@@ -16,7 +16,9 @@ interface Props extends PropsWithChildren {
 }
 
 export default function CustomerPortalLayout({ brand, title, headerAction, children }: Props) {
-    const { auth, flash, url } = usePage<any>().props;
+    const page = usePage<any>();
+    const { auth, flash } = page.props;
+    const url = page.url || '';
     const customer = auth?.customer;
     const brandColor = brand.color || '#0f766e';
 
