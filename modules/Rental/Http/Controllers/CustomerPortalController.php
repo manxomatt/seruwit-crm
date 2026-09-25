@@ -275,6 +275,27 @@ class CustomerPortalController extends Controller
             'kyc_rejected_reason' => null,
         ]);
 
+        try {
+            $staffUsers = \App\Models\User::query()
+                ->get()
+                ->filter(fn (\App\Models\User $u) => $u->isAdmin() || $u->hasPermissionFor('partners', 'update'));
+
+            if ($staffUsers->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send(
+                    $staffUsers,
+                    new \App\Notifications\GenericNotification(
+                        title: 'Verifikasi KYC Baru',
+                        body: "Pelanggan {$partner->name} ({$partner->code}) telah mengunggah dokumen KTP/SIM yang memerlukan verifikasi.",
+                        url: route('module.partners.show', $partner->id),
+                        icon: 'id-card',
+                        type: 'warning',
+                    )
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[CustomerPortal] Gagal mengirim notifikasi KYC ke staff: '.$e->getMessage());
+        }
+
         return back()->with('success', 'Dokumen identitas berhasil diperbarui dan sedang menunggu verifikasi.');
     }
 

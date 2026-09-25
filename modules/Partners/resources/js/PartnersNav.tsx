@@ -1,6 +1,6 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 const TABS: Array<{ labelKey: string; route: string; patterns: string[]; icon: string }> = [
     { labelKey: 'partners.nav.dashboard', route: 'partners.dashboard', patterns: ['partners.dashboard'], icon: '📊' },
@@ -18,6 +18,8 @@ const TABS: Array<{ labelKey: string; route: string; patterns: string[]; icon: s
 export default function PartnersNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const { props } = usePage();
+    const pendingReviewCount = (props.pendingPartnerKycReviewCount as number) || 0;
 
     return (
         <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
@@ -37,6 +39,15 @@ export default function PartnersNav(): JSX.Element {
                         >
                             <span>{tab.icon}</span>
                             <span>{t(tab.labelKey)}</span>
+                            {tab.route === 'partners.index' && pendingReviewCount > 0 && (
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                    active
+                                        ? 'bg-amber-400 text-slate-900'
+                                        : 'bg-amber-500 text-white animate-pulse'
+                                }`}>
+                                    {pendingReviewCount} review
+                                </span>
+                            )}
                         </Link>
                     );
                 })}

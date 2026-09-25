@@ -57,6 +57,7 @@ interface Partner {
     industry: Industry | null;
     tags: Tag[];
     types: PartnerTypeRef[];
+    kyc_status?: string | null;
 }
 
 interface PaginatedPartners {
@@ -75,6 +76,7 @@ interface Filters {
     role: string | null;
     type_id: string | null;
     missing_contact?: string | null;
+    kyc_status?: string | null;
 }
 
 interface Props {
@@ -208,8 +210,9 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
     const pageIds = useMemo(() => partners.data.map((partner) => partner.id), [partners.data]);
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
     const somePageSelected = pageIds.some((id) => selected.includes(id));
+    const pendingReviewCount = (page.props.pendingPartnerKycReviewCount as number) || 0;
     const hasActiveFilters = Boolean(
-        filters.search || filters.status || filters.account_type || filters.role || filters.type_id || filters.missing_contact,
+        filters.search || filters.status || filters.account_type || filters.role || filters.type_id || filters.missing_contact || filters.kyc_status,
     );
     const selectionMode = canBatch && selected.length > 0;
 
@@ -276,6 +279,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                 role: (next.role !== undefined ? next.role : filters.role) || undefined,
                 type_id: (next.type_id !== undefined ? next.type_id : filters.type_id) || undefined,
                 missing_contact: (next.missing_contact !== undefined ? next.missing_contact : filters.missing_contact) || undefined,
+                kyc_status: (next.kyc_status !== undefined ? next.kyc_status : filters.kyc_status) || undefined,
             },
             { preserveState: true, replace: true },
         );
@@ -436,6 +440,50 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                     <div className="flex items-center gap-3">
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold">✕</span>
                         <span>{flash.error}</span>
+                    </div>
+                </div>
+            )}
+
+            {pendingReviewCount > 0 && (
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30 p-4.5 shadow-xs">
+                    <div className="flex items-center gap-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-lg animate-pulse">
+                            🪪
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                                    Verifikasi Dokumen Identitas (KYC) Menunggu Review
+                                </h4>
+                                <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-black text-white shadow-2xs">
+                                    {pendingReviewCount} Kontak
+                                </span>
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
+                                Pelanggan telah mengunggah dokumen KTP/SIM dan memerlukan peninjauan staf sebelum dapat melakukan sewa.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                        {filters.kyc_status === 'pending' ? (
+                            <button
+                                type="button"
+                                onClick={() => applyFilters({ kyc_status: null })}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs hover:bg-amber-100/50 cursor-pointer"
+                            >
+                                ✕ Tampilkan Semua Kontak
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => applyFilters({ kyc_status: 'pending' })}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 active:scale-98 transition cursor-pointer"
+                            >
+                                <span>Filter Yang Perlu Direview</span>
+                                <span>→</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -616,6 +664,23 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                     <span>{t('partners.dashboard.missing_contact', undefined, 'Tanpa info kontak')}</span>
                                     {filters.missing_contact && <span>✕</span>}
                                 </button>
+                                {pendingReviewCount > 0 && (
+                                    <>
+                                        <span className="mx-1 hidden h-4 w-px bg-slate-200 dark:bg-slate-800 sm:inline-block" aria-hidden />
+                                        <button
+                                            type="button"
+                                            onClick={() => applyFilters({ kyc_status: filters.kyc_status === 'pending' ? null : 'pending' })}
+                                            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${filters.kyc_status === 'pending'
+                                                ? 'bg-amber-600 text-white shadow-sm ring-1 ring-amber-500'
+                                                : 'bg-amber-100/70 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:bg-amber-200/70 dark:hover:bg-amber-900/60'
+                                                }`}
+                                        >
+                                            <span>🪪</span>
+                                            <span>Perlu Review KYC ({pendingReviewCount})</span>
+                                            {filters.kyc_status === 'pending' && <span>✕</span>}
+                                        </button>
+                                    </>
+                                )}
                                 <span className="ml-auto text-xs font-bold tabular-nums text-slate-400">
                                     {t('common.showing_results', {
                                         from: partners.total === 0 ? 0 : (partners.current_page - 1) * partners.per_page + 1,
@@ -785,8 +850,25 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                                 >
                                                                     {partner.name}
                                                                 </Link>
-                                                                <div className="text-[10px] font-semibold text-slate-400">
-                                                                    {t(`partners.account_type.${partner.account_type}`)}
+                                                                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                                                    <span className="text-[10px] font-semibold text-slate-400">
+                                                                        {t(`partners.account_type.${partner.account_type}`)}
+                                                                    </span>
+                                                                    {partner.kyc_status === 'pending' && (
+                                                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-black text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950/60 dark:text-amber-300 animate-pulse">
+                                                                            Perlu Review KYC
+                                                                        </span>
+                                                                    )}
+                                                                    {partner.kyc_status === 'verified' && (
+                                                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                                            ✓ KYC
+                                                                        </span>
+                                                                    )}
+                                                                    {partner.kyc_status === 'rejected' && (
+                                                                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950/60 dark:text-rose-300">
+                                                                            ✕ KYC
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>

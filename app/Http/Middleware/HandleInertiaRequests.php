@@ -126,6 +126,7 @@ class HandleInertiaRequests extends Middleware
             // Lazy so only a partial reload that asks for it (the sidebar poll)
             // or the initial full load pays for the query.
             'pendingRentalApprovalsCount' => fn () => $this->resolvePendingRentalApprovalsCount($user),
+            'pendingPartnerKycReviewCount' => fn () => $this->resolvePendingPartnerKycReviewCount($user),
             'settings' => $settings,
             'aiFeaturesEnabled' => \App\Support\CentralAiSettings::isEnabled(),
             // The tenant *domain* we're currently on (null on the central domain).
@@ -218,6 +219,26 @@ class HandleInertiaRequests extends Middleware
         }
 
         return \Modules\Rental\Models\Rental::query()->awaitingApproval()->count();
+    }
+
+    /**
+     * Count partners awaiting KYC document review for staff who can act on them.
+     * Zero when the partners module is unavailable, before its table exists,
+     * or for users without update or view permission.
+     */
+    private function resolvePendingPartnerKycReviewCount(?\App\Models\User $user): int
+    {
+        if (! $user || ! Modules::available('partners') || ! \Illuminate\Support\Facades\Schema::hasTable('partners')) {
+            return 0;
+        }
+
+        if (! $user->isAdmin() && ! $user->hasPermissionFor('partners', 'update') && ! $user->hasPermissionFor('partners', 'view')) {
+            return 0;
+        }
+
+        return \Modules\Partners\Models\Partner::query()
+            ->where('kyc_status', \Modules\Partners\Models\Partner::KYC_STATUS_PENDING)
+            ->count();
     }
 
     /**

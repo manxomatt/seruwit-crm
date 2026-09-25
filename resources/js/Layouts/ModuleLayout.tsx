@@ -607,9 +607,9 @@ export default function ModuleLayout({ header, children }: Props) {
     const subscriptionSummary = pageProps.subscriptionSummary as { plan_name: string | null; status: string } | null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Keep the bell and payment orders count fresh without a full navigation. Only the specified
+    // Keep the bell, review badges, and orders count fresh without a full navigation. Only the specified
     // props are re-fetched, so this is cheap.
-    usePoll(60000, { only: ['notificationCenter', 'pendingPaymentOrdersCount', 'pendingRentalApprovalsCount'] });
+    usePoll(60000, { only: ['notificationCenter', 'pendingPaymentOrdersCount', 'pendingRentalApprovalsCount', 'pendingPartnerKycReviewCount'] });
 
     // No current-tenant domain context means we are on the central domain (the SaaS control plane).
     const currentTenant = pageProps.currentTenant as { id: string; name: string } | null;
@@ -1000,6 +1000,14 @@ export default function ModuleLayout({ header, children }: Props) {
                     {pageProps.pendingRentalApprovalsCount}
                 </span>
             )}
+            {item.module === 'partners' && ((pageProps.pendingPartnerKycReviewCount as number) || 0) > 0 && (
+                <span
+                    className="ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-sm ring-1 ring-white/10 animate-pulse"
+                    title={`${pageProps.pendingPartnerKycReviewCount} kontak menunggu review`}
+                >
+                    {pageProps.pendingPartnerKycReviewCount as number}
+                </span>
+            )}
         </Link>
     );
 
@@ -1009,6 +1017,12 @@ export default function ModuleLayout({ header, children }: Props) {
             {menuGroups.map((group) => {
                 const open = isGroupOpen(group.title);
                 const hasActive = group.items.some((item) => item.current);
+                const groupPendingCount = group.items.reduce((sum, item) => {
+                    if (item.module === 'payment-orders') return sum + ((pageProps.pendingPaymentOrdersCount as number) || 0);
+                    if (item.module === 'rental-reservation') return sum + ((pageProps.pendingRentalApprovalsCount as number) || 0);
+                    if (item.module === 'partners') return sum + ((pageProps.pendingPartnerKycReviewCount as number) || 0);
+                    return sum;
+                }, 0);
                 return (
                     <div key={group.title} className="pt-3">
                         <button
@@ -1019,6 +1033,11 @@ export default function ModuleLayout({ header, children }: Props) {
                                 }`}
                         >
                             <span className="min-w-0 flex-1 text-left">{group.title}</span>
+                            {!open && groupPendingCount > 0 && (
+                                <span className="mr-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
+                                    {groupPendingCount}
+                                </span>
+                            )}
                             <span className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}>
                                 <ChevronDownIcon />
                             </span>

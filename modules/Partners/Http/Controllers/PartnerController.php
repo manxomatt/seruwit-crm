@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +58,7 @@ class PartnerController extends Controller
                 'role' => request('role'),
                 'type_id' => request('type_id'),
                 'missing_contact' => request('missing_contact'),
+                'kyc_status' => request('kyc_status'),
             ],
             'partnerTypes' => $this->activePartnerTypes(),
             'exportColumns' => collect(PartnerExportColumns::definitions())
@@ -177,6 +179,7 @@ class PartnerController extends Controller
             'role' => request('role'),
             'type_id' => request('type_id'),
             'missing_contact' => request('missing_contact'),
+            'kyc_status' => request('kyc_status'),
         ];
 
         return Partner::query()
@@ -192,6 +195,7 @@ class PartnerController extends Controller
             })
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->when($filters['account_type'] ?? null, fn ($query, $type) => $query->where('account_type', $type))
+            ->when($filters['kyc_status'] ?? null, fn ($query, $kycStatus) => $query->where('kyc_status', $kycStatus))
             ->when($filters['role'] ?? null, function ($query, $role) {
                 if ($role === 'customer') {
                     $query->where('customer_rank', '>', 0);
