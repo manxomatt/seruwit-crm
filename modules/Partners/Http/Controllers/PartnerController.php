@@ -311,7 +311,14 @@ class PartnerController extends Controller
             'children',
             'addresses',
             'bankAccounts',
+            'verifiedByUser:id,name',
         ]);
+
+        if (class_exists(\Modules\Rental\Support\RentalPassengerDocMedia::class)) {
+            $media = app(\Modules\Rental\Support\RentalPassengerDocMedia::class);
+            $partner->setAttribute('id_card_url', $media->publicUrl($partner->id_card_photo_path));
+            $partner->setAttribute('driver_license_url', $media->publicUrl($partner->driver_license_photo_path));
+        }
 
         return Inertia::render('Modules/Partners/Show', [
             'partner' => $partner,
@@ -320,6 +327,35 @@ class PartnerController extends Controller
                 'delete' => $user->hasPermissionFor('partners', 'delete'),
             ],
         ]);
+    }
+
+    public function updateKycStatus(Request $request, Partner $partner): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:verified,rejected,pending,unverified'],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $status = $validated['status'];
+        $updates = ['kyc_status' => $status];
+
+        if ($status === Partner::KYC_STATUS_VERIFIED) {
+            $updates['kyc_verified_at'] = now();
+            $updates['kyc_verified_by'] = auth()->id();
+            $updates['kyc_rejected_reason'] = null;
+        } elseif ($status === Partner::KYC_STATUS_REJECTED) {
+            $updates['kyc_rejected_reason'] = $validated['reason'] ?? 'Dokumen tidak memenuhi persyaratan.';
+            $updates['kyc_verified_at'] = null;
+            $updates['kyc_verified_by'] = null;
+        } else {
+            $updates['kyc_verified_at'] = null;
+            $updates['kyc_verified_by'] = null;
+            $updates['kyc_rejected_reason'] = null;
+        }
+
+        $partner->update($updates);
+
+        return back()->with('success', 'Status verifikasi identitas (KYC) pelanggan berhasil diperbarui.');
     }
 
     public function edit(Partner $partner): Response

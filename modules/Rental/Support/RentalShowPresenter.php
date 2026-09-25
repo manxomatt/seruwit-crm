@@ -26,7 +26,7 @@ class RentalShowPresenter
         $rental->load([
             'vehicle:id,name,plate_number,type,status,photo_url',
             'driver:id,name,phone',
-            'partner:id,name,code,phone',
+            'partner:id,name,code,phone,kyc_status',
             'confirmedBy:id,name',
             'appliedPeriodTier:id,tier_type,min_threshold,max_threshold,rate_per_period,discount_percent,discount_flat,priority,is_active',
             'appliedLoyaltyTier:id,tier_type,min_threshold,max_threshold,rate_per_period,discount_percent,discount_flat,priority,is_active',

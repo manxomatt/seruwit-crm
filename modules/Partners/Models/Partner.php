@@ -185,6 +185,12 @@ class Partner extends Model
         return $this->belongsTo(\App\Models\User::class, 'portal_user_id');
     }
 
+    /** @return BelongsTo<\App\Models\User, $this> */
+    public function verifiedByUser(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'kyc_verified_by');
+    }
+
     public static function forPortalUser(\App\Models\User $user): ?self
     {
         return static::query()

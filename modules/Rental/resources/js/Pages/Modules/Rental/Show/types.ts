@@ -181,7 +181,7 @@ export interface Rental {
     }> | null;
     tier_discount_amount?: string | null;
     vehicle: { id: number; name: string; plate_number: string; type: string; status: string; photo_url: string | null };
-    partner: { id: number; name: string; code: string; phone: string | null };
+    partner: { id: number; name: string; code: string; phone: string | null; kyc_status?: string | null };
     driver: { id: number; name: string; phone: string | null } | null;
     confirmed_by: { id: number; name: string } | null;
     extensions: Extension[];

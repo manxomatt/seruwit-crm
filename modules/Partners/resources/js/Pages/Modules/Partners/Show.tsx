@@ -4,6 +4,7 @@ import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
@@ -14,6 +15,36 @@ import PartnersNav from '../../../PartnersNav';
 
 // SVG Icons
 const Icons = {
+    IdCard: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+        </svg>
+    ),
+    ShieldCheck: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+    ),
+    Clock: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    ),
+    XCircle: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    ),
+    ZoomIn: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+        </svg>
+    ),
+    ExternalLink: () => (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+    ),
     Phone: () => (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -188,6 +219,19 @@ interface Partner {
     types: PartnerTypeRef[];
     addresses: Address[];
     bank_accounts: BankAccount[];
+    id_number?: string | null;
+    license_number?: string | null;
+    license_expires_at?: string | null;
+    emergency_contact_name?: string | null;
+    emergency_contact_phone?: string | null;
+    kyc_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
+    kyc_submitted_at?: string | null;
+    kyc_verified_at?: string | null;
+    kyc_verified_by?: number | null;
+    verified_by_user?: { id: number; name: string } | null;
+    kyc_rejected_reason?: string | null;
+    id_card_url?: string | null;
+    driver_license_url?: string | null;
 }
 
 interface Props {
@@ -460,7 +504,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
-    const [activeTab, setActiveTab] = useState<'overview' | 'locations_banks' | 'contacts' | 'risk_notes'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'locations_banks' | 'contacts' | 'risk_notes' | 'kyc'>('overview');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [showAddressForm, setShowAddressForm] = useState(false);
@@ -470,6 +514,31 @@ export default function Show({ partner, can }: Props): JSX.Element {
     const [bankAccountToDelete, setBankAccountToDelete] = useState<BankAccount | null>(null);
     const [deletingAddress, setDeletingAddress] = useState(false);
     const [deletingBankAccount, setDeletingBankAccount] = useState(false);
+
+    // KYC Verification State
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
+    const [updatingKyc, setUpdatingKyc] = useState(false);
+    const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+
+    const handleUpdateKycStatus = (status: 'verified' | 'rejected' | 'unverified' | 'pending', reason?: string) => {
+        setUpdatingKyc(true);
+        router.post(
+            prefixedRoute('partners.kyc-status', partner.id),
+            {
+                status,
+                reason: reason || undefined,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setShowRejectModal(false);
+                    setRejectReason('');
+                },
+                onFinish: () => setUpdatingKyc(false),
+            }
+        );
+    };
 
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
@@ -624,6 +693,25 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                                 {badge.label}
                                             </span>
                                         ))}
+
+                                        {partner.kyc_status === 'verified' && (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                                <Icons.ShieldCheck />
+                                                KYC Terverifikasi
+                                            </span>
+                                        )}
+                                        {partner.kyc_status === 'pending' && (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950/50 dark:text-amber-300 animate-pulse">
+                                                <Icons.Clock />
+                                                KYC Perlu Verifikasi
+                                            </span>
+                                        )}
+                                        {partner.kyc_status === 'rejected' && (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950/50 dark:text-rose-300">
+                                                <Icons.XCircle />
+                                                KYC Ditolak
+                                            </span>
+                                        )}
                                     </div>
 
                                     <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3 flex-wrap">
@@ -739,6 +827,19 @@ export default function Show({ partner, can }: Props): JSX.Element {
                         { id: 'locations_banks', label: `Alamat (${partner.addresses.length}) & Rekening (${partner.bank_accounts.length})`, icon: Icons.Location },
                         { id: 'contacts', label: `Kontak Terkait (${partner.children.length})`, icon: Icons.Users },
                         { id: 'risk_notes', label: 'Informasi Bisnis & Catatan', icon: Icons.Building },
+                        {
+                            id: 'kyc',
+                            label: 'Verifikasi KYC',
+                            icon: Icons.ShieldCheck,
+                            badge: partner.kyc_status === 'pending'
+                                ? 'Perlu Review'
+                                : (partner.kyc_status === 'verified' ? 'Terverifikasi' : (partner.kyc_status === 'rejected' ? 'Ditolak' : undefined)),
+                            badgeClass: partner.kyc_status === 'pending'
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 animate-pulse'
+                                : (partner.kyc_status === 'verified'
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
+                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300'),
+                        },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         const active = activeTab === tab.id;
@@ -753,7 +854,12 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                     }`}
                             >
                                 <Icon />
-                                {tab.label}
+                                <span>{tab.label}</span>
+                                {tab.badge && (
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${tab.badgeClass}`}>
+                                        {tab.badge}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -1052,6 +1158,357 @@ export default function Show({ partner, can }: Props): JSX.Element {
                     </div>
                 )}
 
+                {activeTab === 'kyc' && (
+                    <div className="space-y-6">
+                        {/* Status Alert Banner */}
+                        <div className={`overflow-hidden rounded-3xl border p-6 shadow-xs transition-all ${
+                            partner.kyc_status === 'verified'
+                                ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/60 dark:bg-emerald-950/30'
+                                : partner.kyc_status === 'pending'
+                                ? 'border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/30'
+                                : partner.kyc_status === 'rejected'
+                                ? 'border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30'
+                                : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40'
+                        }`}>
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                <div className="flex items-start gap-3.5">
+                                    <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+                                        partner.kyc_status === 'verified'
+                                            ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/80 dark:text-emerald-300'
+                                            : partner.kyc_status === 'pending'
+                                            ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/80 dark:text-amber-300 animate-pulse'
+                                            : partner.kyc_status === 'rejected'
+                                            ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/80 dark:text-rose-300'
+                                            : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                    }`}>
+                                        {partner.kyc_status === 'verified' ? (
+                                            <Icons.ShieldCheck />
+                                        ) : partner.kyc_status === 'pending' ? (
+                                            <Icons.Clock />
+                                        ) : partner.kyc_status === 'rejected' ? (
+                                            <Icons.XCircle />
+                                        ) : (
+                                            <Icons.IdCard />
+                                        )}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                {partner.kyc_status === 'verified'
+                                                    ? 'Identitas Pelanggan Telah Diverifikasi'
+                                                    : partner.kyc_status === 'pending'
+                                                    ? 'Dokumen Menunggu Verifikasi Staff'
+                                                    : partner.kyc_status === 'rejected'
+                                                    ? 'Verifikasi Dokumen Ditolak'
+                                                    : 'Belum Ada Verifikasi Identitas'}
+                                            </h4>
+                                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                                partner.kyc_status === 'verified'
+                                                    ? 'bg-emerald-200/60 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
+                                                    : partner.kyc_status === 'pending'
+                                                    ? 'bg-amber-200/80 text-amber-900 dark:bg-amber-900 dark:text-amber-300'
+                                                    : partner.kyc_status === 'rejected'
+                                                    ? 'bg-rose-200/80 text-rose-900 dark:bg-rose-900 dark:text-rose-300'
+                                                    : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                            }`}>
+                                                {partner.kyc_status || 'unverified'}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                            {partner.kyc_status === 'verified' && (
+                                                <span>
+                                                    Dokumen KTP & SIM telah diverifikasi valid pada{' '}
+                                                    <span className="font-semibold">{partner.kyc_verified_at ? new Date(partner.kyc_verified_at).toLocaleString('id-ID') : '—'}</span>
+                                                    {partner.verified_by_user && (
+                                                        <span> oleh <span className="font-semibold">{partner.verified_by_user.name}</span></span>
+                                                    )}.
+                                                </span>
+                                            )}
+                                            {partner.kyc_status === 'pending' && (
+                                                <span>
+                                                    Pelanggan telah mengunggah dokumen KTP & SIM. Mohon periksa kejelasan foto dan kesesuaian identitas sebelum menyetujui.
+                                                </span>
+                                            )}
+                                            {partner.kyc_status === 'rejected' && (
+                                                <span>
+                                                    Alasan penolakan:{' '}
+                                                    <span className="font-semibold text-rose-700 dark:text-rose-300">
+                                                        {partner.kyc_rejected_reason || 'Dokumen tidak memenuhi persyaratan.'}
+                                                    </span>
+                                                </span>
+                                            )}
+                                            {(!partner.kyc_status || partner.kyc_status === 'unverified') && (
+                                                <span>
+                                                    Pelanggan belum mengunggah dokumen identitas melalui Customer Portal atau verifikasi belum diproses.
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {can.update && (
+                                    <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 shrink-0">
+                                        {partner.kyc_status !== 'verified' && (
+                                            <button
+                                                type="button"
+                                                disabled={updatingKyc}
+                                                onClick={() => handleUpdateKycStatus('verified')}
+                                                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                                            >
+                                                <Icons.Check />
+                                                <span>Setujui Verifikasi KYC</span>
+                                            </button>
+                                        )}
+                                        {partner.kyc_status !== 'rejected' && (
+                                            <button
+                                                type="button"
+                                                disabled={updatingKyc}
+                                                onClick={() => setShowRejectModal(true)}
+                                                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-white dark:bg-slate-900 px-4 py-2 text-xs font-bold text-rose-700 dark:text-rose-400 shadow-xs hover:bg-rose-50 dark:hover:bg-rose-950/50 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                                            >
+                                                <Icons.XCircle />
+                                                <span>Tolak Dokumen</span>
+                                            </button>
+                                        )}
+                                        {partner.kyc_status && partner.kyc_status !== 'unverified' && (
+                                            <button
+                                                type="button"
+                                                disabled={updatingKyc}
+                                                onClick={() => handleUpdateKycStatus('unverified')}
+                                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750 transition disabled:opacity-50 cursor-pointer"
+                                                title="Reset status verifikasi menjadi unverified"
+                                            >
+                                                Reset
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 2-Column Document Cards */}
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            {/* KTP Document Card */}
+                            <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4 flex flex-col justify-between">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl">🇮🇩</span>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    Kartu Tanda Penduduk (e-KTP)
+                                                </h3>
+                                                <p className="text-[11px] text-slate-400">Identitas utama penyewa / pelanggan</p>
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                            partner.id_card_url
+                                                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                        }`}>
+                                            <span className={`h-1.5 w-1.5 rounded-full ${partner.id_card_url ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                            {partner.id_card_url ? 'Foto Terunggah' : 'Belum Ada Foto'}
+                                        </span>
+                                    </div>
+
+                                    {/* Preview Image */}
+                                    {partner.id_card_url ? (
+                                        <div className="space-y-2">
+                                            <div
+                                                onClick={() => setZoomImageUrl(partner.id_card_url!)}
+                                                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xs dark:border-slate-700 dark:bg-slate-800 transition"
+                                            >
+                                                <img
+                                                    src={partner.id_card_url}
+                                                    alt="e-KTP Pelanggan"
+                                                    className="h-56 w-full object-cover transition duration-300 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = 'none';
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-1.5 text-xs font-black text-slate-900 shadow-md">
+                                                        <Icons.ZoomIn /> Klik untuk Perbesar
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-end">
+                                                <a
+                                                    href={partner.id_card_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                                >
+                                                    <span>Buka Dokumen Asli</span>
+                                                    <Icons.ExternalLink />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/40 py-12 text-center">
+                                            <span className="text-4xl opacity-40">🪪</span>
+                                            <p className="mt-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                Pelanggan belum mengunggah foto e-KTP.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Extracted Details */}
+                                    <dl className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3">
+                                        <DetailRow label="Nomor Induk Kependudukan (NIK)">
+                                            {partner.id_number ? (
+                                                <span className="font-mono text-sm font-bold flex items-center gap-1.5 justify-end">
+                                                    {partner.id_number}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCopy(partner.id_number!, 'id_number')}
+                                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                                                        title="Salin NIK"
+                                                    >
+                                                        {copiedKey === 'id_number' ? <Icons.Check /> : <Icons.Copy />}
+                                                    </button>
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400 italic font-normal">Belum tercatat</span>
+                                            )}
+                                        </DetailRow>
+                                        <DetailRow label="Nama Lengkap di Kontak">
+                                            <span>{partner.name}</span>
+                                        </DetailRow>
+                                    </dl>
+                                </div>
+                            </section>
+
+                            {/* SIM Document Card */}
+                            <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4 flex flex-col justify-between">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl">🚗</span>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    Surat Izin Mengemudi (SIM A)
+                                                </h3>
+                                                <p className="text-[11px] text-slate-400">Izin mengemudi resmi penyewa</p>
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                            partner.driver_license_url
+                                                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                        }`}>
+                                            <span className={`h-1.5 w-1.5 rounded-full ${partner.driver_license_url ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                            {partner.driver_license_url ? 'Foto Terunggah' : 'Belum Ada Foto'}
+                                        </span>
+                                    </div>
+
+                                    {/* Preview Image */}
+                                    {partner.driver_license_url ? (
+                                        <div className="space-y-2">
+                                            <div
+                                                onClick={() => setZoomImageUrl(partner.driver_license_url!)}
+                                                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xs dark:border-slate-700 dark:bg-slate-800 transition"
+                                            >
+                                                <img
+                                                    src={partner.driver_license_url}
+                                                    alt="SIM Pelanggan"
+                                                    className="h-56 w-full object-cover transition duration-300 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = 'none';
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-1.5 text-xs font-black text-slate-900 shadow-md">
+                                                        <Icons.ZoomIn /> Klik untuk Perbesar
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-end">
+                                                <a
+                                                    href={partner.driver_license_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                                >
+                                                    <span>Buka Dokumen Asli</span>
+                                                    <Icons.ExternalLink />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/40 py-12 text-center">
+                                            <span className="text-4xl opacity-40">🚘</span>
+                                            <p className="mt-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                Pelanggan belum mengunggah foto SIM.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Extracted Details */}
+                                    <dl className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3">
+                                        <DetailRow label="Nomor SIM">
+                                            {partner.license_number ? (
+                                                <span className="font-mono text-sm font-bold flex items-center gap-1.5 justify-end">
+                                                    {partner.license_number}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCopy(partner.license_number!, 'license_number')}
+                                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                                                        title="Salin No SIM"
+                                                    >
+                                                        {copiedKey === 'license_number' ? <Icons.Check /> : <Icons.Copy />}
+                                                    </button>
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400 italic font-normal">Belum tercatat</span>
+                                            )}
+                                        </DetailRow>
+                                        <DetailRow label="Masa Berlaku SIM">
+                                            {partner.license_expires_at ? (
+                                                <span className="font-semibold">{partner.license_expires_at}</span>
+                                            ) : (
+                                                <span className="text-slate-400 italic font-normal">Belum tercatat</span>
+                                            )}
+                                        </DetailRow>
+                                    </dl>
+                                </div>
+                            </section>
+                        </div>
+
+                        {/* Emergency Contact & Submission Info Card */}
+                        <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                                <Icons.Phone />
+                                Kontak Darurat & Riwayat Pengajuan
+                            </h3>
+                            <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="rounded-2xl border border-slate-100 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-850/40">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Nama Kontak Darurat</p>
+                                    <p className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+                                        {partner.emergency_contact_name || '—'}
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-slate-100 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-850/40">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Nomor Telepon Darurat</p>
+                                    <p className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+                                        {partner.emergency_contact_phone ? (
+                                            <a href={`tel:${partner.emergency_contact_phone}`} className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                {partner.emergency_contact_phone}
+                                            </a>
+                                        ) : '—'}
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-slate-100 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-850/40">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Waktu Pengajuan Dokumen</p>
+                                    <p className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+                                        {partner.kyc_submitted_at ? new Date(partner.kyc_submitted_at).toLocaleString('id-ID') : '—'}
+                                    </p>
+                                </div>
+                            </dl>
+                        </section>
+                    </div>
+                )}
+
                 {/* Danger Zone */}
                 {can.delete && (
                     <section className="overflow-hidden rounded-3xl border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/40 dark:bg-rose-950/20 p-6">
@@ -1104,6 +1561,77 @@ export default function Show({ partner, can }: Props): JSX.Element {
                     account: bankAccountToDelete?.account_number.slice(-4) ?? '',
                 })}
             />
+
+            {/* Modal Rejection KYC */}
+            <Modal show={showRejectModal} onClose={() => setShowRejectModal(false)} maxWidth="md">
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+                            <Icons.XCircle />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-black text-slate-900 dark:text-white">Tolak Dokumen Identitas</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Pelanggan akan melihat alasan penolakan ini di akun portal mereka.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="reject_reason" value="Alasan Penolakan Dokumen" />
+                        <textarea
+                            id="reject_reason"
+                            rows={3}
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            placeholder="Contoh: Foto KTP buram dan tidak terbaca, mohon unggah ulang dengan pencahayaan yang jelas."
+                            className="mt-1 block w-full rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white shadow-xs focus:border-rose-500 focus:ring-rose-500"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setShowRejectModal(false)}
+                            className="!rounded-xl text-xs"
+                        >
+                            Batal
+                        </SecondaryButton>
+                        <button
+                            type="button"
+                            disabled={updatingKyc || !rejectReason.trim()}
+                            onClick={() => handleUpdateKycStatus('rejected', rejectReason)}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-rose-700 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                        >
+                            Konfirmasi Penolakan
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal Zoom Gambar */}
+            <Modal show={zoomImageUrl !== null} onClose={() => setZoomImageUrl(null)} maxWidth="2xl">
+                <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">Pratinjau Dokumen Identitas</h4>
+                        <button
+                            type="button"
+                            onClick={() => setZoomImageUrl(null)}
+                            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-bold cursor-pointer"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    {zoomImageUrl && (
+                        <div className="overflow-auto max-h-[80vh] flex items-center justify-center bg-slate-950 rounded-xl p-2">
+                            <img
+                                src={zoomImageUrl}
+                                alt="Pratinjau Dokumen"
+                                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+                            />
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </DynamicLayout>
     );
 }

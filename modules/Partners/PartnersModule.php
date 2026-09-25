@@ -105,6 +105,7 @@ class PartnersModule implements ModuleContract
         Route::get('/partners/{partner}/edit', [PartnerController::class, 'edit'])->middleware('permission:partners,update')->name('partners.edit');
         Route::patch('/partners/{partner}', [PartnerController::class, 'update'])->middleware('permission:partners,update')->name('partners.update');
         Route::delete('/partners/{partner}', [PartnerController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.destroy');
+        Route::post('/partners/{partner}/kyc-status', [PartnerController::class, 'updateKycStatus'])->middleware('permission:partners,update')->name('partners.kyc-status');
 
         Route::post('/partners/{partner}/addresses', [PartnerAddressController::class, 'store'])->middleware('permission:partners,update')->name('partners.addresses.store');
         Route::delete('/partners/{partner}/addresses/{address}', [PartnerAddressController::class, 'destroy'])->middleware('permission:partners,update')->name('partners.addresses.destroy');

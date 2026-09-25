@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import React, { useState } from 'react';
 import AiKycVerificationCard from '../../../../../Components/AiKycVerificationCard';
@@ -25,8 +27,10 @@ export default function CustomerDocumentsSection({
     aiSyncKycPartnerUrl,
 }: Props): JSX.Element {
     const { t } = useTrans();
+    const { prefixedRoute } = useRoutePrefix();
     const [showUploadModal, setShowUploadModal] = useState(false);
 
+    const partnerKycStatus = rental.partner?.kyc_status;
     const hasKtp = Boolean(rental.passenger_ktp_path && passengerKtpUrl);
     const hasSim = Boolean(rental.passenger_sim_path && passengerSimUrl);
     const canUpdate = rental.status !== 'cancelled' && rental.status !== 'cancelled_paid';
@@ -55,6 +59,64 @@ export default function CustomerDocumentsSection({
             }
         >
             <div className="space-y-6">
+                {/* Partner KYC Status Alert Banner */}
+                {rental.partner && (
+                    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-4 shadow-2xs ${
+                        partnerKycStatus === 'verified'
+                            ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/60 dark:bg-emerald-950/30'
+                            : partnerKycStatus === 'pending'
+                            ? 'border-amber-200 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30'
+                            : partnerKycStatus === 'rejected'
+                            ? 'border-rose-200 bg-rose-50/80 dark:border-rose-900/60 dark:bg-rose-950/30'
+                            : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-850/40'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl">
+                                {partnerKycStatus === 'verified' ? '🛡️' : partnerKycStatus === 'pending' ? '⏳' : partnerKycStatus === 'rejected' ? '❌' : '📋'}
+                            </span>
+                            <div>
+                                <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>Status KYC Pelanggan:</span>
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                        partnerKycStatus === 'verified'
+                                            ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
+                                            : partnerKycStatus === 'pending'
+                                            ? 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-300 animate-pulse'
+                                            : partnerKycStatus === 'rejected'
+                                            ? 'bg-rose-200 text-rose-900 dark:bg-rose-900 dark:text-rose-300'
+                                            : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                    }`}>
+                                        {partnerKycStatus === 'verified'
+                                            ? 'Terverifikasi'
+                                            : partnerKycStatus === 'pending'
+                                            ? 'Menunggu Review'
+                                            : partnerKycStatus === 'rejected'
+                                            ? 'Ditolak'
+                                            : 'Belum Terverifikasi'}
+                                    </span>
+                                </p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {partnerKycStatus === 'pending'
+                                        ? 'Pelanggan telah mengunggah KTP/SIM dan menunggu verifikasi admin.'
+                                        : partnerKycStatus === 'verified'
+                                        ? 'Identitas pelanggan telah diverifikasi valid.'
+                                        : partnerKycStatus === 'rejected'
+                                        ? 'Dokumen pelanggan sebelumnya ditolak.'
+                                        : 'Dokumen belum diverifikasi.'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <Link
+                            href={prefixedRoute('partners.show', rental.partner.id)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-slate-750 transition shrink-0"
+                        >
+                            <span>Buka Verifikasi KYC di Kontak</span>
+                            <span>↗</span>
+                        </Link>
+                    </div>
+                )}
+
                 {/* 2-Column Document Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* KTP Document Card */}
