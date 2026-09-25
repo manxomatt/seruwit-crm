@@ -428,4 +428,67 @@ class CustomerPortalTest extends TestCase
             ->assertJsonPath('result.data.license_number', '900512345678')
             ->assertJsonPath('result.data.license_type', 'SIM A');
     }
+
+    public function test_customer_can_view_rentals_with_vehicles_on_portal(): void
+    {
+        $partner = Partner::query()->create([
+            'code' => Partner::nextCode(),
+            'name' => 'Faisal Basri',
+            'phone' => '6281999888777',
+            'sub_type' => 'customer',
+            'account_type' => 'individual',
+            'is_active' => true,
+        ]);
+
+        $customer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Faisal Basri',
+            'phone' => '6281999888777',
+            'is_active' => true,
+        ]);
+
+        $vehicle = Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'rental_class' => 'mpv',
+            'fuel_type' => 'petrol',
+            'name' => 'Innova Reborn',
+            'plate_number' => 'B1234ABC',
+        ]);
+
+        $rental = Rental::query()->create([
+            'partner_id' => $partner->id,
+            'vehicle_id' => $vehicle->id,
+            'code' => Rental::nextCode(),
+            'public_token' => \Illuminate\Support\Str::random(32),
+            'status' => Rental::STATUS_ACTIVE,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_name' => 'Faisal Basri',
+            'booker_phone' => '6281999888777',
+            'start_date' => now()->addDay()->toDateString(),
+            'end_date' => now()->addDays(3)->toDateString(),
+            'period_type' => 'daily',
+            'total_periods' => 2,
+            'rate_per_period' => 500000,
+            'base_amount' => 1000000,
+            'total_amount' => 1000000,
+            'deposit_amount' => 500000,
+        ]);
+
+        $this->actingAs($customer, 'customer');
+
+        $this->get(route('book.rental.portal.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('activeRentals.0.vehicle.rental_class_label'));
+
+        $this->get(route('book.rental.portal.rentals.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('rentals.data.0.vehicle.rental_class_label'));
+
+        $this->get(route('book.rental.portal.rentals.show', $rental->code))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('rental.vehicle.rental_class_label', 'MPV')
+                ->has('rental.vehicle.fuel_label')
+            );
+    }
 }

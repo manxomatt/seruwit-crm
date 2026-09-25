@@ -41,7 +41,7 @@ class CustomerPortalController extends Controller
                     Rental::STATUS_CONFIRMED,
                     Rental::STATUS_ACTIVE,
                 ])
-                ->with(['vehicle:id,name,plate_number,photo_url,rental_class_label', 'pickupLocation:id,name', 'returnLocation:id,name'])
+                ->with(['vehicle:id,name,plate_number,photo_url,rental_class', 'pickupLocation:id,name', 'returnLocation:id,name'])
                 ->latest()
                 ->get()
             : collect();
@@ -49,7 +49,7 @@ class CustomerPortalController extends Controller
         $recentRentals = $partner !== null
             ? Rental::query()
                 ->where('partner_id', $partner->id)
-                ->with(['vehicle:id,name,plate_number,photo_url', 'pickupLocation:id,name'])
+                ->with(['vehicle:id,name,plate_number,photo_url,rental_class', 'pickupLocation:id,name'])
                 ->latest()
                 ->limit(5)
                 ->get()
@@ -95,7 +95,7 @@ class CustomerPortalController extends Controller
 
         $query = Rental::query()
             ->where('partner_id', $partner?->id ?? 0)
-            ->with(['vehicle:id,name,plate_number,photo_url,rental_class_label', 'pickupLocation:id,name', 'returnLocation:id,name'])
+            ->with(['vehicle:id,name,plate_number,photo_url,rental_class', 'pickupLocation:id,name', 'returnLocation:id,name'])
             ->latest();
 
         if ($tab === 'active') {
@@ -130,7 +130,7 @@ class CustomerPortalController extends Controller
             ->where('code', $code)
             ->where('partner_id', $partner?->id ?? 0)
             ->with([
-                'vehicle:id,name,plate_number,photo_url,rental_class_label,capacity_seats,fuel_label,model_year',
+                'vehicle:id,name,plate_number,photo_url,rental_class,capacity_seats,fuel_type,model_year',
                 'pickupLocation:id,name,address,city',
                 'returnLocation:id,name,address,city',
                 'insurancePackage:id,name,amount',
@@ -143,7 +143,7 @@ class CustomerPortalController extends Controller
             'customer' => $customer->only(['id', 'name', 'phone']),
             'rental' => $rental,
             'holdTtlMinutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
-            'gatewayAvailable' => app(GatewayCheckoutService::class)->isConfigured(),
+            'gatewayAvailable' => app(GatewayCheckoutService::class)->isAvailable(),
         ]);
     }
 

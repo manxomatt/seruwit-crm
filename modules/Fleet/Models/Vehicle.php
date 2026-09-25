@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Lang;
 use Modules\Fleet\Database\Factories\VehicleFactory;
+use Modules\Fleet\Support\VehicleRentalClass;
 
 /**
  * Deliberately has no knowledge of Trip or any other consumer's booking
@@ -127,6 +129,14 @@ class Vehicle extends Model
     ];
 
     /**
+     * @var list<string>
+     */
+    protected $appends = [
+        'rental_class_label',
+        'fuel_label',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -220,5 +230,27 @@ class Vehicle extends Model
     public function fuelLogs(): HasMany
     {
         return $this->hasMany(FuelLog::class)->latest('filled_at');
+    }
+
+    public function getRentalClassLabelAttribute(): ?string
+    {
+        if (! $this->rental_class) {
+            return null;
+        }
+
+        return VehicleRentalClass::label((string) $this->rental_class);
+    }
+
+    public function getFuelLabelAttribute(): ?string
+    {
+        if (! $this->fuel_type) {
+            return null;
+        }
+
+        $key = 'fleet.vehicles.fuel_types.'.$this->fuel_type;
+
+        return Lang::has($key)
+            ? (string) __($key)
+            : ucfirst((string) $this->fuel_type);
     }
 }
