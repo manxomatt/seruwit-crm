@@ -1,3 +1,4 @@
+import ImageUploader from '@/Components/ImageUploader';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -156,28 +157,11 @@ export default function StorefrontPanel({
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="logo_url" value={t('rental.settings.storefront_logo_url', undefined, 'URL Logo')} />
-                            <div className="mt-1.5 flex items-center gap-3">
-                                {data.logo_url ? (
-                                    <img
-                                        src={data.logo_url}
-                                        alt="Logo"
-                                        className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-contain dark:border-slate-700"
-                                    />
-                                ) : (
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 text-slate-300 dark:border-slate-700">
-                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                )}
-                                <TextInput
-                                    id="logo_url"
-                                    type="url"
+                            <InputLabel htmlFor="logo_url" value={t('rental.settings.storefront_logo_url', undefined, 'Logo Brand')} />
+                            <div className="mt-1.5">
+                                <ImageUploader
                                     value={data.logo_url}
-                                    onChange={(e) => setData('logo_url', e.target.value)}
-                                    placeholder="https://…/logo.png"
-                                    className="w-full text-sm"
+                                    onChange={(value) => setData('logo_url', value)}
                                 />
                             </div>
                             <InputError message={errors.logo_url} className="mt-1" />
@@ -233,15 +217,13 @@ export default function StorefrontPanel({
                             <InputError message={errors.hero_subtitle} className="mt-1" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="hero_image_url" value={t('rental.settings.storefront_hero_image_url', undefined, 'URL Gambar Hero')} />
-                            <TextInput
-                                id="hero_image_url"
-                                type="url"
-                                value={data.hero_image_url}
-                                onChange={(e) => setData('hero_image_url', e.target.value)}
-                                placeholder="https://…/hero.jpg"
-                                className="mt-1.5 w-full text-sm"
-                            />
+                            <InputLabel htmlFor="hero_image_url" value={t('rental.settings.storefront_hero_image_url', undefined, 'Gambar Hero')} />
+                            <div className="mt-1.5">
+                                <ImageUploader
+                                    value={data.hero_image_url}
+                                    onChange={(value) => setData('hero_image_url', value)}
+                                />
+                            </div>
                             <InputError message={errors.hero_image_url} className="mt-1" />
                         </div>
                     </SectionCard>
