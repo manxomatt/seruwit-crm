@@ -239,7 +239,9 @@ export default function Editor({ page, customBlocks = [] }: Props): JSX.Element 
                 styles: [
                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
                 ],
-                scripts: [],
+                scripts: [
+                    'https://cdn.tailwindcss.com',
+                ],
                 frameStyle: `
                     html, body {
                         background-color: #fff;

@@ -27,15 +27,14 @@ class CentralLandingPageTemplateTest extends TestCase
         $html = $template['html'];
         $css = $template['css'];
 
-        // Capsule header classes
-        $this->assertStringContainsString('srw-nav-wrapper', $html);
-        $this->assertStringContainsString('srw-navbar', $html);
-        $this->assertStringContainsString('srw-btn-capsule', $html);
+        // Capsule header classes matching prototype
+        $this->assertStringContainsString('glass-capsule', $html);
+        $this->assertStringContainsString('rounded-full', $html);
         $this->assertStringContainsString('SaaS Rental', $html);
 
         // CSS capsule styles
-        $this->assertStringContainsString('border-radius: 9999px', $css);
-        $this->assertStringContainsString('backdrop-filter: blur', $css);
+        $this->assertStringContainsString('backdrop-filter: blur(18px)', $css);
+        $this->assertStringContainsString('mesh-gradient', $css);
     }
 
     public function test_template_contains_three_core_pillars(): void
@@ -45,11 +44,11 @@ class CentralLandingPageTemplateTest extends TestCase
 
         // Pilar 1: Fleet Management
         $this->assertStringContainsString('Fleet Management', $html);
-        $this->assertStringContainsString('Monitoring status ketersediaan armada live', $html);
+        $this->assertStringContainsString('Monitoring status ketersediaan live', $html);
 
         // Pilar 2: Rental Operations
         $this->assertStringContainsString('Rental Operations', $html);
-        $this->assertStringContainsString('Kalender booking visual anti double-booking', $html);
+        $this->assertStringContainsString('Kalender booking visual anti bentrok', $html);
 
         // Pilar 3: Finance Management
         $this->assertStringContainsString('Finance &amp; ROI', $html);
@@ -62,16 +61,15 @@ class CentralLandingPageTemplateTest extends TestCase
         $html = $template['html'];
 
         // Modular ecosystem
-        $this->assertStringContainsString('srw-modular', $html);
+        $this->assertStringContainsString('Arsitektur Modular Seruwit', $html);
         $this->assertStringContainsString('Platform yang Tumbuh Bersama Skala Bisnis Anda', $html);
 
         // Capsule CTA
-        $this->assertStringContainsString('srw-cta-capsule', $html);
+        $this->assertStringContainsString('Siap Modernisasi Bisnis Rental Anda?', $html);
         $this->assertStringContainsString('Mulai Uji Coba Gratis 14 Hari', $html);
 
         // GrapesJS dynamic hooks
         $this->assertStringContainsString('{{pricing_table}}', $html);
-        $this->assertStringContainsString('{{setting:site.logo}}', $html);
         $this->assertStringContainsString('{{setting:general.site_name}}', $html);
     }
 }

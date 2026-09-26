@@ -16,6 +16,7 @@
     <link rel="icon" href="{{ \App\Models\Setting::getValue('site.favicon', '/favicon.ico') }}">
     
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/builder/css/custom-builder.css">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
