@@ -48,20 +48,6 @@
             margin-top: auto;
             flex-shrink: 0;
         }
-        /* Section containing footer should grow to fill space */
-        body > section:last-of-type,
-        body > div:last-of-type {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-        /* Container inside section should also flex */
-        body > section:last-of-type > div,
-        body > div:last-of-type > div {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
         @if(\App\Modules\Facades\Modules::available('rental'))
         @php
             $rentalStorefront = \Modules\Rental\Support\RentalStorefrontSettings::all();
