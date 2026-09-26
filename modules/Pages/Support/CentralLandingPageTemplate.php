@@ -27,6 +27,7 @@ class CentralLandingPageTemplate
     {
         return <<<'CSS'
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 :root {
     --srw-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -41,30 +42,31 @@ class CentralLandingPageTemplate
     --srw-slate-50: #f8fafc;
     --srw-white: #ffffff;
 
+    --srw-teal-800: #115e59;
     --srw-teal-700: #0f766e;
     --srw-teal-600: #0d9488;
     --srw-teal-500: #14b8a6;
+    --srw-teal-100: #ccfbf1;
     --srw-teal-50: #f0fdfa;
 
+    --srw-cyan-700: #0e7490;
     --srw-cyan-600: #0891b2;
     --srw-cyan-500: #06b6d4;
+    --srw-cyan-100: #cffafe;
     --srw-cyan-50: #ecfeff;
 
     --srw-emerald-600: #059669;
     --srw-emerald-500: #10b981;
+    --srw-emerald-100: #d1fae5;
     --srw-emerald-50: #ecfdf5;
 
-    --srw-indigo-600: #4f46e5;
-    --srw-indigo-500: #6366f1;
-    --srw-indigo-50: #eef2ff;
-
     --srw-amber-500: #f59e0b;
-    --srw-amber-50: #fffbeb;
+    --srw-rose-500: #f43f5e;
 
-    --srw-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --srw-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    --srw-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-    --srw-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    --srw-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    --srw-shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --srw-shadow-lg: 0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+    --srw-shadow-xl: 0 20px 35px -5px rgba(15, 23, 42, 0.1), 0 8px 12px -6px rgba(15, 23, 42, 0.05);
 }
 
 .srw-root {
@@ -76,6 +78,7 @@ class CentralLandingPageTemplate
     padding: 0;
     box-sizing: border-box;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 .srw-root *, .srw-root *::before, .srw-root *::after {
@@ -83,92 +86,84 @@ class CentralLandingPageTemplate
 }
 
 .srw-container {
-    max-width: 1240px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
 }
 
-/* ANNOUNCEMENT BANNER */
-.srw-banner {
-    background: linear-gradient(90deg, #0f766e 0%, #0891b2 50%, #4f46e5 100%);
-    color: #ffffff;
-    font-size: 0.84rem;
-    font-weight: 600;
-    text-align: center;
-    padding: 8px 16px;
-    letter-spacing: 0.01em;
-}
-.srw-banner a {
-    color: #ffffff;
-    text-decoration: underline;
-    margin-left: 6px;
-    font-weight: 700;
-}
-
-/* NAVBAR */
-.srw-navbar {
-    position: sticky;
-    top: 0;
+/* FLOATING CAPSULE HEADER */
+.srw-nav-wrapper {
+    position: fixed;
+    top: 16px;
+    left: 0;
+    right: 0;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--srw-slate-200);
-    transition: all 0.2s ease;
+    padding: 0 20px;
+    pointer-events: none;
+    transition: all 0.3s ease;
 }
-.srw-nav-wrap {
+.srw-navbar {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 9999px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 8px 14px 8px 22px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 72px;
+    transition: all 0.3s ease;
 }
 .srw-brand {
     display: flex;
     align-items: center;
     gap: 10px;
     text-decoration: none;
-    font-size: 1.35rem;
+    font-size: 1.18rem;
     font-weight: 800;
     color: var(--srw-slate-900);
     letter-spacing: -0.02em;
+    flex-shrink: 0;
 }
 .srw-brand-img {
-    height: 34px;
-    max-height: 38px;
+    height: 32px;
+    max-height: 36px;
     width: auto;
-    max-width: 150px;
+    max-width: 130px;
     object-fit: contain;
-    display: inline-block;
-    vertical-align: middle;
     border-radius: 6px;
 }
 .srw-brand-badge {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 10px;
     background: linear-gradient(135deg, var(--srw-teal-600), var(--srw-cyan-600));
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    font-size: 1.1rem;
+    box-shadow: 0 3px 10px rgba(13, 148, 136, 0.3);
 }
 .srw-brand-tag {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 800;
     text-transform: uppercase;
     background: var(--srw-teal-50);
     color: var(--srw-teal-700);
     padding: 3px 8px;
-    border-radius: 6px;
-    border: 1px solid rgba(15, 118, 110, 0.2);
+    border-radius: 9999px;
+    border: 1px solid var(--srw-teal-100);
     letter-spacing: 0.04em;
 }
-.srw-nav-menu {
+.srw-nav-links {
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: 24px;
     list-style: none;
     margin: 0;
     padding: 0;
@@ -176,684 +171,634 @@ class CentralLandingPageTemplate
 .srw-nav-link {
     text-decoration: none;
     color: var(--srw-slate-600);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 600;
-    transition: color 0.15s ease;
+    transition: all 0.2s ease;
+    padding: 6px 12px;
+    border-radius: 9999px;
 }
 .srw-nav-link:hover {
     color: var(--srw-teal-700);
+    background: var(--srw-slate-100);
 }
 .srw-nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    flex-shrink: 0;
 }
-.srw-btn {
+.srw-btn-login {
+    text-decoration: none;
+    color: var(--srw-slate-700);
+    font-size: 0.86rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+}
+.srw-btn-login:hover {
+    color: var(--srw-teal-700);
+    background: var(--srw-slate-100);
+}
+.srw-btn-capsule {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 0.92rem;
-    font-weight: 700;
-    border-radius: 10px;
-    padding: 10px 20px;
+    gap: 6px;
     text-decoration: none;
+    background: linear-gradient(135deg, var(--srw-teal-700) 0%, var(--srw-teal-600) 100%);
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
     transition: all 0.2s ease;
+    border: none;
     cursor: pointer;
 }
-.srw-btn-outline {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
-    color: var(--srw-slate-700);
-}
-.srw-btn-outline:hover {
-    background: var(--srw-slate-50);
-    border-color: var(--srw-slate-300);
-    color: var(--srw-slate-900);
-}
-.srw-btn-primary {
-    background: linear-gradient(135deg, var(--srw-teal-700) 0%, var(--srw-teal-600) 100%);
-    border: 1px solid var(--srw-teal-700);
-    color: #ffffff;
-    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
-}
-.srw-btn-primary:hover {
-    background: linear-gradient(135deg, #0e655e 0%, #0b7c72 100%);
-    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.35);
+.srw-btn-capsule:hover {
+    background: linear-gradient(135deg, var(--srw-teal-800) 0%, var(--srw-teal-700) 100%);
     transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(15, 118, 110, 0.35);
+}
+.srw-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--srw-slate-700);
+    cursor: pointer;
+    padding: 6px;
 }
 
 /* HERO SECTION */
 .srw-hero {
     position: relative;
-    padding: 70px 0 80px 0;
-    background: radial-gradient(100% 80% at 50% -10%, rgba(20, 184, 166, 0.12) 0%, rgba(248, 250, 252, 0) 80%);
+    padding: 130px 0 80px 0;
+    background: radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(248, 250, 252, 0.8) 0px, transparent 100%);
     overflow: hidden;
-}
-.srw-hero-grid {
-    display: grid;
-    grid-template-columns: 1.15fr 0.95fr;
-    gap: 48px;
-    align-items: center;
+    text-align: center;
 }
 .srw-hero-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #ffffff;
-    border: 1px solid rgba(13, 148, 136, 0.3);
-    padding: 6px 14px;
-    border-radius: 50px;
-    font-size: 0.82rem;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid var(--srw-teal-100);
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: var(--srw-teal-700);
+    color: var(--srw-teal-800);
     box-shadow: var(--srw-shadow-sm);
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
-.srw-hero-dot {
+.srw-pulse-dot {
     width: 8px;
     height: 8px;
-    border-radius: 50%;
+    border-radius: 9999px;
     background: var(--srw-teal-500);
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7);
+    animation: srwPulse 2s infinite;
+}
+@keyframes srwPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
 }
 .srw-hero-title {
-    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
     font-weight: 800;
     color: var(--srw-slate-900);
-    line-height: 1.18;
+    line-height: 1.15;
     letter-spacing: -0.03em;
-    margin: 0 0 20px 0;
+    max-width: 900px;
+    margin: 0 auto 20px auto;
 }
-.srw-hero-title span {
-    background: linear-gradient(135deg, var(--srw-teal-700) 0%, var(--srw-cyan-600) 50%, var(--srw-indigo-600) 100%);
+.srw-grad-text {
+    background: linear-gradient(135deg, var(--srw-teal-700) 0%, var(--srw-cyan-600) 50%, var(--srw-emerald-600) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .srw-hero-desc {
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 2vw, 1.15rem);
     color: var(--srw-slate-600);
-    line-height: 1.65;
-    margin: 0 0 32px 0;
-    max-width: 580px;
+    max-width: 680px;
+    margin: 0 auto 36px auto;
+    line-height: 1.7;
 }
-.srw-hero-btns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-bottom: 40px;
-}
-.srw-hero-trust {
+.srw-hero-actions {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding-top: 24px;
-    border-top: 1px solid var(--srw-slate-200);
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 50px;
 }
-.srw-trust-item {
-    display: flex;
+.srw-hero-btn-primary {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--srw-slate-600);
+    background: linear-gradient(135deg, var(--srw-teal-700) 0%, var(--srw-cyan-700) 100%);
+    color: #ffffff;
+    font-size: 0.96rem;
+    font-weight: 800;
+    padding: 14px 30px;
+    border-radius: 9999px;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(15, 118, 110, 0.3);
+    transition: all 0.25s ease;
 }
-.srw-trust-icon {
-    color: var(--srw-emerald-600);
-    font-size: 1.1rem;
+.srw-hero-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 118, 110, 0.4);
+}
+.srw-hero-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--srw-slate-200);
+    color: var(--srw-slate-700);
+    font-size: 0.96rem;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: 9999px;
+    text-decoration: none;
+    box-shadow: var(--srw-shadow-sm);
+    transition: all 0.25s ease;
+}
+.srw-hero-btn-secondary:hover {
+    background: #ffffff;
+    border-color: var(--srw-teal-500);
+    color: var(--srw-teal-800);
+    transform: translateY(-2px);
 }
 
-/* HERO VISUAL DASHBOARD MOCKUP */
+/* HERO SAAS DASHBOARD MOCKUP */
 .srw-dashboard-mockup {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
-    border-radius: 20px;
-    box-shadow: var(--srw-shadow-xl), 0 0 0 1px rgba(0,0,0,0.02);
-    overflow: hidden;
-    position: relative;
+    max-width: 1040px;
+    margin: 0 auto;
+    background: linear-gradient(to bottom, rgba(20, 184, 166, 0.2), rgba(6, 182, 212, 0.08), transparent);
+    padding: 12px;
+    border-radius: 28px;
+    box-shadow: var(--srw-shadow-xl);
+    text-align: left;
 }
-.srw-mockup-bar {
-    background: var(--srw-slate-900);
-    color: #ffffff;
-    padding: 12px 18px;
+.srw-mockup-inner {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+.srw-mockup-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 0.8rem;
-    font-weight: 600;
+    border-bottom: 1px solid var(--srw-slate-100);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
 }
 .srw-mockup-dots {
     display: flex;
+    align-items: center;
     gap: 6px;
 }
-.srw-mockup-dot {
+.srw-dot {
     width: 10px;
     height: 10px;
-    border-radius: 50%;
-    background: #475569;
+    border-radius: 9999px;
 }
-.srw-mockup-body {
-    padding: 22px;
-    background: #fcfdfe;
-}
-.srw-mockup-statgrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin-bottom: 18px;
-}
-.srw-mstat-card {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
-    border-radius: 14px;
-    padding: 14px 16px;
-}
-.srw-mstat-lbl {
+.srw-dot-red { background: #fb7185; }
+.srw-dot-yellow { background: #fbbf24; }
+.srw-dot-green { background: #34d399; }
+.srw-mockup-url {
+    font-family: monospace;
     font-size: 0.76rem;
-    font-weight: 700;
-    color: var(--srw-slate-500);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-bottom: 4px;
+    color: var(--srw-slate-400);
+    margin-left: 10px;
 }
-.srw-mstat-val {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--srw-slate-900);
-}
-.srw-mstat-badge {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--srw-emerald-600);
+.srw-mockup-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: var(--srw-emerald-50);
-    padding: 2px 6px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 4px;
+    border: 1px solid var(--srw-emerald-100);
+    color: var(--srw-emerald-600);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 9999px;
 }
-.srw-mvehicle-card {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
+.srw-mockup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+.srw-mockup-card {
+    background: var(--srw-slate-50);
+    border: 1px solid var(--srw-slate-100);
     border-radius: 14px;
     padding: 16px;
-    margin-top: 14px;
 }
-.srw-mvehicle-head {
+.srw-card-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 10px;
 }
-.srw-mvehicle-title {
-    font-size: 0.92rem;
-    font-weight: 800;
-    color: var(--srw-slate-900);
-}
-.srw-mvehicle-status {
+.srw-card-header span:first-child {
     font-size: 0.72rem;
-    font-weight: 700;
-    background: var(--srw-teal-50);
-    color: var(--srw-teal-700);
-    border: 1px solid rgba(13, 148, 136, 0.2);
-    padding: 3px 8px;
-    border-radius: 6px;
-}
-.srw-mvehicle-info {
-    font-size: 0.8rem;
-    color: var(--srw-slate-600);
-    display: flex;
-    gap: 12px;
-}
-
-/* SECTION COMMONS */
-.srw-section {
-    padding: 85px 0;
-    position: relative;
-}
-.srw-section-white {
-    background: #ffffff;
-}
-.srw-section-alt {
-    background: var(--srw-slate-50);
-}
-.srw-head-center {
-    text-align: center;
-    max-width: 720px;
-    margin: 0 auto 52px auto;
-}
-.srw-tag-pill {
-    display: inline-block;
-    font-size: 0.78rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--srw-teal-700);
-    background: var(--srw-teal-50);
-    border: 1px solid rgba(13, 148, 136, 0.2);
-    padding: 5px 14px;
-    border-radius: 50px;
-    margin-bottom: 14px;
+    color: var(--srw-slate-500);
 }
-.srw-section-title {
-    font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+.srw-card-val {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.srw-card-val strong {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--srw-slate-900);
+}
+.srw-card-val span {
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+.srw-card-prog {
+    margin-top: 12px;
+    background: var(--srw-slate-200);
+    height: 8px;
+    border-radius: 9999px;
+    display: flex;
+    overflow: hidden;
+}
+.srw-prog-green { background: var(--srw-emerald-500); width: 85%; }
+.srw-prog-yellow { background: var(--srw-amber-500); width: 10%; }
+.srw-prog-gray { background: var(--srw-slate-400); width: 5%; }
+.srw-card-subinfo {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--srw-slate-500);
+    margin-top: 8px;
+}
+.srw-order-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--srw-slate-100);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 12px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--srw-slate-700);
+}
+
+/* TRUST METRICS BAR */
+.srw-trust {
+    background: #ffffff;
+    border-top: 1px solid var(--srw-slate-200);
+    border-bottom: 1px solid var(--srw-slate-200);
+    padding: 40px 0;
+}
+.srw-trust-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    text-align: center;
+}
+.srw-trust-item strong {
+    display: block;
+    font-size: 2.2rem;
     font-weight: 800;
     color: var(--srw-slate-900);
     letter-spacing: -0.02em;
-    line-height: 1.25;
-    margin: 0 0 16px 0;
 }
-.srw-section-subtitle {
-    font-size: 1.05rem;
-    color: var(--srw-slate-600);
-    line-height: 1.6;
-    margin: 0;
-}
-
-/* RENTAL SPOTLIGHT (FLAGSHIP TODAY) */
-.srw-spotlight-box {
-    background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 50%, #f8fafc 100%);
-    border: 1px solid rgba(13, 148, 136, 0.25);
-    border-radius: 24px;
-    padding: 44px;
-    box-shadow: var(--srw-shadow-lg);
-    margin-bottom: 48px;
-}
-.srw-spotlight-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    align-items: center;
-}
-.srw-feature-list {
-    display: grid;
-    gap: 16px;
-    margin: 24px 0 32px 0;
-}
-.srw-feature-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-}
-.srw-feature-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--srw-teal-50);
-    color: var(--srw-teal-700);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-.srw-feature-text h4 {
-    margin: 0 0 3px 0;
-    font-size: 0.98rem;
+.srw-trust-item p {
+    margin: 4px 0 0 0;
+    font-size: 0.76rem;
     font-weight: 700;
-    color: var(--srw-slate-900);
-}
-.srw-feature-text p {
-    margin: 0;
-    font-size: 0.88rem;
-    color: var(--srw-slate-600);
-    line-height: 1.5;
-}
-
-/* FLEET CARDS GRID */
-.srw-fleet-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-}
-.srw-fleet-card {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
-    border-radius: 18px;
-    overflow: hidden;
-    transition: all 0.25s ease;
-    display: flex;
-    flex-direction: column;
-}
-.srw-fleet-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--srw-shadow-xl);
-    border-color: rgba(13, 148, 136, 0.3);
-}
-.srw-fleet-media {
-    height: 160px;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3.5rem;
-    position: relative;
-}
-.srw-fleet-category {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: rgba(15, 23, 42, 0.85);
-    color: #ffffff;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 50px;
-    backdrop-filter: blur(4px);
-}
-.srw-fleet-body {
-    padding: 20px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-.srw-fleet-name {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--srw-slate-900);
-    margin: 0 0 8px 0;
-}
-.srw-fleet-specs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 0.8rem;
-    color: var(--srw-slate-600);
-    margin-bottom: 18px;
-}
-.srw-fleet-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid var(--srw-slate-100);
-    padding-top: 14px;
-}
-.srw-fleet-price {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--srw-teal-700);
-}
-.srw-fleet-price span {
-    font-size: 0.78rem;
-    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--srw-slate-500);
 }
 
-/* MODULAR ECOSYSTEM EXPANSION SUITES */
-.srw-ecosystem-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
+/* 3 CORE PILLARS SECTION */
+.srw-pillars {
+    padding: 90px 0;
+    background: var(--srw-slate-50);
 }
-.srw-eco-card {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
-    border-radius: 20px;
-    padding: 32px;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
+.srw-section-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--srw-teal-700);
+    background: var(--srw-teal-50);
+    border: 1px solid var(--srw-teal-100);
+    padding: 4px 14px;
+    border-radius: 9999px;
+    margin-bottom: 12px;
 }
-.srw-eco-card:hover {
-    box-shadow: var(--srw-shadow-lg);
-    border-color: var(--srw-teal-500);
+.srw-section-header {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto 56px auto;
 }
-.srw-eco-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-.srw-eco-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-}
-.srw-icon-teal { background: var(--srw-teal-50); color: var(--srw-teal-700); }
-.srw-icon-cyan { background: var(--srw-cyan-50); color: var(--srw-cyan-600); }
-.srw-icon-indigo { background: var(--srw-indigo-50); color: var(--srw-indigo-600); }
-.srw-icon-amber { background: var(--srw-amber-50); color: var(--srw-amber-500); }
-
-.srw-eco-title {
-    font-size: 1.25rem;
+.srw-section-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
     font-weight: 800;
     color: var(--srw-slate-900);
-    margin: 0;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px 0;
+    line-height: 1.25;
 }
-.srw-eco-desc {
-    font-size: 0.94rem;
+.srw-section-desc {
+    font-size: 0.98rem;
     color: var(--srw-slate-600);
-    line-height: 1.6;
-    margin: 0 0 20px 0;
-}
-.srw-eco-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-.srw-eco-tag {
-    font-size: 0.78rem;
-    font-weight: 700;
-    background: var(--srw-slate-100);
-    color: var(--srw-slate-700);
-    padding: 4px 12px;
-    border-radius: 50px;
-    border: 1px solid var(--srw-slate-200);
-}
-.srw-eco-tag.srw-tag-active {
-    background: var(--srw-teal-50);
-    color: var(--srw-teal-700);
-    border-color: rgba(13, 148, 136, 0.3);
-}
-
-/* HORIZON / MARKETPLACE BANNER */
-.srw-horizon-box {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #ffffff;
-    border-radius: 20px;
-    padding: 38px 44px;
-    margin-top: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px;
-}
-.srw-horizon-content h3 {
-    font-size: 1.45rem;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #ffffff;
-}
-.srw-horizon-content p {
-    font-size: 0.95rem;
-    color: var(--srw-slate-400);
     margin: 0;
-    max-width: 680px;
     line-height: 1.6;
 }
-
-/* HOW IT WORKS / 3 STEPS */
-.srw-steps-grid {
+.srw-pillars-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 28px;
 }
-.srw-step-card {
+.srw-pillar-card {
     background: #ffffff;
     border: 1px solid var(--srw-slate-200);
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 34px 28px;
-    text-align: center;
-    position: relative;
+    box-shadow: var(--srw-shadow-sm);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
-.srw-step-num {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--srw-teal-700), var(--srw-cyan-600));
-    color: #ffffff;
-    font-size: 1.3rem;
-    font-weight: 800;
+.srw-pillar-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--srw-shadow-xl);
+    border-color: var(--srw-teal-500);
+}
+.srw-pillar-featured {
+    border-color: rgba(13, 148, 136, 0.4);
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15), var(--srw-shadow-md);
+}
+.srw-pillar-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 20px auto;
-    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.3);
+    margin-bottom: 22px;
 }
-.srw-step-title {
-    font-size: 1.15rem;
+.srw-icon-teal {
+    background: var(--srw-teal-50);
+    color: var(--srw-teal-700);
+    border: 1px solid var(--srw-teal-100);
+}
+.srw-icon-cyan {
+    background: var(--srw-cyan-50);
+    color: var(--srw-cyan-700);
+    border: 1px solid var(--srw-cyan-100);
+}
+.srw-icon-emerald {
+    background: var(--srw-emerald-50);
+    color: var(--srw-emerald-600);
+    border: 1px solid var(--srw-emerald-100);
+}
+.srw-pillar-title {
+    font-size: 1.25rem;
     font-weight: 800;
     color: var(--srw-slate-900);
     margin: 0 0 10px 0;
 }
-.srw-step-desc {
-    font-size: 0.92rem;
-    color: var(--srw-slate-600);
-    margin: 0;
-    line-height: 1.6;
-}
-
-/* PRICING PLANS */
-.srw-price-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 28px;
-}
-.srw-price-card {
-    background: #ffffff;
-    border: 1px solid var(--srw-slate-200);
-    border-radius: 20px;
-    padding: 36px 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: all 0.2s ease;
-}
-.srw-price-card.srw-price-popular {
-    border: 2px solid var(--srw-teal-600);
-    box-shadow: var(--srw-shadow-xl);
-    position: relative;
-}
-.srw-popular-badge {
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--srw-teal-700);
-    color: #ffffff;
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 4px 14px;
-    border-radius: 50px;
-}
-.srw-plan-title {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--srw-slate-900);
-    margin: 0 0 6px 0;
-}
-.srw-plan-desc {
+.srw-pillar-desc {
     font-size: 0.88rem;
-    color: var(--srw-slate-500);
-    margin: 0 0 20px 0;
-    line-height: 1.5;
+    color: var(--srw-slate-600);
+    line-height: 1.6;
+    margin: 0 0 22px 0;
 }
-.srw-plan-cost {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--srw-slate-900);
-    margin-bottom: 24px;
-}
-.srw-plan-cost span {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--srw-slate-500);
-}
-.srw-plan-features {
+.srw-pillar-list {
     list-style: none;
-    margin: 0 0 32px 0;
-    padding: 0;
+    margin: 0;
+    padding: 20px 0 0 0;
+    border-top: 1px solid var(--srw-slate-100);
     display: grid;
     gap: 12px;
 }
-.srw-plan-feature {
-    font-size: 0.88rem;
-    color: var(--srw-slate-700);
+.srw-pillar-item {
     display: flex;
     align-items: center;
     gap: 10px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--srw-slate-700);
 }
-.srw-plan-check {
-    color: var(--srw-teal-600);
-    font-weight: bold;
+.srw-pillar-item .material-symbols-outlined {
+    font-size: 18px;
+}
+.srw-pillar-footer {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--srw-slate-100);
+}
+.srw-pillar-link {
+    font-size: 0.84rem;
+    font-weight: 800;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
 }
 
-/* FAQ */
+/* MODULAR ECOSYSTEM SECTION */
+.srw-modular {
+    padding: 80px 0;
+    background: #ffffff;
+    border-top: 1px solid var(--srw-slate-200);
+}
+.srw-modular-box {
+    background: linear-gradient(135deg, var(--srw-slate-900) 0%, var(--srw-slate-800) 60%, #042f2e 100%);
+    border-radius: 28px;
+    padding: 50px 48px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+.srw-modular-content {
+    max-width: 640px;
+    position: relative;
+    z-index: 2;
+}
+.srw-modular-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--srw-teal-500);
+    background: rgba(15, 118, 110, 0.25);
+    border: 1px solid rgba(20, 184, 166, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    margin-bottom: 14px;
+}
+.srw-modular-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 14px 0;
+    line-height: 1.25;
+}
+.srw-modular-desc {
+    font-size: 0.95rem;
+    color: var(--srw-slate-300);
+    line-height: 1.7;
+    margin: 0 0 32px 0;
+}
+.srw-modular-tags {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+.srw-tag-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 14px;
+    backdrop-filter: blur(8px);
+}
+.srw-tag-card .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--srw-teal-500);
+    margin-bottom: 6px;
+}
+.srw-tag-card strong {
+    display: block;
+    font-size: 0.84rem;
+    color: #ffffff;
+}
+.srw-tag-card span {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--srw-slate-400);
+    margin-top: 2px;
+}
+
+/* PRICING & FAQ SECTION */
+.srw-pricing {
+    padding: 90px 0;
+    background: var(--srw-slate-50);
+}
+.srw-faq {
+    padding: 80px 0;
+    background: #ffffff;
+    border-top: 1px solid var(--srw-slate-200);
+}
 .srw-faq-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-    max-width: 1000px;
+    gap: 20px;
+    max-width: 960px;
     margin: 0 auto;
 }
 .srw-faq-card {
-    background: #ffffff;
+    background: var(--srw-slate-50);
     border: 1px solid var(--srw-slate-200);
     border-radius: 16px;
-    padding: 24px 26px;
+    padding: 22px 24px;
 }
 .srw-faq-q {
-    font-size: 1.05rem;
+    font-size: 0.96rem;
     font-weight: 800;
     color: var(--srw-slate-900);
-    margin: 0 0 10px 0;
+    margin: 0 0 8px 0;
 }
 .srw-faq-a {
-    font-size: 0.92rem;
+    font-size: 0.86rem;
     color: var(--srw-slate-600);
-    margin: 0;
     line-height: 1.6;
+    margin: 0;
 }
 
-/* CTA BANNER SECTION */
-.srw-cta-section {
-    background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #0891b2 100%);
-    color: #ffffff;
+/* HIGH-CONVERSION CAPSULE CTA */
+.srw-cta-wrap {
     padding: 80px 0;
+    background: var(--srw-slate-50);
+}
+.srw-cta-capsule {
+    background: linear-gradient(135deg, var(--srw-teal-800) 0%, var(--srw-teal-700) 50%, var(--srw-cyan-700) 100%);
+    border-radius: 40px;
+    padding: 60px 40px;
     text-align: center;
+    color: #ffffff;
+    box-shadow: 0 20px 40px -10px rgba(15, 118, 110, 0.4);
+    max-width: 1040px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
 }
 .srw-cta-title {
-    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
     font-weight: 800;
-    margin: 0 0 16px 0;
+    margin: 0 0 14px 0;
     letter-spacing: -0.02em;
 }
 .srw-cta-desc {
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.9);
-    max-width: 600px;
-    margin: 0 auto 36px auto;
+    font-size: 1rem;
+    color: var(--srw-teal-100);
+    max-width: 580px;
+    margin: 0 auto 32px auto;
     line-height: 1.6;
 }
-.srw-btn-white {
-    background: #ffffff;
-    color: var(--srw-teal-700);
-    font-weight: 800;
-    padding: 14px 34px;
-    border-radius: 12px;
-    font-size: 1rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+.srw-cta-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
 }
-.srw-btn-white:hover {
-    background: #f8fafc;
+.srw-btn-white-pill {
+    background: #ffffff;
+    color: var(--srw-teal-800);
+    font-size: 0.92rem;
+    font-weight: 800;
+    padding: 14px 32px;
+    border-radius: 9999px;
+    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s ease;
+}
+.srw-btn-white-pill:hover {
+    background: var(--srw-slate-50);
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+.srw-btn-glass-pill {
+    background: rgba(17, 94, 89, 0.4);
+    border: 1px solid rgba(204, 251, 241, 0.5);
+    color: #ffffff;
+    font-size: 0.92rem;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.srw-btn-glass-pill:hover {
+    background: rgba(17, 94, 89, 0.7);
 }
 
 /* FOOTER */
@@ -865,27 +810,31 @@ class CentralLandingPageTemplate
 .srw-footer-grid {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 40px;
+    gap: 36px;
     margin-bottom: 48px;
 }
-.srw-footer-brand h3 {
-    font-size: 1.35rem;
+.srw-footer-brand h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.25rem;
     font-weight: 800;
     color: #ffffff;
-    margin: 0 0 14px 0;
+    margin: 0 0 12px 0;
 }
 .srw-footer-brand p {
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     line-height: 1.7;
-    margin: 0 0 20px 0;
+    margin: 0;
     max-width: 320px;
 }
-.srw-footer-col h4 {
-    font-size: 0.92rem;
+.srw-footer-col h5 {
+    font-size: 0.8rem;
     font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: #ffffff;
-    margin: 0 0 18px 0;
-    letter-spacing: 0.02em;
+    margin: 0 0 16px 0;
 }
 .srw-footer-links {
     list-style: none;
@@ -897,49 +846,53 @@ class CentralLandingPageTemplate
 .srw-footer-link a {
     color: var(--srw-slate-400);
     text-decoration: none;
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     transition: color 0.15s ease;
 }
 .srw-footer-link a:hover {
     color: #ffffff;
 }
 .srw-footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--srw-slate-800);
     padding-top: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.84rem;
+    font-size: 0.8rem;
 }
 
-/* RESPONSIVE BREAKPOINTS */
+/* RESPONSIVE STYLES */
 @media (max-width: 992px) {
-    .srw-hero-grid, .srw-spotlight-grid, .srw-ecosystem-grid, .srw-price-grid, .srw-steps-grid, .srw-fleet-grid, .srw-faq-grid {
+    .srw-nav-links, .srw-btn-login {
+        display: none;
+    }
+    .srw-menu-btn {
+        display: block;
+    }
+    .srw-mockup-grid, .srw-pillars-grid {
+        grid-template-columns: 1fr;
+    }
+    .srw-trust-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .srw-modular-tags {
+        grid-template-columns: 1fr;
+    }
+    .srw-faq-grid {
         grid-template-columns: 1fr;
     }
     .srw-footer-grid {
         grid-template-columns: 1fr 1fr;
     }
-    .srw-horizon-box {
-        flex-direction: column;
-        text-align: center;
-    }
-    .srw-nav-menu {
-        display: none;
-    }
 }
 @media (max-width: 640px) {
-    .srw-footer-grid {
+    .srw-trust-grid, .srw-footer-grid {
         grid-template-columns: 1fr;
     }
     .srw-footer-bottom {
         flex-direction: column;
         gap: 12px;
         text-align: center;
-    }
-    .srw-hero-trust {
-        flex-direction: column;
-        align-items: flex-start;
     }
 }
 CSS;
@@ -950,514 +903,388 @@ CSS;
         return <<<'HTML'
 <div class="srw-root">
 
-  <!-- TOP ANNOUNCEMENT BAR -->
-  <div class="srw-banner">
-    🚀 <strong>Seruwit Platform:</strong> Solusi SaaS Rental Kendaraan & Ekosistem Bisnis Modular. <a href="#modul">Pelajari Arsitektur Modul →</a>
+  <!-- FLOATING CAPSULE HEADER -->
+  <div class="srw-nav-wrapper">
+    <header class="srw-navbar">
+      <a href="/" class="srw-brand">
+        <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="srw-brand-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+        <div class="srw-brand-badge" style="display:none;">
+          <span class="material-symbols-outlined" style="font-size: 20px;">directions_car</span>
+        </div>
+        <span>{{setting:general.site_name}}</span>
+        <span class="srw-brand-tag">SaaS Rental</span>
+      </a>
+
+      <nav class="srw-nav-links">
+        <a href="#armada" class="srw-nav-link">Fleet Management</a>
+        <a href="#operasional" class="srw-nav-link">Rental Operations</a>
+        <a href="#keuangan" class="srw-nav-link">Finance &amp; ROI</a>
+        <a href="#modular" class="srw-nav-link">Modular Suite</a>
+        <a href="#harga" class="srw-nav-link">Harga</a>
+        <a href="#faq" class="srw-nav-link">FAQ</a>
+      </nav>
+
+      <div class="srw-nav-actions">
+        <a href="/login" class="srw-btn-login">Masuk</a>
+        <a href="/register" class="srw-btn-capsule">
+          <span>Mulai Gratis</span>
+          <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+        </a>
+        <button type="button" class="srw-menu-btn" onclick="const m = document.getElementById('srw-mobile-drawer'); if(m) m.style.display = m.style.display === 'block' ? 'none' : 'block';" aria-label="Menu">
+          <span class="material-symbols-outlined" style="font-size: 24px;">menu</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Drawer -->
+    <div id="srw-mobile-drawer" style="display: none; background: #ffffff; border: 1px solid var(--srw-slate-200); border-radius: 20px; padding: 16px; margin-top: 10px; max-width: 1140px; margin-left: auto; margin-right: auto; box-shadow: var(--srw-shadow-lg); pointer-events: auto;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="#armada" class="srw-nav-link" onclick="document.getElementById('srw-mobile-drawer').style.display='none';">Fleet Management</a>
+        <a href="#operasional" class="srw-nav-link" onclick="document.getElementById('srw-mobile-drawer').style.display='none';">Rental Operations</a>
+        <a href="#keuangan" class="srw-nav-link" onclick="document.getElementById('srw-mobile-drawer').style.display='none';">Finance &amp; ROI</a>
+        <a href="#modular" class="srw-nav-link" onclick="document.getElementById('srw-mobile-drawer').style.display='none';">Modular Suite</a>
+        <a href="#harga" class="srw-nav-link" onclick="document.getElementById('srw-mobile-drawer').style.display='none';">Harga</a>
+        <a href="#faq" class="srw-nav-link" onclick="document.getElementById('srw-mobile-drawer').style.display='none';">FAQ</a>
+        <div style="border-top: 1px solid var(--srw-slate-100); padding-top: 10px; margin-top: 4px; display: flex; gap: 10px;">
+          <a href="/login" class="srw-btn-login" style="display: inline-block; text-align: center; flex: 1;">Masuk</a>
+          <a href="/register" class="srw-btn-capsule" style="display: inline-flex; justify-content: center; flex: 1;">Daftar Akun</a>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- NAVBAR -->
-  <nav class="srw-navbar">
-    <div class="srw-container">
-      <div class="srw-nav-wrap">
-        <a href="/" class="srw-brand">
-          <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="srw-brand-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
-          <div class="srw-brand-badge" style="display:none;">⚡</div>
-          <span>{{setting:general.site_name}}</span>
-          <span class="srw-brand-tag">Modular OS</span>
-        </a>
-        <ul class="srw-nav-menu">
-          <li><a href="#rental" class="srw-nav-link">Rental &amp; Armada</a></li>
-          <li><a href="#modul" class="srw-nav-link">Modul Suite</a></li>
-          <li><a href="#keunggulan" class="srw-nav-link">Keunggulan</a></li>
-          <li><a href="#cara-kerja" class="srw-nav-link">Cara Kerja</a></li>
-          <li><a href="#harga" class="srw-nav-link">Paket Harga</a></li>
-          <li><a href="#faq" class="srw-nav-link">FAQ</a></li>
-        </ul>
-        <div class="srw-nav-actions">
-          <a href="/login" class="srw-btn srw-btn-outline">Masuk</a>
-          <a href="/workspaces" class="srw-btn srw-btn-primary">Portal Workspace</a>
-        </div>
-      </div>
-    </div>
-  </nav>
-
   <!-- HERO SECTION -->
-  <header class="srw-hero">
+  <section class="srw-hero">
     <div class="srw-container">
-      <div class="srw-hero-grid">
-        <div class="srw-hero-content">
-          <div class="srw-hero-badge">
-            <span class="srw-hero-dot"></span> Solusi Rental Kendaraan &amp; Modular ERP #1
-          </div>
-          <h1 class="srw-hero-title">
-            Kelola Rental Kendaraan &amp; <span>Otomasi Seluruh Bisnis Anda.</span>
-          </h1>
-          <p class="srw-hero-desc">
-            Tinggalkan pencatatan terpisah. Seruwit menyatukan manajemen rental mobil &amp; shuttle, pemantauan live GPS armada, inventori gudang, hingga faktur akuntansi dalam satu platform modular multi-tenant.
-          </p>
-          <div class="srw-hero-btns">
-            <a href="#rental" class="srw-btn srw-btn-primary">
-              🚗 Lihat Solusi Rental
-            </a>
-            <a href="#modul" class="srw-btn srw-btn-outline">
-              🧩 Jelajahi Modul Suite
-            </a>
-          </div>
-          <div class="srw-hero-trust">
-            <div class="srw-trust-item">
-              <span class="srw-trust-icon">✓</span> Siap Pakai Hari Ini
-            </div>
-            <div class="srw-trust-item">
-              <span class="srw-trust-icon">✓</span> Multi-Tenant Terisolasi
-            </div>
-            <div class="srw-trust-item">
-              <span class="srw-trust-icon">✓</span> Modul Plug &amp; Play
-            </div>
-          </div>
-        </div>
+      <div class="srw-hero-badge">
+        <span class="srw-pulse-dot"></span>
+        <span>Platform All-in-One Manajemen Rental Modern</span>
+      </div>
 
-        <!-- HERO VISUAL MOCKUP -->
-        <div class="srw-dashboard-mockup">
-          <div class="srw-mockup-bar">
+      <h1 class="srw-hero-title">
+        Kendalikan Armada, Bisnis Rental &amp; Keuangan dalam <span class="srw-grad-text">Satu Platform Cerdas</span>
+      </h1>
+
+      <p class="srw-hero-desc">
+        Solusi SaaS komprehensif bagi pemilik rental kendaraan. Otomatisasi ketersediaan armada, pencatatan sewa digital, perawatan berkala, dan pembukuan laba-rugi otomatis tanpa kerumitan spreadsheet.
+      </p>
+
+      <div class="srw-hero-actions">
+        <a href="/register" class="srw-hero-btn-primary">
+          <span>Coba Gratis 14 Hari</span>
+          <span class="material-symbols-outlined" style="font-size: 18px;">rocket_launch</span>
+        </a>
+        <a href="#fitur" class="srw-hero-btn-secondary">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: var(--srw-teal-600);">play_circle</span>
+          <span>Lihat Demo Fitur</span>
+        </a>
+      </div>
+
+      <!-- SAAS DASHBOARD MOCKUP -->
+      <div class="srw-dashboard-mockup">
+        <div class="srw-mockup-inner">
+          <div class="srw-mockup-header">
             <div class="srw-mockup-dots">
-              <div class="srw-mockup-dot"></div>
-              <div class="srw-mockup-dot"></div>
-              <div class="srw-mockup-dot"></div>
+              <span class="srw-dot srw-dot-red"></span>
+              <span class="srw-dot srw-dot-yellow"></span>
+              <span class="srw-dot srw-dot-green"></span>
+              <span class="srw-mockup-url">app.seruwit.com/fleet-overview</span>
             </div>
-            <span>Seruwit Workspace Dashboard • Live</span>
-            <span style="color:#14b8a6;">● Online</span>
+            <span class="srw-mockup-badge">
+              <span class="srw-pulse-dot" style="width: 6px; height: 6px;"></span> Live Fleet Monitor
+            </span>
           </div>
-          <div class="srw-mockup-body">
-            <div class="srw-mockup-statgrid">
-              <div class="srw-mstat-card">
-                <div class="srw-mstat-lbl">Armada Aktif Rental</div>
-                <div class="srw-mstat-val">38 / 42</div>
-                <span class="srw-mstat-badge">90.4% Tingkat Utilisasi</span>
+
+          <div class="srw-mockup-grid">
+            <!-- Widget 1: Fleet -->
+            <div class="srw-mockup-card">
+              <div class="srw-card-header">
+                <span>Status Armada</span>
+                <span class="material-symbols-outlined" style="color: var(--srw-teal-600); font-size: 20px;">directions_car</span>
               </div>
-              <div class="srw-mstat-card">
-                <div class="srw-mstat-lbl">Pemesanan Hari Ini</div>
-                <div class="srw-mstat-val">19 Booking</div>
-                <span class="srw-mstat-badge" style="background:#f0fdf4; color:#16a34a;">+12% vs Kemarin</span>
+              <div class="srw-card-val">
+                <strong>42</strong>
+                <span style="color: var(--srw-emerald-600);">36 Unit Aktif Disewa</span>
+              </div>
+              <div class="srw-card-prog">
+                <div class="srw-prog-green"></div>
+                <div class="srw-prog-yellow"></div>
+                <div class="srw-prog-gray"></div>
+              </div>
+              <div class="srw-card-subinfo">
+                <span>85% Tersewa</span>
+                <span>Servis: 2 Unit</span>
               </div>
             </div>
 
-            <!-- ACTIVE VEHICLE PREVIEW -->
-            <div class="srw-mvehicle-card">
-              <div class="srw-mvehicle-head">
-                <span class="srw-mvehicle-title">Toyota Innova Zenix Q Hybrid</span>
-                <span class="srw-mvehicle-status">On Trip (Lepas Kunci)</span>
+            <!-- Widget 2: Booking Calendar -->
+            <div class="srw-mockup-card">
+              <div class="srw-card-header">
+                <span>Reservasi Hari Ini</span>
+                <span class="material-symbols-outlined" style="color: var(--srw-cyan-600); font-size: 20px;">event_available</span>
               </div>
-              <div class="srw-mvehicle-info">
-                <span>📍 Live GPS: Jakarta Selatan</span>
-                <span>⏱️ Selesai: Besok, 18:00</span>
+              <div class="srw-card-val">
+                <strong>18 Order</strong>
+                <span style="color: var(--srw-cyan-600);">+4 Siap Handover</span>
+              </div>
+              <div class="srw-order-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-emerald-600); font-size: 18px;">verified</span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Innova Zenix - B 1294 ABC (Check-in OK)</span>
               </div>
             </div>
 
-            <div class="srw-mvehicle-card" style="margin-top: 10px;">
-              <div class="srw-mvehicle-head">
-                <span class="srw-mvehicle-title">Toyota HiAce Premio Luxury</span>
-                <span class="srw-mvehicle-status" style="background:#eff6ff; color:#2563eb; border-color:#bfdbfe;">Shuttle Travel Scheduled</span>
+            <!-- Widget 3: Cashflow -->
+            <div class="srw-mockup-card">
+              <div class="srw-card-header">
+                <span>Omset Bulan Ini</span>
+                <span class="material-symbols-outlined" style="color: var(--srw-emerald-600); font-size: 20px;">payments</span>
               </div>
-              <div class="srw-mvehicle-info">
-                <span>🛣️ Rute: Bandung → Jakarta</span>
-                <span>👥 10 / 10 Kursi Terisi</span>
+              <div class="srw-card-val">
+                <strong>Rp 128.5 Jt</strong>
+                <span style="color: var(--srw-emerald-600);">↑ 18.4%</span>
+              </div>
+              <div class="srw-card-subinfo" style="border-top: 1px solid var(--srw-slate-200); padding-top: 6px; margin-top: 10px;">
+                <span>Split Investor: Rp 38 Jt</span>
+                <strong style="color: var(--srw-slate-700);">Net: Rp 90.5 Jt</strong>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </header>
+  </section>
 
-  <!-- FLAGSHIP SPOTLIGHT: RENTAL KENDARAAN SAAS -->
-  <section class="srw-section srw-section-white" id="rental">
+  <!-- TRUST & METRICS BAR -->
+  <section class="srw-trust">
     <div class="srw-container">
-      <div class="srw-head-center">
-        <span class="srw-tag-pill">Solusi Utama Hari Ini</span>
-        <h2 class="srw-section-title">SaaS Rental Kendaraan &amp; Shuttle Cerdas</h2>
-        <p class="srw-section-subtitle">
-          Sistem manajemen lengkap untuk pemilik rental mobil, motor, bus pariwisata, hingga armada shuttle travel antar-kota.
-        </p>
+      <div class="srw-trust-grid">
+        <div class="srw-trust-item">
+          <strong>99.9%</strong>
+          <p>Akurasi Jadwal Armada</p>
+        </div>
+        <div class="srw-trust-item">
+          <strong style="color: var(--srw-teal-700);">3x Lipat</strong>
+          <p>Kecepatan Handover Unit</p>
+        </div>
+        <div class="srw-trust-item">
+          <strong style="color: var(--srw-cyan-700);">100%</strong>
+          <p>Transparansi Finansial</p>
+        </div>
+        <div class="srw-trust-item">
+          <strong>Modular</strong>
+          <p>Skalabel Tanpa Batas</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 CORE PILLARS SECTION -->
+  <section class="srw-pillars" id="fitur">
+    <div class="srw-container">
+      <div class="srw-section-header">
+        <span class="srw-section-badge">3 Pilar Solusi Utama</span>
+        <h2 class="srw-section-title">Dibuat Khusus untuk Kebutuhan Nyata Pemilik Rental</h2>
+        <p class="srw-section-desc">Mulai dari ketersediaan fisik mobil hingga pembagian hasil investor, semua terkendali rapi dalam satu platform terpadu.</p>
       </div>
 
-      <div class="srw-spotlight-box">
-        <div class="srw-spotlight-grid">
+      <div class="srw-pillars-grid">
+        <!-- Pilar 1: Fleet Management -->
+        <div class="srw-pillar-card" id="armada">
           <div>
-            <span class="srw-brand-tag">Rental &amp; Fleet Management</span>
-            <h3 style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 12px 0 16px 0; line-height: 1.25;">
-              Automasi Penuh Operasional Rental dari Booking hingga Pengembalian Unit
-            </h3>
-            <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
-              Tidak perlu lagi mengecek ketersediaan unit secara manual. Kalender ketersediaan armada langsung ter-update otomatis setiap ada pesanan baru.
+            <div class="srw-pillar-icon srw-icon-teal">
+              <span class="material-symbols-outlined" style="font-size: 26px;">directions_car</span>
+            </div>
+            <h3 class="srw-pillar-title">Fleet Management</h3>
+            <p class="srw-pillar-desc">
+              Pantau kondisi dan utilisasi seluruh armada secara real-time. Cegah kerugian akibat kerusakan tersembunyi dan unit yang tidak produktif.
             </p>
-
-            <div class="srw-feature-list">
-              <div class="srw-feature-row">
-                <div class="srw-feature-icon">📅</div>
-                <div class="srw-feature-text">
-                  <h4>Kalender Ketersediaan Real-Time</h4>
-                  <p>Hindari double booking dengan visualisasi kalender armada yang interaktif dan dinamis.</p>
-                </div>
-              </div>
-              <div class="srw-feature-row">
-                <div class="srw-feature-icon">🪪</div>
-                <div class="srw-feature-text">
-                  <h4>Verifikasi KTP, SIM &amp; Deposit Otomatis</h4>
-                  <p>Kelola data identitas penyewa, foto dokumen, checklist kondisi mobil, dan jaminan deposit.</p>
-                </div>
-              </div>
-              <div class="srw-feature-row">
-                <div class="srw-feature-icon">📍</div>
-                <div class="srw-feature-text">
-                  <h4>Live Telematika &amp; GPS Tracking</h4>
-                  <p>Pantau posisi kendaraan yang sedang disewa secara langsung lengkap dengan histori perjalanan.</p>
-                </div>
-              </div>
-            </div>
-
-            <a href="/workspaces" class="srw-btn srw-btn-primary">Mulai Kelola Rental Anda →</a>
-          </div>
-
-          <!-- SAMPLE FLEET GRID -->
-          <div class="srw-fleet-grid" style="grid-template-columns: 1fr;">
-            <div class="srw-fleet-card">
-              <div class="srw-fleet-media">
-                🚙
-                <span class="srw-fleet-category">SUV Premium</span>
-              </div>
-              <div class="srw-fleet-body">
-                <h4 class="srw-fleet-name">Toyota Fortuner 2.8 GR Sport</h4>
-                <div class="srw-fleet-specs">
-                  <span>👥 7 Kursi</span>
-                  <span>⚙️ Otomatis</span>
-                  <span>❄️ Double Blower</span>
-                  <span>⛽ Diesel</span>
-                </div>
-                <div class="srw-fleet-footer">
-                  <div class="srw-fleet-price">Rp 850.000 <span>/hari</span></div>
-                  <span class="srw-btn srw-btn-outline" style="padding: 6px 14px; font-size: 0.82rem;">Siap Jalan</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="srw-fleet-card">
-              <div class="srw-fleet-media">
-                🚐
-                <span class="srw-fleet-category">Shuttle &amp; Commuter</span>
-              </div>
-              <div class="srw-fleet-body">
-                <h4 class="srw-fleet-name">Toyota HiAce Premio Luxury</h4>
-                <div class="srw-fleet-specs">
-                  <span>👥 10-14 Kursi</span>
-                  <span>🛋️ Captain Seat</span>
-                  <span>📺 Multimedia</span>
-                  <span>👨‍✈️ Driver Ready</span>
-                </div>
-                <div class="srw-fleet-footer">
-                  <div class="srw-fleet-price">Rp 1.400.000 <span>/hari</span></div>
-                  <span class="srw-btn srw-btn-outline" style="padding: 6px 14px; font-size: 0.82rem;">Siap Jalan</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MODULAR ECOSYSTEM SUITES GRID -->
-  <section class="srw-section srw-section-alt" id="modul">
-    <div class="srw-container">
-      <div class="srw-head-center">
-        <span class="srw-tag-pill">Ekosistem Lengkap</span>
-        <h2 class="srw-section-title">Modul Spesialis Sesuai Skala Bisnis Anda</h2>
-        <p class="srw-section-subtitle">
-          Mulai dari rental armada hari ini, aktifkan modul logistik, inventori, POS, hingga marketplace saat bisnis Anda terus berkembang.
-        </p>
-      </div>
-
-      <div class="srw-ecosystem-grid">
-        <!-- Suite 1: Mobility & Fleet -->
-        <div class="srw-eco-card">
-          <div class="srw-eco-header">
-            <div class="srw-eco-icon srw-icon-teal">🚗</div>
-            <div>
-              <h3 class="srw-eco-title">Mobilitas &amp; Armada</h3>
-              <span style="font-size: 0.8rem; color: #0d9488; font-weight: 700;">Tersedia &amp; Siap Pakai</span>
-            </div>
-          </div>
-          <p class="srw-eco-desc">
-            Manajemen rental kendaraan lepas kunci/dengan supir, shuttle travel terjadwal, TMS rute pengiriman, pemantauan GPS live, dan perawatan kendaraan.
-          </p>
-          <div class="srw-eco-tags">
-            <span class="srw-eco-tag srw-tag-active">Rental Kendaraan</span>
-            <span class="srw-eco-tag srw-tag-active">Shuttle Travel</span>
-            <span class="srw-eco-tag srw-tag-active">Fleet Management</span>
-            <span class="srw-eco-tag srw-tag-active">Live GPS Tracking</span>
-            <span class="srw-eco-tag srw-tag-active">Driver Scoring</span>
-          </div>
-        </div>
-
-        <!-- Suite 2: Supply Chain & Logistics -->
-        <div class="srw-eco-card">
-          <div class="srw-eco-header">
-            <div class="srw-eco-icon srw-icon-cyan">📦</div>
-            <div>
-              <h3 class="srw-eco-title">Supply Chain &amp; Logistik</h3>
-              <span style="font-size: 0.8rem; color: #0891b2; font-weight: 700;">Tersedia &amp; Siap Pakai</span>
-            </div>
-          </div>
-          <p class="srw-eco-desc">
-            Kontrol stok multi-gudang, purchase order (PO), penerimaan barang (GRN), surat jalan digital (POD), dan distribusi barang tanpa blind spot.
-          </p>
-          <div class="srw-eco-tags">
-            <span class="srw-eco-tag srw-tag-active">Inventory Multi-Gudang</span>
-            <span class="srw-eco-tag srw-tag-active">Purchasing (PO/GRN)</span>
-            <span class="srw-eco-tag srw-tag-active">Outbound Dispatch</span>
-            <span class="srw-eco-tag srw-tag-active">Delivery Orders (POD)</span>
-          </div>
-        </div>
-
-        <!-- Suite 3: Commerce & Sales -->
-        <div class="srw-eco-card">
-          <div class="srw-eco-header">
-            <div class="srw-eco-icon srw-icon-amber">🛍️</div>
-            <div>
-              <h3 class="srw-eco-title">Commerce &amp; Penjualan</h3>
-              <span style="font-size: 0.8rem; color: #d97706; font-weight: 700;">Tersedia &amp; Siap Pakai</span>
-            </div>
-          </div>
-          <p class="srw-eco-desc">
-            Kasir Point of Sale (POS) untuk toko/cabang fisik, manajemen sales lapangan &amp; canvassing, promosi dagang, dan katalog produk.
-          </p>
-          <div class="srw-eco-tags">
-            <span class="srw-eco-tag srw-tag-active">POS Kasir Cabang</span>
-            <span class="srw-eco-tag srw-tag-active">Sales Canvassing</span>
-            <span class="srw-eco-tag srw-tag-active">Trade Promotions</span>
-            <span class="srw-eco-tag srw-tag-active">Product Catalog</span>
-          </div>
-        </div>
-
-        <!-- Suite 4: Finance & ERP -->
-        <div class="srw-eco-card">
-          <div class="srw-eco-header">
-            <div class="srw-eco-icon srw-icon-indigo">💰</div>
-            <div>
-              <h3 class="srw-eco-title">Keuangan &amp; Akuntansi</h3>
-              <span style="font-size: 0.8rem; color: #4f46e5; font-weight: 700;">Tersedia &amp; Siap Pakai</span>
-            </div>
-          </div>
-          <p class="srw-eco-desc">
-            Faktur otomatis dari rental atau pesanan barang, manajemen piutang (AR) &amp; utang (AP), jurnal akuntansi (GL), dan approval berjenjang.
-          </p>
-          <div class="srw-eco-tags">
-            <span class="srw-eco-tag srw-tag-active">Automated Invoicing</span>
-            <span class="srw-eco-tag srw-tag-active">Piutang &amp; Aging</span>
-            <span class="srw-eco-tag srw-tag-active">Buku Besar / GL</span>
-            <span class="srw-eco-tag srw-tag-active">Multi-tier Approvals</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- HORIZON ROADMAP: MARKETPLACE -->
-      <div class="srw-horizon-box">
-        <div class="srw-horizon-content">
-          <span style="background:rgba(20, 184, 166, 0.2); color:#2dd4bf; font-size:0.75rem; font-weight:800; padding:3px 10px; border-radius:50px; text-transform:uppercase;">Ecosystem Horizon</span>
-          <h3>🌐 B2B Marketplace &amp; E-Commerce Storefront</h3>
-          <p>
-            Visi masa depan Seruwit: Membuka kolaborasi antar-tenant. Saling bertukar permintaan armada sewa saat unit Anda penuh, jual beli suku cadang, hingga etalase e-commerce B2B terintegrasi.
-          </p>
-        </div>
-        <div>
-          <a href="/workspaces" class="srw-btn" style="background:#ffffff; color:#0f172a; font-weight:800; white-space:nowrap;">Gabung Ekosistem</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- KEUNGGULAN / PLATFORM ADVANTAGES -->
-  <section class="srw-section srw-section-white" id="keunggulan">
-    <div class="srw-container">
-      <div class="srw-head-center">
-        <span class="srw-tag-pill">Mengapa Seruwit?</span>
-        <h2 class="srw-section-title">Arsitektur Multi-Tenant yang Aman &amp; Terisolasi</h2>
-        <p class="srw-section-subtitle">
-          Dibangun khusus untuk performa tinggi, privasi data perusahaan, dan fleksibilitas tanpa batas.
-        </p>
-      </div>
-
-      <div class="srw-steps-grid">
-        <div class="srw-step-card">
-          <div class="srw-step-num">🏢</div>
-          <h3 class="srw-step-title">Multi-Tenant Isolation</h3>
-          <p class="srw-step-desc">
-            Setiap perusahaan memiliki database dan ruang kerja yang terisolasi penuh demi keamanan dan kepatuhan privasi data.
-          </p>
-        </div>
-
-        <div class="srw-step-card">
-          <div class="srw-step-num">🧩</div>
-          <h3 class="srw-step-title">Bayar Sesuai Kebutuhan</h3>
-          <p class="srw-step-desc">
-            Pasang modul rental saat memulai, dan cukup aktifkan modul gudang atau POS kasir saat bisnis Anda berekspansi.
-          </p>
-        </div>
-
-        <div class="srw-step-card">
-          <div class="srw-step-num">📱</div>
-          <h3 class="srw-step-title">Mobile PWA Ready</h3>
-          <p class="srw-step-desc">
-            Dapat diakses lancar dari smartphone oleh pengemudi, staf lapangan, kasir toko, maupun pelanggan penyewa.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CARA KERJA (3 LANGKAH) -->
-  <section class="srw-section srw-section-alt" id="cara-kerja">
-    <div class="srw-container">
-      <div class="srw-head-center">
-        <span class="srw-tag-pill">Cara Kerja</span>
-        <h2 class="srw-section-title">Mulai Operasional Hanya dalam 3 Langkah</h2>
-        <p class="srw-section-subtitle">Tidak membutuhkan instalasi server yang rumit. Workspace Anda langsung siap pakai.</p>
-      </div>
-
-      <div class="srw-steps-grid">
-        <div class="srw-step-card">
-          <div class="srw-step-num">1</div>
-          <h3 class="srw-step-title">Daftarkan Workspace</h3>
-          <p class="srw-step-desc">Buat akun perusahaan Anda dan dapatkan domain workspace mandiri dalam hitungan detik.</p>
-        </div>
-
-        <div class="srw-step-card">
-          <div class="srw-step-num">2</div>
-          <h3 class="srw-step-title">Aktifkan Modul Pilihan</h3>
-          <p class="srw-step-desc">Pilih modul Rental Kendaraan, Shuttle, Inventory, atau Kasir sesuai lini bisnis yang aktif.</p>
-        </div>
-
-        <div class="srw-step-card">
-          <div class="srw-step-num">3</div>
-          <h3 class="srw-step-title">Jalankan Operasi Harian</h3>
-          <p class="srw-step-desc">Input unit armada, kelola booking pelanggan, pantau posisi GPS, dan terbitkan invoice otomatis.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PAKET HARGA -->
-  <section class="srw-section srw-section-white" id="harga">
-    <div class="srw-container">
-      <div class="srw-head-center">
-        <span class="srw-tag-pill">Paket Investasi</span>
-        <h2 class="srw-section-title">Paket Fleksibel untuk Setiap Tahap Usaha</h2>
-        <p class="srw-section-subtitle">Transparan, terjangkau, dan dapat di-upgrade sewaktu-waktu.</p>
-      </div>
-
-      <div class="srw-price-grid">
-        <!-- Starter Plan -->
-        <div class="srw-price-card">
-          <div>
-            <h3 class="srw-plan-title">Rental Starter</h3>
-            <p class="srw-plan-desc">Cocok untuk usaha rental mobil atau shuttle travel mandiri.</p>
-            <div class="srw-plan-cost">Rp 299rb <span>/bulan</span></div>
-            <ul class="srw-plan-features">
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Modul Rental Kendaraan Penuh</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Kalender Booking &amp; Jadwal Armada</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Verifikasi Dokumen &amp; Deposit</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Faktur &amp; Tagihan Otomatis</li>
+            <ul class="srw-pillar-list">
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-teal-600);">check_circle</span>
+                <span>Monitoring status ketersediaan armada live</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-teal-600);">check_circle</span>
+                <span>Jadwal servis preventif &amp; pengingat STNK/Pajak</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-teal-600);">check_circle</span>
+                <span>Inspeksi fisik digital &amp; foto kondisi unit</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-teal-600);">check_circle</span>
+                <span>Riwayat pemeliharaan &amp; biaya per kendaraan</span>
+              </li>
             </ul>
           </div>
-          <a href="/workspaces" class="srw-btn srw-btn-outline">Pilih Paket Starter</a>
+          <div class="srw-pillar-footer">
+            <a href="/register" class="srw-pillar-link" style="color: var(--srw-teal-700);">Eksplorasi Fitur Armada →</a>
+          </div>
         </div>
 
-        <!-- Growth Plan -->
-        <div class="srw-price-card srw-price-popular">
-          <div class="srw-popular-badge">Paling Populer</div>
+        <!-- Pilar 2: Rental Operations -->
+        <div class="srw-pillar-card srw-pillar-featured" id="operasional">
           <div>
-            <h3 class="srw-plan-title">Mobility &amp; Logistics</h3>
-            <p class="srw-plan-desc">Untuk bisnis rental berkembang dengan kebutuhan pelacakan &amp; logistik.</p>
-            <div class="srw-plan-cost">Rp 699rb <span>/bulan</span></div>
-            <ul class="srw-plan-features">
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Semua Fitur Rental Starter</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Live GPS Tracking &amp; Telematika</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Modul Shuttle &amp; Tiket Penumpang</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Manajemen Inventori &amp; Suku Cadang</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Multi-User &amp; Hak Akses Khusus</li>
+            <div class="srw-pillar-icon srw-icon-cyan">
+              <span class="material-symbols-outlined" style="font-size: 26px;">calendar_month</span>
+            </div>
+            <h3 class="srw-pillar-title">Rental Operations</h3>
+            <p class="srw-pillar-desc">
+              Kelola alur pemesanan tanpa risiko bentrok jadwal. Dari booking pelanggan hingga serah terima unit secara digital tanpa repot berkas kertas.
+            </p>
+            <ul class="srw-pillar-list">
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-cyan-600);">check_circle</span>
+                <span>Kalender booking visual anti double-booking</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-cyan-600);">check_circle</span>
+                <span>Surat perjanjian sewa digital &amp; e-signature</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-cyan-600);">check_circle</span>
+                <span>Verifikasi identitas penyewa &amp; jaminan deposit</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-cyan-600);">check_circle</span>
+                <span>Multi-cabang &amp; opsi antar-jemput bandara/hotel</span>
+              </li>
             </ul>
           </div>
-          <a href="/workspaces" class="srw-btn srw-btn-primary">Mulai Uji Coba Gratis</a>
+          <div class="srw-pillar-footer">
+            <a href="/register" class="srw-pillar-link" style="color: var(--srw-cyan-700);">Eksplorasi Operasional →</a>
+          </div>
         </div>
 
-        <!-- Enterprise Plan -->
-        <div class="srw-price-card">
+        <!-- Pilar 3: Finance Management -->
+        <div class="srw-pillar-card" id="keuangan">
           <div>
-            <h3 class="srw-plan-title">Full Enterprise Suite</h3>
-            <p class="srw-plan-desc">Solusi komprehensif tanpa batas modul untuk perusahaan skala besar.</p>
-            <div class="srw-plan-cost">Hubungi Kami <span>/custom</span></div>
-            <ul class="srw-plan-features">
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Seluruh Modul Bisnis (28+ Modul)</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Akuntansi Buku Besar &amp; Audit Trail</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Akses Awal B2B Marketplace</li>
-              <li class="srw-plan-feature"><span class="srw-plan-check">✓</span> Custom Domain &amp; Dedicated Support</li>
+            <div class="srw-pillar-icon srw-icon-emerald">
+              <span class="material-symbols-outlined" style="font-size: 26px;">account_balance_wallet</span>
+            </div>
+            <h3 class="srw-pillar-title">Finance &amp; ROI</h3>
+            <p class="srw-pillar-desc">
+              Otomatisasi pembukuan dan analisis laba-rugi setiap armada. Transparan bagi pengelola dan pemilik unit titipan (investor mitra).
+            </p>
+            <ul class="srw-pillar-list">
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-emerald-600);">check_circle</span>
+                <span>Invoice digital instan ber-QR &amp; status bayar</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-emerald-600);">check_circle</span>
+                <span>Otomatisasi split revenue mitra / investor titip unit</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-emerald-600);">check_circle</span>
+                <span>Laporan profit &amp; margin bersih per mobil</span>
+              </li>
+              <li class="srw-pillar-item">
+                <span class="material-symbols-outlined" style="color: var(--srw-emerald-600);">check_circle</span>
+                <span>Pencatatan arus kas operasional harian terpadu</span>
+              </li>
             </ul>
           </div>
-          <a href="mailto:{{setting:site.contact_email}}" class="srw-btn srw-btn-outline">Konsultasi Enterprise</a>
+          <div class="srw-pillar-footer">
+            <a href="/register" class="srw-pillar-link" style="color: var(--srw-emerald-600);">Eksplorasi Keuangan →</a>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section class="srw-section srw-section-alt" id="faq">
+  <!-- MODULAR ECOSYSTEM SECTION -->
+  <section class="srw-modular" id="modular">
     <div class="srw-container">
-      <div class="srw-head-center">
-        <span class="srw-tag-pill">Pertanyaan Umum</span>
-        <h2 class="srw-section-title">Hal yang Sering Ditanyakan</h2>
+      <div class="srw-modular-box">
+        <div class="srw-modular-content">
+          <span class="srw-modular-badge">Arsitektur Modular Seruwit</span>
+          <h2 class="srw-modular-title">Platform yang Tumbuh Bersama Skala Bisnis Anda</h2>
+          <p class="srw-modular-desc">
+            Tidak ada fitur berlebih yang memperlambat sistem Anda. Aktifkan modul tambahan sesuai kebutuhan operasional armada dan cabang Anda sewaktu-waktu tanpa perlu migrasi database.
+          </p>
+
+          <div class="srw-modular-tags">
+            <div class="srw-tag-card">
+              <span class="material-symbols-outlined">web</span>
+              <strong>Storefront &amp; Pages</strong>
+              <span>Katalog publik &amp; visual CMS</span>
+            </div>
+            <div class="srw-tag-card">
+              <span class="material-symbols-outlined">chat</span>
+              <strong>WhatsApp Reminder</strong>
+              <span>Pengingat jatuh tempo otomatis</span>
+            </div>
+            <div class="srw-tag-card">
+              <span class="material-symbols-outlined">domain</span>
+              <strong>Multi-Tenant Cabang</strong>
+              <span>Skalabilitas multi-lokasi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section class="srw-pricing" id="harga">
+    <div class="srw-container">
+      <div class="srw-section-header">
+        <span class="srw-section-badge">Paket Investasi Bisnis</span>
+        <h2 class="srw-section-title">Pilihan Paket Fleksibel Sesuai Jumlah Armada</h2>
+        <p class="srw-section-desc">Mulai gratis 14 hari. Tanpa komitmen kartu kredit. Upgrade kapan saja saat armada bertambah.</p>
+      </div>
+
+      {{pricing_table}}
+    </div>
+  </section>
+
+  <!-- FAQ SECTION -->
+  <section class="srw-faq" id="faq">
+    <div class="srw-container">
+      <div class="srw-section-header">
+        <span class="srw-section-badge">Tanya Jawab</span>
+        <h2 class="srw-section-title">Pertanyaan yang Sering Diajukan</h2>
+        <p class="srw-section-desc">Semua yang perlu Anda ketahui sebelum menggunakan platform Seruwit SaaS.</p>
       </div>
 
       <div class="srw-faq-grid">
         <div class="srw-faq-card">
-          <h4 class="srw-faq-q">Apakah saya bisa hanya memakai fitur rental kendaraan saja?</h4>
-          <p class="srw-faq-a">
-            Tentu saja! Seruwit dirancang modular. Anda dapat mengaktifkan modul rental saja tanpa perlu terganggu dengan modul lain yang belum dibutuhkan.
-          </p>
+          <h3 class="srw-faq-q">Apakah aplikasi ini cocok untuk rental mobil dan motor?</h3>
+          <p class="srw-faq-a">Ya. Seruwit dirancang fleksibel untuk segala jenis rental kendaraan, baik mobil keluarga, mobil premium, bus/shuttle, hingga motor harian.</p>
         </div>
-
         <div class="srw-faq-card">
-          <h4 class="srw-faq-q">Bagaimana jika nanti saya ingin menambah modul logistik atau POS?</h4>
-          <p class="srw-faq-a">
-            Anda dapat langsung mengaktifkannya dari menu Registry Modul di dashboard workspace Anda secara instan tanpa perlu migrasi data atau ganti aplikasi.
-          </p>
+          <h3 class="srw-faq-q">Bagaimana jika saya memiliki armada milik investor (titip sewa)?</h3>
+          <p class="srw-faq-a">Sistem menyediakan fitur split revenue otomatis. Anda dapat menentukan persentase bagi hasil dan menghasilkan laporan bulanan transparan bagi mitra dalam satu klik.</p>
         </div>
-
         <div class="srw-faq-card">
-          <h4 class="srw-faq-q">Apakah data bisnis rental saya aman dari tenant lain?</h4>
-          <p class="srw-faq-a">
-            Sangat aman. Setiap tenant beroperasi dalam arsitektur multi-tenant terisolasi penuh dengan database independen dan hak akses ketat.
-          </p>
+          <h3 class="srw-faq-q">Apakah saya bisa memindahkan data dari Excel?</h3>
+          <p class="srw-faq-a">Tentu saja. Tersedia fitur impor data kendaraan dan pelanggan via file spreadsheet sehingga Anda tidak perlu input satu per satu.</p>
         </div>
-
         <div class="srw-faq-card">
-          <h4 class="srw-faq-q">Bisakah saya menggunakan nama domain bisnis saya sendiri?</h4>
-          <p class="srw-faq-a">
-            Ya, Seruwit mendukung custom domain untuk masing-masing tenant workspace sehingga brand bisnis Anda tampil profesional.
-          </p>
+          <h3 class="srw-faq-q">Apakah halaman website publik bisa diedit sendiri?</h3>
+          <p class="srw-faq-a">Bisa! Seruwit dilengkapi modul visual Page Builder (GrapesJS) yang memungkinkan Anda mengubah teks, gambar, promo, dan tampilan katalog tanpa koding.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- FINAL CTA -->
-  <section class="srw-cta-section">
+  <!-- CAPSULE CTA SECTION -->
+  <section class="srw-cta-wrap" id="daftar">
     <div class="srw-container">
-      <h2 class="srw-cta-title">Siap Memajukan Bisnis Rental &amp; Mobilitas Anda?</h2>
-      <p class="srw-cta-desc">
-        Bergabunglah dengan ekosistem bisnis modern Seruwit. Daftarkan workspace perusahaan Anda hari ini.
-      </p>
-      <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
-        <a href="/workspaces" class="srw-btn srw-btn-white">Daftar Workspace Gratis →</a>
-        <a href="mailto:{{setting:site.contact_email}}?subject=Tanya%20Seputar%20Seruwit%20CRM%20%26%20Solusi%20Enterprise" class="srw-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3);">Hubungi Tim Sales</a>
+      <div class="srw-cta-capsule">
+        <h2 class="srw-cta-title">Siap Memodernisasi Bisnis Rental Anda?</h2>
+        <p class="srw-cta-desc">
+          Tingkatkan efisiensi armada dan pantau laba operasional secara akurat hari ini. Mulai uji coba gratis 14 hari penuh.
+        </p>
+        <div class="srw-cta-actions">
+          <a href="/register" class="srw-btn-white-pill">
+            Mulai Uji Coba Gratis 14 Hari
+          </a>
+          <a href="/login" class="srw-btn-glass-pill">
+            Masuk ke Portal Akun
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -1467,55 +1294,46 @@ CSS;
     <div class="srw-container">
       <div class="srw-footer-grid">
         <div class="srw-footer-brand">
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-            <img src="{{setting:site.logo}}" alt="{{setting:general.site_name}}" class="srw-brand-img" style="height:28px;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
-            <div class="srw-brand-badge" style="width:32px; height:32px; font-size:1rem; display:none;">⚡</div>
-            <h3 style="margin:0;">{{setting:general.site_name}}</h3>
-          </div>
-          <p>{{setting:general.site_tagline}}</p>
-          <p style="font-size:0.84rem; color:#64748b;">
-            📍 {{setting:site.address}}<br>
-            📞 {{setting:site.phone}}<br>
-            ✉️ {{setting:site.contact_email}}
+          <h4>
+            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--srw-teal-500);">directions_car</span>
+            <span>{{setting:general.site_name}}</span>
+          </h4>
+          <p>
+            Platform SaaS all-in-one untuk efisiensi armada, otomatisasi operasional sewa, dan akuntansi bisnis rental terpadu.
           </p>
         </div>
 
         <div class="srw-footer-col">
-          <h4>Solusi Mobilitas</h4>
+          <h5>Fitur Utama</h5>
           <ul class="srw-footer-links">
-            <li class="srw-footer-link"><a href="#rental">Rental Kendaraan</a></li>
-            <li class="srw-footer-link"><a href="#rental">Shuttle &amp; Travel</a></li>
-            <li class="srw-footer-link"><a href="#modul">Fleet Management</a></li>
-            <li class="srw-footer-link"><a href="#modul">Live GPS Tracking</a></li>
+            <li class="srw-footer-link"><a href="#armada">Fleet Management</a></li>
+            <li class="srw-footer-link"><a href="#operasional">Rental Operations</a></li>
+            <li class="srw-footer-link"><a href="#keuangan">Finance &amp; ROI</a></li>
           </ul>
         </div>
 
         <div class="srw-footer-col">
-          <h4>Ekosistem Modular</h4>
+          <h5>Ekosistem</h5>
           <ul class="srw-footer-links">
-            <li class="srw-footer-link"><a href="#modul">Supply Chain &amp; Gudang</a></li>
-            <li class="srw-footer-link"><a href="#modul">POS &amp; Field Sales</a></li>
-            <li class="srw-footer-link"><a href="#modul">Faktur &amp; Akuntansi</a></li>
-            <li class="srw-footer-link"><a href="#modul">B2B Marketplace</a></li>
+            <li class="srw-footer-link"><a href="#modular">Modul Storefront</a></li>
+            <li class="srw-footer-link"><a href="#modular">Modul GrapesJS Pages</a></li>
+            <li class="srw-footer-link"><a href="#modular">Multi-Cabang Tenant</a></li>
           </ul>
         </div>
 
         <div class="srw-footer-col">
-          <h4>Legal &amp; Akses</h4>
+          <h5>Akses</h5>
           <ul class="srw-footer-links">
-            <li class="srw-footer-link"><a href="/login">Masuk ke Akun</a></li>
-            <li class="srw-footer-link"><a href="/workspaces">Portal Workspace</a></li>
-            <li class="srw-footer-link"><a href="/terms">Syarat &amp; Ketentuan</a></li>
-            <li class="srw-footer-link"><a href="/privacy">Kebijakan Privasi</a></li>
+            <li class="srw-footer-link"><a href="/login">Masuk Akun</a></li>
+            <li class="srw-footer-link"><a href="/register">Registrasi Baru</a></li>
+            <li class="srw-footer-link"><a href="#faq">Pusat Bantuan</a></li>
           </ul>
         </div>
       </div>
 
       <div class="srw-footer-bottom">
         <div>{{setting:site.copyright}}</div>
-        <div style="display:flex; gap:16px;">
-          <span>All-in-One Mobility &amp; Business Operating System</span>
-        </div>
+        <div>Platform Manajemen Rental Kendaraan Modern</div>
       </div>
     </div>
   </footer>
