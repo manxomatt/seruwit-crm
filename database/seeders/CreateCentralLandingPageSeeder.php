@@ -23,7 +23,8 @@ class CreateCentralLandingPageSeeder extends Seeder
             return;
         }
 
-        $user = User::query()->first();
+        $user = User::query()->whereHas('roles', fn ($q) => $q->where('slug', 'admin'))->first()
+            ?? User::query()->first();
 
         if ($user === null) {
             return;
