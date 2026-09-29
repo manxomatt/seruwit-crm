@@ -7,43 +7,45 @@ interface CTAProps {
   canRegister?: boolean;
 }
 
-const CTA: React.FC<CTAProps> = ({ canLogin = true, canRegister = true }) => {
+const CTA: React.FC<CTAProps> = ({ canRegister = true }) => {
   const { t } = useTrans();
 
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-teal-800 via-teal-700 to-cyan-700 px-6 py-16 text-center sm:px-16">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber-400/20 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-10 h-72 w-72 rounded-full bg-emerald-400/15 blur-2xl" />
-          <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-900 px-6 py-16 text-center sm:px-16 shadow-2xl">
+          {/* Ambient Glow Orbs */}
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-teal-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-10 h-72 w-72 rounded-full bg-emerald-400/15 blur-3xl" />
 
-          <div className="relative">
-            <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              {t('landing.cta.title')}
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+              {t('landing.cta.title', undefined, 'Siap Mengubah Cara Mengelola Bisnis Rental Anda?')}
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-teal-50/90">
-              {t('landing.cta.subtitle')}
+            <p className="mx-auto mt-4 text-base sm:text-lg text-teal-100/90 leading-relaxed">
+              {t('landing.cta.subtitle', undefined, 'Bergabunglah dengan puluhan pemilik bisnis rental yang telah mengotomatiskan reservasi, armada, dan laporan keuangan mereka bersama Seruwit.')}
             </p>
-            <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+
+            <div className="mt-10 flex flex-col justify-center gap-3.5 sm:flex-row">
               {canRegister && (
                 <Link
                   href={route('register')}
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-teal-800 shadow-sm transition hover:bg-teal-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-8 py-4 text-base font-black text-teal-950 shadow-lg shadow-black/10 transition hover:bg-teal-50 active:scale-95"
                   prefetch
                 >
-                  {t('landing.cta.primary')}
+                  <span>{t('landing.cta.primary', undefined, 'Mulai Coba Gratis 14 Hari')}</span>
+                  <span>⚡</span>
                 </Link>
               )}
-              {canLogin && (
-                <Link
-                  href={route('login')}
-                  className="inline-flex items-center justify-center rounded-xl border border-white/35 px-8 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
-                  prefetch
-                >
-                  {t('landing.cta.secondary')}
-                </Link>
-              )}
+              <a
+                href="https://wa.me/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition hover:bg-white/20 active:scale-95"
+              >
+                <span>{t('landing.cta.secondary', undefined, 'Konsultasi Tim Sales')}</span>
+                <span className="material-symbols-outlined text-[18px]">chat</span>
+              </a>
             </div>
           </div>
         </div>

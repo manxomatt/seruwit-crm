@@ -21,8 +21,12 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['var(--font-sans)', 'Figtree', ...defaultTheme.fontFamily.sans],
-                display: ['Plus Jakarta Sans', 'var(--font-sans)', 'Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['"Plus Jakarta Sans"', 'var(--font-sans)', 'Figtree', ...defaultTheme.fontFamily.sans],
+                body: ['"Plus Jakarta Sans"', 'var(--font-sans)', ...defaultTheme.fontFamily.sans],
+                heading: ['Outfit', 'var(--font-heading)', ...defaultTheme.fontFamily.sans],
+                display: ['Outfit', 'var(--font-heading)', ...defaultTheme.fontFamily.sans],
+                outfit: ['Outfit', 'sans-serif'],
+                jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
             },
             colors: {
                 primary: 'rgb(var(--color-primary-rgb) / <alpha-value>)',

@@ -32,8 +32,11 @@ use Stancl\Tenancy\Database\Models\Domain as BaseDomain;
 class Domain extends BaseDomain
 {
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_PENDING_DNS = 'pending_dns';
+
     public const STATUS_VERIFIED = 'verified';
+
     public const STATUS_FAILED = 'failed';
 
     /**

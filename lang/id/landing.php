@@ -2,24 +2,101 @@
 
 return [
     'nav' => [
-        'features' => 'Modul',
-        'benefits' => 'Cara kerja',
+        'features' => 'Fitur',
+        'solutions' => 'Fitur Utama',
+        'benefits' => 'Cara Kerja',
         'contact' => 'Kontak',
         'login' => 'Masuk',
-        'cta' => 'Daftar Gratis',
+        'cta' => 'Mulai Gratis',
         'language' => 'Bahasa',
         'menu_toggle' => 'Buka menu',
+        'rental' => 'Rental & Booking',
+        'fleet' => 'Manajemen Armada',
+        'accounting' => 'Akuntansi & Finansial',
+        'ecosystem' => 'Ekosistem Modul',
+        'faq' => 'FAQ',
     ],
 
     'hero' => [
-        'badge' => 'Platform operasi untuk distribusi, logistik, dan penjualan',
-        'title_line1' => 'Jalankan seluruh operasi bisnis dari',
-        'title_highlight' => 'satu workspace',
-        'tagline_fallback' => 'Seruwit Biz menghubungkan gudang, armada, penjualan, dan keuangan—siap dipakai, tanpa instalasi rumit.',
+        'badge' => 'Platform Operasi Rental Kendaraan & Keuangan Terpadu',
+        'title_line1' => 'Kelola Rental, Pantau Armada, & Kendalikan',
+        'title_highlight' => 'Finansial Anda',
+        'tagline_fallback' => 'Hilangkan risiko double-booking dengan kalender cerdas, pantau posisi GPS armada real-time, verifikasi KTP/SIM instan, dan kendalikan laba-rugi per mobil secara otomatis.',
+        'quick_input_placeholder' => 'Masukkan nama usaha rental Anda...',
+        'quick_cta' => 'Mulai Coba Gratis ⚡',
         'cta_primary' => 'Daftar Gratis',
         'cta_secondary' => 'Masuk',
         'trust_no_card' => 'Tanpa kartu kredit',
-        'trust_setup_time' => 'Workspace siap dalam hitungan menit',
+        'trust_setup_time' => 'Setup dalam 2 menit',
+        'trust_multi_tenant' => 'Database Terisolasi',
+        'trust_uptime' => '99.9% Uptime SLA',
+    ],
+
+    'trust_pillars' => [
+        'tenant_title' => 'Multi-Tenant Database Terisolasi',
+        'tenant_desc' => 'Keamanan data perusahaan terjamin dengan database mandiri terenkripsi dan proteksi skema terpisah.',
+        'domain_title' => 'Custom Domain Mandiri',
+        'domain_desc' => 'Gunakan domain atau subdomain usaha Anda sendiri (misal: portal.rentalanda.com) dengan SSL otomatis.',
+        'modular_title' => '28+ Modul Plug-and-Play',
+        'modular_desc' => 'Aktifkan modul logistik, bengkel gudang, atau POS kasir kapan saja bisnis Anda berkembang.',
+        'uptime_title' => '99.9% Cloud Uptime SLA',
+        'uptime_desc' => 'Infrastruktur cloud handal, cepat, dan didukung pencadangan data otomatis berkala.',
+    ],
+
+    'rental_section' => [
+        'tag' => 'Pilar Flagship 01',
+        'title' => 'Operasi Rental Kendaraan Bebas Konflik & Terotomatisasi',
+        'subtitle' => 'Mulai dari sewa mobil lepas kunci, paket mobil dengan driver, hingga shuttle antar-kota—seluruh alur booking tersaji rapi dalam satu layar.',
+        'calendar_title' => 'Zero-Conflict Booking Calendar',
+        'calendar_desc' => 'Penjadwalan unit otomatis mencegah double-booking secara presisi. Lihat ketersediaan mobil per tanggal, jam, atau jenis armada seketika.',
+        'handover_title' => 'Inspeksi Handover Foto',
+        'handover_desc' => 'Foto kondisi fisik bodi, baret/kilometer mobil sebelum & sesudah sewa via smartphone untuk menghindari dispute klaim deposit.',
+        'kyc_title' => 'Screening Dokumen KTP/SIM & Deteksi Risiko',
+        'kyc_desc' => 'Auto-OCR KTP & SIM untuk ekstraksi data instan, validasi masa aktif SIM terhadap jadwal sewa, serta pengecekan daftar blacklist penyewa secara terpadu.',
+        'contract_title' => 'Kontrak Digital Otomatis',
+        'contract_desc' => 'Surat perjanjian sewa (SPK) otomatis terbit dengan pasal klausul rental lengkap dan tanda tangan digital saat booking disetujui.',
+    ],
+
+    'fleet_section' => [
+        'tag' => 'Pilar Flagship 02',
+        'title' => 'Kendali Penuh Atas Armada, Dokumen & Driver',
+        'subtitle' => 'Tidak ada lagi denda STNK telat, jadwal servis terlewat, atau ketidaktahuan rute perjalanan kendaraan sewa Anda.',
+        'gps_title' => 'Live GPS Telematics & Radar',
+        'gps_desc' => 'Integrasi pelacakan posisi GPS riil dan alarm peringatan otomatis saat mobil keluar dari batas wilayah kota sewa.',
+        'tax_title' => 'Pengingat Pajak, STNK & KIR',
+        'tax_desc' => 'Notifikasi otomatis H-30 sebelum masa pajak tahunan, 5 tahunan, asuransi all-risk, atau uji KIR armada habis.',
+        'driver_title' => 'Manajemen Driver & Komisi',
+        'driver_desc' => 'Penugasan sopir per trip, pencatatan uang saku/jalan, serta rekap komisi driver yang terhitung transparan.',
+        'maintenance_title' => 'Preventive Maintenance',
+        'maintenance_desc' => 'Jadwal servis berkala, pengingat ganti oli mesin berdasarkan odometer, dan pencatatan riwayat bengkel.',
+    ],
+
+    'accounting_section' => [
+        'tag' => 'Pilar Flagship 03',
+        'title' => 'Akuntansi & Finansial Lengkap Khusus Rental Kendaraan',
+        'subtitle' => 'Bukan akuntansi generik. Seruwit dirancang khusus untuk memahami siklus keuangan rental: deposit jaminan, biaya operasional per armada, piutang korporat, hingga faktur instan.',
+        'invoice_title' => 'Faktur & Payment Gateway Otomatis',
+        'invoice_desc' => 'Terbitkan invoice digital PDF otomatis begitu booking terkonfirmasi. Penyewa bisa langsung membayar via QRIS, Virtual Account bank, atau Kartu Kredit.',
+        'deposit_title' => 'Pengelolaan Deposit & Jaminan Sewa',
+        'deposit_desc' => 'Kelola uang jaminan (deposit sewa) secara transparan. Tahan deposit secara digital, potong otomatis jika ada denda overtime/baret, dan kembalikan sisa deposit seketika.',
+        'pnl_title' => 'Laba Rugi per Unit Mobil (P&L per Vehicle)',
+        'pnl_desc' => 'Ketahui mobil mana yang paling menguntungkan. Bandingkan pendapatan sewa mobil vs total biaya BBM, tol, servis bengkel, dan komisi sopir.',
+        'receivables_title' => 'Pengawasan Piutang & Aging Korporat',
+        'receivables_desc' => 'Pantau jatuh tempo tagihan sewa pelanggan korporat, batas kredit (credit limit), dan riwayat pembayaran mitra.',
+        'gl_title' => 'Buku Besar (GL) & Neraca Otomatis',
+        'gl_desc' => 'Seluruh transaksi operasional sewa otomatis membentuk jurnal, neraca saldo, dan laporan arus kas tanpa entri manual akuntan.',
+    ],
+
+    'ecosystem_section' => [
+        'tag' => 'Skalabilitas Terbuka',
+        'title' => 'Ekosistem Modular yang Siap Tumbuh Bersama Anda',
+        'subtitle' => 'Kembangkan bisnis rental Anda ke lini terkait tanpa perlu berganti software.',
+        'logistics_title' => 'Logistik & Shuttle Travel',
+        'logistics_desc' => 'Manajemen pengiriman kargo, manifest penumpang shuttle antar-kota, dan loket tiket.',
+        'inventory_title' => 'Gudang & Sparepart Bengkel',
+        'inventory_desc' => 'Kontrol stok sparepart, oli, ban, ban serep, dan mutasi barang gudang pusat.',
+        'pos_title' => 'Kasir POS & Outlet Offline',
+        'pos_desc' => 'Kasir transaksi cabang, shift kasir, dan integrasi katalog produk operasional.',
     ],
 
     'modules' => [
@@ -160,7 +237,7 @@ return [
             ],
             'uptime' => [
                 'value' => '4 lini',
-                'label' => 'Distribusi, logistik, rental, field sales',
+                'label' => 'Rental armada, distribusi, logistik, field sales',
             ],
             'setup' => [
                 'value' => 'Menit',
@@ -171,29 +248,42 @@ return [
 
     'how' => [
         'eyebrow' => 'Cara kerja',
-        'title' => 'Dari daftar sampai operasi, tanpa drama setup',
-        'subtitle' => 'Tiga langkah singkat menuju workspace bisnis Anda.',
+        'title' => 'Operasi Rental Siap Berjalan dalam 3 Langkah',
+        'subtitle' => 'Setup instan tanpa instalasi server rumit. Workspace Anda siap dipakai dalam 2 menit.',
         'steps' => [
             'register' => [
                 'title' => 'Daftarkan perusahaan',
-                'description' => 'Buat akun dan workspace. Tidak perlu instal server sendiri.',
+                'description' => 'Buat akun dan workspace rental Anda. Tidak perlu instalasi server sendiri.',
             ],
             'modules' => [
-                'title' => 'Aktifkan modul yang relevan',
-                'description' => 'Pasang Inventory, Fleet, Sales, POS, atau digabung sesuai paket.',
+                'title' => 'Input Armada & Tarif',
+                'description' => 'Masukkan data unit mobil, foto, harga sewa, dan persyaratan deposit jaminan.',
             ],
             'operate' => [
-                'title' => 'Jalankan operasi harian',
-                'description' => 'Stok, trip, invoice, dan laporan bergerak di satu aplikasi.',
+                'title' => 'Terima Booking & Kendalikan',
+                'description' => 'Jadwal reservasi otomatis terkunci, GPS aktif, dan laporan keuangan tercatat real-time.',
             ],
         ],
     ],
 
+    'faq' => [
+        'tag' => 'Tanya Jawab',
+        'title' => 'Pertanyaan yang Sering Diajukan',
+        'q1' => 'Apakah Seruwit cocok untuk usaha rental skala kecil (di bawah 10 armada)?',
+        'a1' => 'Sangat cocok. Seruwit dirancang fleksibel mulai dari pemilik rental 5 unit mobil hingga ratusan armada tanpa biaya lisensi awal yang mahal.',
+        'q2' => 'Bagaimana cara screening dan verifikasi dokumen penyewa bekerja?',
+        'a2' => 'Sistem membaca foto KTP dan SIM secara otomatis menggunakan Auto-OCR untuk mengekstrak NIK, nama, dan masa berlaku tanpa perlu input manual. Sistem memvalidasi apakah SIM masih aktif selama masa sewa, mencocokkan nama dengan pemesan, serta mengecek catatan blacklist sebelum kendaraan diserahterimakan.',
+        'q3' => 'Apakah laporan laba rugi benar-benar bisa dilihat per masing-masing mobil?',
+        'a3' => 'Betul. Setiap pengeluaran (BBM, servis, ganti ban, oli) dan pendapatan sewa di-tag ke plat nomor kendaraan bersangkutan sehingga laporan Laba Rugi Unit (P&L per Vehicle) otomatis terbentuk.',
+        'q4' => 'Apakah saya bisa menggunakan domain saya sendiri (misal: portal.rentaljayabersama.com)?',
+        'a4' => 'Bisa. Seruwit mendukung fitur Custom Domain dengan sertifikat SSL gratis otomatis yang siap dihubungkan langsung dari menu pengaturan domain Anda.',
+    ],
+
     'cta' => [
-        'title' => 'Siap menyatukan operasi bisnis Anda?',
-        'subtitle' => 'Daftar gratis sekarang, atau masuk jika workspace sudah siap. Tanpa kartu kredit.',
-        'primary' => 'Daftar Gratis',
-        'secondary' => 'Masuk ke Akun',
+        'title' => 'Siap Mengubah Cara Mengelola Bisnis Rental Anda?',
+        'subtitle' => 'Bergabunglah dengan puluhan pemilik bisnis rental yang telah mengotomatiskan reservasi, armada, dan laporan keuangan mereka bersama Seruwit.',
+        'primary' => 'Mulai Coba Gratis 14 Hari',
+        'secondary' => 'Konsultasi Tim Sales',
     ],
 
     'footer' => [

@@ -6,7 +6,6 @@ namespace Tests\Feature\Tenancy;
 
 use App\Models\Domain;
 use App\Models\Tenant;
-use App\Models\User;
 use App\Rules\ValidCustomDomain;
 use App\Services\CloudflareCustomHostnameService;
 use App\Services\DomainVerificationService;
@@ -27,7 +26,7 @@ class CustomDomainTest extends TestCase
 
         $validator = Validator::make(
             ['domain' => 'sewa.rentaljaya.com'],
-            ['domain' => [new ValidCustomDomain()]]
+            ['domain' => [new ValidCustomDomain]]
         );
 
         $this->assertFalse($validator->fails());
@@ -43,21 +42,21 @@ class CustomDomainTest extends TestCase
         // Central domain collision
         $validatorCentral = Validator::make(
             ['domain' => 'seruwit.com'],
-            ['domain' => [new ValidCustomDomain()]]
+            ['domain' => [new ValidCustomDomain]]
         );
         $this->assertTrue($validatorCentral->fails());
 
         // Platform tenant subdomain collision
         $validatorSub = Validator::make(
             ['domain' => 'workspace.seruwit.com'],
-            ['domain' => [new ValidCustomDomain()]]
+            ['domain' => [new ValidCustomDomain]]
         );
         $this->assertTrue($validatorSub->fails());
 
         // Invalid format
         $validatorInvalid = Validator::make(
             ['domain' => 'not-a-domain'],
-            ['domain' => [new ValidCustomDomain()]]
+            ['domain' => [new ValidCustomDomain]]
         );
         $this->assertTrue($validatorInvalid->fails());
     }
@@ -85,7 +84,7 @@ class CustomDomainTest extends TestCase
             'verification_token' => 'test-token-123',
         ]);
 
-        $cfService = new CloudflareCustomHostnameService();
+        $cfService = new CloudflareCustomHostnameService;
         $verificationService = new DomainVerificationService($cfService);
 
         // Mock DNS resolver returning a matching CNAME record
@@ -130,7 +129,7 @@ class CustomDomainTest extends TestCase
             'verification_token' => 'secret-token-xyz',
         ]);
 
-        $cfService = new CloudflareCustomHostnameService();
+        $cfService = new CloudflareCustomHostnameService;
         $verificationService = new DomainVerificationService($cfService);
 
         // Mock DNS resolver returning a TXT verification record
@@ -173,7 +172,7 @@ class CustomDomainTest extends TestCase
             'verification_token' => 'secret-token-xyz',
         ]);
 
-        $cfService = new CloudflareCustomHostnameService();
+        $cfService = new CloudflareCustomHostnameService;
         $verificationService = new DomainVerificationService($cfService);
 
         // Mock DNS returning unmatching records

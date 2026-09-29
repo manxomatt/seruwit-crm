@@ -10,7 +10,8 @@
         --color-secondary-rgb: 16 185 129;
         --color-primary-dark: #1e3a5f;
         --color-primary-darker: #0f172a;
-        --font-sans: Figtree, ui-sans-serif, system-ui, sans-serif;
+        --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+        --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
         --brand-sidebar-from: #0f172a;
         --brand-sidebar-via: #1e3a5f;
         --brand-sidebar-to: #0f172a;
@@ -18,6 +19,14 @@
     }
 
     body {
+        font-family: var(--font-sans);
+    }
+
+    h1, h2, h3, h4, h5, h6, .font-heading, .font-display {
+        font-family: var(--font-heading);
+    }
+
+    button, input, select, textarea, .font-sans, .font-body {
         font-family: var(--font-sans);
     }
 }

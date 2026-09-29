@@ -24,7 +24,7 @@ class StoreCustomDomainRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                new ValidCustomDomain(),
+                new ValidCustomDomain,
             ],
         ];
     }
