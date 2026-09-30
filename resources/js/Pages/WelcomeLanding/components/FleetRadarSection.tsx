@@ -11,10 +11,6 @@ const FleetRadarSection: React.FC = () => {
           
           {/* Left: Text & Features List */}
           <div className="space-y-6 lg:col-span-5">
-            <span className="inline-block rounded-full bg-cyan-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-cyan-800 border border-cyan-200">
-              {t('landing.fleet_section.tag', undefined, 'Pilar Flagship 02')}
-            </span>
-
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-950 leading-tight">
               {t('landing.fleet_section.title', undefined, 'Kendali Penuh Atas Armada, Dokumen & Driver')}
             </h2>

@@ -41,9 +41,6 @@ const RentalOperationsSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="mx-auto max-w-3xl text-center mb-16">
-          <span className="inline-block rounded-full bg-teal-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-teal-800 border border-teal-200 mb-3">
-            {t('landing.rental_section.tag', undefined, 'Pilar Flagship 01')}
-          </span>
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
             {t('landing.rental_section.title', undefined, 'Operasi Rental Kendaraan Bebas Konflik & Terotomatisasi')}
           </h2>

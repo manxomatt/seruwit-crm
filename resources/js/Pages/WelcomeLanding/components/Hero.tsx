@@ -18,14 +18,6 @@ interface HeroProps {
 const Hero: React.FC<HeroProps> = ({ settings, canRegister = true }) => {
   const { t } = useTrans();
   const [rentalName, setRentalName] = useState('');
-  const [activeSegment, setActiveSegment] = useState<'lepas_kunci' | 'driver' | 'shuttle' | 'korporat'>('lepas_kunci');
-
-  const segments = [
-    { key: 'lepas_kunci', label: '🚗 Lepas Kunci', hint: 'Klausul SPK & Screening Dokumen' },
-    { key: 'driver', label: '👨‍✈️ Dengan Driver', hint: 'Jadwal Driver & Fee Rute' },
-    { key: 'shuttle', label: '🚐 Shuttle & Wisata', hint: 'Manifest Penumpang & Checkpoint' },
-    { key: 'korporat', label: '🏢 Kontrak Korporat', hint: 'Invoicing Bulanan Otomatis' },
-  ];
 
   const handleQuickRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +25,6 @@ const Hero: React.FC<HeroProps> = ({ settings, canRegister = true }) => {
     if (rentalName.trim()) {
       query.company_name = rentalName.trim();
     }
-    query.segment = activeSegment;
     router.visit(route('register', query));
   };
 
@@ -64,39 +55,21 @@ const Hero: React.FC<HeroProps> = ({ settings, canRegister = true }) => {
           </div>
 
           {/* Main Editorial Headline */}
-          <h1 className="font-heading text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl leading-[1.12]">
-            {t('landing.hero.title_line1', undefined, 'Satu Sistem Operasi untuk Seluruh Armada, Booking, &')}{' '}
+          <h1 className="font-heading text-[27px] font-black tracking-tight text-slate-950 sm:text-4xl lg:text-[45px] leading-[1.15]">
+            {t('landing.hero.title_line1', undefined, 'Platform Operasi Cerdas untuk')}{' '}
             <span className="bg-gradient-to-r from-teal-700 via-cyan-600 to-emerald-600 bg-clip-text text-transparent">
-              {t('landing.hero.title_highlight', undefined, 'Finansial Rental Anda.')}
+              {t('landing.hero.title_highlight', undefined, 'Bisnis Rental Kendaraan Modern.')}
             </span>
           </h1>
 
           {/* Narrative Subtext */}
           <p className="mx-auto max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            {t('landing.hero.tagline_fallback', undefined, 'Cegah tabrakan jadwal sewa dengan kalender interaktif, pantau posisi armada via radar GPS real-time, amankan deposit jaminan, dan audit laba-rugi setiap mobil secara otomatis.')}
+            {t('landing.hero.tagline_fallback', undefined, 'Maksimalkan utilisasi armada tanpa risiko. Mulai dari reservasi bebas konflik, screening dokumen penyewa, telematika GPS live, hingga pembukuan laba-rugi per mobil.')}
           </p>
-
-          {/* Segment Selector Chips (Rental Business Diversity) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            {segments.map((seg) => (
-              <button
-                key={seg.key}
-                type="button"
-                onClick={() => setActiveSegment(seg.key as typeof activeSegment)}
-                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-                  activeSegment === seg.key
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
-                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                {seg.label}
-              </button>
-            ))}
-          </div>
 
           {/* Centered Command Bar: Quick Start Input */}
           {canRegister && (
-            <div className="mx-auto max-w-xl pt-2">
+            <div className="mx-auto max-w-2xl pt-2">
               <form onSubmit={handleQuickRegister}>
                 <div className="flex flex-col sm:flex-row gap-2 rounded-2xl border border-slate-200/90 bg-white p-2 shadow-xl shadow-slate-200/50 backdrop-blur-sm transition focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20">
                   <div className="flex flex-1 items-center px-3">
@@ -105,7 +78,7 @@ const Hero: React.FC<HeroProps> = ({ settings, canRegister = true }) => {
                       type="text"
                       value={rentalName}
                       onChange={(e) => setRentalName(e.target.value)}
-                      placeholder={t('landing.hero.quick_input_placeholder', undefined, 'Ketik nama usaha rental Anda (contoh: Santana Rent Car)...')}
+                      placeholder={t('landing.hero.quick_input_placeholder', undefined, 'Ketik nama usaha rental Anda...')}
                       className="w-full border-none bg-transparent p-0 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0"
                     />
                   </div>
@@ -122,16 +95,20 @@ const Hero: React.FC<HeroProps> = ({ settings, canRegister = true }) => {
               {/* Micro Trust Indicators */}
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-3 text-xs font-semibold text-slate-500">
                 <span className="flex items-center gap-1.5">
-                  <strong className="text-emerald-600 font-bold">✓</strong> Zero-Conflict Calendar
+                  <strong className="text-emerald-600 font-bold">✓</strong>{' '}
+                  {t('landing.hero.trust_zero_conflict', undefined, 'Zero-Conflict Calendar')}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <strong className="text-emerald-600 font-bold">✓</strong> Screening Dokumen & Anti-Fraud
+                  <strong className="text-emerald-600 font-bold">✓</strong>{' '}
+                  {t('landing.hero.trust_screening', undefined, 'Screening Dokumen & Anti-Fraud')}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <strong className="text-emerald-600 font-bold">✓</strong> Multi-Tenant DB Terisolasi
+                  <strong className="text-emerald-600 font-bold">✓</strong>{' '}
+                  {t('landing.hero.trust_gps', undefined, 'Integrasi External GPS')}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <strong className="text-emerald-600 font-bold">✓</strong> Custom Domain Mandiri
+                  <strong className="text-emerald-600 font-bold">✓</strong>{' '}
+                  {t('landing.hero.trust_custom_domain', undefined, 'Custom Domain Mandiri')}
                 </span>
               </div>
             </div>

@@ -6,9 +6,9 @@ const TrustSection: React.FC = () => {
 
   const pillars = [
     {
-      icon: 'database',
-      title: t('landing.trust_pillars.tenant_title', undefined, 'Multi-Tenant Terisolasi'),
-      desc: t('landing.trust_pillars.tenant_desc', undefined, 'Keamanan data perusahaan terjamin dengan database mandiri terenkripsi dan proteksi skema terpisah.'),
+      icon: 'radar',
+      title: t('landing.trust_pillars.gps_title', undefined, 'Integrasi External GPS Telematika'),
+      desc: t('landing.trust_pillars.gps_desc', undefined, 'Hubungkan server GPS yang sudah Anda pakai. Pantau radar posisi, riwayat rute, dan kecepatan armada langsung dari dashboard Seruwit tanpa ganti alat.'),
       color: 'text-teal-600 bg-teal-50 border-teal-200',
     },
     {
