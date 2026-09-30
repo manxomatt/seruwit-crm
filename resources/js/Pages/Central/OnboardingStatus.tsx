@@ -185,7 +185,7 @@ export default function OnboardingStatus({
                                                 {siteName}
                                             </div>
                                             <div className="text-[11px] font-semibold text-indigo-600">
-                                                {t('auth_ui.brand_sub_rental', undefined, 'Sistem Operasi Rental Kendaraan')}
+                                                {t('auth_ui.brand_sub_rental', undefined, 'Sistem Operasional Rental Kendaraan')}
                                             </div>
                                         </div>
                                     </div>

@@ -17,7 +17,7 @@ return [
     'submit' => 'Masuk',
     'submitting' => 'Sedang masuk…',
     'back_home' => 'Kembali ke Beranda',
-    'tagline' => ':name — Platform Operasi Rental Kendaraan & Keuangan Terpadu',
+    'tagline' => ':name — Platform Operasional Rental Kendaraan & Keuangan Terpadu',
 
     'name' => 'Nama',
     'email' => 'Email',
@@ -26,7 +26,7 @@ return [
     'subdomain' => 'Subdomain Workspace',
     'subdomain_placeholder' => 'perusahaan-anda',
     'already_registered' => 'Sudah terdaftar? Masuk',
-    'brand_sub_rental' => 'Sistem Operasi Rental Kendaraan',
+    'brand_sub_rental' => 'Sistem Operasional Rental Kendaraan',
     'status_provisioning' => 'Instant Setup • Workspace Gratis',
     'status_online' => 'System Online • SSL 256-bit',
     'status_recovery' => 'Account Recovery • SSL 256-bit',

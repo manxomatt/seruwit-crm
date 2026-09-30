@@ -17,7 +17,7 @@ return [
     'submit' => 'Sign in',
     'submitting' => 'Signing in…',
     'back_home' => 'Back to home',
-    'tagline' => ':name — Integrated Vehicle Rental & Financial Operating System',
+    'tagline' => ':name — Integrated Vehicle Rental & Financial Operational System',
 
     'name' => 'Name',
     'email' => 'Email',
@@ -26,7 +26,7 @@ return [
     'subdomain' => 'Workspace Subdomain',
     'subdomain_placeholder' => 'your-company',
     'already_registered' => 'Already registered? Sign in',
-    'brand_sub_rental' => 'Vehicle Rental Operating System',
+    'brand_sub_rental' => 'Vehicle Rental Operational System',
     'status_provisioning' => 'Instant Setup • Free Workspace',
     'status_online' => 'System Online • SSL 256-bit',
     'status_recovery' => 'Account Recovery • SSL 256-bit',
