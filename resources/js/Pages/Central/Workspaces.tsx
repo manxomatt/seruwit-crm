@@ -157,16 +157,6 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                     {t('central.workspaces.subtitle', undefined, 'Pilih workspace untuk mengakses dashboard operasional armada, atau daftarkan workspace baru.')}
                                 </p>
                             </div>
-
-                            <div className="shrink-0">
-                                <Link
-                                    href={route('central.onboarding.show')}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200"
-                                >
-                                    <span className="material-symbols-outlined text-base">add_business</span>
-                                    <span>{t('central.workspaces.create_workspace', undefined, 'Buat Workspace Baru')}</span>
-                                </Link>
-                            </div>
                         </div>
 
                         {/* Incoming Invitations Banner */}
