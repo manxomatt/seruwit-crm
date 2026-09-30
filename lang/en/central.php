@@ -2,14 +2,21 @@
 
 return [
     'workspaces' => [
-        'title' => 'Select Workspace',
-        'subtitle' => 'Choose a workspace to continue working.',
+        'title' => 'Workspaces Hub',
+        'subtitle' => 'Select a workspace to access your fleet operations dashboard, or create a new one.',
         'signed_in_as' => 'Signed in as',
-        'enter' => 'Enter',
+        'enter' => 'Enter Workspace',
+        'enter_btn' => 'Enter Workspace →',
+        'pay_btn' => 'Activate Payment →',
         'suspended' => 'Suspended',
-        'empty_title' => 'No workspaces yet',
-        'empty_hint' => 'You are not a member of any workspace yet.',
-        'create_workspace' => 'Set up a workspace',
+        'active' => 'Active',
+        'trial' => 'Trial',
+        'empty_title' => 'No Workspaces Yet',
+        'empty_hint' => 'You do not belong to or own any workspace yet.',
+        'create_workspace' => 'Create New Workspace',
+        'badge' => 'Workspace Hub • Multi-Tenant',
+        'roles_label' => 'Your Roles',
+        'trial_info_card' => 'Currently on free trial of :plan.',
     ],
 
     'suspended' => [

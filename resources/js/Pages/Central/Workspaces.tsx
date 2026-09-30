@@ -28,20 +28,20 @@ interface Workspace {
 function getRoleBadgeStyle(slug: string): string {
     switch (slug) {
         case 'admin':
-            return 'bg-rose-50 text-rose-700 border border-rose-200';
+            return 'bg-rose-50 text-rose-700 border border-rose-200/80';
         case 'user':
-            return 'bg-sky-50 text-sky-700 border border-sky-200';
+            return 'bg-sky-50 text-sky-700 border border-sky-200/80';
         case 'warehouse_head':
         case 'warehouse_manager':
-            return 'bg-amber-50 text-amber-700 border border-amber-200';
+            return 'bg-amber-50 text-amber-700 border border-amber-200/80';
         case 'fleet_base_head':
         case 'fleet_base_manager':
         case 'driver':
-            return 'bg-purple-50 text-purple-700 border border-purple-200';
+            return 'bg-purple-50 text-purple-700 border border-purple-200/80';
         case 'salesperson':
-            return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+            return 'bg-emerald-50 text-emerald-700 border border-emerald-200/80';
         default:
-            return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+            return 'bg-indigo-50 text-indigo-700 border border-indigo-200/80';
     }
 }
 
@@ -73,314 +73,331 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
     const siteLogo = settings?.['site.logo'];
 
     return (
-        <div className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
-            <Head title={t('central.workspaces.title')} />
+        <>
+            <Head title={t('central.workspaces.title', undefined, 'Pusat Ruang Kerja')} />
 
-            <header className="sticky top-0 z-50 w-full border-b border-slate-200/70 bg-white/75 backdrop-blur-md">
-                <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
-                    <a href="/" className="flex min-w-0 items-center gap-2.5">
+            <div className="relative flex min-h-screen flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/50 to-indigo-50/70 text-slate-800 selection:bg-indigo-500 selection:text-white">
+                {/* Ambient background glow effects */}
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <div className="absolute -left-28 -top-28 h-96 w-96 rounded-full bg-sky-300/25 blur-[120px]" />
+                    <div className="absolute -right-28 -bottom-28 h-96 w-96 rounded-full bg-indigo-300/25 blur-[120px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-emerald-200/20 blur-[140px]" />
+                </div>
+
+                {/* Top Bar Navigation */}
+                <header className="relative z-20 flex items-center justify-between px-4 py-3 sm:px-8 border-b border-slate-200/60 bg-white/70 backdrop-blur-md">
+                    <Link
+                        href="/"
+                        className="group flex items-center gap-2.5 transition focus:outline-none"
+                    >
                         {siteLogo ? (
-                            <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-xs transition group-hover:shadow">
+                                <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
+                            </div>
                         ) : (
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-500 text-white shadow-sm shadow-teal-600/20">
-                                <span className="material-symbols-outlined text-[20px]">hub</span>
-                            </span>
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-600 text-white shadow-xs shadow-indigo-600/20 transition group-hover:scale-105">
+                                <span className="material-symbols-outlined text-lg">domain_add</span>
+                            </div>
                         )}
-                        <span className="truncate font-display text-lg font-bold tracking-tight text-slate-900">
-                            {siteName}
-                        </span>
-                    </a>
+                        <div>
+                            <div className="text-sm font-extrabold tracking-tight text-slate-900 group-hover:text-indigo-600 transition leading-tight">
+                                {siteName}
+                            </div>
+                            <div className="text-[10px] font-semibold text-indigo-600 hidden sm:block">
+                                {t('auth_ui.brand_sub_rental', undefined, 'Sistem Operasional Rental Kendaraan')}
+                            </div>
+                        </div>
+                    </Link>
 
                     <div className="flex items-center gap-2 sm:gap-3">
+                        {auth?.user && (
+                            <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/85 py-1 px-3 text-xs shadow-xs backdrop-blur-sm">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-sky-500 text-[10px] font-bold text-white uppercase">
+                                    {(auth.user.name || auth.user.email || 'U').charAt(0)}
+                                </span>
+                                <span className="font-semibold text-slate-700 max-w-[150px] truncate">
+                                    {auth.user.name || auth.user.email}
+                                </span>
+                            </div>
+                        )}
+
                         <LanguageSwitcher
                             compact
-                            className="bg-slate-100 [&_button]:text-slate-500 [&_button.bg-white]:text-teal-800"
+                            className="bg-white/80 border border-slate-200/80 backdrop-blur-md text-xs font-bold shadow-xs [&_button]:text-slate-600 [&_button.bg-white]:bg-indigo-600 [&_button.bg-white]:text-white"
                         />
+
                         <Link
                             href={route('logout')}
                             method="post"
                             as="button"
                             type="button"
-                            className="text-sm font-semibold text-slate-600 transition-colors hover:text-teal-700"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 shadow-xs transition"
                         >
-                            {t('shell.log_out')}
+                            <span className="material-symbols-outlined text-base">logout</span>
+                            <span className="hidden sm:inline">{t('shell.log_out', undefined, 'Keluar')}</span>
                         </Link>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <main className="relative isolate flex-1 overflow-hidden bg-slate-50">
-                <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -left-24 top-10 h-64 w-64 rounded-full bg-teal-200/40 blur-3xl" />
-                    <div className="absolute -right-16 bottom-20 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl" />
-                    <div className="absolute left-1/3 top-1/2 h-40 w-40 rounded-full bg-emerald-100/50 blur-2xl" />
-                </div>
-
-                <div className="relative mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-                    <div className="mb-10 max-w-xl">
-                        <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-                            {siteName}
-                        </p>
-                        <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                            {t('central.workspaces.title')}
-                        </h1>
-                        <p className="mt-3 text-base text-slate-600">
-                            {t('central.workspaces.subtitle')}
-                        </p>
-                        {auth?.user?.email && (
-                            <p className="mt-2 text-sm text-slate-500">
-                                {t('central.workspaces.signed_in_as')}{' '}
-                                <span className="font-medium text-slate-700">{auth.user.email}</span>
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Incoming Invitations Banner */}
-                    {invitations.length > 0 && (
-                        <div className="mb-8 rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/90 p-6 shadow-sm shadow-indigo-100 backdrop-blur-sm">
-                            <div className="flex items-center gap-3">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20 text-lg">
-                                    ✉️
-                                </span>
-                                <div>
-                                    <h2 className="font-display text-lg font-bold text-slate-900">
-                                        {t('central.invitation.incoming_title')}
-                                    </h2>
-                                    <p className="text-xs text-slate-600">
-                                        {t('central.invitation.incoming_desc', { count: invitations.length })}
-                                    </p>
+                {/* Main Content Area */}
+                <main className="relative z-10 flex flex-1 items-start justify-center px-4 py-8 sm:px-6 lg:py-12">
+                    <div className="w-full max-w-5xl">
+                        
+                        {/* Page Header Banner */}
+                        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/90 bg-white/85 px-3 py-1 text-[11px] font-bold text-indigo-700 shadow-xs backdrop-blur-md">
+                                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                                    {t('central.workspaces.badge', undefined, 'Pusat Ruang Kerja • Multi-Tenant')}
                                 </div>
+                                <h1 className="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 leading-tight">
+                                    {t('central.workspaces.title', undefined, 'Pusat Ruang Kerja')}
+                                </h1>
+                                <p className="mt-1 text-xs sm:text-sm font-medium text-slate-600 max-w-xl leading-relaxed">
+                                    {t('central.workspaces.subtitle', undefined, 'Pilih workspace untuk mengakses dashboard operasional armada, atau daftarkan workspace baru.')}
+                                </p>
                             </div>
 
-                            <div className="mt-4 space-y-3">
-                                {invitations.map((inv) => {
-                                    const isAccepting = acceptingToken === inv.token;
+                            <div className="shrink-0">
+                                <Link
+                                    href={route('central.onboarding.show')}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200"
+                                >
+                                    <span className="material-symbols-outlined text-base">add_business</span>
+                                    <span>{t('central.workspaces.create_workspace', undefined, 'Buat Workspace Baru')}</span>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Incoming Invitations Banner */}
+                        {invitations.length > 0 && (
+                            <div className="mb-8 rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/90 p-5 sm:p-6 shadow-xl shadow-indigo-950/5 backdrop-blur-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                                        <span className="material-symbols-outlined text-xl">mark_email_unread</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base font-extrabold text-slate-900">
+                                            {t('central.invitation.incoming_title', undefined, 'Undangan Workspace Baru')}
+                                        </h2>
+                                        <p className="text-xs text-slate-600 font-medium">
+                                            {t('central.invitation.incoming_desc', { count: invitations.length }, `Anda memiliki ${invitations.length} undangan untuk bergabung ke workspace.`)}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 space-y-2.5">
+                                    {invitations.map((inv) => {
+                                        const isAccepting = acceptingToken === inv.token;
+
+                                        return (
+                                            <div
+                                                key={inv.id}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xs"
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-extrabold text-slate-900 text-sm">
+                                                            {inv.tenant_name}
+                                                        </span>
+                                                        <span className="rounded-lg bg-indigo-100/90 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                                                            {t('central.invitation.incoming_role', { role: inv.role_slug }, `Sebagai: ${inv.role_slug}`)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-slate-500 font-medium">
+                                                        {t('central.invitation.incoming_expires', {
+                                                            date: new Date(inv.expires_at).toLocaleDateString(localeTag, {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                            }),
+                                                        }, `Berlaku hingga: ${new Date(inv.expires_at).toLocaleDateString()}`)}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        disabled={isAccepting || processing}
+                                                        onClick={() => {
+                                                            setAcceptingToken(inv.token);
+                                                            router.post(`/invitations/${inv.token}`, {}, {
+                                                                onFinish: () => setAcceptingToken(null),
+                                                            });
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-50 transition"
+                                                    >
+                                                        {isAccepting ? '...' : t('central.invitation.btn_accept', undefined, 'Terima Undangan')}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={isAccepting || processing}
+                                                        onClick={() => {
+                                                            setInvitationToDecline(inv);
+                                                            setShowDeclineDialog(true);
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 transition"
+                                                    >
+                                                        {t('central.invitation.btn_decline', undefined, 'Tolak')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Workspaces Grid or Empty State */}
+                        {workspaces.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                                {workspaces.map((workspace) => {
+                                    const active = workspace.status === 'active';
+                                    const onTrial = workspace.is_on_trial && active;
 
                                     return (
                                         <div
-                                            key={inv.id}
-                                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-sm"
+                                            key={workspace.id}
+                                            className={`relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/90 bg-white/85 p-5 sm:p-6 shadow-xl shadow-indigo-950/5 backdrop-blur-2xl transition-all duration-200 hover:shadow-2xl hover:border-indigo-300 group ${
+                                                onTrial ? 'ring-1 ring-sky-300/40' : active ? 'ring-1 ring-emerald-300/30' : 'ring-1 ring-amber-300/40 opacity-90'
+                                            }`}
                                         >
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-bold text-slate-900 text-sm">
-                                                        {inv.tenant_name}
-                                                    </span>
-                                                    <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                                                        {t('central.invitation.incoming_role', { role: inv.role_slug })}
-                                                    </span>
+                                            {/* Card Top: Details & Status Pill */}
+                                            <div>
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex items-start gap-3 min-w-0">
+                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-600 to-teal-500 text-white font-black text-lg shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
+                                                            {workspace.name.charAt(0).toUpperCase()}
+                                                        </div>
+
+                                                        <div className="min-w-0">
+                                                            <h3 className="text-base font-extrabold tracking-tight text-slate-900 group-hover:text-indigo-600 transition truncate">
+                                                                {workspace.name}
+                                                            </h3>
+
+                                                            {workspace.domain && (
+                                                                <a
+                                                                    href={`https://${workspace.domain}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-slate-500 hover:text-indigo-600 transition truncate mt-0.5"
+                                                                >
+                                                                    <span>{workspace.domain}</span>
+                                                                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="shrink-0">
+                                                        {onTrial ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold text-sky-800 shadow-xs">
+                                                                <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
+                                                                {t('central.trial.days_left', { days: String(workspace.trial_days_left ?? 0) }, `${workspace.trial_days_left} Hari Trial`)}
+                                                            </span>
+                                                        ) : active ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-800 shadow-xs">
+                                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                                {t('central.workspaces.active', undefined, 'Aktif')}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800 shadow-xs">
+                                                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                                                {t('central.workspaces.suspended', undefined, 'Ditangguhkan')}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    {t('central.invitation.incoming_expires', {
-                                                        date: new Date(inv.expires_at).toLocaleDateString(localeTag, {
-                                                            year: 'numeric',
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                        }),
-                                                    })}
-                                                </p>
+
+                                                {/* Badges: Plan & Roles */}
+                                                <div className="mt-4 flex items-center gap-1.5 flex-wrap">
+                                                    {workspace.plan_name && (
+                                                        <span className="rounded-lg bg-indigo-50 border border-indigo-100/80 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700">
+                                                            {workspace.plan_name}
+                                                        </span>
+                                                    )}
+                                                    {workspace.plan_key === 'free' && (
+                                                        <span className="rounded-lg bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700">
+                                                            Free Lifetime
+                                                        </span>
+                                                    )}
+                                                    {workspace.roles?.map((role) => (
+                                                        <span
+                                                            key={role.id ? `${role.id}-${role.slug}` : role.slug}
+                                                            className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
+                                                        >
+                                                            <span className="material-symbols-outlined text-[12px]">
+                                                                {role.slug === 'admin' ? 'shield_person' : role.slug === 'driver' ? 'directions_car' : 'person'}
+                                                            </span>
+                                                            <span>{role.name}</span>
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                {/* Trial / Notes Info */}
+                                                {onTrial && (
+                                                    <div className="mt-3.5 rounded-xl border border-sky-100 bg-sky-50/60 p-2.5 text-[11px] font-medium text-sky-800 leading-relaxed">
+                                                        {t('central.workspaces.trial_info_card', { plan: workspace.plan_name || 'Trial' }, `Sedang dalam masa uji coba gratis paket ${workspace.plan_name || 'Trial'}.`)}
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <button
-                                                    type="button"
-                                                    disabled={isAccepting || processing}
-                                                    onClick={() => {
-                                                        setAcceptingToken(inv.token);
-                                                        router.post(`/invitations/${inv.token}`, {}, {
-                                                            onFinish: () => setAcceptingToken(null),
-                                                        });
-                                                    }}
-                                                    className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 disabled:opacity-50 transition"
-                                                >
-                                                    {isAccepting ? '...' : t('central.invitation.btn_accept')}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    disabled={isAccepting || processing}
-                                                    onClick={() => {
-                                                        setInvitationToDecline(inv);
-                                                        setShowDeclineDialog(true);
-                                                    }}
-                                                    className="inline-flex items-center justify-center rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 transition"
-                                                >
-                                                    {t('central.invitation.btn_decline')}
-                                                </button>
+                                            {/* Card Bottom: Enter / Manage Button */}
+                                            <div className="mt-6 pt-4 border-t border-slate-100">
+                                                {active ? (
+                                                    <a
+                                                        href={route('central.workspaces.enter', workspace.id)}
+                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200"
+                                                    >
+                                                        <span>{t('central.workspaces.enter_btn', undefined, 'Masuk ke Workspace →')}</span>
+                                                    </a>
+                                                ) : (
+                                                    <a
+                                                        href={route('central.workspaces.enter', workspace.id)}
+                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md transition-all duration-200"
+                                                    >
+                                                        <span>{t('central.workspaces.pay_btn', undefined, 'Aktivasi Pembayaran →')}</span>
+                                                    </a>
+                                                )}
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            /* Empty State */
+                            <div className="mx-auto max-w-lg rounded-3xl border border-white/90 bg-white/85 p-8 sm:p-10 text-center shadow-2xl shadow-indigo-950/10 backdrop-blur-2xl">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/25">
+                                    <span className="material-symbols-outlined text-3xl">domain_add</span>
+                                </div>
+                                <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
+                                    {t('central.workspaces.empty_title', undefined, 'Belum Ada Ruang Kerja')}
+                                </h3>
+                                <p className="mt-2 text-xs sm:text-sm font-medium text-slate-500 leading-relaxed">
+                                    {t('central.workspaces.empty_hint', undefined, 'Anda belum memiliki atau tergabung dalam workspace mana pun saat ini. Mulai dengan membuat workspace bisnis rental Anda.')}
+                                </p>
+                                <div className="mt-6">
+                                    <Link
+                                        href={route('central.onboarding.show')}
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200"
+                                    >
+                                        <span>{t('central.workspaces.create_workspace', undefined, 'Buat Workspace Baru')}</span>
+                                        <span className="material-symbols-outlined text-base">arrow_forward</span>
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
 
-                    {workspaces.length > 0 ? (
-                        <ul className="space-y-3">
-                            {workspaces.map((workspace) => {
-                                const active = workspace.status === 'active';
-                                const onTrial = workspace.is_on_trial && active;
+                    </div>
+                </main>
 
-                                return (
-                                    <li key={workspace.id}>
-                                        {onTrial ? (
-                                            <div className="rounded-2xl border border-cyan-200/80 bg-white/90 p-5 shadow-sm shadow-cyan-200/60 backdrop-blur-sm">
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex min-w-0 items-center gap-4">
-                                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-500 text-base font-bold text-white shadow-sm shadow-cyan-600/20">
-                                                            {workspace.name.charAt(0).toUpperCase()}
-                                                        </span>
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <p className="truncate font-semibold text-slate-900">
-                                                                    {workspace.name}
-                                                                </p>
-                                                                <span className="rounded-md bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">
-                                                                    {workspace.plan_name || 'Trial'}
-                                                                </span>
-                                                                {workspace.roles?.map((role) => (
-                                                                    <span
-                                                                        key={role.id ? `${role.id}-${role.slug}` : role.slug}
-                                                                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
-                                                                    >
-                                                                        <span className="material-symbols-outlined text-[12px]">
-                                                                            {role.slug === 'admin' ? 'shield_person' : 'person'}
-                                                                        </span>
-                                                                        <span>{role.name}</span>
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                            {workspace.domain && (
-                                                                <p className="truncate text-sm text-slate-500">
-                                                                    {workspace.domain}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 ring-1 ring-cyan-200">
-                                                            {t('central.trial.days_left', { days: String(workspace.trial_days_left ?? 0) })}
-                                                        </span>
-                                                        <a
-                                                            href={route('central.workspaces.enter', workspace.id)}
-                                                            className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-teal-700/25 transition hover:bg-teal-800"
-                                                        >
-                                                            {t('central.trial.enter_workspace')}
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <p className="mt-3 text-xs text-slate-500">
-                                                    {t('central.trial.trial_info', { plan: workspace.plan_name || 'Trial' })}
-                                                </p>
-                                            </div>
-                                        ) : active ? (
-                                            <a
-                                                href={route('central.workspaces.enter', workspace.id)}
-                                                className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm shadow-slate-200/60 backdrop-blur-sm transition hover:border-teal-300 hover:shadow-md hover:shadow-teal-700/10"
-                                            >
-                                                <div className="flex min-w-0 items-center gap-4">
-                                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-500 text-base font-bold text-white shadow-sm shadow-teal-600/20">
-                                                        {workspace.name.charAt(0).toUpperCase()}
-                                                    </span>
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <p className="truncate font-semibold text-slate-900">
-                                                                {workspace.name}
-                                                            </p>
-                                                            {workspace.plan_name && (
-                                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">
-                                                                    {workspace.plan_name}
-                                                                </span>
-                                                            )}
-                                                            {workspace.plan_key === 'free' && (
-                                                                <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                                                                    Free Lifetime
-                                                                </span>
-                                                            )}
-                                                            {workspace.roles?.map((role) => (
-                                                                <span
-                                                                    key={role.id ? `${role.id}-${role.slug}` : role.slug}
-                                                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[12px]">
-                                                                        {role.slug === 'admin' ? 'shield_person' : 'person'}
-                                                                    </span>
-                                                                    <span>{role.name}</span>
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                        {workspace.domain && (
-                                                            <p className="truncate text-sm text-slate-500">
-                                                                {workspace.domain}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-teal-700/25 transition group-hover:bg-teal-800">
-                                                    {t('central.workspaces.enter')}
-                                                </span>
-                                            </a>
-                                        ) : (
-                                            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm shadow-slate-200/60 backdrop-blur-sm">
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex min-w-0 items-center gap-4">
-                                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base font-bold text-slate-500">
-                                                            {workspace.name.charAt(0).toUpperCase()}
-                                                        </span>
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <p className="truncate font-semibold text-slate-700">
-                                                                    {workspace.name}
-                                                                </p>
-                                                                {workspace.roles?.map((role) => (
-                                                                    <span
-                                                                        key={role.id ? `${role.id}-${role.slug}` : role.slug}
-                                                                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
-                                                                    >
-                                                                        <span className="material-symbols-outlined text-[12px]">
-                                                                            {role.slug === 'admin' ? 'shield_person' : 'person'}
-                                                                        </span>
-                                                                        <span>{role.name}</span>
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                            {workspace.domain && (
-                                                                <p className="truncate text-sm text-slate-400">
-                                                                    {workspace.domain}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
-                                                            {t('central.workspaces.suspended')}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    ) : (
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-12 text-center shadow-sm">
-                            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-                                <span className="material-symbols-outlined">apartment</span>
-                            </span>
-                            <p className="font-semibold text-slate-800">{t('central.workspaces.empty_title')}</p>
-                            <p className="mt-1 text-sm text-slate-500">{t('central.workspaces.empty_hint')}</p>
-                            <Link
-                                href={route('central.onboarding.show')}
-                                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal-700/25 transition hover:bg-teal-800"
-                            >
-                                {t('central.workspaces.create_workspace')}
-                                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                            </Link>
-                        </div>
-                    )}
-                </div>
-            </main>
+                {/* Footer copyright */}
+                <footer className="relative z-20 py-3 text-center text-[11px] font-medium text-slate-400">
+                    &copy; {new Date().getFullYear()} {siteName}. {t('central.onboarding.all_rights_reserved', undefined, 'All rights reserved.')}
+                </footer>
+            </div>
 
+            {/* Confirm Decline Invitation Modal */}
             <ConfirmDeleteDialog
                 show={showDeclineDialog}
                 onClose={() => {
@@ -403,13 +420,13 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                     );
                 }}
                 processing={processing}
-                title={t('central.invitation.decline_confirm_title')}
+                title={t('central.invitation.decline_confirm_title', undefined, 'Tolak Undangan')}
                 message={
                     invitationToDecline
-                        ? t('central.invitation.decline_confirm_message', { tenant: invitationToDecline.tenant_name })
+                        ? t('central.invitation.decline_confirm_message', { tenant: invitationToDecline.tenant_name }, `Apakah Anda yakin ingin menolak undangan dari ${invitationToDecline.tenant_name}?`)
                         : ''
                 }
             />
-        </div>
+        </>
     );
 }

@@ -2,14 +2,21 @@
 
 return [
     'workspaces' => [
-        'title' => 'Pilih Workspace',
-        'subtitle' => 'Pilih workspace untuk melanjutkan kerja Anda.',
+        'title' => 'Pusat Ruang Kerja',
+        'subtitle' => 'Pilih workspace untuk mengakses dashboard operasional armada, atau daftarkan workspace baru.',
         'signed_in_as' => 'Masuk sebagai',
-        'enter' => 'Masuk',
+        'enter' => 'Masuk ke Workspace',
+        'enter_btn' => 'Masuk ke Workspace →',
+        'pay_btn' => 'Aktivasi Pembayaran →',
         'suspended' => 'Ditangguhkan',
-        'empty_title' => 'Belum ada workspace',
-        'empty_hint' => 'Anda belum menjadi anggota workspace mana pun.',
-        'create_workspace' => 'Siapkan workspace',
+        'active' => 'Aktif',
+        'trial' => 'Uji Coba',
+        'empty_title' => 'Belum ada Ruang Kerja',
+        'empty_hint' => 'Anda belum memiliki atau tergabung dalam workspace mana pun saat ini.',
+        'create_workspace' => 'Buat Workspace Baru',
+        'badge' => 'Pusat Ruang Kerja • Multi-Tenant',
+        'roles_label' => 'Peran Anda',
+        'trial_info_card' => 'Sedang dalam masa uji coba gratis paket :plan.',
     ],
 
     'suspended' => [
