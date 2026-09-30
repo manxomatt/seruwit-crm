@@ -76,8 +76,19 @@ class OnboardingController extends Controller
         $initialSubdomain = (string) ($request->query('subdomain')
             ?: ($session?->subdomain ?: ($initialCompanyName ? \Illuminate\Support\Str::slug($initialCompanyName, '') : '')));
 
-        $selectedPlanKey = (string) ($request->query('plan')
-            ?: ($session?->plan_key ?: (session('onboarding_plan') ?: (collect($plans)->firstWhere('key', 'free')['key'] ?? 'free'))));
+        $requestedPlan = (string) ($request->query('plan')
+            ?: ($session?->plan_key ?: session('onboarding_plan')));
+
+        $validPlanKeys = collect($plans)->pluck('key')->all();
+
+        if ($requestedPlan && in_array($requestedPlan, $validPlanKeys, true)) {
+            $selectedPlanKey = $requestedPlan;
+        } else {
+            $selectedPlanKey = collect($plans)->firstWhere('key', 'pay_as_you_go')['key']
+                ?? collect($plans)->firstWhere('is_default', true)['key']
+                ?? collect($plans)->firstWhere('is_popular', true)['key']
+                ?? (collect($plans)->first()['key'] ?? 'pay_as_you_go');
+        }
 
         $initialPhone = (string) ($session?->phone ?: session('onboarding_phone', ''));
         $initialCity = (string) ($session?->city ?: session('onboarding_city', ''));
@@ -176,7 +187,12 @@ class OnboardingController extends Controller
 
         $verticals = array_values(array_unique($request->validated('verticals')));
         $subdomain = $request->validated('subdomain');
-        $planKey = $request->validated('plan_key') ?? 'free';
+        $defaultActivePlanKey = \App\Models\Plan::query()->where('is_active', true)->where('key', 'pay_as_you_go')->value('key')
+            ?? \App\Models\Plan::query()->where('is_active', true)->where('is_default', true)->value('key')
+            ?? \App\Models\Plan::query()->where('is_active', true)->first()?->key
+            ?? 'pay_as_you_go';
+
+        $planKey = $request->validated('plan_key') ?: $defaultActivePlanKey;
 
         $plan = \App\Models\Plan::query()->firstWhere('key', $planKey);
         $isPaidWithoutTrial = $plan && (float) $plan->price > 0 && ((int) ($plan->trial_days ?? 0) <= 0) && ! $plan->is_trial;

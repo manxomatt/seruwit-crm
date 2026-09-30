@@ -56,6 +56,18 @@ class StoreOnboardingRequest extends FormRequest
                 'base_code' => strtoupper(trim($this->base_code)),
             ]);
         }
+
+        if (! $this->filled('plan_key')) {
+            $defaultPlanKey = \App\Models\Plan::query()->where('is_active', true)->where('key', 'pay_as_you_go')->value('key')
+                ?? \App\Models\Plan::query()->where('is_active', true)->where('is_default', true)->value('key')
+                ?? \App\Models\Plan::query()->where('is_active', true)->first()?->key;
+
+            if ($defaultPlanKey) {
+                $this->merge([
+                    'plan_key' => $defaultPlanKey,
+                ]);
+            }
+        }
     }
 
     /**

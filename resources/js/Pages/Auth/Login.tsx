@@ -11,15 +11,15 @@ interface Props {
     settings?: Record<string, string>;
 }
 
-export default function Login({ status, canResetPassword, settings }: Props) {
+interface LoginForm {
+    login: string;
+    password: string;
+    remember: boolean;
+}
+
+export default function Login({ status, canResetPassword = true, settings }: Props) {
     const { t } = useTrans();
     const [showPassword, setShowPassword] = useState(false);
-
-    interface LoginForm {
-        login: string;
-        password: string;
-        remember: boolean;
-    }
 
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         login: '',
@@ -42,232 +42,314 @@ export default function Login({ status, canResetPassword, settings }: Props) {
         <>
             <Head title={t('auth_ui.title')} />
 
-            <div className="relative flex min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/60 to-indigo-50/80 text-slate-800 selection:bg-indigo-500 selection:text-white">
-                {/* Ambient fresh glow effects */}
+            <div className="relative flex min-h-screen flex-col justify-between overflow-x-hidden bg-gradient-to-br from-slate-50 via-sky-50/50 to-indigo-50/70 text-slate-800 selection:bg-indigo-500 selection:text-white antialiased">
+                {/* Ambient Soft Glow Effects */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -left-20 -top-20 h-[450px] w-[450px] rounded-full bg-sky-300/30 blur-[130px]" />
-                    <div className="absolute -right-20 -bottom-20 h-[450px] w-[450px] rounded-full bg-indigo-300/30 blur-[130px]" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-emerald-300/20 blur-[150px]" />
+                    <div className="absolute -left-28 -top-28 h-96 w-96 rounded-full bg-sky-300/25 blur-[120px]" />
+                    <div className="absolute -right-28 -bottom-28 h-96 w-96 rounded-full bg-indigo-300/25 blur-[120px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-emerald-200/20 blur-[140px]" />
                 </div>
 
-                {/* Top-Right Language Switcher */}
-                <div className="absolute right-6 top-6 z-20">
-                    <LanguageSwitcher compact className="bg-white/80 border border-slate-200/80 backdrop-blur-md text-xs font-bold shadow-sm [&_button]:text-slate-600 [&_button.bg-white]:bg-indigo-600 [&_button.bg-white]:text-white" />
-                </div>
-
-                {/* Left Side: Brand Showcase */}
-                <div className="relative hidden lg:flex lg:w-1/2 border-r border-slate-200/60 bg-white/40 backdrop-blur-md">
-                    <div className="relative z-10 flex w-full flex-col justify-between p-12 lg:p-16">
-                        {/* Top System Status Pill */}
-                        <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-sm backdrop-blur-md">
-                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                System Online • SSL 256-bit
-                            </span>
-                        </div>
-
-                        {/* Middle Hero Content */}
-                        <div className="max-w-lg">
-                            <div className="mb-6 inline-flex">
-                                {siteLogo ? (
-                                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-3 shadow-lg shadow-slate-200/50 backdrop-blur-xl">
-                                        <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
-                                    </div>
-                                ) : (
-                                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-indigo-100 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 backdrop-blur-xl">
-                                        <span className="material-symbols-outlined text-4xl text-indigo-600">location_on</span>
-                                    </div>
-                                )}
+                {/* Top Bar Navigation */}
+                <header className="relative z-20 flex items-center justify-between px-4 py-3 sm:px-8">
+                    <Link
+                        href="/"
+                        className="group flex items-center gap-2.5 transition focus:outline-none"
+                    >
+                        {siteLogo ? (
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-xs transition group-hover:shadow">
+                                <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
                             </div>
-
-                            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight">
-                                {t('auth_ui.welcome_back')}
-                            </h1>
-                            <p className="mt-4 text-base font-medium text-slate-600 leading-relaxed">
-                                {t('auth_ui.welcome_subtitle')}
-                            </p>
-
-                            {/* Features Showcase */}
-                            <div className="mt-10 space-y-3.5">
-                                <div className="flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/70 p-3.5 shadow-sm backdrop-blur-md">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600">
-                                        <span className="material-symbols-outlined text-xl">verified_user</span>
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-700">{t('auth_ui.feature_secure')}</span>
-                                </div>
-                                <div className="flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/70 p-3.5 shadow-sm backdrop-blur-md">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-100 bg-sky-50 text-sky-600">
-                                        <span className="material-symbols-outlined text-xl">my_location</span>
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-700">{t('auth_ui.feature_realtime')}</span>
-                                </div>
-                                <div className="flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/70 p-3.5 shadow-sm backdrop-blur-md">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 text-violet-600">
-                                        <span className="material-symbols-outlined text-xl">analytics</span>
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-700">{t('auth_ui.feature_analytics')}</span>
-                                </div>
+                        ) : (
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-600 text-white shadow-xs shadow-indigo-600/20 transition group-hover:scale-105">
+                                <span className="material-symbols-outlined text-lg">rocket_launch</span>
                             </div>
-                        </div>
+                        )}
+                        <span className="text-sm font-extrabold tracking-tight text-slate-900 group-hover:text-indigo-600 transition">
+                            {siteName}
+                        </span>
+                    </Link>
 
-                        {/* Footer Tagline */}
-                        <div className="text-xs font-medium text-slate-400">
-                            &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
-                        </div>
+                    <div className="flex items-center gap-3">
+                        <LanguageSwitcher
+                            compact
+                            className="bg-white/80 border border-slate-200/80 backdrop-blur-md text-xs font-bold shadow-xs [&_button]:text-slate-600 [&_button.bg-white]:bg-indigo-600 [&_button.bg-white]:text-white"
+                        />
                     </div>
-                </div>
+                </header>
 
-                {/* Right Side: Login Form */}
-                <div className="relative z-10 flex w-full items-center justify-center p-6 sm:p-12 lg:w-1/2">
-                    <div className="w-full max-w-md">
-                        {/* Mobile Brand Logo */}
-                        <div className="mb-8 flex justify-center lg:hidden">
-                            {siteLogo ? (
-                                <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-3 shadow-lg shadow-slate-200/50 backdrop-blur-xl">
-                                    <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
-                                </div>
-                            ) : (
-                                <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-indigo-100 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 backdrop-blur-xl">
-                                    <span className="material-symbols-outlined text-4xl text-indigo-600">location_on</span>
-                                </div>
-                            )}
-                        </div>
+                {/* Main Content: Unified Bento Card Layout */}
+                <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-4 sm:px-6">
+                    <div className="w-full max-w-5xl">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-3xl border border-white/90 bg-white/85 shadow-2xl shadow-indigo-950/10 backdrop-blur-2xl">
+                            
+                            {/* Left Panel: Combined Brand & Value Showcase (Glassmorphic Gradient) */}
+                            <div className="relative hidden lg:col-span-5 lg:flex lg:flex-col lg:justify-between p-8 sm:p-9 overflow-hidden bg-gradient-to-b from-sky-50/90 via-indigo-50/65 to-indigo-100/90 border-r border-slate-200/60">
+                                {/* Ambient Orbs inside left panel */}
+                                <div className="pointer-events-none absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+                                <div className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-sky-400/20 blur-2xl" />
 
-                        {/* Login Card */}
-                        <div className="rounded-3xl border border-white/90 bg-white/85 p-8 sm:p-10 shadow-2xl shadow-slate-200/70 backdrop-blur-2xl">
-                            <div className="mb-8 text-center">
-                                <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{t('auth_ui.title')}</h2>
-                                <p className="mt-2 text-xs font-medium text-slate-500">{t('auth_ui.form_subtitle')}</p>
+                                <div className="relative z-10">
+                                    {/* Top Status Pill */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/90 bg-white/85 px-3 py-1 text-[11px] font-bold text-emerald-700 shadow-xs backdrop-blur-md">
+                                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                            {t('auth_ui.status_online', undefined, 'System Online • SSL 256-bit')}
+                                        </span>
+                                    </div>
+
+                                    {/* Brand Logo & Tagline Header */}
+                                    <div className="mt-6 flex items-center gap-3">
+                                        {siteLogo ? (
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/80 bg-white p-2 shadow-sm">
+                                                <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
+                                            </div>
+                                        ) : (
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-200/80 bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                                                <span className="material-symbols-outlined text-2xl">directions_car</span>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <div className="text-base font-black tracking-tight text-slate-900 leading-tight">
+                                                {siteName}
+                                            </div>
+                                            <div className="text-[11px] font-semibold text-indigo-600">
+                                                {t('auth_ui.brand_sub_rental', undefined, 'Sistem Operasi Rental Kendaraan')}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Welcome Heading & Subtitle */}
+                                    <div className="mt-6">
+                                        <h2 className="text-2xl font-black tracking-tight text-slate-900 leading-snug">
+                                            {t('auth_ui.welcome_back')}
+                                        </h2>
+                                        <p className="mt-2 text-xs font-medium text-slate-600 leading-relaxed">
+                                            {t('auth_ui.welcome_subtitle')}
+                                        </p>
+                                    </div>
+
+                                    {/* Feature Cards (3 Highlights: Rental Ops, Accounting, Security) */}
+                                    <div className="mt-6 space-y-2.5">
+                                        <div className="flex items-start gap-3 rounded-2xl border border-white/90 bg-white/75 p-3 shadow-xs backdrop-blur-md transition hover:bg-white hover:shadow-sm">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-100/90 text-sky-600 mt-0.5">
+                                                <span className="material-symbols-outlined text-base">directions_car</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-slate-800">
+                                                    {t('auth_ui.login_feature_fleet_title', undefined, 'Manajemen Armada & Rental')}
+                                                </span>
+                                                <span className="text-[11px] font-medium text-slate-500 leading-tight mt-0.5">
+                                                    {t('auth_ui.login_feature_fleet_desc', undefined, 'Kalender booking, jadwal dispatch, & kontrol status armada real-time')}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 rounded-2xl border border-white/90 bg-white/75 p-3 shadow-xs backdrop-blur-md transition hover:bg-white hover:shadow-sm">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100/90 text-emerald-600 mt-0.5">
+                                                <span className="material-symbols-outlined text-base">account_balance</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-slate-800">
+                                                    {t('auth_ui.login_feature_accounting_title', undefined, 'Akuntansi Rental Terpadu')}
+                                                </span>
+                                                <span className="text-[11px] font-medium text-slate-500 leading-tight mt-0.5">
+                                                    {t('auth_ui.login_feature_accounting_desc', undefined, 'Pembukuan otomatis, invoice, kelola deposit, & laba-rugi per unit mobil')}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 rounded-2xl border border-white/90 bg-white/75 p-3 shadow-xs backdrop-blur-md transition hover:bg-white hover:shadow-sm">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100/90 text-indigo-600 mt-0.5">
+                                                <span className="material-symbols-outlined text-base">verified_user</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-slate-800">
+                                                    {t('auth_ui.login_feature_security_title', undefined, 'Keamanan & Akses Terenkripsi')}
+                                                </span>
+                                                <span className="text-[11px] font-medium text-slate-500 leading-tight mt-0.5">
+                                                    {t('auth_ui.login_feature_security_desc', undefined, 'Autentikasi multi-tenant terisolasi dengan proteksi SSL 256-bit')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bottom Tagline & Brand Alignment */}
+                                <div className="relative z-10 mt-8 pt-4 border-t border-slate-200/60">
+                                    <p className="text-[11px] font-semibold text-slate-500 leading-relaxed">
+                                        {t('auth_ui.tagline', { name: siteName })}
+                                    </p>
+                                </div>
                             </div>
 
-                            {status && (
-                                <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 backdrop-blur-md">
-                                    <div className="flex items-center gap-2.5">
-                                        <span className="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
-                                        <span className="text-xs font-bold text-emerald-800">{status}</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <form onSubmit={submit} className="space-y-5">
-                                {/* Username or Email */}
+                            {/* Right Panel: Compact Login Form */}
+                            <div className="lg:col-span-7 p-6 sm:p-9 flex flex-col justify-between bg-white/95">
                                 <div>
-                                    <label htmlFor="login" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">
-                                        {t('auth_ui.login_label')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                                            <span className="material-symbols-outlined text-xl">person</span>
-                                        </div>
-                                        <input
-                                            id="login"
-                                            type="text"
-                                            name="login"
-                                            value={data.login}
-                                            autoComplete="username"
-                                            autoFocus
-                                            onChange={(e) => setData('login', e.target.value)}
-                                            className="block w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                            placeholder={t('auth_ui.login_placeholder')}
-                                        />
-                                    </div>
-                                    <InputError message={errors.login} className="mt-2" />
-                                </div>
-
-                                {/* Password */}
-                                <div>
-                                    <label htmlFor="password" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">
-                                        {t('auth_ui.password')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                                            <span className="material-symbols-outlined text-xl">lock</span>
-                                        </div>
-                                        <input
-                                            id="password"
-                                            type={showPassword ? 'text' : 'password'}
-                                            name="password"
-                                            value={data.password}
-                                            autoComplete="current-password"
-                                            onChange={(e) => setData('password', e.target.value)}
-                                            className="block w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-11 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                            placeholder="••••••••"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 transition"
-                                            tabIndex={-1}
-                                        >
-                                            <span className="material-symbols-outlined text-xl">
-                                                {showPassword ? 'visibility_off' : 'visibility'}
+                                    {/* Form Header */}
+                                    <div className="mb-6">
+                                        <div className="flex items-center justify-between">
+                                            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                                                {t('auth_ui.title')}
+                                            </h1>
+                                            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-2.5 py-0.5 text-[11px] font-bold text-indigo-700">
+                                                <span className="material-symbols-outlined text-xs">shield</span>
+                                                {t('auth_ui.badge_secure_access', undefined, 'Akses Aman')}
                                             </span>
-                                        </button>
+                                        </div>
+                                        <p className="mt-1 text-xs font-medium text-slate-500">
+                                            {t('auth_ui.form_subtitle')}
+                                        </p>
                                     </div>
-                                    <InputError message={errors.password} className="mt-2" />
-                                </div>
 
-                                {/* Remember Me & Forgot Password */}
-                                <div className="flex items-center justify-between pt-1">
-                                    <label className="flex cursor-pointer items-center">
-                                        <input
-                                            type="checkbox"
-                                            name="remember"
-                                            checked={data.remember}
-                                            onChange={(e) => setData('remember', e.target.checked)}
-                                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 transition focus:ring-indigo-500/30 focus:ring-offset-0"
-                                        />
-                                        <span className="ml-2 text-xs font-bold text-slate-600">{t('auth_ui.remember')}</span>
-                                    </label>
+                                    {/* Status Message (e.g. Password Reset) */}
+                                    {status && (
+                                        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/90 p-3.5 backdrop-blur-md">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-emerald-600 text-base">check_circle</span>
+                                                <span className="text-xs font-semibold text-emerald-800">{status}</span>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                    {canResetPassword && (
-                                        <Link
-                                            href={route('password.request')}
-                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition hover:underline"
+                                    {/* Login Form */}
+                                    <form onSubmit={submit} className="space-y-4">
+                                        {/* Username or Email */}
+                                        <div>
+                                            <label htmlFor="login" className="mb-1 block text-xs font-bold text-slate-700">
+                                                {t('auth_ui.login_label')}
+                                            </label>
+                                            <div className="relative">
+                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                    <span className="material-symbols-outlined text-lg">person</span>
+                                                </div>
+                                                <input
+                                                    id="login"
+                                                    type="text"
+                                                    name="login"
+                                                    value={data.login}
+                                                    autoComplete="username"
+                                                    autoFocus
+                                                    required
+                                                    onChange={(e) => setData('login', e.target.value)}
+                                                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                    placeholder={t('auth_ui.login_placeholder')}
+                                                />
+                                            </div>
+                                            <InputError message={errors.login} className="mt-1" />
+                                        </div>
+
+                                        {/* Password */}
+                                        <div>
+                                            <label htmlFor="password" className="mb-1 block text-xs font-bold text-slate-700">
+                                                {t('auth_ui.password')}
+                                            </label>
+                                            <div className="relative">
+                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                    <span className="material-symbols-outlined text-lg">lock</span>
+                                                </div>
+                                                <input
+                                                    id="password"
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    name="password"
+                                                    value={data.password}
+                                                    autoComplete="current-password"
+                                                    required
+                                                    onChange={(e) => setData('password', e.target.value)}
+                                                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-9 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                    placeholder="••••••••"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition"
+                                                    tabIndex={-1}
+                                                    title={showPassword ? t('auth_ui.hide_password', undefined, 'Sembunyikan sandi') : t('auth_ui.show_password', undefined, 'Tampilkan sandi')}
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">
+                                                        {showPassword ? 'visibility_off' : 'visibility'}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                            <InputError message={errors.password} className="mt-1" />
+                                        </div>
+
+                                        {/* Remember Me & Forgot Password */}
+                                        <div className="flex items-center justify-between pt-0.5">
+                                            <label className="flex cursor-pointer items-center select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    name="remember"
+                                                    checked={data.remember}
+                                                    onChange={(e) => setData('remember', e.target.checked)}
+                                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 transition focus:ring-indigo-500/30 focus:ring-offset-0"
+                                                />
+                                                <span className="ml-2 text-xs font-semibold text-slate-600">
+                                                    {t('auth_ui.remember')}
+                                                </span>
+                                            </label>
+
+                                            {canResetPassword && (
+                                                <Link
+                                                    href={route('password.request')}
+                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition hover:underline underline-offset-2"
+                                                >
+                                                    {t('auth_ui.forgot')}
+                                                </Link>
+                                            )}
+                                        </div>
+
+                                        {/* Primary CTA Submit Button */}
+                                        <button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-sky-500 active:scale-[0.99] py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                                         >
-                                            {t('auth_ui.forgot')}
-                                        </Link>
-                                    )}
+                                            {processing ? (
+                                                <>
+                                                    <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                    </svg>
+                                                    <span>{t('auth_ui.submitting')}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>{t('auth_ui.submit')}</span>
+                                                    <span className="material-symbols-outlined text-base">arrow_forward</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </form>
                                 </div>
 
-                                {/* Submit Button */}
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 active:from-indigo-700 active:to-sky-700 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                >
-                                    {processing ? (
-                                        <>
-                                            <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            <span>{t('auth_ui.submitting')}</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>{t('auth_ui.submit')}</span>
-                                            <span className="material-symbols-outlined text-base">arrow_forward</span>
-                                        </>
-                                    )}
-                                </button>
-                            </form>
+                                {/* Secondary Actions & Links */}
+                                <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left">
+                                    <Link
+                                        href={route('register')}
+                                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition hover:underline"
+                                    >
+                                        {t('auth_ui.need_account', undefined, 'Belum punya akun? Daftar gratis')}
+                                    </Link>
 
-                            {/* Back to Home */}
-                            <div className="mt-8 text-center">
-                                <a href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-800">
-                                    <span className="material-symbols-outlined text-base">arrow_back</span>
-                                    {t('auth_ui.back_home')}
-                                </a>
+                                    <Link
+                                        href="/"
+                                        className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 transition hover:text-slate-800"
+                                    >
+                                        <span className="material-symbols-outlined text-base">arrow_back</span>
+                                        {t('auth_ui.back_home')}
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Footer Branding */}
-                        <div className="mt-8 text-center">
-                            <p className="text-xs font-medium text-slate-400">{t('auth_ui.tagline', { name: siteName })}</p>
                         </div>
                     </div>
-                </div>
+                </main>
+
+                {/* Bottom Simple Copyright Bar */}
+                <footer className="relative z-20 py-2.5 text-center text-[11px] font-medium text-slate-400">
+                    &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
+                </footer>
             </div>
         </>
     );

@@ -87,9 +87,18 @@ class RegisteredUserController extends Controller
             ? $request->string('company_name')->toString()
             : session('onboarding_company_name');
 
-        $planKey = $request->filled('plan')
+        $defaultActivePlanKey = \App\Models\Plan::query()->where('is_active', true)->where('key', 'pay_as_you_go')->value('key')
+            ?? \App\Models\Plan::query()->where('is_active', true)->where('is_default', true)->value('key')
+            ?? \App\Models\Plan::query()->where('is_active', true)->first()?->key
+            ?? 'pay_as_you_go';
+
+        $candidatePlan = $request->filled('plan')
             ? $request->string('plan')->toString()
-            : (session('onboarding_plan') ?: 'free');
+            : (session('onboarding_plan') ?: $defaultActivePlanKey);
+
+        $planKey = \App\Models\Plan::query()->where('is_active', true)->where('key', $candidatePlan)->exists()
+            ? $candidatePlan
+            : $defaultActivePlanKey;
 
         if ($companyName) {
             $subdomain = Str::slug($companyName, '');
