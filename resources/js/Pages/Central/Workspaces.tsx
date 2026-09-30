@@ -28,20 +28,20 @@ interface Workspace {
 function getRoleBadgeStyle(slug: string): string {
     switch (slug) {
         case 'admin':
-            return 'bg-rose-50 text-rose-700 border border-rose-200/80';
+            return 'bg-rose-50/90 text-rose-700 border border-rose-200/90';
         case 'user':
-            return 'bg-sky-50 text-sky-700 border border-sky-200/80';
+            return 'bg-sky-50/90 text-sky-700 border border-sky-200/90';
         case 'warehouse_head':
         case 'warehouse_manager':
-            return 'bg-amber-50 text-amber-700 border border-amber-200/80';
+            return 'bg-amber-50/90 text-amber-700 border border-amber-200/90';
         case 'fleet_base_head':
         case 'fleet_base_manager':
         case 'driver':
-            return 'bg-purple-50 text-purple-700 border border-purple-200/80';
+            return 'bg-purple-50/90 text-purple-700 border border-purple-200/90';
         case 'salesperson':
-            return 'bg-emerald-50 text-emerald-700 border border-emerald-200/80';
+            return 'bg-emerald-50/90 text-emerald-700 border border-emerald-200/90';
         default:
-            return 'bg-indigo-50 text-indigo-700 border border-indigo-200/80';
+            return 'bg-indigo-50/90 text-indigo-700 border border-indigo-200/90';
     }
 }
 
@@ -139,29 +139,27 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                     </div>
                 </header>
 
-                {/* Main Content Area */}
-                <main className="relative z-10 flex flex-1 items-start justify-center px-4 py-8 sm:px-6 lg:py-12">
-                    <div className="w-full max-w-5xl">
+                {/* Main Content Area - Centered Horizontally & Vertically */}
+                <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:py-16">
+                    <div className="w-full">
                         
-                        {/* Page Header Banner */}
-                        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/90 bg-white/85 px-3 py-1 text-[11px] font-bold text-indigo-700 shadow-xs backdrop-blur-md">
-                                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                                    {t('central.workspaces.badge', undefined, 'Pusat Ruang Kerja • Multi-Tenant')}
-                                </div>
-                                <h1 className="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-                                    {t('central.workspaces.title', undefined, 'Pusat Ruang Kerja')}
-                                </h1>
-                                <p className="mt-1 text-xs sm:text-sm font-medium text-slate-600 max-w-xl leading-relaxed">
-                                    {t('central.workspaces.subtitle', undefined, 'Pilih workspace untuk mengakses dashboard operasional armada, atau daftarkan workspace baru.')}
-                                </p>
+                        {/* Centered Page Header Banner */}
+                        <div className="mb-8 text-center max-w-xl mx-auto">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/90 bg-white/85 px-3.5 py-1 text-[11px] font-bold text-indigo-700 shadow-xs backdrop-blur-md">
+                                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                                {t('central.workspaces.badge', undefined, 'Pusat Ruang Kerja • Multi-Tenant')}
                             </div>
+                            <h1 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+                                {t('central.workspaces.title', undefined, 'Pusat Ruang Kerja')}
+                            </h1>
+                            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
+                                {t('central.workspaces.subtitle', undefined, 'Pilih workspace untuk mengakses dashboard operasional armada, atau daftarkan workspace baru.')}
+                            </p>
                         </div>
 
-                        {/* Incoming Invitations Banner */}
+                        {/* Incoming Invitations Banner (if any) */}
                         {invitations.length > 0 && (
-                            <div className="mb-8 rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/90 p-5 sm:p-6 shadow-xl shadow-indigo-950/5 backdrop-blur-xl">
+                            <div className="max-w-2xl mx-auto mb-8 rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/90 p-5 sm:p-6 shadow-xl shadow-indigo-950/5 backdrop-blur-xl">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
                                         <span className="material-symbols-outlined text-xl">mark_email_unread</span>
@@ -238,9 +236,15 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                             </div>
                         )}
 
-                        {/* Workspaces Grid or Empty State */}
+                        {/* Workspaces List / Grid (Centered Horizontally) */}
                         {workspaces.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                            <div
+                                className={`mx-auto ${
+                                    workspaces.length === 1
+                                        ? 'max-w-lg'
+                                        : 'max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5'
+                                }`}
+                            >
                                 {workspaces.map((workspace) => {
                                     const active = workspace.status === 'active';
                                     const onTrial = workspace.is_on_trial && active;
@@ -248,20 +252,24 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                     return (
                                         <div
                                             key={workspace.id}
-                                            className={`relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/90 bg-white/85 p-5 sm:p-6 shadow-xl shadow-indigo-950/5 backdrop-blur-2xl transition-all duration-200 hover:shadow-2xl hover:border-indigo-300 group ${
-                                                onTrial ? 'ring-1 ring-sky-300/40' : active ? 'ring-1 ring-emerald-300/30' : 'ring-1 ring-amber-300/40 opacity-90'
+                                            className={`relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/95 bg-white/90 p-6 sm:p-7 shadow-xl shadow-indigo-950/5 backdrop-blur-2xl transition-all duration-300 hover:shadow-2xl hover:border-indigo-300 hover:-translate-y-0.5 group ${
+                                                onTrial
+                                                    ? 'ring-1 ring-sky-300/40'
+                                                    : active
+                                                      ? 'ring-1 ring-emerald-300/30'
+                                                      : 'ring-1 ring-amber-300/40 opacity-90'
                                             }`}
                                         >
                                             {/* Card Top: Details & Status Pill */}
                                             <div>
                                                 <div className="flex items-start justify-between gap-3">
-                                                    <div className="flex items-start gap-3 min-w-0">
-                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-600 to-teal-500 text-white font-black text-lg shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
+                                                    <div className="flex items-center gap-3.5 min-w-0">
+                                                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-600 to-teal-500 text-white font-black text-xl shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
                                                             {workspace.name.charAt(0).toUpperCase()}
                                                         </div>
 
                                                         <div className="min-w-0">
-                                                            <h3 className="text-base font-extrabold tracking-tight text-slate-900 group-hover:text-indigo-600 transition truncate">
+                                                            <h3 className="text-lg font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition truncate leading-snug">
                                                                 {workspace.name}
                                                             </h3>
 
@@ -273,7 +281,9 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                                                     className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-slate-500 hover:text-indigo-600 transition truncate mt-0.5"
                                                                 >
                                                                     <span>{workspace.domain}</span>
-                                                                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                                                                    <span className="material-symbols-outlined text-[13px] text-slate-400 group-hover:text-indigo-600">
+                                                                        open_in_new
+                                                                    </span>
                                                                 </a>
                                                             )}
                                                         </div>
@@ -281,18 +291,18 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
 
                                                     <div className="shrink-0">
                                                         {onTrial ? (
-                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold text-sky-800 shadow-xs">
-                                                                <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/90 bg-sky-50 px-3 py-1 text-[11px] font-bold text-sky-800 shadow-xs">
+                                                                <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
                                                                 {t('central.trial.days_left', { days: String(workspace.trial_days_left ?? 0) }, `${workspace.trial_days_left} Hari Trial`)}
                                                             </span>
                                                         ) : active ? (
-                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-800 shadow-xs">
-                                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-800 shadow-xs">
+                                                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
                                                                 {t('central.workspaces.active', undefined, 'Aktif')}
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800 shadow-xs">
-                                                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-800 shadow-xs">
+                                                                <span className="h-2 w-2 rounded-full bg-amber-500" />
                                                                 {t('central.workspaces.suspended', undefined, 'Ditangguhkan')}
                                                             </span>
                                                         )}
@@ -300,51 +310,56 @@ export default function Workspaces({ workspaces, invitations = [], settings }: P
                                                 </div>
 
                                                 {/* Badges: Plan & Roles */}
-                                                <div className="mt-4 flex items-center gap-1.5 flex-wrap">
+                                                <div className="mt-4 flex items-center gap-2 flex-wrap">
                                                     {workspace.plan_name && (
-                                                        <span className="rounded-lg bg-indigo-50 border border-indigo-100/80 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700">
-                                                            {workspace.plan_name}
+                                                        <span className="inline-flex items-center gap-1 rounded-xl bg-indigo-50/90 border border-indigo-200/80 px-2.5 py-1 text-[11px] font-bold text-indigo-700 shadow-xs">
+                                                            <span className="text-xs">⚡</span>
+                                                            <span>{workspace.plan_name}</span>
                                                         </span>
                                                     )}
                                                     {workspace.plan_key === 'free' && (
-                                                        <span className="rounded-lg bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700">
-                                                            Free Lifetime
+                                                        <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50/90 border border-emerald-200/80 px-2.5 py-1 text-[11px] font-bold text-emerald-700 shadow-xs">
+                                                            <span>Free Lifetime</span>
                                                         </span>
                                                     )}
                                                     {workspace.roles?.map((role) => (
                                                         <span
                                                             key={role.id ? `${role.id}-${role.slug}` : role.slug}
-                                                            className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold ${getRoleBadgeStyle(role.slug)}`}
+                                                            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[11px] font-bold shadow-xs ${getRoleBadgeStyle(role.slug)}`}
                                                         >
-                                                            <span className="material-symbols-outlined text-[12px]">
-                                                                {role.slug === 'admin' ? 'shield_person' : role.slug === 'driver' ? 'directions_car' : 'person'}
+                                                            <span className="material-symbols-outlined text-[14px]">
+                                                                {role.slug === 'admin'
+                                                                    ? 'shield_person'
+                                                                    : role.slug === 'driver'
+                                                                      ? 'directions_car'
+                                                                      : 'person'}
                                                             </span>
                                                             <span>{role.name}</span>
                                                         </span>
                                                     ))}
                                                 </div>
 
-                                                {/* Trial / Notes Info */}
+                                                {/* Trial Note Info */}
                                                 {onTrial && (
-                                                    <div className="mt-3.5 rounded-xl border border-sky-100 bg-sky-50/60 p-2.5 text-[11px] font-medium text-sky-800 leading-relaxed">
+                                                    <div className="mt-3.5 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-[11px] font-medium text-sky-800 leading-relaxed">
                                                         {t('central.workspaces.trial_info_card', { plan: workspace.plan_name || 'Trial' }, `Sedang dalam masa uji coba gratis paket ${workspace.plan_name || 'Trial'}.`)}
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Card Bottom: Enter / Manage Button */}
-                                            <div className="mt-6 pt-4 border-t border-slate-100">
+                                            <div className="mt-6 pt-5 border-t border-slate-100">
                                                 {active ? (
                                                     <a
                                                         href={route('central.workspaces.enter', workspace.id)}
-                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200"
+                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] py-3 px-6 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200"
                                                     >
                                                         <span>{t('central.workspaces.enter_btn', undefined, 'Masuk ke Workspace →')}</span>
                                                     </a>
                                                 ) : (
                                                     <a
                                                         href={route('central.workspaces.enter', workspace.id)}
-                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md transition-all duration-200"
+                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 active:scale-[0.99] py-3 px-6 text-sm font-bold text-white shadow-lg shadow-amber-500/25 transition-all duration-200"
                                                     >
                                                         <span>{t('central.workspaces.pay_btn', undefined, 'Aktivasi Pembayaran →')}</span>
                                                     </a>
