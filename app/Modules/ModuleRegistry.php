@@ -30,6 +30,14 @@ class ModuleRegistry
     private ?array $disabledKeys = null;
 
     /**
+     * Tenant-hidden module keys, memoized for the life of the request.
+     * Central data, so it never varies by tenant.
+     *
+     * @var list<string>|null
+     */
+    private ?array $hiddenKeys = null;
+
+    /**
      * Installed module keys on the central schema, memoized for the request.
      * Separate from the per-tenant map since central is not a tenant.
      *
@@ -246,6 +254,38 @@ class ModuleRegistry
     }
 
     /**
+     * Whether a super admin has hidden this module from tenants.
+     * Modules hidden from tenants will not appear on the tenant's /module/modules page.
+     */
+    public function isTenantHidden(string $key): bool
+    {
+        if (! $this->has($key)) {
+            return false;
+        }
+
+        return in_array($key, $this->hiddenKeys(), true);
+    }
+
+    /**
+     * Whether this module is visible to tenants.
+     */
+    public function isTenantVisible(string $key): bool
+    {
+        return ! $this->isTenantHidden($key);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function hiddenKeys(): array
+    {
+        return $this->hiddenKeys ??= ModuleSetting::query()
+            ->where('is_hidden', true)
+            ->pluck('key')
+            ->all();
+    }
+
+    /**
      * @return list<string>
      */
     private function disabledKeys(): array
@@ -320,6 +360,15 @@ class ModuleRegistry
     public function flushDisabledState(): void
     {
         $this->disabledKeys = null;
+    }
+
+    /**
+     * Drop the memoized tenant-hidden state. Registered as a singleton, so
+     * anything that writes ModuleSetting::is_hidden must call this.
+     */
+    public function flushHiddenState(): void
+    {
+        $this->hiddenKeys = null;
     }
 
     /**

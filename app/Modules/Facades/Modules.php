@@ -19,8 +19,12 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool isCentralInstallable(string $key)
  * @method static list<string> centralInstalled()
  * @method static bool platformEnabled(string $key)
+ * @method static bool isTenantHidden(string $key)
+ * @method static bool isTenantVisible(string $key)
  * @method static string pageEntrypoint(string $component)
  * @method static void flushInstalledState()
+ * @method static void flushDisabledState()
+ * @method static void flushHiddenState()
  * @method static void registerRoutes()
  *
  * @see ModuleRegistry

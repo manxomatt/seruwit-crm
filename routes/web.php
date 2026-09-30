@@ -433,6 +433,7 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/registry', [ModuleRegistryController::class, 'index'])->name('registry.index');
         Route::patch('/registry/{key}/status', [ModuleRegistryController::class, 'toggleStatus'])->name('registry.toggle-status');
+        Route::patch('/registry/{key}/visibility', [ModuleRegistryController::class, 'toggleVisibility'])->name('registry.toggle-visibility');
     });
 
 /*

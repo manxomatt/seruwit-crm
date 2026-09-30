@@ -29,6 +29,7 @@ class ModuleRegistryController extends Controller
                     'description' => $module->description(),
                     'requires' => $module->requires(),
                     'is_enabled' => Modules::platformEnabled($module->key()),
+                    'is_hidden' => Modules::isTenantHidden($module->key()),
                 ])
                 ->values()
                 ->all(),
@@ -55,6 +56,30 @@ class ModuleRegistryController extends Controller
         $message = $enabled
             ? __('platform.messages.module_disabled', ['module' => $module->label()])
             : __('platform.messages.module_enabled', ['module' => $module->label()]);
+
+        return back()->with('success', $message);
+    }
+
+    public function toggleVisibility(string $key): RedirectResponse
+    {
+        $module = Modules::find($key);
+
+        if (! $module) {
+            abort(404);
+        }
+
+        $hidden = Modules::isTenantHidden($key);
+
+        ModuleSetting::query()->updateOrCreate(
+            ['key' => $key],
+            ['is_hidden' => ! $hidden],
+        );
+
+        Modules::flushHiddenState();
+
+        $message = $hidden
+            ? __('platform.messages.module_unhidden', ['module' => $module->label()])
+            : __('platform.messages.module_hidden', ['module' => $module->label()]);
 
         return back()->with('success', $message);
     }

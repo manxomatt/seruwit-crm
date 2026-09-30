@@ -37,6 +37,7 @@ class ModuleSetting extends Model
     protected $fillable = [
         'key',
         'is_enabled',
+        'is_hidden',
     ];
 
     /**
@@ -46,6 +47,7 @@ class ModuleSetting extends Model
     {
         return [
             'is_enabled' => 'boolean',
+            'is_hidden' => 'boolean',
         ];
     }
 }

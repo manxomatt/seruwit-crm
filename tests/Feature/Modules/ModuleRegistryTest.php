@@ -70,6 +70,7 @@ class ModuleRegistryTest extends TestCase
 
         $this->actingAs($user)->get('/module/registry')->assertForbidden();
         $this->actingAs($user)->patch('/module/registry/fleet/status')->assertForbidden();
+        $this->actingAs($user)->patch('/module/registry/fleet/visibility')->assertForbidden();
     }
 
     public function test_super_admin_can_disable_a_module(): void
@@ -210,5 +211,65 @@ class ModuleRegistryTest extends TestCase
                 ->where('availableModules.4.key', 'fleet')
                 ->where('availableModules.4.is_enabled', false)
             );
+    }
+
+    public function test_super_admin_can_hide_a_module_from_tenants(): void
+    {
+        $admin = $this->makeCentralAdmin();
+
+        $this->actingAs($admin)->get('/module/registry')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Module/Registry/Index')
+                ->where('modules.0.is_hidden', false)
+            );
+
+        $this->actingAs($admin)->patch('/module/registry/fleet/visibility')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('module_settings', ['key' => 'fleet', 'is_hidden' => true]);
+    }
+
+    public function test_toggling_visibility_twice_unhides_the_module(): void
+    {
+        $admin = $this->makeCentralAdmin();
+
+        $this->actingAs($admin)->patch('/module/registry/fleet/visibility');
+        $this->actingAs($admin)->patch('/module/registry/fleet/visibility');
+
+        $this->assertDatabaseHas('module_settings', ['key' => 'fleet', 'is_hidden' => false]);
+    }
+
+    public function test_hidden_module_does_not_appear_on_tenant_module_catalog_page(): void
+    {
+        $tenant = $this->provisionTenant('Catalog Co', 'catalog-co', 'owner@catalog.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+        $owner = $this->ownerOf($tenant, 'owner@catalog.test');
+
+        ModuleSetting::create(['key' => 'fleet', 'is_hidden' => true]);
+        app(\App\Modules\ModuleRegistry::class)->flushHiddenState();
+
+        $this->actingAs($owner)->get('http://catalog-co.localhost/module/modules')
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $modules = collect($page->toArray()['props']['modules']);
+                $this->assertFalse($modules->contains('key', 'fleet'));
+            });
+    }
+
+    public function test_tenant_cannot_install_a_hidden_module(): void
+    {
+        $tenant = $this->provisionTenant('Hidden Install Co', 'hidden-install-co', 'owner@hiddeninstall.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+        $owner = $this->ownerOf($tenant, 'owner@hiddeninstall.test');
+
+        ModuleSetting::create(['key' => 'fleet', 'is_hidden' => true]);
+        app(\App\Modules\ModuleRegistry::class)->flushHiddenState();
+
+        $this->actingAs($owner)->post('http://hidden-install-co.localhost/module/modules/fleet/install')
+            ->assertNotFound();
     }
 }

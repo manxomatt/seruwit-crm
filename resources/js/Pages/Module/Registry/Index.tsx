@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -11,6 +12,7 @@ interface ModuleRow {
     description: string;
     requires: string[];
     is_enabled: boolean;
+    is_hidden: boolean;
 }
 
 interface Props {
@@ -67,12 +69,14 @@ export default function Index({ modules }: Props): JSX.Element {
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
     const [processingKey, setProcessingKey] = useState<string | null>(null);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled' | 'visible' | 'hidden'>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     const totalCount = modules.length;
     const enabledCount = useMemo(() => modules.filter((m) => m.is_enabled).length, [modules]);
     const disabledCount = totalCount - enabledCount;
+    const hiddenCount = useMemo(() => modules.filter((m) => m.is_hidden).length, [modules]);
+    const visibleCount = totalCount - hiddenCount;
 
     const sorted = useMemo(
         () => [...modules].sort((a, b) => a.label.localeCompare(b.label)),
@@ -83,6 +87,8 @@ export default function Index({ modules }: Props): JSX.Element {
         return sorted.filter((m) => {
             if (statusFilter === 'enabled' && !m.is_enabled) return false;
             if (statusFilter === 'disabled' && m.is_enabled) return false;
+            if (statusFilter === 'visible' && m.is_hidden) return false;
+            if (statusFilter === 'hidden' && !m.is_hidden) return false;
 
             const q = search.trim().toLowerCase();
             if (!q) return true;
@@ -95,8 +101,9 @@ export default function Index({ modules }: Props): JSX.Element {
         });
     }, [sorted, search, statusFilter]);
 
-    const toggle = (module: ModuleRow): void => {
-        setProcessingKey(module.key);
+    const toggleStatus = (module: ModuleRow): void => {
+        const key = `${module.key}:status`;
+        setProcessingKey(key);
         router.patch(
             route('module.registry.toggle-status', module.key),
             {},
@@ -107,8 +114,28 @@ export default function Index({ modules }: Props): JSX.Element {
         );
     };
 
+    const toggleVisibility = (module: ModuleRow): void => {
+        const key = `${module.key}:visibility`;
+        setProcessingKey(key);
+        router.patch(
+            route('module.registry.toggle-visibility', module.key),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setProcessingKey(null),
+            },
+        );
+    };
+
     return (
-        <DynamicLayout header={<PageHeader title={t('platform.registry.title')} />}>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('platform.registry.title')}
+                    actions={<LanguageSwitcher compact />}
+                />
+            }
+        >
             <Head title={t('platform.registry.title')} />
 
             <div className="space-y-6">
@@ -131,40 +158,52 @@ export default function Index({ modules }: Props): JSX.Element {
                 )}
 
                 {/* Hero Overview & Stat Cards */}
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent p-5 border border-indigo-500/15 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                            Total Registered Modules
+                            {t('platform.registry.stats.total', undefined, 'Total Registered Modules')}
                         </div>
                         <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                             {totalCount}
                         </div>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Platform-wide available capabilities
+                            {t('platform.registry.stats.total_hint', undefined, 'Platform-wide available capabilities')}
                         </p>
                     </div>
 
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-5 border border-emerald-500/15 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                            Active Across Platform
+                            {t('platform.registry.stats.active', undefined, 'Active Across Platform')}
                         </div>
                         <div className="mt-2 text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
                             {enabledCount}
                         </div>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Enabled & reachable by entitled tenants
+                            {t('platform.registry.stats.active_hint', undefined, 'Enabled & reachable by entitled tenants')}
                         </p>
                     </div>
 
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-5 border border-amber-500/15 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                            Disabled Globally (Kill Switch)
+                            {t('platform.registry.stats.disabled', undefined, 'Disabled Globally (Kill Switch)')}
                         </div>
                         <div className="mt-2 text-3xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
                             {disabledCount}
                         </div>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Overridden & unreachable platform-wide
+                            {t('platform.registry.stats.disabled_hint', undefined, 'Overridden & unreachable platform-wide')}
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-transparent p-5 border border-purple-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                            {t('platform.registry.stats.hidden', undefined, 'Hidden from Tenants')}
+                        </div>
+                        <div className="mt-2 text-3xl font-bold tracking-tight text-purple-600 dark:text-purple-400">
+                            {hiddenCount}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {t('platform.registry.stats.hidden_hint', undefined, 'Hidden from tenant module catalog')}
                         </p>
                     </div>
                 </div>
@@ -172,8 +211,9 @@ export default function Index({ modules }: Props): JSX.Element {
                 {/* Toolbar: Search, Filters & View Toggle */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
                     {/* Filter Tabs */}
-                    <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 text-xs font-medium">
+                    <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 text-xs font-medium">
                         <button
+                            type="button"
                             onClick={() => setStatusFilter('all')}
                             className={`rounded-lg px-3 py-1.5 transition-all ${
                                 statusFilter === 'all'
@@ -181,9 +221,10 @@ export default function Index({ modules }: Props): JSX.Element {
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            All ({totalCount})
+                            {t('platform.registry.filters.all', undefined, 'All')} ({totalCount})
                         </button>
                         <button
+                            type="button"
                             onClick={() => setStatusFilter('enabled')}
                             className={`rounded-lg px-3 py-1.5 transition-all ${
                                 statusFilter === 'enabled'
@@ -191,9 +232,10 @@ export default function Index({ modules }: Props): JSX.Element {
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            Active ({enabledCount})
+                            {t('platform.registry.filters.active', undefined, 'Active')} ({enabledCount})
                         </button>
                         <button
+                            type="button"
                             onClick={() => setStatusFilter('disabled')}
                             className={`rounded-lg px-3 py-1.5 transition-all ${
                                 statusFilter === 'disabled'
@@ -201,13 +243,35 @@ export default function Index({ modules }: Props): JSX.Element {
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            Disabled ({disabledCount})
+                            {t('platform.registry.filters.disabled', undefined, 'Disabled')} ({disabledCount})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('visible')}
+                            className={`rounded-lg px-3 py-1.5 transition-all ${
+                                statusFilter === 'visible'
+                                    ? 'bg-sky-500 text-white shadow-sm font-semibold'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            {t('platform.registry.filters.visible', undefined, 'Visible to Tenants')} ({visibleCount})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('hidden')}
+                            className={`rounded-lg px-3 py-1.5 transition-all ${
+                                statusFilter === 'hidden'
+                                    ? 'bg-purple-500 text-white shadow-sm font-semibold'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            {t('platform.registry.filters.hidden', undefined, 'Hidden from Tenants')} ({hiddenCount})
                         </button>
                     </div>
 
                     <div className="flex items-center gap-3">
                         {/* Search Bar */}
-                        <div className="relative min-w-[340px] flex-1">
+                        <div className="relative min-w-[280px] sm:min-w-[320px] flex-1">
                             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -217,7 +281,7 @@ export default function Index({ modules }: Props): JSX.Element {
                                 type="search"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search module name or key..."
+                                placeholder={t('platform.registry.search_placeholder', undefined, 'Search module name or key...')}
                                 className="w-full pl-9 pr-4 py-1.5 text-sm rounded-xl border-slate-200 dark:border-slate-800"
                             />
                         </div>
@@ -225,6 +289,7 @@ export default function Index({ modules }: Props): JSX.Element {
                         {/* View Switcher */}
                         <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1">
                             <button
+                                type="button"
                                 onClick={() => setViewMode('table')}
                                 title="Table View"
                                 className={`rounded-lg p-1.5 transition-all ${
@@ -238,6 +303,7 @@ export default function Index({ modules }: Props): JSX.Element {
                                 </svg>
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setViewMode('grid')}
                                 title="Grid View"
                                 className={`rounded-lg p-1.5 transition-all ${
@@ -262,91 +328,164 @@ export default function Index({ modules }: Props): JSX.Element {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                         </div>
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">No modules match your filter</h3>
-                        <p className="mt-1 text-xs text-slate-500">Try adjusting your search keyword or active status filter.</p>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                            {t('platform.registry.empty_search', undefined, 'No modules match your filter')}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500">
+                            Try adjusting your search keyword or active/visibility filter.
+                        </p>
                     </div>
                 ) : viewMode === 'grid' ? (
                     /* Modern Grid View */
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {filtered.map((module) => (
-                            <div
-                                key={module.key}
-                                className={`group relative flex flex-col justify-between rounded-2xl border p-5 transition-all duration-200 ${
-                                    module.is_enabled
-                                        ? 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700'
-                                        : 'bg-slate-50/70 dark:bg-slate-900/40 border-amber-200/50 dark:border-amber-900/30'
-                                }`}
-                            >
-                                <div>
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 group-hover:scale-105 transition-transform">
-                                                {getModuleIcon(module.key)}
+                        {filtered.map((module) => {
+                            const isStatusBusy = processingKey === `${module.key}:status`;
+                            const isVisibilityBusy = processingKey === `${module.key}:visibility`;
+
+                            return (
+                                <div
+                                    key={module.key}
+                                    className={`group relative flex flex-col justify-between rounded-2xl border p-5 transition-all duration-200 ${
+                                        !module.is_enabled
+                                            ? 'bg-slate-50/70 dark:bg-slate-900/40 border-amber-200/60 dark:border-amber-900/30'
+                                            : module.is_hidden
+                                            ? 'bg-purple-50/20 dark:bg-purple-950/20 border-purple-200/60 dark:border-purple-800/40 shadow-sm'
+                                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700'
+                                    }`}
+                                >
+                                    <div>
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 group-hover:scale-105 transition-transform">
+                                                    {getModuleIcon(module.key)}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-semibold text-slate-900 dark:text-white text-base">
+                                                        {module.label}
+                                                    </h3>
+                                                    <span className="font-mono text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                                        {module.key}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="font-semibold text-slate-900 dark:text-white text-base">
-                                                    {module.label}
-                                                </h3>
-                                                <span className="font-mono text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                                                    {module.key}
+
+                                            {module.is_hidden && (
+                                                <span
+                                                    className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 px-2 py-0.5 text-[10px] font-semibold border border-purple-500/20"
+                                                    title={t('platform.registry.visibility.hidden', undefined, 'Disembunyikan dari Tenant')}
+                                                >
+                                                    <svg className="h-3 w-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                                    </svg>
+                                                    {t('platform.registry.visibility.hidden', undefined, 'Hidden')}
                                                 </span>
-                                            </div>
+                                            )}
                                         </div>
 
-                                        {/* iOS-Style Toggle Switch */}
-                                        <button
-                                            type="button"
-                                            disabled={processingKey === module.key}
-                                            onClick={() => toggle(module)}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                                module.is_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                            } ${processingKey === module.key ? 'opacity-50 cursor-wait' : ''}`}
-                                            aria-label={`Toggle status for ${module.label}`}
-                                        >
-                                            <span
-                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                                    module.is_enabled ? 'translate-x-5' : 'translate-x-0'
-                                                }`}
-                                            />
-                                        </button>
+                                        {module.description && (
+                                            <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-3">
+                                                {module.description}
+                                            </p>
+                                        )}
+
+                                        {module.requires.length > 0 && (
+                                            <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+                                                <svg className="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                                </svg>
+                                                <span className="truncate">
+                                                    {t('platform.registry.requires_prefix', undefined, 'Membutuhkan:')} {module.requires.join(', ')}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {module.description && (
-                                        <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-3">
-                                            {module.description}
-                                        </p>
-                                    )}
-                                </div>
+                                    {/* Action Controls Section */}
+                                    <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
+                                        {/* Platform Kill-Switch Row */}
+                                        <div className="flex items-center justify-between text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                                        module.is_enabled
+                                                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                                                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                                                    }`}
+                                                >
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${module.is_enabled ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                                    {module.is_enabled
+                                                        ? t('platform.registry.status.active', undefined, 'Active')
+                                                        : t('platform.registry.status.disabled', undefined, 'Disabled')}
+                                                </span>
+                                                <span className="text-[11px] text-slate-400">Platform</span>
+                                            </div>
 
-                                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                                                module.is_enabled
-                                                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                                                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`h-1.5 w-1.5 rounded-full ${
-                                                    module.is_enabled ? 'bg-emerald-500' : 'bg-amber-500'
-                                                }`}
-                                            />
-                                            {module.is_enabled ? 'Active Platform' : 'Disabled Globally'}
-                                        </span>
+                                            <button
+                                                type="button"
+                                                disabled={isStatusBusy}
+                                                onClick={() => toggleStatus(module)}
+                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                    module.is_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                                } ${isStatusBusy ? 'opacity-50 cursor-wait' : ''}`}
+                                                title={module.is_enabled ? t('platform.registry.actions.disable') : t('platform.registry.actions.enable')}
+                                                aria-label={`Toggle platform status for ${module.label}`}
+                                            >
+                                                <span
+                                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                        module.is_enabled ? 'translate-x-4' : 'translate-x-0'
+                                                    }`}
+                                                />
+                                            </button>
+                                        </div>
+
+                                        {/* Tenant Visibility Row */}
+                                        <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100/60 dark:border-slate-800/40">
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                                        module.is_hidden
+                                                            ? 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20'
+                                                            : 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20'
+                                                    }`}
+                                                >
+                                                    {module.is_hidden ? (
+                                                        <svg className="h-3 w-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="h-3 w-3 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                    )}
+                                                    {module.is_hidden
+                                                        ? t('platform.registry.visibility.hidden', undefined, 'Disembunyikan')
+                                                        : t('platform.registry.visibility.visible', undefined, 'Tampil di Tenant')}
+                                                </span>
+                                                <span className="text-[11px] text-slate-400">Tenant</span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                disabled={isVisibilityBusy}
+                                                onClick={() => toggleVisibility(module)}
+                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                    !module.is_hidden ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'
+                                                } ${isVisibilityBusy ? 'opacity-50 cursor-wait' : ''}`}
+                                                title={module.is_hidden ? t('platform.registry.actions.unhide', undefined, 'Tampilkan ke Tenant') : t('platform.registry.actions.hide', undefined, 'Sembunyikan dari Tenant')}
+                                                aria-label={`Toggle tenant visibility for ${module.label}`}
+                                            >
+                                                <span
+                                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                        !module.is_hidden ? 'translate-x-4' : 'translate-x-0'
+                                                    }`}
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    {module.requires.length > 0 && (
-                                        <span className="text-[11px] text-slate-400 flex items-center gap-1" title={`Requires: ${module.requires.join(', ')}`}>
-                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                                            </svg>
-                                            {module.requires.length} req
-                                        </span>
-                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     /* Modern Table View */
@@ -358,64 +497,118 @@ export default function Index({ modules }: Props): JSX.Element {
                                     <th className="py-3.5 px-5">Key</th>
                                     <th className="py-3.5 px-5">Description</th>
                                     <th className="py-3.5 px-5">Requires</th>
-                                    <th className="py-3.5 px-5 text-right">Status & Action</th>
+                                    <th className="py-3.5 px-5">Platform Status</th>
+                                    <th className="py-3.5 px-5 text-right">Tenant Visibility</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {filtered.map((module) => (
-                                    <tr key={module.key} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                        <td className="py-4 px-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
-                                                    {getModuleIcon(module.key)}
-                                                </div>
-                                                <span className="font-semibold text-slate-900 dark:text-white">
-                                                    {module.label}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-5">
-                                            <span className="font-mono text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                                                {module.key}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-5 max-w-xs text-xs text-slate-600 dark:text-slate-400 truncate">
-                                            {module.description || '-'}
-                                        </td>
-                                        <td className="py-4 px-5 text-xs text-slate-500">
-                                            {module.requires.length > 0 ? module.requires.join(', ') : 'None'}
-                                        </td>
-                                        <td className="py-4 px-5 text-right">
-                                            <div className="flex items-center justify-end gap-3">
-                                                <span
-                                                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                                                        module.is_enabled
-                                                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                                                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                                                    }`}
-                                                >
-                                                    <span className={`h-1.5 w-1.5 rounded-full ${module.is_enabled ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                                    {module.is_enabled ? 'Active' : 'Disabled'}
-                                                </span>
+                                {filtered.map((module) => {
+                                    const isStatusBusy = processingKey === `${module.key}:status`;
+                                    const isVisibilityBusy = processingKey === `${module.key}:visibility`;
 
-                                                <button
-                                                    type="button"
-                                                    disabled={processingKey === module.key}
-                                                    onClick={() => toggle(module)}
-                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                                        module.is_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                                    } ${processingKey === module.key ? 'opacity-50 cursor-wait' : ''}`}
-                                                >
+                                    return (
+                                        <tr key={module.key} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+                                                        {getModuleIcon(module.key)}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-slate-900 dark:text-white block">
+                                                            {module.label}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-5">
+                                                <span className="font-mono text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                                    {module.key}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-5 max-w-xs text-xs text-slate-600 dark:text-slate-400 truncate">
+                                                {module.description || '-'}
+                                            </td>
+                                            <td className="py-4 px-5 text-xs text-slate-500">
+                                                {module.requires.length > 0 ? module.requires.join(', ') : 'None'}
+                                            </td>
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-2.5">
                                                     <span
-                                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                                            module.is_enabled ? 'translate-x-4' : 'translate-x-0'
+                                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                                            module.is_enabled
+                                                                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                                                                : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
                                                         }`}
-                                                    />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                    >
+                                                        <span className={`h-1.5 w-1.5 rounded-full ${module.is_enabled ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                                        {module.is_enabled
+                                                            ? t('platform.registry.status.active', undefined, 'Active')
+                                                            : t('platform.registry.status.disabled', undefined, 'Disabled')}
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={isStatusBusy}
+                                                        onClick={() => toggleStatus(module)}
+                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                            module.is_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                                        } ${isStatusBusy ? 'opacity-50 cursor-wait' : ''}`}
+                                                        title={module.is_enabled ? t('platform.registry.actions.disable') : t('platform.registry.actions.enable')}
+                                                        aria-label={`Toggle platform status for ${module.label}`}
+                                                    >
+                                                        <span
+                                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                                module.is_enabled ? 'translate-x-4' : 'translate-x-0'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-5 text-right">
+                                                <div className="flex items-center justify-end gap-2.5">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                                            module.is_hidden
+                                                                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20'
+                                                                : 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20'
+                                                        }`}
+                                                    >
+                                                        {module.is_hidden ? (
+                                                            <svg className="h-3 w-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                                            </svg>
+                                                        ) : (
+                                                            <svg className="h-3 w-3 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                        )}
+                                                        {module.is_hidden
+                                                            ? t('platform.registry.visibility.hidden', undefined, 'Disembunyikan')
+                                                            : t('platform.registry.visibility.visible', undefined, 'Tampil di Tenant')}
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={isVisibilityBusy}
+                                                        onClick={() => toggleVisibility(module)}
+                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                            !module.is_hidden ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'
+                                                        } ${isVisibilityBusy ? 'opacity-50 cursor-wait' : ''}`}
+                                                        title={module.is_hidden ? t('platform.registry.actions.unhide', undefined, 'Tampilkan ke Tenant') : t('platform.registry.actions.hide', undefined, 'Sembunyikan dari Tenant')}
+                                                        aria-label={`Toggle tenant visibility for ${module.label}`}
+                                                    >
+                                                        <span
+                                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                                !module.is_hidden ? 'translate-x-4' : 'translate-x-0'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -424,4 +617,3 @@ export default function Index({ modules }: Props): JSX.Element {
         </DynamicLayout>
     );
 }
-

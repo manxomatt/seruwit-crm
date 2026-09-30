@@ -23,7 +23,7 @@ class ModuleCatalog
      */
     public function forCurrentTenant(): array
     {
-        return $this->forTenant(tenant());
+        return $this->forTenant(tenant(), includeHidden: false);
     }
 
     /**
@@ -31,19 +31,23 @@ class ModuleCatalog
      *
      * @return list<array<string, mixed>>
      */
-    public function forTenant(Tenant $tenant): array
+    public function forTenant(Tenant $tenant, bool $includeHidden = true): array
     {
         $graceDays = config('modules.purge_after_days');
 
         // Built inside the tenant context: the records are pinned to the tenant
         // connection, and casting their timestamps reaches for that connection's
         // query grammar, which no longer resolves once tenancy ends.
-        return $tenant->run(function () use ($tenant, $graceDays): array {
+        return $tenant->run(function () use ($tenant, $graceDays, $includeHidden): array {
             $states = InstalledModule::query()->get()->keyBy('key');
 
             $catalog = [];
 
             foreach (Modules::all() as $key => $module) {
+                if (! $includeHidden && Modules::isTenantHidden($key)) {
+                    continue;
+                }
+
                 $record = $states->get($key);
                 $platformEnabled = Modules::platformEnabled($key);
                 $entitled = $tenant->isEntitledTo($key);
@@ -55,6 +59,7 @@ class ModuleCatalog
                     'description' => $module->description(),
                     'requires' => $module->requires(),
                     'platform_enabled' => $platformEnabled,
+                    'is_hidden' => Modules::isTenantHidden($key),
                     'entitled' => $entitled,
                     'installed' => $installed,
                     'state' => $this->resolveState($platformEnabled, $entitled, $installed, $record),

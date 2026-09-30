@@ -63,7 +63,7 @@ class ModuleController extends Controller
 
         $module = Modules::find($key);
 
-        if (! $module) {
+        if (! $module || Modules::isTenantHidden($key)) {
             abort(404);
         }
 
