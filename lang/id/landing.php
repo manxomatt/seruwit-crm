@@ -18,9 +18,10 @@ return [
     ],
 
     'hero' => [
-        'badge' => 'Platform Operasi Rental Kendaraan & Keuangan Terpadu',
-        'title_line1' => 'Platform Operasi Cerdas untuk',
-        'title_highlight' => 'Bisnis Rental Kendaraan Modern.',
+        'badge' => 'Platform Operasional Rental Kendaraan & Keuangan Terpadu',
+        'title' => 'Platform Cerdas untuk Operasional Bisnis Rental Kendaraan Modern.',
+        'title_line1' => 'Platform Cerdas untuk',
+        'title_highlight' => 'Operasional Bisnis Rental Kendaraan Modern.',
         'tagline_fallback' => 'Maksimalkan utilisasi armada tanpa risiko. Mulai dari reservasi bebas konflik, screening dokumen penyewa, telematika GPS live, hingga pembukuan laba-rugi per mobil.',
         'quick_input_placeholder' => 'Ketik nama usaha rental Anda...',
         'quick_cta' => 'Mulai Coba Gratis ⚡',
@@ -345,7 +346,7 @@ return [
     ],
 
     'footer' => [
-        'description_fallback' => 'Platform operasi rental kendaraan, manajemen telematika armada, dan akuntansi finansial terpadu.',
+        'description_fallback' => 'Platform operasional rental kendaraan, manajemen telematika armada, dan akuntansi finansial terpadu.',
         'product_heading' => 'Produk',
         'features_link' => 'Modul',
         'benefits_link' => 'Cara kerja',

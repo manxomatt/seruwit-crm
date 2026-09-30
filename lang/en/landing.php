@@ -18,9 +18,10 @@ return [
     ],
 
     'hero' => [
-        'badge' => 'Integrated Vehicle Rental & Financial Operating System',
-        'title_line1' => 'Intelligent Operating Platform for',
-        'title_highlight' => 'Modern Vehicle Rental Businesses.',
+        'badge' => 'Integrated Vehicle Rental & Financial Operational Platform',
+        'title' => 'Intelligent Platform for Modern Vehicle Rental Business Operations.',
+        'title_line1' => 'Intelligent Platform for',
+        'title_highlight' => 'Modern Vehicle Rental Business Operations.',
         'tagline_fallback' => 'Maximize fleet utilization without risks. From conflict-free reservations and customer document screening to live GPS telematics and per-vehicle profit & loss.',
         'quick_input_placeholder' => 'Enter your rental business name...',
         'quick_cta' => 'Start Free Trial ⚡',

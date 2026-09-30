@@ -22,7 +22,7 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ settings, canLogin = true, canRegister = true }) => {
   const { t } = useTrans();
   const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
-  const siteDescription = t('landing.footer.description_fallback', undefined, 'Platform operasi modular untuk rental kendaraan, armada, dan manajemen keuangan terpadu.');
+  const siteDescription = t('landing.footer.description_fallback', undefined, 'Platform operasional modular untuk rental kendaraan, armada, dan manajemen keuangan terpadu.');
   const siteLogo = settings?.['site.logo'];
   const copyright = t('landing.footer.copyright_fallback', {
     year: new Date().getFullYear(),

@@ -248,7 +248,7 @@ class LocalizationTest extends TestCase
                 ->where('translations.invoicing.nav.invoices', 'Invoice')
                 ->where('translations.invoicing.index.new', 'Invoice Baru')
                 ->where('translations.landing.nav.features', 'Modul')
-                ->where('translations.landing.hero.title_highlight', 'Bisnis Rental Kendaraan Modern.')
+                ->where('translations.landing.hero.title_highlight', 'Operasional Bisnis Rental Kendaraan Modern.')
                 ->where('translations.live_updates.title', 'Live Updates')
                 ->where('translations.live_updates.actions.add', 'Buat Update')
                 ->where('translations.maintenance.nav.work_orders', 'Work Orders')

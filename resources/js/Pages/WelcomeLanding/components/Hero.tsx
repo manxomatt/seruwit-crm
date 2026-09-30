@@ -56,9 +56,9 @@ const Hero: React.FC<HeroProps> = ({ settings, canRegister = true }) => {
 
           {/* Main Editorial Headline */}
           <h1 className="font-heading text-[27px] font-black tracking-tight text-slate-950 sm:text-4xl lg:text-[45px] leading-[1.15]">
-            {t('landing.hero.title_line1', undefined, 'Platform Operasi Cerdas untuk')}{' '}
+            {t('landing.hero.title_line1', undefined, 'Platform Cerdas untuk')}{' '}
             <span className="bg-gradient-to-r from-teal-700 via-cyan-600 to-emerald-600 bg-clip-text text-transparent">
-              {t('landing.hero.title_highlight', undefined, 'Bisnis Rental Kendaraan Modern.')}
+              {t('landing.hero.title_highlight', undefined, 'Operasional Bisnis Rental Kendaraan Modern.')}
             </span>
           </h1>
 
