@@ -94,6 +94,7 @@ return [
         'users',
         'payment_orders',
         'subscription',
+        'legal',
     ],
 
 ];

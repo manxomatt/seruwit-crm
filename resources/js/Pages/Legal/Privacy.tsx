@@ -14,7 +14,7 @@ export default function Privacy({ settings }: Props) {
 
     return (
         <>
-            <Head title={`Kebijakan Privasi - ${siteName}`} />
+            <Head title={`${t('legal.privacy.page_title')} - ${siteName}`} />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/60 to-indigo-50/80 text-slate-800 selection:bg-indigo-500 selection:text-white">
                 {/* Ambient fresh glow effects */}
@@ -51,52 +51,56 @@ export default function Privacy({ settings }: Props) {
                 <main className="relative z-10 mx-auto max-w-4xl px-6 py-12">
                     <div className="mb-10 text-center">
                         <span className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-sky-50/80 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-sky-700 shadow-sm backdrop-blur-md">
-                            🔒 Perlindungan Data & Privasi
+                            {t('legal.privacy.badge')}
                         </span>
                         <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                            Kebijakan Privasi Pengguna
+                            {t('legal.privacy.title')}
                         </h1>
-                        <p className="mt-2 text-xs font-medium text-slate-500">Terakhir diperbarui: 8 Agustus 2026</p>
+                        <p className="mt-2 text-xs font-medium text-slate-500">
+                            {t('legal.privacy.last_updated', { date: t('legal.privacy.last_updated_date') })}
+                        </p>
                     </div>
 
                     <div className="space-y-8 rounded-3xl border border-white/90 bg-white/85 p-8 sm:p-10 shadow-2xl shadow-slate-200/70 backdrop-blur-2xl">
                         <section className="space-y-3">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-sky-600">
                                 <span className="material-symbols-outlined text-xl">dataset</span>
-                                1. Pengumpulan Informasi Pribadi & Bisnis
+                                {t('legal.privacy.sections.collection.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Kami mengumpulkan informasi yang Anda berikan secara langsung saat registrasi akun dan pembuatan workspace, meliputi nama pengguna, alamat email, nomor telepon bisnis, serta informasi transaksi layanan operasional yang Anda kelola di dalam platform <strong className="text-slate-900">{siteName}</strong>.
+                                {t('legal.privacy.sections.collection.prefix')}{' '}
+                                <strong className="text-slate-900">{siteName}</strong>
+                                {t('legal.privacy.sections.collection.suffix')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-sky-600">
                                 <span className="material-symbols-outlined text-xl">tune</span>
-                                2. Penggunaan Data & Tujuan Pengolahan
+                                {t('legal.privacy.sections.usage.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Data yang dikumpulkan digunakan semata-mata untuk mengoperasikan platform CRM, memverifikasi identitas pengguna, mengelola tagihan & reservasi, memberikan layanan dukungan pelanggan, serta meningkatkan kinerja dan keamanan platform secara berkelanjutan.
+                                {t('legal.privacy.sections.usage.content')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-sky-600">
                                 <span className="material-symbols-outlined text-xl">lock</span>
-                                3. Keamanan Data & Isolasi Tenant
+                                {t('legal.privacy.sections.security.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Seluruh data tenant disimpan dengan isolasi skema database (*multi-tenancy isolation*) dan enkripsi jaringan berstandar industri. Kami tidak pernah menjual atau membagikan data bisnis pribadi Anda kepada pihak ketiga tanpa persetujuan tertulis dari Anda.
+                                {t('legal.privacy.sections.security.content')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-sky-600">
                                 <span className="material-symbols-outlined text-xl">delete_history</span>
-                                4. Hak Pengguna & Retensi Data
+                                {t('legal.privacy.sections.rights.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Pengguna berhak meminta pembaruan data, ekspor data transaksi bisnis, atau pengahapusan akun sesuai dengan prosedur dan regulasi pelindungan data pribadi yang berlaku.
+                                {t('legal.privacy.sections.rights.content')}
                             </p>
                         </section>
                     </div>
@@ -107,13 +111,16 @@ export default function Privacy({ settings }: Props) {
                             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 px-6 py-3 text-xs font-bold text-slate-700 shadow-sm transition"
                         >
                             <span className="material-symbols-outlined text-base">arrow_back</span>
-                            Kembali ke Halaman Registrasi
+                            {t('legal.privacy.back_to_register')}
                         </Link>
                     </div>
                 </main>
 
                 <footer className="relative z-10 mt-12 border-t border-slate-200/80 bg-white/60 py-6 text-center text-xs font-medium text-slate-400">
-                    &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
+                    {t('legal.privacy.copyright', {
+                        year: new Date().getFullYear(),
+                        name: siteName,
+                    })}
                 </footer>
             </div>
         </>

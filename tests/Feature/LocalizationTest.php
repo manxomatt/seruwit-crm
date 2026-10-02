@@ -119,6 +119,8 @@ class LocalizationTest extends TestCase
                 ->has('translations.subscription.hero_title')
                 ->has('translations.subscription.payment_hero_title')
                 ->has('translations.subscription.modules.accounting')
+                ->has('translations.legal')
+                ->has('translations.legal.terms.title')
                 ->has('availableLocales', 2)
             );
     }

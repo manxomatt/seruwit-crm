@@ -14,7 +14,7 @@ export default function Terms({ settings }: Props) {
 
     return (
         <>
-            <Head title={`Syarat & Ketentuan - ${siteName}`} />
+            <Head title={`${t('legal.terms.page_title')} - ${siteName}`} />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/60 to-indigo-50/80 text-slate-800 selection:bg-indigo-500 selection:text-white">
                 {/* Ambient fresh glow effects */}
@@ -51,52 +51,56 @@ export default function Terms({ settings }: Props) {
                 <main className="relative z-10 mx-auto max-w-4xl px-6 py-12">
                     <div className="mb-10 text-center">
                         <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-indigo-700 shadow-sm backdrop-blur-md">
-                            ⚖️ Ketentuan Layanan & Registrasi
+                            {t('legal.terms.badge')}
                         </span>
                         <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                            Syarat & Ketentuan Registrasi Platform
+                            {t('legal.terms.title')}
                         </h1>
-                        <p className="mt-2 text-xs font-medium text-slate-500">Terakhir diperbarui: 8 Agustus 2026</p>
+                        <p className="mt-2 text-xs font-medium text-slate-500">
+                            {t('legal.terms.last_updated', { date: t('legal.terms.last_updated_date') })}
+                        </p>
                     </div>
 
                     <div className="space-y-8 rounded-3xl border border-white/90 bg-white/85 p-8 sm:p-10 shadow-2xl shadow-slate-200/70 backdrop-blur-2xl">
                         <section className="space-y-3">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">badge</span>
-                                1. Ketentuan Akun & Registrasi Pengguna
+                                {t('legal.terms.sections.account.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Dengan mendaftar dan membuat akun pada platform <strong className="text-slate-900">{siteName}</strong>, Anda menyatakan bahwa Anda berusia minimal 18 tahun atau memiliki kewenangan legal untuk mewakili badan usaha/perusahaan yang mendaftar. Seluruh informasi yang Anda berikan saat registrasi (nama lengkap, alamat email, dan identitas bisnis) harus akurat dan benar.
+                                {t('legal.terms.sections.account.prefix')}{' '}
+                                <strong className="text-slate-900">{siteName}</strong>
+                                {t('legal.terms.sections.account.suffix')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">domain</span>
-                                2. Pengelolaan Tenant & Workspace Bisnis
+                                {t('legal.terms.sections.tenant.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Akun registrasi utama Anda berfungsi sebagai pemilik (*owner*) awal dari ruang kerja bisnis (*tenant workspace*). Anda bertanggung jawab penuh atas segala aktivitas, pengelolaan hak akses modul, staf/driver yang diundang, serta kepatuhan data transaksi yang dikelola di dalam workspace Anda.
+                                {t('legal.terms.sections.tenant.content')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">security</span>
-                                3. Keamanan Sandi & Hak Akses
+                                {t('legal.terms.sections.security.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Pengguna bertanggung jawab penuh atas kerahasiaan kata sandi (*password*) dan keamanan credential akun. Jika ditemukan indikasi akses tanpa izin atau pelanggaran keamanan pada akun Anda, harap segera hubungi tim dukungan sistem kami.
+                                {t('legal.terms.sections.security.content')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">gavel</span>
-                                4. Pembatasan Penggunaan & Hak Kekayaan Intelektual
+                                {t('legal.terms.sections.intellectual_property.title')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                Seluruh hak cipta, merek dagang, dan kode sumber platform ini dimiliki secara eksklusif oleh penyedia platform. Pengguna dilarang melakukan penyalahgunaan sistem, rekayasa balik (*reverse engineering*), atau memanfaatkan platform untuk kegiatan yang melanggar hukum yang berlaku di Republik Indonesia.
+                                {t('legal.terms.sections.intellectual_property.content')}
                             </p>
                         </section>
                     </div>
@@ -107,13 +111,16 @@ export default function Terms({ settings }: Props) {
                             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 px-6 py-3 text-xs font-bold text-slate-700 shadow-sm transition"
                         >
                             <span className="material-symbols-outlined text-base">arrow_back</span>
-                            Kembali ke Halaman Registrasi
+                            {t('legal.terms.back_to_register')}
                         </Link>
                     </div>
                 </main>
 
                 <footer className="relative z-10 mt-12 border-t border-slate-200/80 bg-white/60 py-6 text-center text-xs font-medium text-slate-400">
-                    &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
+                    {t('legal.terms.copyright', {
+                        year: new Date().getFullYear(),
+                        name: siteName,
+                    })}
                 </footer>
             </div>
         </>
