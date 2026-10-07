@@ -15,6 +15,8 @@ interface Role {
     id: number;
     name: string;
     slug: string;
+    description?: string | null;
+    is_system?: boolean;
 }
 
 interface UserProfile {

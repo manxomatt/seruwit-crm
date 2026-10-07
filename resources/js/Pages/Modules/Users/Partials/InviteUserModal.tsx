@@ -3,16 +3,19 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select, { SelectOption } from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { useForm } from '@inertiajs/react';
-import { FormEventHandler, useEffect } from 'react';
+import { FormEventHandler, useEffect, useMemo } from 'react';
 
 interface RoleOption {
     id: number;
     name: string;
     slug: string;
+    description?: string | null;
+    is_system?: boolean;
 }
 
 interface Props {
@@ -63,6 +66,46 @@ export default function InviteUserModal({
         });
     };
 
+    const getRoleIcon = (slug: string) => {
+        switch (slug) {
+            case 'admin':
+                return '🔑';
+            case 'user':
+                return '👤';
+            case 'driver':
+                return '🚚';
+            case 'salesperson':
+                return '💼';
+            case 'warehouse_head':
+                return '🏭';
+            case 'warehouse_manager':
+                return '🏢';
+            case 'fleet_base_head':
+                return '🚛';
+            case 'fleet_base_manager':
+                return '🚚';
+            case 'rental_operator':
+                return '📋';
+            case 'reseller':
+                return '🤝';
+            default:
+                return '🛡️';
+        }
+    };
+
+    const roleOptions: SelectOption[] = useMemo(
+        () =>
+            roles.map((role) => ({
+                value: role.slug,
+                label: `${getRoleIcon(role.slug)} ${role.name}`,
+                description: role.description || undefined,
+                badge: role.is_system ? t('users.system_badge', undefined, 'System') : undefined,
+            })),
+        [roles, t]
+    );
+
+    const selectedRole = roles.find((r) => r.slug === data.role_slug);
+
     return (
         <Modal show={show} onClose={handleClose} maxWidth="md">
             <form onSubmit={submit} className="p-6">
@@ -107,20 +150,26 @@ export default function InviteUserModal({
                             value={t('users.invite.role_label')}
                             className="!text-xs !font-bold !uppercase !tracking-wider"
                         />
-                        <select
-                            id="invite-role"
-                            name="role_slug"
-                            value={data.role_slug}
-                            onChange={(e) => setData('role_slug', e.target.value)}
-                            className="mt-1 block w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 text-xs font-semibold text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            required
-                        >
-                            {roles.map((role) => (
-                                <option key={role.id} value={role.slug}>
-                                    {role.name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="mt-1">
+                            <Select
+                                id="invite-role"
+                                value={data.role_slug}
+                                onChange={(val) => setData('role_slug', val)}
+                                options={roleOptions}
+                                placeholder={t('users.invite.role_select')}
+                            />
+                        </div>
+                        {selectedRole && selectedRole.description && (
+                            <div className="mt-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 p-2.5 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
+                                <span className="text-sm shrink-0">{getRoleIcon(selectedRole.slug)}</span>
+                                <div className="leading-relaxed">
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 mr-1.5">
+                                        {selectedRole.name}:
+                                    </span>
+                                    <span>{selectedRole.description}</span>
+                                </div>
+                            </div>
+                        )}
                         <InputError message={errors.role_slug} className="mt-1.5" />
                     </div>
                 </div>

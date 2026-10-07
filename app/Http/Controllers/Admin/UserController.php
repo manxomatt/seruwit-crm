@@ -87,7 +87,7 @@ class UserController extends Controller
             $stats['platform_users'] = User::whereHas('roles')->count();
         }
 
-        $roles = Role::query()->orderBy('name')->get(['id', 'name', 'slug']);
+        $roles = Role::query()->orderBy('name')->get(['id', 'name', 'slug', 'description', 'is_system']);
 
         $pendingInvitations = tenant('id')
             ? \App\Models\Invitation::query()
