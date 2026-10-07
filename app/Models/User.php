@@ -15,6 +15,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\Syncable;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
+use Stancl\Tenancy\Database\Models\TenantPivot;
 
 class User extends Authenticatable implements MustVerifyEmail, Syncable
 {
@@ -263,6 +264,26 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
     public function syncRoles(array $roleIds): void
     {
         $this->roles()->sync($roleIds);
+    }
+
+    /**
+     * The tenants (workspaces) this user belongs to.
+     *
+     * @return BelongsToMany<Tenant, $this>
+     */
+    public function tenants(): BelongsToMany
+    {
+        return $this->belongsToMany(Tenant::class, 'tenant_users', 'global_user_id', 'tenant_id', 'global_id')
+            ->using(TenantPivot::class)
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user belongs to at least one tenant workspace.
+     */
+    public function belongsToAnyTenant(): bool
+    {
+        return $this->tenants()->exists();
     }
 
     /**

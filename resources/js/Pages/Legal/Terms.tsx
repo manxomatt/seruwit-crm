@@ -14,7 +14,7 @@ export default function Terms({ settings }: Props) {
 
     return (
         <>
-            <Head title={`${t('legal.terms.page_title')} - ${siteName}`} />
+            <Head title={`${t('legal.terms.page_title', undefined, 'Syarat & Ketentuan')} - ${siteName}`} />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/60 to-indigo-50/80 text-slate-800 selection:bg-indigo-500 selection:text-white">
                 {/* Ambient fresh glow effects */}
@@ -41,7 +41,7 @@ export default function Terms({ settings }: Props) {
                                 href={route('register')}
                                 className="rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 px-4 py-2 text-xs font-bold text-white shadow-md transition"
                             >
-                                {t('auth_ui.register_title')}
+                                {t('auth_ui.register_title', undefined, 'Daftar')}
                             </Link>
                         </div>
                     </div>
@@ -51,13 +51,13 @@ export default function Terms({ settings }: Props) {
                 <main className="relative z-10 mx-auto max-w-4xl px-6 py-12">
                     <div className="mb-10 text-center">
                         <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-indigo-700 shadow-sm backdrop-blur-md">
-                            {t('legal.terms.badge')}
+                            {t('legal.terms.badge', undefined, '⚖️ Ketentuan Layanan & Registrasi')}
                         </span>
                         <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                            {t('legal.terms.title')}
+                            {t('legal.terms.title', undefined, 'Syarat & Ketentuan Registrasi Platform')}
                         </h1>
                         <p className="mt-2 text-xs font-medium text-slate-500">
-                            {t('legal.terms.last_updated', { date: t('legal.terms.last_updated_date') })}
+                            {t('legal.terms.last_updated', { date: t('legal.terms.last_updated_date', undefined, '8 Agustus 2026') }, 'Terakhir diperbarui: 8 Agustus 2026')}
                         </p>
                     </div>
 
@@ -65,42 +65,42 @@ export default function Terms({ settings }: Props) {
                         <section className="space-y-3">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">badge</span>
-                                {t('legal.terms.sections.account.title')}
+                                {t('legal.terms.sections.account.title', undefined, '1. Ketentuan Akun & Registrasi Pengguna')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                {t('legal.terms.sections.account.prefix')}{' '}
+                                {t('legal.terms.sections.account.prefix', undefined, 'Dengan mendaftar dan membuat akun pada platform')}{' '}
                                 <strong className="text-slate-900">{siteName}</strong>
-                                {t('legal.terms.sections.account.suffix')}
+                                {t('legal.terms.sections.account.suffix', undefined, ', Anda menyatakan bahwa Anda berusia minimal 18 tahun atau memiliki kewenangan legal untuk mewakili badan usaha/perusahaan yang mendaftar. Seluruh informasi yang Anda berikan saat registrasi (nama lengkap, alamat email, dan identitas bisnis) harus akurat dan benar.')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">domain</span>
-                                {t('legal.terms.sections.tenant.title')}
+                                {t('legal.terms.sections.tenant.title', undefined, '2. Pengelolaan Tenant & Workspace Bisnis')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                {t('legal.terms.sections.tenant.content')}
+                                {t('legal.terms.sections.tenant.content', undefined, 'Akun registrasi utama Anda berfungsi sebagai pemilik (owner) awal dari ruang kerja bisnis (tenant workspace). Anda bertanggung jawab penuh atas segala aktivitas, pengelolaan hak akses modul, staf/driver yang diundang, serta kepatuhan data transaksi yang dikelola di dalam workspace Anda.')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">security</span>
-                                {t('legal.terms.sections.security.title')}
+                                {t('legal.terms.sections.security.title', undefined, '3. Keamanan Sandi & Hak Akses')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                {t('legal.terms.sections.security.content')}
+                                {t('legal.terms.sections.security.content', undefined, 'Pengguna bertanggung jawab penuh atas kerahasiaan kata sandi (password) dan keamanan credential akun. Jika ditemukan indikasi akses tanpa izin atau pelanggaran keamanan pada akun Anda, harap segera hubungi tim dukungan sistem kami.')}
                             </p>
                         </section>
 
                         <section className="space-y-3 border-t border-slate-100 pt-6">
                             <h2 className="flex items-center gap-2.5 text-lg font-bold text-indigo-600">
                                 <span className="material-symbols-outlined text-xl">gavel</span>
-                                {t('legal.terms.sections.intellectual_property.title')}
+                                {t('legal.terms.sections.intellectual_property.title', undefined, '4. Pembatasan Penggunaan & Hak Kekayaan Intelektual')}
                             </h2>
                             <p className="text-xs font-medium leading-relaxed text-slate-600">
-                                {t('legal.terms.sections.intellectual_property.content')}
+                                {t('legal.terms.sections.intellectual_property.content', undefined, 'Seluruh hak cipta, merek dagang, dan kode sumber platform ini dimiliki secara eksklusif oleh penyedia platform. Pengguna dilarang melakukan penyalahgunaan sistem, rekayasa balik (reverse engineering), atau memanfaatkan platform untuk kegiatan yang melanggar hukum yang berlaku di Republik Indonesia.')}
                             </p>
                         </section>
                     </div>
@@ -111,7 +111,7 @@ export default function Terms({ settings }: Props) {
                             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 px-6 py-3 text-xs font-bold text-slate-700 shadow-sm transition"
                         >
                             <span className="material-symbols-outlined text-base">arrow_back</span>
-                            {t('legal.terms.back_to_register')}
+                            {t('legal.terms.back_to_register', undefined, 'Kembali ke Halaman Registrasi')}
                         </Link>
                     </div>
                 </main>
@@ -120,7 +120,7 @@ export default function Terms({ settings }: Props) {
                     {t('legal.terms.copyright', {
                         year: new Date().getFullYear(),
                         name: siteName,
-                    })}
+                    }, `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`)}
                 </footer>
             </div>
         </>

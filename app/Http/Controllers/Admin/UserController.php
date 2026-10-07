@@ -36,13 +36,18 @@ class UserController extends Controller
     public function index(): Response
     {
         $statusFilter = request('status');
+        $typeFilter = request('type');
         $tenant = tenant();
+        $isCentral = ! tenancy()->initialized;
         $totalUsers = User::count();
         $isLimitReached = $tenant instanceof Tenant && $tenant->hasReachedLimit('max_users', $totalUsers);
         $maxLimit = $tenant instanceof Tenant ? $tenant->planLimit('max_users') : null;
 
         $users = User::query()
             ->with(['roles', 'profile'])
+            ->when($isCentral, function ($query) {
+                $query->with(['tenants' => fn ($q) => $q->select('tenants.id', 'tenants.name')]);
+            })
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -60,6 +65,12 @@ class UserController extends Controller
             ->when($statusFilter === 'unverified', function ($query) {
                 $query->whereNull('email_verified_at');
             })
+            ->when($isCentral && $typeFilter === 'platform', function ($query) {
+                $query->whereHas('roles');
+            })
+            ->when($isCentral && $typeFilter === 'tenant_user', function ($query) {
+                $query->whereDoesntHave('roles')->whereHas('tenants');
+            })
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -70,6 +81,11 @@ class UserController extends Controller
             'unverified_users' => User::whereNull('email_verified_at')->count(),
             'admin_users' => User::whereHas('roles', fn ($q) => $q->where('slug', 'admin'))->count(),
         ];
+
+        if ($isCentral) {
+            $stats['tenant_users'] = User::whereDoesntHave('roles')->whereHas('tenants')->count();
+            $stats['platform_users'] = User::whereHas('roles')->count();
+        }
 
         $roles = Role::query()->orderBy('name')->get(['id', 'name', 'slug']);
 
@@ -89,7 +105,9 @@ class UserController extends Controller
             'filters' => [
                 'search' => request('search'),
                 'status' => $statusFilter,
+                'type' => $typeFilter,
             ],
+            'isCentral' => $isCentral,
             'can' => [
                 'create' => ! $isLimitReached,
             ],
@@ -185,10 +203,15 @@ class UserController extends Controller
      */
     public function show(User $user): Response
     {
+        $isCentral = ! tenancy()->initialized;
         $user->load(['roles.permissions', 'profile']);
+        if ($isCentral) {
+            $user->load(['tenants' => fn ($q) => $q->select('tenants.id', 'tenants.name')]);
+        }
 
         return Inertia::render('Modules/Users/Show', [
             'user' => $user,
+            'isCentral' => $isCentral,
         ]);
     }
 
@@ -197,7 +220,11 @@ class UserController extends Controller
      */
     public function edit(User $user): Response
     {
+        $isCentral = ! tenancy()->initialized;
         $user->load(['roles', 'profile']);
+        if ($isCentral) {
+            $user->load(['tenants' => fn ($q) => $q->select('tenants.id', 'tenants.name')]);
+        }
         $roles = Role::query()->orderBy('name')->get();
 
         $userWarehouseIds = [];
@@ -220,6 +247,7 @@ class UserController extends Controller
             'warehouseScopedRoleSlugs' => AccessibleWarehouses::scopedRoleSlugs(),
             'fleetBases' => $this->assignableFleetBases(),
             'fleetBaseScopedRoleSlugs' => AccessibleFleetBases::scopedRoleSlugs(),
+            'isCentral' => $isCentral,
         ]);
     }
 

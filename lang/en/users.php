@@ -39,6 +39,22 @@ return [
         'all_status' => 'All Status',
         'verified' => 'Verified',
         'unverified' => 'Unverified',
+        'all_types' => 'All Types',
+        'platform_users' => 'Platform Staff',
+        'tenant_users' => 'Tenant Users',
+    ],
+
+    'badges' => [
+        'tenant_user' => 'Tenant User',
+        'platform_staff' => 'Platform Staff',
+    ],
+
+    'tenant_roles_managed_in_workspace' => 'Roles managed inside tenant workspace',
+    'tenant_workspaces' => 'Tenant Workspaces',
+
+    'notices' => [
+        'tenant_user_notice_title' => 'Tenant Workspace Member',
+        'tenant_user_notice_body' => 'This user belongs to tenant workspace(s). Their functional roles and permissions are configured within their respective workspace. Roles selected below will grant permissions to the central platform dashboard.',
     ],
 
     'view_modes' => [

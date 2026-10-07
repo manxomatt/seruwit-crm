@@ -26,6 +26,11 @@ interface UserProfile {
     avatar_url: string | null;
 }
 
+interface TenantInfo {
+    id: string;
+    name: string;
+}
+
 interface User {
     id: number;
     name: string;
@@ -35,6 +40,7 @@ interface User {
     updated_at: string;
     roles: Role[];
     profile: UserProfile | null;
+    tenants?: TenantInfo[];
 }
 
 interface PaginatedUsers {
@@ -53,6 +59,7 @@ interface PaginatedUsers {
 interface Filters {
     search: string | null;
     status: string | null;
+    type?: string | null;
 }
 
 interface Stats {
@@ -60,6 +67,8 @@ interface Stats {
     verified_users: number;
     unverified_users: number;
     admin_users: number;
+    tenant_users?: number;
+    platform_users?: number;
 }
 
 interface PendingInvitation {
@@ -78,15 +87,17 @@ interface Props {
     filters: Filters;
     can?: { create: boolean };
     quota?: { max: number | null; current: number; reached: boolean };
+    isCentral?: boolean;
 }
 
-export default function Index({ users, stats, roles = [], pendingInvitations = [], filters, can, quota }: Props): JSX.Element {
+export default function Index({ users, stats, roles = [], pendingInvitations = [], filters, can, quota, isCentral = false }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search || '');
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
     const [activeStatus, setActiveStatus] = useState<string>(filters.status || 'all');
+    const [activeType, setActiveType] = useState<string>(filters.type || 'all');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -137,6 +148,7 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
             {
                 search: search || undefined,
                 status: activeStatus !== 'all' ? activeStatus : undefined,
+                type: isCentral && activeType !== 'all' ? activeType : undefined,
             },
             {
                 preserveState: true,
@@ -152,6 +164,23 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
             {
                 search: search || undefined,
                 status: status !== 'all' ? status : undefined,
+                type: isCentral && activeType !== 'all' ? activeType : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            }
+        );
+    };
+
+    const handleFilterType = (type: string) => {
+        setActiveType(type);
+        router.get(
+            prefixedRoute('users.index'),
+            {
+                search: search || undefined,
+                status: activeStatus !== 'all' ? activeStatus : undefined,
+                type: type !== 'all' ? type : undefined,
             },
             {
                 preserveState: true,
@@ -163,6 +192,7 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
     const clearFilters = () => {
         setSearch('');
         setActiveStatus('all');
+        setActiveType('all');
         router.get(prefixedRoute('users.index'));
     };
 
@@ -317,33 +347,67 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
                         </div>
                     </div>
 
-                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                {t('users.stats.unverified_users')}
-                            </span>
-                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 text-lg font-bold">
-                                ⏳
-                            </span>
-                        </div>
-                        <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
-                            {stats.unverified_users}
-                        </div>
-                    </div>
+                    {isCentral && stats.tenant_users !== undefined ? (
+                        <>
+                            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        {t('users.filters.platform_users')}
+                                    </span>
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 text-lg font-bold">
+                                        🛡️
+                                    </span>
+                                </div>
+                                <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+                                    {stats.platform_users ?? stats.admin_users}
+                                </div>
+                            </div>
 
-                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                {t('users.stats.admin_users')}
-                            </span>
-                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 text-lg font-bold">
-                                🔑
-                            </span>
-                        </div>
-                        <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
-                            {stats.admin_users}
-                        </div>
-                    </div>
+                            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        {t('users.filters.tenant_users')}
+                                    </span>
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 text-lg font-bold">
+                                        🏢
+                                    </span>
+                                </div>
+                                <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+                                    {stats.tenant_users}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        {t('users.stats.unverified_users')}
+                                    </span>
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 text-lg font-bold">
+                                        ⏳
+                                    </span>
+                                </div>
+                                <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+                                    {stats.unverified_users}
+                                </div>
+                            </div>
+
+                            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        {t('users.stats.admin_users')}
+                                    </span>
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 text-lg font-bold">
+                                        🔑
+                                    </span>
+                                </div>
+                                <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+                                    {stats.admin_users}
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Filter and View Mode Control Toolbar */}
@@ -363,7 +427,7 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
                         <PrimaryButton type="submit" className="!rounded-2xl text-xs !py-2 shadow-sm">
                             {t('common.search')}
                         </PrimaryButton>
-                        {(search || activeStatus !== 'all') && (
+                        {(search || activeStatus !== 'all' || activeType !== 'all') && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
@@ -374,8 +438,47 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
                         )}
                     </form>
 
-                    {/* Status Filter Pills & View Switcher */}
-                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                    {/* Status & Type Filter Pills & View Switcher */}
+                    <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3">
+                        {/* Type Pills (Central only) */}
+                        {isCentral && (
+                            <div className="flex items-center gap-1 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => handleFilterType('all')}
+                                    className={`rounded-xl px-3 py-1.5 font-bold transition-all ${
+                                        activeType === 'all'
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                    }`}
+                                >
+                                    {t('users.filters.all_types')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleFilterType('platform')}
+                                    className={`rounded-xl px-3 py-1.5 font-bold transition-all ${
+                                        activeType === 'platform'
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                    }`}
+                                >
+                                    🛡️ {t('users.filters.platform_users')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleFilterType('tenant_user')}
+                                    className={`rounded-xl px-3 py-1.5 font-bold transition-all ${
+                                        activeType === 'tenant_user'
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                    }`}
+                                >
+                                    🏢 {t('users.filters.tenant_users')}
+                                </button>
+                            </div>
+                        )}
+
                         {/* Status Pills */}
                         <div className="flex items-center gap-1 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
                             <button
@@ -566,6 +669,31 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
                                                     {role.name}
                                                 </span>
                                             ))
+                                        ) : user.tenants && user.tenants.length > 0 ? (
+                                            <div className="flex flex-col gap-1 w-full">
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <span className="inline-flex items-center gap-1 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80 px-2.5 py-0.5 text-[11px] font-bold">
+                                                        🏢 {t('users.badges.tenant_user', 'Tenant User')}
+                                                    </span>
+                                                    {user.tenants.slice(0, 2).map((tn) => (
+                                                        <span
+                                                            key={tn.id}
+                                                            className="rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 text-[10px] font-medium"
+                                                            title={tn.id}
+                                                        >
+                                                            {tn.name || tn.id}
+                                                        </span>
+                                                    ))}
+                                                    {user.tenants.length > 2 && (
+                                                        <span className="text-[10px] text-slate-400 font-medium">
+                                                            +{user.tenants.length - 2}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                                                    {t('users.tenant_roles_managed_in_workspace', 'Roles managed inside tenant workspace')}
+                                                </span>
+                                            </div>
                                         ) : (
                                             <span className="text-xs text-slate-400 italic">
                                                 {t('users.pages.index.no_roles')}
@@ -649,7 +777,7 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
                                             <td className="px-6 py-4 whitespace-nowrap font-mono text-slate-500">
                                                 {user.email}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-1">
                                                     {user.roles.length > 0 ? (
                                                         user.roles.map((role) => (
@@ -660,8 +788,33 @@ export default function Index({ users, stats, roles = [], pendingInvitations = [
                                                                 {role.name}
                                                             </span>
                                                         ))
+                                                    ) : user.tenants && user.tenants.length > 0 ? (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="flex flex-wrap items-center gap-1">
+                                                                <span className="inline-flex items-center gap-1 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80 px-2 py-0.5 text-[10px] font-bold">
+                                                                    🏢 {t('users.badges.tenant_user', 'Tenant User')}
+                                                                </span>
+                                                                {user.tenants.slice(0, 2).map((tn) => (
+                                                                    <span
+                                                                        key={tn.id}
+                                                                        className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                                                        title={tn.id}
+                                                                    >
+                                                                        {tn.name || tn.id}
+                                                                    </span>
+                                                                ))}
+                                                                {user.tenants.length > 2 && (
+                                                                    <span className="text-[9px] text-slate-400 font-medium">
+                                                                        +{user.tenants.length - 2}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic">
+                                                                {t('users.tenant_roles_managed_in_workspace', 'Roles managed in workspace')}
+                                                            </span>
+                                                        </div>
                                                     ) : (
-                                                        <span className="text-slate-400 italic">
+                                                        <span className="text-slate-400 italic text-[11px]">
                                                             {t('users.pages.index.no_roles')}
                                                         </span>
                                                     )}

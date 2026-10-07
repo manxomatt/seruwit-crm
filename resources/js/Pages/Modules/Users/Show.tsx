@@ -24,6 +24,11 @@ interface UserProfile {
     avatar_url: string | null;
 }
 
+interface TenantInfo {
+    id: string;
+    name: string;
+}
+
 interface User {
     id: number;
     name: string;
@@ -33,13 +38,15 @@ interface User {
     updated_at: string;
     roles?: Role[];
     profile: UserProfile | null;
+    tenants?: TenantInfo[];
 }
 
 interface Props {
     user: User;
+    isCentral?: boolean;
 }
 
-export default function Show({ user }: Props): JSX.Element {
+export default function Show({ user, isCentral = false }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -148,7 +155,7 @@ export default function Show({ user }: Props): JSX.Element {
                             </div>
                         </div>
 
-                        {user.roles && user.roles.length > 0 && (
+                        {user.roles && user.roles.length > 0 ? (
                             <div className="flex flex-wrap gap-1.5 sm:justify-end">
                                 {user.roles.map((role) => (
                                     <span
@@ -159,7 +166,26 @@ export default function Show({ user }: Props): JSX.Element {
                                     </span>
                                 ))}
                             </div>
-                        )}
+                        ) : user.tenants && user.tenants.length > 0 ? (
+                            <div className="flex flex-col items-start sm:items-end gap-1">
+                                <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                                    <span className="rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 px-3 py-1 text-xs font-bold">
+                                        🏢 {t('users.badges.tenant_user', 'Tenant User')}
+                                    </span>
+                                    {user.tenants.map((tn) => (
+                                        <span
+                                            key={tn.id}
+                                            className="rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium"
+                                        >
+                                            {tn.name || tn.id}
+                                        </span>
+                                    ))}
+                                </div>
+                                <span className="text-[11px] text-slate-400 italic">
+                                    {t('users.tenant_roles_managed_in_workspace', 'Roles managed inside tenant workspace')}
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
 
@@ -214,6 +240,29 @@ export default function Show({ user }: Props): JSX.Element {
                             </div>
                         </dl>
                     </div>
+
+                    {user.tenants && user.tenants.length > 0 && (
+                        <div className="md:col-span-2 rounded-3xl border border-sky-200/80 dark:border-sky-900/60 bg-sky-50/50 dark:bg-sky-950/20 p-6 shadow-sm">
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                <span>🏢</span>
+                                <span>{t('users.tenant_workspaces', 'Tenant Workspaces')}</span>
+                            </h4>
+                            <p className="text-xs text-slate-500 mb-4">
+                                {t('users.tenant_roles_managed_in_workspace', 'Roles managed inside tenant workspace')}
+                            </p>
+                            <div className="flex flex-wrap gap-2.5">
+                                {user.tenants.map((tn) => (
+                                    <div
+                                        key={tn.id}
+                                        className="rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs shadow-xs"
+                                    >
+                                        <div className="font-bold text-slate-900 dark:text-white">{tn.name || tn.id}</div>
+                                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{tn.id}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

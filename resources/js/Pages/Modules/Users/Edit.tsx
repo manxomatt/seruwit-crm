@@ -27,6 +27,11 @@ interface UserProfile {
     avatar_url: string | null;
 }
 
+interface TenantInfo {
+    id: string;
+    name: string;
+}
+
 interface User {
     id: number;
     name: string;
@@ -35,6 +40,7 @@ interface User {
     created_at: string;
     updated_at: string;
     profile: UserProfile | null;
+    tenants?: TenantInfo[];
 }
 
 interface WarehouseOption {
@@ -59,6 +65,7 @@ interface Props {
     warehouseScopedRoleSlugs?: string[];
     fleetBases?: FleetBaseOption[];
     fleetBaseScopedRoleSlugs?: string[];
+    isCentral?: boolean;
 }
 
 export default function Edit({
@@ -71,6 +78,7 @@ export default function Edit({
     warehouseScopedRoleSlugs = ['warehouse_head', 'warehouse_manager'],
     fleetBases = [],
     fleetBaseScopedRoleSlugs = ['fleet_base_head', 'fleet_base_manager'],
+    isCentral = false,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -288,6 +296,31 @@ export default function Edit({
 
                         {/* Right Column - Roles & Permissions Scope */}
                         <div className="space-y-5">
+                            {isCentral && user.tenants && user.tenants.length > 0 && (
+                                <div className="rounded-2xl border border-sky-200/80 bg-sky-50 dark:border-sky-800/60 dark:bg-sky-950/30 p-4 text-xs text-sky-800 dark:text-sky-300">
+                                    <div className="font-bold flex items-center gap-1.5">
+                                        <span>ℹ️</span>
+                                        <span>{t('users.notices.tenant_user_notice_title', 'Tenant Workspace Member')}</span>
+                                    </div>
+                                    <p className="mt-1 text-[11px] leading-relaxed text-sky-700/90 dark:text-sky-300/80">
+                                        {t(
+                                            'users.notices.tenant_user_notice_body',
+                                            'This user belongs to tenant workspace(s). Their functional roles and permissions are configured within their respective workspace. Roles selected below will grant central platform permissions.',
+                                        )}
+                                    </p>
+                                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                                        {user.tenants.map((tn) => (
+                                            <span
+                                                key={tn.id}
+                                                className="rounded-lg bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200 px-2 py-0.5 text-[10px] font-semibold"
+                                            >
+                                                🏢 {tn.name || tn.id}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                                 🛡️ {t('users.fields.roles')}
                             </h4>

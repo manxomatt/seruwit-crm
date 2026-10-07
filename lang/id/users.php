@@ -39,6 +39,22 @@ return [
         'all_status' => 'Semua Status',
         'verified' => 'Terverifikasi',
         'unverified' => 'Belum Terverifikasi',
+        'all_types' => 'Semua Tipe',
+        'platform_users' => 'Staf Platform',
+        'tenant_users' => 'Pengguna Tenant',
+    ],
+
+    'badges' => [
+        'tenant_user' => 'Pengguna Tenant',
+        'platform_staff' => 'Staf Platform',
+    ],
+
+    'tenant_roles_managed_in_workspace' => 'Peran dikelola di dalam workspace tenant',
+    'tenant_workspaces' => 'Workspace Tenant',
+
+    'notices' => [
+        'tenant_user_notice_title' => 'Anggota Workspace Tenant',
+        'tenant_user_notice_body' => 'Pengguna ini tergabung dalam workspace tenant. Peran dan hak akses operasionalnya dikonfigurasi di dalam workspace masing-masing. Peran yang dipilih di bawah ini akan memberikan hak akses ke dashboard central platform.',
     ],
 
     'view_modes' => [
