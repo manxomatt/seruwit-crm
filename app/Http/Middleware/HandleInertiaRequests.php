@@ -138,6 +138,7 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'workspacesUrl' => rtrim(config('app.url'), '/').'/workspaces',
             'subscriptionSummary' => fn () => $this->resolveSubscriptionSummary(),
+            'is_maintenance_mode' => fn () => rescue(fn () => Setting::getValue('general.maintenance_mode') === '1', false, false),
         ];
     }
 

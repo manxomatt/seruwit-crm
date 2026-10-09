@@ -168,9 +168,13 @@ Route::domain($centralDomain)
         Route::get('/r/{code}', [ResellerLandingPageController::class, 'show'])->name('reseller.landing');
 
         if (config('app.central_serves_app')) {
-            require __DIR__.'/app.php';
+            Route::middleware(\App\Http\Middleware\CheckMaintenanceMode::class)->group(function () {
+                require __DIR__.'/app.php';
+            });
         } else {
-            Route::get('/', [PageController::class, 'homepage'])->name('home');
+            Route::get('/', [PageController::class, 'homepage'])
+                ->middleware(\App\Http\Middleware\CheckMaintenanceMode::class)
+                ->name('home');
 
             // Legacy absolute redirects from module Route::redirect() dropped the /module
             // prefix (e.g. /rental/dashboard). Keep these bookmarks working.

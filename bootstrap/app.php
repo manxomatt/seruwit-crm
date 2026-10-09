@@ -82,6 +82,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // `module.` route-name prefix and `permissions.module` column.
             'requires-module' => \App\Http\Middleware\RequiresModule::class,
             'auth.mobile_passenger' => \Modules\Shuttle\Http\Middleware\AuthenticateMobilePassenger::class,
+            'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
         ]);
 
         // Route model binding would otherwise resolve /module/carousels/{carousel}

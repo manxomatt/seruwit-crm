@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Modules\Facades\Modules;
+use App\Support\MaintenanceModePage;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Inertia\Response;
 use Modules\Pages\Models\Page;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * The public face of the Pages module: the homepage and /p/{slug}. These
@@ -23,8 +25,12 @@ class PageController extends Controller
     /**
      * Render the published page for public viewing.
      */
-    public function render(string $slug): \Illuminate\Http\Response
+    public function render(string $slug): Response
     {
+        if (Setting::getValue('general.maintenance_mode') === '1' && ! Auth::guard('web')->check()) {
+            return MaintenanceModePage::toResponse(request());
+        }
+
         abort_unless(Modules::available('pages'), 404);
 
         $page = Page::query()
@@ -39,8 +45,11 @@ class PageController extends Controller
      * Render the homepage: the tenant's designated page when the Pages module
      * is available and one is set, the stock landing page otherwise.
      */
-    public function homepage(): Response|\Illuminate\Http\Response
+    public function homepage(): Response
     {
+        if (Setting::getValue('general.maintenance_mode') === '1' && ! Auth::guard('web')->check()) {
+            return MaintenanceModePage::toResponse(request());
+        }
         $page = Modules::available('pages')
             ? Page::query()->where('is_homepage', true)->where('is_published', true)->first()
             : null;

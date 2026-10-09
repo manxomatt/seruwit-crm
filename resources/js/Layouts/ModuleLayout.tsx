@@ -605,6 +605,7 @@ export default function ModuleLayout({ header, children }: Props) {
     // marketplace installs). Drives which module menus the central sidebar shows.
     const centralInstalled = (pageProps.centralInstalledModules ?? []) as string[];
     const subscriptionSummary = pageProps.subscriptionSummary as { plan_name: string | null; status: string } | null;
+    const isMaintenanceMode = Boolean(pageProps.is_maintenance_mode);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Keep the bell, review badges, and orders count fresh without a full navigation. Only the specified
@@ -1142,6 +1143,28 @@ export default function ModuleLayout({ header, children }: Props) {
 
             {/* Main content */}
             <div className="lg:pl-64">
+                {/* Maintenance Mode Warning Banner */}
+                {isMaintenanceMode && (
+                    <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 sm:px-6 lg:px-8 text-amber-900 dark:text-amber-200">
+                        <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                                <span>
+                                    <strong className="font-semibold">Mode Pemeliharaan Aktif:</strong> Halaman publik saat ini ditutup untuk pengunjung.
+                                </span>
+                            </div>
+                            {routeExists('module.settings.group') && (
+                                <Link
+                                    href={route(resolveNamedRoute('module.settings.group'), 'general')}
+                                    className="shrink-0 font-semibold underline hover:no-underline text-amber-700 dark:text-amber-300"
+                                >
+                                    Kelola Pengaturan &rarr;
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Top navigation */}
                 <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
                     <button
