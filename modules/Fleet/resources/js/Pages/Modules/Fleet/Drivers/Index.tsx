@@ -253,7 +253,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                     actions={
                         can.create && (
                             <Link href={prefixedRoute('fleet.drivers.create')}>
-                                <PrimaryButton className="rounded-2xl text-xs font-black shadow-md">
+                                <PrimaryButton className="rounded-xl shadow-sm">
                                     Tambah Pengemudi
                                 </PrimaryButton>
                             </Link>

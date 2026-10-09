@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
 import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
 import FleetOnboardingHero, { FleetSetupCounts, FleetSetupPermissions } from '../../../../Components/FleetOnboardingHero';
 
 interface VehicleRow {
@@ -207,11 +208,10 @@ export default function Index({ board, can }: Props): JSX.Element {
                     subtitle={t('fleet.dashboard.subtitle', undefined, 'Vehicle status board and operational overview')}
                     actions={
                         !isZeroState && can?.create_vehicle !== false ? (
-                            <Link
-                                href={prefixedRoute('fleet.vehicles.create')}
-                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
-                            >
-                                <span>{t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}</span>
+                            <Link href={prefixedRoute('fleet.vehicles.create')}>
+                                <PrimaryButton className="rounded-xl shadow-sm">
+                                    {t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}
+                                </PrimaryButton>
                             </Link>
                         ) : undefined
                     }
@@ -361,9 +361,11 @@ export default function Index({ board, can }: Props): JSX.Element {
                                                         {can?.create_vehicle !== false && (
                                                             <Link
                                                                 href={prefixedRoute('fleet.vehicles.create')}
-                                                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
+                                                                className="mt-4 inline-block"
                                                             >
-                                                                <span>{t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}</span>
+                                                                <PrimaryButton className="rounded-xl shadow-sm">
+                                                                    {t('fleet.vehicles.add', undefined, 'Tambah Kendaraan')}
+                                                                </PrimaryButton>
                                                             </Link>
                                                         )}
                                                     </div>

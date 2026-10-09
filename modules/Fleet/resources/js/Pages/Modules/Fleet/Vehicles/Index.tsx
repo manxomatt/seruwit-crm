@@ -4,6 +4,7 @@ import ColumnVisibilityMenu, {
 } from '@/Components/ColumnVisibilityMenu';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
@@ -439,11 +440,10 @@ export default function Index({
                                 </button>
                             ) : (
                                 can.create && (
-                                    <Link
-                                        href={prefixedRoute('fleet.vehicles.create')}
-                                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
-                                    >
-                                        <span>{t('fleet.vehicles.add_new', undefined, 'Tambah Kendaraan Baru')}</span>
+                                    <Link href={prefixedRoute('fleet.vehicles.create')}>
+                                        <PrimaryButton className="rounded-xl shadow-sm">
+                                            {t('fleet.vehicles.add_new', undefined, 'Tambah Kendaraan Baru')}
+                                        </PrimaryButton>
                                     </Link>
                                 )
                             )}
@@ -800,9 +800,11 @@ export default function Index({
                         {can.create && !hasActiveFilters && (
                             <Link
                                 href={prefixedRoute('fleet.vehicles.create')}
-                                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
+                                className="mt-4 inline-block"
                             >
-                                Tambah Kendaraan Pertama
+                                <PrimaryButton className="rounded-xl shadow-sm">
+                                    Tambah Kendaraan Pertama
+                                </PrimaryButton>
                             </Link>
                         )}
                     </div>
