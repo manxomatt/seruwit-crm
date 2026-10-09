@@ -2,33 +2,56 @@ schema: spec-driven
 githubCopilot:
   cloudAgent: true
 
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
+# Project context
+context: |
+  Seruwit Biz is a multi-tenant SaaS CRM/CMS platform built with Laravel 12, Inertia.js v2 (React 18), and Tailwind CSS v3.
+  Architectural constraints and conventions:
+  1. Multi-Tenancy Architecture (stancl/tenancy):
+     - Single PostgreSQL database with schema-per-tenant isolation (`tenant_<id>`). Redis cache is tenant-namespaced.
+     - Central domain (`seruwit.com`) manages platform administration, subscriptions/plans, global user identities, and onboarding.
+     - Tenant workspaces (`{subdomain}.seruwit.com` or custom domains) operate within their respective tenant database schema.
+     - Central and tenant contexts must never cross queries. Central models must not query tenant schemas and vice-versa.
+  2. Pluggable Module System:
+     - Modular extensions reside in `modules/<Name>/` implementing `App\Modules\ModuleContract`.
+     - Strict 3-tier layering: Content (tier 1: pages, posts, carousels) <= Foundation (tier 2: partners, products, inventory, fleet, accounting, etc.) <= Vertical (tier 3: transportation, orders, billing, rental, canvassing, etc.).
+     - Dependencies must strictly point downward or to the same tier via `requires()`.
+     - Module routes are always registered; access is strictly enforced via `requires-module` middleware without super admin bypass.
+     - Uninstall is non-destructive: schema tables remain intact until purged by `modules:purge-expired` after 30 days.
+  3. Entitlement & Registry Triad:
+     - 3 independent availability axes: Platform Registry kill switch (`module_settings`), Plan Entitlement (`plans` table / `PlanRepository`), and Workspace Install State (`installed_modules`).
+  4. Access Control (RBAC):
+     - Central user identities synchronize credentials to tenant users; tenant roles and permissions remain local.
+     - Permissions follow `module:action` conventions. Admin bypass applies to permissions, but NEVER to module gating.
+  5. Operational vs. Accounting Separation:
+     - Operational documents (SO, PO, GRN, GIN, DO, Invoices) are authoritative master records.
+     - GL Accounting entries are asynchronous event projections posted idempotently via `AccountingPoster`.
+  6. Code Standards & Testing:
+     - PHP 8.4 with strict type declarations and explicit return types.
+     - Every feature and change must have PHPUnit tests (`php artisan test --compact`) running on PostgreSQL (`seruwit_crm_testing`).
+     - Format code using Laravel Pint (`vendor/bin/pint --dirty --format agent`).
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Clearly define target domain scope (Central platform vs Tenant workspace) and tier (Content, Foundation, Vertical).
+    - Identify required module dependencies (`requires()`) and migration schema targets.
+    - Explicitly state out-of-scope items.
+  specs:
+    - Follow standard OpenSpec requirement and scenario structure (WHEN/THEN or GIVEN/WHEN/THEN).
+    - Detail multi-tenant isolation, data boundaries, and permission gating for every requirement.
+    - Include edge cases, failure scenarios, and data integrity guarantees.
+  design:
+    - Document schema changes distinguishing central vs tenant migrations.
+    - Detail event triggers, cross-module listeners, and accounting poster hooks.
+    - Detail Inertia/React page routes, components, and form handling.
+  tasks:
+    - Break tasks down into database migrations/models, controllers/actions, UI pages, and PHPUnit feature tests.
+    - Ensure programmatic test coverage for all paths.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  apply:
+    guidance:
+      - Format code with Pint before finalizing changes.
+      - Execute relevant PHPUnit tests to verify functionality before completing tasks.
+  archive:
+    guidance:
+      - Ensure all specs are synchronized with the living codebase before archiving.
