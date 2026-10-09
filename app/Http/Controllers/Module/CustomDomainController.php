@@ -21,11 +21,14 @@ class CustomDomainController extends Controller
     /**
      * Display the domain settings page for the current tenant.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         /** @var Tenant|null $tenant */
         $tenant = tenant();
-        abort_unless($tenant instanceof Tenant, 404, 'Tenant context not initialized.');
+        if (! ($tenant instanceof Tenant)) {
+            return redirect()->route('settings.index')
+                ->with('error', __('settings.domain.tenant_only_notice'));
+        }
 
         $domains = $tenant->domains()->orderByDesc('is_primary')->orderBy('created_at')->get();
 

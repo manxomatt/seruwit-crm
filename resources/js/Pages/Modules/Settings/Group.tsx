@@ -259,7 +259,9 @@ export default function Group({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
+    const pageProps = usePage().props;
+    const flash = pageProps.flash as { success?: string; error?: string } | undefined;
+    const currentTenant = pageProps.currentTenant as { id: string; name: string } | null | undefined;
 
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
@@ -374,13 +376,15 @@ export default function Group({
                                 </Link>
                             );
                         })}
-                        <Link
-                            href={prefixedRoute('settings.domain')}
-                            className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all shrink-0"
-                        >
-                            <span>🌐</span>
-                            <span>{t('settings.domain.nav_custom_domain')}</span>
-                        </Link>
+                        {Boolean(currentTenant) && (
+                            <Link
+                                href={prefixedRoute('settings.domain')}
+                                className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all shrink-0"
+                            >
+                                <span>🌐</span>
+                                <span>{t('settings.domain.nav_custom_domain')}</span>
+                            </Link>
+                        )}
                     </nav>
 
                     {canManageStructure && (

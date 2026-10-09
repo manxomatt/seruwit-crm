@@ -279,6 +279,7 @@ return [
     ],
 
     'domain' => [
+        'tenant_only_notice' => 'Pengaturan Custom Domain hanya dapat diakses melalui workspace tenant.',
         'head' => 'Pengaturan Domain Workspace',
         'title' => 'Pengaturan Domain & Branding',
         'subtitle' => 'Kelola domain workspace sistem dan hubungkan custom domain bisnis Anda sendiri.',

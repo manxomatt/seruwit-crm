@@ -279,6 +279,7 @@ return [
     ],
 
     'domain' => [
+        'tenant_only_notice' => 'Custom Domain settings are only accessible within a tenant workspace.',
         'head' => 'Workspace Domain Settings',
         'title' => 'Domain & Branding Settings',
         'subtitle' => 'Manage system workspace domains and connect your own custom business domain.',
