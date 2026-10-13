@@ -37,5 +37,28 @@ class ModuleRegistrySeeder extends Seeder
                 Menu::query()->updateOrCreate(['slug' => $menu['slug']], $menu);
             }
         }
+
+        $hiddenModules = [
+            'canvassing',
+            'inventory',
+            'orders',
+            'outbound',
+            'payables',
+            'pos',
+            'products',
+            'promotions',
+            'purchasing',
+            'routing',
+            'sales',
+            'transportation',
+            'billing',
+        ];
+
+        foreach ($hiddenModules as $hiddenKey) {
+            \App\Models\ModuleSetting::query()->updateOrCreate(
+                ['key' => $hiddenKey],
+                ['is_hidden' => true],
+            );
+        }
     }
 }
