@@ -121,6 +121,16 @@ class Vehicle extends Model
         'is_trial',
         'trial_ends_at',
         'home_base_id',
+        'ownership_type',
+        'partner_id',
+        'contract_number',
+        'contract_start_date',
+        'contract_end_date',
+        'settlement_scheme',
+        'revenue_share_owner_pct',
+        'revenue_share_tenant_pct',
+        'fixed_fee_amount',
+        'maintenance_payer',
         'odometer_km',
         'stnk_expires_at',
         'kir_expires_at',
@@ -157,6 +167,12 @@ class Vehicle extends Model
             'stnk_expires_at' => 'date:Y-m-d',
             'kir_expires_at' => 'date:Y-m-d',
             'home_base_id' => 'integer',
+            'partner_id' => 'integer',
+            'contract_start_date' => 'date:Y-m-d',
+            'contract_end_date' => 'date:Y-m-d',
+            'revenue_share_owner_pct' => 'decimal:2',
+            'revenue_share_tenant_pct' => 'decimal:2',
+            'fixed_fee_amount' => 'decimal:2',
         ];
     }
 
@@ -214,6 +230,14 @@ class Vehicle extends Model
     public function homeBase(): BelongsTo
     {
         return $this->belongsTo(FleetBase::class, 'home_base_id');
+    }
+
+    /**
+     * @return BelongsTo<\Modules\Partners\Models\Partner, $this>
+     */
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Partners\Models\Partner::class, 'partner_id');
     }
 
     /**

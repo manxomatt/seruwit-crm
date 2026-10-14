@@ -76,6 +76,17 @@ interface Vehicle {
     fuel_type: string;
     status: string;
     home_base?: { id: number; code: string; name: string } | null;
+    ownership_type?: string | null;
+    partner_id?: number | null;
+    partner?: { id: number; code: string; name: string; phone?: string | null; email?: string | null } | null;
+    contract_number?: string | null;
+    contract_start_date?: string | null;
+    contract_end_date?: string | null;
+    settlement_scheme?: string | null;
+    revenue_share_owner_pct?: string | number | null;
+    revenue_share_tenant_pct?: string | number | null;
+    fixed_fee_amount?: string | number | null;
+    maintenance_payer?: string | null;
     odometer_km: number;
     stnk_expires_at: string | null;
     kir_expires_at: string | null;
@@ -497,6 +508,24 @@ export default function Show({
                                 {vehicle.rental_class && (
                                     <span className="inline-flex items-center rounded-xl bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                                         🏷️ {vehicle.rental_class.toUpperCase()}
+                                    </span>
+                                )}
+                                {vehicle.ownership_type === 'investor' ? (
+                                    <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                        <span>🤝</span>
+                                        <span>{t('fleet.vehicles.ownership_badge_investor', undefined, 'Titipan Investor')}</span>
+                                        {vehicle.partner && <span className="font-semibold text-emerald-700 dark:text-emerald-400">({vehicle.partner.name})</span>}
+                                    </span>
+                                ) : vehicle.ownership_type === 'partner_loan' ? (
+                                    <span className="inline-flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+                                        <span>🔄</span>
+                                        <span>{t('fleet.vehicles.ownership_badge_partner_loan', undefined, 'Sublease Rekanan')}</span>
+                                        {vehicle.partner && <span className="font-semibold text-amber-700 dark:text-amber-400">({vehicle.partner.name})</span>}
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                        <span>🏢</span>
+                                        <span>{t('fleet.vehicles.ownership_badge_owned', undefined, 'Milik Sendiri')}</span>
                                     </span>
                                 )}
                             </div>
@@ -976,8 +1005,97 @@ export default function Show({
                         </div>
                     </div>
 
-                    {/* Right Column: Compliance, Documents & AI Health (5 cols) */}
+                    {/* Right Column: Ownership, Compliance, Documents & AI Health (5 cols) */}
                     <div className="space-y-6 lg:col-span-5">
+                        {/* Status Kepemilikan & Kerjasama Mitra / Investor Card */}
+                        {vehicle.ownership_type && vehicle.ownership_type !== 'owned' && (
+                            <div className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-white p-6 shadow-xs dark:border-indigo-900/50 dark:bg-slate-900">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-base">{vehicle.ownership_type === 'investor' ? '🤝' : '🔄'}</span>
+                                        <div>
+                                            <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                                {vehicle.ownership_type === 'investor'
+                                                    ? t('fleet.vehicles.show_ownership_investor_title', undefined, 'Kerjasama Titipan Investor')
+                                                    : t('fleet.vehicles.show_ownership_partner_title', undefined, 'Kerjasama Sublease Rekanan')}
+                                            </h3>
+                                            <p className="text-xs text-slate-400">
+                                                {t('fleet.vehicles.show_ownership_card_sub', undefined, 'Perjanjian operasional & bagi hasil / sewa')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`inline-flex items-center rounded-xl px-2.5 py-0.5 text-xs font-black ${
+                                        vehicle.ownership_type === 'investor'
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                    }`}>
+                                        {vehicle.ownership_type === 'investor' ? 'Investor' : 'Sublease'}
+                                    </span>
+                                </div>
+
+                                <dl className="mt-4 divide-y divide-slate-100 text-xs dark:divide-slate-800">
+                                    <div className="flex justify-between py-2.5 items-center">
+                                        <dt className="text-slate-400">{t('fleet.vehicles.show_partner_owner', undefined, 'Mitra Pemilik / Investor:')}</dt>
+                                        <dd className="font-bold text-slate-800 dark:text-slate-200">
+                                            {vehicle.partner ? (
+                                                <Link
+                                                    href={prefixedRoute('partners.show', vehicle.partner.id)}
+                                                    className="inline-flex items-center gap-1 font-black text-indigo-600 hover:underline dark:text-indigo-400"
+                                                >
+                                                    <span>🏢 {vehicle.partner.name}</span>
+                                                    <span className="text-[10px] text-slate-400">({vehicle.partner.code}) →</span>
+                                                </Link>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </dd>
+                                    </div>
+                                    <div className="flex justify-between py-2.5">
+                                        <dt className="text-slate-400">{t('fleet.vehicles.show_contract_num', undefined, 'Nomor Kontrak / PKS:')}</dt>
+                                        <dd className="font-mono font-bold text-slate-800 dark:text-slate-200">{vehicle.contract_number || '—'}</dd>
+                                    </div>
+                                    <div className="flex justify-between py-2.5">
+                                        <dt className="text-slate-400">{t('fleet.vehicles.show_contract_period', undefined, 'Periode Kontrak:')}</dt>
+                                        <dd className="font-medium text-slate-800 dark:text-slate-200">
+                                            {vehicle.contract_start_date ? formatDate(vehicle.contract_start_date, localeTag) : '—'}
+                                            {' s/d '}
+                                            {vehicle.contract_end_date ? formatDate(vehicle.contract_end_date, localeTag) : t('fleet.vehicles.show_contract_ongoing', undefined, 'Seterusnya')}
+                                        </dd>
+                                    </div>
+                                    <div className="flex justify-between py-2.5">
+                                        <dt className="text-slate-400">{t('fleet.vehicles.show_settlement_scheme', undefined, 'Skema Finansial:')}</dt>
+                                        <dd className="font-bold text-slate-800 dark:text-slate-200 text-right">
+                                            {vehicle.settlement_scheme === 'revenue_share' && (
+                                                <span className="text-emerald-600 dark:text-emerald-400">
+                                                    Bagi Hasil ({vehicle.revenue_share_owner_pct ?? 0}% Pemilik : {vehicle.revenue_share_tenant_pct ?? 0}% Rental)
+                                                </span>
+                                            )}
+                                            {vehicle.settlement_scheme === 'fixed_monthly' && (
+                                                <span className="text-indigo-600 dark:text-indigo-400">
+                                                    Sewa Bulanan Tetap (Rp {Number(vehicle.fixed_fee_amount || 0).toLocaleString()}/bln)
+                                                </span>
+                                            )}
+                                            {vehicle.settlement_scheme === 'daily_rental' && (
+                                                <span className="text-amber-600 dark:text-amber-400">
+                                                    Sewa Harian (Rp {Number(vehicle.fixed_fee_amount || 0).toLocaleString()}/hari)
+                                                </span>
+                                            )}
+                                            {!vehicle.settlement_scheme && '—'}
+                                        </dd>
+                                    </div>
+                                    <div className="flex justify-between py-2.5">
+                                        <dt className="text-slate-400">{t('fleet.vehicles.show_maintenance_payer', undefined, 'Tanggung Jawab Servis:')}</dt>
+                                        <dd className="font-semibold text-slate-800 dark:text-slate-200">
+                                            {vehicle.maintenance_payer === 'tenant' && 'Ditanggung Rental (Tenant)'}
+                                            {vehicle.maintenance_payer === 'owner' && 'Ditanggung Pemilik / Investor'}
+                                            {vehicle.maintenance_payer === 'shared' && 'Bagi Dua / Sesuai Kesepakatan'}
+                                            {!vehicle.maintenance_payer && 'Ditanggung Rental (Default)'}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        )}
+
                         {/* Compliance Card */}
                         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-center gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">

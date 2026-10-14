@@ -36,6 +36,9 @@ interface Vehicle {
     odometer_km: number;
     home_base_id?: number | null;
     home_base?: HomeBase | null;
+    ownership_type?: string | null;
+    partner_id?: number | null;
+    partner?: { id: number; code: string; name: string } | null;
     activated_at?: string | null;
     active_until?: string | null;
     auto_renew?: boolean;
@@ -74,6 +77,7 @@ type VehicleColumn =
     | 'photo'
     | 'name'
     | 'plate_number'
+    | 'ownership'
     | 'type'
     | 'brand'
     | 'home_base'
@@ -88,6 +92,7 @@ const VEHICLE_COLUMN_KEYS: Array<{ key: VehicleColumn; required?: boolean; defau
     { key: 'photo', defaultVisible: true },
     { key: 'name', required: true },
     { key: 'plate_number', required: true },
+    { key: 'ownership', defaultVisible: true },
     { key: 'type', defaultVisible: true },
     { key: 'home_base', defaultVisible: true },
     { key: 'brand', defaultVisible: true },
@@ -843,10 +848,22 @@ export default function Index({
                                                 </span>
                                             </div>
 
-                                            <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-0.5 text-[11px] font-black ${statusInfo.className}`}>
-                                                <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
-                                                <span>{statusInfo.label}</span>
-                                            </span>
+                                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                                {vehicle.ownership_type === 'investor' && (
+                                                    <span className="inline-flex items-center gap-1 rounded-xl bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 ring-1 ring-inset ring-indigo-600/20" title={vehicle.partner?.name || 'Titipan Investor'}>
+                                                        <span>🤝</span> {vehicle.partner?.name || 'Investor'}
+                                                    </span>
+                                                )}
+                                                {vehicle.ownership_type === 'partner_loan' && (
+                                                    <span className="inline-flex items-center gap-1 rounded-xl bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 ring-1 ring-inset ring-amber-600/20" title={vehicle.partner?.name || 'Sublease Rekanan'}>
+                                                        <span>🔄</span> {vehicle.partner?.name || 'Rekanan'}
+                                                    </span>
+                                                )}
+                                                <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-0.5 text-[11px] font-black ${statusInfo.className}`}>
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
+                                                    <span>{statusInfo.label}</span>
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* Photo & Title */}
@@ -971,6 +988,11 @@ export default function Index({
                                                 Plat Nomor
                                             </th>
                                         )}
+                                        {visibleColumns.ownership && (
+                                            <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                Kepemilikan
+                                            </th>
+                                        )}
                                         {visibleColumns.type && (
                                             <th className="px-4 py-3.5 font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                 Tipe
@@ -1074,6 +1096,38 @@ export default function Index({
                                                         <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
                                                             {vehicle.plate_number}
                                                         </span>
+                                                    </td>
+                                                )}
+
+                                                {visibleColumns.ownership && (
+                                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                                        {vehicle.ownership_type === 'investor' ? (
+                                                            <div className="flex flex-col">
+                                                                <span className="inline-flex w-fit items-center gap-1 rounded-xl bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 ring-1 ring-inset ring-indigo-600/20">
+                                                                    <span>🤝</span> Titipan Investor
+                                                                </span>
+                                                                {vehicle.partner && (
+                                                                    <span className="text-[11px] text-slate-500 font-medium mt-0.5 truncate max-w-[140px]" title={vehicle.partner.name}>
+                                                                        {vehicle.partner.name}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : vehicle.ownership_type === 'partner_loan' ? (
+                                                            <div className="flex flex-col">
+                                                                <span className="inline-flex w-fit items-center gap-1 rounded-xl bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 ring-1 ring-inset ring-amber-600/20">
+                                                                    <span>🔄</span> Sublease Rekanan
+                                                                </span>
+                                                                {vehicle.partner && (
+                                                                    <span className="text-[11px] text-slate-500 font-medium mt-0.5 truncate max-w-[140px]" title={vehicle.partner.name}>
+                                                                        {vehicle.partner.name}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                                <span>🏢</span> Milik Sendiri
+                                                            </span>
+                                                        )}
                                                     </td>
                                                 )}
 

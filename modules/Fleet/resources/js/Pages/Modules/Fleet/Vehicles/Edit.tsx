@@ -1,6 +1,7 @@
 import ImageUploader from '@/Components/ImageUploader';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -63,6 +64,16 @@ interface Vehicle {
     photo_url: string | null;
     notes: string | null;
     home_base_id: number | null;
+    ownership_type?: string | null;
+    partner_id?: number | null;
+    contract_number?: string | null;
+    contract_start_date?: string | null;
+    contract_end_date?: string | null;
+    settlement_scheme?: string | null;
+    revenue_share_owner_pct?: string | number | null;
+    revenue_share_tenant_pct?: string | number | null;
+    fixed_fee_amount?: string | number | null;
+    maintenance_payer?: string | null;
 }
 
 interface HomeBaseOption {
@@ -71,12 +82,19 @@ interface HomeBaseOption {
     name: string;
 }
 
+interface PartnerOption {
+    id: number;
+    code: string;
+    name: string;
+}
+
 interface Props {
     vehicle: Vehicle;
     bases?: HomeBaseOption[];
+    partners?: PartnerOption[];
 }
 
-export default function Edit({ vehicle, bases = [] }: Props): JSX.Element {
+export default function Edit({ vehicle, bases = [], partners = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
@@ -96,6 +114,16 @@ export default function Edit({ vehicle, bases = [] }: Props): JSX.Element {
         fuel_type: vehicle.fuel_type,
         status: vehicle.status,
         home_base_id: vehicle.home_base_id ? String(vehicle.home_base_id) : '',
+        ownership_type: vehicle.ownership_type || 'owned',
+        partner_id: vehicle.partner_id ? String(vehicle.partner_id) : '',
+        contract_number: vehicle.contract_number || '',
+        contract_start_date: toDateInputValue(vehicle.contract_start_date),
+        contract_end_date: toDateInputValue(vehicle.contract_end_date),
+        settlement_scheme: vehicle.settlement_scheme || 'revenue_share',
+        revenue_share_owner_pct: vehicle.revenue_share_owner_pct !== null && vehicle.revenue_share_owner_pct !== undefined ? String(vehicle.revenue_share_owner_pct) : '70',
+        revenue_share_tenant_pct: vehicle.revenue_share_tenant_pct !== null && vehicle.revenue_share_tenant_pct !== undefined ? String(vehicle.revenue_share_tenant_pct) : '30',
+        fixed_fee_amount: vehicle.fixed_fee_amount !== null && vehicle.fixed_fee_amount !== undefined ? String(vehicle.fixed_fee_amount) : '',
+        maintenance_payer: vehicle.maintenance_payer || 'tenant',
         odometer_km: vehicle.odometer_km,
         stnk_expires_at: toDateInputValue(vehicle.stnk_expires_at),
         kir_expires_at: toDateInputValue(vehicle.kir_expires_at),
@@ -507,11 +535,277 @@ export default function Edit({ vehicle, bases = [] }: Props): JSX.Element {
                         </div>
                     </div>
 
-                    {/* 5. Kepatuhan Dokumen & Catatan */}
+                    {/* 5. Status Kepemilikan & Kerjasama Mitra */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-teal-100 text-base font-black text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+                                5
+                            </span>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Status Kepemilikan & Kerjasama Mitra / Investor
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Tentukan apakah unit merupakan aset sendiri, titipan investor (bagi hasil/sewa tetap), atau pinjaman/sublease rekanan.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Pilihan Kepemilikan */}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <label
+                                className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                                    data.ownership_type === 'owned'
+                                        ? 'border-teal-500 bg-teal-50/40 dark:border-teal-500/80 dark:bg-teal-950/30'
+                                        : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="ownership_type"
+                                    value="owned"
+                                    checked={data.ownership_type === 'owned'}
+                                    onChange={() => setData('ownership_type', 'owned')}
+                                    className="mt-1 h-4 w-4 text-teal-600 focus:ring-teal-500"
+                                />
+                                <div>
+                                    <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                        <span>🏢</span> Milik Sendiri (Owned)
+                                    </div>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                        Aset penuh perusahaan tenant. Pendapatan dan perawatan 100% internal.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label
+                                className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                                    data.ownership_type === 'investor'
+                                        ? 'border-indigo-500 bg-indigo-50/40 dark:border-indigo-500/80 dark:bg-indigo-950/30'
+                                        : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="ownership_type"
+                                    value="investor"
+                                    checked={data.ownership_type === 'investor'}
+                                    onChange={() => setData('ownership_type', 'investor')}
+                                    className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                        <span>🤝</span> Titipan Investor
+                                    </div>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                        Unit dititipkan pemodal/investor dengan skema bagi hasil omset atau sewa bulanan.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label
+                                className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                                    data.ownership_type === 'partner_loan'
+                                        ? 'border-amber-500 bg-amber-50/40 dark:border-amber-500/80 dark:bg-amber-950/30'
+                                        : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="ownership_type"
+                                    value="partner_loan"
+                                    checked={data.ownership_type === 'partner_loan'}
+                                    onChange={() => setData('ownership_type', 'partner_loan')}
+                                    className="mt-1 h-4 w-4 text-amber-600 focus:ring-amber-500"
+                                />
+                                <div>
+                                    <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                        <span>🔄</span> Pinjaman / Sublease Rekanan
+                                    </div>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                        Unit dipinjam atau disewa dari vendor rekanan sewa untuk mencukupi lonjakan order.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                        <InputError message={errors.ownership_type} className="mt-1" />
+
+                        {/* Form Detail jika Bukan Milik Sendiri */}
+                        {data.ownership_type !== 'owned' && (
+                            <div className="mt-4 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-850/50 space-y-5 animate-in fade-in duration-200">
+                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="partner_id"
+                                            value={data.ownership_type === 'investor' ? 'Investor Pemilik Unit *' : 'Mitra Rekanan Penyedia Unit *'}
+                                        />
+                                        <Select
+                                            id="partner_id"
+                                            className="mt-1.5"
+                                            value={data.partner_id}
+                                            onChange={(value) => setData('partner_id', value)}
+                                            placeholder="Pilih Mitra / Investor Terdaftar"
+                                            options={[
+                                                { value: '', label: '-- Pilih Mitra / Investor --' },
+                                                ...partners.map((p) => ({
+                                                    value: String(p.id),
+                                                    label: `👤 ${p.name} (${p.code})`,
+                                                })),
+                                            ]}
+                                        />
+                                        <InputError message={errors.partner_id} className="mt-1" />
+                                        {partners.length === 0 && (
+                                            <p className="mt-1 text-xs text-amber-600">
+                                                Belum ada mitra terdaftar. Tambahkan investor/mitra terlebih dahulu di menu Pelanggan & Mitra.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="contract_number" value="Nomor Perjanjian / PKS Kerjasama" />
+                                        <TextInput
+                                            id="contract_number"
+                                            type="text"
+                                            className="mt-1.5 block w-full !rounded-2xl shadow-2xs"
+                                            value={data.contract_number}
+                                            onChange={(e) => setData('contract_number', e.target.value)}
+                                            placeholder="Contoh: PKS/2026/INV-001"
+                                        />
+                                        <InputError message={errors.contract_number} className="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="contract_start_date" value="Tanggal Mulai Kerjasama" />
+                                        <TextInput
+                                            id="contract_start_date"
+                                            type="date"
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                            value={data.contract_start_date}
+                                            onChange={(e) => setData('contract_start_date', e.target.value)}
+                                        />
+                                        <InputError message={errors.contract_start_date} className="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="contract_end_date" value="Tanggal Selesai Kerjasama" />
+                                        <TextInput
+                                            id="contract_end_date"
+                                            type="date"
+                                            className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                            value={data.contract_end_date}
+                                            onChange={(e) => setData('contract_end_date', e.target.value)}
+                                        />
+                                        <InputError message={errors.contract_end_date} className="mt-1" />
+                                    </div>
+                                </div>
+
+                                {/* Skema Finansial & Komitmen */}
+                                <div className="border-t border-slate-200/80 pt-4 dark:border-slate-800 space-y-4">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Skema Pembayaran & Bagi Hasil
+                                    </h4>
+
+                                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                        <div>
+                                            <InputLabel htmlFor="settlement_scheme" value="Skema Komitmen Finansial" />
+                                            <Select
+                                                id="settlement_scheme"
+                                                className="mt-1.5"
+                                                value={data.settlement_scheme}
+                                                onChange={(value) => setData('settlement_scheme', value)}
+                                                options={[
+                                                    { value: 'revenue_share', label: 'Bagi Hasil Omset (%)' },
+                                                    { value: 'fixed_monthly', label: 'Sewa Tetap Bulanan (Rp)' },
+                                                    { value: 'daily_rental', label: 'Tarif Sewa Harian Rekanan (Rp)' },
+                                                ]}
+                                            />
+                                            <InputError message={errors.settlement_scheme} className="mt-1" />
+                                        </div>
+
+                                        {data.settlement_scheme === 'revenue_share' ? (
+                                            <>
+                                                <div>
+                                                    <InputLabel htmlFor="revenue_share_owner_pct" value="Porsi Pemilik / Investor (%)" />
+                                                    <TextInput
+                                                        id="revenue_share_owner_pct"
+                                                        type="number"
+                                                        step="0.1"
+                                                        min={0}
+                                                        max={100}
+                                                        className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                                        value={data.revenue_share_owner_pct}
+                                                        onChange={(e) => {
+                                                            const ownerVal = parseFloat(e.target.value) || 0;
+                                                            setData((prev) => ({
+                                                                ...prev,
+                                                                revenue_share_owner_pct: e.target.value,
+                                                                revenue_share_tenant_pct: String(Math.max(0, 100 - ownerVal)),
+                                                            }));
+                                                        }}
+                                                        placeholder="70"
+                                                    />
+                                                    <InputError message={errors.revenue_share_owner_pct} className="mt-1" />
+                                                </div>
+
+                                                <div>
+                                                    <InputLabel htmlFor="revenue_share_tenant_pct" value="Porsi Pengelola / Tenant (%)" />
+                                                    <TextInput
+                                                        id="revenue_share_tenant_pct"
+                                                        type="number"
+                                                        step="0.1"
+                                                        min={0}
+                                                        max={100}
+                                                        className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                                        value={data.revenue_share_tenant_pct}
+                                                        onChange={(e) => setData('revenue_share_tenant_pct', e.target.value)}
+                                                        placeholder="30"
+                                                    />
+                                                    <InputError message={errors.revenue_share_tenant_pct} className="mt-1" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="fixed_fee_amount"
+                                                    value={data.settlement_scheme === 'fixed_monthly' ? 'Biaya Sewa Bulanan (Rp)' : 'Tarif Sewa Harian (Rp)'}
+                                                />
+                                                <MoneyInput
+                                                    id="fixed_fee_amount"
+                                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs font-bold"
+                                                    value={data.fixed_fee_amount}
+                                                    onChange={(val) => setData('fixed_fee_amount', val)}
+                                                    placeholder="Contoh: 4500000"
+                                                />
+                                                <InputError message={errors.fixed_fee_amount} className="mt-1" />
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <InputLabel htmlFor="maintenance_payer" value="Penanggung Servis & Perawatan" />
+                                            <Select
+                                                id="maintenance_payer"
+                                                className="mt-1.5"
+                                                value={data.maintenance_payer}
+                                                onChange={(value) => setData('maintenance_payer', value)}
+                                                options={[
+                                                    { value: 'tenant', label: 'Pengelola / Tenant' },
+                                                    { value: 'owner', label: 'Pemilik Unit (Potong Hasil)' },
+                                                    { value: 'shared', label: 'Dibagi Dua (50 : 50)' },
+                                                ]}
+                                            />
+                                            <InputError message={errors.maintenance_payer} className="mt-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 6. Kepatuhan Dokumen & Catatan */}
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                         <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-100 text-base font-black text-sky-700 dark:bg-sky-950 dark:text-sky-300">
-                                5
+                                6
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900 dark:text-white">

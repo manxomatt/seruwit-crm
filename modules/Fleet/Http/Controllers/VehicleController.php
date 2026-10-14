@@ -65,7 +65,7 @@ class VehicleController extends Controller
 
         $vehicles = AccessibleFleetBases::scopeVehicles(
             Vehicle::query()
-                ->with('homeBase:id,code,name')
+                ->with(['homeBase:id,code,name', 'partner:id,code,name'])
                 ->when(request('search'), function ($query, $search) {
                     $like = "%{$search}%";
 
@@ -138,6 +138,7 @@ class VehicleController extends Controller
 
         return Inertia::render('Modules/Fleet/Vehicles/Create', [
             'bases' => $this->homeBaseOptions(),
+            'partners' => $this->partnerOptions(),
             'available_credits' => $availableCredits,
             'is_trial_mode' => $isPerVehicleTrial,
             'trial_duration_days' => PlatformSetting::getVehicleTrialDurationDays(),
@@ -284,7 +285,7 @@ class VehicleController extends Controller
 
         $maintenanceEnabled = Modules::available('maintenance');
 
-        $vehicle->load(['fuelLogs.driver', 'homeBase:id,code,name']);
+        $vehicle->load(['fuelLogs.driver', 'homeBase:id,code,name', 'partner:id,code,name,phone,email']);
 
         if (! $maintenanceEnabled) {
             $vehicle->load(['maintenanceLogs']);
@@ -467,7 +468,29 @@ class VehicleController extends Controller
         return Inertia::render('Modules/Fleet/Vehicles/Edit', [
             'vehicle' => $vehicle,
             'bases' => $this->homeBaseOptions(),
+            'partners' => $this->partnerOptions(),
         ]);
+    }
+
+    /**
+     * @return list<array{id: int, code: string, name: string}>
+     */
+    private function partnerOptions(): array
+    {
+        if (! Modules::available('partners') || ! class_exists(\Modules\Partners\Models\Partner::class)) {
+            return [];
+        }
+
+        return \Modules\Partners\Models\Partner::query()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'code', 'name'])
+            ->map(fn ($p): array => [
+                'id' => (int) $p->id,
+                'code' => (string) $p->code,
+                'name' => (string) $p->name,
+            ])
+            ->all();
     }
 
     /**

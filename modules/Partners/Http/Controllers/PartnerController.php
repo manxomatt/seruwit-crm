@@ -316,6 +316,7 @@ class PartnerController extends Controller
             'addresses',
             'bankAccounts',
             'verifiedByUser:id,name',
+            'vehicles.homeBase:id,code,name',
         ]);
 
         if (class_exists(\Modules\Rental\Support\RentalPassengerDocMedia::class)) {

@@ -198,4 +198,10 @@ class Partner extends Model
             ->where('status', 'active')
             ->first();
     }
+
+    /** @return HasMany<\Modules\Fleet\Models\Vehicle, $this> */
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(\Modules\Fleet\Models\Vehicle::class, 'partner_id');
+    }
 }

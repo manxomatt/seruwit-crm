@@ -126,6 +126,11 @@ const Icons = {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
     ),
+    Car: () => (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 17a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4zm-9-5l1-5h8l1 5m-10 0h10m-10 0a2 2 0 00-2 2v3h14v-3a2 2 0 00-2-2" />
+        </svg>
+    ),
 };
 
 interface Tag {
@@ -232,6 +237,18 @@ interface Partner {
     kyc_rejected_reason?: string | null;
     id_card_url?: string | null;
     driver_license_url?: string | null;
+    vehicles?: Array<{
+        id: number;
+        name: string;
+        plate_number: string;
+        type: string;
+        status: string;
+        ownership_type: string;
+        settlement_scheme?: string | null;
+        fixed_fee_amount?: number | string | null;
+        revenue_share_owner_pct?: number | null;
+        home_base?: { id: number; code: string; name: string } | null;
+    }>;
 }
 
 interface Props {
@@ -504,7 +521,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
-    const [activeTab, setActiveTab] = useState<'overview' | 'locations_banks' | 'contacts' | 'risk_notes' | 'kyc'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'locations_banks' | 'contacts' | 'risk_notes' | 'kyc' | 'vehicles'>('overview');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [showAddressForm, setShowAddressForm] = useState(false);
@@ -788,7 +805,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
                     </div>
 
                     {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-4 lg:grid-cols-4">
+                    <div className={`grid grid-cols-2 gap-3 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-4 ${partner.vehicles && partner.vehicles.length > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
                         <StatCard
                             icon={Icons.CreditCard}
                             label={t('partners.show.stats.credit_limit')}
@@ -817,6 +834,15 @@ export default function Show({ partner, can }: Props): JSX.Element {
                             hint={t('partners.show.contacts')}
                             tone={partner.children.length > 0 ? 'success' : 'default'}
                         />
+                        {partner.vehicles && partner.vehicles.length > 0 && (
+                            <StatCard
+                                icon={Icons.Car}
+                                label="Armada Terhubung"
+                                value={`${partner.vehicles.length} Unit`}
+                                hint="Titipan / Sublease"
+                                tone="indigo"
+                            />
+                        )}
                     </div>
                 </section>
 
@@ -827,6 +853,13 @@ export default function Show({ partner, can }: Props): JSX.Element {
                         { id: 'locations_banks', label: `Alamat (${partner.addresses.length}) & Rekening (${partner.bank_accounts.length})`, icon: Icons.Location },
                         { id: 'contacts', label: `Kontak Terkait (${partner.children.length})`, icon: Icons.Users },
                         { id: 'risk_notes', label: 'Informasi Bisnis & Catatan', icon: Icons.Building },
+                        {
+                            id: 'vehicles',
+                            label: `Armada (${partner.vehicles?.length ?? 0})`,
+                            icon: Icons.Car,
+                            badge: (partner.vehicles?.length ?? 0) > 0 ? `${partner.vehicles?.length} Unit` : undefined,
+                            badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300',
+                        },
                         {
                             id: 'kyc',
                             label: 'Verifikasi KYC',
@@ -1505,6 +1538,132 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                     </p>
                                 </div>
                             </dl>
+                        </section>
+                    </div>
+                )}
+
+                {/* Tab: Armada Terhubung */}
+                {activeTab === 'vehicles' && (
+                    <div className="space-y-6">
+                        <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">🚗</span>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                            Armada Terhubung ({partner.vehicles?.length ?? 0} Unit)
+                                        </h3>
+                                        <p className="text-xs text-slate-400">
+                                            Daftar unit kendaraan yang dititipkan atau disublease oleh mitra ini ke rental.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href={prefixedRoute('fleet.vehicles.create')}
+                                    className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700"
+                                >
+                                    <Icons.Plus />
+                                    <span>Tambah Armada Baru</span>
+                                </Link>
+                            </div>
+
+                            {!partner.vehicles || partner.vehicles.length === 0 ? (
+                                <div className="py-12 text-center">
+                                    <span className="text-4xl opacity-40">🚗</span>
+                                    <p className="mt-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        Belum ada armada yang terhubung dengan mitra ini.
+                                    </p>
+                                    <p className="text-[11px] text-slate-400 mt-1">
+                                        Saat mendaftarkan unit kendaraan baru di modul Armada, pilih mitra ini sebagai pemilik/investor.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
+                                        <thead>
+                                            <tr className="bg-slate-50/70 dark:bg-slate-850 text-slate-400">
+                                                <th className="px-4 py-3 font-bold">Plat Nomor</th>
+                                                <th className="px-4 py-3 font-bold">Nama Kendaraan</th>
+                                                <th className="px-4 py-3 font-bold">Jenis Kepemilikan</th>
+                                                <th className="px-4 py-3 font-bold">Home Base</th>
+                                                <th className="px-4 py-3 font-bold">Skema Finansial</th>
+                                                <th className="px-4 py-3 font-bold">Status Unit</th>
+                                                <th className="px-4 py-3 text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                            {partner.vehicles.map((v) => (
+                                                <tr key={v.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/50">
+                                                    <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
+                                                        <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1">
+                                                            {v.plate_number}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-bold text-slate-800 dark:text-slate-200">{v.name}</div>
+                                                        <div className="text-[11px] text-slate-400 capitalize">{v.type}</div>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        {v.ownership_type === 'investor' ? (
+                                                            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                                                🤝 Titipan Investor
+                                                            </span>
+                                                        ) : v.ownership_type === 'partner_loan' ? (
+                                                            <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+                                                                🔄 Sublease Rekanan
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                                🏢 Milik Sendiri
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                                        {v.home_base ? `${v.home_base.code} - ${v.home_base.name}` : '—'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">
+                                                        {v.settlement_scheme === 'revenue_share' && (
+                                                            <span className="text-emerald-600 dark:text-emerald-400">
+                                                                Bagi Hasil ({v.revenue_share_owner_pct ?? 0}%)
+                                                            </span>
+                                                        )}
+                                                        {v.settlement_scheme === 'fixed_monthly' && (
+                                                            <span className="text-indigo-600 dark:text-indigo-400">
+                                                                Rp {Number(v.fixed_fee_amount || 0).toLocaleString()}/bln
+                                                            </span>
+                                                        )}
+                                                        {v.settlement_scheme === 'daily_rental' && (
+                                                            <span className="text-amber-600 dark:text-amber-400">
+                                                                Rp {Number(v.fixed_fee_amount || 0).toLocaleString()}/hari
+                                                            </span>
+                                                        )}
+                                                        {!v.settlement_scheme && '—'}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-bold ${
+                                                            v.status === 'active'
+                                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                                : v.status === 'maintenance'
+                                                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                                                                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                        }`}>
+                                                            {v.status === 'active' ? 'Siap Operasi' : v.status === 'maintenance' ? 'Perawatan' : v.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <Link
+                                                            href={prefixedRoute('fleet.vehicles.show', v.id)}
+                                                            className="font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                                        >
+                                                            Lihat Unit →
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </section>
                     </div>
                 )}

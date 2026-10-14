@@ -43,6 +43,16 @@ class UpdateVehicleRequest extends FormRequest
             'fuel_type' => ['sometimes', 'required', 'string', 'in:petrol,diesel,electric,hybrid'],
             'status' => ['sometimes', 'required', 'string', 'in:active,maintenance,retired,out_of_service'],
             'home_base_id' => ['nullable', 'integer', 'exists:fleet_bases,id'],
+            'ownership_type' => ['sometimes', 'required', 'string', 'in:owned,investor,partner_loan'],
+            'partner_id' => ['nullable', 'required_if:ownership_type,investor,partner_loan', 'integer', 'exists:partners,id'],
+            'contract_number' => ['nullable', 'string', 'max:100'],
+            'contract_start_date' => ['nullable', 'date'],
+            'contract_end_date' => ['nullable', 'date', 'after_or_equal:contract_start_date'],
+            'settlement_scheme' => ['nullable', 'string', 'in:revenue_share,fixed_monthly,daily_rental'],
+            'revenue_share_owner_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'revenue_share_tenant_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'fixed_fee_amount' => ['nullable', 'numeric', 'min:0'],
+            'maintenance_payer' => ['nullable', 'string', 'in:tenant,owner,shared'],
             'odometer_km' => ['integer', 'min:0'],
             'stnk_expires_at' => ['nullable', 'date'],
             'kir_expires_at' => ['nullable', 'date'],
@@ -62,6 +72,60 @@ class UpdateVehicleRequest extends FormRequest
         if ($this->exists('rental_class')) {
             $this->merge([
                 'rental_class' => $this->filled('rental_class') ? $this->input('rental_class') : null,
+            ]);
+        }
+
+        if ($this->exists('partner_id')) {
+            $this->merge([
+                'partner_id' => $this->filled('partner_id') ? $this->input('partner_id') : null,
+            ]);
+        }
+
+        if ($this->exists('contract_number')) {
+            $this->merge([
+                'contract_number' => $this->filled('contract_number') ? $this->input('contract_number') : null,
+            ]);
+        }
+
+        if ($this->exists('contract_start_date')) {
+            $this->merge([
+                'contract_start_date' => $this->filled('contract_start_date') ? $this->input('contract_start_date') : null,
+            ]);
+        }
+
+        if ($this->exists('contract_end_date')) {
+            $this->merge([
+                'contract_end_date' => $this->filled('contract_end_date') ? $this->input('contract_end_date') : null,
+            ]);
+        }
+
+        if ($this->exists('settlement_scheme')) {
+            $this->merge([
+                'settlement_scheme' => $this->filled('settlement_scheme') ? $this->input('settlement_scheme') : null,
+            ]);
+        }
+
+        if ($this->exists('revenue_share_owner_pct')) {
+            $this->merge([
+                'revenue_share_owner_pct' => $this->filled('revenue_share_owner_pct') ? $this->input('revenue_share_owner_pct') : null,
+            ]);
+        }
+
+        if ($this->exists('revenue_share_tenant_pct')) {
+            $this->merge([
+                'revenue_share_tenant_pct' => $this->filled('revenue_share_tenant_pct') ? $this->input('revenue_share_tenant_pct') : null,
+            ]);
+        }
+
+        if ($this->exists('fixed_fee_amount')) {
+            $this->merge([
+                'fixed_fee_amount' => $this->filled('fixed_fee_amount') ? $this->input('fixed_fee_amount') : null,
+            ]);
+        }
+
+        if ($this->exists('maintenance_payer')) {
+            $this->merge([
+                'maintenance_payer' => $this->filled('maintenance_payer') ? $this->input('maintenance_payer') : 'tenant',
             ]);
         }
     }

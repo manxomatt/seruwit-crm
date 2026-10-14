@@ -8,6 +8,7 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Models\VehicleMaintenanceLog;
 use Modules\Maintenance\Models\MaintenanceCategory;
 use Modules\Maintenance\Models\WorkOrder;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -572,5 +573,55 @@ class VehicleTest extends TestCase
             'plate_number' => 'B 9999 INO',
             'name' => 'Innova Zenix',
         ]);
+    }
+
+    public function test_can_create_vehicle_with_investor_ownership_and_revenue_share(): void
+    {
+        $user = $this->createAdminUser();
+
+        $partner = Partner::create([
+            'code' => 'PTN-TEST-01',
+            'name' => 'Budi Investor Sukses',
+            'account_type' => 'individual',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Avanza Investor',
+            'plate_number' => 'B 7777 INV',
+            'type' => 'car',
+            'rental_class' => 'mpv',
+            'fuel_type' => 'petrol',
+            'status' => 'active',
+            'odometer_km' => 1000,
+            'rental_rate' => [
+                'rate_per_period' => 350000,
+            ],
+            'ownership_type' => 'investor',
+            'partner_id' => $partner->id,
+            'contract_number' => 'PKS/INV/2026/001',
+            'contract_start_date' => '2026-01-01',
+            'contract_end_date' => '2027-01-01',
+            'settlement_scheme' => 'revenue_share',
+            'revenue_share_owner_pct' => 70,
+            'revenue_share_tenant_pct' => 30,
+            'maintenance_payer' => 'shared',
+        ]);
+
+        $vehicle = Vehicle::firstWhere('plate_number', 'B 7777 INV');
+        $this->assertNotNull($vehicle);
+        $response->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
+
+        $this->assertEquals('investor', $vehicle->ownership_type);
+        $this->assertEquals($partner->id, $vehicle->partner_id);
+        $this->assertEquals('PKS/INV/2026/001', $vehicle->contract_number);
+        $this->assertEquals('revenue_share', $vehicle->settlement_scheme);
+        $this->assertEquals(70, (int) $vehicle->revenue_share_owner_pct);
+        $this->assertEquals(30, (int) $vehicle->revenue_share_tenant_pct);
+        $this->assertEquals('shared', $vehicle->maintenance_payer);
+
+        // Test relationship
+        $this->assertEquals($partner->id, $vehicle->partner->id);
+        $this->assertTrue($partner->vehicles->contains($vehicle));
     }
 }
