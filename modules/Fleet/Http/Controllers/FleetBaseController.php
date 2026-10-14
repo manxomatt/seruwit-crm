@@ -176,9 +176,6 @@ class FleetBaseController extends Controller
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $canDeleteBase,
             ],
-            'deleteBlockedReason' => $totalBases <= 1
-                ? __('fleet.messages.base_last_remaining')
-                : ($fleetBase->vehicles->isNotEmpty() ? __('fleet.messages.base_in_use') : null),
         ]);
     }
 
