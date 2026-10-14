@@ -1558,13 +1558,24 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                         </p>
                                     </div>
                                 </div>
-                                <Link
-                                    href={prefixedRoute('fleet.vehicles.create')}
-                                    className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700"
-                                >
-                                    <Icons.Plus />
-                                    <span>Tambah Armada Baru</span>
-                                </Link>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {partner.vehicles && partner.vehicles.length > 0 && (
+                                        <Link
+                                            href={prefixedRoute('partners.settlement', partner.id)}
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
+                                        >
+                                            <span>📊</span>
+                                            <span>Rekap Statement Semua Armada</span>
+                                        </Link>
+                                    )}
+                                    <Link
+                                        href={prefixedRoute('fleet.vehicles.create')}
+                                        className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700"
+                                    >
+                                        <Icons.Plus />
+                                        <span>Tambah Armada Baru</span>
+                                    </Link>
+                                </div>
                             </div>
 
                             {!partner.vehicles || partner.vehicles.length === 0 ? (
@@ -1650,7 +1661,13 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                                             {v.status === 'active' ? 'Siap Operasi' : v.status === 'maintenance' ? 'Perawatan' : v.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-3 text-right">
+                                                    <td className="px-4 py-3 text-right space-x-2">
+                                                        <Link
+                                                            href={prefixedRoute('fleet.vehicles.settlement', v.id)}
+                                                            className="font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                                                        >
+                                                            📊 Statement
+                                                        </Link>
                                                         <Link
                                                             href={prefixedRoute('fleet.vehicles.show', v.id)}
                                                             className="font-bold text-indigo-600 hover:underline dark:text-indigo-400"

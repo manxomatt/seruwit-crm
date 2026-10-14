@@ -11,6 +11,7 @@ use Modules\Partners\Http\Controllers\PartnerBankAccountController;
 use Modules\Partners\Http\Controllers\PartnerController;
 use Modules\Partners\Http\Controllers\PartnerDashboardController;
 use Modules\Partners\Http\Controllers\PartnerIndustryController;
+use Modules\Partners\Http\Controllers\PartnerSettlementController;
 use Modules\Partners\Http\Controllers\PartnerTypeController;
 
 class PartnersModule implements ModuleContract
@@ -102,6 +103,7 @@ class PartnersModule implements ModuleContract
         Route::delete('/partners/types/{type}', [PartnerTypeController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.types.destroy');
 
         Route::get('/partners/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners,view')->name('partners.show');
+        Route::get('/partners/{partner}/settlement', [PartnerSettlementController::class, 'show'])->middleware('permission:partners,view')->name('partners.settlement');
         Route::get('/partners/{partner}/edit', [PartnerController::class, 'edit'])->middleware('permission:partners,update')->name('partners.edit');
         Route::patch('/partners/{partner}', [PartnerController::class, 'update'])->middleware('permission:partners,update')->name('partners.update');
         Route::delete('/partners/{partner}', [PartnerController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.destroy');

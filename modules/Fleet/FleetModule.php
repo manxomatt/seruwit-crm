@@ -17,6 +17,7 @@ use Modules\Fleet\Http\Controllers\VehicleAiGenerateController;
 use Modules\Fleet\Http\Controllers\VehicleCheckoutController;
 use Modules\Fleet\Http\Controllers\VehicleController;
 use Modules\Fleet\Http\Controllers\VehicleMaintenanceLogController;
+use Modules\Fleet\Http\Controllers\VehicleSettlementController;
 use Modules\Fleet\Models\FleetBase;
 
 /**
@@ -118,6 +119,7 @@ class FleetModule implements ModuleContract
         Route::post('/fleet/vehicles/batch-destroy', [VehicleController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.batch-destroy');
         Route::get('/fleet/vehicles/{vehicle}', [VehicleController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.show');
         Route::get('/fleet/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.vehicles.edit');
+        Route::get('/fleet/vehicles/{vehicle}/settlement', [VehicleSettlementController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.settlement');
         Route::patch('/fleet/vehicles/{vehicle}', [VehicleController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.update');
         Route::delete('/fleet/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.destroy');
         Route::post('/fleet/vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->middleware('permission:fleet,update')->name('fleet.vehicles.activate');

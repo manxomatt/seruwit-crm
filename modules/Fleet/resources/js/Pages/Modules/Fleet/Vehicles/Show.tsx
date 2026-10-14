@@ -440,6 +440,16 @@ export default function Show({
                                 )
                             )}
 
+                            {vehicle.ownership_type && vehicle.ownership_type !== 'owned' && (
+                                <Link
+                                    href={prefixedRoute('fleet.vehicles.settlement', vehicle.id)}
+                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
+                                >
+                                    <span>📊</span>
+                                    <span>Laporan Bagi Hasil</span>
+                                </Link>
+                            )}
+
                             {can.update && (
                                 <Link
                                     href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
@@ -1093,6 +1103,16 @@ export default function Show({
                                         </dd>
                                     </div>
                                 </dl>
+
+                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                                    <Link
+                                        href={prefixedRoute('fleet.vehicles.settlement', vehicle.id)}
+                                        className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700"
+                                    >
+                                        <span>📊</span>
+                                        <span>Buka Rekap Kinerja & Bagi Hasil (Statement) →</span>
+                                    </Link>
+                                </div>
                             </div>
                         )}
 
