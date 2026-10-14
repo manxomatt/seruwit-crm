@@ -250,6 +250,20 @@ const OrdersIcon = () => (
     </svg>
 );
 
+const TagIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+    </svg>
+);
+
+const LocationPinIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+    </svg>
+);
+
 const MenuIcon = () => (
     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -389,7 +403,17 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'fleet_compliance', modules: ['fleet', 'document', 'maintenance', 'tracking', 'scoring'] },
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing'] },
     { titleKey: 'intelligence', modules: ['bi', 'approvals'] },
-    { titleKey: 'master_data', modules: ['partners', 'products'] },
+    {
+        titleKey: 'master_data',
+        modules: [
+            'partners-dashboard',
+            'partners-list',
+            'partners-types',
+            'partners-industries',
+            'partners-locations',
+            'products',
+        ],
+    },
     { titleKey: 'sales_commercial', modules: ['pos', 'canvassing', 'shuttle', 'promotions'] },
     { titleKey: 'distribution_logistics', modules: ['transportation', 'orders', 'outbound', 'routing'] },
     { titleKey: 'procurement_warehouse', modules: ['purchasing', 'sales', 'inventory'] },
@@ -470,6 +494,53 @@ type ModuleSidebarChild = {
 };
 
 const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
+    partners: [
+        {
+            key: 'partners-dashboard',
+            labelKey: 'partners.nav.dashboard',
+            route: 'module.partners.dashboard',
+            routePatterns: ['module.partners.dashboard', 'module.partners.dashboard.*'],
+            icon: <DashboardIcon />,
+            permissionAction: 'view',
+        },
+        {
+            key: 'partners-list',
+            labelKey: 'partners.nav.list',
+            route: 'module.partners.index',
+            routePatterns: [
+                'module.partners.index',
+                'module.partners.create',
+                'module.partners.show',
+                'module.partners.edit',
+            ],
+            icon: <CustomersIcon />,
+            permissionAction: 'view',
+        },
+        {
+            key: 'partners-types',
+            labelKey: 'partners.nav.types',
+            route: 'module.partners.types.index',
+            routePatterns: ['module.partners.types.*'],
+            icon: <TagIcon />,
+            permissionAction: 'view',
+        },
+        {
+            key: 'partners-industries',
+            labelKey: 'partners.nav.industries',
+            route: 'module.partners.industries.index',
+            routePatterns: ['module.partners.industries.*'],
+            icon: <BuildingIcon />,
+            permissionAction: 'view',
+        },
+        {
+            key: 'partners-locations',
+            labelKey: 'partners.nav.locations',
+            route: 'module.partners.locations.index',
+            routePatterns: ['module.partners.locations.*'],
+            icon: <LocationPinIcon />,
+            permissionAction: 'view',
+        },
+    ],
     rental: [
         {
             key: 'rental-dashboard',
@@ -1075,7 +1146,7 @@ export default function ModuleLayout({ header, children }: Props) {
                     {pageProps.pendingRentalApprovalsCount}
                 </span>
             )}
-            {item.module === 'partners' && ((pageProps.pendingPartnerKycReviewCount as number) || 0) > 0 && (
+            {(item.module === 'partners' || item.module === 'partners-list') && ((pageProps.pendingPartnerKycReviewCount as number) || 0) > 0 && (
                 <span
                     className="ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-sm ring-1 ring-white/10 animate-pulse"
                     title={`${pageProps.pendingPartnerKycReviewCount} kontak menunggu review`}
@@ -1095,7 +1166,7 @@ export default function ModuleLayout({ header, children }: Props) {
                 const groupPendingCount = group.items.reduce((sum, item) => {
                     if (item.module === 'payment-orders') return sum + ((pageProps.pendingPaymentOrdersCount as number) || 0);
                     if (item.module === 'rental-reservation') return sum + ((pageProps.pendingRentalApprovalsCount as number) || 0);
-                    if (item.module === 'partners') return sum + ((pageProps.pendingPartnerKycReviewCount as number) || 0);
+                    if (item.module === 'partners' || item.module === 'partners-list') return sum + ((pageProps.pendingPartnerKycReviewCount as number) || 0);
                     return sum;
                 }, 0);
                 return (

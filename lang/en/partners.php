@@ -1,14 +1,14 @@
 <?php
 
 return [
-    'title' => 'Contacts',
+    'title' => 'Customers & Partners',
 
     'nav' => [
         'dashboard' => 'Dashboard',
-        'list' => 'Contacts',
-        'types' => 'Contact Types',
+        'list' => 'Customer & Partner Directory',
+        'types' => 'Types & Categories',
         'industries' => 'Industries',
-        'locations' => 'Locations',
+        'locations' => 'Locations / Zones',
     ],
 
     'dashboard' => [

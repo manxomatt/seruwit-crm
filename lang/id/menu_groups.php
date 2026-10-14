@@ -2,7 +2,7 @@
 
 return [
     'intelligence' => 'Intelijen',
-    'master_data' => 'Master Data',
+    'master_data' => 'Pelanggan & Mitra',
     'finance' => 'Keuangan',
     'procurement_warehouse' => 'Pengadaan & Gudang',
     'fleet_compliance' => 'Armada & Kepatuhan',

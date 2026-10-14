@@ -1,14 +1,14 @@
 <?php
 
 return [
-    'title' => 'Kontak',
+    'title' => 'Pelanggan & Mitra',
 
     'nav' => [
         'dashboard' => 'Dashboard',
-        'list' => 'Kontak',
-        'types' => 'Tipe Kontak',
-        'industries' => 'Industri',
-        'locations' => 'Lokasi',
+        'list' => 'Daftar Pelanggan & Mitra',
+        'types' => 'Tipe / Kategori',
+        'industries' => 'Sektor Industri',
+        'locations' => 'Titik Wilayah / Lokasi',
     ],
 
     'dashboard' => [
