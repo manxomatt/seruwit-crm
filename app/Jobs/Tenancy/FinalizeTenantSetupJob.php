@@ -150,6 +150,27 @@ class FinalizeTenantSetupJob implements ShouldQueue
                 return;
             }
 
+            // Sync tenant identity & contact to tenant settings
+            $phone = $setup['phone'] ?? null;
+            if (class_exists(\App\Models\Setting::class)) {
+                if (! empty($this->tenant->name)) {
+                    \App\Models\Setting::set('general.company_name', $this->tenant->name);
+                    \App\Models\Setting::set('general.site_name', $this->tenant->name);
+                }
+                if (! empty($adminUser->email)) {
+                    \App\Models\Setting::set('general.company_email', $adminUser->email);
+                    \App\Models\Setting::set('general.contact_email', $adminUser->email);
+                }
+                if (! empty($phone)) {
+                    \App\Models\Setting::set('general.company_phone', $phone);
+                    \App\Models\Setting::set('general.contact_phone', $phone);
+                    $digits = preg_replace('/[^0-9]/', '', $phone);
+                    if (str_starts_with($digits, '08') || str_starts_with($digits, '628')) {
+                        \App\Models\Setting::set('general.contact_whatsapp', $phone);
+                    }
+                }
+            }
+
             $baseData = $setup['main_base'] ?? [];
             $code = ! empty($baseData['code']) ? strtoupper(trim($baseData['code'])) : 'HQ';
             $name = ! empty($baseData['name']) ? trim($baseData['name']) : ('Kantor Operasional '.$this->tenant->name);

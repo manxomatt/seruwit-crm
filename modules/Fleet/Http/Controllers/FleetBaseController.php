@@ -164,12 +164,21 @@ class FleetBaseController extends Controller
             $fleetBase->load('warehouse:id,name,kind');
         }
 
+        $totalBases = FleetBase::count();
+        $canDeleteBase = $user->hasPermissionFor('fleet', 'delete')
+            && ! ($user->hasRole(AccessibleFleetBases::ROLE_HEAD) && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER) && ! $user->isAdmin())
+            && $totalBases > 1
+            && $fleetBase->vehicles->isEmpty();
+
         return Inertia::render('Modules/Fleet/Bases/Show', [
             'base' => $fleetBase,
             'can' => [
                 'update' => $user->hasPermissionFor('fleet', 'update'),
-                'delete' => $user->hasPermissionFor('fleet', 'delete'),
+                'delete' => $canDeleteBase,
             ],
+            'deleteBlockedReason' => $totalBases <= 1
+                ? __('fleet.messages.base_last_remaining')
+                : ($fleetBase->vehicles->isNotEmpty() ? __('fleet.messages.base_in_use') : null),
         ]);
     }
 
@@ -223,6 +232,14 @@ class FleetBaseController extends Controller
 
         $this->ensureAccessible($fleetBase);
 
+        if (FleetBase::count() <= 1) {
+            return back()->with('error', __('fleet.messages.base_last_remaining'));
+        }
+
+        if ($fleetBase->vehicles()->exists()) {
+            return back()->with('error', __('fleet.messages.base_in_use'));
+        }
+
         try {
             DB::transaction(fn () => $fleetBase->delete());
         } catch (QueryException) {
@@ -257,7 +274,8 @@ class FleetBaseController extends Controller
     }
 
     /**
-     * Delete multiple fleet bases, skipping any blocked by foreign-key constraints.
+     * Delete multiple fleet bases, skipping any blocked by foreign-key constraints,
+     * assigned vehicles, or being the last remaining base.
      */
     public function batchDestroy(BatchDeleteFleetBasesRequest $request): RedirectResponse
     {
@@ -283,10 +301,27 @@ class FleetBaseController extends Controller
             return back()->with('error', __('fleet.validation.base_access_denied'));
         }
 
+        $totalBasesCount = FleetBase::count();
+
         foreach ($bases as $base) {
+            // Cannot delete if this is the only remaining base overall
+            if ($totalBasesCount <= 1) {
+                $blocked++;
+
+                continue;
+            }
+
+            // Cannot delete if base has assigned vehicles
+            if ($base->vehicles()->exists()) {
+                $blocked++;
+
+                continue;
+            }
+
             try {
                 DB::transaction(fn () => $base->delete());
                 $deleted++;
+                $totalBasesCount--;
             } catch (QueryException) {
                 $blocked++;
             }

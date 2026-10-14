@@ -311,21 +311,36 @@ class FleetBaseTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_delete_a_fleet_base_without_vehicles(): void
+    public function test_admin_can_delete_a_fleet_base_without_vehicles_when_other_bases_exist(): void
     {
         $user = $this->createAdminUser();
-        $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $base1 = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $base2 = FleetBase::factory()->create(['manager_id' => $user->id]);
 
-        $this->actingAs($user)->delete(route('module.fleet.bases.destroy', $base))
+        $this->actingAs($user)->delete(route('module.fleet.bases.destroy', $base1))
             ->assertRedirect(route('module.fleet.bases.index'));
 
-        $this->assertDatabaseMissing('fleet_bases', ['id' => $base->id]);
+        $this->assertDatabaseMissing('fleet_bases', ['id' => $base1->id]);
+        $this->assertDatabaseHas('fleet_bases', ['id' => $base2->id]);
+    }
+
+    public function test_cannot_delete_last_remaining_fleet_base(): void
+    {
+        $user = $this->createAdminUser();
+        $singleBase = FleetBase::factory()->create(['manager_id' => $user->id]);
+
+        $this->actingAs($user)->delete(route('module.fleet.bases.destroy', $singleBase))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('fleet_bases', ['id' => $singleBase->id]);
     }
 
     public function test_a_fleet_base_with_vehicles_cannot_be_deleted(): void
     {
         $user = $this->createAdminUser();
         $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+        FleetBase::factory()->create(['manager_id' => $user->id]); // second base exists
         Vehicle::factory()->create(['home_base_id' => $base->id]);
 
         $this->actingAs($user)->delete(route('module.fleet.bases.destroy', $base))

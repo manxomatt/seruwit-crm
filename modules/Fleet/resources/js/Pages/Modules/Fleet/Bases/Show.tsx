@@ -73,6 +73,7 @@ interface FleetBase {
 interface Props {
     base: FleetBase;
     can: { update: boolean; delete: boolean };
+    deleteBlockedReason?: string | null;
 }
 
 const getKindBadge = (kind: string) => {
@@ -137,7 +138,7 @@ const displayAddress = (base: FleetBase): string => {
     return parts.length > 0 ? parts.join(', ') : 'Belum ada alamat terdaftar.';
 };
 
-export default function Show({ base, can }: Props): JSX.Element {
+export default function Show({ base, can, deleteBlockedReason }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -201,7 +202,7 @@ export default function Show({ base, can }: Props): JSX.Element {
                                 </Link>
                             )}
 
-                            {can.delete && (
+                            {can.delete ? (
                                 <button
                                     type="button"
                                     onClick={() => setShowDeleteDialog(true)}
@@ -210,7 +211,15 @@ export default function Show({ base, can }: Props): JSX.Element {
                                     <span>🗑️</span>
                                     <span>{t('common.delete', undefined, 'Hapus')}</span>
                                 </button>
-                            )}
+                            ) : deleteBlockedReason ? (
+                                <span
+                                    title={deleteBlockedReason}
+                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 bg-slate-100/80 px-3 py-2 text-xs font-medium text-slate-500 cursor-not-allowed dark:border-slate-800 dark:bg-slate-850 dark:text-slate-400"
+                                >
+                                    <span>🔒</span>
+                                    <span>{deleteBlockedReason}</span>
+                                </span>
+                            ) : null}
                         </div>
                     }
                 />

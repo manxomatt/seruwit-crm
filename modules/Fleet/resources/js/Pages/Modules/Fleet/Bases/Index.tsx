@@ -248,6 +248,9 @@ export default function Index({ bases, filters, kinds, can, quota }: Props): JSX
     };
 
     const openDeleteDialog = (base: FleetBaseRow) => {
+        if (totalBases <= 1 || base.vehicles_count > 0) {
+            return;
+        }
         setBaseToDelete(base);
         setShowDeleteDialog(true);
     };
@@ -682,14 +685,27 @@ export default function Index({ bases, filters, kinds, can, quota }: Props): JSX
                                                 </Link>
                                             )}
                                             {can.delete && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openDeleteDialog(base)}
-                                                    className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
-                                                    title="Hapus Base"
-                                                >
-                                                    <TrashIcon />
-                                                </button>
+                                                totalBases <= 1 || base.vehicles_count > 0 ? (
+                                                    <span
+                                                        className="rounded-xl p-1.5 text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                                                        title={
+                                                            totalBases <= 1
+                                                                ? 'Tidak dapat menghapus base terakhir'
+                                                                : `Tidak dapat menghapus base (masih memiliki ${base.vehicles_count} unit armada terhubung)`
+                                                        }
+                                                    >
+                                                        <TrashIcon />
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDeleteDialog(base)}
+                                                        className="rounded-xl p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                        title="Hapus Base"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -904,14 +920,28 @@ export default function Index({ bases, filters, kinds, can, quota }: Props): JSX
                                                                     <>
                                                                         <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                                                                         <MenuItem>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => openDeleteDialog(base)}
-                                                                                className={menuItemDangerClassName}
-                                                                            >
-                                                                                <TrashIcon />
-                                                                                <span>{t('common.delete', undefined, 'Hapus Base')}</span>
-                                                                            </button>
+                                                                            {totalBases <= 1 || base.vehicles_count > 0 ? (
+                                                                                <div
+                                                                                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                                                                                    title={
+                                                                                        totalBases <= 1
+                                                                                            ? 'Tidak dapat menghapus base terakhir'
+                                                                                            : `Tidak dapat menghapus base (masih memiliki ${base.vehicles_count} unit armada terhubung)`
+                                                                                    }
+                                                                                >
+                                                                                    <TrashIcon />
+                                                                                    <span>{t('common.delete', undefined, 'Hapus Base')} (Terkunci)</span>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => openDeleteDialog(base)}
+                                                                                    className={menuItemDangerClassName}
+                                                                                >
+                                                                                    <TrashIcon />
+                                                                                    <span>{t('common.delete', undefined, 'Hapus Base')}</span>
+                                                                                </button>
+                                                                            )}
                                                                         </MenuItem>
                                                                     </>
                                                                 )}
