@@ -16,6 +16,7 @@ import RentalNav from '../../../../RentalNav';
 import DocumentsPanel from './DocumentsPanel';
 import StorefrontPanel, { DEFAULT_STOREFRONT, StorefrontSettings } from './StorefrontPanel';
 import TestimonialsPanel, { TestimonialItem } from './TestimonialsPanel';
+import WhatsappPanel, { DeviceStatus, WhatsappSettings } from './WhatsappPanel';
 
 interface GeneralSettings {
     default_one_way_fee: string;
@@ -43,11 +44,13 @@ interface DocumentTemplate {
 }
 
 interface Props {
-    tab: 'general' | 'storefront' | 'testimonials' | 'rates' | 'documents';
+    tab: 'general' | 'storefront' | 'testimonials' | 'rates' | 'documents' | 'whatsapp';
     general?: GeneralSettings;
     storefront?: StorefrontSettings;
     testimonials?: TestimonialItem[];
     documents?: Record<string, DocumentTemplate>;
+    whatsapp?: WhatsappSettings;
+    deviceStatus?: DeviceStatus;
     centralAiEnabled?: boolean;
 }
 
@@ -660,12 +663,25 @@ function GeneralPanel({
     );
 }
 
+const DEFAULT_WHATSAPP: WhatsappSettings = {
+    is_enabled: false,
+    provider: 'fonnte',
+    fonnte_token: '',
+    custom_url: '',
+    custom_token: '',
+    send_on_booking_confirmed: true,
+    send_on_checkout: true,
+    send_on_return: true,
+};
+
 export default function Index({
     tab,
     general = DEFAULT_GENERAL,
     storefront = DEFAULT_STOREFRONT,
     testimonials = [],
     documents = DEFAULT_DOCUMENTS,
+    whatsapp = DEFAULT_WHATSAPP,
+    deviceStatus,
     centralAiEnabled = true,
 }: Props): JSX.Element {
     const { t } = useTrans();
@@ -676,6 +692,7 @@ export default function Index({
         { key: 'storefront' as const, label: t('rental.settings.tab_storefront', undefined, 'Tampilan Storefront') },
         { key: 'testimonials' as const, label: t('rental.settings.tab_testimonials', undefined, 'Testimoni') },
         { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Template Dokumen') },
+        { key: 'whatsapp' as const, label: '💬 WhatsApp Gateway' },
     ];
 
     return (
@@ -716,6 +733,10 @@ export default function Index({
 
             {tab === 'documents' && (
                 <DocumentsPanel documents={documents} prefixedRoute={prefixedRoute} />
+            )}
+
+            {tab === 'whatsapp' && (
+                <WhatsappPanel settings={whatsapp} deviceStatus={deviceStatus} />
             )}
         </DynamicLayout>
     );

@@ -82,6 +82,13 @@ class RentalConfirmationService
                 RentalLifecycleMailNotification::EVENT_CONFIRMED,
             );
 
+            try {
+                app(\Modules\Rental\Support\RentalWhatsAppNotifier::class)
+                    ->sendBookingConfirmed($rental->fresh(['vehicle', 'partner']));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('WhatsApp booking confirmed notification failed: '.$e->getMessage());
+            }
+
             return $rental->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
         });
     }

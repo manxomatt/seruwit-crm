@@ -181,6 +181,13 @@ class RentalActionController extends Controller
             return back()->withErrors($e->errors());
         }
 
+        try {
+            app(\Modules\Rental\Support\RentalWhatsAppNotifier::class)
+                ->sendCheckoutHandover($rental->fresh(['vehicle', 'partner']));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('WhatsApp checkout notification failed: '.$e->getMessage());
+        }
+
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
             ->with('success', __('rental.messages.checked_out'));
     }
@@ -269,6 +276,13 @@ class RentalActionController extends Controller
         }
 
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_RETURNED);
+
+        try {
+            app(\Modules\Rental\Support\RentalWhatsAppNotifier::class)
+                ->sendReturnReceipt($rental->fresh(['vehicle', 'partner']));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('WhatsApp return receipt notification failed: '.$e->getMessage());
+        }
 
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
             ->with('success', __('rental.messages.returned'));

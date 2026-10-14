@@ -13,6 +13,8 @@ class GatewayCharge extends Model
 {
     public const PURPOSE_RENTAL_DEPOSIT = 'rental_deposit';
 
+    public const PURPOSE_RENTAL_FULL_PAYMENT = 'rental_full_payment';
+
     public const PURPOSE_INVOICE = 'invoice';
 
     public const PURPOSE_SHUTTLE_BOOKING = 'shuttle_booking';

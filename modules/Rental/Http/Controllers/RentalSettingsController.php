@@ -4,6 +4,7 @@ namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,18 +22,19 @@ use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalStorefrontSettings;
 use Modules\Rental\Support\RentalTestimonials;
+use Modules\Rental\Support\RentalWhatsAppSettings;
 
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'storefront', 'testimonials', 'documents'];
+    public const TABS = ['general', 'storefront', 'testimonials', 'documents', 'whatsapp'];
 
     protected function getRoutePrefix(): string
     {
         return 'module';
     }
 
-    public function index(Request $request): InertiaResponse|RedirectResponse
+    public function index(Request $request, WhatsAppGatewayManager $whatsappManager): InertiaResponse|RedirectResponse
     {
         if (! $request->has('tab')) {
             return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'general']);
@@ -49,6 +51,8 @@ class RentalSettingsController extends Controller
             'storefront' => RentalStorefrontSettings::all(),
             'testimonials' => RentalTestimonials::all(),
             'documents' => DocumentTemplateManager::all(),
+            'whatsapp' => RentalWhatsAppSettings::all(),
+            'deviceStatus' => $whatsappManager->driver()->getDeviceStatus(),
             'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
         ]);
     }
@@ -201,6 +205,45 @@ class RentalSettingsController extends Controller
             'checklistLabels' => $this->checklistLabels(),
             'template' => $resolved,
         ])->stream("preview-{$code}.pdf");
+    }
+
+    public function updateWhatsapp(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'is_enabled' => ['required', 'boolean'],
+            'provider' => ['required', 'string', 'in:fonnte,custom,log'],
+            'fonnte_token' => ['nullable', 'string', 'max:255'],
+            'custom_url' => ['nullable', 'url', 'max:255'],
+            'custom_token' => ['nullable', 'string', 'max:255'],
+            'send_on_booking_confirmed' => ['required', 'boolean'],
+            'send_on_checkout' => ['required', 'boolean'],
+            'send_on_return' => ['required', 'boolean'],
+        ]);
+
+        RentalWhatsAppSettings::update($validated);
+
+        return back()->with('success', 'Pengaturan WhatsApp Gateway berhasil disimpan.');
+    }
+
+    public function testWhatsapp(Request $request, WhatsAppGatewayManager $manager): RedirectResponse
+    {
+        $validated = $request->validate([
+            'target_phone' => ['required', 'string', 'max:30'],
+        ]);
+
+        $phone = WhatsAppGatewayManager::normalizePhone($validated['target_phone']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+
+        $testMessage = "Halo! Ini adalah pesan uji coba dari sistem *{$companyName}*.\n\n"
+            .'WhatsApp Gateway Anda telah berhasil terhubung dan siap digunakan untuk notifikasi rental!';
+
+        $success = $manager->driver()->sendMessage($phone, $testMessage);
+
+        if ($success) {
+            return back()->with('success', "Pesan uji coba WhatsApp berhasil dikirim ke nomor {$phone}.");
+        }
+
+        return back()->with('error', "Gagal mengirim pesan uji coba ke nomor {$phone}. Silakan periksa token atau status koneksi WhatsApp Anda.");
     }
 
     private function company(): array

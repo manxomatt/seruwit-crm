@@ -83,6 +83,47 @@ class GatewayCheckoutService
         ]);
     }
 
+    /**
+     * @param  object{id: int, code: string, partner_id: int, total_amount: mixed, deposit_amount: mixed, status: string, public_token?: string|null, partner?: object|null}  $rental
+     */
+    public function createRentalFullPaymentCharge(object $rental, ?string $finishPath = null): GatewayCharge
+    {
+        $totalAmount = round((float) $rental->total_amount, 2);
+        $depositAmount = round((float) $rental->deposit_amount, 2);
+        $grandTotal = round($totalAmount + $depositAmount, 2);
+
+        if ($grandTotal < 0.01) {
+            throw ValidationException::withMessages([
+                'amount' => __('receivables.gateway.invoice_nothing_due'),
+            ]);
+        }
+
+        if (! in_array($rental->status, [
+            'draft',
+            'pending',
+            'pending_reserved',
+            'confirmed',
+        ], true)) {
+            throw ValidationException::withMessages([
+                'rental' => __('receivables.gateway.deposit_status_invalid'),
+            ]);
+        }
+
+        $partner = $rental->partner ?? null;
+
+        return $this->createCharge([
+            'purpose' => GatewayCharge::PURPOSE_RENTAL_FULL_PAYMENT,
+            'rental_id' => $rental->id,
+            'partner_id' => $rental->partner_id,
+            'amount' => $grandTotal,
+            'item_name' => "Pelunasan Sewa & Deposit [{$rental->code}]",
+            'customer_name' => $partner->name ?? null,
+            'customer_email' => $partner->email ?? null,
+            'customer_phone' => $partner->phone ?? $partner->mobile ?? null,
+            'finish_path' => $finishPath ?? ('/book/rental/booking/'.($rental->public_token ?? '')),
+        ]);
+    }
+
     public function createInvoiceCharge(Invoice $invoice, ?string $finishPath = null): GatewayCharge
     {
         $balance = round((float) $invoice->balanceDue(), 2);
@@ -325,6 +366,60 @@ class GatewayCheckoutService
             return;
         }
 
+        if ($charge->purpose === GatewayCharge::PURPOSE_RENTAL_FULL_PAYMENT) {
+            if (! class_exists(\Modules\Rental\Models\Rental::class)
+                || ! class_exists(\Modules\Rental\Support\RentalAccountingService::class)) {
+                return;
+            }
+
+            $rental = \Modules\Rental\Models\Rental::query()->lockForUpdate()->findOrFail($charge->rental_id);
+
+            if (in_array($rental->status, [
+                \Modules\Rental\Models\Rental::STATUS_CANCELLED,
+                \Modules\Rental\Models\Rental::STATUS_CANCELLED_PAID,
+                \Modules\Rental\Models\Rental::STATUS_NO_SHOW,
+                \Modules\Rental\Models\Rental::STATUS_NO_SHOW_PAID,
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'rental' => __('receivables.gateway.rental_cancelled'),
+                ]);
+            }
+
+            // 1. Receive deposit if applicable
+            if ((float) $rental->deposit_amount > 0) {
+                app(\Modules\Rental\Support\RentalAccountingService::class)->receiveDeposit($rental, [
+                    'payment_method' => $method,
+                ]);
+            }
+
+            // 2. Confirm booking if pending
+            app(\Modules\Rental\Support\RentalConfirmationService::class)
+                ->confirmAfterPaymentIfPending($rental->fresh());
+
+            // 3. Record payment for base rental invoice if issued
+            $invoice = $rental->invoices()->first();
+            if ($invoice !== null && $invoice->balanceDue() > 0) {
+                $payAmount = round(min((float) $charge->amount - (float) $rental->deposit_amount, $invoice->balanceDue()), 2);
+                if ($payAmount > 0) {
+                    PaymentRecorder::record([
+                        'partner_id' => $invoice->partner_id,
+                        'payment_date' => now()->toDateString(),
+                        'amount' => $payAmount,
+                        'type' => Payment::TYPE_SETTLEMENT,
+                        'method' => $method,
+                        'reference_number' => $reference,
+                        'notes' => __('receivables.gateway.payment_note', ['order' => $charge->order_id]),
+                        'allocations' => [[
+                            'invoice_id' => $invoice->id,
+                            'amount' => $payAmount,
+                        ]],
+                    ]);
+                }
+            }
+
+            return;
+        }
+
         if ($charge->purpose === GatewayCharge::PURPOSE_INVOICE) {
             $invoice = Invoice::query()->lockForUpdate()->findOrFail($charge->invoice_id);
             $amount = round(min((float) $charge->amount, $invoice->balanceDue()), 2);
@@ -384,6 +479,7 @@ class GatewayCheckoutService
     {
         $prefix = match ($purpose) {
             GatewayCharge::PURPOSE_RENTAL_DEPOSIT => 'RDEP',
+            GatewayCharge::PURPOSE_RENTAL_FULL_PAYMENT => 'RFULL',
             GatewayCharge::PURPOSE_SHUTTLE_BOOKING => 'SBOOK',
             default => 'RINV',
         };

@@ -409,7 +409,7 @@ class PublicRentalBookingController extends Controller
 
         try {
             $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
-                ->createRentalDepositCharge(
+                ->createRentalFullPaymentCharge(
                     $rental->loadMissing('partner'),
                     '/book/rental/booking/'.$rental->public_token.'/finish/deposit',
                 );
