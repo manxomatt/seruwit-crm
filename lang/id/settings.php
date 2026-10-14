@@ -70,6 +70,10 @@ return [
             'save' => 'Simpan Perubahan',
             'reset_appearance' => 'Kembalikan ke Default',
             'enabled_label' => 'Aktif',
+            'disabled_label' => 'Nonaktif',
+            'count_hint' => ':count pengaturan dalam grup ini',
+            'ai_enabled' => 'Aktif (Fitur AI Aktif)',
+            'ai_disabled' => 'Nonaktif (Fitur AI Nonaktif)',
         ],
         'create' => [
             'title' => 'Buat Pengaturan',
@@ -322,5 +326,155 @@ return [
         'guide_step4' => 'Sertifikat SSL Let\'s Encrypt / Cloudflare otomatis aktif tanpa konfigurasi tambahan.',
         'delete_modal_title' => 'Hapus Custom Domain',
         'delete_modal_message' => 'Apakah Anda yakin ingin menghapus domain ":domain"? Domain ini tidak akan lagi mengarah ke workspace Anda.',
+    ],
+
+    'system_mode_options' => [
+        'development_label' => 'Development',
+        'development_desc' => 'Mode pengembangan (debug aktif, simulasi email & OTP)',
+        'production_label' => 'Production',
+        'production_desc' => 'Mode produksi (email nyata & sistem keamanan penuh)',
+    ],
+
+    'definitions' => [
+        'general.site_name' => [
+            'label' => 'Nama Website',
+            'description' => 'Nama situs web atau brand yang ditampilkan pada judul browser dan header.',
+        ],
+        'general.site_tagline' => [
+            'label' => 'Tagline Website',
+            'description' => 'Slogan atau deskripsi singkat untuk website Anda.',
+        ],
+        'general.site_description' => [
+            'label' => 'Deskripsi Website',
+            'description' => 'Deskripsi lengkap website Anda untuk keperluan SEO.',
+        ],
+        'general.admin_email' => [
+            'label' => 'Email Administrator',
+            'description' => 'Alamat email utama untuk menerima notifikasi sistem administratif.',
+        ],
+        'general.timezone' => [
+            'label' => 'Zona Waktu',
+            'description' => 'Zona waktu default aplikasi (contoh: Asia/Jakarta).',
+        ],
+        'general.date_format' => [
+            'label' => 'Format Tanggal',
+            'description' => 'Format tampilan tanggal default (format PHP, contoh: d M Y).',
+        ],
+        'general.maintenance_mode' => [
+            'label' => 'Mode Pemeliharaan',
+            'description' => 'Aktifkan mode pemeliharaan untuk menampilkan halaman maintenance ke pengunjung.',
+        ],
+        'general.system_mode' => [
+            'label' => 'Mode Sistem',
+            'description' => 'Mode operasional sistem saat ini.',
+        ],
+        'general.ai_features_enabled' => [
+            'label' => 'Fitur AI (Artificial Intelligence)',
+            'description' => 'Aktifkan atau nonaktifkan kapabilitas pintar berbasis AI di workspace ini.',
+        ],
+        'ecommerce.currency' => [
+            'label' => 'Kode Mata Uang',
+            'description' => 'Kode mata uang default (contoh: IDR, USD, EUR).',
+        ],
+        'ecommerce.currency_symbol' => [
+            'label' => 'Simbol Mata Uang',
+            'description' => 'Simbol mata uang yang ditampilkan sebelum nominal harga (contoh: Rp).',
+        ],
+        'site.logo' => [
+            'label' => 'Logo Website',
+            'description' => 'URL atau path file gambar logo website.',
+        ],
+        'site.favicon' => [
+            'label' => 'Favicon',
+            'description' => 'URL atau path file ikon favicon website.',
+        ],
+        'site.copyright' => [
+            'label' => 'Teks Hak Cipta',
+            'description' => 'Teks hak cipta yang ditampilkan pada footer website.',
+        ],
+        'site.phone' => [
+            'label' => 'Nomor Telepon',
+            'description' => 'Nomor kontak telepon resmi.',
+        ],
+        'site.address' => [
+            'label' => 'Alamat Kantor',
+            'description' => 'Alamat fisik kantor atau lokasi operasional bisnis Anda.',
+        ],
+        'site.contact_email' => [
+            'label' => 'Email Kontak',
+            'description' => 'Alamat email publik untuk pertanyaan umum pelanggan.',
+        ],
+        'site.working_hours' => [
+            'label' => 'Jam Operasional',
+            'description' => 'Jam kerja operasional kantor/layanan.',
+        ],
+        'seo.meta_title' => [
+            'label' => 'Meta Title Default',
+            'description' => 'Judul meta SEO bawaan untuk halaman yang belum memiliki judul khusus.',
+        ],
+        'seo.meta_description' => [
+            'label' => 'Meta Description Default',
+            'description' => 'Deskripsi meta bawaan untuk keperluan mesin pencari (SEO).',
+        ],
+        'seo.meta_keywords' => [
+            'label' => 'Kata Kunci Meta (Keywords)',
+            'description' => 'Kata kunci SEO bawaan (pisahkan dengan tanda koma).',
+        ],
+        'appearance.primary_color' => [
+            'label' => 'Warna Utama (Primary Color)',
+            'description' => 'Warna brand utama untuk tombol, navigasi, dan aksen penting.',
+        ],
+        'appearance.accent_color' => [
+            'label' => 'Warna Aksen (Accent Color)',
+            'description' => 'Warna aksen sekunder untuk badge dan elemen dekoratif.',
+        ],
+        'appearance.font_family' => [
+            'label' => 'Jenis Font (Typography)',
+            'description' => 'Pilihan font tipografi utama untuk antarmuka pengguna.',
+        ],
+        'social.whatsapp' => [
+            'label' => 'Nomor WhatsApp',
+            'description' => 'Nomor kontak WhatsApp (dengan kode negara, contoh: +62812...).',
+        ],
+        'social.facebook' => [
+            'label' => 'URL Facebook',
+            'description' => 'Tautan ke halaman profil Facebook resmi.',
+        ],
+        'social.instagram' => [
+            'label' => 'URL Instagram',
+            'description' => 'Tautan ke akun profil Instagram resmi.',
+        ],
+        'social.youtube' => [
+            'label' => 'URL YouTube',
+            'description' => 'Tautan ke channel YouTube resmi.',
+        ],
+        'social.linkedin' => [
+            'label' => 'URL LinkedIn',
+            'description' => 'Tautan ke halaman perusahaan di LinkedIn.',
+        ],
+        'social.tiktok' => [
+            'label' => 'URL TikTok',
+            'description' => 'Tautan ke akun profil TikTok resmi.',
+        ],
+        'email.from_name' => [
+            'label' => 'Nama Pengirim Email',
+            'description' => 'Nama yang tampil sebagai pengirim pada email keluar.',
+        ],
+        'email.from_address' => [
+            'label' => 'Alamat Email Pengirim',
+            'description' => 'Alamat email yang digunakan sebagai pengirim sistem.',
+        ],
+        'email.reply_to' => [
+            'label' => 'Alamat Reply-To',
+            'description' => 'Alamat email tujuan jika penerima membalas pesan.',
+        ],
+        'email.footer_text' => [
+            'label' => 'Teks Footer Email',
+            'description' => 'Teks penutup yang ditampilkan di bagian bawah setiap email.',
+        ],
+        'email.notification_enabled' => [
+            'label' => 'Aktifkan Notifikasi Email',
+            'description' => 'Aktifkan atau nonaktifkan pengiriman notifikasi email sistem.',
+        ],
     ],
 ];

@@ -70,6 +70,10 @@ return [
             'save' => 'Save Changes',
             'reset_appearance' => 'Reset to Default',
             'enabled_label' => 'Enabled',
+            'disabled_label' => 'Disabled',
+            'count_hint' => ':count settings in this group',
+            'ai_enabled' => 'Active (AI Features Enabled)',
+            'ai_disabled' => 'Inactive (AI Features Disabled)',
         ],
         'create' => [
             'title' => 'Create Setting',
@@ -322,5 +326,155 @@ return [
         'guide_step4' => 'Automated SSL certificates from Let\'s Encrypt / Cloudflare activate automatically.',
         'delete_modal_title' => 'Delete Custom Domain',
         'delete_modal_message' => 'Are you sure you want to remove the domain ":domain"? It will no longer point to your workspace.',
+    ],
+
+    'system_mode_options' => [
+        'development_label' => 'Development',
+        'development_desc' => 'Development mode (debug enabled, simulated email & OTP)',
+        'production_label' => 'Production',
+        'production_desc' => 'Production mode (live email & full security enforced)',
+    ],
+
+    'definitions' => [
+        'general.site_name' => [
+            'label' => 'Site Name',
+            'description' => 'The name of your website displayed in the browser title and header.',
+        ],
+        'general.site_tagline' => [
+            'label' => 'Site Tagline',
+            'description' => 'A short description or slogan for your website.',
+        ],
+        'general.site_description' => [
+            'label' => 'Site Description',
+            'description' => 'A longer description of your website for SEO purposes.',
+        ],
+        'general.admin_email' => [
+            'label' => 'Admin Email',
+            'description' => 'Primary email address for administrative notifications.',
+        ],
+        'general.timezone' => [
+            'label' => 'Timezone',
+            'description' => 'Default timezone for the application.',
+        ],
+        'general.date_format' => [
+            'label' => 'Date Format',
+            'description' => 'Default date format (PHP date format).',
+        ],
+        'general.maintenance_mode' => [
+            'label' => 'Maintenance Mode',
+            'description' => 'Enable maintenance mode to show a maintenance page to visitors.',
+        ],
+        'general.system_mode' => [
+            'label' => 'System Mode',
+            'description' => 'Current operating mode for the system.',
+        ],
+        'general.ai_features_enabled' => [
+            'label' => 'AI Features',
+            'description' => 'Enable or disable AI-assisted capabilities across this workspace.',
+        ],
+        'ecommerce.currency' => [
+            'label' => 'Currency Code',
+            'description' => 'Default currency code (e.g., IDR, USD, EUR).',
+        ],
+        'ecommerce.currency_symbol' => [
+            'label' => 'Currency Symbol',
+            'description' => 'Currency symbol displayed before prices.',
+        ],
+        'site.logo' => [
+            'label' => 'Site Logo',
+            'description' => 'URL or path to the site logo image.',
+        ],
+        'site.favicon' => [
+            'label' => 'Favicon',
+            'description' => 'URL or path to the favicon.',
+        ],
+        'site.copyright' => [
+            'label' => 'Copyright Text',
+            'description' => 'Copyright text displayed in the footer.',
+        ],
+        'site.phone' => [
+            'label' => 'Phone Number',
+            'description' => 'Contact phone number.',
+        ],
+        'site.address' => [
+            'label' => 'Address',
+            'description' => 'Physical address of your business.',
+        ],
+        'site.contact_email' => [
+            'label' => 'Contact Email',
+            'description' => 'Public contact email address.',
+        ],
+        'site.working_hours' => [
+            'label' => 'Working Hours',
+            'description' => 'Business working hours.',
+        ],
+        'seo.meta_title' => [
+            'label' => 'Default Meta Title',
+            'description' => 'Default meta title for pages without a specific title.',
+        ],
+        'seo.meta_description' => [
+            'label' => 'Default Meta Description',
+            'description' => 'Default meta description for SEO.',
+        ],
+        'seo.meta_keywords' => [
+            'label' => 'Default Meta Keywords',
+            'description' => 'Default meta keywords (comma separated).',
+        ],
+        'appearance.primary_color' => [
+            'label' => 'Primary Color',
+            'description' => 'Primary brand color for buttons and highlights.',
+        ],
+        'appearance.accent_color' => [
+            'label' => 'Accent Color',
+            'description' => 'Secondary accent color for badges and decorative elements.',
+        ],
+        'appearance.font_family' => [
+            'label' => 'Font Family',
+            'description' => 'Primary typography font family for the interface.',
+        ],
+        'social.whatsapp' => [
+            'label' => 'WhatsApp Number',
+            'description' => 'WhatsApp contact number (with country code).',
+        ],
+        'social.facebook' => [
+            'label' => 'Facebook URL',
+            'description' => 'Facebook page URL.',
+        ],
+        'social.instagram' => [
+            'label' => 'Instagram URL',
+            'description' => 'Instagram profile URL.',
+        ],
+        'social.youtube' => [
+            'label' => 'YouTube URL',
+            'description' => 'YouTube channel URL.',
+        ],
+        'social.linkedin' => [
+            'label' => 'LinkedIn URL',
+            'description' => 'LinkedIn company page URL.',
+        ],
+        'social.tiktok' => [
+            'label' => 'TikTok URL',
+            'description' => 'TikTok profile URL.',
+        ],
+        'email.from_name' => [
+            'label' => 'Email From Name',
+            'description' => 'Name displayed as the sender in emails.',
+        ],
+        'email.from_address' => [
+            'label' => 'Email From Address',
+            'description' => 'Email address used as the sender.',
+        ],
+        'email.reply_to' => [
+            'label' => 'Reply-To Address',
+            'description' => 'Email address for replies.',
+        ],
+        'email.footer_text' => [
+            'label' => 'Email Footer Text',
+            'description' => 'Text displayed in the footer of all emails.',
+        ],
+        'email.notification_enabled' => [
+            'label' => 'Enable Email Notifications',
+            'description' => 'Enable or disable email notifications.',
+        ],
     ],
 ];

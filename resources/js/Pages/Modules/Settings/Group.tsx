@@ -57,22 +57,22 @@ const GROUP_ICONS: Record<string, string> = {
     maintenance: '🛠️',
 };
 
-const SELECT_OPTIONS: Record<string, { value: string; label: string; badge?: string; description?: string }[]> = {
+const getSelectOptions = (t: (key: string, params?: Record<string, string | number>, fallback?: string) => string): Record<string, { value: string; label: string; badge?: string; description?: string }[]> => ({
     'general.system_mode': [
         {
             value: 'development',
-            label: 'Development',
+            label: t('settings.system_mode_options.development_label', undefined, 'Development'),
             badge: 'DEV',
-            description: 'Mode pengembangan (debug aktif, simulasi email & OTP)',
+            description: t('settings.system_mode_options.development_desc', undefined, 'Mode pengembangan (debug aktif, simulasi email & OTP)'),
         },
         {
             value: 'production',
-            label: 'Production',
+            label: t('settings.system_mode_options.production_label', undefined, 'Production'),
             badge: 'LIVE',
-            description: 'Mode produksi (email nyata & sistem keamanan penuh)',
+            description: t('settings.system_mode_options.production_desc', undefined, 'Mode produksi (email nyata & sistem keamanan penuh)'),
         },
     ],
-};
+});
 
 const formatGroupLabel = (group: string, t: (key: string) => string): string => {
     const key = `settings.groups.${group}`;
@@ -269,12 +269,27 @@ export default function Group({
     const [resetProcessing, setResetProcessing] = useState(false);
     const isAppearanceGroup = currentGroup === 'appearance';
 
+    const selectOptions = getSelectOptions(t);
+
+    const getSettingLabel = (setting: Setting): string => {
+        const key = `settings.definitions.${setting.key}.label`;
+        const translated = t(key);
+        return translated === key ? setting.label : translated;
+    };
+
+    const getSettingDescription = (setting: Setting): string | null => {
+        if (!setting.description) return null;
+        const key = `settings.definitions.${setting.key}.description`;
+        const translated = t(key);
+        return translated === key ? setting.description : translated;
+    };
+
     const formatDisplayValue = (setting: Setting): string => {
         if (setting.type === 'boolean') {
             return setting.value === '1' ? t('settings.value_display.yes') : t('settings.value_display.no');
         }
-        if (setting.type === 'select' && setting.key in SELECT_OPTIONS) {
-            const option = SELECT_OPTIONS[setting.key].find((item) => item.value === setting.value);
+        if (setting.type === 'select' && setting.key in selectOptions) {
+            const option = selectOptions[setting.key].find((item) => item.value === setting.value);
             return option?.label ?? setting.value ?? t('settings.value_display.empty');
         }
         return setting.value || t('settings.value_display.empty');
@@ -407,7 +422,7 @@ export default function Group({
                                     {formatGroupLabel(currentGroup, t)}
                                 </h3>
                                 <p className="text-xs text-slate-500">
-                                    {groupSettings.length} pengaturan dalam grup ini
+                                    {t('settings.pages.group.count_hint', { count: groupSettings.length })}
                                 </p>
                             </div>
                         </div>
@@ -440,9 +455,9 @@ export default function Group({
                         <div className="space-y-6">
                             {groupSettings.map((setting) => (
                                 <div key={setting.id} className="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-b-0 last:pb-0">
-                                    <InputLabel value={setting.label} className="!text-xs !font-bold !uppercase !tracking-wider" />
-                                    {setting.description && (
-                                        <p className="mt-0.5 text-xs text-slate-500">{setting.description}</p>
+                                    <InputLabel value={getSettingLabel(setting)} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                    {getSettingDescription(setting) && (
+                                        <p className="mt-0.5 text-xs text-slate-500">{getSettingDescription(setting)}</p>
                                     )}
                                     {setting.type === 'color' && setting.value ? (
                                         <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
@@ -456,7 +471,7 @@ export default function Group({
                                         <div className="mt-2">
                                             <img
                                                 src={setting.value}
-                                                alt={setting.label}
+                                                alt={getSettingLabel(setting)}
                                                 className="max-h-24 rounded-xl border border-slate-200 dark:border-slate-800 object-contain p-2 bg-slate-50 dark:bg-slate-800"
                                                 onError={(e) => {
                                                     (e.target as HTMLImageElement).style.display = 'none';
@@ -476,14 +491,14 @@ export default function Group({
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
-                                                <InputLabel htmlFor={`value-${setting.id}`} value={setting.label} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                                <InputLabel htmlFor={`value-${setting.id}`} value={getSettingLabel(setting)} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                                 <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                                                     {setting.key}
                                                 </span>
                                             </div>
 
-                                            {setting.description && (
-                                                <p className="mt-0.5 text-xs text-slate-500">{setting.description}</p>
+                                            {getSettingDescription(setting) && (
+                                                <p className="mt-0.5 text-xs text-slate-500">{getSettingDescription(setting)}</p>
                                             )}
 
                                             <div className="mt-2.5 max-w-xl">
@@ -507,8 +522,8 @@ export default function Group({
                                                             )}
                                                             <span className="text-xs font-bold text-slate-900 dark:text-white">
                                                                 {data.settings[index].value === '1'
-                                                                    ? (setting.key === 'general.ai_features_enabled' ? 'Aktif (AI Features Enabled)' : t('settings.pages.group.enabled_label'))
-                                                                    : (setting.key === 'general.ai_features_enabled' ? 'Nonaktif (AI Features Disabled)' : 'Nonaktif')}
+                                                                    ? (setting.key === 'general.ai_features_enabled' ? t('settings.pages.group.ai_enabled') : t('settings.pages.group.enabled_label'))
+                                                                    : (setting.key === 'general.ai_features_enabled' ? t('settings.pages.group.ai_disabled') : t('settings.pages.group.disabled_label'))}
                                                             </span>
                                                         </div>
                                                         <div className="relative shrink-0">
@@ -522,13 +537,13 @@ export default function Group({
                                                             <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5 shadow-sm" />
                                                         </div>
                                                     </label>
-                                                ) : setting.type === 'select' && setting.key in SELECT_OPTIONS ? (
+                                                ) : setting.type === 'select' && setting.key in selectOptions ? (
                                                     <Select
                                                         id={`value-${setting.id}`}
                                                         className="w-full"
                                                         value={data.settings[index].value}
                                                         onChange={(value) => updateValue(index, value)}
-                                                        options={SELECT_OPTIONS[setting.key]}
+                                                        options={selectOptions[setting.key]}
                                                     />
                                                 ) : setting.type === 'color' ? (
                                                     <div className="flex items-center gap-3">
@@ -615,7 +630,7 @@ export default function Group({
                 title={t('settings.delete_confirm.title')}
                 message={
                     settingToDelete
-                        ? t('settings.delete_confirm.message', { label: settingToDelete.label, key: settingToDelete.key })
+                        ? t('settings.delete_confirm.message', { label: getSettingLabel(settingToDelete), key: settingToDelete.key })
                         : t('settings.delete_confirm.message_generic')
                 }
             />
