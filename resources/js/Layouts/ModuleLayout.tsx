@@ -316,6 +316,65 @@ type MenuGroup =
     | { titleKey: string; tier: ModuleTier; also?: string[] }
     | { titleKey: string; modules: string[] };
 
+const MENU_GROUP_ICONS: Record<string, ReactNode> = {
+    car_rental: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+        </svg>
+    ),
+    intelligence: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        </svg>
+    ),
+    master_data: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+        </svg>
+    ),
+    finance: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    ),
+    procurement_warehouse: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+        </svg>
+    ),
+    fleet_compliance: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+    ),
+    distribution_logistics: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.083c.621 0 1.191.354 1.409.923.156.406.301.816.436 1.228M14.25 7.5v11.25m0-11.25h-3.75m3.75 0V4.875c0-.621-.504-1.125-1.125-1.125h-7.5C6.879 3.75 6 4.629 6 5.652v9.848m0 0a1.5 1.5 0 013 0M6 15.5h3.75" />
+        </svg>
+    ),
+    sales_commercial: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+        </svg>
+    ),
+    content: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
+        </svg>
+    ),
+    administration: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    ),
+    platform: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+        </svg>
+    ),
+};
+
 const MENU_GROUPS: MenuGroup[] = [
     {
         titleKey: 'car_rental',
@@ -948,7 +1007,9 @@ export default function ModuleLayout({ header, children }: Props) {
                 : group.modules;
 
         return groupsToUse.map((group) => ({
+            key: group.titleKey,
             title: t(`menu_groups.${group.titleKey}`),
+            icon: MENU_GROUP_ICONS[group.titleKey] ?? null,
             items: moduleKeysIn(group)
                 .map((module) => navigation.find((item) => item.module === module))
                 .filter((item): item is MenuItem => Boolean(item)),
@@ -963,10 +1024,23 @@ export default function ModuleLayout({ header, children }: Props) {
             return {};
         }
     });
-    const isGroupOpen = (title: string) => openGroups[title] ?? true;
-    const toggleGroup = (title: string) =>
+
+    // Auto-open group if an item inside is active, or if user hasn't explicitly closed it
+    const isGroupOpen = (title: string, hasActive: boolean, key?: string) => {
+        // If an item inside is currently active, ensure it is expanded
+        if (hasActive) {
+            return true;
+        }
+        // By default, car_rental is open on tenants unless explicitly collapsed
+        if (openGroups[title] === undefined) {
+            return key === 'car_rental' ? true : true;
+        }
+        return openGroups[title];
+    };
+
+    const toggleGroup = (title: string, currentOpen: boolean) =>
         setOpenGroups((prev) => {
-            const next = { ...prev, [title]: !(prev[title] ?? true) };
+            const next = { ...prev, [title]: !currentOpen };
             try {
                 localStorage.setItem('sidebarGroups', JSON.stringify(next));
             } catch {
@@ -1016,8 +1090,8 @@ export default function ModuleLayout({ header, children }: Props) {
         <>
             {dashboardItem && renderNavLink(dashboardItem)}
             {menuGroups.map((group) => {
-                const open = isGroupOpen(group.title);
                 const hasActive = group.items.some((item) => item.current);
+                const open = isGroupOpen(group.title, hasActive, group.key);
                 const groupPendingCount = group.items.reduce((sum, item) => {
                     if (item.module === 'payment-orders') return sum + ((pageProps.pendingPaymentOrdersCount as number) || 0);
                     if (item.module === 'rental-reservation') return sum + ((pageProps.pendingRentalApprovalsCount as number) || 0);
@@ -1025,25 +1099,45 @@ export default function ModuleLayout({ header, children }: Props) {
                     return sum;
                 }, 0);
                 return (
-                    <div key={group.title} className="pt-3">
+                    <div key={group.title} className="pt-2.5">
                         <button
                             type="button"
-                            onClick={() => toggleGroup(group.title)}
+                            onClick={() => toggleGroup(group.title, open)}
                             aria-expanded={open}
-                            className={`flex w-full items-center justify-between gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold uppercase leading-snug tracking-wide transition-colors ${hasActive && !open ? 'text-white' : `${theme.text} hover:text-white`
-                                }`}
+                            className={`group flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold leading-normal transition-colors ${
+                                hasActive
+                                    ? 'text-white'
+                                    : `${theme.text} hover:bg-white/5 hover:text-white`
+                            }`}
                         >
-                            <span className="min-w-0 flex-1 text-left">{group.title}</span>
-                            {!open && groupPendingCount > 0 && (
-                                <span className="mr-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
-                                    {groupPendingCount}
+                            <div className="flex items-center min-w-0 gap-2">
+                                {group.icon && (
+                                    <span
+                                        className={`transition-colors ${
+                                            hasActive
+                                                ? 'text-indigo-400'
+                                                : 'text-white/40 group-hover:text-white/70'
+                                        }`}
+                                    >
+                                        {group.icon}
+                                    </span>
+                                )}
+                                <span className="truncate text-left tracking-normal font-medium">
+                                    {group.title}
                                 </span>
-                            )}
-                            <span className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}>
-                                <ChevronDownIcon />
-                            </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                {!open && groupPendingCount > 0 && (
+                                    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
+                                        {groupPendingCount}
+                                    </span>
+                                )}
+                                <span className={`transition-transform duration-200 text-white/40 group-hover:text-white/80 ${open ? '' : '-rotate-90'}`}>
+                                    <ChevronDownIcon />
+                                </span>
+                            </div>
                         </button>
-                        {open && <div className="mt-1 space-y-1">{group.items.map(renderNavLink)}</div>}
+                        {open && <div className="mt-1 space-y-0.5 pl-1">{group.items.map(renderNavLink)}</div>}
                     </div>
                 );
             })}
