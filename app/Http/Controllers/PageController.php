@@ -9,6 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Modules\Pages\Models\Page;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -45,7 +46,7 @@ class PageController extends Controller
      * Render the homepage: the tenant's designated page when the Pages module
      * is available and one is set, the stock landing page otherwise.
      */
-    public function homepage(): Response
+    public function homepage(): Response|InertiaResponse
     {
         if (Setting::getValue('general.maintenance_mode') === '1' && ! Auth::guard('web')->check()) {
             return MaintenanceModePage::toResponse(request());
