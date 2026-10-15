@@ -57,14 +57,23 @@ class PartnerSettlementController extends Controller
         }
 
         $monthOptions = [];
-        $cursor = Carbon::now()->startOfMonth();
-        for ($i = 0; $i < 6; $i++) {
+        $cursor = Carbon::now()->startOfMonth()->addMonth();
+        for ($i = 0; $i < 14; $i++) {
             $val = $cursor->format('Y-m');
             $monthOptions[] = [
                 'value' => $val,
                 'label' => $cursor->translatedFormat('F Y'),
             ];
             $cursor->subMonth();
+        }
+
+        if ($month && ! collect($monthOptions)->contains('value', $month)) {
+            $parsedMonth = Carbon::parse($month.'-01');
+            $monthOptions[] = [
+                'value' => $month,
+                'label' => $parsedMonth->translatedFormat('F Y'),
+            ];
+            usort($monthOptions, fn ($a, $b) => strcmp($b['value'], $a['value']));
         }
 
         $tenant = tenant();
@@ -84,6 +93,9 @@ class PartnerSettlementController extends Controller
                 'name' => $v->name,
                 'plate_number' => $v->plate_number,
                 'type' => $v->type,
+                'ownership_type' => $v->ownership_type,
+                'settlement_scheme' => $v->settlement_scheme,
+                'home_base' => $v->homeBase ? ['id' => $v->homeBase->id, 'name' => $v->homeBase->name] : null,
             ])->values()->all(),
             'monthOptions' => $monthOptions,
             'currentFilter' => [

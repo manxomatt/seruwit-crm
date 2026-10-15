@@ -1,9 +1,10 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import Select, { type SelectOption } from '@/Components/Select';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PartnersNav from '../../../PartnersNav';
 
 interface VehicleReport {
@@ -90,6 +91,9 @@ interface Props {
         name: string;
         plate_number: string;
         type: string;
+        ownership_type?: string;
+        settlement_scheme?: string | null;
+        home_base?: { id: number; name: string } | null;
     }>;
     monthOptions: Array<{ value: string; label: string }>;
     currentFilter: {
@@ -123,12 +127,25 @@ export default function Settlement({
     const [selectedVehicleId, setSelectedVehicleId] = useState<string>(
         currentFilter.vehicle_id ? String(currentFilter.vehicle_id) : ''
     );
+    const [useCustomRange, setUseCustomRange] = useState(false);
+    const [startDate, setStartDate] = useState(currentFilter.start_date);
+    const [endDate, setEndDate] = useState(currentFilter.end_date);
+
+    useEffect(() => {
+        setSelectedMonth(currentFilter.month);
+        setSelectedVehicleId(currentFilter.vehicle_id ? String(currentFilter.vehicle_id) : '');
+        setStartDate(currentFilter.start_date);
+        setEndDate(currentFilter.end_date);
+    }, [currentFilter.month, currentFilter.vehicle_id, currentFilter.start_date, currentFilter.end_date]);
 
     const handleFilterChange = (month: string, vehicleId: string) => {
         setSelectedMonth(month);
         setSelectedVehicleId(vehicleId);
 
-        const params: Record<string, string> = { month };
+        const params: Record<string, string> = {};
+        if (month) {
+            params.month = month;
+        }
         if (vehicleId) {
             params.vehicle_id = vehicleId;
         }
@@ -136,9 +153,46 @@ export default function Settlement({
         router.get(
             prefixedRoute('partners.settlement', settlement.partner.id),
             params,
-            { preserveState: true }
+            { preserveState: true, replace: true }
         );
     };
+
+    const handleCustomFilter = (e: React.FormEvent) => {
+        e.preventDefault();
+        const params: Record<string, string> = {
+            start_date: startDate,
+            end_date: endDate,
+        };
+        if (selectedVehicleId) {
+            params.vehicle_id = selectedVehicleId;
+        }
+        router.get(
+            prefixedRoute('partners.settlement', settlement.partner.id),
+            params,
+            { preserveState: true, replace: true }
+        );
+    };
+
+    const periodOptions: SelectOption[] = monthOptions.map((opt) => ({
+        value: opt.value,
+        label: opt.label,
+        description: `Bulan ${opt.value}`,
+    }));
+
+    const vehicleOptions: SelectOption[] = [
+        {
+            value: '',
+            label: `Semua Armada (${partnerVehicles.length} Unit)`,
+            description: 'Rekapitulasi gabungan seluruh armada milik mitra',
+            badge: 'Konsolidasi',
+        },
+        ...partnerVehicles.map((v) => ({
+            value: String(v.id),
+            label: `${v.plate_number} — ${v.name}`,
+            description: `${v.type}${v.settlement_scheme ? ` · ${v.settlement_scheme}` : ''}`,
+            badge: v.plate_number,
+        })),
+    ];
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat(localeTag, {
@@ -198,37 +252,101 @@ export default function Settlement({
 
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6 pb-24 print:p-0 print:max-w-none print:m-0">
                 {/* Filter Controls (Hidden on print) */}
-                <div className="print:hidden flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <label className="text-xs font-bold text-slate-500">Periode:</label>
-                            <select
-                                value={selectedMonth}
-                                onChange={(e) => handleFilterChange(e.target.value, selectedVehicleId)}
-                                className="rounded-2xl border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                            >
-                                {monthOptions.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
+                <div className="print:hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                            {/* Combobox Periode */}
+                            <div className="space-y-1.5">
+                                <label className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    <span className="flex items-center gap-1.5">
+                                        <span>📅</span>
+                                        <span>Periode Statement:</span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUseCustomRange(!useCustomRange)}
+                                        className="text-[11px] font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                    >
+                                        {useCustomRange ? 'Gunakan Periode Bulan' : 'Rentang Tanggal Kustom'}
+                                    </button>
+                                </label>
+                                {!useCustomRange ? (
+                                    <Select
+                                        value={selectedMonth}
+                                        onChange={(newMonth) => handleFilterChange(newMonth, selectedVehicleId)}
+                                        options={periodOptions}
+                                        placeholder="Pilih periode bulan..."
+                                        searchPlaceholder="Cari bulan..."
+                                        searchable={false}
+                                        className="w-full text-xs"
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            className="w-1/2 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                        />
+                                        <span className="text-xs text-slate-400">s/d</span>
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className="w-1/2 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleCustomFilter}
+                                            className="shrink-0 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-indigo-700"
+                                        >
+                                            OK
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Combobox Pilih Unit */}
+                            <div className="space-y-1.5">
+                                <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    <span>🚗</span>
+                                    <span>Pilih Unit Armada:</span>
+                                </label>
+                                <Select
+                                    value={selectedVehicleId}
+                                    onChange={(newVehicleId) => handleFilterChange(selectedMonth, newVehicleId)}
+                                    options={vehicleOptions}
+                                    placeholder="Semua Armada Terhubung"
+                                    searchPlaceholder="Ketik plat nomor atau nama unit..."
+                                    searchable={true}
+                                    className="w-full text-xs"
+                                />
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <label className="text-xs font-bold text-slate-500">Pilih Unit:</label>
-                            <select
-                                value={selectedVehicleId}
-                                onChange={(e) => handleFilterChange(selectedMonth, e.target.value)}
-                                className="rounded-2xl border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                            >
-                                <option value="">Semua Armada Terhubung ({partnerVehicles.length} Unit)</option>
-                                {partnerVehicles.map((v) => (
-                                    <option key={v.id} value={String(v.id)}>
-                                        {v.plate_number} — {v.name}
-                                    </option>
-                                ))}
-                            </select>
+                        {/* Status / Active Filter Badge */}
+                        <div className="flex flex-wrap items-center gap-3 lg:border-l lg:border-slate-100 lg:dark:border-slate-800 lg:pl-5">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mode Statement</p>
+                                <span className={`mt-0.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                                    isConsolidated
+                                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
+                                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                                }`}>
+                                    <span className={`h-2 w-2 rounded-full ${isConsolidated ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                                    <span>{isConsolidated ? `Semua Armada (${partnerVehicles.length} Unit)` : (settlement.vehicle?.plate_number ?? 'Unit Tunggal')}</span>
+                                </span>
+                            </div>
+
+                            {selectedVehicleId && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleFilterChange(selectedMonth, '')}
+                                    className="text-xs font-bold text-slate-500 hover:text-indigo-600 underline dark:text-slate-400 dark:hover:text-indigo-400 self-end mb-1"
+                                >
+                                    Tampilkan Semua Unit
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

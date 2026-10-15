@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import Select, { type SelectOption } from '@/Components/Select';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
@@ -197,17 +198,20 @@ export default function Settlement({
                 <div className="print:hidden flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex flex-wrap items-center gap-3">
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Pilih Periode Bulan:</label>
-                        <select
-                            value={selectedMonth}
-                            onChange={(e) => handleMonthChange(e.target.value)}
-                            className="rounded-2xl border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                        >
-                            {monthOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="w-56">
+                            <Select
+                                value={selectedMonth}
+                                onChange={handleMonthChange}
+                                options={monthOptions.map((opt) => ({
+                                    value: opt.value,
+                                    label: opt.label,
+                                    description: `Bulan ${opt.value}`,
+                                }))}
+                                placeholder="Pilih periode..."
+                                searchable={false}
+                                className="w-full text-xs"
+                            />
+                        </div>
 
                         <button
                             type="button"

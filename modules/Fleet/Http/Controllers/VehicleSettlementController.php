@@ -47,16 +47,25 @@ class VehicleSettlementController extends Controller
 
         $settlement = $calculator->calculateForVehicle($vehicle, $startDate, $endDate);
 
-        // Generate quick available month options (current + past 5 months)
+        // Generate quick available month options (next month + past 12 months)
         $monthOptions = [];
-        $cursor = Carbon::now()->startOfMonth();
-        for ($i = 0; $i < 6; $i++) {
+        $cursor = Carbon::now()->startOfMonth()->addMonth();
+        for ($i = 0; $i < 14; $i++) {
             $val = $cursor->format('Y-m');
             $monthOptions[] = [
                 'value' => $val,
                 'label' => $cursor->translatedFormat('F Y'),
             ];
             $cursor->subMonth();
+        }
+
+        if ($month && ! collect($monthOptions)->contains('value', $month)) {
+            $parsedMonth = Carbon::parse($month.'-01');
+            $monthOptions[] = [
+                'value' => $month,
+                'label' => $parsedMonth->translatedFormat('F Y'),
+            ];
+            usort($monthOptions, fn ($a, $b) => strcmp($b['value'], $a['value']));
         }
 
         $tenant = tenant();
