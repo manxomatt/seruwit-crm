@@ -1,7 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -10,7 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import PartnersNav from '../../../../PartnersNav';
 
@@ -129,7 +127,6 @@ export default function BlacklistIndex({
     const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || 'active');
 
     // Modals
-    const [showAddModal, setShowAddModal] = useState(false);
     const [selectedItemForDetail, setSelectedItemForDetail] = useState<BlacklistItem | null>(null);
     const [itemToDelete, setItemToDelete] = useState<BlacklistItem | null>(null);
     const [processingDelete, setProcessingDelete] = useState(false);
@@ -137,18 +134,6 @@ export default function BlacklistIndex({
     const hasActiveFilters = Boolean(
         search.trim() || selectedCategory !== 'all' || selectedSeverity !== 'all' || selectedStatus !== 'active'
     );
-
-    const addForm = useForm({
-        name: '',
-        id_number: '',
-        phone: '',
-        license_number: '',
-        category: 'car_theft',
-        severity: 'critical',
-        incident_date: new Date().toISOString().slice(0, 10),
-        incident_details: '',
-        police_report_number: '',
-    });
 
     const applyFilters = (newOverrides: Partial<Filters> = {}) => {
         const query: Record<string, any> = {
@@ -183,17 +168,6 @@ export default function BlacklistIndex({
         setSelectedSeverity('all');
         setSelectedStatus('all');
         router.get(prefixedRoute('partners.blacklist.index'), { status: 'all' }, { preserveState: true, replace: true });
-    };
-
-    const submitAdd: FormEventHandler = (e) => {
-        e.preventDefault();
-        addForm.post(prefixedRoute('partners.blacklist.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setShowAddModal(false);
-                addForm.reset();
-            },
-        });
     };
 
     const toggleStatus = (item: BlacklistItem) => {
@@ -307,13 +281,14 @@ export default function BlacklistIndex({
                     }
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
-                            <PrimaryButton
-                                type="button"
-                                onClick={() => setShowAddModal(true)}
-                                className="!rounded-xl text-xs shadow-sm bg-rose-600 hover:bg-rose-700 active:bg-rose-800 focus:ring-rose-500"
-                            >
-                                + Tambah Daftar Hitam
-                            </PrimaryButton>
+                            <Link href={prefixedRoute('partners.blacklist.create')}>
+                                <PrimaryButton
+                                    type="button"
+                                    className="!rounded-xl text-xs shadow-sm bg-rose-600 hover:bg-rose-700 active:bg-rose-800 focus:ring-rose-500"
+                                >
+                                    + Tambah Daftar Hitam
+                                </PrimaryButton>
+                            </Link>
                         </div>
                     }
                 />
@@ -552,14 +527,13 @@ export default function BlacklistIndex({
                             </button>
                         ) : (
                             <div className="mt-5">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddModal(true)}
+                                <Link
+                                    href={prefixedRoute('partners.blacklist.create')}
                                     className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 hover:bg-rose-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-rose-600/30 transition"
                                 >
                                     <span>+</span>
                                     <span>Tambah Catatan Kasus Pertama</span>
-                                </button>
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -914,146 +888,7 @@ export default function BlacklistIndex({
                 </Modal>
             )}
 
-            {/* Add Blacklist Modal */}
-            <Modal show={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="lg">
-                <form onSubmit={submitAdd} className="p-6 space-y-4">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-                        <span className="text-xl">🚨</span>
-                        <div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                Masukkan Data ke Daftar Hitam (Blacklist)
-                            </h3>
-                            <p className="text-xs text-slate-400">
-                                Mencegah identitas pelaku agar tidak dapat menyewa unit rental kembali.
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
-                            <InputLabel value="Nama Lengkap Terduga / Pelaku *" />
-                            <TextInput
-                                type="text"
-                                value={addForm.data.name}
-                                onChange={(e) => addForm.setData('name', e.target.value)}
-                                placeholder="Nama sesuai KTP"
-                                className="mt-1 w-full text-xs !rounded-xl"
-                                required
-                            />
-                            <InputError message={addForm.errors.name} className="mt-1" />
-                        </div>
-
-                        <div>
-                            <InputLabel value="Nomor KTP / NIK / Paspor *" />
-                            <TextInput
-                                type="text"
-                                value={addForm.data.id_number}
-                                onChange={(e) => addForm.setData('id_number', e.target.value)}
-                                placeholder="Contoh: 3578210000000001"
-                                className="mt-1 w-full text-xs font-mono !rounded-xl"
-                                required
-                            />
-                            <InputError message={addForm.errors.id_number} className="mt-1" />
-                        </div>
-
-                        <div>
-                            <InputLabel value="Nomor Telepon / WhatsApp *" />
-                            <TextInput
-                                type="text"
-                                value={addForm.data.phone}
-                                onChange={(e) => addForm.setData('phone', e.target.value)}
-                                placeholder="Contoh: 08123456789"
-                                className="mt-1 w-full text-xs font-mono !rounded-xl"
-                                required
-                            />
-                            <InputError message={addForm.errors.phone} className="mt-1" />
-                        </div>
-
-                        <div>
-                            <InputLabel value="Nomor SIM (Opsional)" />
-                            <TextInput
-                                type="text"
-                                value={addForm.data.license_number}
-                                onChange={(e) => addForm.setData('license_number', e.target.value)}
-                                placeholder="Nomor SIM A / B1"
-                                className="mt-1 w-full text-xs font-mono !rounded-xl"
-                            />
-                        </div>
-
-                        <div>
-                            <InputLabel value="Kategori Kasus *" />
-                            <select
-                                value={addForm.data.category}
-                                onChange={(e) => addForm.setData('category', e.target.value as any)}
-                                className="mt-1 w-full rounded-xl border-slate-200 bg-white text-xs font-medium text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                            >
-                                <option value="car_theft">Penggelapan Armada</option>
-                                <option value="pawn_attempt">Percobaan Gadai Tanpa Izin</option>
-                                <option value="bad_debt">Gagal Bayar / Kabur Tanpa Pelunasan</option>
-                                <option value="fake_identity">Pemalsuan Dokumen Identitas</option>
-                                <option value="reckless_damage">Kecelakaan / Rusak Berat Menolak Ganti</option>
-                                <option value="other">Pelanggaran Lainnya</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <InputLabel value="Tingkat Bahaya (Severity) *" />
-                            <select
-                                value={addForm.data.severity}
-                                onChange={(e) => addForm.setData('severity', e.target.value as any)}
-                                className="mt-1 w-full rounded-xl border-slate-200 bg-white text-xs font-medium text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                            >
-                                <option value="critical">⛔ Tolak Mutlak (Critical Danger)</option>
-                                <option value="warning">⚠️ Waspada (Perlu Jaminan Ekstra)</option>
-                                <option value="caution">📝 Catatan Kasus Khusus</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <InputLabel value="Tanggal Kejadian" />
-                            <TextInput
-                                type="date"
-                                value={addForm.data.incident_date}
-                                onChange={(e) => addForm.setData('incident_date', e.target.value)}
-                                className="mt-1 w-full text-xs !rounded-xl"
-                            />
-                        </div>
-
-                        <div>
-                            <InputLabel value="Nomor Laporan Polisi / LP (Opsional)" />
-                            <TextInput
-                                type="text"
-                                value={addForm.data.police_report_number}
-                                onChange={(e) => addForm.setData('police_report_number', e.target.value)}
-                                placeholder="Contoh: LP/B/123/X/2026/SPKT"
-                                className="mt-1 w-full text-xs !rounded-xl"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <InputLabel value="Kronologi & Modus Kejadian *" />
-                        <textarea
-                            value={addForm.data.incident_details}
-                            onChange={(e) => addForm.setData('incident_details', e.target.value)}
-                            placeholder="Jelaskan kronologi kejadian, modus yang digunakan, ciri-ciri pelaku, dan nomor plat mobil yang sempat dibawa..."
-                            rows={4}
-                            className="mt-1 w-full rounded-xl border-slate-200 bg-white text-xs font-medium text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                            required
-                        />
-                        <InputError message={addForm.errors.incident_details} className="mt-1" />
-                    </div>
-
-                    <div className="mt-6 flex justify-end gap-2">
-                        <SecondaryButton type="button" onClick={() => setShowAddModal(false)}>
-                            Batal
-                        </SecondaryButton>
-                        <PrimaryButton type="submit" disabled={addForm.processing} className="bg-rose-600 hover:bg-rose-700">
-                            {addForm.processing ? 'Menyimpan...' : 'Simpan & Aktifkan Daftar Hitam'}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
 
             {/* Confirm Delete Dialog */}
             <ConfirmDeleteDialog

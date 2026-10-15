@@ -15,6 +15,27 @@ use Modules\Partners\Support\CustomerRiskService;
 
 class PartnerBlacklistController extends Controller
 {
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
+     * Show the form for creating a new blacklist record.
+     */
+    public function create(Request $request): Response
+    {
+        $partnerId = $request->query('partner_id');
+        $selectedPartner = null;
+        if ($partnerId) {
+            $selectedPartner = Partner::query()->select('id', 'name', 'code', 'phone', 'id_number')->find($partnerId);
+        }
+
+        return Inertia::render('Modules/Partners/Blacklist/Create', [
+            'partner' => $selectedPartner,
+        ]);
+    }
+
     /**
      * Display the Blacklist & Anti-Fraud Registry dashboard.
      */
@@ -137,7 +158,8 @@ class PartnerBlacklistController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', "Identitas {$validated['name']} ({$validated['id_number']}) berhasil dimasukkan ke Daftar Hitam.");
+        return redirect()->route($this->getRoutePrefix().'.partners.blacklist.index')
+            ->with('success', "Identitas {$validated['name']} ({$validated['id_number']}) berhasil dimasukkan ke Daftar Hitam.");
     }
 
     /**

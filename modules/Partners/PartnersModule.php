@@ -105,6 +105,7 @@ class PartnersModule implements ModuleContract
 
         // Blacklist & Anti-Fraud
         Route::get('/partners/blacklist', [PartnerBlacklistController::class, 'index'])->middleware('permission:partners,view')->name('partners.blacklist.index');
+        Route::get('/partners/blacklist/create', [PartnerBlacklistController::class, 'create'])->middleware('permission:partners,create')->name('partners.blacklist.create');
         Route::post('/partners/blacklist', [PartnerBlacklistController::class, 'store'])->middleware('permission:partners,create')->name('partners.blacklist.store');
         Route::patch('/partners/blacklist/{blacklist}', [PartnerBlacklistController::class, 'update'])->middleware('permission:partners,update')->name('partners.blacklist.update');
         Route::delete('/partners/blacklist/{blacklist}', [PartnerBlacklistController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.blacklist.destroy');

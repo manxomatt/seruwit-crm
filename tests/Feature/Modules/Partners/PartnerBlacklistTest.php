@@ -60,6 +60,19 @@ class PartnerBlacklistTest extends TestCase
         );
     }
 
+    public function test_admin_can_view_blacklist_create_page(): void
+    {
+        $user = $this->createAdminUser();
+
+        $response = $this->actingAs($user)->get(route('module.partners.blacklist.create'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Modules/Partners/Blacklist/Create')
+            ->has('partner')
+        );
+    }
+
     public function test_admin_can_store_blacklist_record_and_sync_partner(): void
     {
         $user = $this->createAdminUser();
