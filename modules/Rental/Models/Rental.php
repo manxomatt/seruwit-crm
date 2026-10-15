@@ -267,6 +267,12 @@ class Rental extends Model
         return $this->belongsTo(Driver::class);
     }
 
+    /** @return HasMany<RentalDutyOrder, $this> */
+    public function dutyOrders(): HasMany
+    {
+        return $this->hasMany(RentalDutyOrder::class);
+    }
+
     /** @return BelongsTo<Partner, $this> */
     public function partner(): BelongsTo
     {

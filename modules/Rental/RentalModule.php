@@ -18,6 +18,7 @@ use Modules\Rental\Http\Controllers\RentalCalendarController;
 use Modules\Rental\Http\Controllers\RentalController;
 use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalDispatchController;
+use Modules\Rental\Http\Controllers\RentalDutyOrderController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 use Modules\Rental\Http\Controllers\RentalReservationWizardController;
@@ -164,6 +165,18 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/dispatch/auto-generate', [RentalDispatchController::class, 'autoGenerate'])->middleware('permission:rental,dispatch')->name('rental.dispatch.auto_generate');
         Route::patch('/rental/dispatch/{dispatch}/assign', [RentalDispatchController::class, 'assign'])->middleware('permission:rental,dispatch')->name('rental.dispatch.assign');
         Route::patch('/rental/dispatch/{dispatch}/status', [RentalDispatchController::class, 'updateStatus'])->middleware('permission:rental,dispatch')->name('rental.dispatch.status');
+
+        // Driver Duty Orders / SPPD & Expense Cash Advance (before {rental} wildcard)
+        Route::get('/rental/duty-orders', [RentalDutyOrderController::class, 'index'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.index');
+        Route::get('/rental/duty-orders/create', [RentalDutyOrderController::class, 'create'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.create');
+        Route::post('/rental/duty-orders', [RentalDutyOrderController::class, 'store'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.store');
+        Route::get('/rental/duty-orders/{dutyOrder}', [RentalDutyOrderController::class, 'show'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.show');
+        Route::patch('/rental/duty-orders/{dutyOrder}/status', [RentalDutyOrderController::class, 'updateStatus'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.status');
+        Route::post('/rental/duty-orders/{dutyOrder}/expenses', [RentalDutyOrderController::class, 'addExpense'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.expenses.store');
+        Route::delete('/rental/duty-orders/{dutyOrder}/expenses/{expense}', [RentalDutyOrderController::class, 'deleteExpense'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.expenses.destroy');
+        Route::post('/rental/duty-orders/{dutyOrder}/overtime', [RentalDutyOrderController::class, 'updateOvertime'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.overtime');
+        Route::post('/rental/duty-orders/{dutyOrder}/settle', [RentalDutyOrderController::class, 'settle'])->middleware('permission:rental,finance')->name('rental.duty_orders.settle');
+        Route::get('/rental/duty-orders/{dutyOrder}/print', [RentalDutyOrderController::class, 'print'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.print');
 
         // Reservation wizard JSON helpers (before {rental} wildcard)
         Route::get('/rental/reservations/available-vehicles', [RentalReservationWizardController::class, 'availableVehicles'])
