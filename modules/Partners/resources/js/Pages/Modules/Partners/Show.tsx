@@ -131,6 +131,11 @@ const Icons = {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 17a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4zm-9-5l1-5h8l1 5m-10 0h10m-10 0a2 2 0 00-2 2v3h14v-3a2 2 0 00-2-2" />
         </svg>
     ),
+    ChartBar: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+    ),
 };
 
 interface Tag {
@@ -649,6 +654,15 @@ export default function Show({ partner, can }: Props): JSX.Element {
                         <Link href={prefixedRoute('partners.index')}>
                             <SecondaryButton type="button" className="!rounded-xl text-xs shadow-xs">{t('common.back')}</SecondaryButton>
                         </Link>
+                        <Link href={prefixedRoute('partners.settlement', partner.id)}>
+                            <SecondaryButton
+                                type="button"
+                                className="!rounded-xl text-xs shadow-xs gap-1.5 !border-indigo-200 !bg-indigo-50 !text-indigo-700 hover:!bg-indigo-100 dark:!border-indigo-900/50 dark:!bg-indigo-950/40 dark:!text-indigo-300 font-bold"
+                            >
+                                <Icons.ChartBar />
+                                <span>Laporan Settlement</span>
+                            </SecondaryButton>
+                        </Link>
                         {can.update && (
                             <Link href={prefixedRoute('partners.edit', partner.id)}>
                                 <PrimaryButton type="button" className="!rounded-xl text-xs shadow-xs gap-1.5">
@@ -755,6 +769,15 @@ export default function Show({ partner, can }: Props): JSX.Element {
 
                             {/* Quick Communication Actions */}
                             <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0">
+                                <Link href={prefixedRoute('partners.settlement', partner.id)}>
+                                    <SecondaryButton
+                                        type="button"
+                                        className="!rounded-xl text-xs gap-1.5 shadow-xs !border-indigo-200 !bg-indigo-50/80 !text-indigo-700 hover:!bg-indigo-100 dark:!border-indigo-900/50 dark:!bg-indigo-950/40 dark:!text-indigo-300 font-bold"
+                                    >
+                                        <Icons.ChartBar />
+                                        <span>Settlement & Bagi Hasil</span>
+                                    </SecondaryButton>
+                                </Link>
                                 {primaryPhone && (
                                     <a href={`tel:${primaryPhone}`}>
                                         <SecondaryButton type="button" className="!rounded-xl text-xs gap-1.5 shadow-xs">
@@ -835,13 +858,15 @@ export default function Show({ partner, can }: Props): JSX.Element {
                             tone={partner.children.length > 0 ? 'success' : 'default'}
                         />
                         {partner.vehicles && partner.vehicles.length > 0 && (
-                            <StatCard
-                                icon={Icons.Car}
-                                label="Armada Terhubung"
-                                value={`${partner.vehicles.length} Unit`}
-                                hint="Titipan / Sublease"
-                                tone="indigo"
-                            />
+                            <Link href={prefixedRoute('partners.settlement', partner.id)} className="block transition hover:scale-[1.02]">
+                                <StatCard
+                                    icon={Icons.Car}
+                                    label="Armada Terhubung"
+                                    value={`${partner.vehicles.length} Unit`}
+                                    hint="Lihat Settlement →"
+                                    tone="indigo"
+                                />
+                            </Link>
                         )}
                     </div>
                 </section>
@@ -901,6 +926,34 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 {/* Tab Contents */}
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {/* Bagi Hasil / Settlement Highlight Banner */}
+                        <div className="lg:col-span-2 overflow-hidden rounded-3xl border border-indigo-100 dark:border-indigo-950/60 bg-gradient-to-r from-indigo-50/70 via-sky-50/40 to-white dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-900 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-start sm:items-center gap-3.5">
+                                <div className="h-11 w-11 shrink-0 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-sm">
+                                    📊
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                                        Laporan Kinerja & Rekap Bagi Hasil (Settlement)
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        {partner.vehicles && partner.vehicles.length > 0
+                                            ? `Rekap pendapatan sewa, potongan operasional/servis, dan hak bagi hasil bersih untuk ${partner.vehicles.length} unit armada milik mitra ini.`
+                                            : 'Lihat rekapitulasi statement performa unit kendaraan, omzet rental, dan settlement finansial mitra.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Link
+                                    href={prefixedRoute('partners.settlement', partner.id)}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-xs transition hover:bg-indigo-700"
+                                >
+                                    <Icons.ChartBar />
+                                    <span>Buka Statement Settlement</span>
+                                </Link>
+                            </div>
+                        </div>
+
                         {/* Contact Card */}
                         <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
                             <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
@@ -1559,15 +1612,13 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    {partner.vehicles && partner.vehicles.length > 0 && (
-                                        <Link
-                                            href={prefixedRoute('partners.settlement', partner.id)}
-                                            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
-                                        >
-                                            <span>📊</span>
-                                            <span>Rekap Statement Semua Armada</span>
-                                        </Link>
-                                    )}
+                                    <Link
+                                        href={prefixedRoute('partners.settlement', partner.id)}
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
+                                    >
+                                        <Icons.ChartBar />
+                                        <span>Rekap Statement Bagi Hasil</span>
+                                    </Link>
                                     <Link
                                         href={prefixedRoute('fleet.vehicles.create')}
                                         className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700"
