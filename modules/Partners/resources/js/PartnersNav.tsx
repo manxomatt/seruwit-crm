@@ -2,18 +2,19 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage } from '@inertiajs/react';
 
-const TABS: Array<{ labelKey: string; route: string; patterns: string[]; icon: string }> = [
-    { labelKey: 'partners.nav.dashboard', route: 'partners.dashboard', patterns: ['partners.dashboard'], icon: '📊' },
+const TABS: Array<{ labelKey: string; fallbackLabel: string; route: string; patterns: string[]; icon: string }> = [
+    { labelKey: 'partners.nav.dashboard', fallbackLabel: 'Dashboard', route: 'partners.dashboard', patterns: ['partners.dashboard'], icon: '📊' },
     {
         labelKey: 'partners.nav.list',
+        fallbackLabel: 'Daftar Kontak',
         route: 'partners.index',
         patterns: ['partners.index', 'partners.create', 'partners.show', 'partners.edit'],
         icon: '👥',
     },
-    { labelKey: 'partners.nav.types', route: 'partners.types.index', patterns: ['partners.types.*'], icon: '🏷️' },
-    { labelKey: 'partners.nav.industries', route: 'partners.industries.index', patterns: ['partners.industries.*'], icon: '🏢' },
-    { labelKey: 'partners.nav.locations', route: 'partners.locations.index', patterns: ['partners.locations.*'], icon: '📍' },
-    { labelKey: 'partners.nav.blacklist', route: 'partners.blacklist.index', patterns: ['partners.blacklist.*'], icon: '🚨' },
+    { labelKey: 'partners.nav.types', fallbackLabel: 'Tipe / Kategori', route: 'partners.types.index', patterns: ['partners.types.*'], icon: '🏷️' },
+    { labelKey: 'partners.nav.industries', fallbackLabel: 'Sektor Industri', route: 'partners.industries.index', patterns: ['partners.industries.*'], icon: '🏢' },
+    { labelKey: 'partners.nav.locations', fallbackLabel: 'Titik Lokasi', route: 'partners.locations.index', patterns: ['partners.locations.*'], icon: '📍' },
+    { labelKey: 'partners.nav.blacklist', fallbackLabel: 'Daftar Hitam & Anti-Fraud', route: 'partners.blacklist.index', patterns: ['partners.blacklist.*'], icon: '🚨' },
 ];
 
 export default function PartnersNav(): JSX.Element {
@@ -24,7 +25,7 @@ export default function PartnersNav(): JSX.Element {
 
     return (
         <div className="mb-6 flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
-            <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label={t('partners.title')}>
+            <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label={t('partners.title', undefined, 'Pelanggan & Mitra')}>
                 {TABS.map((tab) => {
                     const active = tab.patterns.some((pattern) => isCurrentRoute(pattern));
 
@@ -39,7 +40,7 @@ export default function PartnersNav(): JSX.Element {
                             }`}
                         >
                             <span>{tab.icon}</span>
-                            <span>{t(tab.labelKey)}</span>
+                            <span>{t(tab.labelKey, undefined, tab.fallbackLabel)}</span>
                             {tab.route === 'partners.index' && pendingReviewCount > 0 && (
                                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
                                     active

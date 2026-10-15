@@ -9,6 +9,7 @@ return [
         'types' => 'Tipe / Kategori',
         'industries' => 'Sektor Industri',
         'locations' => 'Titik Wilayah / Lokasi',
+        'blacklist' => 'Daftar Hitam & Anti-Fraud',
     ],
 
     'dashboard' => [

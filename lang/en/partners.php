@@ -9,6 +9,7 @@ return [
         'types' => 'Types & Categories',
         'industries' => 'Industries',
         'locations' => 'Locations / Zones',
+        'blacklist' => 'Blacklist & Anti-Fraud',
     ],
 
     'dashboard' => [
