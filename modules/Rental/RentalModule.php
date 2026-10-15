@@ -17,6 +17,7 @@ use Modules\Rental\Http\Controllers\RentalAvailabilityController;
 use Modules\Rental\Http\Controllers\RentalCalendarController;
 use Modules\Rental\Http\Controllers\RentalController;
 use Modules\Rental\Http\Controllers\RentalDashboardController;
+use Modules\Rental\Http\Controllers\RentalDispatchController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 use Modules\Rental\Http\Controllers\RentalReservationWizardController;
@@ -156,6 +157,13 @@ class RentalModule implements ModuleContract
 
         // Vehicle usage calendar (before {rental} wildcard)
         Route::get('/rental/calendar', [RentalCalendarController::class, 'index'])->middleware('permission:rental,view')->name('rental.calendar.index');
+
+        // Runner Dispatch (Delivery & Pickup) Board & Lifecycle
+        Route::get('/rental/dispatch', [RentalDispatchController::class, 'index'])->middleware('permission:rental,dispatch')->name('rental.dispatch.index');
+        Route::post('/rental/{rental}/dispatch', [RentalDispatchController::class, 'store'])->middleware('permission:rental,dispatch')->name('rental.dispatch.store');
+        Route::post('/rental/{rental}/dispatch/auto-generate', [RentalDispatchController::class, 'autoGenerate'])->middleware('permission:rental,dispatch')->name('rental.dispatch.auto_generate');
+        Route::patch('/rental/dispatch/{dispatch}/assign', [RentalDispatchController::class, 'assign'])->middleware('permission:rental,dispatch')->name('rental.dispatch.assign');
+        Route::patch('/rental/dispatch/{dispatch}/status', [RentalDispatchController::class, 'updateStatus'])->middleware('permission:rental,dispatch')->name('rental.dispatch.status');
 
         // Reservation wizard JSON helpers (before {rental} wildcard)
         Route::get('/rental/reservations/available-vehicles', [RentalReservationWizardController::class, 'availableVehicles'])

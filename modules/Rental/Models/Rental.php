@@ -327,6 +327,12 @@ class Rental extends Model
         return $this->hasOne(RentalAiInspection::class)->latestOfMany();
     }
 
+    /** @return HasMany<RentalDispatch, $this> */
+    public function dispatches(): HasMany
+    {
+        return $this->hasMany(RentalDispatch::class)->orderBy('scheduled_at');
+    }
+
     public function isDepositSettled(): bool
     {
         return $this->deposit_status === self::DEPOSIT_SETTLED

@@ -1,6 +1,8 @@
 import { useTrans } from '@/hooks/useTrans';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { formatDateDmY } from '@/utils/date';
 import { formatMoney } from '@/utils/money';
+import { Link } from '@inertiajs/react';
 import { DetailRow, SectionCard } from '../../ShowUi';
 import type { Rental } from '../types';
 import { locationDisplay } from './shared';
@@ -12,6 +14,7 @@ interface Props {
 
 export default function BookingDetailsSection({ rental, periodLabel }: Props): JSX.Element {
     const { t } = useTrans();
+    const { prefixedRoute } = useRoutePrefix();
 
     return (
         <SectionCard title={t('rental.sections.booking_details', undefined, 'Detail Reservasi & Rute')} icon="📍">
@@ -74,6 +77,17 @@ export default function BookingDetailsSection({ rental, periodLabel }: Props): J
                     </DetailRow>
                 )}
             </dl>
+
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-500">Tugas Antar / Jemput (Runner Dispatch)</span>
+                <Link
+                    href={prefixedRoute('rental.dispatch.index', { search: rental.code })}
+                    className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-indigo-600 transition hover:bg-indigo-50 dark:bg-slate-800 dark:text-indigo-400"
+                >
+                    <span>🚚 Buka Papan Dispatch</span>
+                    <span>→</span>
+                </Link>
+            </div>
         </SectionCard>
     );
 }
