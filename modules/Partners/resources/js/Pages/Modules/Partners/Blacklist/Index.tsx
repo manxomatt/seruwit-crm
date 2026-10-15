@@ -159,7 +159,19 @@ export default function BlacklistIndex({
     const [selectedItemForDetail, setSelectedItemForDetail] = useState<BlacklistItem | CommunityBlacklistItem | null>(null);
     const [itemToDelete, setItemToDelete] = useState<BlacklistItem | null>(null);
     const [processingDelete, setProcessingDelete] = useState(false);
-    const [processingImportId, setProcessingImportId] = useState<number | null>(null);
+
+    // Modal State: Cabut / Aktifkan Cekal
+    const [itemForStatusModal, setItemForStatusModal] = useState<BlacklistItem | null>(null);
+    const [processingStatus, setProcessingStatus] = useState(false);
+
+    // Modal State: Bagikan / Hentikan Berbagi Komunitas
+    const [itemForCommunityModal, setItemForCommunityModal] = useState<BlacklistItem | null>(null);
+    const [shareAnonymously, setShareAnonymously] = useState(true);
+    const [processingCommunity, setProcessingCommunity] = useState(false);
+
+    // Modal State: Salin ke Blacklist Internal
+    const [itemForImportModal, setItemForImportModal] = useState<CommunityBlacklistItem | null>(null);
+    const [processingImport, setProcessingImport] = useState(false);
 
     const hasActiveFilters = Boolean(
         search.trim() || selectedCategory !== 'all' || selectedSeverity !== 'all' || (activeTab === 'local' && selectedStatus !== 'active')
@@ -206,48 +218,72 @@ export default function BlacklistIndex({
         router.get(prefixedRoute('partners.blacklist.index'), { tab: activeTab, status: 'all' }, { preserveState: true, replace: true });
     };
 
-    const toggleStatus = (item: BlacklistItem) => {
-        const newStatus = !item.is_active;
-        const confirmMsg = newStatus
-            ? `Aktifkan kembali status blacklist untuk ${item.name}?`
-            : `Cabut status blacklist (whitelist) untuk ${item.name}?`;
-
-        if (confirm(confirmMsg)) {
-            router.patch(
-                prefixedRoute('partners.blacklist.update', item.id),
-                { is_active: newStatus },
-                { preserveScroll: true }
-            );
-        }
+    // Open & Confirm Status Modal (Cabut / Aktifkan Cekal)
+    const openStatusModal = (item: BlacklistItem) => {
+        setItemForStatusModal(item);
     };
 
-    const toggleCommunityShare = (item: BlacklistItem) => {
-        const newShare = !item.is_shared_with_community;
-        const msg = newShare
-            ? `Bagikan kasus ${item.name} ke Jaringan Komunitas Rental Seruwit? Data NIK/HP akan membantu sesama pengusaha rental mencegah penggelapan armada.`
-            : `Hentikan pembagian kasus ${item.name} dari Jaringan Komunitas Seruwit?`;
-
-        if (confirm(msg)) {
-            router.patch(
-                prefixedRoute('partners.blacklist.update', item.id),
-                { is_shared_with_community: newShare },
-                { preserveScroll: true }
-            );
-        }
+    const confirmStatusChange = () => {
+        if (!itemForStatusModal) return;
+        setProcessingStatus(true);
+        router.patch(
+            prefixedRoute('partners.blacklist.update', itemForStatusModal.id),
+            { is_active: !itemForStatusModal.is_active },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setProcessingStatus(false);
+                    setItemForStatusModal(null);
+                },
+            }
+        );
     };
 
-    const importFromCommunity = (item: CommunityBlacklistItem) => {
-        if (confirm(`Salin catatan ${item.name} (${item.id_number}) ke Blacklist Internal Anda?`)) {
-            setProcessingImportId(item.id);
-            router.post(
-                prefixedRoute('partners.blacklist.import_community', item.id),
-                {},
-                {
-                    preserveScroll: true,
-                    onFinish: () => setProcessingImportId(null),
-                }
-            );
-        }
+    // Open & Confirm Community Share Modal
+    const openCommunityModal = (item: BlacklistItem) => {
+        setItemForCommunityModal(item);
+        setShareAnonymously(item.share_anonymously ?? true);
+    };
+
+    const confirmCommunityShare = () => {
+        if (!itemForCommunityModal) return;
+        setProcessingCommunity(true);
+        const newShare = !itemForCommunityModal.is_shared_with_community;
+        router.patch(
+            prefixedRoute('partners.blacklist.update', itemForCommunityModal.id),
+            {
+                is_shared_with_community: newShare,
+                share_anonymously: shareAnonymously,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setProcessingCommunity(false);
+                    setItemForCommunityModal(null);
+                },
+            }
+        );
+    };
+
+    // Open & Confirm Import Community Modal
+    const openImportModal = (item: CommunityBlacklistItem) => {
+        setItemForImportModal(item);
+    };
+
+    const confirmImport = () => {
+        if (!itemForImportModal) return;
+        setProcessingImport(true);
+        router.post(
+            prefixedRoute('partners.blacklist.import_community', itemForImportModal.id),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setProcessingImport(false);
+                    setItemForImportModal(null);
+                },
+            }
+        );
     };
 
     const openDeleteDialog = (item: BlacklistItem) => {
@@ -829,7 +865,7 @@ export default function BlacklistIndex({
                                                                 <MenuItem>
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => toggleCommunityShare(item)}
+                                                                        onClick={() => openCommunityModal(item)}
                                                                         className={menuItemClassName}
                                                                     >
                                                                         <span>
@@ -843,7 +879,7 @@ export default function BlacklistIndex({
                                                                 <MenuItem>
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => toggleStatus(item)}
+                                                                        onClick={() => openStatusModal(item)}
                                                                         className={menuItemClassName}
                                                                     >
                                                                         <span>{item.is_active ? '🔓 Cabut Cekal (Whitelist)' : '🔒 Aktifkan Kembali Cekal'}</span>
@@ -1037,12 +1073,11 @@ export default function BlacklistIndex({
                                                             {!citem.is_own_tenant && (
                                                                 <button
                                                                     type="button"
-                                                                    disabled={processingImportId === citem.id}
-                                                                    onClick={() => importFromCommunity(citem)}
-                                                                    className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition disabled:opacity-50"
+                                                                    onClick={() => openImportModal(citem)}
+                                                                    className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition"
                                                                 >
                                                                     <span>+</span>
-                                                                    <span>{processingImportId === citem.id ? 'Menyalin...' : 'Salin ke Blacklist'}</span>
+                                                                    <span>Salin ke Blacklist</span>
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1164,7 +1199,7 @@ export default function BlacklistIndex({
                                     onClick={() => {
                                         const citem = selectedItemForDetail as CommunityBlacklistItem;
                                         setSelectedItemForDetail(null);
-                                        importFromCommunity(citem);
+                                        openImportModal(citem);
                                     }}
                                     className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 shadow-xs"
                                 >
@@ -1183,9 +1218,295 @@ export default function BlacklistIndex({
                 </Modal>
             )}
 
+            {/* Modal: Cabut / Aktifkan Status Cekal */}
+            {itemForStatusModal && (
+                <Modal
+                    show={Boolean(itemForStatusModal)}
+                    onClose={() => !processingStatus && setItemForStatusModal(null)}
+                    maxWidth="md"
+                >
+                    <div className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div
+                                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl shadow-xs ${
+                                    itemForStatusModal.is_active
+                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400'
+                                        : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                                }`}
+                            >
+                                {itemForStatusModal.is_active ? '🔓' : '🔒'}
+                            </div>
+
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    {itemForStatusModal.is_active
+                                        ? 'Cabut Status Cekal (Whitelist)?'
+                                        : 'Aktifkan Kembali Cekal (Blacklist)?'}
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    {itemForStatusModal.is_active
+                                        ? 'Mencabut cekal akan membolehkan pelanggan ini untuk menyewa kendaraan kembali.'
+                                        : 'Mengaktifkan kembali cekal akan memblokir pelanggan ini dari sistem penyewaan armada.'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Ringkasan Identitas */}
+                        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-xs dark:border-slate-800 dark:bg-slate-800/40 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Nama Pelanggan:</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{itemForStatusModal.name}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">NIK KTP:</span>
+                                <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{itemForStatusModal.id_number}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">No. Telepon:</span>
+                                <span className="font-mono text-slate-700 dark:text-slate-300">{itemForStatusModal.phone}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Kategori Kasus:</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">{getCategoryLabel(itemForStatusModal.category)}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 text-xs">
+                            {itemForStatusModal.is_active ? (
+                                <div className="rounded-xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 p-3 text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                                    <span className="text-sm shrink-0">ℹ️</span>
+                                    <span>
+                                        Riwayat catatan kasus sebelumnya akan tetap tersimpan sebagai arsip internal, namun sistem tidak lagi menandai pelanggan ini sebagai risiko bahaya saat reservasi.
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="rounded-xl bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 p-3 text-rose-800 dark:text-rose-300 flex items-start gap-2">
+                                    <span className="text-sm shrink-0">⚠️</span>
+                                    <span>
+                                        Sistem akan otomatis mendeteksi dan menolak mutlak setiap upaya reservasi yang menggunakan NIK atau Nomor HP ini.
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setItemForStatusModal(null)}
+                                disabled={processingStatus}
+                                className="!rounded-xl text-xs"
+                            >
+                                Batal
+                            </SecondaryButton>
+                            <button
+                                type="button"
+                                onClick={confirmStatusChange}
+                                disabled={processingStatus}
+                                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm transition disabled:opacity-50 ${
+                                    itemForStatusModal.is_active
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+                                        : 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
+                                }`}
+                            >
+                                {processingStatus
+                                    ? 'Memproses...'
+                                    : itemForStatusModal.is_active
+                                    ? 'Ya, Cabut Cekal (Bolehkan Sewa)'
+                                    : 'Ya, Aktifkan Kembali Cekal'}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Modal: Bagikan ke Komunitas / Hentikan Berbagi */}
+            {itemForCommunityModal && (
+                <Modal
+                    show={Boolean(itemForCommunityModal)}
+                    onClose={() => !processingCommunity && setItemForCommunityModal(null)}
+                    maxWidth="md"
+                >
+                    <div className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div
+                                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl shadow-xs ${
+                                    itemForCommunityModal.is_shared_with_community
+                                        ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'
+                                        : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400'
+                                }`}
+                            >
+                                🌐
+                            </div>
+
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    {itemForCommunityModal.is_shared_with_community
+                                        ? 'Hentikan Berbagi ke Jaringan Komunitas?'
+                                        : 'Bagikan Kasus ke Komunitas Rental Seruwit?'}
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    {itemForCommunityModal.is_shared_with_community
+                                        ? 'Catatan kasus ini akan ditarik dari database intelijen komunitas bersama.'
+                                        : 'Bantu sesama pengusaha rental mobil/motor di seluruh Indonesia mencegah penggelapan armada.'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Ringkasan Identitas */}
+                        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-xs dark:border-slate-800 dark:bg-slate-800/40 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Nama Pelaku:</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{itemForCommunityModal.name}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">NIK KTP:</span>
+                                <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{itemForCommunityModal.id_number}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Kategori Kasus:</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">{getCategoryLabel(itemForCommunityModal.category)}</span>
+                            </div>
+                        </div>
+
+                        {!itemForCommunityModal.is_shared_with_community ? (
+                            <div className="mt-4 space-y-3">
+                                <div className="rounded-xl bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 p-3 text-xs text-indigo-900 dark:text-indigo-300 flex items-start gap-2">
+                                    <span className="text-sm shrink-0">💡</span>
+                                    <span>
+                                        Ketika dibagikan, data NIK, No. HP, dan kategori kasus akan masuk ke jaringan intelijen Seruwit. Rental lain akan menerima peringatan otomatis secara real-time saat orang ini mencoba menyewa armada mereka.
+                                    </span>
+                                </div>
+
+                                <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                                    <input
+                                        type="checkbox"
+                                        checked={shareAnonymously}
+                                        onChange={(e) => setShareAnonymously(e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                                    />
+                                    <span>
+                                        <strong>Samarkan nama rental saya</strong> (Tampilkan sebagai <em>"Mitra Rental Terverifikasi"</em> untuk menjaga privasi)
+                                    </span>
+                                </label>
+                            </div>
+                        ) : (
+                            <div className="mt-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                                <span className="text-sm shrink-0">⚠️</span>
+                                <span>
+                                    Setelah ditarik, rental lain dalam jaringan tidak akan lagi mendapatkan notifikasi peringatan jika orang ini mencoba menyewa unit di tempat mereka.
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setItemForCommunityModal(null)}
+                                disabled={processingCommunity}
+                                className="!rounded-xl text-xs"
+                            >
+                                Batal
+                            </SecondaryButton>
+                            <button
+                                type="button"
+                                onClick={confirmCommunityShare}
+                                disabled={processingCommunity}
+                                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm transition disabled:opacity-50 ${
+                                    itemForCommunityModal.is_shared_with_community
+                                        ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                                        : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
+                                }`}
+                            >
+                                {processingCommunity
+                                    ? 'Memproses...'
+                                    : itemForCommunityModal.is_shared_with_community
+                                    ? 'Ya, Hentikan Berbagi'
+                                    : 'Ya, Bagikan ke Komunitas'}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Modal: Salin ke Blacklist Internal */}
+            {itemForImportModal && (
+                <Modal
+                    show={Boolean(itemForImportModal)}
+                    onClose={() => !processingImport && setItemForImportModal(null)}
+                    maxWidth="md"
+                >
+                    <div className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 text-xl shadow-xs">
+                                🛡️
+                            </div>
+
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    Salin ke Blacklist Internal Anda?
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Tambahkan identitas pelaku dari laporan komunitas ini ke daftar cekal rental internal Anda.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Ringkasan Identitas */}
+                        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-xs dark:border-slate-800 dark:bg-slate-800/40 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Terduga Pelaku:</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{itemForImportModal.name}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">NIK KTP:</span>
+                                <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{itemForImportModal.id_number}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Kontak HP:</span>
+                                <span className="font-mono text-slate-700 dark:text-slate-300">{itemForImportModal.phone}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Kategori Kasus:</span>
+                                <span className="font-semibold text-rose-600 dark:text-rose-400">{itemForImportModal.category_label}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-400 font-medium">Pelapor Awal:</span>
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">{itemForImportModal.reporter_display}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 p-3 text-xs text-indigo-900 dark:text-indigo-300 flex items-start gap-2">
+                            <span className="text-sm shrink-0">🔒</span>
+                            <span>
+                                Setelah disalin, sistem rental Anda akan langsung memblokir dan memberi peringatan bahaya jika orang ini mencoba menyewa kendaraan Anda di masa mendatang.
+                            </span>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setItemForImportModal(null)}
+                                disabled={processingImport}
+                                className="!rounded-xl text-xs"
+                            >
+                                Batal
+                            </SecondaryButton>
+                            <button
+                                type="button"
+                                onClick={confirmImport}
+                                disabled={processingImport}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 px-4 py-2 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
+                            >
+                                {processingImport ? 'Menyalin...' : 'Salin & Proteksi Rental Saya'}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
             {/* Confirm Delete Dialog */}
             <ConfirmDeleteDialog
-                isOpen={Boolean(itemToDelete)}
+                show={Boolean(itemToDelete)}
                 title="Hapus Catatan Daftar Hitam?"
                 message={
                     itemToDelete
