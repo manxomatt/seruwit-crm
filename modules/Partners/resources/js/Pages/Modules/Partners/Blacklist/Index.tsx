@@ -4,6 +4,7 @@ import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
@@ -410,22 +411,24 @@ export default function BlacklistIndex({
                             </div>
 
                             <div className="w-56 shrink-0 sm:w-64">
-                                <select
+                                <Select
+                                    className="w-full !py-1 text-xs !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                                     value={selectedCategory}
-                                    onChange={(e) => {
-                                        setSelectedCategory(e.target.value);
-                                        applyFilters({ category: e.target.value });
+                                    onChange={(value) => {
+                                        setSelectedCategory(value);
+                                        applyFilters({ category: value });
                                     }}
-                                    className="w-full !rounded-xl border-slate-200 dark:border-slate-800 !py-2 text-xs bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:ring-indigo-500 shadow-xs"
-                                >
-                                    <option value="all">Semua Kategori Kasus</option>
-                                    <option value="car_theft">Penggelapan Armada</option>
-                                    <option value="pawn_attempt">Percobaan Gadai</option>
-                                    <option value="bad_debt">Gagal Bayar / Kabur</option>
-                                    <option value="fake_identity">Identitas Palsu</option>
-                                    <option value="reckless_damage">Kecelakaan Menolak Ganti</option>
-                                    <option value="other">Pelanggaran Lainnya</option>
-                                </select>
+                                    placeholder="Semua Kategori Kasus"
+                                    options={[
+                                        { value: 'all', label: 'Semua Kategori Kasus' },
+                                        { value: 'car_theft', label: 'Penggelapan Armada' },
+                                        { value: 'pawn_attempt', label: 'Percobaan Gadai' },
+                                        { value: 'bad_debt', label: 'Gagal Bayar / Kabur' },
+                                        { value: 'fake_identity', label: 'Identitas Palsu' },
+                                        { value: 'reckless_damage', label: 'Kecelakaan Menolak Ganti' },
+                                        { value: 'other', label: 'Pelanggaran Lainnya' },
+                                    ]}
+                                />
                             </div>
 
                             <PrimaryButton
@@ -538,7 +541,7 @@ export default function BlacklistIndex({
                         )}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto min-h-[320px]">
                         <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                             <thead className="bg-slate-50/50 dark:bg-slate-800/50">
                                 <tr>
@@ -703,7 +706,8 @@ export default function BlacklistIndex({
 
                                                     <MenuItems
                                                         transition
-                                                        className="absolute right-0 z-20 mt-1 w-52 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl transition focus:outline-hidden"
+                                                        anchor="bottom end"
+                                                        className="z-[1200] w-52 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-2xl backdrop-blur-md outline-none"
                                                     >
                                                         <MenuItem>
                                                             <button

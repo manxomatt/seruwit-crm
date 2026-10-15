@@ -3,11 +3,12 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler } from 'react';
 import PartnersNav from '../../../../PartnersNav';
 
 interface PartnerRef {
@@ -20,6 +21,7 @@ interface PartnerRef {
 
 interface Props {
     partner?: PartnerRef | null;
+    partners?: PartnerRef[];
 }
 
 const SEVERITY_OPTIONS = [
@@ -55,7 +57,7 @@ const CATEGORIES = [
     { value: 'other', label: '⚠️ Pelanggaran Operasional Lainnya' },
 ] as const;
 
-export default function BlacklistCreate({ partner }: Props): JSX.Element {
+export default function BlacklistCreate({ partner, partners = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
@@ -79,8 +81,6 @@ export default function BlacklistCreate({ partner }: Props): JSX.Element {
 
     const textareaClass =
         'mt-1 block w-full rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs focus:border-rose-500 focus:ring-rose-500 text-xs leading-relaxed p-3.5';
-
-    const selectedSeverityObj = SEVERITY_OPTIONS.find((s) => s.key === data.severity) || SEVERITY_OPTIONS[0];
 
     return (
         <DynamicLayout
@@ -146,14 +146,48 @@ export default function BlacklistCreate({ partner }: Props): JSX.Element {
                                     Identitas Terduga / Pelaku
                                 </h3>
                                 <p className="text-xs text-slate-500">
-                                    Masukkan identitas resmi sesuai KTP/Paspor untuk akurasi pencocokan sistem anti-fraud.
+                                    Pilih dari kontak mitra terdaftar atau masukkan identitas baru sesuai KTP/Paspor.
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     <div className="p-5 sm:p-6 space-y-5">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {/* Searchable Combobox for Registered Partners */}
+                        <div>
+                            <InputLabel value="Tautkan ke Profil Kontak / Mitra Terdaftar (Opsional)" />
+                            <p className="mb-1.5 text-[11px] text-slate-500">
+                                Jika pelaku sudah pernah terdaftar sebagai customer/kontak, pilih dari daftar untuk auto-fill identitas.
+                            </p>
+                            <Select
+                                className="w-full !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs"
+                                value={data.partner_id ? String(data.partner_id) : ''}
+                                onChange={(val) => {
+                                    const pId = val ? Number(val) : null;
+                                    setData('partner_id', pId);
+                                    if (pId && partners.length > 0) {
+                                        const matched = partners.find((p) => p.id === pId);
+                                        if (matched) {
+                                            if (!data.name) setData('name', matched.name);
+                                            if (!data.phone && matched.phone) setData('phone', matched.phone);
+                                            if (!data.id_number && matched.id_number) setData('id_number', matched.id_number);
+                                        }
+                                    }
+                                }}
+                                placeholder="Cari atau pilih kontak mitra yang terdaftar..."
+                                searchable
+                                options={[
+                                    { value: '', label: '— Tidak ditautkan ke mitra manapun (Kasus Baru) —' },
+                                    ...partners.map((p) => ({
+                                        value: String(p.id),
+                                        label: `${p.name} (${p.code})`,
+                                        description: [p.phone, p.id_number ? `NIK: ${p.id_number}` : null].filter(Boolean).join(' • '),
+                                    })),
+                                ]}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
                             <div>
                                 <InputLabel value="Nama Lengkap Sesuai KTP *" />
                                 <TextInput
@@ -205,26 +239,6 @@ export default function BlacklistCreate({ partner }: Props): JSX.Element {
                                 <InputError message={errors.license_number} className="mt-1" />
                             </div>
                         </div>
-
-                        {/* Optional Linked Partner Notification */}
-                        {partner && (
-                            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-xs text-indigo-900 dark:text-indigo-200">
-                                        <span>🔗 Terhubung ke Kontak Mitra Terdaftar:</span>
-                                        <strong className="font-bold">{partner.name}</strong>
-                                        <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">({partner.code})</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setData('partner_id', null)}
-                                        className="text-xs font-bold text-slate-500 hover:text-rose-600 underline"
-                                    >
-                                        Lepas Tautan
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </section>
 
@@ -285,21 +299,21 @@ export default function BlacklistCreate({ partner }: Props): JSX.Element {
                             <InputError message={errors.severity} className="mt-1" />
                         </div>
 
-                        {/* Category Dropdown */}
+                        {/* Category Select Combobox */}
                         <div>
                             <InputLabel value="Kategori Kasus Pelanggaran *" />
-                            <select
-                                value={data.category}
-                                onChange={(e) => setData('category', e.target.value as any)}
-                                className="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-xs focus:border-rose-500 focus:ring-rose-500 p-2.5"
-                                required
-                            >
-                                {CATEGORIES.map((cat) => (
-                                    <option key={cat.value} value={cat.value}>
-                                        {cat.label}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="mt-1">
+                                <Select
+                                    className="w-full !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs"
+                                    value={data.category}
+                                    onChange={(val) => setData('category', val as any)}
+                                    placeholder="Pilih kategori kasus..."
+                                    options={CATEGORIES.map((cat) => ({
+                                        value: cat.value,
+                                        label: cat.label,
+                                    }))}
+                                />
+                            </div>
                             <InputError message={errors.category} className="mt-1" />
                         </div>
                     </div>

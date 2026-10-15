@@ -33,6 +33,7 @@ class PartnerBlacklistController extends Controller
 
         return Inertia::render('Modules/Partners/Blacklist/Create', [
             'partner' => $selectedPartner,
+            'partners' => Partner::query()->select('id', 'name', 'code', 'phone', 'id_number')->orderBy('name')->get(),
         ]);
     }
 
