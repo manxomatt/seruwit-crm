@@ -189,7 +189,11 @@ export default function BlacklistIndex({
             header={
                 <PageHeader
                     title="Daftar Hitam & Deteksi Anti-Fraud (Blacklist Registry)"
-                    subtitle="Database pencegahan penggelapan armada, pemalsuan identitas KTP/SIM, dan penunggakan sewa bermasalah."
+                    subtitle={
+                        <span className="text-xs text-slate-500">
+                            Database pencegahan penggelapan armada, pemalsuan identitas KTP/SIM, dan penunggakan sewa bermasalah.
+                        </span>
+                    }
                     actions={
                         <button
                             type="button"
