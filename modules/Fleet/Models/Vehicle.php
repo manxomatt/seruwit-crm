@@ -133,6 +133,11 @@ class Vehicle extends Model
         'maintenance_payer',
         'odometer_km',
         'stnk_expires_at',
+        'stnk_five_year_expires_at',
+        'insurance_provider',
+        'insurance_policy_number',
+        'insurance_type',
+        'insurance_expires_at',
         'kir_expires_at',
         'photo_url',
         'notes',
@@ -144,6 +149,7 @@ class Vehicle extends Model
     protected $appends = [
         'rental_class_label',
         'fuel_label',
+        'compliance_summary',
     ];
 
     /**
@@ -165,6 +171,8 @@ class Vehicle extends Model
             'is_trial' => 'boolean',
             'trial_ends_at' => 'datetime',
             'stnk_expires_at' => 'date:Y-m-d',
+            'stnk_five_year_expires_at' => 'date:Y-m-d',
+            'insurance_expires_at' => 'date:Y-m-d',
             'kir_expires_at' => 'date:Y-m-d',
             'home_base_id' => 'integer',
             'partner_id' => 'integer',
@@ -276,5 +284,95 @@ class Vehicle extends Model
         return Lang::has($key)
             ? (string) __($key)
             : ucfirst((string) $this->fuel_type);
+    }
+
+    /**
+     * @return HasMany<VehicleComplianceRenewal, $this>
+     */
+    public function complianceRenewals(): HasMany
+    {
+        return $this->hasMany(VehicleComplianceRenewal::class)->latest('renewal_date');
+    }
+
+    /**
+     * Evaluate the status of a specific document expiration date.
+     *
+     * @return array{status: string, days: int|null, label: string}
+     */
+    public static function evaluateExpirationStatus(?\Carbon\CarbonInterface $date): array
+    {
+        if (! $date) {
+            return [
+                'status' => 'not_set',
+                'days' => null,
+                'label' => 'Belum Diatur',
+            ];
+        }
+
+        $now = now()->startOfDay();
+        $target = $date->copy()->startOfDay();
+        $days = (int) $now->diffInDays($target, false);
+
+        if ($days < 0) {
+            return [
+                'status' => 'expired',
+                'days' => $days,
+                'label' => 'Kadaluarsa ('.abs($days).' hari lalu)',
+            ];
+        }
+
+        if ($days <= 30) {
+            return [
+                'status' => 'expiring_soon',
+                'days' => $days,
+                'label' => $days === 0 ? 'Jatuh tempo hari ini' : 'Sisa '.$days.' hari',
+            ];
+        }
+
+        return [
+            'status' => 'safe',
+            'days' => $days,
+            'label' => 'Aktif (Sisa '.$days.' hari)',
+        ];
+    }
+
+    /**
+     * Get consolidated compliance evaluation for all documents.
+     *
+     * @return array<string, mixed>
+     */
+    public function getComplianceSummaryAttribute(): array
+    {
+        $stnk = static::evaluateExpirationStatus($this->stnk_expires_at);
+        $stnkFiveYear = static::evaluateExpirationStatus($this->stnk_five_year_expires_at);
+        $insurance = static::evaluateExpirationStatus($this->insurance_expires_at);
+        $kir = static::evaluateExpirationStatus($this->kir_expires_at);
+
+        $statuses = [$stnk['status'], $stnkFiveYear['status'], $insurance['status']];
+        if ($this->kir_expires_at) {
+            $statuses[] = $kir['status'];
+        }
+
+        $overall = 'safe';
+        if (in_array('expired', $statuses, true)) {
+            $overall = 'expired';
+        } elseif (in_array('expiring_soon', $statuses, true)) {
+            $overall = 'expiring_soon';
+        } elseif (in_array('not_set', $statuses, true)) {
+            $overall = 'incomplete';
+        }
+
+        return [
+            'overall' => $overall,
+            'stnk_annual' => array_merge($stnk, ['date' => $this->stnk_expires_at?->toDateString()]),
+            'stnk_five_year' => array_merge($stnkFiveYear, ['date' => $this->stnk_five_year_expires_at?->toDateString()]),
+            'insurance' => array_merge($insurance, [
+                'date' => $this->insurance_expires_at?->toDateString(),
+                'provider' => $this->insurance_provider,
+                'policy_number' => $this->insurance_policy_number,
+                'type' => $this->insurance_type,
+            ]),
+            'kir' => array_merge($kir, ['date' => $this->kir_expires_at?->toDateString()]),
+        ];
     }
 }

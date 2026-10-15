@@ -60,6 +60,11 @@ interface Vehicle {
     status: string;
     odometer_km: number;
     stnk_expires_at: string | null;
+    stnk_five_year_expires_at?: string | null;
+    insurance_provider?: string | null;
+    insurance_policy_number?: string | null;
+    insurance_type?: string | null;
+    insurance_expires_at?: string | null;
     kir_expires_at: string | null;
     photo_url: string | null;
     notes: string | null;
@@ -126,6 +131,11 @@ export default function Edit({ vehicle, bases = [], partners = [] }: Props): JSX
         maintenance_payer: vehicle.maintenance_payer || 'tenant',
         odometer_km: vehicle.odometer_km,
         stnk_expires_at: toDateInputValue(vehicle.stnk_expires_at),
+        stnk_five_year_expires_at: toDateInputValue(vehicle.stnk_five_year_expires_at),
+        insurance_provider: vehicle.insurance_provider || '',
+        insurance_policy_number: vehicle.insurance_policy_number || '',
+        insurance_type: vehicle.insurance_type || 'all_risk',
+        insurance_expires_at: toDateInputValue(vehicle.insurance_expires_at),
         kir_expires_at: toDateInputValue(vehicle.kir_expires_at),
         photo_url: vehicle.photo_url || '',
         notes: vehicle.notes || '',
@@ -819,7 +829,7 @@ export default function Edit({ vehicle, bases = [], partners = [] }: Props): JSX
 
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="stnk_expires_at" value="Masa Berlaku STNK / Pajak" />
+                                <InputLabel htmlFor="stnk_expires_at" value="Pajak STNK Tahunan" />
                                 <TextInput
                                     id="stnk_expires_at"
                                     type="date"
@@ -831,7 +841,79 @@ export default function Edit({ vehicle, bases = [], partners = [] }: Props): JSX
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="kir_expires_at" value="Masa Berlaku Uji KIR (Opsional)" />
+                                <InputLabel htmlFor="stnk_five_year_expires_at" value="STNK 5 Tahunan (Ganti Plat / Kaleng)" />
+                                <TextInput
+                                    id="stnk_five_year_expires_at"
+                                    type="date"
+                                    className="mt-1.5 block w-full !rounded-2xl font-mono shadow-2xs"
+                                    value={data.stnk_five_year_expires_at}
+                                    onChange={(e) => setData('stnk_five_year_expires_at', e.target.value)}
+                                />
+                                <InputError message={errors.stnk_five_year_expires_at} className="mt-1" />
+                            </div>
+
+                            {/* Insurance Details Box */}
+                            <div className="sm:col-span-2 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-850/40 space-y-3">
+                                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                    <span>🛡️</span>
+                                    <span>Informasi Polis Asuransi Kendaraan</span>
+                                </p>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                    <div>
+                                        <InputLabel htmlFor="insurance_provider" value="Perusahaan Asuransi" />
+                                        <TextInput
+                                            id="insurance_provider"
+                                            placeholder="cth: Garda Oto / ACA"
+                                            className="mt-1.5 block w-full !rounded-xl text-xs"
+                                            value={data.insurance_provider}
+                                            onChange={(e) => setData('insurance_provider', e.target.value)}
+                                        />
+                                        <InputError message={errors.insurance_provider} className="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="insurance_type" value="Jenis Perlindungan" />
+                                        <select
+                                            id="insurance_type"
+                                            className="mt-1.5 block w-full rounded-xl border-slate-200 bg-white py-2 px-3 text-xs font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                            value={data.insurance_type}
+                                            onChange={(e) => setData('insurance_type', e.target.value)}
+                                        >
+                                            <option value="all_risk">All Risk (Comprehensive)</option>
+                                            <option value="tlo">Total Loss Only (TLO)</option>
+                                            <option value="comprehensive">Kombinasi</option>
+                                        </select>
+                                        <InputError message={errors.insurance_type} className="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="insurance_expires_at" value="Jatuh Tempo Asuransi" />
+                                        <TextInput
+                                            id="insurance_expires_at"
+                                            type="date"
+                                            className="mt-1.5 block w-full !rounded-xl font-mono text-xs"
+                                            value={data.insurance_expires_at}
+                                            onChange={(e) => setData('insurance_expires_at', e.target.value)}
+                                        />
+                                        <InputError message={errors.insurance_expires_at} className="mt-1" />
+                                    </div>
+
+                                    <div className="sm:col-span-3">
+                                        <InputLabel htmlFor="insurance_policy_number" value="Nomor Polis Asuransi (Opsional)" />
+                                        <TextInput
+                                            id="insurance_policy_number"
+                                            placeholder="cth: POL-2026-ASTRA-88912"
+                                            className="mt-1.5 block w-full !rounded-xl font-mono text-xs"
+                                            value={data.insurance_policy_number}
+                                            onChange={(e) => setData('insurance_policy_number', e.target.value)}
+                                        />
+                                        <InputError message={errors.insurance_policy_number} className="mt-1" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-2">
+                                <InputLabel htmlFor="kir_expires_at" value="Masa Berlaku Uji KIR (Opsional, untuk komersial/shuttle/elf)" />
                                 <TextInput
                                     id="kir_expires_at"
                                     type="date"

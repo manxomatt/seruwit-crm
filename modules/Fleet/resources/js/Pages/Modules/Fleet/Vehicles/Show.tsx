@@ -89,6 +89,11 @@ interface Vehicle {
     maintenance_payer?: string | null;
     odometer_km: number;
     stnk_expires_at: string | null;
+    stnk_five_year_expires_at?: string | null;
+    insurance_provider?: string | null;
+    insurance_policy_number?: string | null;
+    insurance_type?: string | null;
+    insurance_expires_at?: string | null;
     kir_expires_at: string | null;
     photo_url: string | null;
     notes: string | null;
@@ -381,6 +386,8 @@ export default function Show({
     };
 
     const stnkTone = expiryTone(vehicle.stnk_expires_at);
+    const stnkFiveYearTone = expiryTone(vehicle.stnk_five_year_expires_at);
+    const insuranceTone = expiryTone(vehicle.insurance_expires_at);
     const kirTone = expiryTone(vehicle.kir_expires_at);
 
     const expiryLabel = (tone: ExpiryTone): string => {
@@ -1118,20 +1125,30 @@ export default function Show({
 
                         {/* Compliance Card */}
                         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex items-center gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
-                                <span className="text-base">📅</span>
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                        {t('fleet.vehicles.show_compliance_title', undefined, 'Kepatuhan Pajak & Uji Berkala')}
-                                    </h3>
-                                    <p className="text-xs text-slate-400">{t('fleet.vehicles.show_compliance_subtitle', undefined, 'Jadwal jatuh tempo legalitas berkendara.')}</p>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base">🛡️</span>
+                                    <div>
+                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                            {t('fleet.vehicles.show_compliance_title', undefined, 'Kepatuhan & Dokumen Armada')}
+                                        </h3>
+                                        <p className="text-xs text-slate-400">{t('fleet.vehicles.show_compliance_subtitle', undefined, 'Jatuh tempo STNK, Plat 5-tahunan, Asuransi, & Uji KIR.')}</p>
+                                    </div>
                                 </div>
+                                <Link
+                                    href={prefixedRoute('fleet.compliance.index')}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400"
+                                >
+                                    <span>Kelola Kepatuhan</span>
+                                    <span>→</span>
+                                </Link>
                             </div>
 
-                            <div className="mt-4 space-y-3">
+                            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                {/* 1. Pajak STNK Tahunan */}
                                 <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-500">{t('fleet.vehicles.show_compliance_stnk', undefined, 'Masa Berlaku Pajak STNK')}</span>
+                                        <span className="text-xs font-bold text-slate-500">Pajak STNK Tahunan</span>
                                         <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${expiryBadgeClass(stnkTone)}`}>
                                             {expiryLabel(stnkTone)}
                                         </span>
@@ -1141,9 +1158,48 @@ export default function Show({
                                     </p>
                                 </div>
 
+                                {/* 2. STNK 5 Tahunan / Plat */}
                                 <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-500">{t('fleet.vehicles.show_compliance_kir', undefined, 'Masa Berlaku Uji KIR')}</span>
+                                        <span className="text-xs font-bold text-slate-500">STNK 5 Tahunan (Plat)</span>
+                                        <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${expiryBadgeClass(stnkFiveYearTone)}`}>
+                                            {expiryLabel(stnkFiveYearTone)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
+                                        {vehicle.stnk_five_year_expires_at ? formatDate(vehicle.stnk_five_year_expires_at, localeTag) : 'Belum Diatur'}
+                                    </p>
+                                </div>
+
+                                {/* 3. Polis Asuransi */}
+                                <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="text-xs font-bold text-slate-500">Asuransi</span>
+                                            {vehicle.insurance_provider && (
+                                                <span className="ml-1.5 text-[11px] font-semibold text-slate-400">
+                                                    ({vehicle.insurance_provider}{vehicle.insurance_type ? ` • ${vehicle.insurance_type}` : ''})
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${expiryBadgeClass(insuranceTone)}`}>
+                                            {expiryLabel(insuranceTone)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 font-mono text-base font-black text-slate-900 dark:text-white">
+                                        {vehicle.insurance_expires_at ? formatDate(vehicle.insurance_expires_at, localeTag) : 'Belum Diatur'}
+                                    </p>
+                                    {vehicle.insurance_policy_number && (
+                                        <p className="mt-1 font-mono text-[11px] text-slate-500">
+                                            No. Polis: {vehicle.insurance_policy_number}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* 4. Uji KIR Berkala */}
+                                <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-500">Uji Berkala KIR</span>
                                         <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${expiryBadgeClass(kirTone)}`}>
                                             {expiryLabel(kirTone)}
                                         </span>

@@ -6,6 +6,7 @@ const TABS = [
     { icon: '📊', labelKey: 'fleet.nav.dashboard', fallbackLabel: 'Dashboard', route: 'fleet.dashboard', pattern: 'fleet.dashboard' },
     { icon: '🏢', labelKey: 'fleet.nav.bases', fallbackLabel: 'Fleet Bases', route: 'fleet.bases.index', pattern: 'fleet.bases.*' },
     { icon: '🚗', labelKey: 'fleet.nav.vehicles', fallbackLabel: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
+    { icon: '🛡️', labelKey: 'fleet.nav.compliance', fallbackLabel: 'Kepatuhan & Pajak', route: 'fleet.compliance.index', pattern: 'fleet.compliance.*' },
     { icon: '👨‍✈️', labelKey: 'fleet.nav.drivers', fallbackLabel: 'Drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
     { icon: '⛽', labelKey: 'fleet.nav.fuel', fallbackLabel: 'Fuel Logs', route: 'fleet.fuel.index', pattern: 'fleet.fuel.index' },
     { icon: '📈', labelKey: 'fleet.nav.analytics', fallbackLabel: 'Analytics', route: 'fleet.fuel.analytics', pattern: 'fleet.fuel.analytics' },

@@ -10,6 +10,7 @@ use Modules\Fleet\Http\Controllers\DriverAccountController;
 use Modules\Fleet\Http\Controllers\DriverController;
 use Modules\Fleet\Http\Controllers\FleetBaseAiGenerateController;
 use Modules\Fleet\Http\Controllers\FleetBaseController;
+use Modules\Fleet\Http\Controllers\FleetComplianceController;
 use Modules\Fleet\Http\Controllers\FleetDashboardController;
 use Modules\Fleet\Http\Controllers\FuelAnalyticsController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
@@ -131,6 +132,9 @@ class FleetModule implements ModuleContract
         Route::post('/fleet/vehicles/{vehicle}/maintenance-logs', [VehicleMaintenanceLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.maintenance-logs.store');
         Route::patch('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.maintenance-logs.update');
         Route::delete('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.maintenance-logs.destroy');
+
+        Route::get('/fleet/compliance', [FleetComplianceController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.compliance.index');
+        Route::post('/fleet/vehicles/{vehicle}/compliance/renew', [FleetComplianceController::class, 'renew'])->middleware('permission:fleet,update')->name('fleet.compliance.renew');
 
         Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');
         Route::get('/fleet/fuel/analytics', [FuelAnalyticsController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.analytics');
