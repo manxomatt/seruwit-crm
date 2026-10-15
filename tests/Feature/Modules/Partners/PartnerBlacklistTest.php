@@ -202,4 +202,100 @@ class PartnerBlacklistTest extends TestCase
         ]);
         $this->assertNotEmpty($blockedResponse->json('records'));
     }
+
+    public function test_storing_blacklist_with_community_sharing_syncs_to_central(): void
+    {
+        $user = $this->createAdminUser();
+
+        $payload = [
+            'name' => 'Buronan Komunitas',
+            'id_number' => '3273019999990001',
+            'phone' => '081234567890',
+            'category' => 'car_theft',
+            'severity' => 'critical',
+            'incident_date' => now()->toDateString(),
+            'incident_details' => 'Membawa kabur Innova Reborn ke luar provinsi.',
+            'is_shared_with_community' => true,
+            'share_anonymously' => true,
+        ];
+
+        $response = $this->actingAs($user)->post(route('module.partners.blacklist.store'), $payload);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('partner_blacklists', [
+            'id_number' => '3273019999990001',
+            'is_shared_with_community' => true,
+        ]);
+
+        $this->assertDatabaseHas('community_blacklists', [
+            'id_number' => '3273019999990001',
+            'name' => 'Buronan Komunitas',
+            'category' => 'car_theft',
+            'severity' => 'critical',
+            'reporting_company_name' => 'Mitra Rental Terverifikasi',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_check_risk_api_detects_community_blacklist_from_other_tenant(): void
+    {
+        $user = $this->createAdminUser();
+
+        \Modules\Partners\Models\CommunityBlacklist::create([
+            'tenant_id' => 'other-rental-tenant-uuid',
+            'reporting_company_name' => 'Rental Sahabat Bali',
+            'name' => 'Pelaku Luar Daerah',
+            'id_number' => '7171018888880002',
+            'phone' => '085299887766',
+            'category' => 'car_theft',
+            'severity' => 'critical',
+            'incident_details' => 'Modus sewa harian lepas kunci mobil Fortuner.',
+            'is_active' => true,
+            'share_anonymously' => false,
+        ]);
+
+        $response = $this->actingAs($user)->getJson(route('module.partners.risk_check', [
+            'id_number' => '7171018888880002',
+        ]));
+
+        $response->assertOk();
+        $response->assertJson([
+            'risk_level' => 'blocked',
+            'is_blacklisted' => true,
+        ]);
+
+        $records = $response->json('records');
+        $this->assertNotEmpty($records);
+        $this->assertEquals('community', $records[0]['source']);
+        $this->assertEquals('Rental Sahabat Bali', $records[0]['reported_by_name']);
+    }
+
+    public function test_tenant_can_import_community_blacklist_to_local_registry(): void
+    {
+        $user = $this->createAdminUser();
+
+        $community = \Modules\Partners\Models\CommunityBlacklist::create([
+            'tenant_id' => 'tenant-surabaya',
+            'reporting_company_name' => 'Mitra Rental Terverifikasi',
+            'name' => 'Sindikat KTP Palsu',
+            'id_number' => '3578017777770003',
+            'phone' => '081377889900',
+            'category' => 'fake_identity',
+            'severity' => 'critical',
+            'incident_details' => 'Menggunakan KTP palsu hasil editan.',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('module.partners.blacklist.import_community', $community->id));
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('partner_blacklists', [
+            'id_number' => '3578017777770003',
+            'name' => 'Sindikat KTP Palsu',
+            'category' => 'fake_identity',
+            'severity' => 'critical',
+        ]);
+    }
 }

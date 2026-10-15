@@ -2,13 +2,14 @@
 
 namespace Modules\Partners\Support;
 
+use Modules\Partners\Models\CommunityBlacklist;
 use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerBlacklist;
 
 class CustomerRiskService
 {
     /**
-     * Evaluate customer identity against blacklist registry and history.
+     * Evaluate customer identity against blacklist registry (both local and cross-tenant community).
      *
      * @return array{
      *     risk_level: 'clean'|'warning'|'blocked',
@@ -23,7 +24,7 @@ class CustomerRiskService
         $idNumber = ! empty($idNumber) ? trim($idNumber) : null;
         $cleanPhone = ! empty($phone) ? preg_replace('/[^0-9]/', '', $phone) : null;
 
-        // Query active blacklist entries
+        // Query active local blacklist entries
         $query = PartnerBlacklist::query()->active();
 
         $query->where(function ($q) use ($idNumber, $cleanPhone, $partnerId) {
@@ -79,6 +80,7 @@ class CustomerRiskService
 
             $records[] = [
                 'id' => $bl->id,
+                'source' => 'local',
                 'name' => $bl->name,
                 'id_number' => $bl->id_number,
                 'phone' => $bl->phone,
@@ -88,7 +90,48 @@ class CustomerRiskService
                 'incident_date' => $bl->incident_date?->toDateString(),
                 'incident_details' => $bl->incident_details,
                 'police_report_number' => $bl->police_report_number,
-                'reported_by_name' => $bl->reporter?->name,
+                'reported_by_name' => $bl->reporter?->name ?? 'Internal Rental',
+                'is_community' => false,
+            ];
+        }
+
+        // Query active community cross-tenant blacklist
+        $currentTenantId = function_exists('tenant') && tenant() ? (string) tenant('id') : null;
+        $communityMatches = collect();
+        if ($idNumber || $cleanPhone) {
+            $commQuery = CommunityBlacklist::query()->active()->matchIdentity($idNumber, $cleanPhone);
+            if ($currentTenantId) {
+                $commQuery->where(function ($q) use ($currentTenantId) {
+                    $q->whereNull('tenant_id')
+                        ->orWhere('tenant_id', '!=', $currentTenantId);
+                });
+            }
+            $communityMatches = $commQuery->get();
+        }
+
+        $hasCommunityCritical = false;
+        foreach ($communityMatches as $cbl) {
+            if ($cbl->severity === CommunityBlacklist::SEVERITY_CRITICAL) {
+                $hasCritical = true;
+                $hasCommunityCritical = true;
+            } else {
+                $hasWarning = true;
+            }
+
+            $records[] = [
+                'id' => $cbl->id,
+                'source' => 'community',
+                'name' => $cbl->name,
+                'id_number' => $cbl->id_number,
+                'phone' => $cbl->phone,
+                'category' => $cbl->category,
+                'category_label' => $cbl->category_label,
+                'severity' => $cbl->severity,
+                'incident_date' => $cbl->incident_date?->toDateString(),
+                'incident_details' => $cbl->incident_details,
+                'police_report_number' => $cbl->police_report_number,
+                'reported_by_name' => $cbl->reporter_display,
+                'is_community' => true,
             ];
         }
 
@@ -96,6 +139,7 @@ class CustomerRiskService
             $hasCritical = true;
             $records[] = [
                 'id' => null,
+                'source' => 'partner_profile',
                 'name' => $name ?? 'Data Mitra',
                 'id_number' => $idNumber ?? '—',
                 'phone' => $phone ?? '—',
@@ -106,15 +150,24 @@ class CustomerRiskService
                 'incident_details' => $partnerReason ?: 'Ditandai blacklist pada data kontak/mitra.',
                 'police_report_number' => null,
                 'reported_by_name' => 'Sistem',
+                'is_community' => false,
             ];
         }
 
         if ($hasCritical) {
+            $summary = $hasCommunityCritical && $matchedBlacklists->isEmpty()
+                ? 'PERINGATAN JARINGAN KOMUNITAS: NIK / No. HP ini dilaporkan oleh mitra rental lain dalam Jaringan Anti-Penggelapan Seruwit!'
+                : 'PELANGGAN MASUK DAFTAR HITAM (RISIKO TINGGI). Terindikasi kasus pelanggaran berat / penggelapan armada.';
+
+            $recommendation = $hasCommunityCritical && $matchedBlacklists->isEmpty()
+                ? 'TOLAK RESERVASI / JANGAN SERAHKAN KENDARAAN. Pelaku terindikasi modus penggelapan pada rental lain.'
+                : 'TOLAK RESERVASI / JANGAN SERAHKAN KENDARAAN.';
+
             return [
                 'risk_level' => 'blocked',
                 'is_blacklisted' => true,
-                'summary' => 'PELANGGAN MASUK DAFTAR HITAM (RISIKO TINGGI). Terindikasi kasus pelanggaran berat / penggelapan armada.',
-                'recommendation' => 'TOLAK RESERVASI / JANGAN SERAHKAN KENDARAAN.',
+                'summary' => $summary,
+                'recommendation' => $recommendation,
                 'records' => $records,
             ];
         }
@@ -123,7 +176,7 @@ class CustomerRiskService
             return [
                 'risk_level' => 'warning',
                 'is_blacklisted' => true,
-                'summary' => 'PERINGATAN: Pelanggan memiliki catatan sengketa atau pelanggaran ringan di masa lalu.',
+                'summary' => 'PERINGATAN: Pelanggan memiliki catatan sengketa atau peringatan di masa lalu.',
                 'recommendation' => 'Waspada: Verifikasi ulang KTP fisik & kenakan syarat jaminan deposit tambahan.',
                 'records' => $records,
             ];
@@ -132,7 +185,7 @@ class CustomerRiskService
         return [
             'risk_level' => 'clean',
             'is_blacklisted' => false,
-            'summary' => 'Identitas bersih. Tidak ditemukan catatan daftar hitam.',
+            'summary' => 'Identitas bersih. Tidak ditemukan catatan daftar hitam internal maupun komunitas.',
             'recommendation' => 'Pelanggan memenuhi syarat sewa.',
             'records' => [],
         ];

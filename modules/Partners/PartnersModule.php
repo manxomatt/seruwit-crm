@@ -109,6 +109,7 @@ class PartnersModule implements ModuleContract
         Route::post('/partners/blacklist', [PartnerBlacklistController::class, 'store'])->middleware('permission:partners,create')->name('partners.blacklist.store');
         Route::patch('/partners/blacklist/{blacklist}', [PartnerBlacklistController::class, 'update'])->middleware('permission:partners,update')->name('partners.blacklist.update');
         Route::delete('/partners/blacklist/{blacklist}', [PartnerBlacklistController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.blacklist.destroy');
+        Route::post('/partners/blacklist/import-community/{communityBlacklist}', [PartnerBlacklistController::class, 'importFromCommunity'])->middleware('permission:partners,create')->name('partners.blacklist.import_community');
         Route::get('/partners/risk-check', [PartnerBlacklistController::class, 'checkRisk'])->middleware('permission:partners,view')->name('partners.risk_check');
 
         Route::get('/partners/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners,view')->name('partners.show');

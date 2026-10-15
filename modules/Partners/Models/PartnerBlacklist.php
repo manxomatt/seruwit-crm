@@ -44,6 +44,8 @@ class PartnerBlacklist extends Model
         'evidence_urls',
         'is_active',
         'reported_by',
+        'is_shared_with_community',
+        'share_anonymously',
     ];
 
     /**
@@ -55,6 +57,8 @@ class PartnerBlacklist extends Model
             'incident_date' => 'date:Y-m-d',
             'evidence_urls' => 'array',
             'is_active' => 'boolean',
+            'is_shared_with_community' => 'boolean',
+            'share_anonymously' => 'boolean',
         ];
     }
 

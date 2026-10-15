@@ -10,7 +10,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { FormEventHandler, useMemo, useState } from 'react';
+import { FormEventHandler, useState } from 'react';
 import PartnersNav from '../../../../PartnersNav';
 
 interface BlacklistItem {
@@ -26,9 +26,28 @@ interface BlacklistItem {
     incident_details: string;
     police_report_number: string | null;
     is_active: boolean;
+    is_shared_with_community?: boolean;
+    share_anonymously?: boolean;
     created_at: string;
     partner?: { id: number; code: string; name: string; phone: string | null } | null;
     reporter?: { id: number; name: string } | null;
+}
+
+interface CommunityBlacklistItem {
+    id: number;
+    name: string;
+    id_number: string;
+    phone: string;
+    license_number: string | null;
+    category: 'car_theft' | 'pawn_attempt' | 'bad_debt' | 'fake_identity' | 'reckless_damage' | 'other';
+    category_label: string;
+    severity: 'critical' | 'warning' | 'caution';
+    incident_date: string | null;
+    incident_details: string;
+    police_report_number: string | null;
+    reporter_display: string;
+    is_own_tenant: boolean;
+    created_at: string;
 }
 
 interface Metrics {
@@ -36,6 +55,8 @@ interface Metrics {
     theft_cases: number;
     bad_debt_cases: number;
     active_cases: number;
+    community_total_cases?: number;
+    my_shared_cases?: number;
 }
 
 interface Filters {
@@ -43,12 +64,16 @@ interface Filters {
     category: string;
     severity: string;
     status: string;
+    tab?: string;
 }
 
 interface Props {
+    tab?: string;
     blacklists: BlacklistItem[];
+    community_blacklists?: CommunityBlacklistItem[];
     metrics: Metrics;
     filters: Filters;
+    current_tenant_id?: string | null;
 }
 
 const SearchIcon = () => (
@@ -112,7 +137,9 @@ const menuItemDangerClassName =
     'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition data-[focus]:bg-rose-50 dark:data-[focus]:bg-rose-900/30';
 
 export default function BlacklistIndex({
+    tab = 'local',
     blacklists,
+    community_blacklists = [],
     metrics,
     filters,
 }: Props): JSX.Element {
@@ -122,22 +149,25 @@ export default function BlacklistIndex({
     const page = usePage();
     const flash = page.props.flash as { success?: string; error?: string } | undefined;
 
+    const [activeTab, setActiveTab] = useState<'local' | 'community'>((filters.tab as any) || tab || 'local');
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCategory, setSelectedCategory] = useState<string>(filters.category || 'all');
     const [selectedSeverity, setSelectedSeverity] = useState<string>(filters.severity || 'all');
     const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || 'active');
 
     // Modals
-    const [selectedItemForDetail, setSelectedItemForDetail] = useState<BlacklistItem | null>(null);
+    const [selectedItemForDetail, setSelectedItemForDetail] = useState<BlacklistItem | CommunityBlacklistItem | null>(null);
     const [itemToDelete, setItemToDelete] = useState<BlacklistItem | null>(null);
     const [processingDelete, setProcessingDelete] = useState(false);
+    const [processingImportId, setProcessingImportId] = useState<number | null>(null);
 
     const hasActiveFilters = Boolean(
-        search.trim() || selectedCategory !== 'all' || selectedSeverity !== 'all' || selectedStatus !== 'active'
+        search.trim() || selectedCategory !== 'all' || selectedSeverity !== 'all' || (activeTab === 'local' && selectedStatus !== 'active')
     );
 
     const applyFilters = (newOverrides: Partial<Filters> = {}) => {
         const query: Record<string, any> = {
+            tab: newOverrides.tab !== undefined ? newOverrides.tab : activeTab,
             search: (newOverrides.search !== undefined ? newOverrides.search : search).trim() || undefined,
             category: (newOverrides.category !== undefined ? newOverrides.category : selectedCategory) !== 'all'
                 ? (newOverrides.category !== undefined ? newOverrides.category : selectedCategory)
@@ -158,6 +188,11 @@ export default function BlacklistIndex({
         });
     };
 
+    const handleTabChange = (newTab: 'local' | 'community') => {
+        setActiveTab(newTab);
+        applyFilters({ tab: newTab });
+    };
+
     const handleSearchSubmit: FormEventHandler = (e) => {
         e.preventDefault();
         applyFilters({ search });
@@ -168,7 +203,7 @@ export default function BlacklistIndex({
         setSelectedCategory('all');
         setSelectedSeverity('all');
         setSelectedStatus('all');
-        router.get(prefixedRoute('partners.blacklist.index'), { status: 'all' }, { preserveState: true, replace: true });
+        router.get(prefixedRoute('partners.blacklist.index'), { tab: activeTab, status: 'all' }, { preserveState: true, replace: true });
     };
 
     const toggleStatus = (item: BlacklistItem) => {
@@ -182,6 +217,35 @@ export default function BlacklistIndex({
                 prefixedRoute('partners.blacklist.update', item.id),
                 { is_active: newStatus },
                 { preserveScroll: true }
+            );
+        }
+    };
+
+    const toggleCommunityShare = (item: BlacklistItem) => {
+        const newShare = !item.is_shared_with_community;
+        const msg = newShare
+            ? `Bagikan kasus ${item.name} ke Jaringan Komunitas Rental Seruwit? Data NIK/HP akan membantu sesama pengusaha rental mencegah penggelapan armada.`
+            : `Hentikan pembagian kasus ${item.name} dari Jaringan Komunitas Seruwit?`;
+
+        if (confirm(msg)) {
+            router.patch(
+                prefixedRoute('partners.blacklist.update', item.id),
+                { is_shared_with_community: newShare },
+                { preserveScroll: true }
+            );
+        }
+    };
+
+    const importFromCommunity = (item: CommunityBlacklistItem) => {
+        if (confirm(`Salin catatan ${item.name} (${item.id_number}) ke Blacklist Internal Anda?`)) {
+            setProcessingImportId(item.id);
+            router.post(
+                prefixedRoute('partners.blacklist.import_community', item.id),
+                {},
+                {
+                    preserveScroll: true,
+                    onFinish: () => setProcessingImportId(null),
+                }
             );
         }
     };
@@ -217,7 +281,7 @@ export default function BlacklistIndex({
         }
     };
 
-    const getSeverityBadge = (severity: BlacklistItem['severity']) => {
+    const getSeverityBadge = (severity: 'critical' | 'warning' | 'caution') => {
         switch (severity) {
             case 'critical':
                 return {
@@ -240,7 +304,7 @@ export default function BlacklistIndex({
         }
     };
 
-    const getCategoryLabel = (category: BlacklistItem['category']) => {
+    const getCategoryLabel = (category: string) => {
         switch (category) {
             case 'car_theft':
                 return 'Penggelapan Armada';
@@ -256,6 +320,16 @@ export default function BlacklistIndex({
                 return 'Pelanggaran Lainnya';
         }
     };
+
+    const CATEGORY_OPTIONS = [
+        { value: 'all', label: 'Semua Kategori Kasus' },
+        { value: 'car_theft', label: 'Penggelapan Armada' },
+        { value: 'pawn_attempt', label: 'Percobaan Gadai' },
+        { value: 'bad_debt', label: 'Gagal Bayar / Kabur' },
+        { value: 'fake_identity', label: 'Identitas Palsu' },
+        { value: 'reckless_damage', label: 'Kecelakaan Menolak Ganti' },
+        { value: 'other', label: 'Pelanggaran Lainnya' },
+    ];
 
     const statusPills = [
         { value: 'active', label: 'Aktif Dicekal' },
@@ -317,78 +391,139 @@ export default function BlacklistIndex({
             )}
 
             {/* KPI Metrics */}
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {/* Card 1: Total */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                {/* Card 1: Total Local */}
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-center justify-between">
-                        <span className="text-xl">📋</span>
-                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                            Total Kasus
+                        <span className="text-lg">📋</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            Kasus Internal
                         </span>
                     </div>
-                    <div className="mt-3">
-                        <p className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                    <div className="mt-2.5">
+                        <p className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                             {metrics.total_cases}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            Riwayat Kasus Terdata
+                        <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            Catatan Lokal Anda
                         </p>
                     </div>
                 </div>
 
                 {/* Card 2: Theft Cases */}
-                <div className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-4 sm:p-5 shadow-xs dark:border-rose-900/60 dark:bg-rose-950/20">
+                <div className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-xs dark:border-rose-900/60 dark:bg-rose-950/20">
                     <div className="flex items-center justify-between">
-                        <span className="text-xl">🚨</span>
-                        <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">
+                        <span className="text-lg">🚨</span>
+                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">
                             Bahaya Fatal
                         </span>
                     </div>
-                    <div className="mt-3">
-                        <p className="text-2xl sm:text-3xl font-black tracking-tight text-rose-700 dark:text-rose-400">
+                    <div className="mt-2.5">
+                        <p className="text-xl sm:text-2xl font-black tracking-tight text-rose-700 dark:text-rose-400">
                             {metrics.theft_cases}
                         </p>
-                        <p className="mt-0.5 text-xs text-rose-600/90 dark:text-rose-400/80">
-                            Penggelapan & Gadai Gelap
+                        <p className="mt-0.5 text-[11px] text-rose-600/90 dark:text-rose-400/80 truncate">
+                            Penggelapan & Gadai
                         </p>
                     </div>
                 </div>
 
                 {/* Card 3: Bad Debt */}
-                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 sm:p-5 shadow-xs dark:border-amber-900/60 dark:bg-amber-950/20">
+                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 shadow-xs dark:border-amber-900/60 dark:bg-amber-950/20">
                     <div className="flex items-center justify-between">
-                        <span className="text-xl">💸</span>
-                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                        <span className="text-lg">💸</span>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
                             Finansial
                         </span>
                     </div>
-                    <div className="mt-3">
-                        <p className="text-2xl sm:text-3xl font-black tracking-tight text-amber-700 dark:text-amber-400">
+                    <div className="mt-2.5">
+                        <p className="text-xl sm:text-2xl font-black tracking-tight text-amber-700 dark:text-amber-400">
                             {metrics.bad_debt_cases}
                         </p>
-                        <p className="mt-0.5 text-xs text-amber-600/90 dark:text-amber-400/80">
-                            Kasus Gagal Bayar / Kabur
+                        <p className="mt-0.5 text-[11px] text-amber-600/90 dark:text-amber-400/80 truncate">
+                            Gagal Bayar / Kabur
                         </p>
                     </div>
                 </div>
 
-                {/* Card 4: Active Blacklists */}
-                <div className="rounded-2xl border border-indigo-200/80 bg-indigo-50/40 p-4 sm:p-5 shadow-xs dark:border-indigo-900/60 dark:bg-indigo-950/20">
+                {/* Card 4: Active Cekal */}
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-center justify-between">
-                        <span className="text-xl">🔒</span>
-                        <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-bold text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
+                        <span className="text-lg">🔒</span>
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
                             Cekal Aktif
                         </span>
                     </div>
-                    <div className="mt-3">
-                        <p className="text-2xl sm:text-3xl font-black tracking-tight text-indigo-700 dark:text-indigo-400">
+                    <div className="mt-2.5">
+                        <p className="text-xl sm:text-2xl font-black tracking-tight text-indigo-700 dark:text-indigo-400">
                             {metrics.active_cases}
                         </p>
-                        <p className="mt-0.5 text-xs text-indigo-600/90 dark:text-indigo-400/80">
-                            Identitas Terkunci dari Sewa
+                        <p className="mt-0.5 text-[11px] text-indigo-600/90 dark:text-indigo-400/80 truncate">
+                            Terkunci dari Sewa
                         </p>
                     </div>
                 </div>
+
+                {/* Card 5: Jaringan Komunitas */}
+                <div className="col-span-2 sm:col-span-1 rounded-2xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/40 p-4 shadow-xs dark:border-indigo-900/70 dark:bg-gradient-to-br dark:from-indigo-950/40 dark:via-slate-900 dark:to-slate-900">
+                    <div className="flex items-center justify-between">
+                        <span className="text-lg">🌐</span>
+                        <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                            Lintas Rental
+                        </span>
+                    </div>
+                    <div className="mt-2.5">
+                        <p className="text-xl sm:text-2xl font-black tracking-tight text-indigo-600 dark:text-indigo-300">
+                            {metrics.community_total_cases ?? 0}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                            Intelijen Komunitas Seruwit
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-2">
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => handleTabChange('local')}
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                            activeTab === 'local'
+                                ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900'
+                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                        }`}
+                    >
+                        <span>📁 Blacklist Internal Saya</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                            activeTab === 'local' ? 'bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900' : 'bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}>
+                            {blacklists.length}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => handleTabChange('community')}
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                            activeTab === 'community'
+                                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                                : 'text-slate-600 hover:bg-indigo-50/70 hover:text-indigo-700 dark:text-slate-400 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-300'
+                        }`}
+                    >
+                        <span>🌐 Jaringan Komunitas Seruwit</span>
+                        <span className="inline-flex items-center rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-black text-indigo-700 dark:text-indigo-300">
+                            {metrics.community_total_cases ?? community_blacklists.length} Kasus
+                        </span>
+                    </button>
+                </div>
+
+                {activeTab === 'community' && (
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                        ⚡ Real-time sinkronisasi pencegahan penggelapan antar rental se-Indonesia
+                    </span>
+                )}
             </div>
 
             {/* Unified Data Card */}
@@ -403,10 +538,14 @@ export default function BlacklistIndex({
                                 </span>
                                 <TextInput
                                     type="search"
-                                    placeholder="Cari nama, NIK KTP, no telepon, no laporan polisi, kronologi..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="w-full !rounded-xl border-slate-200 dark:border-slate-800 !py-2 pl-9 text-xs bg-white dark:bg-slate-900"
+                                    placeholder={
+                                        activeTab === 'community'
+                                            ? 'Cari NIK KTP, No. HP, nama pelaku, atau nomor plat di seluruh jaringan rental...'
+                                            : 'Cari nama pelanggan, NIK, No. HP, atau No. LP...'
+                                    }
+                                    className="w-full !rounded-xl border-slate-200 pl-9 text-xs dark:border-slate-800"
                                 />
                             </div>
 
@@ -419,351 +558,503 @@ export default function BlacklistIndex({
                                         applyFilters({ category: value });
                                     }}
                                     placeholder="Semua Kategori Kasus"
-                                    options={[
-                                        { value: 'all', label: 'Semua Kategori Kasus' },
-                                        { value: 'car_theft', label: 'Penggelapan Armada' },
-                                        { value: 'pawn_attempt', label: 'Percobaan Gadai' },
-                                        { value: 'bad_debt', label: 'Gagal Bayar / Kabur' },
-                                        { value: 'fake_identity', label: 'Identitas Palsu' },
-                                        { value: 'reckless_damage', label: 'Kecelakaan Menolak Ganti' },
-                                        { value: 'other', label: 'Pelanggaran Lainnya' },
-                                    ]}
+                                    options={CATEGORY_OPTIONS}
                                 />
                             </div>
 
                             <PrimaryButton
                                 type="submit"
-                                className="!rounded-xl text-xs shadow-sm"
+                                className="!rounded-xl px-4 py-2 text-xs shadow-xs"
                             >
-                                {t('common.search', undefined, 'Cari')}
+                                Cari
                             </PrimaryButton>
 
                             {hasActiveFilters && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
-                                    className="inline-flex h-9 items-center gap-1 rounded-xl px-3 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white transition"
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
                                 >
                                     <CloseIcon />
-                                    <span>Bersihkan Filter</span>
+                                    <span>Reset</span>
                                 </button>
                             )}
                         </form>
 
-                        {/* Pills Filter Row */}
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            {statusPills.map((pill) => {
-                                const active = selectedStatus === pill.value;
-                                return (
-                                    <button
-                                        key={`status-${pill.value}`}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedStatus(pill.value);
-                                            applyFilters({ status: pill.value });
-                                        }}
-                                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${active
-                                            ? pill.value === 'active'
-                                                ? 'bg-rose-600 text-white shadow-sm'
-                                                : pill.value === 'inactive'
-                                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                                    : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        {/* Filter Badges Bar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t border-slate-50 dark:border-slate-800/60">
+                            {activeTab === 'local' ? (
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="text-slate-400 font-semibold mr-1">Status Cekal:</span>
+                                    {statusPills.map((pill) => (
+                                        <button
+                                            key={pill.value}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedStatus(pill.value);
+                                                applyFilters({ status: pill.value });
+                                            }}
+                                            className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                                                selectedStatus === pill.value
+                                                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
                                             }`}
-                                    >
-                                        {pill.label}
-                                    </button>
-                                );
-                            })}
+                                        >
+                                            {pill.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-medium">
+                                    <span>🌐 Sumber: Seluruh Mitra Rental Terverifikasi Seruwit</span>
+                                </div>
+                            )}
 
-                            <span className="mx-1 hidden h-4 w-px bg-slate-200 dark:bg-slate-800 sm:inline-block" aria-hidden />
-
-                            {severityPills.map((pill) => {
-                                const active = selectedSeverity === pill.value;
-                                return (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-slate-400 font-semibold mr-1">Tingkat Risiko:</span>
+                                {severityPills.map((pill) => (
                                     <button
-                                        key={`severity-${pill.value}`}
+                                        key={pill.value}
                                         type="button"
                                         onClick={() => {
                                             setSelectedSeverity(pill.value);
                                             applyFilters({ severity: pill.value });
                                         }}
-                                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${active
-                                            ? 'bg-indigo-600 text-white shadow-sm'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                            }`}
+                                        className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                                            selectedSeverity === pill.value
+                                                ? 'bg-rose-600 text-white'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                                        }`}
                                     >
                                         {pill.label}
                                     </button>
-                                );
-                            })}
-
-                            <span className="ml-auto text-xs font-bold tabular-nums text-slate-400">
-                                Menampilkan {blacklists.length} kasus
-                            </span>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Table or Empty State */}
-                {blacklists.length === 0 ? (
-                    <div className="px-6 py-16 text-center">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600 text-2xl font-bold">
-                            🛡️
-                        </div>
-                        <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
-                            {hasActiveFilters ? 'Tidak Ditemukan Kasus yang Sesuai' : 'Belum Ada Daftar Hitam'}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                            {hasActiveFilters
-                                ? 'Coba sesuaikan filter atau kata kunci pencarian Anda untuk melihat data lainnya.'
-                                : 'Database daftar hitam pelanggan bermasalah masih kosong. Tambahkan data untuk mencegah risiko penggelapan armada.'}
-                        </p>
-                        {hasActiveFilters ? (
-                            <button
-                                type="button"
-                                onClick={clearFilters}
-                                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                            >
-                                <CloseIcon />
-                                <span>Bersihkan Filter</span>
-                            </button>
-                        ) : (
-                            <div className="mt-5">
-                                <Link
-                                    href={prefixedRoute('partners.blacklist.create')}
-                                    className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 hover:bg-rose-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-rose-600/30 transition"
-                                >
-                                    <span>+</span>
-                                    <span>Tambah Catatan Kasus Pertama</span>
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto min-h-[320px]">
-                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
-                                <tr>
-                                    <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
-                                        Identitas Pelaku
-                                    </th>
-                                    <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
-                                        Kontak & Profil
-                                    </th>
-                                    <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
-                                        Tingkat Risiko & Modus
-                                    </th>
-                                    <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
-                                        Kronologi & Bukti
-                                    </th>
-                                    <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400">
-                                        Aksi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {blacklists.map((item) => {
-                                    const sevBadge = getSeverityBadge(item.severity);
-                                    const phoneClean = item.phone.replace(/[^0-9]/g, '');
-                                    const avatarCls = getAvatarColor(item.id, item.name);
-
-                                    return (
-                                        <tr
-                                            key={item.id}
-                                            className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
-                                                !item.is_active ? 'opacity-65' : ''
-                                            }`}
+                {/* Tab 1: Local Blacklist Table */}
+                {activeTab === 'local' && (
+                    <>
+                        {blacklists.length === 0 ? (
+                            <div className="py-16 text-center">
+                                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl dark:bg-emerald-950/40">
+                                    🛡️
+                                </span>
+                                <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
+                                    {hasActiveFilters ? 'Tidak ada data yang sesuai filter' : 'Belum Ada Daftar Hitam Internal'}
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                                    {hasActiveFilters
+                                        ? 'Coba ubah kata kunci pencarian atau sesuaikan opsi kategori kasus.'
+                                        : 'Tambahkan data pelanggan yang pernah bermasalah, menolak bayar, atau terindikasi penggelapan armada.'}
+                                </p>
+                                {hasActiveFilters ? (
+                                    <button
+                                        type="button"
+                                        onClick={clearFilters}
+                                        className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
+                                    >
+                                        Bersihkan Filter
+                                    </button>
+                                ) : (
+                                    <div className="mt-5">
+                                        <Link
+                                            href={prefixedRoute('partners.blacklist.create')}
+                                            className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 hover:bg-rose-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-rose-600/30 transition"
                                         >
-                                            {/* Column 1: Identitas */}
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-2xs ${avatarCls}`}
-                                                    >
-                                                        {getInitials(item.name)}
-                                                    </div>
-                                                    <div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedItemForDetail(item)}
-                                                            className="text-left font-bold text-slate-900 dark:text-white hover:text-rose-600 dark:hover:text-rose-400 transition"
-                                                        >
-                                                            {item.name}
-                                                        </button>
-                                                        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                                            <span className="font-semibold text-rose-600 dark:text-rose-400">
-                                                                NIK: {item.id_number}
-                                                            </span>
-                                                            {item.license_number && (
-                                                                <span>SIM: {item.license_number}</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
+                                            <span>+</span>
+                                            <span>Tambah Catatan Kasus Pertama</span>
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto min-h-[320px]">
+                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                                        <tr>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Identitas Pelaku
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Kontak & Profil
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Tingkat Risiko & Modus
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Kronologi & Bukti
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Status & Jaringan
+                                            </th>
+                                            <th className="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400">
+                                                Aksi
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {blacklists.map((item) => {
+                                            const sevBadge = getSeverityBadge(item.severity);
+                                            const phoneClean = item.phone.replace(/[^0-9]/g, '');
+                                            const avatarCls = getAvatarColor(item.id, item.name);
 
-                                            {/* Column 2: Kontak & Mitra */}
-                                            <td className="px-6 py-4">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                            return (
+                                                <tr
+                                                    key={item.id}
+                                                    className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
+                                                        !item.is_active ? 'opacity-65' : ''
+                                                    }`}
+                                                >
+                                                    {/* Pelaku */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold ${avatarCls}`}>
+                                                                {getInitials(item.name)}
+                                                            </div>
+                                                            <div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSelectedItemForDetail(item)}
+                                                                    className="font-bold text-slate-900 dark:text-white hover:text-rose-600 text-left transition"
+                                                                >
+                                                                    {item.name}
+                                                                </button>
+                                                                <p className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                                                    NIK: {item.id_number}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Kontak & Profil */}
+                                                    <td className="px-6 py-4">
+                                                        <p className="font-mono text-slate-700 dark:text-slate-300">
                                                             {item.phone}
-                                                        </span>
-                                                        {phoneClean && (
-                                                            <a
-                                                                href={`https://wa.me/${phoneClean.startsWith('0') ? '62' + phoneClean.slice(1) : phoneClean}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                title="Hubungi via WhatsApp"
-                                                                className="inline-flex items-center justify-center rounded-lg bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300"
-                                                            >
-                                                                WA 💬
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                    {item.partner ? (
-                                                        <div>
+                                                        </p>
+                                                        {item.partner ? (
                                                             <Link
                                                                 href={prefixedRoute('partners.show', item.partner.id)}
-                                                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                                                                className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
                                                             >
-                                                                <span>Mitra:</span>
-                                                                <span>{item.partner.name}</span>
-                                                                <span className="font-mono text-[10px]">({item.partner.code})</span>
+                                                                <span>Mitra: {item.partner.code}</span>
                                                             </Link>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[11px] text-slate-400">Tanpa tautan profil</span>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            {/* Column 3: Severity & Kategori */}
-                                            <td className="px-6 py-4">
-                                                <div>
-                                                    <span
-                                                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${sevBadge.className}`}
-                                                    >
-                                                        <span>{sevBadge.icon}</span>
-                                                        <span>{sevBadge.label}</span>
-                                                    </span>
-                                                    <div className="mt-1">
-                                                        <span className="inline-block rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
-                                                            {getCategoryLabel(item.category)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Column 4: Kronologi & Bukti */}
-                                            <td className="px-6 py-4 max-w-xs">
-                                                <div>
-                                                    <p
-                                                        onClick={() => setSelectedItemForDetail(item)}
-                                                        className="line-clamp-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:text-slate-900 dark:hover:text-white"
-                                                        title={item.incident_details}
-                                                    >
-                                                        {item.incident_details}
-                                                    </p>
-                                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                                                        {item.incident_date && (
-                                                            <span>Tgl: {formatDate(item.incident_date)}</span>
+                                                        ) : (
+                                                            <span className="text-[11px] text-slate-400">Bukan mitra tetap</span>
                                                         )}
-                                                        {item.police_report_number && (
-                                                            <span className="font-semibold text-slate-600 dark:text-slate-300">
-                                                                LP: {item.police_report_number}
+                                                    </td>
+
+                                                    {/* Kategori & Severity */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1">
+                                                            <span
+                                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${sevBadge.className}`}
+                                                            >
+                                                                <span>{sevBadge.icon}</span>
+                                                                <span>{sevBadge.label}</span>
                                                             </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
+                                                            <p className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                {getCategoryLabel(item.category)}
+                                                            </p>
+                                                        </div>
+                                                    </td>
 
-                                            {/* Column 5: Status */}
-                                            <td className="px-6 py-4">
-                                                {item.is_active ? (
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-rose-600 dark:bg-rose-400 animate-pulse" />
-                                                        Aktif Dicekal
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                                        Dicabut (Whitelist)
-                                                    </span>
-                                                )}
-                                            </td>
+                                                    {/* Kronologi */}
+                                                    <td className="px-6 py-4 max-w-xs">
+                                                        <p className="line-clamp-2 text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                                                            {item.incident_details}
+                                                        </p>
+                                                        <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
+                                                            <span>Tgl: {formatDate(item.incident_date)}</span>
+                                                            {item.police_report_number && (
+                                                                <span className="font-mono text-rose-600 dark:text-rose-400">
+                                                                    • LP: {item.police_report_number}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
 
-                                            {/* Column 6: Actions */}
-                                            <td className="px-6 py-4 text-right">
-                                                <Menu as="div" className="relative inline-block text-left">
-                                                    <MenuButton className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition">
-                                                        <EllipsisVerticalIcon />
-                                                    </MenuButton>
+                                                    {/* Status & Komunitas */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1">
+                                                            {item.is_active ? (
+                                                                <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+                                                                    ● Dicekal
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                                    Whitelist
+                                                                </span>
+                                                            )}
 
-                                                    <MenuItems
-                                                        transition
-                                                        anchor="bottom end"
-                                                        className="z-[1200] w-52 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-2xl backdrop-blur-md outline-none"
-                                                    >
-                                                        <MenuItem>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setSelectedItemForDetail(item)}
-                                                                className={menuItemClassName}
+                                                            <div>
+                                                                {item.is_shared_with_community ? (
+                                                                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-950 dark:text-indigo-300">
+                                                                        🌐 Dibagikan
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[10px] text-slate-400 block">
+                                                                        Hanya Internal
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Aksi */}
+                                                    <td className="px-6 py-4 text-right">
+                                                        <Menu as="div" className="relative inline-block text-left">
+                                                            <MenuButton className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition">
+                                                                <EllipsisVerticalIcon />
+                                                            </MenuButton>
+
+                                                            <MenuItems
+                                                                transition
+                                                                anchor="bottom end"
+                                                                className="z-[1200] w-56 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-2xl backdrop-blur-md outline-none"
                                                             >
-                                                                <EyeIcon />
-                                                                <span>Lihat Detail Lengkap</span>
-                                                            </button>
-                                                        </MenuItem>
+                                                                <MenuItem>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setSelectedItemForDetail(item)}
+                                                                        className={menuItemClassName}
+                                                                    >
+                                                                        <EyeIcon />
+                                                                        <span>Lihat Detail Kasus</span>
+                                                                    </button>
+                                                                </MenuItem>
 
-                                                        {phoneClean && (
-                                                            <MenuItem>
-                                                                <a
-                                                                    href={`https://wa.me/${phoneClean.startsWith('0') ? '62' + phoneClean.slice(1) : phoneClean}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className={menuItemClassName}
-                                                                >
-                                                                    <span>💬 Hubungi via WA</span>
-                                                                </a>
-                                                            </MenuItem>
-                                                        )}
+                                                                <MenuItem>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => toggleCommunityShare(item)}
+                                                                        className={menuItemClassName}
+                                                                    >
+                                                                        <span>
+                                                                            {item.is_shared_with_community
+                                                                                ? '🚫 Hentikan Berbagi Komunitas'
+                                                                                : '🌐 Bagikan ke Komunitas Rental'}
+                                                                        </span>
+                                                                    </button>
+                                                                </MenuItem>
 
-                                                        <MenuItem>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => toggleStatus(item)}
-                                                                className={menuItemClassName}
-                                                            >
-                                                                <span>{item.is_active ? '🔓 Cabut Cekal (Whitelist)' : '🔒 Aktifkan Kembali Cekal'}</span>
-                                                            </button>
-                                                        </MenuItem>
+                                                                <MenuItem>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => toggleStatus(item)}
+                                                                        className={menuItemClassName}
+                                                                    >
+                                                                        <span>{item.is_active ? '🔓 Cabut Cekal (Whitelist)' : '🔒 Aktifkan Kembali Cekal'}</span>
+                                                                    </button>
+                                                                </MenuItem>
 
-                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
-                                                        <MenuItem>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openDeleteDialog(item)}
-                                                                className={menuItemDangerClassName}
-                                                            >
-                                                                <TrashIcon />
-                                                                <span>Hapus Catatan</span>
-                                                            </button>
-                                                        </MenuItem>
-                                                    </MenuItems>
-                                                </Menu>
-                                            </td>
+                                                                <MenuItem>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => openDeleteDialog(item)}
+                                                                        className={menuItemDangerClassName}
+                                                                    >
+                                                                        <TrashIcon />
+                                                                        <span>Hapus Catatan</span>
+                                                                    </button>
+                                                                </MenuItem>
+                                                            </MenuItems>
+                                                        </Menu>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* Tab 2: Community Shared Blacklist Table */}
+                {activeTab === 'community' && (
+                    <>
+                        <div className="bg-indigo-50/50 dark:bg-indigo-950/20 border-b border-indigo-100/60 dark:border-indigo-950/40 p-4 sm:p-5 flex items-start gap-3">
+                            <span className="text-2xl shrink-0">🌐</span>
+                            <div className="text-xs">
+                                <h4 className="font-bold text-slate-900 dark:text-white">
+                                    Jaringan Intelijen Anti-Penggelapan Lintas Rental (Seruwit Network)
+                                </h4>
+                                <p className="text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    Database ini berisi daftar hitam yang dilaporkan oleh sesama pemilik rental di ekosistem Seruwit. Jika menemukan pelaku yang berpotensi menyewa di rental Anda, klik <strong>"Salin ke Blacklist Saya"</strong> untuk langsung memasukkannya ke proteksi internal.
+                                </p>
+                            </div>
+                        </div>
+
+                        {community_blacklists.length === 0 ? (
+                            <div className="py-16 text-center">
+                                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-2xl dark:bg-indigo-950/40">
+                                    🔍
+                                </span>
+                                <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
+                                    Tidak Ditemukan Laporan Komunitas yang Cocok
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                                    Belum ada catatan yang sesuai dengan filter atau kata kunci pencarian Anda di jaringan nasional.
+                                </p>
+                                {hasActiveFilters && (
+                                    <button
+                                        type="button"
+                                        onClick={clearFilters}
+                                        className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
+                                    >
+                                        Bersihkan Filter
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto min-h-[320px]">
+                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                                        <tr>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Identitas Terduga Pelaku
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Kontak & SIM
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Kategori Kasus
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Modus / No. Laporan Polisi
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400">
+                                                Pelapor
+                                            </th>
+                                            <th className="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400">
+                                                Aksi Proteksi
+                                            </th>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {community_blacklists.map((citem) => {
+                                            const sevBadge = getSeverityBadge(citem.severity);
+                                            const avatarCls = getAvatarColor(citem.id, citem.name);
+
+                                            return (
+                                                <tr
+                                                    key={citem.id}
+                                                    className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-colors"
+                                                >
+                                                    {/* Pelaku */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold ${avatarCls}`}>
+                                                                {getInitials(citem.name)}
+                                                            </div>
+                                                            <div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSelectedItemForDetail(citem)}
+                                                                    className="font-bold text-slate-900 dark:text-white hover:text-indigo-600 text-left transition"
+                                                                >
+                                                                    {citem.name}
+                                                                </button>
+                                                                <p className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                                                    NIK: {citem.id_number}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Kontak & SIM */}
+                                                    <td className="px-6 py-4">
+                                                        <p className="font-mono text-slate-700 dark:text-slate-300">
+                                                            {citem.phone}
+                                                        </p>
+                                                        {citem.license_number && (
+                                                            <p className="font-mono text-[11px] text-slate-400">
+                                                                SIM: {citem.license_number}
+                                                            </p>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Kategori & Severity */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1">
+                                                            <span
+                                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${sevBadge.className}`}
+                                                            >
+                                                                <span>{sevBadge.icon}</span>
+                                                                <span>{sevBadge.label}</span>
+                                                            </span>
+                                                            <p className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                {citem.category_label || getCategoryLabel(citem.category)}
+                                                            </p>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Modus & No LP */}
+                                                    <td className="px-6 py-4 max-w-xs">
+                                                        <p className="line-clamp-2 text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                                                            {citem.incident_details}
+                                                        </p>
+                                                        <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
+                                                            <span>Tgl: {formatDate(citem.incident_date)}</span>
+                                                            {citem.police_report_number && (
+                                                                <span className="font-mono font-semibold text-rose-600 dark:text-rose-400">
+                                                                    • LP: {citem.police_report_number}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Pelapor */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-0.5">
+                                                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                                                                🏢 {citem.reporter_display}
+                                                            </span>
+                                                            {citem.is_own_tenant && (
+                                                                <span className="block text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                                                                    (Laporan Rental Anda)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Aksi Proteksi */}
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSelectedItemForDetail(citem)}
+                                                                className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+                                                            >
+                                                                Detail
+                                                            </button>
+
+                                                            {!citem.is_own_tenant && (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={processingImportId === citem.id}
+                                                                    onClick={() => importFromCommunity(citem)}
+                                                                    className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition disabled:opacity-50"
+                                                                >
+                                                                    <span>+</span>
+                                                                    <span>{processingImportId === citem.id ? 'Menyalin...' : 'Salin ke Blacklist'}</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -822,12 +1113,16 @@ export default function BlacklistIndex({
                                     {selectedItemForDetail.phone}
                                 </p>
                                 <div className="mt-2">
-                                    <span className="font-semibold text-slate-400">Status Cekal Saat Ini:</span>
+                                    <span className="font-semibold text-slate-400">Status Sumber:</span>
                                     <p className="mt-0.5">
-                                        {selectedItemForDetail.is_active ? (
-                                            <span className="font-bold text-rose-600">🔴 Aktif Dicekal dari Rental</span>
+                                        {'reporter_display' in selectedItemForDetail ? (
+                                            <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                                                🌐 Komunitas: {selectedItemForDetail.reporter_display}
+                                            </span>
                                         ) : (
-                                            <span className="font-bold text-emerald-600">🟢 Dicabut (Whitelist)</span>
+                                            <span className="font-bold text-slate-700 dark:text-slate-300">
+                                                📁 Blacklist Internal Anda
+                                            </span>
                                         )}
                                     </p>
                                 </div>
@@ -838,53 +1133,49 @@ export default function BlacklistIndex({
                         <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-4 text-xs dark:border-rose-950/40 dark:bg-rose-950/10">
                             <div className="flex items-center justify-between font-semibold text-slate-500 mb-2">
                                 <span>Kronologi & Modus Kejadian:</span>
-                                {selectedItemForDetail.incident_date && (
-                                    <span>Tgl Kejadian: {formatDate(selectedItemForDetail.incident_date)}</span>
-                                )}
+                                <span>Tanggal: {formatDate(selectedItemForDetail.incident_date)}</span>
                             </div>
-                            <p className="whitespace-pre-line leading-relaxed text-slate-800 dark:text-slate-200">
+                            <p className="whitespace-pre-line text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
                                 {selectedItemForDetail.incident_details}
                             </p>
-                            {selectedItemForDetail.police_report_number && (
-                                <div className="mt-3 pt-2 border-t border-rose-200/50 dark:border-rose-900/40 font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                                    <strong>No. Laporan Polisi (LP):</strong> {selectedItemForDetail.police_report_number}
+                        </div>
+
+                        {/* Legal Report Number */}
+                        {selectedItemForDetail.police_report_number && (
+                            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-3.5 text-xs dark:border-amber-900/60 dark:bg-amber-950/20">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm">👮‍♂️</span>
+                                    <div>
+                                        <span className="font-bold text-amber-900 dark:text-amber-200">
+                                            Nomor Laporan Polisi (LP):
+                                        </span>
+                                        <p className="font-mono font-bold text-slate-900 dark:text-white mt-0.5">
+                                            {selectedItemForDetail.police_report_number}
+                                        </p>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
-                        {/* Metadata Footer */}
-                        <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400">
-                            <span>
-                                Dicatat pada {formatDate(selectedItemForDetail.created_at)}
-                                {selectedItemForDetail.reporter ? ` oleh ${selectedItemForDetail.reporter.name}` : ''}
-                            </span>
-                            {selectedItemForDetail.partner && (
-                                <Link
-                                    href={prefixedRoute('partners.show', selectedItemForDetail.partner.id)}
-                                    className="font-bold text-indigo-600 underline dark:text-indigo-400"
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            {'reporter_display' in selectedItemForDetail && !selectedItemForDetail.is_own_tenant && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const citem = selectedItemForDetail as CommunityBlacklistItem;
+                                        setSelectedItemForDetail(null);
+                                        importFromCommunity(citem);
+                                    }}
+                                    className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 shadow-xs"
                                 >
-                                    Buka Profil Mitra ({selectedItemForDetail.partner.code})
-                                </Link>
+                                    + Salin ke Blacklist Internal Saya
+                                </button>
                             )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                            <button
+                            <SecondaryButton
                                 type="button"
-                                onClick={() => {
-                                    const item = selectedItemForDetail;
-                                    setSelectedItemForDetail(null);
-                                    toggleStatus(item);
-                                }}
-                                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
-                                    selectedItemForDetail.is_active
-                                        ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
-                                        : 'bg-rose-600 text-white hover:bg-rose-700 shadow-xs'
-                                }`}
+                                onClick={() => setSelectedItemForDetail(null)}
+                                className="!rounded-xl text-xs"
                             >
-                                {selectedItemForDetail.is_active ? 'Cabut Status Blacklist' : 'Aktifkan Kembali Cekal'}
-                            </button>
-                            <SecondaryButton type="button" onClick={() => setSelectedItemForDetail(null)}>
                                 Tutup
                             </SecondaryButton>
                         </div>
@@ -892,20 +1183,18 @@ export default function BlacklistIndex({
                 </Modal>
             )}
 
-
-
             {/* Confirm Delete Dialog */}
             <ConfirmDeleteDialog
-                show={Boolean(itemToDelete)}
-                onClose={closeDeleteDialog}
-                onConfirm={confirmDelete}
-                processing={processingDelete}
-                title="Hapus Catatan Daftar Hitam"
+                isOpen={Boolean(itemToDelete)}
+                title="Hapus Catatan Daftar Hitam?"
                 message={
                     itemToDelete
-                        ? `Apakah Anda yakin ingin menghapus permanen catatan daftar hitam untuk ${itemToDelete.name} (NIK: ${itemToDelete.id_number})? Tindakan ini tidak dapat dibatalkan.`
-                        : 'Apakah Anda yakin ingin menghapus catatan daftar hitam ini?'
+                        ? `Apakah Anda yakin ingin menghapus catatan daftar hitam untuk ${itemToDelete.name} (${itemToDelete.id_number})? Data riwayat kasus ini akan dihapus permanen.`
+                        : ''
                 }
+                onConfirm={confirmDelete}
+                onClose={closeDeleteDialog}
+                processing={processingDelete}
             />
         </DynamicLayout>
     );

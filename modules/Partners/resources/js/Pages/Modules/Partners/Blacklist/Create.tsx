@@ -72,6 +72,8 @@ export default function BlacklistCreate({ partner, partners = [] }: Props): JSX.
         incident_details: '',
         police_report_number: '',
         partner_id: partner?.id || null,
+        is_shared_with_community: false,
+        share_anonymously: true,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -375,6 +377,74 @@ export default function BlacklistCreate({ partner, partners = [] }: Props): JSX.
                             />
                             <InputError message={errors.incident_details} className="mt-1" />
                         </div>
+                    </div>
+                </section>
+
+                {/* Section 4: Jaringan Anti-Penggelapan Komunitas Seruwit */}
+                <section className="rounded-2xl border border-indigo-100 dark:border-indigo-950/60 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    <div className="border-b border-indigo-100/70 dark:border-indigo-950/50 bg-gradient-to-r from-indigo-50/70 via-indigo-50/30 to-transparent dark:from-indigo-950/30 dark:via-transparent p-5 sm:p-6">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-sm shadow-sm">
+                                    🌐
+                                </span>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                            Jaringan Anti-Penggelapan Komunitas Seruwit (Lintas Tenant)
+                                        </h3>
+                                        <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-950 dark:text-indigo-300">
+                                            Opsional & Rahasia
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Bantu sesama pengusaha rental mencegah sindikat penggelapan armada dan penipuan identitas di seluruh Indonesia.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-5 sm:p-6 space-y-4">
+                        <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition">
+                            <input
+                                type="checkbox"
+                                checked={data.is_shared_with_community}
+                                onChange={(e) => setData('is_shared_with_community', e.target.checked)}
+                                className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                            />
+                            <div className="text-xs">
+                                <span className="font-bold text-slate-900 dark:text-white block">
+                                    Bagikan Kasus Ini ke Jaringan Komunitas Rental Seruwit
+                                </span>
+                                <span className="text-slate-500 dark:text-slate-400 block mt-0.5">
+                                    Ketika dicentang, data NIK, No. HP, dan kategori kasus akan masuk ke database intelijen bersama. Rental lain dalam jaringan akan otomatis mendapatkan peringatan dini saat orang ini mencoba menyewa kendaraan.
+                                </span>
+                            </div>
+                        </label>
+
+                        {data.is_shared_with_community && (
+                            <div className="pl-7 pt-1 space-y-3">
+                                <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.share_anonymously}
+                                        onChange={(e) => setData('share_anonymously', e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                                    />
+                                    <span>
+                                        <strong>Samarkan nama rental saya</strong> (Tampilkan sebagai <em>"Mitra Rental Terverifikasi"</em> untuk menjaga kerahasiaan bisnis)
+                                    </span>
+                                </label>
+
+                                <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                                    <span className="shrink-0 text-sm">💡</span>
+                                    <span>
+                                        <strong>Komitmen Bersama:</strong> Pastikan data yang dibagikan adalah akurat dan dapat dipertanggungjawabkan (disertai kronologi/bukti hukum) demi menjaga integritas ekosistem transportasi rental Indonesia.
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
 
