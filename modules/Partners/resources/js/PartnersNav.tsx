@@ -13,6 +13,7 @@ const TABS: Array<{ labelKey: string; route: string; patterns: string[]; icon: s
     { labelKey: 'partners.nav.types', route: 'partners.types.index', patterns: ['partners.types.*'], icon: '🏷️' },
     { labelKey: 'partners.nav.industries', route: 'partners.industries.index', patterns: ['partners.industries.*'], icon: '🏢' },
     { labelKey: 'partners.nav.locations', route: 'partners.locations.index', patterns: ['partners.locations.*'], icon: '📍' },
+    { labelKey: 'partners.nav.blacklist', route: 'partners.blacklist.index', patterns: ['partners.blacklist.*'], icon: '🚨' },
 ];
 
 export default function PartnersNav(): JSX.Element {

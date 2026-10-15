@@ -204,4 +204,10 @@ class Partner extends Model
     {
         return $this->hasMany(\Modules\Fleet\Models\Vehicle::class, 'partner_id');
     }
+
+    /** @return HasMany<PartnerBlacklist, $this> */
+    public function blacklists(): HasMany
+    {
+        return $this->hasMany(PartnerBlacklist::class);
+    }
 }
