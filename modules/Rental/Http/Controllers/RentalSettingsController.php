@@ -64,6 +64,7 @@ class RentalSettingsController extends Controller
         $data['calendar_click_to_book'] = $request->boolean('calendar_click_to_book');
         $data['insurance_packages_enabled'] = $request->boolean('insurance_packages_enabled');
         $data['mobile_rate_limiting_enabled'] = $request->boolean('mobile_rate_limiting_enabled');
+        $data['require_guarantor_docs'] = $request->boolean('require_guarantor_docs');
 
         RentalGeneralSettings::update($data);
 
@@ -218,6 +219,8 @@ class RentalSettingsController extends Controller
             'send_on_booking_confirmed' => ['required', 'boolean'],
             'send_on_checkout' => ['required', 'boolean'],
             'send_on_return' => ['required', 'boolean'],
+            'send_on_driver_assigned' => ['sometimes', 'boolean'],
+            'send_to_driver_on_duty' => ['sometimes', 'boolean'],
         ]);
 
         RentalWhatsAppSettings::update($validated);

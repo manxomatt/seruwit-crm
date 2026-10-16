@@ -13,6 +13,7 @@ use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\MobileRentalBookingService;
+use Modules\Rental\Support\RentalWhatsAppSettings;
 use Modules\Shuttle\Support\PassengerOtpService;
 use Tests\TestCase;
 
@@ -317,5 +318,113 @@ class PublicRentalSelfServiceCoreTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'status' => \Modules\Rental\Models\RentalDutyOrder::STATUS_DRAFT,
         ]);
+    }
+
+    public function test_whatsapp_notifier_formats_self_service_booking_confirmed_message(): void
+    {
+        RentalWhatsAppSettings::update([
+            'is_enabled' => true,
+            'provider' => 'log',
+            'send_on_booking_confirmed' => true,
+        ]);
+
+        $vehicle = Vehicle::factory()->create(['name' => 'Innova Zenix', 'plate_number' => 'B 1234 ABC']);
+        $partner = Partner::factory()->create(['name' => 'Budi Santoso', 'phone' => '081234567890']);
+
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'code' => 'RNT-SELF-001',
+            'service_type' => Rental::SERVICE_LEPAS_KUNCI,
+            'delivery_type' => Rental::DELIVERY_AIRPORT,
+            'delivery_address' => 'Terminal 3 Gate 4',
+            'total_amount' => 1500000,
+            'deposit_amount' => 500000,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'status' => Rental::STATUS_CONFIRMED,
+        ]);
+
+        $notifier = app(\Modules\Rental\Support\RentalWhatsAppNotifier::class);
+        $sent = $notifier->sendBookingConfirmed($rental);
+
+        $this->assertTrue($sent);
+    }
+
+    public function test_whatsapp_notifier_sends_driver_assignment_and_duty_order_notifications(): void
+    {
+        RentalWhatsAppSettings::update([
+            'is_enabled' => true,
+            'provider' => 'log',
+            'send_on_driver_assigned' => true,
+            'send_to_driver_on_duty' => true,
+        ]);
+
+        $vehicle = Vehicle::factory()->create(['name' => 'Toyota HiAce', 'plate_number' => 'B 9999 XYZ']);
+        $driver = \Modules\Fleet\Models\Driver::factory()->create(['name' => 'Pak Joko', 'phone' => '081987654321']);
+        $partner = Partner::factory()->create(['name' => 'Ibu Siti', 'phone' => '081234567890']);
+
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'driver_id' => $driver->id,
+            'partner_id' => $partner->id,
+            'code' => 'RNT-DRV-002',
+            'service_type' => Rental::SERVICE_WITH_DRIVER,
+        ]);
+
+        $dutyOrder = \Modules\Rental\Models\RentalDutyOrder::create([
+            'duty_order_number' => 'SPPD-TEST-001',
+            'rental_id' => $rental->id,
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicle->id,
+            'origin' => 'Hotel Indonesia Kempinski',
+            'destination' => 'Bandara Soekarno Hatta',
+            'departure_date' => now()->addDay()->toDateString(),
+            'departure_time' => '06:00',
+            'return_date' => now()->addDay()->toDateString(),
+            'return_time' => '12:00',
+            'passenger_name' => 'Ibu Siti',
+            'passenger_phone' => '081234567890',
+            'cash_advance_amount' => 200000,
+            'status' => \Modules\Rental\Models\RentalDutyOrder::STATUS_DRAFT,
+            'settlement_status' => \Modules\Rental\Models\RentalDutyOrder::SETTLEMENT_PENDING,
+        ]);
+
+        $notifier = app(\Modules\Rental\Support\RentalWhatsAppNotifier::class);
+        $customerNotified = $notifier->sendDriverAssignedToCustomer($dutyOrder);
+        $driverNotified = $notifier->sendDutyOrderToDriver($dutyOrder);
+
+        $this->assertTrue($customerNotified);
+        $this->assertTrue($driverNotified);
+    }
+
+    public function test_duty_order_creation_syncs_driver_id_to_rental(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+        $driver = \Modules\Fleet\Models\Driver::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'driver_id' => null,
+            'service_type' => Rental::SERVICE_WITH_DRIVER,
+        ]);
+
+        $this->assertNull($rental->driver_id);
+
+        $user = \App\Models\User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->post(route('module.rental.duty_orders.store'), [
+            'rental_id' => $rental->id,
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicle->id,
+            'origin' => 'Pool Pusat',
+            'destination' => 'Bandara',
+            'departure_date' => now()->addDay()->toDateString(),
+            'return_date' => now()->addDay()->toDateString(),
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $rental->refresh();
+        $this->assertSame($driver->id, $rental->driver_id);
     }
 }

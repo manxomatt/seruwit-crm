@@ -56,11 +56,35 @@
             <td>{{ $rental->vehicle?->type ?? '—' }}</td>
         </tr>
         <tr>
+            <td class="label">Layanan</td><td class="sep">:</td>
+            <td><strong>{{ $rental->isWithDriver() ? 'Dengan Sopir (Driver)' : 'Lepas Kunci (Self-Drive)' }}</strong></td>
             <td class="label">Periode</td><td class="sep">:</td>
-            <td>{{ $rental->start_date?->format('d/m/Y') }} &rarr; {{ $rental->end_date?->format('d/m/Y') }}</td>
-            <td class="label">Durasi</td><td class="sep">:</td>
-            <td>{{ $rental->total_periods }} {{ $rental->period_type }}</td>
+            <td>{{ $rental->start_date?->format('d/m/Y') }} &rarr; {{ $rental->end_date?->format('d/m/Y') }} ({{ $rental->total_periods }} {{ $rental->period_type }})</td>
         </tr>
+        @php
+            $pickupLoc = match ($rental->delivery_type) {
+                \Modules\Rental\Models\Rental::DELIVERY_AIRPORT => 'Bandara ' . ($rental->delivery_address ?: $rental->delivery_landmark),
+                \Modules\Rental\Models\Rental::DELIVERY_HOTEL, \Modules\Rental\Models\Rental::DELIVERY_CUSTOM, \Modules\Rental\Models\Rental::DELIVERY_HOTEL_CUSTOM => ($rental->delivery_address ?: ($rental->delivery_landmark ?: 'Antar ke Alamat/Hotel')),
+                default => ($rental->pickup_location ?: 'Pool Garasi'),
+            };
+            $returnLoc = match ($rental->return_delivery_type ?? $rental->return_type) {
+                \Modules\Rental\Models\Rental::DELIVERY_AIRPORT => 'Bandara ' . ($rental->return_delivery_address ?: 'Bandara'),
+                \Modules\Rental\Models\Rental::DELIVERY_HOTEL, \Modules\Rental\Models\Rental::DELIVERY_CUSTOM, \Modules\Rental\Models\Rental::DELIVERY_HOTEL_CUSTOM => ($rental->return_delivery_address ?: 'Jemput di Alamat/Hotel'),
+                default => ($rental->return_location ?: 'Pool Garasi'),
+            };
+        @endphp
+        <tr>
+            <td class="label">Titik Serah Terima</td><td class="sep">:</td>
+            <td>{{ $pickupLoc }}</td>
+            <td class="label">Titik Kembali</td><td class="sep">:</td>
+            <td>{{ $returnLoc }}</td>
+        </tr>
+        @if ($rental->emergency_contact_name)
+            <tr>
+                <td class="label">Kontak Darurat</td><td class="sep">:</td>
+                <td colspan="4">{{ $rental->emergency_contact_name }} ({{ $rental->emergency_contact_phone }} &mdash; {{ $rental->emergency_contact_relation }})</td>
+            </tr>
+        @endif
         @if ($rental->driver)
             <tr>
                 <td class="label">Driver</td><td class="sep">:</td>
@@ -81,7 +105,7 @@
             <tr>
                 <td class="label">Jumlah dasar</td><td class="sep">:</td>
                 <td class="money">Rp {{ number_format((float) $rental->base_amount, 0, ',', '.') }}</td>
-                <td class="label">Total</td><td class="sep">:</td>
+                <td class="label">Total Sewa</td><td class="sep">:</td>
                 <td class="money">Rp {{ number_format((float) $rental->total_amount, 0, ',', '.') }}</td>
             </tr>
             @if ($rental->km_limit_per_period)
@@ -92,12 +116,24 @@
                     <td>Rp {{ number_format((float) ($rental->excess_km_rate ?? 0), 0, ',', '.') }} / km</td>
                 </tr>
             @endif
-            <tr>
-                <td class="label">Lokasi jemput</td><td class="sep">:</td>
-                <td>{{ $rental->pickup_location ?: '—' }}</td>
-                <td class="label">Lokasi kembali</td><td class="sep">:</td>
-                <td>{{ $rental->return_location ?: '—' }}</td>
-            </tr>
+            @if ((float) ($rental->driver_fee_amount ?? 0) > 0)
+                <tr>
+                    <td class="label">Biaya Sopir</td><td class="sep">:</td>
+                    <td colspan="4" class="money">Rp {{ number_format((float) $rental->driver_fee_amount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ((float) ($rental->delivery_fee ?? 0) > 0)
+                <tr>
+                    <td class="label">Biaya Antar Unit</td><td class="sep">:</td>
+                    <td colspan="4" class="money">Rp {{ number_format((float) $rental->delivery_fee, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ((float) ($rental->return_delivery_fee ?? 0) > 0)
+                <tr>
+                    <td class="label">Biaya Jemput Unit</td><td class="sep">:</td>
+                    <td colspan="4" class="money">Rp {{ number_format((float) $rental->return_delivery_fee, 0, ',', '.') }}</td>
+                </tr>
+            @endif
             @if ((float) ($rental->one_way_fee_amount ?? 0) > 0)
                 <tr>
                     <td class="label">Biaya one-way</td><td class="sep">:</td>
@@ -162,12 +198,28 @@
         <table class="sign">
             <tr>
                 <td>
-                    <div class="space"></div>
+                    @if (!empty($staffSignatureBase64))
+                        <div class="space"><img src="{{ $staffSignatureBase64 }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
+                    @else
+                        <div class="space"></div>
+                    @endif
                     <div class="name">{{ $company['name'] }}<br><span style="font-size:10px;color:#666;">Pihak Penyedia</span></div>
                 </td>
                 <td>
-                    <div class="space"></div>
-                    <div class="name">{{ $rental->partner?->name }}<br><span style="font-size:10px;color:#666;">Penyewa</span></div>
+                    @if (!empty($customerSignatureBase64))
+                        <div class="space"><img src="{{ $customerSignatureBase64 }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
+                    @else
+                        <div class="space"></div>
+                    @endif
+                    <div class="name">
+                        {{ $rental->partner?->name }}<br>
+                        <span style="font-size:10px;color:#666;">
+                            Penyewa
+                            @if ($rental->contract_signed_at)
+                                <br><span style="font-size:8px;color:#15803d;font-style:italic;">✓ Ditandatangani Digital ({{ $rental->contract_signed_at->format('d/m/Y H:i') }} WIB)</span>
+                            @endif
+                        </span>
+                    </div>
                 </td>
             </tr>
         </table>

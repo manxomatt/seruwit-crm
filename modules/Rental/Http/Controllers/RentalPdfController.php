@@ -36,11 +36,19 @@ class RentalPdfController extends Controller
             'company' => $this->company(),
         ]);
 
+        $customerSigPath = $rental->contract_signature_path
+            ?: ($rental->pickup_customer_signature_path ?: ($rental->checkout_signature_path ?: $rental->return_signature_path));
+
+        $customerSignatureBase64 = $this->resolveSignatureBase64($customerSigPath);
+        $staffSignatureBase64 = $this->resolveSignatureBase64($rental->checkout_signature_path);
+
         return Pdf::loadView('rental::contract', [
             'rental' => $rental,
             'company' => $this->company(),
             'checklistLabels' => $this->checklistLabels(),
             'template' => $template,
+            'customerSignatureBase64' => $customerSignatureBase64,
+            'staffSignatureBase64' => $staffSignatureBase64,
         ])->stream("rental-contract-{$rental->code}.pdf");
     }
 
@@ -76,12 +84,40 @@ class RentalPdfController extends Controller
             ],
         ]);
 
+        $customerSigPath = $rental->contract_signature_path
+            ?: ($rental->pickup_customer_signature_path ?: ($rental->return_signature_path ?: $rental->checkout_signature_path));
+
+        $customerSignatureBase64 = $this->resolveSignatureBase64($customerSigPath);
+        $staffSignatureBase64 = $this->resolveSignatureBase64($rental->checkout_signature_path);
+
         return Pdf::loadView('rental::handover', [
             'rental' => $rental,
             'company' => $this->company(),
             'checklistLabels' => $this->checklistLabels(),
             'template' => $template,
+            'customerSignatureBase64' => $customerSignatureBase64,
+            'staffSignatureBase64' => $staffSignatureBase64,
         ])->stream("rental-handover-{$rental->code}.pdf");
+    }
+
+    private function resolveSignatureBase64(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'data:image/')) {
+            return $path;
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            $content = \Illuminate\Support\Facades\Storage::disk('public')->get($path);
+            $mime = pathinfo($path, PATHINFO_EXTENSION) === 'png' ? 'image/png' : 'image/jpeg';
+
+            return 'data:'.$mime.';base64,'.base64_encode($content);
+        }
+
+        return null;
     }
 
     private function company(): array

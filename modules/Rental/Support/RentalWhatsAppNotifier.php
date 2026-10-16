@@ -6,6 +6,8 @@ use App\Models\Setting;
 use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Illuminate\Support\Facades\Log;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalDispatch;
+use Modules\Rental\Models\RentalDutyOrder;
 use Throwable;
 
 class RentalWhatsAppNotifier
@@ -23,7 +25,7 @@ class RentalWhatsAppNotifier
             return false;
         }
 
-        $rental->loadMissing(['vehicle', 'partner']);
+        $rental->loadMissing(['vehicle', 'partner', 'driver']);
         $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
 
         $totalPaid = (float) $rental->total_amount + (float) $rental->deposit_amount;
@@ -36,6 +38,32 @@ class RentalWhatsAppNotifier
 
         $customerName = $rental->partner?->name ?? 'Pelanggan';
         $vehicleInfo = $rental->vehicle ? "{$rental->vehicle->name} [{$rental->vehicle->plate_number}]" : 'Unit Kendaraan';
+        $serviceLabel = $rental->isWithDriver() ? 'Dengan Sopir (Driver)' : 'Lepas Kunci (Self-Drive)';
+
+        $deliveryLoc = $rental->delivery_address ?: $rental->delivery_landmark;
+        $pickupText = match ($rental->delivery_type) {
+            Rental::DELIVERY_AIRPORT => 'Bandara'.($deliveryLoc ? " ({$deliveryLoc})" : ''),
+            Rental::DELIVERY_HOTEL, Rental::DELIVERY_CUSTOM, Rental::DELIVERY_HOTEL_CUSTOM => ($deliveryLoc ?: 'Alamat/Hotel Pengantaran'),
+            default => ($rental->pickup_location ? "Pool Garasi ({$rental->pickup_location})" : 'Pool Garasi'),
+        };
+
+        $returnLoc = $rental->return_delivery_address;
+        $returnText = match ($rental->return_delivery_type ?? $rental->return_type) {
+            Rental::DELIVERY_AIRPORT => 'Bandara'.($returnLoc ? " ({$returnLoc})" : ''),
+            Rental::DELIVERY_HOTEL, Rental::DELIVERY_CUSTOM, Rental::DELIVERY_HOTEL_CUSTOM => ($returnLoc ?: 'Alamat/Hotel Pengembalian'),
+            default => ($rental->return_location ? "Pool Garasi ({$rental->return_location})" : null),
+        };
+
+        $driverNotice = '';
+        if ($rental->isWithDriver() && $rental->driver) {
+            $driverNotice = "• Pengemudi: *{$rental->driver->name}* ({$rental->driver->phone})\n";
+        }
+
+        $guarantorNotice = '';
+        if ($rental->isSelfDrive() && empty($rental->passenger_guarantor_doc_path)) {
+            $guarantorNotice = "\n⚠️ *Syarat Dokumen Penjamin (Lepas Kunci):*\n"
+                ."Mohon unggah dokumen penjamin (Tiket Pesawat PP / Voucher Hotel / ID Karyawan / Kartu Keluarga) melalui tautan voucher di atas sebelum jadwal pengambilan unit.\n";
+        }
 
         $publicUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
 
@@ -45,12 +73,16 @@ class RentalWhatsAppNotifier
             ."📋 *Detail Reservasi:*\n"
             ."• No. Kontrak: *{$rental->code}*\n"
             ."• Kendaraan: *{$vehicleInfo}*\n"
+            ."• Layanan: *{$serviceLabel}*\n"
             ."• Periode: {$startDate} s/d {$endDate} ({$rental->total_periods} {$rental->period_type})\n"
             ."• Biaya Sewa: {$formattedRent}\n"
             ."• Jaminan Deposit: {$formattedDeposit}\n"
-            ."• *Total Lunas*: *{$formattedTotal}*\n\n"
-            .($rental->pickup_location ? "📍 Lokasi Ambil: {$rental->pickup_location}\n\n" : '')
-            .($publicUrl ? "🔗 Akses Voucher & Detail Sewa:\n{$publicUrl}\n\n" : '')
+            ."• *Total Lunas*: *{$formattedTotal}*\n"
+            .$driverNotice."\n"
+            ."📍 *Titik Serah Terima*: {$pickupText}\n"
+            .($returnText ? "📍 *Titik Pengembalian*: {$returnText}\n" : '')
+            .($publicUrl ? "\n🔗 Akses Voucher & Detail Sewa:\n{$publicUrl}\n" : '')
+            .$guarantorNotice."\n"
             ."Mohon siapkan identitas asli (KTP & SIM) saat proses serah terima kendaraan.\n"
             ."Terima kasih telah mempercayakan perjalanan Anda bersama {$companyName}!";
 
@@ -132,6 +164,123 @@ class RentalWhatsAppNotifier
         return $this->dispatch($phone, $message);
     }
 
+    public function sendDriverAssignedToCustomer(RentalDutyOrder $dutyOrder): bool
+    {
+        if (! $this->shouldSend('driver_assigned')) {
+            return false;
+        }
+
+        $dutyOrder->loadMissing(['driver', 'vehicle', 'rental.partner']);
+        $phone = $dutyOrder->passenger_phone ?: ($dutyOrder->rental ? $this->resolvePhone($dutyOrder->rental) : null);
+        if (blank($phone) || ! $dutyOrder->driver) {
+            return false;
+        }
+
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $dutyOrder->passenger_name ?: ($dutyOrder->rental?->partner?->name ?? 'Pelanggan');
+        $rentalCode = $dutyOrder->rental?->code ?? $dutyOrder->duty_order_number;
+        $driverName = $dutyOrder->driver->name;
+        $driverPhone = $dutyOrder->driver->phone ?: '-';
+        $vehicleInfo = $dutyOrder->vehicle ? "{$dutyOrder->vehicle->name} [{$dutyOrder->vehicle->plate_number}]" : 'Unit Kendaraan';
+        $departure = $dutyOrder->departure_date ? $dutyOrder->departure_date->format('d/m/Y') : '-';
+        if ($dutyOrder->departure_time) {
+            $departure .= ' jam '.$dutyOrder->departure_time;
+        }
+
+        $message = "🚗 *INFORMASI PENGEMUDI RENTAL - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Pengemudi untuk pesanan rental Anda (*{$rentalCode}*) telah resmi ditugaskan:\n\n"
+            ."👤 *Data Pengemudi:*\n"
+            ."• Nama Sopir: *{$driverName}*\n"
+            ."• No. WhatsApp/HP: *{$driverPhone}*\n"
+            ."• Kendaraan: *{$vehicleInfo}*\n\n"
+            ."📍 *Rincian Penjemputan:*\n"
+            ."• Jadwal Berangkat: {$departure}\n"
+            ."• Titik Jemput: {$dutyOrder->origin}\n"
+            ."• Tujuan: {$dutyOrder->destination}\n\n"
+            ."Pengemudi kami akan menghubungi Anda sebelum waktu penjemputan. Anda juga dapat langsung menghubungi driver melalui nomor di atas.\n\n"
+            ."Selamat menikmati perjalanan bersama {$companyName}!";
+
+        return $this->dispatch($phone, $message);
+    }
+
+    public function sendDutyOrderToDriver(RentalDutyOrder $dutyOrder): bool
+    {
+        if (! $this->shouldSend('driver_on_duty')) {
+            return false;
+        }
+
+        $dutyOrder->loadMissing(['driver', 'vehicle', 'rental']);
+        if (! $dutyOrder->driver || blank($dutyOrder->driver->phone)) {
+            return false;
+        }
+
+        $phone = WhatsAppGatewayManager::normalizePhone($dutyOrder->driver->phone);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+
+        $driverName = $dutyOrder->driver->name;
+        $vehicleInfo = $dutyOrder->vehicle ? "{$dutyOrder->vehicle->name} [{$dutyOrder->vehicle->plate_number}]" : 'Armada Operasional';
+        $departure = $dutyOrder->departure_date ? $dutyOrder->departure_date->format('d/m/Y') : '-';
+        if ($dutyOrder->departure_time) {
+            $departure .= ' jam '.$dutyOrder->departure_time;
+        }
+        $return = $dutyOrder->return_date ? $dutyOrder->return_date->format('d/m/Y') : '-';
+        if ($dutyOrder->return_time) {
+            $return .= ' jam '.$dutyOrder->return_time;
+        }
+        $passengerName = $dutyOrder->passenger_name ?: 'Tamu/Pelanggan';
+        $passengerPhone = $dutyOrder->passenger_phone ?: '-';
+        $cashAdvance = 'Rp '.number_format((float) $dutyOrder->cash_advance_amount, 0, ',', '.');
+
+        $message = "📋 *SURAT TUGAS PENGEMUDI (SPPD) - {$companyName}*\n\n"
+            ."Halo *{$driverName}*,\n"
+            ."Anda menerima tugas dinas pengemudi dengan rincian berikut:\n\n"
+            ."• No. SPPD: *{$dutyOrder->duty_order_number}*\n"
+            ."• Armada: *{$vehicleInfo}*\n"
+            ."• Tamu/Penumpang: *{$passengerName}* ({$passengerPhone})\n"
+            ."• Titik Jemput (Asal): {$dutyOrder->origin}\n"
+            ."• Tujuan: {$dutyOrder->destination}\n"
+            ."• Waktu Berangkat: {$departure}\n"
+            ."• Perkiraan Selesai: {$return}\n"
+            ."• Uang Jalan (Kasbon): *{$cashAdvance}*\n\n"
+            .'Mohon periksa kesiapan unit armada, tiba 15 menit sebelum jadwal penjemputan, dan utamakan keselamatan berkendara.';
+
+        return $this->dispatch($phone, $message);
+    }
+
+    public function sendDispatchToRunner(RentalDispatch $dispatch): bool
+    {
+        if (! $this->shouldSend('driver_on_duty')) {
+            return false;
+        }
+
+        $dispatch->loadMissing(['driver', 'rental.vehicle']);
+        if (! $dispatch->driver || blank($dispatch->driver->phone)) {
+            return false;
+        }
+
+        $phone = WhatsAppGatewayManager::normalizePhone($dispatch->driver->phone);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+
+        $typeLabel = $dispatch->type === RentalDispatch::TYPE_DELIVERY ? 'PENGANTARAN UNIT (DELIVERY)' : 'PENJEMPUTAN UNIT (PICKUP)';
+        $vehicleInfo = $dispatch->rental?->vehicle ? "{$dispatch->rental->vehicle->name} [{$dispatch->rental->vehicle->plate_number}]" : 'Unit Armada';
+        $scheduledAt = $dispatch->scheduled_at ? $dispatch->scheduled_at->format('d/m/Y H:i') : '-';
+
+        $message = "🚚 *TUGAS OPERASIONAL RUNNER - {$typeLabel}*\n"
+            ."*{$companyName}*\n\n"
+            ."Halo *{$dispatch->driver->name}*,\n"
+            ."Anda ditugaskan untuk operasional runner armada:\n\n"
+            ."• Tugas: *{$typeLabel}*\n"
+            ."• Kendaraan: *{$vehicleInfo}*\n"
+            ."• Waktu Jadwal: *{$scheduledAt} WIB*\n"
+            ."• Lokasi: *{$dispatch->location_name}*\n"
+            .($dispatch->location_address ? "• Alamat: {$dispatch->location_address}\n" : '')
+            ."• Kontak Tamu: *{$dispatch->contact_name}* ({$dispatch->contact_phone})\n\n"
+            .'Harap segera bersiap dan konfirmasi status melalui sistem saat mulai berangkat.';
+
+        return $this->dispatch($phone, $message);
+    }
+
     protected function resolvePhone(Rental $rental): ?string
     {
         $raw = $rental->booker_phone
@@ -156,6 +305,8 @@ class RentalWhatsAppNotifier
             'booking_confirmed' => 'whatsapp.send_on_booking_confirmed',
             'checkout' => 'whatsapp.send_on_checkout',
             'return' => 'whatsapp.send_on_return',
+            'driver_assigned' => 'whatsapp.send_on_driver_assigned',
+            'driver_on_duty' => 'whatsapp.send_to_driver_on_duty',
             default => null,
         };
 

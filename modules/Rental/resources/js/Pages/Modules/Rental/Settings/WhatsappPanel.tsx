@@ -18,6 +18,8 @@ export interface WhatsappSettings {
     send_on_booking_confirmed: boolean;
     send_on_checkout: boolean;
     send_on_return: boolean;
+    send_on_driver_assigned?: boolean;
+    send_to_driver_on_duty?: boolean;
 }
 
 export interface DeviceStatus {
@@ -63,6 +65,8 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
         send_on_booking_confirmed: settings.send_on_booking_confirmed ?? true,
         send_on_checkout: settings.send_on_checkout ?? true,
         send_on_return: settings.send_on_return ?? true,
+        send_on_driver_assigned: settings.send_on_driver_assigned ?? true,
+        send_to_driver_on_duty: settings.send_to_driver_on_duty ?? true,
     });
 
     const testForm = useForm({
@@ -272,6 +276,38 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                                 </span>
                                 <p className="text-xs text-slate-500">
                                     Mengirimkan total kilometer yang ditempuh, konfirmasi unit diterima kembali, dan informasi refund uang jaminan deposit.
+                                </p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <Checkbox
+                                checked={form.data.send_on_driver_assigned}
+                                onChange={(e) => form.setData('send_on_driver_assigned', e.target.checked)}
+                                className="mt-1"
+                            />
+                            <div>
+                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                    Informasi Penugasan Pengemudi ke Pelanggan
+                                </span>
+                                <p className="text-xs text-slate-500">
+                                    Mengirimkan nama pengemudi, nomor kontak WhatsApp sopir, dan konfirmasi unit ke penyewa saat sopir ditugaskan.
+                                </p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <Checkbox
+                                checked={form.data.send_to_driver_on_duty}
+                                onChange={(e) => form.setData('send_to_driver_on_duty', e.target.checked)}
+                                className="mt-1"
+                            />
+                            <div>
+                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                    Kirim Surat Tugas (SPPD) ke WhatsApp Driver
+                                </span>
+                                <p className="text-xs text-slate-500">
+                                    Mengirimkan rincian surat tugas (nama tamu, no telp, titik jemput, tujuan, jam keberangkatan & uang jalan) langsung ke pengemudi.
                                 </p>
                             </div>
                         </label>

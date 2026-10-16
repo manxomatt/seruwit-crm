@@ -196,8 +196,8 @@ class RentalDutyOrderController extends Controller
             'destination' => $validated['destination'],
             'departure_date' => $validated['departure_date'],
             'return_date' => $validated['return_date'],
-            'departure_time' => $validated['departure_time'] ?? null,
-            'return_time' => $validated['return_time'] ?? null,
+            'departure_time' => ! empty($validated['departure_time']) ? $validated['departure_time'] : '08:00',
+            'return_time' => ! empty($validated['return_time']) ? $validated['return_time'] : '20:00',
             'passenger_name' => $validated['passenger_name'] ?? null,
             'passenger_phone' => $validated['passenger_phone'] ?? null,
             'status' => RentalDutyOrder::STATUS_DRAFT,
@@ -214,6 +214,20 @@ class RentalDutyOrderController extends Controller
             'notes' => $validated['notes'] ?? null,
             'created_by' => Auth::id(),
         ]);
+
+        if (! empty($validated['rental_id'])) {
+            Rental::where('id', $validated['rental_id'])->update(['driver_id' => $validated['driver_id']]);
+        }
+
+        try {
+            $notifier = app(\Modules\Rental\Support\RentalWhatsAppNotifier::class);
+            $notifier->sendDutyOrderToDriver($dutyOrder);
+            if (! empty($validated['rental_id'])) {
+                $notifier->sendDriverAssignedToCustomer($dutyOrder);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[RentalDutyOrderController] WhatsApp notification error: '.$e->getMessage());
+        }
 
         return redirect()->route($this->getRoutePrefix().'.rental.duty_orders.show', $dutyOrder)
             ->with('success', "Surat Jalan {$dutyOrder->duty_order_number} berhasil diterbitkan.");
@@ -277,6 +291,14 @@ class RentalDutyOrderController extends Controller
         }
 
         $dutyOrder->save();
+
+        if ($newStatus === RentalDutyOrder::STATUS_DISPATCHED) {
+            try {
+                app(\Modules\Rental\Support\RentalWhatsAppNotifier::class)->sendDutyOrderToDriver($dutyOrder);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[RentalDutyOrderController] WhatsApp dispatch notification error: '.$e->getMessage());
+            }
+        }
 
         $labels = [
             RentalDutyOrder::STATUS_DRAFT => 'Draft',

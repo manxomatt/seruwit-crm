@@ -63,6 +63,10 @@ class Rental extends Model
 
     public const SERVICE_WITH_DRIVER = 'with_driver';
 
+    public const SERVICE_LEPAS_KUNCI = self::SERVICE_SELF_DRIVE;
+
+    public const SERVICE_DENGAN_SOPIR = self::SERVICE_WITH_DRIVER;
+
     public const DELIVERY_DEPOT = 'depot';
 
     public const DELIVERY_AIRPORT = 'airport';
@@ -70,6 +74,8 @@ class Rental extends Model
     public const DELIVERY_HOTEL = 'hotel';
 
     public const DELIVERY_CUSTOM = 'custom_address';
+
+    public const DELIVERY_HOTEL_CUSTOM = 'hotel_custom';
 
     protected static function newFactory(): Factory
     {
@@ -252,12 +258,22 @@ class Rental extends Model
 
     public function isWithDriver(): bool
     {
-        return $this->service_type === self::SERVICE_WITH_DRIVER;
+        return in_array($this->service_type, [self::SERVICE_WITH_DRIVER, 'dengan_sopir'], true);
     }
 
     public function isSelfDrive(): bool
     {
-        return $this->service_type === self::SERVICE_SELF_DRIVE;
+        return in_array($this->service_type, [self::SERVICE_SELF_DRIVE, 'lepas_kunci'], true);
+    }
+
+    public function getDeliveryAddressOrLandmarkAttribute(): ?string
+    {
+        return $this->delivery_address ?: $this->delivery_landmark;
+    }
+
+    public function getReturnAddressOrLandmarkAttribute(): ?string
+    {
+        return $this->return_delivery_address;
     }
 
     /** @return BelongsTo<Vehicle, $this> */

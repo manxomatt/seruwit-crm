@@ -34,6 +34,10 @@ interface GeneralSettings {
     ai_pricing_optimizer_enabled: boolean;
     mobile_rate_limiting_enabled?: boolean;
     insurance_packages_enabled?: boolean;
+    default_driver_rate?: string;
+    default_airport_delivery_fee?: string;
+    default_security_deposit?: string;
+    require_guarantor_docs?: boolean;
 }
 
 interface DocumentTemplate {
@@ -70,6 +74,10 @@ const DEFAULT_GENERAL: GeneralSettings = {
     ai_pricing_optimizer_enabled: true,
     mobile_rate_limiting_enabled: false,
     insurance_packages_enabled: true,
+    default_driver_rate: '150000',
+    default_airport_delivery_fee: '50000',
+    default_security_deposit: '500000',
+    require_guarantor_docs: true,
 };
 
 const DEFAULT_DOCUMENTS: Record<string, DocumentTemplate> = {};
@@ -161,6 +169,10 @@ function GeneralPanel({
         ai_pricing_optimizer_enabled: general.ai_pricing_optimizer_enabled ?? true,
         mobile_rate_limiting_enabled: general.mobile_rate_limiting_enabled ?? false,
         insurance_packages_enabled: general.insurance_packages_enabled ?? true,
+        default_driver_rate: general.default_driver_rate ?? '150000',
+        default_airport_delivery_fee: general.default_airport_delivery_fee ?? '50000',
+        default_security_deposit: general.default_security_deposit ?? '500000',
+        require_guarantor_docs: general.require_guarantor_docs ?? true,
     });
 
     const ttlPresets = [
@@ -307,6 +319,100 @@ function GeneralPanel({
                                     label={t('rental.settings.insurance_packages_enabled', undefined, 'Paket Proteksi & Asuransi')}
                                     description={t('rental.settings.insurance_packages_enabled_hint', undefined, 'Aktifkan seksi pemilihan paket asuransi & proteksi kendaraan pada form reservasi sewa.')}
                                 />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Section: Driver Rates & Self-Service Delivery */}
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 font-bold">
+                                🚗
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    {t('rental.settings.self_service_section', undefined, 'Layanan Sopir, Pengantaran & Dokumen Penjamin')}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {t('rental.settings.self_service_section_hint', undefined, 'Konfigurasi tarif default layanan pengemudi harian, biaya antar-jemput bandara/alamat khusus, dan syarat penjamin lepas kunci.')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 space-y-5">
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                {/* Default Driver Rate */}
+                                <div>
+                                    <InputLabel htmlFor="default_driver_rate" value={t('rental.settings.default_driver_rate', undefined, 'Tarif Sopir Harian Standar (Per Hari)')} />
+                                    <div className="relative mt-1.5">
+                                        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
+                                            Rp
+                                        </span>
+                                        <MoneyInput
+                                            id="default_driver_rate"
+                                            value={data.default_driver_rate}
+                                            onChange={(val) => setData('default_driver_rate', val)}
+                                            className="w-full pl-11 text-sm font-semibold"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        {t('rental.settings.default_driver_rate_hint', undefined, 'Biaya jasa pengemudi per hari saat pelanggan memilih layanan Dengan Sopir.')}
+                                    </p>
+                                    <InputError message={errors.default_driver_rate} className="mt-1" />
+                                </div>
+
+                                {/* Default Airport Delivery Surcharge */}
+                                <div>
+                                    <InputLabel htmlFor="default_airport_delivery_fee" value={t('rental.settings.default_airport_delivery_fee', undefined, 'Biaya Antar / Ambil Bandara Standar')} />
+                                    <div className="relative mt-1.5">
+                                        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
+                                            Rp
+                                        </span>
+                                        <MoneyInput
+                                            id="default_airport_delivery_fee"
+                                            value={data.default_airport_delivery_fee}
+                                            onChange={(val) => setData('default_airport_delivery_fee', val)}
+                                            className="w-full pl-11 text-sm font-semibold"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        {t('rental.settings.default_airport_delivery_fee_hint', undefined, 'Surcharge pengantaran atau penjemputan unit di Bandara atau alamat luar garasi.')}
+                                    </p>
+                                    <InputError message={errors.default_airport_delivery_fee} className="mt-1" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 pt-2">
+                                {/* Default Security Deposit */}
+                                <div>
+                                    <InputLabel htmlFor="default_security_deposit" value={t('rental.settings.default_security_deposit', undefined, 'Deposit Jaminan Standar (Refundable)')} />
+                                    <div className="relative mt-1.5">
+                                        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-bold text-slate-400">
+                                            Rp
+                                        </span>
+                                        <MoneyInput
+                                            id="default_security_deposit"
+                                            value={data.default_security_deposit}
+                                            onChange={(val) => setData('default_security_deposit', val)}
+                                            className="w-full pl-11 text-sm font-semibold"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        {t('rental.settings.default_security_deposit_hint', undefined, 'Uang jaminan sewa yang dikembalikan ke pelanggan setelah unit kembali tanpa kerusakan.')}
+                                    </p>
+                                    <InputError message={errors.default_security_deposit} className="mt-1" />
+                                </div>
+
+                                {/* Require Guarantor Docs Toggle */}
+                                <div className="flex items-center pt-2">
+                                    <ToggleSwitch
+                                        id="require_guarantor_docs"
+                                        checked={data.require_guarantor_docs ?? true}
+                                        onChange={(checked) => setData('require_guarantor_docs', checked)}
+                                        label={t('rental.settings.require_guarantor_docs', undefined, 'Wajibkan Dokumen Penjamin Lepas Kunci')}
+                                        description={t('rental.settings.require_guarantor_docs_hint', undefined, 'Wajibkan customer mengunggah bukti tiket penerbangan, voucher hotel, ID karyawan, atau Kartu Keluarga sebelum unit diserahterimakan.')}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

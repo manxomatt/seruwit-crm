@@ -193,6 +193,12 @@ class RentalDispatchController extends Controller
 
         $driver = Driver::find($validated['driver_id']);
 
+        try {
+            app(\Modules\Rental\Support\RentalWhatsAppNotifier::class)->sendDispatchToRunner($dispatch);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[RentalDispatchController] WhatsApp runner dispatch error: '.$e->getMessage());
+        }
+
         return redirect()->back()->with('success', "Runner {$driver?->name} berhasil ditugaskan.");
     }
 

@@ -36,6 +36,10 @@ class UpdateRentalGeneralSettingsRequest extends FormRequest
             'ai_kyc_enabled' => ['sometimes', 'boolean'],
             'ai_pricing_optimizer_enabled' => ['sometimes', 'boolean'],
             'mobile_rate_limiting_enabled' => ['sometimes', 'boolean'],
+            'default_driver_rate' => ['sometimes', 'numeric', 'min:0'],
+            'default_airport_delivery_fee' => ['sometimes', 'numeric', 'min:0'],
+            'default_security_deposit' => ['sometimes', 'numeric', 'min:0'],
+            'require_guarantor_docs' => ['sometimes', 'boolean'],
         ];
     }
 

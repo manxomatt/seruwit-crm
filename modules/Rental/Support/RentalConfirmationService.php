@@ -110,8 +110,13 @@ class RentalConfirmationService
             );
 
             try {
-                app(\Modules\Rental\Support\RentalWhatsAppNotifier::class)
-                    ->sendBookingConfirmed($rental->fresh(['vehicle', 'partner']));
+                $notifier = app(\Modules\Rental\Support\RentalWhatsAppNotifier::class);
+                $notifier->sendBookingConfirmed($rental->fresh(['vehicle', 'partner', 'driver']));
+
+                if (isset($dutyOrder) && $dutyOrder && $dutyOrder->driver_id) {
+                    $notifier->sendDutyOrderToDriver($dutyOrder);
+                    $notifier->sendDriverAssignedToCustomer($dutyOrder);
+                }
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('WhatsApp booking confirmed notification failed: '.$e->getMessage());
             }
