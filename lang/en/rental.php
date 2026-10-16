@@ -248,6 +248,8 @@ return [
         'list' => 'Rentals',
         'bookings' => 'Bookings',
         'reservation' => 'Reservation',
+        'dispatch' => 'Dispatch (Delivery & Pickup)',
+        'duty_orders' => 'Duty Orders & Cash Advance',
         'availability' => 'Availability',
         'calendar' => 'Calendar',
         'rates' => 'Rates',
