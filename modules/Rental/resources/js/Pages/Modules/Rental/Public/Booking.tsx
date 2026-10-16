@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router, usePoll } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEvent, useEffect, useState } from 'react';
 import Modal from '@/Components/Modal';
@@ -18,6 +18,14 @@ interface CompanyBankAccount {
     bank_name: string | null;
     account_number: string | null;
     account_holder: string | null;
+}
+
+interface TimelineItem {
+    key: string;
+    title: string;
+    description: string;
+    status: 'completed' | 'current' | 'pending';
+    timestamp: string | null;
 }
 
 interface Booking {
@@ -58,6 +66,22 @@ interface Booking {
         relation: string | null;
     };
     social_media_account?: string | null;
+    contract?: {
+        signed: boolean;
+        signed_at: string | null;
+        signature_url: string | null;
+    };
+    driver?: {
+        id: number;
+        name: string;
+        phone: string | null;
+        photo_url: string | null;
+    } | null;
+    pdf_urls?: {
+        contract: string | null;
+        handover: string | null;
+    };
+    tracking_timeline?: TimelineItem[];
     vehicle: { id: number; name: string; plate_number: string; photo_url: string | null } | null;
     insurance_package: { id: number; name: string; amount: number } | null;
     can_pay_deposit: boolean;
@@ -244,6 +268,8 @@ export default function BookingView({ brand, booking, gateway_available, company
     const { flash } = usePage().props as {
         flash?: { success?: string; error?: string };
     };
+
+    usePoll(15000);
 
     const [otpHint, setOtpHint] = useState<string | null>(null);
     const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
@@ -567,6 +593,16 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                         <div className="flex items-center gap-3">
                             <Link
+                                href={route('book.rental.track')}
+                                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
+                            >
+                                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <span>Lacak Pesanan</span>
+                            </Link>
+
+                            <Link
                                 href={route('book.rental.search')}
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
                             >
@@ -594,52 +630,95 @@ export default function BookingView({ brand, booking, gateway_available, company
                 {/* Dashboard Layout Container */}
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
                     
-                    {/* Visual 4-Stage Stepper: pay → documents → contract → depot handover */}
-                    <div className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                            {[
-                                {
-                                    done: paymentSettled,
-                                    current: false,
-                                    label: paymentSettled ? 'Pembayaran selesai ✓' : 'Bayar',
-                                },
-                                {
-                                    done: documentsReady,
-                                    current: false,
-                                    label: documentsReady ? 'Dokumen diunggah ✓' : 'Unggah KTP/SIM',
-                                },
-                                {
-                                    done: contractSigned,
-                                    current: paymentSettled && !contractSigned && booking.status === 'confirmed',
-                                    label: contractSigned ? 'Kontrak ditandatangani ✓' : 'Tanda tangan kontrak',
-                                },
-                                {
-                                    done: unitHandedOver,
-                                    current: contractSigned && !unitHandedOver,
-                                    label: unitHandedOver ? 'Unit sudah diserahkan ✓' : 'Datang ke depot',
-                                },
-                            ].map((stage, index) => (
-                                <div
-                                    key={`stage-${index}`}
-                                    className={`p-3 rounded-xl border space-y-0.5 ${
-                                        stage.done
-                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                                            : stage.current
-                                              ? 'bg-amber-50 border-amber-200 text-amber-900'
-                                              : 'bg-slate-50 border-slate-200 text-slate-500'
-                                    }`}
-                                >
-                                    <span
-                                        className={`text-[10px] font-black uppercase tracking-widest block ${
-                                            stage.done ? 'text-emerald-600' : stage.current ? 'text-amber-600' : 'text-slate-400'
+                    {/* Visual Live Status Tracking Timeline */}
+                    <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-xs border border-slate-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-2.5 w-2.5 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                    Progres Pemesanan & Status Kendaraan
+                                </h3>
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5 text-emerald-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                Live Polling Aktif · Real-Time Update
+                            </span>
+                        </div>
+
+                        {booking.tracking_timeline && booking.tracking_timeline.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                {booking.tracking_timeline.map((item, idx) => {
+                                    const isDone = item.status === 'completed';
+                                    const isCurrent = item.status === 'current';
+                                    return (
+                                        <div
+                                            key={item.key}
+                                            className={`relative p-3.5 rounded-2xl border transition-all ${
+                                                isDone
+                                                    ? 'bg-emerald-50/70 border-emerald-200/90 text-emerald-950'
+                                                    : isCurrent
+                                                      ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/20 text-amber-950'
+                                                      : 'bg-slate-50 border-slate-200/80 text-slate-400'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span
+                                                    className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${
+                                                        isDone
+                                                            ? 'bg-emerald-200/70 text-emerald-900'
+                                                            : isCurrent
+                                                              ? 'bg-amber-200 text-amber-900'
+                                                              : 'bg-slate-200 text-slate-600'
+                                                    }`}
+                                                >
+                                                    Tahap {idx + 1}
+                                                </span>
+                                                {isDone && <span className="text-emerald-700 text-xs font-black">✓</span>}
+                                                {isCurrent && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
+                                            </div>
+                                            <div className="text-xs font-black leading-tight text-slate-900">{item.title}</div>
+                                            <div className="text-[10px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{item.description}</div>
+                                            {item.timestamp && (
+                                                <div className="text-[9px] font-mono font-bold text-slate-400 mt-2 pt-1.5 border-t border-slate-200/50">
+                                                    {item.timestamp}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                                {[
+                                    { done: paymentSettled, current: false, label: paymentSettled ? 'Pembayaran selesai ✓' : 'Bayar' },
+                                    { done: documentsReady, current: false, label: documentsReady ? 'Dokumen diunggah ✓' : 'Unggah KTP/SIM' },
+                                    { done: contractSigned, current: paymentSettled && !contractSigned && booking.status === 'confirmed', label: contractSigned ? 'Kontrak ditandatangani ✓' : 'Tanda tangan kontrak' },
+                                    { done: unitHandedOver, current: contractSigned && !unitHandedOver, label: unitHandedOver ? 'Unit sudah diserahkan ✓' : 'Datang ke depot' },
+                                ].map((stage, index) => (
+                                    <div
+                                        key={`stage-${index}`}
+                                        className={`p-3 rounded-xl border space-y-0.5 ${
+                                            stage.done
+                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                                : stage.current
+                                                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                                                  : 'bg-slate-50 border-slate-200 text-slate-500'
                                         }`}
                                     >
-                                        Tahap {index + 1}
-                                    </span>
-                                    <div className="text-xs font-black">{stage.label}</div>
-                                </div>
-                            ))}
-                        </div>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest block ${stage.done ? 'text-emerald-600' : stage.current ? 'text-amber-600' : 'text-slate-400'}`}>
+                                            Tahap {index + 1}
+                                        </span>
+                                        <div className="text-xs font-black">{stage.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Flash Notifications */}
@@ -840,6 +919,127 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     )}
                                 </div>
                             </div>
+
+                            {/* Driver Assignment Card (if with_driver or driver assigned) */}
+                            {booking.driver && (
+                                <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 sm:p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base">👨‍✈️</span>
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">Sopir Ditugaskan</span>
+                                                <h4 className="text-sm font-black text-white">Driver Siap Melayani Perjalanan Anda</h4>
+                                            </div>
+                                        </div>
+                                        <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                                            Driver Siap
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        {booking.driver.photo_url ? (
+                                            <img
+                                                src={booking.driver.photo_url}
+                                                alt={booking.driver.name}
+                                                className="h-14 w-14 rounded-2xl object-cover border-2 border-white/20"
+                                            />
+                                        ) : (
+                                            <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center text-xl font-bold border border-white/20">
+                                                {booking.driver.name.charAt(0)}
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <h5 className="text-base font-black truncate">{booking.driver.name}</h5>
+                                            <p className="text-xs text-slate-300 font-mono mt-0.5">{booking.driver.phone || 'Nomor HP via konfirmasi'}</p>
+                                        </div>
+                                    </div>
+
+                                    {booking.driver.phone && (
+                                        <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap gap-2.5">
+                                            <a
+                                                href={`https://wa.me/${booking.driver.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo Pak ${booking.driver.name}, saya penyewa unit rental dengan kode ${booking.code}.`)}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-4 py-2.5 text-xs font-black text-white transition shadow-sm"
+                                            >
+                                                <span>Chat WhatsApp Driver</span>
+                                            </a>
+                                            <a
+                                                href={`tel:${booking.driver.phone}`}
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-black text-white transition"
+                                            >
+                                                <span>Telepon</span>
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Official Digital Documents (Contract & BAST Download Hub) */}
+                            {booking.pdf_urls && (booking.pdf_urls.contract || booking.pdf_urls.handover) && (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base">📄</span>
+                                            <div>
+                                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Dokumen & Kontrak Digital</h4>
+                                                <p className="text-xs text-slate-400">Unduh berkas legalitas resmi sewa kendaraan Anda</p>
+                                            </div>
+                                        </div>
+                                        {booking.contract?.signed && (
+                                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                                ✓ TTD Digital Sah
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {booking.pdf_urls.contract && (
+                                            <a
+                                                href={booking.pdf_urls.contract}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-black text-xs">
+                                                        PDF
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">Kontrak Sewa</div>
+                                                        <div className="text-[10px] text-slate-400">Perjanjian & Tanda Tangan</div>
+                                                    </div>
+                                                </div>
+                                                <svg className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                            </a>
+                                        )}
+
+                                        {booking.pdf_urls.handover && (
+                                            <a
+                                                href={booking.pdf_urls.handover}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-xs">
+                                                        PDF
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">Berita Acara (BAST)</div>
+                                                        <div className="text-[10px] text-slate-400">Kondisi Serah Terima Fisik</div>
+                                                    </div>
+                                                </div>
+                                                <svg className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Documents Upload Section */}
                             <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">

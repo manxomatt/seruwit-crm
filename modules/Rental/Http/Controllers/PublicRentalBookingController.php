@@ -750,6 +750,83 @@ class PublicRentalBookingController extends Controller
         ]);
     }
 
+    public function trackLookup(): Response
+    {
+        $this->ensureAvailable();
+
+        return Inertia::render('Modules/Rental/Public/TrackLookup', [
+            'brand' => $this->brand(),
+        ]);
+    }
+
+    public function trackFind(Request $request, PassengerOtpService $otp): RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $data = $request->validate([
+            'booking_code' => ['required', 'string', 'max:64'],
+            'phone' => ['required', 'string', 'max:32'],
+        ]);
+
+        $code = strtoupper(trim($data['booking_code']));
+        $rawDigits = preg_replace('/\D/', '', $data['phone']);
+        $normalizedPhone = $otp->normalize($data['phone']);
+        $phoneCandidates = array_values(array_unique(array_filter([
+            $data['phone'],
+            $rawDigits,
+            $normalizedPhone,
+            str_starts_with($rawDigits, '62') ? '0'.substr($rawDigits, 2) : null,
+            str_starts_with($rawDigits, '0') ? '62'.substr($rawDigits, 1) : null,
+        ])));
+
+        $rental = Rental::query()
+            ->whereIn('channel', Rental::passengerChannels())
+            ->whereRaw('UPPER(code) = ?', [$code])
+            ->where(function ($query) use ($phoneCandidates): void {
+                $query->whereIn('booker_phone', $phoneCandidates)
+                    ->orWhereHas('partner', fn ($q) => $q->whereIn('phone', $phoneCandidates));
+            })
+            ->first();
+
+        if (! $rental) {
+            return back()
+                ->withInput()
+                ->with('error', 'Reservasi tidak ditemukan. Pastikan Kode Booking dan Nomor WhatsApp sesuai.');
+        }
+
+        return redirect()->route('book.rental.booking.show', $rental->public_token);
+    }
+
+    public function downloadContractPdf(string $token, RentalPdfController $pdfController): \Illuminate\Http\Response|RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        if (in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CANCELLED], true)) {
+            return back()->with('error', __('rental.errors.pdf_contract_confirmed_only'));
+        }
+
+        return $pdfController->generateContractPdf($rental);
+    }
+
+    public function downloadHandoverPdf(string $token, RentalPdfController $pdfController): \Illuminate\Http\Response|RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        if (! in_array($rental->status, [
+            Rental::STATUS_ACTIVE,
+            Rental::STATUS_RETURNED,
+            Rental::STATUS_COMPLETED,
+        ], true)) {
+            return back()->with('error', __('rental.errors.pdf_handover_checked_out_only'));
+        }
+
+        return $pdfController->generateHandoverPdf($rental);
+    }
+
     private function ensureAvailable(): void
     {
         $this->preferIndonesianForFirstVisit();
@@ -902,7 +979,7 @@ class PublicRentalBookingController extends Controller
         return Rental::query()
             ->where('public_token', $token)
             ->whereIn('channel', Rental::passengerChannels())
-            ->with(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation'])
+            ->with(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation', 'driver', 'dutyOrders.driver'])
             ->firstOrFail();
     }
 
@@ -1085,6 +1162,11 @@ class PublicRentalBookingController extends Controller
             $phoneVerified = app(PassengerOtpService::class)->isVerified($rental->booker_phone);
         }
 
+        $assignedDriver = $rental->driver;
+        if (! $assignedDriver && $rental->dutyOrders && $rental->dutyOrders->isNotEmpty()) {
+            $assignedDriver = $rental->dutyOrders->sortByDesc('id')->first()?->driver;
+        }
+
         return [
             'code' => $rental->code,
             'public_token' => $rental->public_token,
@@ -1127,6 +1209,80 @@ class PublicRentalBookingController extends Controller
                 'signed' => filled($rental->contract_signed_at),
                 'signed_at' => $rental->contract_signed_at?->toIso8601String(),
                 'signature_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->contract_signature_path),
+            ],
+            'driver' => $assignedDriver ? [
+                'id' => $assignedDriver->id,
+                'name' => $assignedDriver->name,
+                'phone' => $assignedDriver->phone,
+                'photo_url' => $assignedDriver->photo_url,
+            ] : null,
+            'pdf_urls' => [
+                'contract' => in_array($rental->status, [Rental::STATUS_CONFIRMED, Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                    ? route('book.rental.booking.contract_pdf', $rental->public_token)
+                    : null,
+                'handover' => in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                    ? route('book.rental.booking.handover_pdf', $rental->public_token)
+                    : null,
+            ],
+            'tracking_timeline' => [
+                [
+                    'key' => 'booking_created',
+                    'title' => 'Reservasi Diterima',
+                    'description' => 'Pemesanan telah masuk ke sistem operasional',
+                    'status' => 'completed',
+                    'timestamp' => $rental->created_at?->format('d M Y, H:i').' WIB',
+                ],
+                [
+                    'key' => 'kyc_verified',
+                    'title' => 'Verifikasi Identitas & Dokumen',
+                    'description' => filled($rental->passenger_ktp_path)
+                        ? 'Dokumen persyaratan (KTP/SIM) telah diunggah'
+                        : 'Menunggu kelengkapan dokumen identitas',
+                    'status' => filled($rental->passenger_ktp_path) ? 'completed' : 'pending',
+                    'timestamp' => null,
+                ],
+                [
+                    'key' => 'payment_deposit',
+                    'title' => 'Pembayaran & Deposit',
+                    'description' => $upfrontPaid
+                        ? 'Pembayaran / Deposit telah terverifikasi'
+                        : 'Menunggu konfirmasi pembayaran deposit',
+                    'status' => $upfrontPaid ? 'completed' : ($rental->status === Rental::STATUS_PENDING_RESERVED ? 'current' : 'pending'),
+                    'timestamp' => null,
+                ],
+                [
+                    'key' => 'confirmation_unit',
+                    'title' => 'Persetujuan & Penyiapan Unit',
+                    'description' => in_array($rental->status, [Rental::STATUS_CONFIRMED, Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                        ? ($assignedDriver ? 'Unit & Driver siap ('.$assignedDriver->name.')' : 'Unit telah disiapkan di lokasi serah terima')
+                        : 'Menunggu verifikasi dan alokasi unit',
+                    'status' => in_array($rental->status, [Rental::STATUS_CONFIRMED, Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                        ? 'completed'
+                        : ($rental->status === Rental::STATUS_PENDING ? 'current' : 'pending'),
+                    'timestamp' => null,
+                ],
+                [
+                    'key' => 'handover_active',
+                    'title' => 'Serah Terima Unit (BAST)',
+                    'description' => in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                        ? 'Unit telah diserahkan dan masa sewa sedang aktif berjalan'
+                        : 'Serah terima kendaraan di titik antar/depot',
+                    'status' => in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                        ? 'completed'
+                        : ($rental->status === Rental::STATUS_CONFIRMED ? 'current' : 'pending'),
+                    'timestamp' => $rental->checked_out_at?->format('d M Y, H:i').' WIB',
+                ],
+                [
+                    'key' => 'return_completed',
+                    'title' => 'Pengembalian & Selesai',
+                    'description' => in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                        ? 'Kendaraan telah dikembalikan dalam kondisi baik'
+                        : 'Pengembalian unit di akhir masa sewa',
+                    'status' => in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+                        ? 'completed'
+                        : 'pending',
+                    'timestamp' => $rental->returned_at?->format('d M Y, H:i').' WIB',
+                ],
             ],
             'vehicle' => $rental->vehicle ? [
                 'id' => $rental->vehicle->id,

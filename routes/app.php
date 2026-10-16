@@ -77,8 +77,12 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
     Route::post('/otp', [PublicRentalBookingController::class, 'sendOtp'])
         ->middleware('throttle:20,1')
         ->name('otp');
+    Route::get('/track', [PublicRentalBookingController::class, 'trackLookup'])->name('track');
+    Route::post('/track', [PublicRentalBookingController::class, 'trackFind'])->name('track.find');
     Route::get('/booking/{token}', [PublicRentalBookingController::class, 'show'])->name('booking.show');
     Route::get('/booking/{token}/finish/{intent?}', [PublicRentalBookingController::class, 'paymentResult'])->name('booking.result');
+    Route::get('/booking/{token}/pdf/contract', [PublicRentalBookingController::class, 'downloadContractPdf'])->name('booking.contract_pdf');
+    Route::get('/booking/{token}/pdf/handover', [PublicRentalBookingController::class, 'downloadHandoverPdf'])->name('booking.handover_pdf');
     Route::post('/booking/{token}/verify-otp', [PublicRentalBookingController::class, 'verifyOtp'])->name('booking.verify_otp');
     Route::post('/booking/{token}/pay-deposit', [PublicRentalBookingController::class, 'payDeposit'])->name('booking.pay_deposit');
     Route::post('/booking/{token}/deposit-proof', [PublicRentalBookingController::class, 'uploadDepositProof'])->name('booking.upload_deposit_proof');

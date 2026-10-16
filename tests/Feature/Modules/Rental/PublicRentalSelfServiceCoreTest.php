@@ -427,4 +427,71 @@ class PublicRentalSelfServiceCoreTest extends TestCase
         $rental->refresh();
         $this->assertSame($driver->id, $rental->driver_id);
     }
+
+    public function test_customer_can_view_track_lookup_page(): void
+    {
+        $response = $this->get(route('book.rental.track'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Modules/Rental/Public/TrackLookup'));
+    }
+
+    public function test_customer_can_track_booking_by_code_and_phone(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+        $driver = \Modules\Fleet\Models\Driver::factory()->create(['name' => 'Bambang Driver']);
+        $partner = Partner::factory()->create(['phone' => '081299887766']);
+        $rental = Rental::factory()->confirmed()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'driver_id' => $driver->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '081299887766',
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        // Failed lookup (wrong phone)
+        $badResponse = $this->post(route('book.rental.track.find'), [
+            'booking_code' => $rental->code,
+            'phone' => '089999999999',
+        ]);
+        $badResponse->assertSessionHas('error');
+
+        // Successful lookup
+        $goodResponse = $this->post(route('book.rental.track.find'), [
+            'booking_code' => strtolower($rental->code),
+            'phone' => '081299887766',
+        ]);
+        $goodResponse->assertRedirect(route('book.rental.booking.show', $rental->public_token));
+
+        // Check show payload contains timeline, driver, and pdf_urls
+        $showResponse = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $showResponse->assertOk();
+        $showResponse->assertInertia(fn ($page) => $page
+            ->component('Modules/Rental/Public/Booking')
+            ->has('booking.tracking_timeline')
+            ->where('booking.driver.name', 'Bambang Driver')
+            ->has('booking.pdf_urls.contract')
+        );
+    }
+
+    public function test_customer_can_download_contract_and_handover_pdf_via_public_token(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->active()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'start_fuel_level' => 'full',
+            'checkout_checklist' => ['exterior_body' => true],
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $contractResponse = $this->get(route('book.rental.booking.contract_pdf', $rental->public_token));
+        $contractResponse->assertOk();
+        $contractResponse->assertHeader('Content-Type', 'application/pdf');
+
+        $handoverResponse = $this->get(route('book.rental.booking.handover_pdf', $rental->public_token));
+        $handoverResponse->assertOk();
+        $handoverResponse->assertHeader('Content-Type', 'application/pdf');
+    }
 }

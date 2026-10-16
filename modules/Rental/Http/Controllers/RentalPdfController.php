@@ -21,7 +21,12 @@ class RentalPdfController extends Controller
             return back()->with('error', __('rental.errors.pdf_contract_confirmed_only'));
         }
 
-        $rental->load([
+        return $this->generateContractPdf($rental);
+    }
+
+    public function generateContractPdf(Rental $rental): Response
+    {
+        $rental->loadMissing([
             'vehicle:id,name,plate_number,type',
             'partner',
             'driver:id,name,phone',
@@ -64,7 +69,12 @@ class RentalPdfController extends Controller
             return back()->with('error', __('rental.errors.pdf_handover_checked_out_only'));
         }
 
-        $rental->load([
+        return $this->generateHandoverPdf($rental);
+    }
+
+    public function generateHandoverPdf(Rental $rental): Response
+    {
+        $rental->loadMissing([
             'vehicle:id,name,plate_number,type',
             'partner',
             'driver:id,name,phone',
