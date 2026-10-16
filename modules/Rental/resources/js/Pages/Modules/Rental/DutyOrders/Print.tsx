@@ -78,7 +78,7 @@ export default function DutyOrderPrint({ dutyOrder, company }: Props) {
 
     return (
         <div className="bg-white text-black min-h-screen p-8 print:p-0 font-sans text-sm">
-            <Head title={`SPPD ${dutyOrder.duty_order_number}`} />
+            <Head title={`Surat Jalan ${dutyOrder.duty_order_number}`} />
 
             {/* Print Controls (Hidden on Print) */}
             <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between print:hidden bg-slate-100 p-4 rounded-lg border border-slate-200">
@@ -90,7 +90,7 @@ export default function DutyOrderPrint({ dutyOrder, company }: Props) {
                         onClick={() => window.print()}
                         className="px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition"
                     >
-                        🖨️ Cetak SPPD Sekarang
+                        🖨️ Cetak Surat Jalan Sekarang
                     </button>
                     <button
                         onClick={() => window.close()}
@@ -110,14 +110,14 @@ export default function DutyOrderPrint({ dutyOrder, company }: Props) {
                             {company.name || 'SERUWIT RENTAL CAR'}
                         </h1>
                         <p className="text-xs text-slate-700 mt-1 max-w-md">
-                            {company.address || 'Layanan Rental Mobil & Perjalanan Dinas Profesional'}
+                            {company.address || 'Layanan Rental Mobil & Transportasi Profesional'}
                         </p>
                         <p className="text-xs text-slate-700">
                             {company.phone && `Telp/WA: ${company.phone}`} {company.email && `• Email: ${company.email}`}
                         </p>
                     </div>
                     <div className="text-right">
-                        <div className="text-xs uppercase text-slate-500 font-semibold">Nomor SPPD:</div>
+                        <div className="text-xs uppercase text-slate-500 font-semibold">Nomor Surat Jalan:</div>
                         <div className="text-base font-bold font-mono text-black">{dutyOrder.duty_order_number}</div>
                         {dutyOrder.rental && (
                             <div className="text-xs text-slate-600 mt-0.5 font-mono">Ref Booking: {dutyOrder.rental.code}</div>
@@ -128,10 +128,10 @@ export default function DutyOrderPrint({ dutyOrder, company }: Props) {
                 {/* Judul Dokumen */}
                 <div className="text-center my-6">
                     <h2 className="text-lg font-bold uppercase tracking-wider underline">
-                        SURAT PERINTAH PERJALANAN DINAS (SPPD)
+                        SURAT JALAN OPERASIONAL PENGEMUDI
                     </h2>
                     <p className="text-xs text-slate-600 mt-1">
-                        Surat Penugasan Pengemudi & Pencairan Uang Muka Operasional
+                        Surat Penugasan Pengemudi & Pencairan Kas Jalan Operasional (UJO)
                     </p>
                 </div>
 

@@ -270,7 +270,7 @@ return [
         'bookings' => 'Bookings',
         'reservation' => 'Reservasi',
         'dispatch' => 'Antar-Jemput (Dispatch)',
-        'duty_orders' => 'SPPD & Uang Jalan',
+        'duty_orders' => 'Surat Jalan & Kas Jalan',
         'availability' => 'Ketersediaan',
         'calendar' => 'Kalender',
         'rates' => 'Tarif',

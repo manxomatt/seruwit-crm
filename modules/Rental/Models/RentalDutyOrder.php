@@ -174,11 +174,11 @@ class RentalDutyOrder extends Model
     }
 
     /**
-     * Auto-generate a unique duty order number (SPPD).
+     * Auto-generate a unique duty order number (Surat Jalan Operasional - SJO).
      */
     public static function generateNumber(): string
     {
-        $prefix = 'SPPD-'.now()->format('Ym');
+        $prefix = 'SJO-'.now()->format('Ym');
         $latest = static::query()
             ->where('duty_order_number', 'like', "{$prefix}-%")
             ->latest('id')

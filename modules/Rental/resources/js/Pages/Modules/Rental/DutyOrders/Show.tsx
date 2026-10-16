@@ -195,7 +195,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
 
     return (
         <DynamicLayout>
-            <Head title={`SPPD ${dutyOrder.duty_order_number} - Rincian & Uang Jalan`} />
+            <Head title={`Surat Jalan ${dutyOrder.duty_order_number} - Rincian & Kas Jalan`} />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
                 {/* Navigation Header */}
@@ -220,7 +220,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                             rel="noopener noreferrer"
                         >
                             <SecondaryButton className="inline-flex items-center gap-1.5">
-                                <span>🖨️</span> Cetak Lembar SPPD
+                                <span>🖨️</span> Cetak Surat Jalan
                             </SecondaryButton>
                         </a>
 
@@ -296,7 +296,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                     {/* 1. Cash Advance Given */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">1. Uang Muka Operasional</span>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">1. Kas Jalan Operasional</span>
                             <span className="text-lg">💵</span>
                         </div>
                         <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -347,7 +347,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                         </div>
                         <div className="mt-2 text-xs font-medium text-slate-700 dark:text-slate-300">
                             {isCashAdvanceSurplus ? (
-                                <span>⚠️ <strong>Sisa Uang Jalan:</strong> Supir wajib mengembalikan uang sisa ini ke kasir.</span>
+                                <span>⚠️ <strong>Sisa Kas Jalan:</strong> Supir wajib mengembalikan uang sisa ini ke kasir.</span>
                             ) : (
                                 <span>⚠️ <strong>Talangan Supir:</strong> Kasir wajib mengganti (reimburse) uang supir ini.</span>
                             )}
@@ -521,7 +521,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                     </div>
                 </div>
 
-                {/* SPPD Trip Information & Passenger Details */}
+                {/* Surat Jalan Trip Information & Passenger Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
                         <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
@@ -538,7 +538,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                                         {dutyOrder.rental.code}
                                     </Link>
                                 ) : (
-                                    <span className="text-slate-500">SPPD Mandiri</span>
+                                    <span className="text-slate-500">Surat Jalan Mandiri</span>
                                 )}
                             </div>
                             <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
@@ -754,12 +754,12 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
             <Modal show={isSettleModalOpen} onClose={() => setIsSettleModalOpen(false)} maxWidth="md">
                 <form onSubmit={handleSettleSubmit} className="p-6 space-y-4">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                        Selesaikan Uang Jalan & SPPD (Settlement)
+                        Selesaikan Kas Jalan & Surat Jalan (Settlement)
                     </h3>
 
                     <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 space-y-2 text-sm">
                         <div className="flex justify-between">
-                            <span className="text-slate-500">Uang Muka Diberikan:</span>
+                            <span className="text-slate-500">Kas Jalan Diberikan:</span>
                             <span className="font-semibold">{formatCurrency(dutyOrder.cash_advance_amount)}</span>
                         </div>
                         <div className="flex justify-between">
@@ -788,7 +788,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                             rows={3}
                             value={settleForm.data.settlement_notes}
                             onChange={(e) => settleForm.setData('settlement_notes', e.target.value)}
-                            placeholder="Contoh: Sisa kas Rp 75.000 telah diterima kasir tunai. SPPD selesai."
+                            placeholder="Contoh: Sisa kas Rp 75.000 telah diterima kasir tunai. Surat Jalan selesai."
                             className="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                     </div>
@@ -798,7 +798,7 @@ export default function DutyOrderShow({ dutyOrder, expenseCategories }: Props) {
                             Batal
                         </SecondaryButton>
                         <PrimaryButton type="submit" disabled={settleForm.processing} className="bg-purple-600 hover:bg-purple-700">
-                            {settleForm.processing ? 'Menyelesaikan...' : 'Tutup & Selesaikan SPPD'}
+                            {settleForm.processing ? 'Menyelesaikan...' : 'Tutup & Selesaikan Surat Jalan'}
                         </PrimaryButton>
                     </div>
                 </form>

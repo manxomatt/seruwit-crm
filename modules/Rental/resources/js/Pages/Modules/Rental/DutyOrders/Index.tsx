@@ -257,14 +257,14 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
         <DynamicLayout
             header={
                 <PageHeader
-                    title="Surat Perintah Perjalanan Dinas (SPPD) & Uang Jalan"
-                    subtitle="Kelola surat tugas supir, pencairan uang muka perjalanan, pencatatan nota riil, dan rekonsiliasi kas lembur."
+                    title="Surat Jalan Operasional (SJO) & Kas Jalan"
+                    subtitle="Kelola surat jalan pengemudi, pencairan kas jalan (UJO), pencatatan nota riil lapangan, dan rekonsiliasi lembur."
                     actions={
                         <div className="flex items-center gap-2">
                             <LanguageSwitcher compact />
                             <Link href={prefixedRoute('rental.duty_orders.create')}>
                                 <PrimaryButton className="rounded-xl shadow-sm inline-flex items-center gap-1.5">
-                                    <span className="text-base leading-none">＋</span> Buat SPPD Baru
+                                    <span className="text-base leading-none">＋</span> Buat Surat Jalan
                                 </PrimaryButton>
                             </Link>
                         </div>
@@ -272,7 +272,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                 />
             }
         >
-            <Head title="SPPD & Uang Jalan Pengemudi - Rental" />
+            <Head title="Surat Jalan & Kas Jalan Pengemudi - Rental" />
 
             <RentalNav />
 
@@ -291,7 +291,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                 {/* Metrics Cards */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total SPPD</div>
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Surat Jalan</div>
                         <div className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{metrics.total_orders}</div>
                     </div>
                     <div className="rounded-3xl border border-blue-200/80 bg-blue-50/50 p-4 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/20">
@@ -303,7 +303,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                         <div className="mt-1 text-2xl font-black text-rose-700 dark:text-rose-400">{metrics.pending_settlement}</div>
                     </div>
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Uang Muka Keluar</div>
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kas Jalan Keluar</div>
                         <div className="mt-1 text-base font-black text-slate-900 dark:text-white truncate">{formatCurrency(metrics.total_advance_disbursed)}</div>
                     </div>
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -332,7 +332,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                 </span>
                                 <TextInput
                                     type="search"
-                                    placeholder="Cari No SPPD, rute, supir, tamu, nopol..."
+                                    placeholder="Cari No. Surat Jalan, rute, supir, tamu, nopol..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="w-full !rounded-2xl !py-2.5 pl-10 text-xs shadow-2xs"
@@ -442,10 +442,10 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                 👨‍✈️
                             </div>
                             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                Belum ada Surat Perintah Perjalanan Dinas (SPPD)
+                                Belum ada Surat Jalan Operasional
                             </h3>
                             <p className="mt-1 text-xs text-slate-500">
-                                Coba sesuaikan kata kunci pencarian atau buat surat tugas perjalanan baru.
+                                Coba sesuaikan kata kunci pencarian atau terbitkan surat jalan baru untuk pengemudi.
                             </p>
                             {hasActiveFilters ? (
                                 <button
@@ -458,7 +458,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                             ) : (
                                 <Link href={prefixedRoute('rental.duty_orders.create')}>
                                     <SecondaryButton className="mt-3 text-xs rounded-xl">
-                                        ＋ Buat SPPD Pertama
+                                        ＋ Buat Surat Jalan Pertama
                                     </SecondaryButton>
                                 </Link>
                             )}
@@ -470,7 +470,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                     <thead className="bg-slate-50/80 dark:bg-slate-850">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                No. SPPD & Tanggal
+                                                No. Surat Jalan & Tanggal
                                             </th>
                                             <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                 Pengemudi & Unit
@@ -479,7 +479,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                                 Rute & Penumpang
                                             </th>
                                             <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                Uang Muka
+                                                Kas Jalan
                                             </th>
                                             <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                 Nota Riil
@@ -592,7 +592,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
-                                                                title="Cetak SPPD"
+                                                                title="Cetak Surat Jalan"
                                                             >
                                                                 🖨️
                                                             </a>
@@ -688,7 +688,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                 <span className="font-semibold text-slate-900 dark:text-white">{previewOrder.passenger_name || '-'}</span>
                             </div>
                             <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                                <span className="text-slate-400">Uang Muka Diberikan:</span>
+                                <span className="text-slate-400">Kas Jalan Diberikan:</span>
                                 <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(previewOrder.cash_advance_amount)}</span>
                             </div>
                             <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
@@ -710,7 +710,7 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                                 rel="noopener noreferrer"
                             >
                                 <SecondaryButton className="text-xs rounded-xl">
-                                    🖨️ Cetak Lembar SPPD
+                                    🖨️ Cetak Surat Jalan
                                 </SecondaryButton>
                             </a>
                             <Link href={prefixedRoute('rental.duty_orders.show', previewOrder.id)}>

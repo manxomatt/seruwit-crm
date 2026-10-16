@@ -216,7 +216,7 @@ class RentalDutyOrderController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.rental.duty_orders.show', $dutyOrder)
-            ->with('success', "Surat Tugas {$dutyOrder->duty_order_number} berhasil dibuat.");
+            ->with('success', "Surat Jalan {$dutyOrder->duty_order_number} berhasil diterbitkan.");
     }
 
     /**
@@ -294,7 +294,7 @@ class RentalDutyOrderController extends Controller
     public function addExpense(Request $request, RentalDutyOrder $dutyOrder): RedirectResponse
     {
         if ($dutyOrder->settlement_status === RentalDutyOrder::SETTLEMENT_SETTLED) {
-            return back()->with('error', 'Tidak dapat menambah pengeluaran karena SPPD telah disettle.');
+            return back()->with('error', 'Tidak dapat menambah pengeluaran karena Surat Jalan telah disettle.');
         }
 
         $validated = $request->validate([
@@ -336,7 +336,7 @@ class RentalDutyOrderController extends Controller
         }
 
         if ($dutyOrder->settlement_status === RentalDutyOrder::SETTLEMENT_SETTLED) {
-            return back()->with('error', 'Tidak dapat menghapus pengeluaran karena SPPD telah disettle.');
+            return back()->with('error', 'Tidak dapat menghapus pengeluaran karena Surat Jalan telah disettle.');
         }
 
         $expense->delete();

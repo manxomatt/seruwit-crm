@@ -121,7 +121,7 @@ export default function DutyOrderCreate({
     };
 
     const rentalOptions: SelectOption[] = useMemo(() => [
-        { value: '', label: '-- Tanpa Booking Rental (SPPD Mandiri / Operasional) --' },
+        { value: '', label: '-- Tanpa Booking Rental (Surat Jalan Mandiri / Operasional) --' },
         ...activeRentals.map((r) => ({
             value: String(r.id),
             label: `${r.code} - ${r.partner?.name || 'Tamu'} (${r.vehicle?.plate_number || 'Unit'})`,
@@ -146,7 +146,7 @@ export default function DutyOrderCreate({
 
     return (
         <DynamicLayout>
-            <Head title="Buat Surat Perintah Perjalanan Dinas (SPPD)" />
+            <Head title="Buat Surat Jalan Operasional (SJO)" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
@@ -154,13 +154,13 @@ export default function DutyOrderCreate({
                         href={route(`${routePrefix}.rental.duty_orders.index`)}
                         className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition"
                     >
-                        <span>←</span> Kembali ke Daftar SPPD
+                        <span>←</span> Kembali ke Daftar Surat Jalan
                     </Link>
                 </div>
 
                 <PageHeader
-                    title="Terbitkan Surat Perintah Perjalanan Dinas (SPPD)"
-                    subtitle="Isi rincian penugasan pengemudi, estimasi uang jalan (kas operasional bbm/tol), dan batas jam kerja."
+                    title="Terbitkan Surat Jalan Operasional (SJO)"
+                    subtitle="Isi rincian penugasan pengemudi, estimasi kas jalan (UJO: BBM, e-toll, makan), dan batas jam kerja."
                 />
 
                 <form onSubmit={submit} className="space-y-6">
@@ -186,12 +186,12 @@ export default function DutyOrderCreate({
                     {/* Penugasan Supir & Armada */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
                         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            <span>👨‍✈️</span> Identitas Penugasan & Nomor Surat
+                            <span>👨‍✈️</span> Identitas Penugasan & Nomor Surat Jalan
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <InputLabel htmlFor="duty_order_number" value="Nomor SPPD *" />
+                                <InputLabel htmlFor="duty_order_number" value="Nomor Surat Jalan *" />
                                 <TextInput
                                     id="duty_order_number"
                                     value={data.duty_order_number}
@@ -338,7 +338,7 @@ export default function DutyOrderCreate({
                     {/* Uang Jalan (Cash Advance) */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
                         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            <span>💵</span> Uang Muka Operasional Perjalanan (Cash Advance / Uang Jalan)
+                            <span>💵</span> Kas Jalan Operasional (UJO / Cash Advance)
                         </h3>
                         <p className="text-xs text-slate-500">
                             Dana tunai / transfer yang diberikan kasir kepada supir sebelum berangkat untuk keperluan BBM, E-Toll, uang makan, dan parkir.
@@ -346,7 +346,7 @@ export default function DutyOrderCreate({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="cash_advance_amount" value="Nominal Uang Jalan (Rp)" />
+                                <InputLabel htmlFor="cash_advance_amount" value="Nominal Kas Jalan (Rp)" />
                                 <TextInput
                                     id="cash_advance_amount"
                                     type="number"
@@ -359,7 +359,7 @@ export default function DutyOrderCreate({
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="cash_advance_notes" value="Rincian Alokasi Uang Jalan" />
+                                <InputLabel htmlFor="cash_advance_notes" value="Rincian Alokasi Kas Jalan" />
                                 <TextInput
                                     id="cash_advance_notes"
                                     placeholder="Contoh: BBM Rp 400rb, Tol Rp 250rb, Uang Makan Rp 100rb"
@@ -435,7 +435,7 @@ export default function DutyOrderCreate({
                             <SecondaryButton disabled={processing}>Batal</SecondaryButton>
                         </Link>
                         <PrimaryButton type="submit" disabled={processing} className="px-6">
-                            {processing ? 'Menyimpan...' : 'Terbitkan SPPD & Simpan'}
+                            {processing ? 'Menyimpan...' : 'Terbitkan Surat Jalan & Simpan'}
                         </PrimaryButton>
                     </div>
                 </form>
