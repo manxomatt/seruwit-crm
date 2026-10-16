@@ -118,6 +118,76 @@ class RentalCorporateContractController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        $this->ensureSchemaExists();
+
+        $partners = Schema::hasTable('partners')
+            ? Partner::query()
+                ->select(['id', 'name', 'email', 'phone'])
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Partner $p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'email' => $p->email,
+                    'phone' => $p->phone,
+                ])
+                ->values()
+            : collect();
+
+        return Inertia::render('Modules/Rental/CorporateContracts/Form', [
+            'suggestedCode' => RentalCorporateContract::generateCode(),
+            'partners' => $partners,
+            'contract' => null,
+        ]);
+    }
+
+    public function edit(RentalCorporateContract $contract): Response
+    {
+        $this->ensureSchemaExists();
+
+        $partners = Schema::hasTable('partners')
+            ? Partner::query()
+                ->select(['id', 'name', 'email', 'phone'])
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Partner $p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'email' => $p->email,
+                    'phone' => $p->phone,
+                ])
+                ->values()
+            : collect();
+
+        return Inertia::render('Modules/Rental/CorporateContracts/Form', [
+            'suggestedCode' => $contract->code,
+            'partners' => $partners,
+            'contract' => [
+                'id' => $contract->id,
+                'code' => $contract->code,
+                'partner_id' => $contract->partner_id,
+                'title' => $contract->title,
+                'po_number' => $contract->po_number,
+                'pic_name' => $contract->pic_name,
+                'pic_phone' => $contract->pic_phone,
+                'pic_email' => $contract->pic_email,
+                'start_date' => $contract->start_date?->toDateString(),
+                'end_date' => $contract->end_date?->toDateString(),
+                'billing_cycle' => $contract->billing_cycle,
+                'payment_term_days' => (int) $contract->payment_term_days,
+                'credit_limit' => (float) $contract->credit_limit,
+                'discount_pct' => (float) $contract->discount_pct,
+                'tax_included' => (bool) $contract->tax_included,
+                'withholding_tax_pct' => (float) $contract->withholding_tax_pct,
+                'sla_replacement_hours' => (int) $contract->sla_replacement_hours,
+                'status' => $contract->status,
+                'notes' => $contract->notes,
+            ],
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $this->ensureSchemaExists();
@@ -165,7 +235,7 @@ class RentalCorporateContractController extends Controller
         ]);
 
         return redirect()
-            ->route('rental.corporate.show', $contract->id)
+            ->route($this->getRoutePrefix().'.rental.corporate.show', $contract->id)
             ->with('success', "Kontrak Sewa Korporat {$contract->code} berhasil dibuat.");
     }
 
@@ -211,7 +281,9 @@ class RentalCorporateContractController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        return back()->with('success', "Kontrak Korporat {$contract->code} berhasil diperbarui.");
+        return redirect()
+            ->route($this->getRoutePrefix().'.rental.corporate.show', $contract->id)
+            ->with('success', "Kontrak Korporat {$contract->code} berhasil diperbarui.");
     }
 
     public function show(Request $request, RentalCorporateContract $contract): Response
