@@ -115,6 +115,28 @@ interface Booking {
         ktp_url: string | null;
         sim_url: string | null;
         guarantor_url?: string | null;
+        ai_ocr_enabled?: boolean;
+        ai_kyc_assessment?: {
+            status?: string;
+            risk_level?: string;
+            summary?: string;
+            ktp?: {
+                nik?: string;
+                name?: string;
+                birth_date?: string;
+                address?: string;
+            };
+            sim?: {
+                license_number?: string;
+                expires_at?: string;
+                is_expired?: boolean;
+            };
+        } | null;
+        partner_identity?: {
+            id_number?: string | null;
+            license_number?: string | null;
+            license_expires_at?: string | null;
+        };
     };
     deposit_proof?: {
         path: string | null;
@@ -355,6 +377,10 @@ export default function BookingView({ brand, booking, gateway_available, company
         sim: File | null;
         guarantor_doc: File | null;
         guarantor_doc_type: string;
+        id_number: string;
+        license_number: string;
+        license_expires_at: string;
+        birth_date: string;
     }>({
         booker_phone: booking.booker_phone ?? '',
         otp_code: '',
@@ -362,7 +388,73 @@ export default function BookingView({ brand, booking, gateway_available, company
         sim: null,
         guarantor_doc: null,
         guarantor_doc_type: booking.documents?.guarantor_doc_type || 'flight_ticket',
+        id_number: booking.documents?.partner_identity?.id_number || '',
+        license_number: booking.documents?.partner_identity?.license_number || '',
+        license_expires_at: booking.documents?.partner_identity?.license_expires_at || '',
+        birth_date: '',
     });
+
+    const [scanningKtp, setScanningKtp] = useState(false);
+    const [ktpOcrResult, setKtpOcrResult] = useState<any>(null);
+    const [ktpOcrValidation, setKtpOcrValidation] = useState<any>(null);
+    const [ktpOcrError, setKtpOcrError] = useState<string | null>(null);
+
+    const [scanningSim, setScanningSim] = useState(false);
+    const [simOcrResult, setSimOcrResult] = useState<any>(null);
+    const [simOcrValidation, setSimOcrValidation] = useState<any>(null);
+    const [simOcrError, setSimOcrError] = useState<string | null>(null);
+
+    const scanDocumentOcr = async (file: File, docType: 'ktp' | 'sim') => {
+        if (!file) return;
+
+        if (docType === 'ktp') {
+            setScanningKtp(true);
+            setKtpOcrError(null);
+        } else {
+            setScanningSim(true);
+            setSimOcrError(null);
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('doc_type', docType);
+
+            const url = typeof route === 'function' && route().has('book.rental.booking.ocr')
+                ? route('book.rental.booking.ocr', booking.public_token)
+                : `/book/rental/booking/${booking.public_token}/ocr`;
+
+            const { data } = await axios.post(url, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+
+            if (data.success && data.result) {
+                if (docType === 'ktp') {
+                    setKtpOcrResult(data.result);
+                    setKtpOcrValidation(data.validation);
+                    const nik = data.result.data?.nik || '';
+                    const cleanNik = nik.replace(/[^0-9]/g, '');
+                    if (cleanNik) docsForm.setData('id_number', cleanNik);
+                    if (data.result.data?.birth_date) docsForm.setData('birth_date', data.result.data.birth_date);
+                } else {
+                    setSimOcrResult(data.result);
+                    setSimOcrValidation(data.validation);
+                    if (data.result.data?.license_number) docsForm.setData('license_number', data.result.data.license_number);
+                    if (data.result.data?.expires_at) docsForm.setData('license_expires_at', data.result.data.expires_at);
+                }
+            } else {
+                if (docType === 'ktp') setKtpOcrError(data.message || 'Gagal memindai KTP');
+                else setSimOcrError(data.message || 'Gagal memindai SIM');
+            }
+        } catch (err: any) {
+            const msg = err.response?.data?.message || 'Gagal memproses OCR dokumen. Mohon pastikan foto cukup terang.';
+            if (docType === 'ktp') setKtpOcrError(msg);
+            else setSimOcrError(msg);
+        } finally {
+            if (docType === 'ktp') setScanningKtp(false);
+            else setScanningSim(false);
+        }
+    };
 
     useEffect(() => {
         if (!proofForm.data.company_bank_account_id && company_bank_accounts.length > 0) {
@@ -1073,6 +1165,16 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.guarantor_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                                         Dokumen Penjamin: {booking.documents?.guarantor_uploaded ? 'Terunggah ✓' : 'Belum'}
                                     </span>
+                                    {booking.documents?.ai_kyc_assessment && (
+                                        <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents.ai_kyc_assessment.status === 'verified' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+                                            e-KYC AI: {booking.documents.ai_kyc_assessment.status === 'verified' ? 'Terverifikasi ✓' : 'Perlu Review Staff'}
+                                        </span>
+                                    )}
+                                    {!booking.documents?.ai_kyc_assessment && booking.documents?.partner_identity?.id_number && (
+                                        <span className="rounded-lg px-2.5 py-1 font-bold border bg-slate-50 border-slate-200 text-slate-700">
+                                            NIK: {booking.documents.partner_identity.id_number}
+                                        </span>
+                                    )}
                                 </div>
 
                                 {showDocs && isVerified && (
@@ -1081,25 +1183,182 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
                                                     Foto KTP Penyewa
+                                                    {booking.documents?.ai_ocr_enabled !== false && (
+                                                        <span className="ml-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                                                            ⚡ Auto-Scan OCR
+                                                        </span>
+                                                    )}
                                                 </label>
                                                 <input
                                                     type="file"
                                                     accept="image/*,.pdf"
-                                                    onChange={(e) => docsForm.setData('ktp', e.target.files?.[0] ?? null)}
+                                                    onChange={(e) => {
+                                                        const f = e.target.files?.[0] ?? null;
+                                                        docsForm.setData('ktp', f);
+                                                        if (f && (booking.documents?.ai_ocr_enabled !== false)) {
+                                                            scanDocumentOcr(f, 'ktp');
+                                                        }
+                                                    }}
                                                     className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
                                                 />
+
+                                                {scanningKtp && (
+                                                    <div className="mt-2.5 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2.5">
+                                                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                                                        <span className="text-xs font-semibold text-blue-800">
+                                                            AI sedang memindai KTP & membaca NIK...
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {ktpOcrError && (
+                                                    <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                                                        ⚠️ {ktpOcrError}
+                                                    </div>
+                                                )}
+
+                                                {ktpOcrResult && (
+                                                    <div className="mt-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                                                <span className="text-emerald-600">✓</span> Hasil OCR KTP
+                                                            </span>
+                                                            {ktpOcrValidation?.checks?.nik_16_digits?.passed ? (
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                                    16 Digit Valid
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                                                                    Periksa NIK
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="space-y-1.5 pt-1">
+                                                            <div>
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                                                    NIK (16 Digit)
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    maxLength={16}
+                                                                    value={docsForm.data.id_number}
+                                                                    onChange={(e) => docsForm.setData('id_number', e.target.value)}
+                                                                    placeholder="Contoh: 3201234567890001"
+                                                                    className="w-full mt-0.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
+                                                                />
+                                                            </div>
+
+                                                            {ktpOcrResult.data?.name && (
+                                                                <div className="text-xs text-slate-600">
+                                                                    <span className="text-slate-400">Nama di KTP:</span> <b>{ktpOcrResult.data.name}</b>
+                                                                    {ktpOcrValidation?.checks?.name_match?.passed !== undefined && (
+                                                                        <span className={`ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${ktpOcrValidation.checks.name_match.passed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                                                                            {ktpOcrValidation.checks.name_match.passed ? 'Nama Sesuai' : 'Beda Nama'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            {ktpOcrValidation?.warnings?.length > 0 && (
+                                                                <div className="text-[11px] text-amber-700 bg-amber-50/70 p-2 rounded-lg border border-amber-200">
+                                                                    {ktpOcrValidation.warnings[0]}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
+
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
                                                     Foto SIM A Penyewa
+                                                    {booking.documents?.ai_ocr_enabled !== false && (
+                                                        <span className="ml-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                                                            ⚡ Auto-Scan OCR
+                                                        </span>
+                                                    )}
                                                 </label>
                                                 <input
                                                     type="file"
                                                     accept="image/*,.pdf"
-                                                    onChange={(e) => docsForm.setData('sim', e.target.files?.[0] ?? null)}
+                                                    onChange={(e) => {
+                                                        const f = e.target.files?.[0] ?? null;
+                                                        docsForm.setData('sim', f);
+                                                        if (f && (booking.documents?.ai_ocr_enabled !== false)) {
+                                                            scanDocumentOcr(f, 'sim');
+                                                        }
+                                                    }}
                                                     className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
                                                 />
+
+                                                {scanningSim && (
+                                                    <div className="mt-2.5 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2.5">
+                                                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                                                        <span className="text-xs font-semibold text-blue-800">
+                                                            AI sedang memindai SIM & masa berlaku...
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {simOcrError && (
+                                                    <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                                                        ⚠️ {simOcrError}
+                                                    </div>
+                                                )}
+
+                                                {simOcrResult && (
+                                                    <div className="mt-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                                                <span className="text-emerald-600">✓</span> Hasil OCR SIM
+                                                            </span>
+                                                            {simOcrValidation?.checks?.sim_expiry?.passed ? (
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                                    SIM Aktif
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
+                                                                    {simOcrValidation?.checks?.sim_expiry?.is_expired ? 'SIM Kedaluwarsa' : 'Periksa Masa Berlaku'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                                            <div>
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                                                    Nomor SIM
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={docsForm.data.license_number}
+                                                                    onChange={(e) => docsForm.setData('license_number', e.target.value)}
+                                                                    placeholder="Nomor SIM"
+                                                                    className="w-full mt-0.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                                                    Masa Berlaku
+                                                                </label>
+                                                                <input
+                                                                    type="date"
+                                                                    value={docsForm.data.license_expires_at}
+                                                                    onChange={(e) => docsForm.setData('license_expires_at', e.target.value)}
+                                                                    className="w-full mt-0.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {simOcrValidation?.warnings?.length > 0 && (
+                                                            <div className="text-[11px] text-rose-700 bg-rose-50/70 p-2 rounded-lg border border-rose-200">
+                                                                {simOcrValidation.warnings[0]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
+
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
                                                     Jenis Dokumen Penjamin
@@ -1131,10 +1390,10 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                                         <button
                                             type="submit"
-                                            disabled={docsForm.processing}
+                                            disabled={docsForm.processing || scanningKtp || scanningSim}
                                             className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase text-white shadow-sm transition disabled:opacity-50"
                                         >
-                                            {docsForm.processing ? 'Mengunggah...' : 'Simpan Dokumen'}
+                                            {docsForm.processing ? 'Mengunggah & Memproses...' : 'Simpan Dokumen'}
                                         </button>
                                     </form>
                                 )}

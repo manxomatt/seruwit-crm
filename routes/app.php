@@ -91,6 +91,9 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
     Route::post('/booking/{token}/extend-request', [PublicRentalBookingController::class, 'requestExtend'])->name('booking.extend_request');
     Route::post('/booking/{token}/request-pickup', [PublicRentalBookingController::class, 'requestPickup'])->name('booking.request_pickup');
     Route::post('/booking/{token}/documents', [PublicRentalBookingController::class, 'uploadDocuments'])->name('booking.documents');
+    Route::post('/booking/{token}/ocr', [PublicRentalBookingController::class, 'scanDocument'])
+        ->middleware('throttle:20,1')
+        ->name('booking.ocr');
     Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
 
     // Customer Authentication (Option A+C)

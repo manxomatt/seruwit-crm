@@ -8,8 +8,11 @@ use App\Models\Setting;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery\MockInterface;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
+use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
+use Modules\Rental\AI\DTO\KycDocumentResult;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\MobileRentalBookingService;
@@ -493,5 +496,207 @@ class PublicRentalSelfServiceCoreTest extends TestCase
         $handoverResponse = $this->get(route('book.rental.booking.handover_pdf', $rental->public_token));
         $handoverResponse->assertOk();
         $handoverResponse->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_customer_can_scan_ktp_via_public_ocr(): void
+    {
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.ai_kyc_enabled'],
+            ['group' => 'rental_internal', 'value' => '1', 'type' => 'boolean', 'label' => 'AI KYC']
+        );
+
+        $partner = Partner::factory()->create([
+            'name' => 'Budi Santoso',
+            'phone' => '081234567890',
+        ]);
+
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '081234567890',
+            'public_token' => \Illuminate\Support\Str::random(40),
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->mock(DocumentKycServiceInterface::class, function (MockInterface $mock) {
+            $mock->shouldReceive('scanSingleDocument')
+                ->once()
+                ->andReturn([
+                    'doc_type' => 'ktp',
+                    'confidence' => 0.95,
+                    'data' => [
+                        'nik' => '3271012345670001',
+                        'name' => 'BUDI SANTOSO',
+                        'birth_date' => '1990-05-12',
+                        'address' => 'Jl. Sudirman No. 45, Jakarta',
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $file = UploadedFile::fake()->image('ktp.jpg');
+
+        $response = $this->postJson(route('book.rental.booking.ocr', $rental->public_token), [
+            'file' => $file,
+            'doc_type' => 'ktp',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('result.doc_type', 'ktp')
+            ->assertJsonPath('result.data.nik', '3271012345670001')
+            ->assertJsonPath('result.data.name', 'BUDI SANTOSO')
+            ->assertJsonPath('validation.checks.nik_16_digits.passed', true)
+            ->assertJsonPath('validation.checks.name_match.passed', true);
+    }
+
+    public function test_customer_can_scan_sim_via_public_ocr(): void
+    {
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.ai_kyc_enabled'],
+            ['group' => 'rental_internal', 'value' => '1', 'type' => 'boolean', 'label' => 'AI KYC']
+        );
+
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'public_token' => \Illuminate\Support\Str::random(40),
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->mock(DocumentKycServiceInterface::class, function (MockInterface $mock) {
+            $mock->shouldReceive('scanSingleDocument')
+                ->once()
+                ->andReturn([
+                    'doc_type' => 'sim',
+                    'confidence' => 0.92,
+                    'data' => [
+                        'license_number' => '900512345678',
+                        'name' => 'BUDI SANTOSO',
+                        'expires_at' => now()->addYears(3)->format('Y-m-d'),
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $file = UploadedFile::fake()->image('sim.jpg');
+
+        $response = $this->postJson(route('book.rental.booking.ocr', $rental->public_token), [
+            'file' => $file,
+            'doc_type' => 'sim',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('result.doc_type', 'sim')
+            ->assertJsonPath('result.data.license_number', '900512345678')
+            ->assertJsonPath('validation.checks.sim_expiry.passed', true);
+    }
+
+    public function test_public_ocr_fails_gracefully_when_disabled(): void
+    {
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.ai_kyc_enabled'],
+            ['group' => 'rental_internal', 'value' => '0', 'type' => 'boolean', 'label' => 'AI KYC']
+        );
+
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $file = UploadedFile::fake()->image('ktp.jpg');
+
+        $response = $this->postJson(route('book.rental.booking.ocr', $rental->public_token), [
+            'file' => $file,
+            'doc_type' => 'ktp',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_customer_upload_documents_syncs_partner_identity_and_triggers_ai_kyc(): void
+    {
+        Storage::fake('local');
+
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.ai_kyc_enabled'],
+            ['group' => 'rental_internal', 'value' => '1', 'type' => 'boolean', 'label' => 'AI KYC']
+        );
+
+        $otpService = app(PassengerOtpService::class);
+        $phone = '081234567890';
+        $normalizedPhone = $otpService->normalize($phone);
+
+        $partner = Partner::factory()->create([
+            'phone' => $normalizedPhone,
+            'id_number' => null,
+            'license_number' => null,
+        ]);
+
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => $normalizedPhone,
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $code = $otpService->send($phone);
+
+        $this->mock(DocumentKycServiceInterface::class, function (MockInterface $mock) {
+            $mock->shouldReceive('analyzeRentalKyc')
+                ->once()
+                ->andReturn(new KycDocumentResult(
+                    status: 'verified',
+                    riskLevel: 'low',
+                    riskScore: 95,
+                    summary: 'KTP valid dan sesuai',
+                    ktp: [
+                        'nik' => '3271012345670001',
+                        'name' => 'BUDI SANTOSO',
+                        'birth_date' => '1990-05-12',
+                        'address' => 'Jl. Sudirman',
+                        'religion' => 'Islam',
+                        'occupation' => 'Wiraswasta',
+                        'confidence' => 0.95,
+                    ],
+                ));
+        });
+
+        $ktpFile = UploadedFile::fake()->create('ktp.jpg', 200);
+        $simFile = UploadedFile::fake()->create('sim.jpg', 200);
+
+        $response = $this->post(route('book.rental.booking.documents', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+            'ktp' => $ktpFile,
+            'sim' => $simFile,
+            'id_number' => '3271012345670001',
+            'license_number' => '900512345678',
+            'license_expires_at' => now()->addYears(2)->toDateString(),
+            'birth_date' => '1990-05-12',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $rental->refresh();
+        $this->assertNotNull($rental->passenger_ktp_path);
+        $this->assertNotNull($rental->passenger_sim_path);
+
+        $partner->refresh();
+        $this->assertSame('3271012345670001', $partner->id_number);
+        $this->assertSame('900512345678', $partner->license_number);
     }
 }

@@ -5,15 +5,19 @@ namespace Modules\Rental\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Modules\Facades\Modules;
+use App\Support\CentralAiSettings;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
 use Modules\Rental\Http\Requests\Public\CancelPublicRentalBookingRequest;
 use Modules\Rental\Http\Requests\Public\StorePublicRentalBookingRequest;
 use Modules\Rental\Models\Rental;
@@ -629,6 +633,10 @@ class PublicRentalBookingController extends Controller
             'sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'guarantor_doc' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'guarantor_doc_type' => ['nullable', 'string', 'max:64'],
+            'id_number' => ['nullable', 'string', 'max:50'],
+            'license_number' => ['nullable', 'string', 'max:50'],
+            'license_expires_at' => ['nullable', 'date'],
+            'birth_date' => ['nullable', 'date'],
         ]);
 
         if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
@@ -655,9 +663,182 @@ class PublicRentalBookingController extends Controller
 
         $rental->update($updates);
 
+        if ($rental->partner) {
+            $partnerUpdates = [];
+            if (! empty($data['id_number'])) {
+                $cleanNik = preg_replace('/[^0-9]/', '', (string) $data['id_number']);
+                $partnerUpdates['id_number'] = $cleanNik ?: $data['id_number'];
+            }
+            if (! empty($data['license_number'])) {
+                $partnerUpdates['license_number'] = $data['license_number'];
+            }
+            if (! empty($data['license_expires_at'])) {
+                $partnerUpdates['license_expires_at'] = $data['license_expires_at'];
+            }
+            if (! empty($updates['passenger_ktp_path']) && blank($rental->partner->id_card_photo_path)) {
+                $partnerUpdates['id_card_photo_path'] = $updates['passenger_ktp_path'];
+            }
+            if (! empty($updates['passenger_sim_path']) && blank($rental->partner->driver_license_photo_path)) {
+                $partnerUpdates['driver_license_photo_path'] = $updates['passenger_sim_path'];
+            }
+            if ($partnerUpdates !== []) {
+                $rental->partner->forceFill($partnerUpdates)->save();
+            }
+        }
+
+        if (CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
+            try {
+                app(DocumentKycServiceInterface::class)->analyzeRentalKyc($rental);
+            } catch (Throwable $e) {
+                Log::warning('[PublicRental AI KYC] '.$e->getMessage(), ['rental_id' => $rental->id]);
+            }
+        }
+
         return redirect()
             ->route('book.rental.booking.show', $token)
             ->with('success', __('rental.public.documents_uploaded'));
+    }
+
+    public function scanDocument(
+        Request $request,
+        string $token,
+        DocumentKycServiceInterface $kycService,
+    ): JsonResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        if (! CentralAiSettings::isOcrEnabled() || ! (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.ai.feature_disabled', ['feature' => 'AI OCR Dokumen']),
+            ], 403);
+        }
+
+        $request->validate([
+            'image' => ['nullable'],
+            'file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'doc_type' => ['nullable', 'string', 'in:ktp,sim,auto'],
+        ]);
+
+        $imageSource = null;
+        if ($request->hasFile('file')) {
+            $imageSource = $request->file('file')->getRealPath();
+        } elseif ($request->hasFile('image')) {
+            $imageSource = $request->file('image')->getRealPath();
+        } elseif ($request->filled('image')) {
+            $imageSource = (string) $request->input('image');
+        }
+
+        if (blank($imageSource)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.ai.no_documents_uploaded'),
+            ], 422);
+        }
+
+        try {
+            $docType = (string) $request->input('doc_type', 'auto');
+            $extracted = $kycService->scanSingleDocument(
+                imageSource: $imageSource,
+                docType: $docType,
+            );
+
+            $data = (array) ($extracted['data'] ?? []);
+            $extractedDocType = (string) ($extracted['doc_type'] ?? $docType);
+
+            $validation = [
+                'is_valid' => true,
+                'warnings' => [],
+                'checks' => [],
+            ];
+
+            // 1. KTP Checks (16-digit NIK & Name Match)
+            if ($extractedDocType === 'ktp' || ! empty($data['nik'])) {
+                $rawNik = (string) ($data['nik'] ?? '');
+                $cleanNik = preg_replace('/[^0-9]/', '', $rawNik);
+                $isValidNik = strlen($cleanNik) === 16;
+
+                $validation['checks']['nik_16_digits'] = [
+                    'passed' => $isValidNik,
+                    'value' => $cleanNik,
+                    'label' => $isValidNik ? 'Format NIK 16 Digit Valid' : 'Format NIK belum 16 digit angka',
+                ];
+
+                if (! $isValidNik) {
+                    $validation['warnings'][] = 'Format NIK terdeteksi tidak 16 digit ('.($cleanNik ?: '-').'). Harap periksa kembali foto KTP.';
+                }
+
+                $bookerName = trim((string) ($rental->partner?->name ?: ''));
+                $docName = trim((string) ($data['name'] ?? ''));
+
+                if ($bookerName !== '' && $docName !== '') {
+                    similar_text(strtoupper($bookerName), strtoupper($docName), $percent);
+                    $nameMatchScore = round($percent, 1);
+                    $isMatched = $nameMatchScore >= 50.0;
+
+                    $validation['checks']['name_match'] = [
+                        'passed' => $isMatched,
+                        'score' => $nameMatchScore,
+                        'booker_name' => $bookerName,
+                        'doc_name' => $docName,
+                        'label' => $isMatched
+                            ? "Nama sesuai ({$nameMatchScore}% kesamaan)"
+                            : "Nama di KTP ({$docName}) berbeda dengan nama pemesan ({$bookerName})",
+                    ];
+
+                    if (! $isMatched) {
+                        $validation['warnings'][] = "Nama pada KTP ({$docName}) berbeda dengan nama pemesan ({$bookerName}).";
+                    }
+                }
+            }
+
+            // 2. SIM Checks (Expiry Date vs Rental End Date)
+            if ($extractedDocType === 'sim' || ! empty($data['license_number']) || ! empty($data['expires_at'])) {
+                $expiresAt = $data['expires_at'] ?? null;
+                if ($expiresAt) {
+                    try {
+                        $expDate = Carbon::parse($expiresAt);
+                        $isExpired = $expDate->isPast();
+                        $rentalEndDate = $rental->end_date;
+                        $validForRental = $rentalEndDate ? $expDate->greaterThanOrEqualTo($rentalEndDate) : ! $isExpired;
+
+                        $validation['checks']['sim_expiry'] = [
+                            'passed' => $validForRental,
+                            'is_expired' => $isExpired,
+                            'expires_at' => $expDate->format('Y-m-d'),
+                            'label' => $validForRental
+                                ? "SIM aktif hingga {$expDate->format('d/m/Y')}"
+                                : ($isExpired ? 'SIM sudah kedaluwarsa' : "SIM akan kedaluwarsa sebelum sewa berakhir ({$expDate->format('d/m/Y')})"),
+                        ];
+
+                        if (! $validForRental) {
+                            $validation['warnings'][] = $isExpired
+                                ? 'Masa berlaku SIM telah kedaluwarsa.'
+                                : "SIM akan kedaluwarsa sebelum periode sewa selesai ({$expDate->format('d/m/Y')}).";
+                        }
+                    } catch (Throwable) {
+                        // Ignore date parse issues
+                    }
+                }
+            }
+
+            $validation['is_valid'] = empty($validation['warnings']);
+
+            return response()->json([
+                'success' => true,
+                'result' => $extracted,
+                'validation' => $validation,
+                'message' => __('rental.ai.ocr_success'),
+            ]);
+        } catch (Throwable $e) {
+            Log::error('[PublicRental OCR] '.$e->getMessage(), ['exception' => $e]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     public function requestPickup(
@@ -1314,6 +1495,13 @@ class PublicRentalBookingController extends Controller
                 'ktp_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
                 'sim_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
                 'guarantor_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_guarantor_doc_path),
+                'ai_ocr_enabled' => CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false),
+                'ai_kyc_assessment' => $rental->ai_kyc_assessment,
+                'partner_identity' => [
+                    'id_number' => $rental->partner?->id_number,
+                    'license_number' => $rental->partner?->license_number,
+                    'license_expires_at' => $rental->partner?->license_expires_at?->format('Y-m-d'),
+                ],
             ],
             'deposit_proof' => [
                 'path' => $rental->deposit_proof_path,
