@@ -38,6 +38,14 @@ class RentalGeneralSettings
 
     public const KEY_INSURANCE_PACKAGES_ENABLED = 'rental.insurance_packages_enabled';
 
+    public const KEY_DEFAULT_DRIVER_RATE = 'rental.default_driver_rate';
+
+    public const KEY_DEFAULT_AIRPORT_DELIVERY_FEE = 'rental.default_airport_delivery_fee';
+
+    public const KEY_DEFAULT_SECURITY_DEPOSIT = 'rental.default_security_deposit';
+
+    public const KEY_REQUIRE_GUARANTOR_DOCS = 'rental.require_guarantor_docs';
+
     /**
      * @return list<string>
      */
@@ -59,6 +67,10 @@ class RentalGeneralSettings
             self::KEY_AI_PRICING_OPTIMIZER_ENABLED,
             self::KEY_MOBILE_RATE_LIMITING_ENABLED,
             self::KEY_INSURANCE_PACKAGES_ENABLED,
+            self::KEY_DEFAULT_DRIVER_RATE,
+            self::KEY_DEFAULT_AIRPORT_DELIVERY_FEE,
+            self::KEY_DEFAULT_SECURITY_DEPOSIT,
+            self::KEY_REQUIRE_GUARANTOR_DOCS,
         ];
     }
 
@@ -78,7 +90,11 @@ class RentalGeneralSettings
      *     ai_kyc_enabled: bool,
      *     ai_pricing_optimizer_enabled: bool,
      *     mobile_rate_limiting_enabled: bool,
-     *     insurance_packages_enabled: bool
+     *     insurance_packages_enabled: bool,
+     *     default_driver_rate: string,
+     *     default_airport_delivery_fee: string,
+     *     default_security_deposit: string,
+     *     require_guarantor_docs: bool
      * }
      */
     public static function all(): array
@@ -99,6 +115,10 @@ class RentalGeneralSettings
             'ai_pricing_optimizer_enabled' => Setting::getValue(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, '1') === '1',
             'mobile_rate_limiting_enabled' => Setting::getValue(self::KEY_MOBILE_RATE_LIMITING_ENABLED, '0') === '1',
             'insurance_packages_enabled' => Setting::getValue(self::KEY_INSURANCE_PACKAGES_ENABLED, '1') === '1',
+            'default_driver_rate' => (string) Setting::getValue(self::KEY_DEFAULT_DRIVER_RATE, '150000'),
+            'default_airport_delivery_fee' => (string) Setting::getValue(self::KEY_DEFAULT_AIRPORT_DELIVERY_FEE, '50000'),
+            'default_security_deposit' => (string) Setting::getValue(self::KEY_DEFAULT_SECURITY_DEPOSIT, '500000'),
+            'require_guarantor_docs' => Setting::getValue(self::KEY_REQUIRE_GUARANTOR_DOCS, '1') === '1',
         ];
     }
 
@@ -118,7 +138,11 @@ class RentalGeneralSettings
      *     ai_kyc_enabled?: bool,
      *     ai_pricing_optimizer_enabled?: bool,
      *     mobile_rate_limiting_enabled?: bool,
-     *     insurance_packages_enabled?: bool
+     *     insurance_packages_enabled?: bool,
+     *     default_driver_rate?: int|float|string,
+     *     default_airport_delivery_fee?: int|float|string,
+     *     default_security_deposit?: int|float|string,
+     *     require_guarantor_docs?: bool
      * }  $data
      */
     public static function update(array $data): void
@@ -137,6 +161,10 @@ class RentalGeneralSettings
         self::put(self::KEY_AI_INSPECTION_ENABLED, ! empty($data['ai_inspection_enabled']) ? '1' : '0', 'boolean', 'AI Visual Inspection (Handover)', 30);
         self::put(self::KEY_AI_KYC_ENABLED, ! empty($data['ai_kyc_enabled']) ? '1' : '0', 'boolean', 'AI Smart KYC & Document OCR', 31);
         self::put(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, ! empty($data['ai_pricing_optimizer_enabled']) ? '1' : '0', 'boolean', 'AI Dynamic Pricing & Fleet Optimizer', 32);
+        self::put(self::KEY_DEFAULT_DRIVER_RATE, isset($data['default_driver_rate']) ? (string) $data['default_driver_rate'] : '150000', 'number', 'Default Driver Rate per Day (Rp)', 35);
+        self::put(self::KEY_DEFAULT_AIRPORT_DELIVERY_FEE, isset($data['default_airport_delivery_fee']) ? (string) $data['default_airport_delivery_fee'] : '50000', 'number', 'Default Airport Delivery Fee (Rp)', 36);
+        self::put(self::KEY_DEFAULT_SECURITY_DEPOSIT, isset($data['default_security_deposit']) ? (string) $data['default_security_deposit'] : '500000', 'number', 'Default Security Deposit (Rp)', 37);
+        self::put(self::KEY_REQUIRE_GUARANTOR_DOCS, ! empty($data['require_guarantor_docs']) ? '1' : '0', 'boolean', 'Require Guarantor Docs for Self-Drive', 38);
         self::put(self::KEY_MOBILE_RATE_LIMITING_ENABLED, ! empty($data['mobile_rate_limiting_enabled']) ? '1' : '0', 'boolean', 'Mobile API Rate Limiting (Anti-Spam)', 40);
     }
 

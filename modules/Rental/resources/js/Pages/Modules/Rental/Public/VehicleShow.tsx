@@ -31,6 +31,12 @@ interface Vehicle {
 interface Quote {
     available: boolean;
     reasons: string[];
+    service_type?: string;
+    driver_fee_amount?: number;
+    delivery_type?: string;
+    delivery_fee?: number;
+    return_delivery_type?: string;
+    return_delivery_fee?: number;
     total_periods: number;
     rate_per_period: number | null;
     deposit_amount: number | null;
@@ -72,6 +78,9 @@ interface Props {
         start_date: string;
         end_date: string;
         period_type: string;
+        service_type?: string;
+        delivery_type?: string;
+        return_delivery_type?: string;
         pickup_location_id: number | null;
         return_location_id: number | null;
         insurance_package_id: number | null;
@@ -119,6 +128,12 @@ export default function VehicleShow({
         start_date: filters.start_date,
         end_date: filters.end_date,
         period_type: filters.period_type,
+        service_type: filters.service_type || 'self_drive',
+        delivery_type: filters.delivery_type || 'depot',
+        delivery_address: '',
+        delivery_landmark: '',
+        return_delivery_type: filters.return_delivery_type || 'depot',
+        return_delivery_address: '',
         pickup_location_id: filters.pickup_location_id ? String(filters.pickup_location_id) : '',
         return_location_id: filters.return_location_id ? String(filters.return_location_id) : '',
         pickup_time: '08:00',
@@ -128,6 +143,10 @@ export default function VehicleShow({
         customer_email: customer?.email || '',
         booker_phone: customer?.phone || '',
         otp_code: customer ? '000000' : '',
+        emergency_contact_name: '',
+        emergency_contact_phone: '',
+        emergency_contact_relation: 'Keluarga',
+        social_media_account: '',
         notes: '',
     });
 
@@ -170,6 +189,9 @@ export default function VehicleShow({
                 start_date: payload.start_date,
                 end_date: payload.end_date,
                 period_type: payload.period_type,
+                service_type: payload.service_type || 'self_drive',
+                delivery_type: payload.delivery_type || 'depot',
+                return_delivery_type: payload.return_delivery_type || 'depot',
                 pickup_location_id: payload.pickup_location_id || null,
                 return_location_id: payload.return_location_id || null,
                 insurance_package_id: insurance_packages_enabled ? (payload.insurance_package_id || null) : null,
@@ -486,7 +508,103 @@ export default function VehicleShow({
                                 </div>
 
                                 {/* Date & Depot Section */}
-                                <div className="space-y-3">
+                                <div className="space-y-3.5">
+                                    {/* Service Type Switcher */}
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1.5">
+                                            Jenis Layanan
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    form.setData('service_type', 'self_drive');
+                                                    void refreshQuote({ service_type: 'self_drive' });
+                                                }}
+                                                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition border ${
+                                                    form.data.service_type === 'self_drive'
+                                                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <span>🔑</span>
+                                                <span>Lepas Kunci</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    form.setData('service_type', 'with_driver');
+                                                    void refreshQuote({ service_type: 'with_driver' });
+                                                }}
+                                                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition border ${
+                                                    form.data.service_type === 'with_driver'
+                                                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <span>👨‍✈️</span>
+                                                <span>Dengan Sopir</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Delivery Method Options */}
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                            Metode Penjemputan Unit
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'depot', label: 'Depot Pool', icon: '🏢' },
+                                                { id: 'airport', label: 'Bandara', icon: '✈️' },
+                                                { id: 'custom_address', label: 'Alamat / Hotel', icon: '📍' },
+                                            ].map((del) => (
+                                                <button
+                                                    key={del.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        form.setData('delivery_type', del.id);
+                                                        void refreshQuote({ delivery_type: del.id });
+                                                    }}
+                                                    className={`py-2 px-2.5 rounded-xl text-[11px] font-bold transition border text-center flex flex-col items-center gap-1 ${
+                                                        form.data.delivery_type === del.id
+                                                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    <span>{del.icon}</span>
+                                                    <span>{del.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {form.data.delivery_type !== 'depot' && (
+                                        <div className="space-y-2 rounded-xl bg-slate-50 p-3.5 border border-slate-200">
+                                            <label className="text-[11px] font-bold text-slate-700 block">
+                                                Alamat / Lokasi Pengantaran Unit <span className="text-rose-500">*</span>
+                                                <input
+                                                    type="text"
+                                                    placeholder={form.data.delivery_type === 'airport' ? 'Contoh: Bandara Terminal 3 Ultimate' : 'Nama hotel / nama jalan & nomor'}
+                                                    className={fieldClassName}
+                                                    value={form.data.delivery_address}
+                                                    onChange={(e) => form.setData('delivery_address', e.target.value)}
+                                                    required
+                                                />
+                                            </label>
+                                            <label className="text-[11px] font-bold text-slate-700 block">
+                                                Patokan / Petunjuk Tambahan (Opsional)
+                                                <input
+                                                    type="text"
+                                                    placeholder="Contoh: Gate 2 Keberangkatan / Lobby Hotel"
+                                                    className={fieldClassName}
+                                                    value={form.data.delivery_landmark}
+                                                    onChange={(e) => form.setData('delivery_landmark', e.target.value)}
+                                                />
+                                            </label>
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-2 gap-3">
                                         <label className="text-[11px] font-bold text-slate-700">
                                             Mulai Sewa
@@ -621,9 +739,36 @@ export default function VehicleShow({
                                     ) : (
                                         <div className="space-y-2 text-xs">
                                             <div className="flex justify-between text-slate-600 font-medium">
-                                                <span>Sewa Dasar</span>
+                                                <span>Sewa Dasar Unit</span>
                                                 <span className="font-bold text-slate-900">{quote.base_amount ? money(quote.base_amount) : '—'}</span>
                                             </div>
+
+                                            {quote.driver_fee_amount != null && quote.driver_fee_amount > 0 && (
+                                                <div className="flex justify-between text-slate-600 font-medium">
+                                                    <span className="flex items-center gap-1">
+                                                        <span>👨‍✈️</span> Jasa Pengemudi ({quote.total_periods} hari)
+                                                    </span>
+                                                    <span className="font-bold text-slate-900">{money(quote.driver_fee_amount)}</span>
+                                                </div>
+                                            )}
+
+                                            {quote.delivery_fee != null && quote.delivery_fee > 0 && (
+                                                <div className="flex justify-between text-slate-600 font-medium">
+                                                    <span className="flex items-center gap-1">
+                                                        <span>✈️</span> Biaya Pengantaran ({quote.delivery_type})
+                                                    </span>
+                                                    <span className="font-bold text-slate-900">{money(quote.delivery_fee)}</span>
+                                                </div>
+                                            )}
+
+                                            {quote.return_delivery_fee != null && quote.return_delivery_fee > 0 && (
+                                                <div className="flex justify-between text-slate-600 font-medium">
+                                                    <span className="flex items-center gap-1">
+                                                        <span>🔄</span> Biaya Pengambilan Kembali
+                                                    </span>
+                                                    <span className="font-bold text-slate-900">{money(quote.return_delivery_fee)}</span>
+                                                </div>
+                                            )}
 
                                             {insurance_packages_enabled && quote.insurance_amount != null && quote.insurance_amount > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
@@ -649,8 +794,8 @@ export default function VehicleShow({
                                             {quote.deposit_amount != null && quote.deposit_amount > 0 && (
                                                 <div className="rounded-lg bg-white p-3 border border-slate-200 flex items-center justify-between text-xs font-bold mt-1 shadow-2xs">
                                                     <div>
-                                                        <div className="text-slate-900 font-black">Deposit untuk menahan mobil</div>
-                                                        <div className="text-[9px] text-slate-400 font-normal">Bayar dalam {hold_ttl_minutes} menit</div>
+                                                        <div className="text-slate-900 font-black">Deposit Jaminan Unit</div>
+                                                        <div className="text-[9px] text-emerald-700 font-bold">Dapat dikembalikan penuh · Bayar dalam {hold_ttl_minutes} menit</div>
                                                     </div>
                                                     <div className="text-sm font-black text-slate-900">
                                                         {money(quote.deposit_amount)}
@@ -736,6 +881,68 @@ export default function VehicleShow({
                                             required
                                         />
                                         {errors.booker_phone && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.booker_phone}</p>}
+                                    </div>
+
+                                    {/* Emergency Contact & Risk Mitigation */}
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm">🚨</span>
+                                            <div>
+                                                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-wider">Kontak Darurat (Emergency Contact)</h4>
+                                                <p className="text-[10px] text-slate-500 font-medium">Verifikasi keamanan & penanggung jawab perjalanan</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            <div>
+                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">Nama Kontak <span className="text-rose-500">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nama Lengkap Kerabat"
+                                                    className={fieldClassName}
+                                                    value={form.data.emergency_contact_name}
+                                                    onChange={(e) => form.setData('emergency_contact_name', e.target.value)}
+                                                    required
+                                                />
+                                                {errors.emergency_contact_name && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.emergency_contact_name}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">No. Telepon Kontak <span className="text-rose-500">*</span></label>
+                                                <input
+                                                    type="tel"
+                                                    placeholder="08xxxxxxxxxx"
+                                                    className={fieldClassName}
+                                                    value={form.data.emergency_contact_phone}
+                                                    onChange={(e) => form.setData('emergency_contact_phone', e.target.value)}
+                                                    required
+                                                />
+                                                {errors.emergency_contact_phone && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.emergency_contact_phone}</p>}
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            <div>
+                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">Hubungan</label>
+                                                <select
+                                                    value={form.data.emergency_contact_relation}
+                                                    onChange={(e) => form.setData('emergency_contact_relation', e.target.value)}
+                                                    className={fieldClassName}
+                                                >
+                                                    <option value="Keluarga">Keluarga (Family)</option>
+                                                    <option value="Pasangan">Pasangan / Suami / Istri (Spouse)</option>
+                                                    <option value="Teman">Teman / Sahabat (Friend)</option>
+                                                    <option value="Rekan Kerja">Rekan Kerja (Colleague)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">Akun Media Sosial (Opsional)</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Contoh: @instagram / LinkedIn"
+                                                    className={fieldClassName}
+                                                    value={form.data.social_media_account}
+                                                    onChange={(e) => form.setData('social_media_account', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* OTP Verification Block */}

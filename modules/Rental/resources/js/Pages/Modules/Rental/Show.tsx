@@ -39,6 +39,7 @@ import RentalSections from './Show/RentalSections';
 import type {
     AddonCharge,
     AddonCodeOption,
+    DutyOrderSummary,
     HandoverEvidence,
     PaymentSummary,
     Rental,
@@ -79,6 +80,10 @@ interface Props {
     pickupCustomerSignatureUrl?: string | null;
     passengerKtpUrl?: string | null;
     passengerSimUrl?: string | null;
+    passengerGuarantorDocUrl?: string | null;
+    passengerGuarantorDocType?: string | null;
+    contractSignatureUrl?: string | null;
+    dutyOrders?: DutyOrderSummary[];
     uploadDocumentsUrl?: string | null;
     gatewayEnabled?: boolean;
 
@@ -123,6 +128,10 @@ export default function Show({
     pickupCustomerSignatureUrl = null,
     passengerKtpUrl = null,
     passengerSimUrl = null,
+    passengerGuarantorDocUrl = null,
+    passengerGuarantorDocType = null,
+    contractSignatureUrl = null,
+    dutyOrders = [],
     uploadDocumentsUrl = null,
     canPayDepositOnline = false,
 
@@ -904,6 +913,10 @@ export default function Show({
                     handoverEvidence={handoverEvidence}
                     passengerKtpUrl={passengerKtpUrl}
                     passengerSimUrl={passengerSimUrl}
+                    passengerGuarantorDocUrl={passengerGuarantorDocUrl}
+                    passengerGuarantorDocType={passengerGuarantorDocType}
+                    contractSignatureUrl={contractSignatureUrl}
+                    dutyOrders={dutyOrders}
                     uploadDocumentsUrl={uploadDocumentsUrl}
                     aiKycEnabled={aiKycEnabled}
                     aiInspectionEnabled={aiInspectionEnabled}

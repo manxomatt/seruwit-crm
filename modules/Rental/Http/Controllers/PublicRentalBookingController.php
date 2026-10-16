@@ -48,6 +48,8 @@ class PublicRentalBookingController extends Controller
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'period_type' => ['nullable', 'string', 'in:daily,weekly,monthly'],
+            'service_type' => ['nullable', 'string', 'in:self_drive,with_driver'],
+            'delivery_type' => ['nullable', 'string', 'in:depot,airport,hotel,custom_address'],
             'pickup_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'return_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'rental_class' => ['nullable', 'string', 'in:'.implode(',', VehicleRentalClass::values())],
@@ -56,6 +58,8 @@ class PublicRentalBookingController extends Controller
         $start = $validated['start_date'] ?? now()->toDateString();
         $end = $validated['end_date'] ?? now()->addDays(2)->toDateString();
         $periodType = $validated['period_type'] ?? 'daily';
+        $serviceType = $validated['service_type'] ?? Rental::SERVICE_SELF_DRIVE;
+        $deliveryType = $validated['delivery_type'] ?? Rental::DELIVERY_DEPOT;
         $locations = app(RentalLocationHydrator::class)->depotOptions();
         $needsDepot = $locations !== [] && empty($validated['pickup_location_id']);
         $searched = ! $needsDepot;
@@ -85,6 +89,8 @@ class PublicRentalBookingController extends Controller
                 'start_date' => $start,
                 'end_date' => $end,
                 'period_type' => $periodType,
+                'service_type' => $serviceType,
+                'delivery_type' => $deliveryType,
                 'pickup_location_id' => $validated['pickup_location_id'] ?? null,
                 'return_location_id' => $validated['return_location_id'] ?? ($validated['pickup_location_id'] ?? null),
                 'rental_class' => $validated['rental_class'] ?? null,
@@ -115,12 +121,19 @@ class PublicRentalBookingController extends Controller
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'period_type' => ['nullable', 'string', 'in:daily,weekly,monthly'],
+            'service_type' => ['nullable', 'string', 'in:self_drive,with_driver'],
             'pickup_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'return_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
+            'delivery_type' => ['nullable', 'string', 'in:depot,airport,hotel,custom_address'],
+            'return_delivery_type' => ['nullable', 'string', 'in:depot,airport,hotel,custom_address'],
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
         ]);
 
         $periodType = $validated['period_type'] ?? 'daily';
+        $serviceType = $validated['service_type'] ?? Rental::SERVICE_SELF_DRIVE;
+        $deliveryType = $validated['delivery_type'] ?? Rental::DELIVERY_DEPOT;
+        $returnDeliveryType = $validated['return_delivery_type'] ?? $deliveryType;
+
         $insurancePackagesEnabled = (bool) RentalGeneralSettings::all()['insurance_packages_enabled'];
         $insurancePackageId = ($insurancePackagesEnabled && ! empty($validated['insurance_package_id']))
             ? (int) $validated['insurance_package_id']
@@ -131,8 +144,11 @@ class PublicRentalBookingController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'period_type' => $periodType,
+            'service_type' => $serviceType,
             'pickup_location_id' => $validated['pickup_location_id'] ?? null,
             'return_location_id' => $validated['return_location_id'] ?? null,
+            'delivery_type' => $deliveryType,
+            'return_delivery_type' => $returnDeliveryType,
             'insurance_package_id' => $insurancePackageId,
         ]);
 
@@ -144,8 +160,11 @@ class PublicRentalBookingController extends Controller
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'],
                 'period_type' => $periodType,
+                'service_type' => $serviceType,
                 'pickup_location_id' => $validated['pickup_location_id'] ?? null,
                 'return_location_id' => $validated['return_location_id'] ?? ($validated['pickup_location_id'] ?? null),
+                'delivery_type' => $deliveryType,
+                'return_delivery_type' => $returnDeliveryType,
                 'insurance_package_id' => $insurancePackageId,
             ],
             'quote' => $this->quotePayload($quote),
@@ -182,8 +201,13 @@ class PublicRentalBookingController extends Controller
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'period_type' => ['required', 'string', 'in:daily,weekly,monthly'],
+            'service_type' => ['nullable', 'string', 'in:self_drive,with_driver'],
             'pickup_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'return_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
+            'delivery_type' => ['nullable', 'string', 'in:depot,airport,hotel,custom_address'],
+            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'return_delivery_type' => ['nullable', 'string', 'in:depot,airport,hotel,custom_address'],
+            'return_delivery_fee' => ['nullable', 'numeric', 'min:0'],
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
         ]);
 
@@ -603,13 +627,15 @@ class PublicRentalBookingController extends Controller
             'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
             'ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'guarantor_doc' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'guarantor_doc_type' => ['nullable', 'string', 'max:64'],
         ]);
 
         if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
             return $error;
         }
 
-        if (! $request->hasFile('ktp') && ! $request->hasFile('sim')) {
+        if (! $request->hasFile('ktp') && ! $request->hasFile('sim') && ! $request->hasFile('guarantor_doc')) {
             return back()->withErrors(['ktp' => __('rental.public.documents_required')]);
         }
 
@@ -619,6 +645,12 @@ class PublicRentalBookingController extends Controller
         }
         if ($request->hasFile('sim')) {
             $updates['passenger_sim_path'] = $docs->storeUpload($request->file('sim'), $rental->id, 'sim');
+        }
+        if ($request->hasFile('guarantor_doc')) {
+            $updates['passenger_guarantor_doc_path'] = $docs->storeUpload($request->file('guarantor_doc'), $rental->id, 'guarantor');
+            if (! empty($data['guarantor_doc_type'])) {
+                $updates['passenger_guarantor_doc_type'] = $data['guarantor_doc_type'];
+            }
         }
 
         $rental->update($updates);
@@ -681,6 +713,8 @@ class PublicRentalBookingController extends Controller
             'pickup_customer_signature_path' => $signaturePath,
             'pickup_terms_agreed' => true,
             'pickup_notes' => $data['pickup_notes'] ?? null,
+            'contract_signature_path' => $rental->contract_signature_path ?: $signaturePath,
+            'contract_signed_at' => $rental->contract_signed_at ?: now(),
         ]);
 
         return redirect()
@@ -1019,6 +1053,12 @@ class PublicRentalBookingController extends Controller
         return [
             'available' => $quote['available'],
             'reasons' => $quote['reasons'],
+            'service_type' => $quote['service_type'] ?? Rental::SERVICE_SELF_DRIVE,
+            'driver_fee_amount' => (float) ($quote['driver_fee_amount'] ?? 0),
+            'delivery_type' => $quote['delivery_type'] ?? Rental::DELIVERY_DEPOT,
+            'delivery_fee' => (float) ($quote['delivery_fee'] ?? 0),
+            'return_delivery_type' => $quote['return_delivery_type'] ?? Rental::DELIVERY_DEPOT,
+            'return_delivery_fee' => (float) ($quote['return_delivery_fee'] ?? 0),
             'total_periods' => $quote['total_periods'],
             'rate_per_period' => $quote['rate_per_period'],
             'deposit_amount' => $quote['deposit_amount'],
@@ -1050,6 +1090,7 @@ class PublicRentalBookingController extends Controller
             'public_token' => $rental->public_token,
             'status' => $rental->status,
             'channel' => $rental->channel,
+            'service_type' => $rental->service_type ?? Rental::SERVICE_SELF_DRIVE,
             'booker_phone' => $rental->booker_phone,
             'booker_phone_verified' => $phoneVerified,
             'start_date' => $rental->start_date?->toDateString(),
@@ -1062,12 +1103,31 @@ class PublicRentalBookingController extends Controller
             'base_amount' => (float) $rental->base_amount,
             'deposit_amount' => (float) $rental->deposit_amount,
             'deposit_received' => $rental->isDepositReceived(),
+            'driver_fee_amount' => (float) $rental->driver_fee_amount,
+            'delivery_type' => $rental->delivery_type ?? Rental::DELIVERY_DEPOT,
+            'delivery_address' => $rental->delivery_address,
+            'delivery_landmark' => $rental->delivery_landmark,
+            'delivery_fee' => (float) $rental->delivery_fee,
+            'return_delivery_type' => $rental->return_delivery_type ?? Rental::DELIVERY_DEPOT,
+            'return_delivery_address' => $rental->return_delivery_address,
+            'return_delivery_fee' => (float) $rental->return_delivery_fee,
             'total_amount' => (float) $rental->total_amount,
             'pickup_location' => $rental->pickup_location ?? $rental->pickupLocation?->name,
             'return_location' => $rental->return_location ?? $rental->returnLocation?->name,
             'reserved_until' => $rental->reserved_until?->toIso8601String(),
             'status_hint' => app(RentalStatusHint::class)->for($rental, RentalStatusHint::AUDIENCE_PASSENGER),
             'cancelled_reason' => $rental->cancelled_reason,
+            'emergency_contact' => [
+                'name' => $rental->emergency_contact_name,
+                'phone' => $rental->emergency_contact_phone,
+                'relation' => $rental->emergency_contact_relation,
+            ],
+            'social_media_account' => $rental->social_media_account,
+            'contract' => [
+                'signed' => filled($rental->contract_signed_at),
+                'signed_at' => $rental->contract_signed_at?->toIso8601String(),
+                'signature_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->contract_signature_path),
+            ],
             'vehicle' => $rental->vehicle ? [
                 'id' => $rental->vehicle->id,
                 'name' => PublicRentalCatalog::displayName((string) $rental->vehicle->name),
@@ -1093,8 +1153,11 @@ class PublicRentalBookingController extends Controller
             'documents' => [
                 'ktp_uploaded' => filled($rental->passenger_ktp_path),
                 'sim_uploaded' => filled($rental->passenger_sim_path),
+                'guarantor_uploaded' => filled($rental->passenger_guarantor_doc_path),
+                'guarantor_doc_type' => $rental->passenger_guarantor_doc_type,
                 'ktp_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
                 'sim_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
+                'guarantor_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_guarantor_doc_path),
             ],
             'deposit_proof' => [
                 'path' => $rental->deposit_proof_path,

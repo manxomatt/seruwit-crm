@@ -12,7 +12,7 @@ import PricingSnapshotSection from './sections/PricingSnapshotSection';
 import QuickFactsSection from './sections/QuickFactsSection';
 import TimelineSection from './sections/TimelineSection';
 import VehicleSwapsSection from './sections/VehicleSwapsSection';
-import type { AddonCharge, PaymentSummary, Rental, VehicleSwapRow } from './types';
+import type { AddonCharge, DutyOrderSummary, PaymentSummary, Rental, VehicleSwapRow } from './types';
 import type { HandoverEvidence } from './types';
 
 interface Props {
@@ -26,6 +26,10 @@ interface Props {
     handoverEvidence: HandoverEvidence;
     passengerKtpUrl?: string | null;
     passengerSimUrl?: string | null;
+    passengerGuarantorDocUrl?: string | null;
+    passengerGuarantorDocType?: string | null;
+    contractSignatureUrl?: string | null;
+    dutyOrders?: DutyOrderSummary[];
     uploadDocumentsUrl?: string | null;
     aiKycEnabled: boolean;
     aiInspectionEnabled: boolean;
@@ -53,6 +57,10 @@ export default function RentalSections({
     handoverEvidence,
     passengerKtpUrl,
     passengerSimUrl,
+    passengerGuarantorDocUrl,
+    passengerGuarantorDocType,
+    contractSignatureUrl,
+    dutyOrders = [],
     uploadDocumentsUrl,
     aiKycEnabled,
     aiInspectionEnabled,
@@ -72,12 +80,15 @@ export default function RentalSections({
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-5">
             {/* Left Column (3 of 5 cols) */}
             <div className="space-y-6 lg:col-span-3">
-                <BookingDetailsSection rental={rental} periodLabel={periodLabel} />
+                <BookingDetailsSection rental={rental} periodLabel={periodLabel} dutyOrders={dutyOrders} />
 
                 <CustomerDocumentsSection
                     rental={rental}
                     passengerKtpUrl={passengerKtpUrl}
                     passengerSimUrl={passengerSimUrl}
+                    passengerGuarantorDocUrl={passengerGuarantorDocUrl}
+                    passengerGuarantorDocType={passengerGuarantorDocType}
+                    contractSignatureUrl={contractSignatureUrl}
                     uploadDocumentsUrl={uploadDocumentsUrl}
                     aiKycEnabled={aiKycEnabled}
                     aiScanKycUrl={aiScanKycUrl}

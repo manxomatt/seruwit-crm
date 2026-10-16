@@ -945,6 +945,9 @@ class RentalActionController extends Controller
             'passenger_ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'passenger_sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'guarantor_doc' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'passenger_guarantor_doc' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'guarantor_doc_type' => ['nullable', 'string', 'max:50'],
         ]);
 
         $updates = [];
@@ -956,6 +959,15 @@ class RentalActionController extends Controller
         $simFile = $request->file('sim') ?? $request->file('passenger_sim');
         if ($simFile) {
             $updates['passenger_sim_path'] = $docs->storeUpload($simFile, $rental->id, 'sim');
+        }
+
+        $guarantorFile = $request->file('guarantor_doc') ?? $request->file('passenger_guarantor_doc');
+        if ($guarantorFile) {
+            $updates['passenger_guarantor_doc_path'] = $docs->storeUpload($guarantorFile, $rental->id, 'guarantor');
+        }
+
+        if ($request->filled('guarantor_doc_type')) {
+            $updates['passenger_guarantor_doc_type'] = $request->string('guarantor_doc_type')->value();
         }
 
         if ($updates !== []) {

@@ -28,13 +28,19 @@ export default function UploadDocumentsModal({
 
     const [ktpPreview, setKtpPreview] = useState<string | null>(null);
     const [simPreview, setSimPreview] = useState<string | null>(null);
+    const [guarantorPreview, setGuarantorPreview] = useState<string | null>(null);
+    const guarantorInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<{
         ktp: File | null;
         sim: File | null;
+        guarantor_doc: File | null;
+        guarantor_doc_type: string;
     }>({
         ktp: null,
         sim: null,
+        guarantor_doc: null,
+        guarantor_doc_type: rental.passenger_guarantor_doc_type || 'flight_ticket',
     });
 
     const handleKtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,9 +67,21 @@ export default function UploadDocumentsModal({
         }
     };
 
+    const handleGuarantorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        form.setData('guarantor_doc', file);
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (ev) => setGuarantorPreview(ev.target?.result as string);
+            reader.readAsDataURL(file);
+        } else {
+            setGuarantorPreview(null);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.data.ktp && !form.data.sim) {
+        if (!form.data.ktp && !form.data.sim && !form.data.guarantor_doc) {
             return;
         }
 
@@ -73,6 +91,7 @@ export default function UploadDocumentsModal({
                 form.reset();
                 setKtpPreview(null);
                 setSimPreview(null);
+                setGuarantorPreview(null);
                 onClose();
             },
         });
@@ -191,6 +210,82 @@ export default function UploadDocumentsModal({
                         <p className="text-[10px] text-slate-400">Format: JPG, PNG, WEBP, PDF (Maks. 5MB)</p>
                         <InputError message={form.errors.sim} className="mt-1" />
                     </div>
+
+                    {/* Guarantor Document Upload */}
+                    <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/80 dark:bg-slate-800/40 space-y-3 sm:col-span-2">
+                        <div className="flex items-center justify-between">
+                            <InputLabel
+                                htmlFor="guarantor_upload"
+                                value="Dokumen Penjamin / Pendukung (Tiket / Hotel / ID Card)"
+                                className="font-bold text-xs"
+                            />
+                            {rental.passenger_guarantor_doc_path && (
+                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                    Sudah Ada
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-xs text-slate-600 dark:text-slate-400 block mb-1">
+                                    Jenis Dokumen
+                                </label>
+                                <select
+                                    value={form.data.guarantor_doc_type}
+                                    onChange={(e) => form.setData('guarantor_doc_type', e.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200"
+                                >
+                                    <option value="flight_ticket">Tiket Pesawat Pulang-Pergi</option>
+                                    <option value="hotel_booking">Voucher Reservasi Hotel</option>
+                                    <option value="employee_id">ID Card Karyawan / Kartu Nama</option>
+                                    <option value="family_card">Kartu Keluarga (KK)</option>
+                                    <option value="other">Dokumen Lainnya</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-slate-600 dark:text-slate-400 block mb-1">
+                                    Pilih Berkas
+                                </label>
+                                <input
+                                    ref={guarantorInputRef}
+                                    id="guarantor_upload"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                                    onChange={handleGuarantorChange}
+                                    className="block w-full text-xs text-slate-500 file:mr-2.5 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-950 dark:file:text-indigo-300"
+                                />
+                            </div>
+                        </div>
+
+                        {guarantorPreview ? (
+                            <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                                <img src={guarantorPreview} alt="Preview Penjamin" className="h-32 w-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        form.setData('guarantor_doc', null);
+                                        setGuarantorPreview(null);
+                                        if (guarantorInputRef.current) guarantorInputRef.current.value = '';
+                                    }}
+                                    className="absolute top-1 right-1 rounded-full bg-slate-900/70 p-1 text-white hover:bg-slate-900"
+                                >
+                                    <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        ) : form.data.guarantor_doc ? (
+                            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                <span>📄</span>
+                                <span className="truncate flex-1 font-medium">{form.data.guarantor_doc.name}</span>
+                            </div>
+                        ) : null}
+
+                        <p className="text-[10px] text-slate-400">Format: JPG, PNG, WEBP, PDF (Maks. 5MB)</p>
+                        <InputError message={form.errors.guarantor_doc} className="mt-1" />
+                    </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -199,7 +294,7 @@ export default function UploadDocumentsModal({
                     </SecondaryButton>
                     <PrimaryButton
                         type="submit"
-                        disabled={form.processing || (!form.data.ktp && !form.data.sim)}
+                        disabled={form.processing || (!form.data.ktp && !form.data.sim && !form.data.guarantor_doc)}
                         className="rounded-xl px-5 py-2 text-xs font-bold"
                     >
                         {form.processing ? 'Menyimpan...' : 'Simpan Dokumen'}

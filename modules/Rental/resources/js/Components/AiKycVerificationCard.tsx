@@ -40,6 +40,8 @@ interface Props {
     assessment: KycAssessmentData | null;
     hasKtp: boolean;
     hasSim: boolean;
+    hasGuarantor?: boolean;
+    guarantorDocType?: string | null;
     aiScanKycUrl: string;
     aiSyncKycPartnerUrl?: string;
     canUpdate: boolean;
@@ -49,6 +51,8 @@ export default function AiKycVerificationCard({
     assessment,
     hasKtp,
     hasSim,
+    hasGuarantor = false,
+    guarantorDocType,
     aiScanKycUrl,
     aiSyncKycPartnerUrl,
     canUpdate,
@@ -233,6 +237,14 @@ export default function AiKycVerificationCard({
                                         {assessment.checks.is_blacklisted ? '⚠️ Terdaftar Blacklist' : '✅ Bersih'}
                                     </p>
                                 </div>
+                                {hasGuarantor && (
+                                    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dokumen Penjamin</span>
+                                        <p className="mt-0.5 font-bold text-emerald-600 dark:text-emerald-400">
+                                            ✅ Terlampir ({guarantorDocType === 'flight_ticket' ? 'Tiket Pesawat' : guarantorDocType === 'hotel_booking' ? 'Reservasi Hotel' : guarantorDocType === 'employee_id' ? 'ID Card' : 'Dokumen Pendukung'})
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
 

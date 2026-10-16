@@ -2,11 +2,13 @@
 
 namespace Modules\Rental\Support;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
+use Modules\Rental\Models\RentalDutyOrder;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 
 /**
@@ -76,6 +78,31 @@ class RentalConfirmationService
             $this->bookingExtras->applyOnConfirm($rental->fresh(['insurancePackage']));
             $this->invoices->invoiceBase($rental->fresh());
             $this->accounting->issueDraftInvoices($rental->fresh());
+
+            if ($rental->isWithDriver() && $rental->driver_id && $rental->dutyOrders()->doesntExist()) {
+                RentalDutyOrder::create([
+                    'duty_order_number' => RentalDutyOrder::generateNumber(),
+                    'rental_id' => $rental->id,
+                    'driver_id' => $rental->driver_id,
+                    'vehicle_id' => $rental->vehicle_id,
+                    'origin' => $rental->delivery_address ?: ($rental->pickup_location ?: 'Pool Depot'),
+                    'destination' => $rental->return_delivery_address ?: ($rental->return_location ?: 'Dalam Kota'),
+                    'departure_date' => $rental->start_date?->toDateString() ?: now()->toDateString(),
+                    'return_date' => $rental->end_date?->toDateString() ?: now()->toDateString(),
+                    'departure_time' => $rental->pickup_time ? Carbon::parse($rental->pickup_time)->format('H:i') : '08:00',
+                    'return_time' => $rental->return_time ? Carbon::parse($rental->return_time)->format('H:i') : '20:00',
+                    'passenger_name' => $rental->partner?->name,
+                    'passenger_phone' => $rental->booker_phone ?: ($rental->partner?->phone ?: $rental->partner?->mobile),
+                    'status' => RentalDutyOrder::STATUS_DRAFT,
+                    'cash_advance_amount' => 0,
+                    'actual_expense_total' => 0,
+                    'net_balance' => 0,
+                    'settlement_status' => RentalDutyOrder::SETTLEMENT_PENDING,
+                    'standard_hours_per_day' => 12,
+                    'notes' => 'Auto-generated saat konfirmasi pemesanan rental dengan sopir.',
+                    'created_by' => $options['confirmed_by'] ?? null,
+                ]);
+            }
 
             $this->mailer->notify(
                 $rental->fresh(['vehicle', 'partner']),

@@ -57,6 +57,8 @@ interface Props {
         start_date: string | null;
         end_date: string | null;
         period_type: string;
+        service_type?: string;
+        delivery_type?: string;
         pickup_location_id: number | null;
         return_location_id: number | null;
         rental_class: string | null;
@@ -136,6 +138,8 @@ export default function Search({
             return toISODate(d);
         })(),
         period_type: filters.period_type || 'daily',
+        service_type: filters.service_type || 'self_drive',
+        delivery_type: filters.delivery_type || 'depot',
         pickup_location_id: filters.pickup_location_id ? String(filters.pickup_location_id) : '',
         return_location_id: filters.return_location_id ? String(filters.return_location_id) : '',
         rental_class: filters.rental_class ?? '',
@@ -233,6 +237,8 @@ export default function Search({
                 start_date: form.data.start_date || undefined,
                 end_date: form.data.end_date || undefined,
                 period_type: form.data.period_type || 'daily',
+                service_type: form.data.service_type || undefined,
+                delivery_type: form.data.delivery_type || undefined,
                 pickup_location_id: form.data.pickup_location_id || undefined,
                 return_location_id: returnId || undefined,
                 rental_class: activeClass || undefined,
@@ -282,6 +288,8 @@ export default function Search({
             start_date: form.data.start_date,
             end_date: form.data.end_date,
             period_type: form.data.period_type,
+            service_type: form.data.service_type,
+            delivery_type: form.data.delivery_type,
             ...(form.data.pickup_location_id ? { pickup_location_id: form.data.pickup_location_id } : {}),
             ...(diffReturnDepot && form.data.return_location_id
                 ? { return_location_id: form.data.return_location_id }
@@ -438,6 +446,52 @@ export default function Search({
                 {/* Floating Modern Interactive Booking Search Card */}
                 <div className="relative z-20 -mt-16 sm:-mt-20 mx-auto max-w-6xl px-4 sm:px-6">
                     <div className="rounded-3xl bg-white p-5 sm:p-8 shadow-xl border border-slate-200/90 transition-all">
+                        {/* Service Type Switcher: Lepas Kunci vs Dengan Sopir */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-100">
+                            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        form.setData('service_type', 'self_drive');
+                                    }}
+                                    className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                                        form.data.service_type === 'self_drive'
+                                            ? 'bg-slate-900 text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    <span>Lepas Kunci</span>
+                                    <span className="hidden sm:inline-block text-[10px] opacity-75 font-normal">(Self-Drive)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        form.setData('service_type', 'with_driver');
+                                    }}
+                                    className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                                        form.data.service_type === 'with_driver'
+                                            ? 'bg-slate-900 text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span>Dengan Sopir</span>
+                                    <span className="hidden sm:inline-block text-[10px] opacity-75 font-normal">(With Driver)</span>
+                                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-emerald-500 text-white ml-1">Praktis</span>
+                                </button>
+                            </div>
+
+                            <div className="text-xs text-slate-500 font-medium hidden sm:flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                                <span>{form.data.service_type === 'with_driver' ? 'Termasuk jasa driver profesional & berpengalaman' : 'Bebas bepergian sendiri dengan verifikasi identitas mudah'}</span>
+                            </div>
+                        </div>
+
                         {/* Segmented Rental Period Tabs */}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5">
                             <div className="flex items-center gap-2 p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60">
@@ -893,6 +947,13 @@ export default function Search({
                                             <span className="absolute right-3.5 bottom-3 rounded-lg bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
                                                 {vehicle.available_count} Unit Siap
                                             </span>
+
+                                            {/* With Driver indicator */}
+                                            {form.data.service_type === 'with_driver' && (
+                                                <span className="absolute left-3.5 bottom-3 rounded-lg bg-emerald-700/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
+                                                    <span>👨‍✈️</span> Dengan Sopir
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Card Body Details */}

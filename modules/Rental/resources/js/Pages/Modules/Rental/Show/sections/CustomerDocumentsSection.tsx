@@ -11,6 +11,9 @@ interface Props {
     rental: Rental;
     passengerKtpUrl?: string | null;
     passengerSimUrl?: string | null;
+    passengerGuarantorDocUrl?: string | null;
+    passengerGuarantorDocType?: string | null;
+    contractSignatureUrl?: string | null;
     uploadDocumentsUrl?: string | null;
     aiKycEnabled: boolean;
     aiScanKycUrl?: string | null;
@@ -21,6 +24,9 @@ export default function CustomerDocumentsSection({
     rental,
     passengerKtpUrl,
     passengerSimUrl,
+    passengerGuarantorDocUrl,
+    passengerGuarantorDocType,
+    contractSignatureUrl,
     uploadDocumentsUrl,
     aiKycEnabled,
     aiScanKycUrl,
@@ -33,7 +39,25 @@ export default function CustomerDocumentsSection({
     const partnerKycStatus = rental.partner?.kyc_status;
     const hasKtp = Boolean(rental.passenger_ktp_path && passengerKtpUrl);
     const hasSim = Boolean(rental.passenger_sim_path && passengerSimUrl);
+    const hasGuarantor = Boolean(rental.passenger_guarantor_doc_path && passengerGuarantorDocUrl);
+    const isSigned = Boolean(rental.contract_signed_at || (rental.contract_signature_path && contractSignatureUrl));
     const canUpdate = rental.status !== 'cancelled' && rental.status !== 'cancelled_paid';
+
+    const guarantorLabel = (type?: string | null) => {
+        switch (type) {
+            case 'flight_ticket':
+                return 'Tiket Pesawat Pulang-Pergi';
+            case 'hotel_booking':
+                return 'Voucher Reservasi Hotel';
+            case 'employee_id':
+                return 'ID Card Karyawan / Kartu Nama';
+            case 'family_card':
+                return 'Kartu Keluarga (KK)';
+            case 'other':
+            default:
+                return 'Dokumen Penjamin / Pendukung';
+        }
+    };
 
     const isPdf = (path?: string | null) => {
         if (!path) return false;
@@ -318,6 +342,162 @@ export default function CustomerDocumentsSection({
                             </div>
                         </div>
                     </div>
+
+                    {/* Guarantor Document Card */}
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base">✈️</span>
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                                            Dokumen Penjamin / Pendukung
+                                        </h4>
+                                        <p className="text-[11px] text-slate-400">
+                                            {guarantorLabel(rental.passenger_guarantor_doc_type || passengerGuarantorDocType)}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                        hasGuarantor
+                                            ? 'border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                            : 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                    }`}
+                                >
+                                    <span className={`h-1.5 w-1.5 rounded-full ${hasGuarantor ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                    {hasGuarantor ? 'Terunggah' : 'Belum (Opsional)'}
+                                </span>
+                            </div>
+
+                            {/* Content / Preview */}
+                            <div className="mt-3">
+                                {hasGuarantor && passengerGuarantorDocUrl ? (
+                                    isPdf(rental.passenger_guarantor_doc_path) ? (
+                                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-6 text-center dark:border-slate-700 dark:bg-slate-800/50">
+                                            <span className="text-3xl">📄</span>
+                                            <p className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                Dokumen Penjamin (PDF)
+                                            </p>
+                                            <a
+                                                href={passengerGuarantorDocUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3.5 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300"
+                                            >
+                                                <span>Buka Dokumen PDF ↗</span>
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <a
+                                                href={passengerGuarantorDocUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="group relative block overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-2xs dark:border-slate-700 dark:bg-slate-800"
+                                            >
+                                                <img
+                                                    src={passengerGuarantorDocUrl}
+                                                    alt="Dokumen Penjamin"
+                                                    className="h-44 w-full object-cover transition duration-300 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = 'none';
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <span className="rounded-xl bg-white/90 px-3 py-1.5 text-xs font-black text-slate-900 shadow-md">
+                                                        🔍 Lihat Ukuran Penuh ↗
+                                                    </span>
+                                                </div>
+                                            </a>
+                                            <div className="flex justify-end">
+                                                <a
+                                                    href={passengerGuarantorDocUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                                >
+                                                    Buka Dokumen Asli ↗
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-8 text-center dark:border-slate-800 dark:bg-slate-850/40">
+                                        <span className="text-3xl opacity-50">🎫</span>
+                                        <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                            Belum ada dokumen penjamin (tiket pesawat, voucher hotel, atau ID card).
+                                        </p>
+                                        {uploadDocumentsUrl && canUpdate && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowUploadModal(true)}
+                                                className="mt-3 text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                            >
+                                                + Unggah Dokumen Penjamin
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Digital Contract Signature Card */}
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base">✍️</span>
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                                            Kontrak Digital & Tanda Tangan
+                                        </h4>
+                                        <p className="text-[11px] text-slate-400">
+                                            Penyewa: {rental.partner.name}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                        isSigned
+                                            ? 'border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                            : 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                    }`}
+                                >
+                                    <span className={`h-1.5 w-1.5 rounded-full ${isSigned ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                    {isSigned ? 'Ditandatangani ✓' : 'Belum Ditandatangani'}
+                                </span>
+                            </div>
+
+                            {/* Content / Preview */}
+                            <div className="mt-3">
+                                {isSigned && contractSignatureUrl ? (
+                                    <div className="space-y-2">
+                                        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                                            <img
+                                                src={contractSignatureUrl}
+                                                alt="Tanda Tangan Penyewa"
+                                                className="h-28 max-w-full object-contain filter dark:invert"
+                                            />
+                                            {rental.contract_signed_at && (
+                                                <p className="mt-2 text-[10px] text-slate-400 font-mono">
+                                                    Ditandatangani: {rental.contract_signed_at}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-8 text-center dark:border-slate-800 dark:bg-slate-850/40">
+                                        <span className="text-3xl opacity-50">🖋️</span>
+                                        <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                            Pelanggan belum menandatangani perjanjian sewa digital.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* AI KYC Verification Card (When AI KYC is Enabled) */}
@@ -327,6 +507,8 @@ export default function CustomerDocumentsSection({
                             assessment={rental.ai_kyc_assessment ?? null}
                             hasKtp={Boolean(rental.passenger_ktp_path)}
                             hasSim={Boolean(rental.passenger_sim_path)}
+                            hasGuarantor={hasGuarantor}
+                            guarantorDocType={rental.passenger_guarantor_doc_type || passengerGuarantorDocType}
                             aiScanKycUrl={aiScanKycUrl || ''}
                             aiSyncKycPartnerUrl={aiSyncKycPartnerUrl}
                             canUpdate={canUpdate}

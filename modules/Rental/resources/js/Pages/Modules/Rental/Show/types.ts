@@ -189,7 +189,33 @@ export interface Rental {
     damages: Damage[];
     passenger_ktp_path?: string | null;
     passenger_sim_path?: string | null;
+    passenger_guarantor_doc_path?: string | null;
+    passenger_guarantor_doc_type?: string | null;
+    service_type?: 'self_drive' | 'with_driver' | string;
+    driver_fee_amount?: string | number | null;
+    delivery_type?: 'depot' | 'airport' | 'hotel' | 'custom_address' | string;
+    delivery_address?: string | null;
+    delivery_landmark?: string | null;
+    delivery_fee?: string | number | null;
+    return_delivery_type?: 'depot' | 'airport' | 'hotel' | 'custom_address' | string;
+    return_delivery_address?: string | null;
+    return_delivery_fee?: string | number | null;
+    emergency_contact_name?: string | null;
+    emergency_contact_phone?: string | null;
+    emergency_contact_relation?: string | null;
+    social_media_account?: string | null;
+    contract_signature_path?: string | null;
+    contract_signed_at?: string | null;
     ai_kyc_assessment?: KycAssessmentData | null;
+}
+
+export interface DutyOrderSummary {
+    id: number;
+    duty_order_number: string;
+    driver_name?: string | null;
+    status: string;
+    settlement_status: string;
+    show_url: string;
 }
 
 /**

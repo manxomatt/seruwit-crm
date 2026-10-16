@@ -38,6 +38,7 @@ class RentalShowPresenter
             'latestAiInspection.createdByUser:id,name',
             'insurancePackage',
             'depositCompanyBankAccount:id,name,bank_name,account_number,account_holder',
+            'dutyOrders.driver:id,name',
             // Do not eager-load pickupLocation/returnLocation here: Laravel serializes
             // those relations as pickup_location / return_location and overwrites the
             // text snapshot columns, which crashes React when rendered as children.
@@ -150,6 +151,17 @@ class RentalShowPresenter
             'pickupCustomerSignatureUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->pickup_customer_signature_path),
             'passengerKtpUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
             'passengerSimUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
+            'passengerGuarantorDocUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->passenger_guarantor_doc_path),
+            'passengerGuarantorDocType' => $rental->passenger_guarantor_doc_type,
+            'contractSignatureUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->contract_signature_path),
+            'dutyOrders' => $rental->dutyOrders->map(fn ($d) => [
+                'id' => $d->id,
+                'duty_order_number' => $d->duty_order_number,
+                'driver_name' => $d->driver?->name,
+                'status' => $d->status,
+                'settlement_status' => $d->settlement_status,
+                'show_url' => route($routePrefix.'.rental.duty_orders.show', $d),
+            ])->values()->all(),
             'uploadDocumentsUrl' => route($routePrefix.'.rental.documents.upload', $rental),
 
             'gatewayEnabled' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)

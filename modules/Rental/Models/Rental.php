@@ -59,6 +59,18 @@ class Rental extends Model
 
     public const PROOF_REJECTED = 'rejected';
 
+    public const SERVICE_SELF_DRIVE = 'self_drive';
+
+    public const SERVICE_WITH_DRIVER = 'with_driver';
+
+    public const DELIVERY_DEPOT = 'depot';
+
+    public const DELIVERY_AIRPORT = 'airport';
+
+    public const DELIVERY_HOTEL = 'hotel';
+
+    public const DELIVERY_CUSTOM = 'custom_address';
+
     protected static function newFactory(): Factory
     {
         return RentalFactory::new();
@@ -68,6 +80,7 @@ class Rental extends Model
     protected $fillable = [
         'code',
         'channel',
+        'service_type',
         'vehicle_id',
         'driver_id',
         'partner_id',
@@ -131,16 +144,33 @@ class Rental extends Model
         'notes',
         'passenger_ktp_path',
         'passenger_sim_path',
+        'passenger_guarantor_doc_type',
+        'passenger_guarantor_doc_path',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relation',
+        'social_media_account',
         'ai_kyc_assessment',
         'pickup_location',
         'return_location',
         'pickup_location_id',
         'return_location_id',
+        'delivery_type',
+        'delivery_address',
+        'delivery_landmark',
+        'delivery_fee',
+        'return_delivery_type',
+        'return_delivery_address',
+        'return_delivery_fee',
         'pickup_fleet_base_id',
         'return_fleet_base_id',
         'one_way_fee_amount',
+        'driver_fee_amount',
         'insurance_package_id',
         'fuel_policy_notes',
+        'contract_signed_at',
+        'contract_signature_path',
+        'contract_signed_ip',
         'cancelled_reason',
         'cancelled_at',
         'no_show_at',
@@ -213,7 +243,21 @@ class Rental extends Model
             'applied_loyalty_tier_id' => 'integer',
             'period_pricing_snapshot' => 'array',
             'tier_discount_amount' => 'decimal:2',
+            'driver_fee_amount' => 'decimal:2',
+            'delivery_fee' => 'decimal:2',
+            'return_delivery_fee' => 'decimal:2',
+            'contract_signed_at' => 'datetime',
         ];
+    }
+
+    public function isWithDriver(): bool
+    {
+        return $this->service_type === self::SERVICE_WITH_DRIVER;
+    }
+
+    public function isSelfDrive(): bool
+    {
+        return $this->service_type === self::SERVICE_SELF_DRIVE;
     }
 
     /** @return BelongsTo<Vehicle, $this> */

@@ -87,6 +87,29 @@ class MobileRentalBookingService
             $insuranceAmount = $package ? (float) $package->amount : null;
         }
 
+        $serviceType = $input['service_type'] ?? Rental::SERVICE_SELF_DRIVE;
+        $driverFeeAmount = 0.0;
+        if ($serviceType === Rental::SERVICE_WITH_DRIVER) {
+            $driverDailyRate = (float) (RentalGeneralSettings::all()['default_driver_rate'] ?? 150000);
+            $driverFeeAmount = round($driverDailyRate * $periods, 2);
+        }
+
+        $deliveryType = $input['delivery_type'] ?? Rental::DELIVERY_DEPOT;
+        $deliveryFee = 0.0;
+        if ($deliveryType === Rental::DELIVERY_AIRPORT) {
+            $deliveryFee = (float) (RentalGeneralSettings::all()['default_airport_delivery_fee'] ?? 50000);
+        } elseif (isset($input['delivery_fee'])) {
+            $deliveryFee = (float) $input['delivery_fee'];
+        }
+
+        $returnDeliveryType = $input['return_delivery_type'] ?? Rental::DELIVERY_DEPOT;
+        $returnDeliveryFee = 0.0;
+        if ($returnDeliveryType === Rental::DELIVERY_AIRPORT) {
+            $returnDeliveryFee = (float) (RentalGeneralSettings::all()['default_airport_delivery_fee'] ?? 50000);
+        } elseif (isset($input['return_delivery_fee'])) {
+            $returnDeliveryFee = (float) $input['return_delivery_fee'];
+        }
+
         $ratePerPeriod = $pricing !== null
             ? $pricing['effective_rate_per_period']
             : ($rate ? (float) $rate->rate_per_period : null);
@@ -98,12 +121,18 @@ class MobileRentalBookingService
         }
         $oneWay = isset($hydrated['one_way_fee_amount']) ? (float) $hydrated['one_way_fee_amount'] : null;
         $total = $baseAmount !== null
-            ? round($baseAmount + ($oneWay ?? 0) + ($insuranceAmount ?? 0), 2)
+            ? round($baseAmount + ($oneWay ?? 0) + ($insuranceAmount ?? 0) + $driverFeeAmount + $deliveryFee + $returnDeliveryFee, 2)
             : null;
 
         return [
             'available' => $reasons === [] && $rate !== null,
             'reasons' => $reasons,
+            'service_type' => $serviceType,
+            'driver_fee_amount' => $driverFeeAmount,
+            'delivery_type' => $deliveryType,
+            'delivery_fee' => $deliveryFee,
+            'return_delivery_type' => $returnDeliveryType,
+            'return_delivery_fee' => $returnDeliveryFee,
             'total_periods' => $periods,
             'rate' => $rate,
             'rate_per_period' => $ratePerPeriod,
@@ -178,6 +207,7 @@ class MobileRentalBookingService
             $rental = Rental::query()->create([
                 'code' => Rental::nextCode(),
                 'channel' => $channel,
+                'service_type' => $quote['service_type'] ?? ($input['service_type'] ?? Rental::SERVICE_SELF_DRIVE),
                 'public_token' => Str::random(40),
                 'booker_phone' => $bookerPhone,
                 'vehicle_id' => $vehicle->id,
@@ -197,21 +227,34 @@ class MobileRentalBookingService
                 'deposit_status' => Rental::DEPOSIT_HELD,
                 'total_periods' => $periods,
                 'base_amount' => $baseAmount,
-                'total_amount' => $baseAmount,
+                'total_amount' => (float) ($quote['total_amount'] ?? $baseAmount),
                 'applied_period_tier_id' => $periodTier?->id,
                 'applied_loyalty_tier_id' => $loyaltyTier?->id,
                 'period_pricing_snapshot' => $periodSnapshot,
                 'tier_discount_amount' => $discountAmount,
                 'pickup_location_id' => $hydrated['pickup_location_id'] ?? null,
                 'return_location_id' => $hydrated['return_location_id'] ?? null,
+                'delivery_type' => $quote['delivery_type'] ?? ($input['delivery_type'] ?? Rental::DELIVERY_DEPOT),
+                'delivery_address' => $input['delivery_address'] ?? null,
+                'delivery_landmark' => $input['delivery_landmark'] ?? null,
+                'delivery_fee' => (float) ($quote['delivery_fee'] ?? 0),
+                'return_delivery_type' => $quote['return_delivery_type'] ?? ($input['return_delivery_type'] ?? Rental::DELIVERY_DEPOT),
+                'return_delivery_address' => $input['return_delivery_address'] ?? null,
+                'return_delivery_fee' => (float) ($quote['return_delivery_fee'] ?? 0),
                 'pickup_fleet_base_id' => $hydrated['pickup_fleet_base_id'] ?? null,
                 'return_fleet_base_id' => $hydrated['return_fleet_base_id'] ?? null,
                 'pickup_location' => $hydrated['pickup_location'] ?? ($input['pickup_location'] ?? null),
                 'return_location' => $hydrated['return_location'] ?? ($input['return_location'] ?? null),
                 'one_way_fee_amount' => $hydrated['one_way_fee_amount'] ?? null,
+                'driver_fee_amount' => (float) ($quote['driver_fee_amount'] ?? 0),
                 'insurance_package_id' => ((bool) RentalGeneralSettings::all()['insurance_packages_enabled']) ? ($input['insurance_package_id'] ?? null) : null,
                 'passenger_ktp_path' => $partner->id_card_photo_path,
                 'passenger_sim_path' => $partner->driver_license_photo_path,
+                'passenger_guarantor_doc_type' => $input['passenger_guarantor_doc_type'] ?? null,
+                'emergency_contact_name' => $input['emergency_contact_name'] ?? null,
+                'emergency_contact_phone' => $input['emergency_contact_phone'] ?? null,
+                'emergency_contact_relation' => $input['emergency_contact_relation'] ?? null,
+                'social_media_account' => $input['social_media_account'] ?? null,
                 'fuel_policy_notes' => $input['fuel_policy_notes'] ?? null,
                 'notes' => $input['notes'] ?? null,
             ]);

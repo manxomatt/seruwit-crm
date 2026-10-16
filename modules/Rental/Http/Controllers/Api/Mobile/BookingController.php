@@ -471,6 +471,8 @@ class BookingController extends Controller
             'pickup_customer_signature_path' => $signaturePath,
             'pickup_terms_agreed' => true,
             'pickup_notes' => $request->input('pickup_notes'),
+            'contract_signature_path' => $rental->contract_signature_path ?: $signaturePath,
+            'contract_signed_at' => $rental->contract_signed_at ?: now(),
         ]);
 
         return response()->json([

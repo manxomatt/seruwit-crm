@@ -25,6 +25,7 @@ interface Booking {
     public_token: string;
     status: string;
     channel: string;
+    service_type?: string;
     booker_phone: string | null;
     booker_phone_verified: boolean;
     start_date: string | null;
@@ -37,12 +38,26 @@ interface Booking {
     base_amount: number;
     deposit_amount: number;
     deposit_received: boolean;
+    driver_fee_amount?: number;
+    delivery_type?: string;
+    delivery_address?: string | null;
+    delivery_landmark?: string | null;
+    delivery_fee?: number;
+    return_delivery_type?: string;
+    return_delivery_address?: string | null;
+    return_delivery_fee?: number;
     total_amount: number;
     pickup_location: string | null;
     return_location: string | null;
     reserved_until: string | null;
     status_hint?: string | null;
     cancelled_reason: string | null;
+    emergency_contact?: {
+        name: string | null;
+        phone: string | null;
+        relation: string | null;
+    };
+    social_media_account?: string | null;
     vehicle: { id: number; name: string; plate_number: string; photo_url: string | null } | null;
     insurance_package: { id: number; name: string; amount: number } | null;
     can_pay_deposit: boolean;
@@ -71,8 +86,11 @@ interface Booking {
     documents: {
         ktp_uploaded: boolean;
         sim_uploaded: boolean;
+        guarantor_uploaded?: boolean;
+        guarantor_doc_type?: string | null;
         ktp_url: string | null;
         sim_url: string | null;
+        guarantor_url?: string | null;
     };
     deposit_proof?: {
         path: string | null;
@@ -309,11 +327,15 @@ export default function BookingView({ brand, booking, gateway_available, company
         otp_code: string;
         ktp: File | null;
         sim: File | null;
+        guarantor_doc: File | null;
+        guarantor_doc_type: string;
     }>({
         booker_phone: booking.booker_phone ?? '',
         otp_code: '',
         ktp: null,
         sim: null,
+        guarantor_doc: null,
+        guarantor_doc_type: booking.documents?.guarantor_doc_type || 'flight_ticket',
     });
 
     useEffect(() => {
@@ -748,7 +770,21 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-black text-slate-900">{booking.vehicle?.name ?? 'Kendaraan'}</h3>
-                                        <p className="text-xs font-mono font-bold text-slate-400 mt-0.5">{booking.vehicle?.plate_number}</p>
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                            <span className="text-xs font-mono font-bold text-slate-400">{booking.vehicle?.plate_number}</span>
+                                            <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
+                                                booking.service_type === 'with_driver'
+                                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                                    : 'bg-slate-100 text-slate-800 border border-slate-300'
+                                            }`}>
+                                                {booking.service_type === 'with_driver' ? '👨‍✈️ Dengan Sopir' : '🔑 Lepas Kunci'}
+                                            </span>
+                                            {booking.delivery_type && booking.delivery_type !== 'depot' && (
+                                                <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                                                    ✈️ Antar {booking.delivery_type === 'airport' ? 'Bandara' : 'Lokasi'}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -771,6 +807,30 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Delivery details if custom / airport */}
+                                    {booking.delivery_address && (
+                                        <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
+                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Titik Pengantaran Unit ({booking.delivery_type})</span>
+                                            <span className="font-bold text-slate-900 text-xs block">{booking.delivery_address}</span>
+                                            {booking.delivery_landmark && (
+                                                <span className="block text-[11px] text-slate-500 font-medium">Patokan: {booking.delivery_landmark}</span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Emergency contact info */}
+                                    {booking.emergency_contact?.name && (
+                                        <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
+                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Kontak Darurat Penjamin</span>
+                                            <span className="font-bold text-slate-900 text-xs block">
+                                                {booking.emergency_contact.name} ({booking.emergency_contact.relation || 'Kerabat'}) · {booking.emergency_contact.phone}
+                                            </span>
+                                            {booking.social_media_account && (
+                                                <span className="block text-[11px] text-slate-500 font-medium">Medsos: {booking.social_media_account}</span>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {booking.insurance_package && (
                                         <div className="flex items-center justify-between rounded-xl bg-teal-50 p-3 border border-teal-200 text-teal-900 text-xs">
@@ -803,12 +863,15 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     </button>
                                 </div>
 
-                                <div className="flex gap-2.5 text-xs">
+                                <div className="flex flex-wrap gap-2.5 text-xs">
                                     <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.ktp_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                                         KTP: {booking.documents?.ktp_uploaded ? 'Terunggah ✓' : 'Belum'}
                                     </span>
                                     <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.sim_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                                         SIM A: {booking.documents?.sim_uploaded ? 'Terunggah ✓' : 'Belum'}
+                                    </span>
+                                    <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.guarantor_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                                        Dokumen Penjamin: {booking.documents?.guarantor_uploaded ? 'Terunggah ✓' : 'Belum'}
                                     </span>
                                 </div>
 
@@ -834,6 +897,33 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                     type="file"
                                                     accept="image/*,.pdf"
                                                     onChange={(e) => docsForm.setData('sim', e.target.files?.[0] ?? null)}
+                                                    className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-700 block mb-1">
+                                                    Jenis Dokumen Penjamin
+                                                </label>
+                                                <select
+                                                    value={docsForm.data.guarantor_doc_type}
+                                                    onChange={(e) => docsForm.setData('guarantor_doc_type', e.target.value)}
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-slate-900 focus:outline-none"
+                                                >
+                                                    <option value="flight_ticket">Tiket Pesawat Pulang-Pergi</option>
+                                                    <option value="hotel_booking">Voucher Reservasi Hotel</option>
+                                                    <option value="employee_id">ID Card Karyawan / Kartu Nama</option>
+                                                    <option value="family_card">Kartu Keluarga (KK)</option>
+                                                    <option value="other">Dokumen Lainnya</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-700 block mb-1">
+                                                    Unggah Dokumen Penjamin
+                                                </label>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*,.pdf"
+                                                    onChange={(e) => docsForm.setData('guarantor_doc', e.target.files?.[0] ?? null)}
                                                     className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
                                                 />
                                             </div>
