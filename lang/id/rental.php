@@ -158,6 +158,7 @@ return [
 
     'settings' => [
         'title' => 'Pengaturan Rental',
+        'subtitle' => 'Konfigurasi kebijakan operasional, tampilan etalase booking online, template kontrak, dan notifikasi.',
         'tab_general' => 'Umum',
         'tab_rates' => 'Tarif',
         'tab_storefront' => 'Tampilan Storefront',
@@ -961,10 +962,12 @@ return [
         'calendar' => [
             'title' => 'Kalender kendaraan',
             'head' => 'Kalender',
+            'subtitle' => 'Pantau linimasa reservasi armada, ketersediaan harian, dan utilisasi kendaraan.',
         ],
         'rates' => [
             'title' => 'Tarif Rental Kendaraan',
             'head' => 'Tarif Rental',
+            'subtitle' => 'Kelola skema harga sewa, batasan kilometer, deposit, serta aturan denda keterlambatan.',
             'empty' => 'Belum ada tarif. Buat satu untuk mulai.',
             'new' => 'Tarif Baru',
             'create' => 'Buat Tarif Baru',

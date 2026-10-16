@@ -700,7 +700,12 @@ export default function Index({
             header={
                 <PageHeader
                     title={t('rental.settings.title', undefined, 'Pengaturan Rental')}
-                    actions={<LanguageSwitcher compact />}
+                    subtitle={t('rental.settings.subtitle', undefined, 'Konfigurasi kebijakan operasional, tampilan etalase booking online, template kontrak, dan notifikasi.')}
+                    actions={
+                        <div className="flex items-center gap-2">
+                            <LanguageSwitcher compact />
+                        </div>
+                    }
                 />
             }
         >

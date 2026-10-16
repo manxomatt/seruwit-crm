@@ -158,6 +158,7 @@ return [
 
     'settings' => [
         'title' => 'Rental Settings',
+        'subtitle' => 'Configure operational policies, online booking storefront, contract templates, and notifications.',
         'tab_general' => 'General',
         'tab_rates' => 'Rates',
         'tab_storefront' => 'Storefront',
@@ -940,10 +941,12 @@ return [
         'calendar' => [
             'title' => 'Vehicle calendar',
             'head' => 'Calendar',
+            'subtitle' => 'Monitor fleet reservation timelines, daily vehicle availability, and fleet utilization.',
         ],
         'rates' => [
             'title' => 'Vehicle Rental Rates',
             'head' => 'Rental Rates',
+            'subtitle' => 'Manage rental pricing schemes, mileage limits, deposits, and late return penalty rules.',
             'empty' => 'No rates yet. Create one to get started.',
             'new' => 'New Rate',
             'create' => 'Create New Rate',

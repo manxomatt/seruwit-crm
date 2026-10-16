@@ -31,7 +31,12 @@ export default function RatesIndex({
             header={
                 <PageHeader
                     title={t('rental.pages.rates.title', undefined, 'Tarif Rental Kendaraan')}
-                    actions={<LanguageSwitcher compact />}
+                    subtitle={t('rental.pages.rates.subtitle', undefined, 'Kelola skema harga sewa, batasan kilometer, deposit, serta aturan denda keterlambatan.')}
+                    actions={
+                        <div className="flex items-center gap-2">
+                            <LanguageSwitcher compact />
+                        </div>
+                    }
                 />
             }
         >
