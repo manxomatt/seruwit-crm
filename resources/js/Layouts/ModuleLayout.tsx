@@ -403,6 +403,7 @@ const MENU_GROUPS: MenuGroup[] = [
             'rental-reservation',
             'rental-dispatch',
             'rental-duty-orders',
+            'rental-corporate',
             'rental-calendar',
             'rental-availability',
             'rental-rates',
