@@ -182,10 +182,10 @@ class RentalModule implements ModuleContract
         // B2B Corporate Contracts & Consolidated Invoicing (before {rental} wildcard)
         Route::get('/rental/corporate-contracts', [RentalCorporateContractController::class, 'index'])->middleware('permission:rental,view')->name('rental.corporate.index');
         Route::post('/rental/corporate-contracts', [RentalCorporateContractController::class, 'store'])->middleware('permission:rental,bookings')->name('rental.corporate.store');
-        Route::get('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'show'])->middleware('permission:rental,view')->name('rental.corporate.show');
-        Route::put('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'update'])->middleware('permission:rental,bookings')->name('rental.corporate.update');
-        Route::post('/rental/corporate-contracts/{contract}/attach-rentals', [RentalCorporateContractController::class, 'attachRentals'])->middleware('permission:rental,bookings')->name('rental.corporate.attach_rentals');
-        Route::post('/rental/corporate-contracts/{contract}/consolidate-invoice', [RentalCorporateContractController::class, 'consolidateInvoice'])->middleware('permission:rental,finance')->name('rental.corporate.consolidate_invoice');
+        Route::get('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'show'])->whereNumber('contract')->middleware('permission:rental,view')->name('rental.corporate.show');
+        Route::put('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'update'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.update');
+        Route::post('/rental/corporate-contracts/{contract}/attach-rentals', [RentalCorporateContractController::class, 'attachRentals'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.attach_rentals');
+        Route::post('/rental/corporate-contracts/{contract}/consolidate-invoice', [RentalCorporateContractController::class, 'consolidateInvoice'])->whereNumber('contract')->middleware('permission:rental,finance')->name('rental.corporate.consolidate_invoice');
 
         // Reservation wizard JSON helpers (before {rental} wildcard)
         Route::get('/rental/reservations/available-vehicles', [RentalReservationWizardController::class, 'availableVehicles'])
@@ -200,12 +200,12 @@ class RentalModule implements ModuleContract
         Route::get('/rental/create', [RentalController::class, 'create'])->middleware('permission:rental,bookings')->name('rental.create');
         Route::post('/rental/walk-in-customers', [RentalController::class, 'storeWalkInCustomer'])->middleware('permission:rental,bookings')->name('rental.walk_in_customers.store');
         Route::post('/rental', [RentalController::class, 'store'])->middleware('permission:rental,bookings')->name('rental.store');
-        Route::get('/rental/{rental}', [RentalController::class, 'show'])->middleware('permission:rental,view')->name('rental.show');
-        Route::get('/rental/{rental}/edit', [RentalController::class, 'edit'])->middleware('permission:rental,bookings')->name('rental.edit');
-        Route::get('/rental/{rental}/checkout', [RentalController::class, 'checkoutPage'])->middleware('permission:rental,dispatch')->name('rental.checkout_page');
-        Route::get('/rental/{rental}/return', [RentalController::class, 'returnPage'])->middleware('permission:rental,dispatch')->name('rental.return_page');
-        Route::patch('/rental/{rental}', [RentalController::class, 'update'])->middleware('permission:rental,bookings')->name('rental.update');
-        Route::delete('/rental/{rental}', [RentalController::class, 'destroy'])->middleware('permission:rental,bookings')->name('rental.destroy');
+        Route::get('/rental/{rental}', [RentalController::class, 'show'])->whereNumber('rental')->middleware('permission:rental,view')->name('rental.show');
+        Route::get('/rental/{rental}/edit', [RentalController::class, 'edit'])->whereNumber('rental')->middleware('permission:rental,bookings')->name('rental.edit');
+        Route::get('/rental/{rental}/checkout', [RentalController::class, 'checkoutPage'])->whereNumber('rental')->middleware('permission:rental,dispatch')->name('rental.checkout_page');
+        Route::get('/rental/{rental}/return', [RentalController::class, 'returnPage'])->whereNumber('rental')->middleware('permission:rental,dispatch')->name('rental.return_page');
+        Route::patch('/rental/{rental}', [RentalController::class, 'update'])->whereNumber('rental')->middleware('permission:rental,bookings')->name('rental.update');
+        Route::delete('/rental/{rental}', [RentalController::class, 'destroy'])->whereNumber('rental')->middleware('permission:rental,bookings')->name('rental.destroy');
 
         // PDFs
         Route::get('/rental/{rental}/pdf/contract', [RentalPdfController::class, 'contract'])->middleware('permission:rental,view')->name('rental.pdf.contract');

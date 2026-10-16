@@ -4,6 +4,7 @@ namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,8 @@ class RentalCorporateContractController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->ensureSchemaExists();
+
         $statusFilter = (string) $request->string('status', 'all');
         $cycleFilter = (string) $request->string('billing_cycle', 'all');
         $search = trim((string) $request->string('search', ''));
@@ -117,6 +120,8 @@ class RentalCorporateContractController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->ensureSchemaExists();
+
         $validated = $request->validate([
             'partner_id' => ['required', 'integer', 'exists:partners,id'],
             'title' => ['required', 'string', 'max:191'],
@@ -699,5 +704,54 @@ class RentalCorporateContractController extends Controller
             'credit_used' => $creditUsed,
             'credit_utilization_pct' => $utilizationPct,
         ];
+    }
+
+    private function ensureSchemaExists(): void
+    {
+        if (! Schema::hasTable('rentals')) {
+            return;
+        }
+
+        if (! Schema::hasTable('rental_corporate_contracts')) {
+            Schema::create('rental_corporate_contracts', function (Blueprint $table) {
+                $table->id();
+                $table->string('code', 40)->unique();
+                $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
+                $table->string('title', 191);
+                $table->string('po_number', 100)->nullable();
+                $table->string('pic_name', 150)->nullable();
+                $table->string('pic_phone', 60)->nullable();
+                $table->string('pic_email', 150)->nullable();
+                $table->date('start_date');
+                $table->date('end_date');
+                $table->string('billing_cycle', 30)->default('monthly');
+                $table->unsignedSmallInteger('payment_term_days')->default(30);
+                $table->decimal('credit_limit', 15, 2)->default(0);
+                $table->decimal('discount_pct', 5, 2)->default(0);
+                $table->boolean('tax_included')->default(true);
+                $table->decimal('withholding_tax_pct', 5, 2)->default(2.00);
+                $table->unsignedSmallInteger('sla_replacement_hours')->default(4);
+                $table->string('status', 30)->default('active')->index();
+                $table->text('notes')->nullable();
+                $table->foreignId('created_by')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::hasColumn('rentals', 'corporate_contract_id')) {
+            Schema::table('rentals', function (Blueprint $table) {
+                $table->foreignId('corporate_contract_id')
+                    ->nullable()
+                    ->after('partner_id')
+                    ->constrained('rental_corporate_contracts')
+                    ->nullOnDelete();
+            });
+        }
+
+        if (! Schema::hasColumn('rentals', 'client_po_number')) {
+            Schema::table('rentals', function (Blueprint $table) {
+                $table->string('client_po_number', 100)->nullable()->after('corporate_contract_id');
+            });
+        }
     }
 }
