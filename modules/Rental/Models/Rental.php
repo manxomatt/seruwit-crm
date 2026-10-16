@@ -71,6 +71,8 @@ class Rental extends Model
         'vehicle_id',
         'driver_id',
         'partner_id',
+        'corporate_contract_id',
+        'client_po_number',
         'booker_phone',
         'public_token',
         'status',
@@ -158,6 +160,7 @@ class Rental extends Model
     protected function casts(): array
     {
         return [
+            'corporate_contract_id' => 'integer',
             'start_date' => 'date:Y-m-d',
             'end_date' => 'date:Y-m-d',
             'actual_return_date' => 'date:Y-m-d',
@@ -277,6 +280,12 @@ class Rental extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    /** @return BelongsTo<RentalCorporateContract, $this> */
+    public function corporateContract(): BelongsTo
+    {
+        return $this->belongsTo(RentalCorporateContract::class, 'corporate_contract_id');
     }
 
     /** @return BelongsTo<User, $this> */

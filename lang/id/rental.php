@@ -271,6 +271,7 @@ return [
         'reservation' => 'Reservasi',
         'dispatch' => 'Antar-Jemput (Dispatch)',
         'duty_orders' => 'Surat Jalan & Kas Jalan',
+        'corporate' => 'Kontrak B2B',
         'availability' => 'Ketersediaan',
         'calendar' => 'Kalender',
         'rates' => 'Tarif',

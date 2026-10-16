@@ -591,6 +591,14 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             permissionAction: 'dispatch',
         },
         {
+            key: 'rental-corporate',
+            labelKey: 'rental.nav.corporate',
+            route: 'module.rental.corporate.index',
+            routePatterns: ['module.rental.corporate.*'],
+            icon: <BuildingIcon />,
+            permissionAction: 'view',
+        },
+        {
             key: 'rental-calendar',
             labelKey: 'rental.nav.calendar',
             route: 'module.rental.calendar.index',

@@ -250,6 +250,7 @@ return [
         'reservation' => 'Reservation',
         'dispatch' => 'Dispatch (Delivery & Pickup)',
         'duty_orders' => 'Duty Orders & Cash Advance',
+        'corporate' => 'B2B Contracts',
         'availability' => 'Availability',
         'calendar' => 'Calendar',
         'rates' => 'Rates',
