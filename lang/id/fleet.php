@@ -7,6 +7,8 @@ return [
         'dashboard' => 'Dashboard',
         'bases' => 'Base',
         'vehicles' => 'Kendaraan',
+        'settlements' => 'Bagi Hasil Investor',
+        'compliance' => 'Kepatuhan & Pajak',
         'drivers' => 'Pengemudi',
         'fuel' => 'BBM',
         'analytics' => 'Analitik',

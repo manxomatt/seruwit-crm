@@ -295,6 +295,14 @@ class Vehicle extends Model
     }
 
     /**
+     * @return HasMany<VehicleSettlement, $this>
+     */
+    public function settlements(): HasMany
+    {
+        return $this->hasMany(VehicleSettlement::class)->latest('period_month');
+    }
+
+    /**
      * Evaluate the status of a specific document expiration date.
      *
      * @return array{status: string, days: int|null, label: string}

@@ -79,8 +79,24 @@ interface SettlementData {
     }>;
 }
 
+interface SavedSettlementInfo {
+    id: number;
+    code: string;
+    status: string;
+    other_adjustment: number;
+    adjustment_notes: string | null;
+    net_payout: number;
+    paid_at: string | null;
+    payment_method: string | null;
+    payment_reference: string | null;
+    bank_name: string | null;
+    account_number: string | null;
+    account_holder_name: string | null;
+}
+
 interface Props {
     settlement: SettlementData;
+    savedSettlement?: SavedSettlementInfo | null;
     monthOptions: Array<{ value: string; label: string }>;
     currentFilter: {
         month: string;
@@ -98,6 +114,7 @@ interface Props {
 
 export default function Settlement({
     settlement,
+    savedSettlement = null,
     monthOptions,
     currentFilter,
     company,
@@ -156,6 +173,13 @@ export default function Settlement({
                         subtitle={`Periode: ${settlement.period.month_label} (${formatDate(settlement.period.start_date)} s/d ${formatDate(settlement.period.end_date)})`}
                         actions={
                             <div className="flex flex-wrap items-center gap-2">
+                                <Link
+                                    href={prefixedRoute('fleet.settlements.index', { month: currentFilter.month })}
+                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                >
+                                    🤝 Papan Bagi Hasil
+                                </Link>
+
                                 <Link
                                     href={prefixedRoute('fleet.vehicles.show', settlement.vehicle.id)}
                                     className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
@@ -249,6 +273,50 @@ export default function Settlement({
                     )}
                 </div>
 
+                {/* Saved Settlement Status Banner */}
+                {savedSettlement && (
+                    <div className={`flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4 text-xs ${
+                        savedSettlement.status === 'paid'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+                            : savedSettlement.status === 'approved'
+                              ? 'border-indigo-200 bg-indigo-50 text-indigo-900 dark:border-indigo-800/60 dark:bg-indigo-950/30 dark:text-indigo-200'
+                              : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200'
+                    }`}>
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-2 font-black">
+                                <span>
+                                    {savedSettlement.status === 'paid'
+                                        ? '✅ LUNAS DIBAYAR KE INVESTOR'
+                                        : savedSettlement.status === 'approved'
+                                          ? '✔️ STATEMENT DISETUJUI (SIAP TRANSFER)'
+                                          : '📝 DRAFT STATEMENT TERSIMPAN'}
+                                </span>
+                                <span className="font-mono text-[11px] opacity-80">({savedSettlement.code})</span>
+                            </div>
+                            {savedSettlement.status === 'paid' && (
+                                <p className="text-[11px] opacity-90">
+                                    Dibayarkan pada {formatDate(savedSettlement.paid_at)} via {savedSettlement.payment_method || 'Transfer Bank'}
+                                    {savedSettlement.bank_name ? ` (${savedSettlement.bank_name} ${savedSettlement.account_number || ''})` : ''}
+                                    {savedSettlement.payment_reference ? ` · Ref: ${savedSettlement.payment_reference}` : ''}
+                                </p>
+                            )}
+                            {savedSettlement.other_adjustment !== 0 && (
+                                <p className="text-[11px] opacity-90">
+                                    Penyesuaian Lainnya: <strong className="font-mono">{formatCurrency(savedSettlement.other_adjustment)}</strong>
+                                    {savedSettlement.adjustment_notes ? ` (${savedSettlement.adjustment_notes})` : ''}
+                                    {' · '}Total Net Payout Final: <strong className="font-mono">{formatCurrency(savedSettlement.net_payout)}</strong>
+                                </p>
+                            )}
+                        </div>
+                        <Link
+                            href={prefixedRoute('fleet.settlements.index', { month: currentFilter.month })}
+                            className="print:hidden rounded-xl bg-white/90 px-3 py-1.5 text-[11px] font-bold text-slate-800 shadow-2xs hover:bg-white dark:bg-slate-800 dark:text-slate-100"
+                        >
+                            Kelola Pencairan →
+                        </Link>
+                    </div>
+                )}
+
                 {/* Printable Statement Container */}
                 <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900 print:border-none print:shadow-none print:p-0 space-y-8">
                     {/* Header Formal Statement */}
@@ -277,7 +345,7 @@ export default function Settlement({
                                 REKAP BAGI HASIL & KINERJA ARMADA
                             </h2>
                             <p className="mt-1 font-mono text-xs text-slate-500">
-                                Ref: STMT/{settlement.vehicle.plate_number.replace(/\s+/g, '')}/{settlement.period.start_date.replace(/-/g, '')}
+                                Ref: {savedSettlement?.code || `STMT/${settlement.vehicle.plate_number.replace(/\s+/g, '')}/${settlement.period.start_date.replace(/-/g, '')}`}
                             </p>
                             <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-1">
                                 Periode: {formatDate(settlement.period.start_date)} — {formatDate(settlement.period.end_date)} ({settlement.period.days_count} Hari)

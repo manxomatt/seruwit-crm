@@ -7,6 +7,8 @@ return [
         'dashboard' => 'Dashboard',
         'bases' => 'Bases',
         'vehicles' => 'Vehicles',
+        'settlements' => 'Investor Profit Sharing',
+        'compliance' => 'Compliance & Taxes',
         'drivers' => 'Drivers',
         'fuel' => 'Fuel',
         'analytics' => 'Analytics',

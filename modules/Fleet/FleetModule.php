@@ -136,6 +136,10 @@ class FleetModule implements ModuleContract
         Route::get('/fleet/compliance', [FleetComplianceController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.compliance.index');
         Route::post('/fleet/vehicles/{vehicle}/compliance/renew', [FleetComplianceController::class, 'renew'])->middleware('permission:fleet,update')->name('fleet.compliance.renew');
 
+        Route::get('/fleet/settlements', [VehicleSettlementController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.settlements.index');
+        Route::post('/fleet/settlements/generate', [VehicleSettlementController::class, 'generate'])->middleware('permission:fleet,update')->name('fleet.settlements.generate');
+        Route::post('/fleet/settlements/payout', [VehicleSettlementController::class, 'savePayout'])->middleware('permission:fleet,update')->name('fleet.settlements.payout');
+
         Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');
         Route::get('/fleet/fuel/analytics', [FuelAnalyticsController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.analytics');
         Route::post('/fleet/vehicles/{vehicle}/fuel-logs', [FuelLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.fuel-logs.store');
