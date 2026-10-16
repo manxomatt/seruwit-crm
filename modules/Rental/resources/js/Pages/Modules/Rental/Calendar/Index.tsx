@@ -72,7 +72,7 @@ interface StatCardProps {
     icon: string;
     active: boolean;
     onClick: () => void;
-    tone: 'all' | 'free' | 'booked' | 'in_use' | 'unavailable';
+    tone: 'all' | 'free' | 'booked' | 'in_use' | 'maintenance' | 'unavailable';
 }
 
 function StatCard({ title, count, total, icon, active, onClick, tone }: StatCardProps): JSX.Element {
@@ -98,6 +98,11 @@ function StatCard({ title, count, total, icon, active, onClick, tone }: StatCard
             activeRing: 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/40 ring-2 ring-sky-500/30',
             iconBg: 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
             countText: 'text-sky-600 dark:text-sky-400',
+        },
+        maintenance: {
+            activeRing: 'border-purple-500 bg-purple-50/50 dark:bg-purple-950/40 ring-2 ring-purple-500/30',
+            iconBg: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
+            countText: 'text-purple-600 dark:text-purple-400',
         },
         unavailable: {
             activeRing: 'border-slate-400 bg-slate-100 dark:bg-slate-800 ring-2 ring-slate-400/30',
@@ -346,7 +351,7 @@ export default function Index({ board, calendarClickToBook = true, rentalClasses
                 </section>
 
                 {/* 2. Interactive KPI Stat Cards */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     <StatCard
                         title={t('rental.availability.total', undefined, 'Total Armada')}
                         count={board.counts.total}
@@ -382,6 +387,15 @@ export default function Index({ board, calendarClickToBook = true, rentalClasses
                         tone="in_use"
                         active={statusFilter === 'in_use'}
                         onClick={() => setStatusFilter(statusFilter === 'in_use' ? 'all' : 'in_use')}
+                    />
+                    <StatCard
+                        title={t('rental.nav.maintenance', undefined, 'Servis/Blackout')}
+                        count={board.counts.maintenance ?? 0}
+                        total={board.counts.total}
+                        icon="🛠️"
+                        tone="maintenance"
+                        active={statusFilter === 'maintenance'}
+                        onClick={() => setStatusFilter(statusFilter === 'maintenance' ? 'all' : 'maintenance')}
                     />
                     <StatCard
                         title={t('rental.availability.unavailable', undefined, 'Tidak Aktif')}

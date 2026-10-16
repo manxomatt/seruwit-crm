@@ -17,6 +17,7 @@ const TABS: Array<TabItem> = [
     { icon: '🚚', labelKey: 'rental.nav.dispatch', fallbackLabel: 'Antar-Jemput (Dispatch)', route: 'rental.dispatch.index', pattern: 'rental.dispatch.*', permissionAction: 'dispatch' },
     { icon: '👨‍✈️', labelKey: 'rental.nav.duty_orders', fallbackLabel: 'Surat Jalan & Kas Jalan', route: 'rental.duty_orders.index', pattern: 'rental.duty_orders.*', permissionAction: 'dispatch' },
     { icon: '🏢', labelKey: 'rental.nav.corporate', fallbackLabel: 'Kontrak B2B', route: 'rental.corporate.index', pattern: 'rental.corporate.*', permissionAction: 'view' },
+    { icon: '🛠️', labelKey: 'rental.nav.maintenance', fallbackLabel: 'Servis & Blackout', route: 'rental.maintenance.index', pattern: 'rental.maintenance.*', permissionAction: 'view' },
     { icon: '📅', labelKey: 'rental.nav.calendar', fallbackLabel: 'Calendar', route: 'rental.calendar.index', pattern: 'rental.calendar.*', permissionAction: 'view' },
     { icon: '🚗', labelKey: 'rental.nav.availability', fallbackLabel: 'Availability', route: 'rental.availability.index', pattern: 'rental.availability.*', permissionAction: 'view' },
     { icon: '💰', labelKey: 'rental.nav.rates', fallbackLabel: 'Tariff Rates', route: 'rental.rates.index', pattern: 'rental.rates.*', permissionAction: 'rates' },

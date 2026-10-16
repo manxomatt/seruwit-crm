@@ -9,6 +9,7 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalMaintenanceBlackout;
 
 class RentalUsageCalendar
 {
@@ -43,18 +44,19 @@ class RentalUsageCalendar
      *     from: string,
      *     to: string,
      *     dates: list<string>,
-     *     counts: array{total: int, free: int, booked: int, in_use: int, unavailable: int},
+     *     counts: array{total: int, free: int, booked: int, in_use: int, maintenance: int, unavailable: int},
      *     utilisation_percent: float,
-     *     utilisation_by_date: array<string, array{free: int, booked: int, in_use: int, unavailable: int, utilisation_percent: float}>,
+     *     utilisation_by_date: array<string, array{free: int, booked: int, in_use: int, maintenance: int, unavailable: int, utilisation_percent: float}>,
      *     vehicles: list<array{
      *         id: int,
      *         name: string,
      *         plate_number: string,
      *         type: string|null,
+     *         rental_class: string|null,
      *         status: string,
      *         photo_url: string|null,
      *         availability: string,
-     *         cells: array<string, array{status: string, bookings: list<array{id: int, code: string, status: string, start_date: string, end_date: string, partner: string|null}>}>
+     *         cells: array<string, array{status: string, blackout?: array{id: int, code: string, reason: string, status: string, start_date: string, end_date: string}|null, bookings: list<array{id: int, code: string, status: string, start_date: string, end_date: string, partner: string|null}>}>
      *     }>
      * }
      */
@@ -90,17 +92,20 @@ class RentalUsageCalendar
             ->get()
             ->groupBy('vehicle_id');
 
+        $blackouts = RentalMaintenanceBlackout::activeBlackoutsBetween($from->toDateString(), $to->toDateString());
+
         $includeVehicleCells = $view !== self::VIEW_YEAR;
 
         $vehicleRows = [];
         $free = 0;
         $booked = 0;
         $inUse = 0;
+        $maintenance = 0;
         $unavailable = 0;
 
         $dayTallies = [];
         foreach ($dates as $day) {
-            $dayTallies[$day] = ['free' => 0, 'booked' => 0, 'in_use' => 0, 'unavailable' => 0];
+            $dayTallies[$day] = ['free' => 0, 'booked' => 0, 'in_use' => 0, 'maintenance' => 0, 'unavailable' => 0];
         }
 
         $occupiedVehicleDays = 0;
@@ -109,10 +114,13 @@ class RentalUsageCalendar
         foreach ($vehicles as $vehicle) {
             /** @var Collection<int, Rental> $bookings */
             $bookings = $rentals->get($vehicle->id, collect());
-            $periodAvailability = $this->resolvePeriodAvailability($vehicle, $bookings, $shopHeldVehicleIds);
+            /** @var Collection<int, RentalMaintenanceBlackout> $vehicleBlackouts */
+            $vehicleBlackouts = $blackouts->get($vehicle->id, collect());
+            $periodAvailability = $this->resolvePeriodAvailability($vehicle, $bookings, $shopHeldVehicleIds, $vehicleBlackouts->isNotEmpty());
 
             match ($periodAvailability) {
                 'unavailable' => $unavailable++,
+                'maintenance' => $maintenance++,
                 'in_use' => $inUse++,
                 'booked' => $booked++,
                 default => $free++,
@@ -125,7 +133,10 @@ class RentalUsageCalendar
                     ->filter(fn (Rental $rental): bool => $this->coversDay($rental, $day))
                     ->values();
 
-                $dayStatus = $this->resolveDayStatus($vehicle, $dayBookings, $shopHeldVehicleIds);
+                $dayBlackout = $vehicleBlackouts
+                    ->first(fn (RentalMaintenanceBlackout $b): bool => $b->start_date?->toDateString() <= $day && $b->end_date?->toDateString() >= $day);
+
+                $dayStatus = $this->resolveDayStatus($vehicle, $dayBookings, $shopHeldVehicleIds, $dayBlackout !== null);
                 $dayTallies[$day][$dayStatus]++;
 
                 if ($vehicle->status === Vehicle::STATUS_ACTIVE && ! isset($shopHeldVehicleIds[$vehicle->id])) {
@@ -138,6 +149,14 @@ class RentalUsageCalendar
                 if ($includeVehicleCells) {
                     $cells[$day] = [
                         'status' => $dayStatus,
+                        'blackout' => $dayBlackout ? [
+                            'id' => $dayBlackout->id,
+                            'code' => $dayBlackout->code,
+                            'reason' => $dayBlackout->reason,
+                            'status' => $dayBlackout->status,
+                            'start_date' => $dayBlackout->start_date?->toDateString(),
+                            'end_date' => $dayBlackout->end_date?->toDateString(),
+                        ] : null,
                         'bookings' => $dayBookings
                             ->filter(fn (Rental $rental): bool => in_array($rental->status, [
                                 Rental::STATUS_PENDING_RESERVED,
@@ -196,6 +215,7 @@ class RentalUsageCalendar
                 'free' => $free,
                 'booked' => $booked,
                 'in_use' => $inUse,
+                'maintenance' => $maintenance,
                 'unavailable' => $unavailable,
             ],
             'utilisation_percent' => $availableVehicleDays > 0
@@ -246,10 +266,14 @@ class RentalUsageCalendar
      * @param  Collection<int, Rental>  $dayBookings
      * @param  array<int, true>  $shopHeldVehicleIds
      */
-    private function resolveDayStatus(Vehicle $vehicle, Collection $dayBookings, array $shopHeldVehicleIds): string
+    private function resolveDayStatus(Vehicle $vehicle, Collection $dayBookings, array $shopHeldVehicleIds, bool $hasBlackout = false): string
     {
         if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
             return 'unavailable';
+        }
+
+        if ($hasBlackout) {
+            return 'maintenance';
         }
 
         if ($dayBookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_ACTIVE)) {
@@ -270,10 +294,14 @@ class RentalUsageCalendar
      * @param  Collection<int, Rental>  $bookings
      * @param  array<int, true>  $shopHeldVehicleIds
      */
-    private function resolvePeriodAvailability(Vehicle $vehicle, Collection $bookings, array $shopHeldVehicleIds): string
+    private function resolvePeriodAvailability(Vehicle $vehicle, Collection $bookings, array $shopHeldVehicleIds, bool $hasBlackout = false): string
     {
         if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
             return 'unavailable';
+        }
+
+        if ($hasBlackout) {
+            return 'maintenance';
         }
 
         if ($bookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_ACTIVE)) {

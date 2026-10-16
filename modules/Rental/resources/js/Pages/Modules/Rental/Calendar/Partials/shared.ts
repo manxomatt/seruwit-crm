@@ -1,6 +1,6 @@
 export type CalendarView = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
-export type CellStatus = 'free' | 'booked' | 'in_use' | 'unavailable';
+export type CellStatus = 'free' | 'booked' | 'in_use' | 'maintenance' | 'unavailable';
 
 export type Booking = {
     id: number;
@@ -11,9 +11,19 @@ export type Booking = {
     partner: string | null;
 };
 
+export type Blackout = {
+    id: number;
+    code: string;
+    reason: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+};
+
 export type CalendarCell = {
     status: CellStatus;
     bookings: Booking[];
+    blackout?: Blackout | null;
 };
 
 export type CalendarVehicle = {
@@ -25,6 +35,7 @@ export type CalendarVehicle = {
     status: string;
     photo_url: string | null;
     availability: CellStatus;
+    blackout?: Blackout | null;
     cells: Record<string, CalendarCell>;
 };
 
@@ -32,6 +43,7 @@ export type DayUtilisation = {
     free: number;
     booked: number;
     in_use: number;
+    maintenance?: number;
     unavailable: number;
     utilisation_percent: number;
 };
@@ -47,6 +59,7 @@ export type CalendarBoard = {
         free: number;
         booked: number;
         in_use: number;
+        maintenance?: number;
         unavailable: number;
     };
     utilisation_percent: number;
@@ -58,6 +71,7 @@ export const CELL_BG: Record<CellStatus, string> = {
     free: 'bg-emerald-100 dark:bg-emerald-950/60',
     booked: 'bg-amber-200 dark:bg-amber-900/70',
     in_use: 'bg-sky-200 dark:bg-sky-900/70',
+    maintenance: 'bg-purple-200 dark:bg-purple-900/70',
     unavailable: 'bg-slate-200 dark:bg-slate-700',
 };
 
@@ -65,6 +79,7 @@ export const CELL_BADGE: Record<CellStatus, string> = {
     free: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950 dark:text-emerald-200',
     booked: 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950 dark:text-amber-200',
     in_use: 'bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-600/20 dark:bg-sky-950 dark:text-sky-200',
+    maintenance: 'bg-purple-50 text-purple-800 ring-1 ring-inset ring-purple-600/20 dark:bg-purple-950 dark:text-purple-200',
     unavailable: 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20 dark:bg-slate-800 dark:text-slate-300',
 };
 

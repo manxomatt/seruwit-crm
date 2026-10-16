@@ -404,6 +404,7 @@ const MENU_GROUPS: MenuGroup[] = [
             'rental-dispatch',
             'rental-duty-orders',
             'rental-corporate',
+            'rental-maintenance',
             'rental-calendar',
             'rental-availability',
             'rental-rates',
@@ -597,6 +598,14 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             route: 'module.rental.corporate.index',
             routePatterns: ['module.rental.corporate.*'],
             icon: <BuildingIcon />,
+            permissionAction: 'view',
+        },
+        {
+            key: 'rental-maintenance',
+            labelKey: 'rental.nav.maintenance',
+            route: 'module.rental.maintenance.index',
+            routePatterns: ['module.rental.maintenance.*'],
+            icon: <WrenchIcon />,
             permissionAction: 'view',
         },
         {

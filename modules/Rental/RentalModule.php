@@ -20,6 +20,7 @@ use Modules\Rental\Http\Controllers\RentalCorporateContractController;
 use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalDispatchController;
 use Modules\Rental\Http\Controllers\RentalDutyOrderController;
+use Modules\Rental\Http\Controllers\RentalMaintenanceController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 use Modules\Rental\Http\Controllers\RentalReservationWizardController;
@@ -188,6 +189,13 @@ class RentalModule implements ModuleContract
         Route::put('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'update'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.update');
         Route::post('/rental/corporate-contracts/{contract}/attach-rentals', [RentalCorporateContractController::class, 'attachRentals'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.attach_rentals');
         Route::post('/rental/corporate-contracts/{contract}/consolidate-invoice', [RentalCorporateContractController::class, 'consolidateInvoice'])->whereNumber('contract')->middleware('permission:rental,finance')->name('rental.corporate.consolidate_invoice');
+
+        // Fleet Maintenance, Service Reminders & Blackout Calendar (before {rental} wildcard)
+        Route::get('/rental/maintenance', [RentalMaintenanceController::class, 'index'])->middleware('permission:rental,view')->name('rental.maintenance.index');
+        Route::post('/rental/maintenance', [RentalMaintenanceController::class, 'store'])->middleware('permission:rental,bookings')->name('rental.maintenance.store');
+        Route::put('/rental/maintenance/{blackout}', [RentalMaintenanceController::class, 'update'])->whereNumber('blackout')->middleware('permission:rental,bookings')->name('rental.maintenance.update');
+        Route::post('/rental/maintenance/{blackout}/complete', [RentalMaintenanceController::class, 'complete'])->whereNumber('blackout')->middleware('permission:rental,bookings')->name('rental.maintenance.complete');
+        Route::delete('/rental/maintenance/{blackout}', [RentalMaintenanceController::class, 'destroy'])->whereNumber('blackout')->middleware('permission:rental,bookings')->name('rental.maintenance.destroy');
 
         // Reservation wizard JSON helpers (before {rental} wildcard)
         Route::get('/rental/reservations/available-vehicles', [RentalReservationWizardController::class, 'availableVehicles'])

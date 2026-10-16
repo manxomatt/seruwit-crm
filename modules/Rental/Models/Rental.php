@@ -672,6 +672,15 @@ class Rental extends Model
             ]);
         }
 
+        if ($blackout = RentalMaintenanceBlackout::findOverlappingBlackout((int) $vehicle->id, $start, $end)) {
+            $reasons[] = __('rental.validation.vehicle_maintenance_blackout', [
+                'name' => $vehicle->name,
+                'reason' => $blackout->reason,
+                'start' => $blackout->start_date?->format('d/m/Y') ?? $start,
+                'end' => $blackout->end_date?->format('d/m/Y') ?? $end,
+            ]);
+        }
+
         if ($vehicle->active_until && $vehicle->active_until->isPast()) {
             $reasons[] = __('rental.validation.vehicle_capacity_expired', [
                 'name' => $vehicle->name,

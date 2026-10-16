@@ -164,6 +164,25 @@ export default function TimelineView({
                                         );
                                     }
 
+                                    if (status === 'maintenance') {
+                                        const blackout = cell?.blackout ?? null;
+                                        const tooltip = blackout
+                                            ? `🛠️ Servis: ${blackout.reason} [${blackout.start_date} → ${blackout.end_date}]`
+                                            : '🛠️ Dalam Pemeliharaan / Servis Bengkel';
+
+                                        return (
+                                            <td key={`${vehicle.id}-${date}`} className={`p-1.5 text-center align-middle ${isToday ? 'bg-indigo-50/20 dark:bg-indigo-950/10' : ''}`}>
+                                                <Link
+                                                    href={prefixedRoute('rental.maintenance.index')}
+                                                    title={tooltip}
+                                                    className="mx-auto flex h-8 w-full items-center justify-center rounded-xl bg-purple-600 text-white hover:bg-purple-700 px-1 text-[10px] font-bold shadow-xs transition transform hover:scale-[1.03]"
+                                                >
+                                                    <span>🛠️</span>
+                                                </Link>
+                                            </td>
+                                        );
+                                    }
+
                                     if (status === 'in_use' || status === 'booked') {
                                         const isUse = status === 'in_use';
                                         const bgClass = isUse
