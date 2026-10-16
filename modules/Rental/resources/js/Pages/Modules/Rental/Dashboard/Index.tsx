@@ -1,11 +1,12 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import RentalNav from '../../../../RentalNav';
 
@@ -76,6 +77,9 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { counts, utilisation, revenue, overdue, ending_soon, idle_vehicles, compliance, kpis } = board;
+    const { flash } = usePage().props as {
+        flash?: { success?: string; error?: string };
+    };
 
     const [revenueTab, setRevenueTab] = useState<'vehicle' | 'partner' | 'type'>('vehicle');
 
@@ -90,17 +94,10 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                     actions={
                         <div className="flex items-center gap-2">
                             <LanguageSwitcher compact />
-                            <Link
-                                href={prefixedRoute('rental.create')}
-                                className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
-                            >
-                                <span>🚗</span>
-                                <span>{t('rental.dashboard.create_rental', undefined, 'Buat Sewa Baru')}</span>
-                            </Link>
 
                             {/* Export CSV Dropdown */}
                             <Menu as="div" className="relative inline-block text-left">
-                                <MenuButton className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                <MenuButton className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                     <span>📥</span>
                                     <span>{t('rental.dashboard.export_csv', undefined, 'Export CSV')}</span>
                                     <span className="text-[10px] text-slate-400">▼</span>
@@ -148,6 +145,13 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                     </MenuItem>
                                 </MenuItems>
                             </Menu>
+
+                            <Link href={prefixedRoute('rental.create')}>
+                                <PrimaryButton className="gap-2 rounded-xl shadow-sm">
+                                    <span>🚗</span>
+                                    <span>{t('rental.dashboard.create_rental', undefined, 'Buat Sewa Baru')}</span>
+                                </PrimaryButton>
+                            </Link>
                         </div>
                     }
                 />
@@ -156,7 +160,18 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
             <Head title={t('rental.dashboard.head', undefined, 'Dashboard Rental')} />
             <RentalNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
+            {flash?.success && (
+                <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-xs font-semibold text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 shadow-2xs">
+                    ✓ {flash.success}
+                </div>
+            )}
+            {flash?.error && (
+                <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-xs font-semibold text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 shadow-2xs">
+                    ⚠️ {flash.error}
+                </div>
+            )}
+
+            <div className="space-y-6 pb-12">
                 {/* 1. Main Executive KPI Cards (Top 4) */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Active Rentals */}
