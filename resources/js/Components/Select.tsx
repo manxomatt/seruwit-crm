@@ -251,7 +251,7 @@ export default function Select({
     id,
     value,
     onChange,
-    options,
+    options = [],
     placeholder,
     searchPlaceholder,
     emptyText,

@@ -149,13 +149,15 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                         <Select
                             id="provider"
                             value={form.data.provider}
-                            onChange={(e) => form.setData('provider', e.target.value)}
+                            onChange={(value) => form.setData('provider', value)}
+                            options={[
+                                { value: 'fonnte', label: 'Fonnte (Rekomendasi - Mudah & Scan QR)' },
+                                { value: 'custom', label: 'Custom Gateway Sendiri (Self-Hosted / Webhook)' },
+                                { value: 'log', label: 'Mode Simulasi (Log Only - Tanpa Kuota)' },
+                            ]}
+                            searchable={false}
                             className="mt-1 w-full"
-                        >
-                            <option value="fonnte">Fonnte (Rekomendasi - Mudah & Scan QR)</option>
-                            <option value="custom">Custom Gateway Sendiri (Self-Hosted / Webhook)</option>
-                            <option value="log">Mode Simulasi (Log Only - Tanpa Kuota)</option>
-                        </Select>
+                        />
                         <p className="mt-1.5 text-xs text-slate-500">
                             Setiap tenant menggunakan kredensial WhatsApp masing-masing agar pesan dikirim atas nama nomor CS kantor sendiri.
                         </p>
