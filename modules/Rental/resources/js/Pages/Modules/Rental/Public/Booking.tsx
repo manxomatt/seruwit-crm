@@ -178,6 +178,24 @@ interface Booking {
         return_photos?: string[];
         return_signature_url?: string | null;
     };
+    deposit_refund?: {
+        has_deposit: boolean;
+        deposit_amount: number;
+        deposit_received: boolean;
+        deposit_status: string;
+        deposit_applied_amount: number;
+        deposit_refunded_amount: number;
+        deposit_settled_at: string | null;
+        refund_status: 'not_applicable' | 'pending_deposit' | 'pending_return' | 'bank_submitted' | 'pending_bank_info' | 'in_review' | 'approved' | 'refunded' | 'forfeited' | string;
+        bank_name: string | null;
+        account_number: string | null;
+        account_name: string | null;
+        bank_submitted_at: string | null;
+        refund_proof_url: string | null;
+        refund_notes: string | null;
+        refunded_at: string | null;
+        can_submit_bank: boolean;
+    };
 }
 
 interface Props {
@@ -602,6 +620,36 @@ export default function BookingView({ brand, booking, gateway_available, company
             preserveScroll: true,
             onSuccess: () => setShowReturnModal(false),
         });
+    };
+
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const refundAccountForm = useForm({
+        booker_phone: booking.booker_phone ?? '',
+        otp_code: '',
+        bank_name: booking.deposit_refund?.bank_name ?? 'BCA',
+        custom_bank_name: '',
+        account_number: booking.deposit_refund?.account_number ?? '',
+        account_name: booking.deposit_refund?.account_name ?? '',
+    });
+
+    const submitRefundAccount = (e: FormEvent) => {
+        e.preventDefault();
+        const effectiveBankName = refundAccountForm.data.bank_name === 'LAINNYA'
+            ? refundAccountForm.data.custom_bank_name
+            : refundAccountForm.data.bank_name;
+
+        refundAccountForm.transform((data) => ({
+            ...data,
+            bank_name: effectiveBankName,
+        })).post(
+            typeof route === 'function' && route().has('book.rental.booking.refund_account')
+                ? route('book.rental.booking.refund_account', booking.public_token)
+                : `/book/rental/booking/${booking.public_token}/refund-account`,
+            {
+                preserveScroll: true,
+                onSuccess: () => setShowRefundModal(false),
+            }
+        );
     };
 
     const sendOtp = async (phone: string) => {
@@ -2136,6 +2184,211 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             )}
 
+                            {/* Security Deposit Refund Hub Card */}
+                            {booking.deposit_refund?.has_deposit && (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 text-lg">
+                                                💰
+                                            </span>
+                                            <div>
+                                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Pusat Pengembalian Deposit (Refund Hub)
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500">
+                                                    Total Jaminan: <strong className="text-slate-800">{money(booking.deposit_refund.deposit_amount)}</strong>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Status Badge */}
+                                        {(() => {
+                                            const s = booking.deposit_refund.refund_status;
+                                            if (s === 'refunded') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs font-black text-emerald-700 shadow-2xs">
+                                                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                        Dana Telah Ditransfer
+                                                    </span>
+                                                );
+                                            }
+                                            if (s === 'approved') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-300 px-3 py-1 text-xs font-black text-blue-700 shadow-2xs">
+                                                        <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                                                        Disetujui • Siap Ditransfer
+                                                    </span>
+                                                );
+                                            }
+                                            if (s === 'in_review') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 border border-purple-300 px-3 py-1 text-xs font-black text-purple-700 shadow-2xs">
+                                                        <span className="h-2 w-2 rounded-full bg-purple-500"></span>
+                                                        Pemeriksaan E-Tilang & Denda
+                                                    </span>
+                                                );
+                                            }
+                                            if (s === 'pending_bank_info') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-300 px-3 py-1 text-xs font-black text-amber-700 shadow-2xs">
+                                                        <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping"></span>
+                                                        Perlu Rekening Refund
+                                                    </span>
+                                                );
+                                            }
+                                            if (s === 'bank_submitted') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-300 px-3 py-1 text-xs font-black text-teal-700 shadow-2xs">
+                                                        <span className="h-2 w-2 rounded-full bg-teal-500"></span>
+                                                        Rekening Tersimpan
+                                                    </span>
+                                                );
+                                            }
+                                            if (s === 'forfeited') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-300 px-3 py-1 text-xs font-black text-slate-700 shadow-2xs">
+                                                        Dipotong Pelunasan Sewa
+                                                    </span>
+                                                );
+                                            }
+                                            return (
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
+                                                    Ditahan Selama Sewa
+                                                </span>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* Calculation Summary Box */}
+                                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 text-xs space-y-2">
+                                        <div className="flex justify-between items-center text-slate-600">
+                                            <span>Uang Jaminan Deposit Awal:</span>
+                                            <span className="font-bold text-slate-800">{money(booking.deposit_refund.deposit_amount)}</span>
+                                        </div>
+                                        {booking.deposit_refund.deposit_applied_amount > 0 && (
+                                            <div className="flex justify-between items-center text-rose-600">
+                                                <span>Potongan Biaya / Kerusakan / Denda:</span>
+                                                <span className="font-bold">- {money(booking.deposit_refund.deposit_applied_amount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-slate-900 font-black">
+                                            <span>Total Pengembalian Bersih:</span>
+                                            <span className={`text-sm ${booking.deposit_refund.refund_status === 'refunded' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                {money(booking.deposit_refund.deposit_status === 'settled'
+                                                    ? booking.deposit_refund.deposit_refunded_amount
+                                                    : booking.deposit_refund.deposit_amount)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Destination Bank Account Section */}
+                                    {booking.deposit_refund.bank_name ? (
+                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                                                    <span>🏦</span> Rekening Tujuan Pengembalian:
+                                                </span>
+                                                {booking.deposit_refund.can_submit_bank && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (!isVerified) {
+                                                                alert('Mohon verifikasi nomor WhatsApp Anda terlebih dahulu.');
+                                                                return;
+                                                            }
+                                                            setShowRefundModal(true);
+                                                        }}
+                                                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline"
+                                                    >
+                                                        Ubah Rekening
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="text-slate-900 font-bold text-sm">
+                                                {booking.deposit_refund.bank_name} • {booking.deposit_refund.account_number}
+                                            </div>
+                                            <div className="text-slate-600 text-xs">
+                                                Atas Nama: <strong className="text-slate-800">{booking.deposit_refund.account_name}</strong>
+                                            </div>
+                                            {booking.deposit_refund.bank_submitted_at && (
+                                                <div className="text-[10px] text-slate-500 pt-1">
+                                                    Diajukan pada {booking.deposit_refund.bank_submitted_at}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs space-y-3">
+                                            <div className="flex items-start gap-2.5">
+                                                <span className="text-lg">💳</span>
+                                                <div>
+                                                    <h4 className="font-bold text-amber-950">Rekening Pengembalian Belum Terdaftar</h4>
+                                                    <p className="text-[11px] text-amber-900/80 mt-0.5 leading-relaxed">
+                                                        Agar dana deposit dapat langsung ditransfer kembali setelah masa sewa selesai, silakan daftarkan nomor rekening bank atau e-wallet Anda.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {booking.deposit_refund.can_submit_bank && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!isVerified) {
+                                                            alert('Mohon verifikasi nomor WhatsApp Anda terlebih dahulu.');
+                                                            return;
+                                                        }
+                                                        setShowRefundModal(true);
+                                                    }}
+                                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 text-xs shadow-xs transition"
+                                                >
+                                                    <span>Input Rekening Pengembalian Sekarang</span>
+                                                    <span>→</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Transfer Receipt Proof Section (When Refunded) */}
+                                    {booking.deposit_refund.refund_status === 'refunded' && (
+                                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                                                    <span>🧾</span> Bukti Transfer Pengembalian Dana
+                                                </div>
+                                                {booking.deposit_refund.refunded_at && (
+                                                    <span className="text-[11px] text-slate-500">{booking.deposit_refund.refunded_at}</span>
+                                                )}
+                                            </div>
+                                            {booking.deposit_refund.refund_notes && (
+                                                <p className="text-[11px] text-slate-600 italic">
+                                                    "{booking.deposit_refund.refund_notes}"
+                                                </p>
+                                            )}
+                                            {booking.deposit_refund.refund_proof_url ? (
+                                                <a
+                                                    href={booking.deposit_refund.refund_proof_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50 transition shadow-2xs"
+                                                >
+                                                    <span>📎</span>
+                                                    <span>Lihat Bukti Transfer Bank (Struk)</span>
+                                                    <span>↗</span>
+                                                </a>
+                                            ) : (
+                                                <p className="text-[11px] text-slate-500">
+                                                    Transfer telah berhasil diselesaikan oleh tim Finance kami.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Additional policy information */}
+                                    <p className="text-[10px] text-slate-400 leading-relaxed">
+                                        ℹ️ <em>Kebijakan Pengembalian: Uang jaminan deposit diproses 1-3 hari kerja setelah unit dikembalikan untuk memastikan tidak ada denda e-tilang (ETLE) atau kerusakan tersembunyi.</em>
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Pending Extension Request Card */}
                             {booking.extend_request && (
                                 <div className={`rounded-2xl p-5 border shadow-xs space-y-2.5 ${
@@ -2375,6 +2628,151 @@ export default function BookingView({ brand, booking, gateway_available, company
                             {cancelForm.processing ? 'Memproses...' : 'Ya, Batalkan'}
                         </button>
                     </div>
+                </div>
+            </Modal>
+
+            {/* Refund Account Input Modal */}
+            <Modal show={showRefundModal} onClose={() => setShowRefundModal(false)} maxWidth="md">
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 text-base">
+                                💳
+                            </span>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                    Rekening Pengembalian Deposit
+                                </h3>
+                                <p className="text-[11px] text-slate-500 font-medium">
+                                    Booking #{booking.code} • Total: {money(booking.deposit_refund?.deposit_amount ?? 0)}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowRefundModal(false)}
+                            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        💡 <em>Pastikan nama lengkap sesuai dengan nama yang tercantum pada rekening bank atau aplikasi e-wallet Anda agar transfer tidak ditolak oleh sistem perbankan.</em>
+                    </p>
+
+                    <form onSubmit={submitRefundAccount} className="space-y-3.5 text-xs">
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-700">Bank / E-Wallet Tujuan *</label>
+                            <select
+                                value={refundAccountForm.data.bank_name}
+                                onChange={(e) => refundAccountForm.setData('bank_name', e.target.value)}
+                                className={`${fieldClassName} mt-1`}
+                                required
+                            >
+                                <option value="BCA">Bank BCA</option>
+                                <option value="MANDIRI">Bank Mandiri</option>
+                                <option value="BRI">Bank BRI</option>
+                                <option value="BNI">Bank BNI</option>
+                                <option value="BSI">Bank Syariah Indonesia (BSI)</option>
+                                <option value="CIMB">Bank CIMB Niaga</option>
+                                <option value="PERMATA">Bank Permata</option>
+                                <option value="JAGO">Bank Jago</option>
+                                <option value="SEABANK">SeaBank Indonesia</option>
+                                <option value="DANA">E-Wallet DANA</option>
+                                <option value="GOPAY">E-Wallet GoPay</option>
+                                <option value="OVO">E-Wallet OVO</option>
+                                <option value="SHOPEEPAY">E-Wallet ShopeePay</option>
+                                <option value="LAINNYA">Bank Lainnya...</option>
+                            </select>
+                        </div>
+
+                        {refundAccountForm.data.bank_name === 'LAINNYA' && (
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-700">Nama Bank Lainnya *</label>
+                                <input
+                                    type="text"
+                                    placeholder="Contoh: Bank Danamon / Bank BJB"
+                                    value={refundAccountForm.data.custom_bank_name}
+                                    onChange={(e) => refundAccountForm.setData('custom_bank_name', e.target.value)}
+                                    className={`${fieldClassName} mt-1`}
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-700">Nomor Rekening / No. HP E-Wallet *</label>
+                            <input
+                                type="text"
+                                placeholder="Contoh: 1234567890 atau 08123456789"
+                                value={refundAccountForm.data.account_number}
+                                onChange={(e) => refundAccountForm.setData('account_number', e.target.value)}
+                                className={`${fieldClassName} mt-1 font-mono`}
+                                required
+                            />
+                            {refundAccountForm.errors.account_number && (
+                                <p className="text-[11px] text-rose-600 mt-1">{refundAccountForm.errors.account_number}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-700">Nama Lengkap Pemilik Rekening *</label>
+                            <input
+                                type="text"
+                                placeholder="Nama sesuai buku tabungan / aplikasi"
+                                value={refundAccountForm.data.account_name}
+                                onChange={(e) => refundAccountForm.setData('account_name', e.target.value)}
+                                className={`${fieldClassName} mt-1 uppercase`}
+                                required
+                            />
+                            {refundAccountForm.errors.account_name && (
+                                <p className="text-[11px] text-rose-600 mt-1">{refundAccountForm.errors.account_name}</p>
+                            )}
+                        </div>
+
+                        {!isVerified && (
+                            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2 text-amber-900">
+                                <p className="text-[11px] font-bold">Verifikasi WhatsApp Diperlukan</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="6 digit kode OTP"
+                                        maxLength={6}
+                                        value={refundAccountForm.data.otp_code}
+                                        onChange={(e) => refundAccountForm.setData('otp_code', e.target.value)}
+                                        className={`${fieldClassName} font-mono text-center tracking-widest`}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => sendOtp(booking.booker_phone || refundAccountForm.data.booker_phone)}
+                                        disabled={sendingPageOtp}
+                                        className="rounded-xl bg-slate-900 text-white font-bold px-3 py-1.5 text-xs whitespace-nowrap"
+                                    >
+                                        {sendingPageOtp ? '...' : 'Kirim OTP'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowRefundModal(false)}
+                                className="rounded-xl border border-slate-250 bg-white px-4 py-2.5 font-bold text-slate-600 hover:bg-slate-50 transition"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={refundAccountForm.processing}
+                                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 shadow-xs transition disabled:opacity-50"
+                            >
+                                {refundAccountForm.processing ? 'Menyimpan...' : 'Simpan Rekening'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </Modal>
         </div>

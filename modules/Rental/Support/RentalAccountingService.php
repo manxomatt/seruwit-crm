@@ -198,7 +198,7 @@ class RentalAccountingService
             ]);
         }
 
-        DB::transaction(function () use ($rental, $applied, $refunded, $deposit): void {
+        DB::transaction(function () use ($rental, $applied, $refunded, $deposit, $amounts): void {
             $this->issueDraftInvoices($rental);
 
             $toAr = 0.0;
@@ -209,10 +209,7 @@ class RentalAccountingService
                 $forfeited = round(max(0, $applied - $toAr), 2);
             }
 
-            $rental->settleDeposit([
-                'deposit_applied_amount' => $applied,
-                'deposit_refunded_amount' => $refunded,
-            ]);
+            $rental->settleDeposit($amounts);
 
             if (! $this->accountingAvailable() || $deposit < 0.005) {
                 return;

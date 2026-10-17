@@ -243,6 +243,7 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,finance')->name('rental.deposit.receive');
         Route::post('/rental/{rental}/deposit-pay-online', [RentalActionController::class, 'payDepositOnline'])->middleware('permission:rental,finance')->name('rental.deposit.pay_online');
         Route::post('/rental/{rental}/deposit-settle', [RentalActionController::class, 'settleDeposit'])->middleware('permission:rental,finance')->name('rental.deposit.settle');
+        Route::post('/rental/{rental}/deposit-refund-proof', [RentalActionController::class, 'uploadDepositRefundProof'])->middleware('permission:rental,finance')->name('rental.deposit.refund_proof');
         Route::post('/rental/{rental}/pay-invoices', [RentalActionController::class, 'payInvoices'])->middleware('permission:rental,finance')->name('rental.invoices.pay');
         Route::post('/rental/{rental}/approve-deposit-proof', [RentalActionController::class, 'approveDepositProof'])->middleware('permission:rental,finance')->name('rental.approve_deposit_proof');
         Route::post('/rental/{rental}/reject-deposit-proof', [RentalActionController::class, 'rejectDepositProof'])->middleware('permission:rental,finance')->name('rental.reject_deposit_proof');

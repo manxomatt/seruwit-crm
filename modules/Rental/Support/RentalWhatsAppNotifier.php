@@ -281,6 +281,62 @@ class RentalWhatsAppNotifier
         return $this->dispatch($phone, $message);
     }
 
+    public function sendDepositRefundBankSubmitted(Rental $rental): bool
+    {
+        $phone = $this->resolvePhone($rental);
+        if (blank($phone)) {
+            return false;
+        }
+
+        $rental->loadMissing(['vehicle', 'partner']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $rental->partner?->name ?? 'Pelanggan';
+        $portalUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
+
+        $bankInfo = "{$rental->deposit_refund_bank_name} - {$rental->deposit_refund_account_number} a/n {$rental->deposit_refund_account_name}";
+
+        $message = "💳 *REKENING PENGEMBALIAN DEPOSIT DITERIMA - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Data rekening tujuan pengembalian dana deposit untuk sewa *{$rental->code}* telah berhasil kami simpan:\n\n"
+            ."📋 *Rincian Rekening:*\n"
+            ."• Bank/E-Wallet: *{$bankInfo}*\n"
+            .'• Total Deposit: *Rp '.number_format((float) $rental->deposit_amount, 0, ',', '.')."*\n\n"
+            ."Tim Finance kami akan memproses verifikasi dan pencairan dana pengembalian deposit ke rekening tersebut sesuai prosedur (1-3 hari kerja setelah unit kembali).\n\n"
+            .($portalUrl ? "Pantau status pengembalian deposit secara live:\n{$portalUrl}\n\n" : '')
+            .'Terima kasih atas kerja sama Anda!';
+
+        return $this->dispatch($phone, $message);
+    }
+
+    public function sendDepositRefundTransferred(Rental $rental): bool
+    {
+        $phone = $this->resolvePhone($rental);
+        if (blank($phone)) {
+            return false;
+        }
+
+        $rental->loadMissing(['vehicle', 'partner']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $rental->partner?->name ?? 'Pelanggan';
+        $portalUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
+
+        $refundAmount = (float) $rental->deposit_refunded_amount;
+        $formattedRefund = 'Rp '.number_format($refundAmount, 0, ',', '.');
+        $bankInfo = "{$rental->deposit_refund_bank_name} - {$rental->deposit_refund_account_number} a/n {$rental->deposit_refund_account_name}";
+
+        $message = "💸 *DANA DEPOSIT BERHASIL DITRANSFER - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Kabar baik! Dana pengembalian jaminan deposit untuk pesanan rental *{$rental->code}* sebesar *{$formattedRefund}* telah *SELESAI DITRANSFER* ke rekening Anda:\n\n"
+            ."🏦 *Tujuan Transfer:*\n"
+            ."• {$bankInfo}\n"
+            ."• Jumlah Dana: *{$formattedRefund}*\n\n"
+            .($rental->deposit_refund_notes ? "📝 *Catatan Finance:*\n{$rental->deposit_refund_notes}\n\n" : '')
+            .($portalUrl ? "Lihat tanda terima & bukti transfer melalui portal resmi:\n{$portalUrl}\n\n" : '')
+            ."Terima kasih banyak telah mempercayakan rental kendaraan kepada {$companyName}. Sampai jumpa pada perjalanan berikutnya!";
+
+        return $this->dispatch($phone, $message);
+    }
+
     protected function resolvePhone(Rental $rental): ?string
     {
         $raw = $rental->booker_phone

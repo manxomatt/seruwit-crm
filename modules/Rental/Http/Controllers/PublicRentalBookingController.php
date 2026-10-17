@@ -1097,6 +1097,56 @@ class PublicRentalBookingController extends Controller
             ->with('success', __('rental.messages.returned'));
     }
 
+    public function submitRefundAccount(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        abort_if(! $rental->canSubmitRefundAccount(), 422, 'Pengajuan rekening pengembalian deposit tidak diizinkan untuk status booking ini.');
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
+        $data = $request->validate([
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
+            'bank_name' => ['required', 'string', 'max:100'],
+            'account_number' => ['required', 'string', 'max:50'],
+            'account_name' => ['required', 'string', 'max:150'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
+            return $error;
+        }
+
+        $newRefundStatus = in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
+            ? ($rental->deposit_status === Rental::DEPOSIT_SETTLED ? Rental::REFUND_STATUS_APPROVED : Rental::REFUND_STATUS_IN_REVIEW)
+            : Rental::REFUND_STATUS_BANK_SUBMITTED;
+
+        $rental->update([
+            'deposit_refund_bank_name' => trim($data['bank_name']),
+            'deposit_refund_account_number' => preg_replace('/[^0-9A-Za-z\-]/', '', trim($data['account_number'])),
+            'deposit_refund_account_name' => strtoupper(trim($data['account_name'])),
+            'deposit_refund_bank_submitted_at' => now(),
+            'deposit_refund_status' => $newRefundStatus,
+        ]);
+
+        try {
+            app(RentalWhatsAppNotifier::class)
+                ->sendDepositRefundBankSubmitted($rental->fresh(['vehicle', 'partner']));
+        } catch (Throwable $e) {
+            Log::warning('[PublicRental Refund Bank WhatsApp] '.$e->getMessage(), ['rental_id' => $rental->id]);
+        }
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', 'Data rekening pengembalian deposit berhasil disimpan.');
+    }
+
     public function history(Request $request, PassengerOtpService $otp): Response
     {
         $this->ensureAvailable();
@@ -1649,7 +1699,7 @@ class PublicRentalBookingController extends Controller
                 ],
                 [
                     'key' => 'return_completed',
-                    'title' => 'Pengembalian & Selesai',
+                    'title' => 'Pengembalian Unit',
                     'description' => in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
                         ? 'Kendaraan telah dikembalikan dalam kondisi baik'
                         : 'Pengembalian unit di akhir masa sewa',
@@ -1657,6 +1707,23 @@ class PublicRentalBookingController extends Controller
                         ? 'completed'
                         : 'pending',
                     'timestamp' => $rental->returned_at?->format('d M Y, H:i').' WIB',
+                ],
+                [
+                    'key' => 'deposit_refund_settled',
+                    'title' => 'Penyelesaian & Refund Deposit',
+                    'description' => ((float) $rental->deposit_amount <= 0)
+                        ? 'Sewa tidak menggunakan jaminan deposit'
+                        : ($rental->resolveDepositRefundStatus() === Rental::REFUND_STATUS_REFUNDED
+                            ? 'Deposit telah berhasil dikembalikan ke rekening'
+                            : ($rental->resolveDepositRefundStatus() === Rental::REFUND_STATUS_APPROVED
+                                ? 'Pencairan deposit disetujui, siap ditransfer'
+                                : ($rental->resolveDepositRefundStatus() === Rental::REFUND_STATUS_FORFEITED
+                                    ? 'Deposit dipotong penuh untuk pelunasan sewa'
+                                    : 'Pemeriksaan denda/tilang dan pengembalian dana deposit'))),
+                    'status' => ((float) $rental->deposit_amount <= 0 || in_array($rental->resolveDepositRefundStatus(), [Rental::REFUND_STATUS_REFUNDED, Rental::REFUND_STATUS_FORFEITED], true))
+                        ? (in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true) ? 'completed' : 'pending')
+                        : (in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true) ? 'current' : 'pending'),
+                    'timestamp' => $rental->deposit_refunded_at?->format('d M Y, H:i').' WIB',
                 ],
             ],
             'vehicle' => $rental->vehicle ? [
@@ -1736,6 +1803,24 @@ class PublicRentalBookingController extends Controller
                 'return_checklist' => $rental->return_checklist,
                 'return_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->return_photos),
                 'return_signature_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->return_signature_path),
+            ],
+            'deposit_refund' => [
+                'has_deposit' => (float) $rental->deposit_amount > 0,
+                'deposit_amount' => (float) $rental->deposit_amount,
+                'deposit_received' => $rental->isDepositReceived(),
+                'deposit_status' => $rental->deposit_status,
+                'deposit_applied_amount' => (float) $rental->deposit_applied_amount,
+                'deposit_refunded_amount' => (float) $rental->deposit_refunded_amount,
+                'deposit_settled_at' => $rental->deposit_settled_at?->format('d M Y, H:i').' WIB',
+                'refund_status' => $rental->resolveDepositRefundStatus(),
+                'bank_name' => $rental->deposit_refund_bank_name,
+                'account_number' => $rental->deposit_refund_account_number,
+                'account_name' => $rental->deposit_refund_account_name,
+                'bank_submitted_at' => $rental->deposit_refund_bank_submitted_at?->format('d M Y, H:i').' WIB',
+                'refund_proof_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->deposit_refund_proof_path),
+                'refund_notes' => $rental->deposit_refund_notes,
+                'refunded_at' => $rental->deposit_refunded_at?->format('d M Y, H:i').' WIB',
+                'can_submit_bank' => $rental->canSubmitRefundAccount(),
             ],
         ];
     }

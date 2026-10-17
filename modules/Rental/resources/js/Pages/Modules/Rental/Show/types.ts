@@ -164,6 +164,14 @@ export interface Rental {
     deposit_proof_status?: string | null;
     deposit_proof_approved_at?: string | null;
     deposit_proof_rejected_reason?: string | null;
+    deposit_refund_status?: string | null;
+    deposit_refund_bank_name?: string | null;
+    deposit_refund_account_number?: string | null;
+    deposit_refund_account_name?: string | null;
+    deposit_refund_bank_submitted_at?: string | null;
+    deposit_refund_proof_path?: string | null;
+    deposit_refund_notes?: string | null;
+    deposit_refunded_at?: string | null;
     deposit_company_bank_account_id?: number | null;
     depositCompanyBankAccount?: { id: number; name: string; bank_name?: string | null; account_number?: string | null; account_holder?: string | null } | null;
     pickup_requested_at?: string | null;
@@ -238,4 +246,12 @@ export interface ModalRental {
         account_number?: string | null;
         account_holder?: string | null;
     } | null;
+    deposit_refund_status?: string | null;
+    deposit_refund_bank_name?: string | null;
+    deposit_refund_account_number?: string | null;
+    deposit_refund_account_name?: string | null;
+    deposit_refund_bank_submitted_at?: string | null;
+    deposit_refund_proof_path?: string | null;
+    deposit_refund_notes?: string | null;
+    deposit_refunded_at?: string | null;
 }

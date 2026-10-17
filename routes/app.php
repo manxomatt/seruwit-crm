@@ -99,6 +99,8 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
         ->name('booking.inspect_return');
     Route::post('/booking/{token}/return', [PublicRentalBookingController::class, 'submitReturn'])
         ->name('booking.return');
+    Route::post('/booking/{token}/refund-account', [PublicRentalBookingController::class, 'submitRefundAccount'])
+        ->name('booking.refund_account');
     Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
 
     // Customer Authentication (Option A+C)

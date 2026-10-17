@@ -833,4 +833,142 @@ class PublicRentalSelfServiceCoreTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_customer_can_submit_deposit_refund_bank_account(): void
+    {
+        $otpService = app(PassengerOtpService::class);
+        $phone = '081211112222';
+        $normalizedPhone = $otpService->normalize($phone);
+
+        $partner = Partner::factory()->create(['phone' => $normalizedPhone]);
+        $vehicle = Vehicle::factory()->create();
+
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => $normalizedPhone,
+            'status' => Rental::STATUS_RETURNED,
+            'deposit_amount' => 500_000,
+            'deposit_received_at' => now()->subDays(2),
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $code = $otpService->send($phone);
+
+        $response = $this->post(route('book.rental.booking.refund_account', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+            'bank_name' => 'BCA',
+            'account_number' => '1234567890',
+            'account_name' => 'Budi Santoso',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('book.rental.booking.show', $rental->public_token));
+
+        $rental->refresh();
+        $this->assertSame('BCA', $rental->deposit_refund_bank_name);
+        $this->assertSame('1234567890', $rental->deposit_refund_account_number);
+        $this->assertSame('BUDI SANTOSO', $rental->deposit_refund_account_name);
+        $this->assertNotNull($rental->deposit_refund_bank_submitted_at);
+        $this->assertSame(Rental::REFUND_STATUS_IN_REVIEW, $rental->resolveDepositRefundStatus());
+    }
+
+    public function test_customer_cannot_submit_refund_account_when_deposit_is_zero(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'status' => Rental::STATUS_RETURNED,
+            'deposit_amount' => 0,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $response = $this->post(route('book.rental.booking.refund_account', $rental->public_token), [
+            'bank_name' => 'BCA',
+            'account_number' => '1234567890',
+            'account_name' => 'Budi Santoso',
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_staff_can_settle_deposit_and_upload_refund_proof(): void
+    {
+        Storage::fake('public');
+
+        $partner = Partner::factory()->create();
+        $vehicle = Vehicle::factory()->create();
+
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'status' => Rental::STATUS_RETURNED,
+            'deposit_amount' => 500_000,
+            'deposit_received_at' => now()->subDays(2),
+            'deposit_status' => Rental::DEPOSIT_HELD,
+            'deposit_refund_bank_name' => 'BCA',
+            'deposit_refund_account_number' => '1234567890',
+            'deposit_refund_account_name' => 'BUDI SANTOSO',
+        ]);
+
+        $proofFile = UploadedFile::fake()->create('struk-transfer.jpg', 150);
+        $user = \App\Models\User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('module.rental.deposit.settle', $rental->id), [
+            'deposit_applied_amount' => 100_000,
+            'deposit_refunded_amount' => 400_000,
+            'deposit_refund_proof' => $proofFile,
+            'deposit_refund_notes' => 'Potongan denda Rp 100.000, sisa Rp 400.000 ditransfer.',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $rental->refresh();
+        $this->assertSame(Rental::DEPOSIT_SETTLED, $rental->deposit_status);
+        $this->assertEquals(100_000.0, (float) $rental->deposit_applied_amount);
+        $this->assertEquals(400_000.0, (float) $rental->deposit_refunded_amount);
+        $this->assertNotNull($rental->deposit_refund_proof_path);
+        $this->assertSame(Rental::REFUND_STATUS_REFUNDED, $rental->resolveDepositRefundStatus());
+        $this->assertNotNull($rental->deposit_refunded_at);
+    }
+
+    public function test_staff_can_upload_refund_proof_post_settlement(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_RETURNED,
+            'deposit_amount' => 500_000,
+            'deposit_received_at' => now()->subDays(2),
+            'deposit_status' => Rental::DEPOSIT_SETTLED,
+            'deposit_applied_amount' => 0,
+            'deposit_refunded_amount' => 500_000,
+            'deposit_refund_bank_name' => 'BCA',
+            'deposit_refund_account_number' => '1234567890',
+            'deposit_refund_account_name' => 'BUDI SANTOSO',
+            'deposit_refund_status' => Rental::REFUND_STATUS_APPROVED,
+        ]);
+
+        $proofFile = UploadedFile::fake()->create('bukti-transfer-late.jpg', 200);
+        $user = \App\Models\User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('module.rental.deposit.refund_proof', $rental->id), [
+            'deposit_refund_proof' => $proofFile,
+            'deposit_refund_notes' => 'Transfer manual via m-BCA berhasil.',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $rental->refresh();
+        $this->assertNotNull($rental->deposit_refund_proof_path);
+        $this->assertSame(Rental::REFUND_STATUS_REFUNDED, $rental->deposit_refund_status);
+        $this->assertNotNull($rental->deposit_refunded_at);
+        $this->assertSame('Transfer manual via m-BCA berhasil.', $rental->deposit_refund_notes);
+    }
 }

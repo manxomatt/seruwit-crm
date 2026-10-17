@@ -53,6 +53,18 @@ class Rental extends Model
 
     public const DEPOSIT_SETTLED = 'settled';
 
+    public const REFUND_STATUS_PENDING_BANK = 'pending_bank_info';
+
+    public const REFUND_STATUS_BANK_SUBMITTED = 'bank_submitted';
+
+    public const REFUND_STATUS_IN_REVIEW = 'in_review';
+
+    public const REFUND_STATUS_APPROVED = 'approved';
+
+    public const REFUND_STATUS_REFUNDED = 'refunded';
+
+    public const REFUND_STATUS_FORFEITED = 'forfeited';
+
     public const PROOF_PENDING = 'pending';
 
     public const PROOF_APPROVED = 'approved';
@@ -141,6 +153,14 @@ class Rental extends Model
         'deposit_proof_approved_by',
         'deposit_proof_approved_at',
         'deposit_proof_rejected_reason',
+        'deposit_refund_status',
+        'deposit_refund_bank_name',
+        'deposit_refund_account_number',
+        'deposit_refund_account_name',
+        'deposit_refund_bank_submitted_at',
+        'deposit_refund_proof_path',
+        'deposit_refund_notes',
+        'deposit_refunded_at',
         'pickup_requested_at',
         'pickup_request_status',
         'pickup_customer_signature_path',
@@ -234,6 +254,8 @@ class Rental extends Model
             'completed_at' => 'datetime',
             'deposit_settled_at' => 'datetime',
             'deposit_received_at' => 'datetime',
+            'deposit_refund_bank_submitted_at' => 'datetime',
+            'deposit_refunded_at' => 'datetime',
             'pickup_requested_at' => 'datetime',
             'pickup_terms_agreed' => 'boolean',
             'deposit_proof_uploaded_at' => 'datetime',
@@ -474,20 +496,95 @@ class Rental extends Model
     }
 
     /**
-     * @param  array{deposit_applied_amount: float|int|string, deposit_refunded_amount: float|int|string}  $amounts
+     * @param  array{deposit_applied_amount: float|int|string, deposit_refunded_amount: float|int|string, deposit_refund_proof_path?: string|null, deposit_refund_notes?: string|null}  $amounts
      */
     public function settleDeposit(array $amounts): void
     {
         $applied = round((float) $amounts['deposit_applied_amount'], 2);
         $refunded = round((float) $amounts['deposit_refunded_amount'], 2);
 
-        $this->update([
+        $updates = [
             'deposit_status' => self::DEPOSIT_SETTLED,
             'deposit_applied_amount' => $applied,
             'deposit_refunded_amount' => $refunded,
             'deposit_returned' => $applied < 0.009 && abs($refunded - (float) $this->deposit_amount) < 0.009,
             'deposit_settled_at' => now(),
-        ]);
+        ];
+
+        if (! empty($amounts['deposit_refund_proof_path'])) {
+            $updates['deposit_refund_proof_path'] = $amounts['deposit_refund_proof_path'];
+            $updates['deposit_refund_status'] = self::REFUND_STATUS_REFUNDED;
+            $updates['deposit_refunded_at'] = now();
+        } elseif ($refunded <= 0) {
+            $updates['deposit_refund_status'] = self::REFUND_STATUS_FORFEITED;
+        } else {
+            $updates['deposit_refund_status'] = filled($this->deposit_refund_bank_name)
+                ? self::REFUND_STATUS_APPROVED
+                : self::REFUND_STATUS_PENDING_BANK;
+        }
+
+        if (array_key_exists('deposit_refund_notes', $amounts)) {
+            $updates['deposit_refund_notes'] = $amounts['deposit_refund_notes'];
+        }
+
+        $this->update($updates);
+    }
+
+    public function resolveDepositRefundStatus(): string
+    {
+        if ((float) $this->deposit_amount <= 0) {
+            return 'not_applicable';
+        }
+
+        if (! $this->isDepositReceived()) {
+            return 'pending_deposit';
+        }
+
+        if ($this->deposit_refunded_at !== null || $this->deposit_refund_status === self::REFUND_STATUS_REFUNDED || filled($this->deposit_refund_proof_path)) {
+            return self::REFUND_STATUS_REFUNDED;
+        }
+
+        if ($this->deposit_status === self::DEPOSIT_SETTLED) {
+            if ((float) $this->deposit_refunded_amount <= 0) {
+                return self::REFUND_STATUS_FORFEITED;
+            }
+
+            if (filled($this->deposit_refund_bank_name)) {
+                return self::REFUND_STATUS_APPROVED;
+            }
+
+            return self::REFUND_STATUS_PENDING_BANK;
+        }
+
+        if (! in_array($this->status, [self::STATUS_RETURNED, self::STATUS_COMPLETED], true)) {
+            return filled($this->deposit_refund_bank_name)
+                ? self::REFUND_STATUS_BANK_SUBMITTED
+                : 'pending_return';
+        }
+
+        if (filled($this->deposit_refund_bank_name)) {
+            return self::REFUND_STATUS_IN_REVIEW;
+        }
+
+        return self::REFUND_STATUS_PENDING_BANK;
+    }
+
+    public function canSubmitRefundAccount(): bool
+    {
+        if ((float) $this->deposit_amount <= 0) {
+            return false;
+        }
+
+        if ($this->deposit_refunded_at !== null || $this->deposit_refund_status === self::REFUND_STATUS_REFUNDED || filled($this->deposit_refund_proof_path)) {
+            return false;
+        }
+
+        return in_array($this->status, [
+            self::STATUS_CONFIRMED,
+            self::STATUS_ACTIVE,
+            self::STATUS_RETURNED,
+            self::STATUS_COMPLETED,
+        ], true);
     }
 
     /**

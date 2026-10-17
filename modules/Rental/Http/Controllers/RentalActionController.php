@@ -339,9 +339,50 @@ class RentalActionController extends Controller
 
         abort_if($rental->deposit_status === Rental::DEPOSIT_SETTLED, 422, __('rental.errors.deposit_already_settled'));
 
-        $this->accounting->settleDeposit($rental, $request->validated());
+        $data = $request->validated();
+        if ($request->hasFile('deposit_refund_proof')) {
+            $path = $request->file('deposit_refund_proof')->store('rental/deposit-refunds', 'public');
+            $data['deposit_refund_proof_path'] = $path;
+        }
+
+        $this->accounting->settleDeposit($rental, $data);
+
+        if ((float) ($data['deposit_refunded_amount'] ?? 0) > 0 && ($request->hasFile('deposit_refund_proof') || ($data['deposit_refund_status'] ?? '') === 'refunded')) {
+            try {
+                app(RentalWhatsAppNotifier::class)->sendDepositRefundTransferred($rental->fresh(['vehicle', 'partner']));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[Rental Deposit Refund WhatsApp] '.$e->getMessage(), ['rental_id' => $rental->id]);
+            }
+        }
 
         return back()->with('success', __('rental.messages.deposit_settled'));
+    }
+
+    public function uploadDepositRefundProof(Request $request, Rental $rental): RedirectResponse
+    {
+        $this->ensureAccessibleRental($rental);
+
+        $data = $request->validate([
+            'deposit_refund_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'deposit_refund_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $path = $request->file('deposit_refund_proof')->store('rental/deposit-refunds', 'public');
+
+        $rental->update([
+            'deposit_refund_proof_path' => $path,
+            'deposit_refund_status' => Rental::REFUND_STATUS_REFUNDED,
+            'deposit_refunded_at' => now(),
+            'deposit_refund_notes' => $data['deposit_refund_notes'] ?? $rental->deposit_refund_notes,
+        ]);
+
+        try {
+            app(RentalWhatsAppNotifier::class)->sendDepositRefundTransferred($rental->fresh(['vehicle', 'partner']));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Rental Deposit Refund WhatsApp] '.$e->getMessage(), ['rental_id' => $rental->id]);
+        }
+
+        return back()->with('success', 'Bukti transfer pengembalian deposit berhasil diunggah.');
     }
 
     public function payInvoices(PayRentalInvoicesRequest $request, Rental $rental): RedirectResponse

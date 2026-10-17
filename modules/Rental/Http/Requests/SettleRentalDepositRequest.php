@@ -19,6 +19,9 @@ class SettleRentalDepositRequest extends FormRequest
         return [
             'deposit_applied_amount' => ['required', 'numeric', 'min:0'],
             'deposit_refunded_amount' => ['required', 'numeric', 'min:0'],
+            'deposit_refund_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'deposit_refund_notes' => ['nullable', 'string', 'max:1000'],
+            'deposit_refund_status' => ['nullable', 'string', 'in:approved,refunded,forfeited'],
         ];
     }
 
