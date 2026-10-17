@@ -94,6 +94,11 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
     Route::post('/booking/{token}/ocr', [PublicRentalBookingController::class, 'scanDocument'])
         ->middleware('throttle:20,1')
         ->name('booking.ocr');
+    Route::post('/booking/{token}/inspect-return', [PublicRentalBookingController::class, 'inspectReturn'])
+        ->middleware('throttle:15,1')
+        ->name('booking.inspect_return');
+    Route::post('/booking/{token}/return', [PublicRentalBookingController::class, 'submitReturn'])
+        ->name('booking.return');
     Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
 
     // Customer Authentication (Option A+C)

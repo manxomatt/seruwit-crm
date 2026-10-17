@@ -12,8 +12,11 @@ use Mockery\MockInterface;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
+use Modules\Rental\AI\Contracts\VisionInspectionServiceInterface;
+use Modules\Rental\AI\DTO\HandoverInspectionResult;
 use Modules\Rental\AI\DTO\KycDocumentResult;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalAiInspection;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\RentalWhatsAppSettings;
@@ -698,5 +701,136 @@ class PublicRentalSelfServiceCoreTest extends TestCase
         $partner->refresh();
         $this->assertSame('3271012345670001', $partner->id_number);
         $this->assertSame('900512345678', $partner->license_number);
+    }
+
+    public function test_customer_can_run_ai_return_inspection_on_active_booking(): void
+    {
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.ai_inspection_enabled'],
+            ['group' => 'rental_internal', 'value' => '1', 'type' => 'boolean', 'label' => 'AI Inspection']
+        );
+
+        $partner = Partner::factory()->create();
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'status' => Rental::STATUS_ACTIVE,
+            'start_odometer' => 15000,
+            'start_fuel_level' => 'full',
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $this->mock(VisionInspectionServiceInterface::class, function (MockInterface $mock) {
+            $mock->shouldReceive('inspectHandover')
+                ->once()
+                ->andReturn(new HandoverInspectionResult(
+                    extractedOdometer: 15450,
+                    extractedFuelLevel: 'full',
+                    conditionSummary: 'Kendaraan dalam kondisi bersih tanpa goresan baru.',
+                    overallStatus: 'clean',
+                    damages: [],
+                    rawResponse: ['status' => 'ok'],
+                    modelUsed: 'gemini-1.5-flash',
+                ));
+        });
+
+        $fakePhoto = 'data:image/jpeg;base64,'.base64_encode('fake-image-bytes');
+
+        $response = $this->postJson(route('book.rental.booking.inspect_return', $rental->public_token), [
+            'return_photos' => [$fakePhoto],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('inspection.extracted_odometer', 15450)
+            ->assertJsonPath('inspection.extracted_fuel_level', 'full')
+            ->assertJsonPath('inspection.overall_status', 'clean');
+
+        $this->assertDatabaseHas('rental_ai_inspections', [
+            'rental_id' => $rental->id,
+            'inspection_type' => RentalAiInspection::TYPE_LIVE_PREVIEW,
+            'extracted_odometer' => 15450,
+            'extracted_fuel_level' => 'full',
+        ]);
+    }
+
+    public function test_customer_can_submit_self_return_with_photos_and_signature(): void
+    {
+        Storage::fake('public');
+
+        $otpService = app(PassengerOtpService::class);
+        $phone = '081298765432';
+        $normalizedPhone = $otpService->normalize($phone);
+
+        $partner = Partner::factory()->create(['phone' => $normalizedPhone]);
+        $vehicle = Vehicle::factory()->create();
+
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => $normalizedPhone,
+            'status' => Rental::STATUS_ACTIVE,
+            'start_odometer' => 10000,
+            'start_fuel_level' => 'full',
+            'km_limit_per_period' => 100,
+            'total_periods' => 1,
+            'excess_km_rate' => 1000,
+            'start_date' => now()->subDay()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $code = $otpService->send($phone);
+
+        $fakePhoto = 'data:image/jpeg;base64,'.base64_encode('fake-photo-content');
+        $fakeSignature = 'data:image/png;base64,'.base64_encode('fake-signature-content');
+
+        $response = $this->post(route('book.rental.booking.return', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+            'end_odometer' => 10150,
+            'end_fuel_level' => 'full',
+            'return_checklist' => ['clean_interior' => true],
+            'return_notes' => 'Unit dikembalikan tepat waktu.',
+            'return_photos' => [$fakePhoto],
+            'customer_signature' => $fakeSignature,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('book.rental.booking.show', $rental->public_token));
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_RETURNED, $rental->status);
+        $this->assertSame(10150, $rental->end_odometer);
+        $this->assertSame('full', $rental->end_fuel_level);
+        $this->assertSame(50, $rental->excess_km);
+        $this->assertEquals(50000.0, (float) $rental->excess_amount);
+        $this->assertNotNull($rental->return_signature_path);
+        $this->assertCount(1, $rental->return_photos ?? []);
+        $this->assertNotNull($rental->actual_return_date);
+    }
+
+    public function test_customer_cannot_submit_return_when_rental_is_not_active(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'status' => Rental::STATUS_CONFIRMED,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $fakePhoto = 'data:image/jpeg;base64,'.base64_encode('fake-photo-content');
+        $fakeSignature = 'data:image/png;base64,'.base64_encode('fake-signature-content');
+
+        $response = $this->post(route('book.rental.booking.return', $rental->public_token), [
+            'return_photos' => [$fakePhoto],
+            'customer_signature' => $fakeSignature,
+        ]);
+
+        $response->assertStatus(422);
     }
 }

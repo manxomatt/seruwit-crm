@@ -12,23 +12,28 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
+use Modules\Rental\AI\Contracts\VisionInspectionServiceInterface;
 use Modules\Rental\Http\Requests\Public\CancelPublicRentalBookingRequest;
 use Modules\Rental\Http\Requests\Public\StorePublicRentalBookingRequest;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalAiInspection;
 use Modules\Rental\Models\RentalExtensionRequest;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\PublicRentalCatalog;
+use Modules\Rental\Support\RentalAccountingService;
 use Modules\Rental\Support\RentalBookingPolicy;
 use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalGeneralSettings;
+use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLifecycleGate;
@@ -36,6 +41,7 @@ use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Rental\Support\RentalRateResolver;
 use Modules\Rental\Support\RentalStatusHint;
+use Modules\Rental\Support\RentalWhatsAppNotifier;
 use Modules\Shuttle\Support\PassengerOtpService;
 use Throwable;
 
@@ -903,6 +909,194 @@ class PublicRentalBookingController extends Controller
             ->with('success', __('rental.public.pickup_requested'));
     }
 
+    public function inspectReturn(
+        Request $request,
+        string $token,
+        VisionInspectionServiceInterface $visionInspectionService,
+    ): JsonResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        abort_if(
+            $rental->status !== Rental::STATUS_ACTIVE,
+            422,
+            __('rental.errors.return_active_only'),
+        );
+
+        if (! CentralAiSettings::isEnabled() || ! (bool) (RentalGeneralSettings::all()['ai_inspection_enabled'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Visual Inspection']),
+            ], 403);
+        }
+
+        $request->validate([
+            'return_photos' => ['required', 'array', 'min:1', 'max:5'],
+            'return_photos.*' => ['string', 'starts_with:data:image/'],
+        ], [
+            'return_photos.required' => __('rental.errors.handover_photo_required'),
+            'return_photos.min' => __('rental.errors.handover_photo_required'),
+        ]);
+
+        $rental->loadMissing('vehicle');
+
+        $context = [
+            'vehicle_info' => $rental->vehicle ? sprintf('%s (%s)', $rental->vehicle->name, $rental->vehicle->plate_number) : 'Kendaraan Rental',
+            'start_odometer' => $rental->start_odometer,
+            'start_fuel_level' => $rental->start_fuel_level,
+        ];
+
+        try {
+            $result = $visionInspectionService->inspectHandover(
+                checkoutPhotos: $rental->checkout_photos ?? [],
+                returnPhotos: $request->input('return_photos', []),
+                context: $context,
+            );
+
+            $inspection = RentalAiInspection::query()->create([
+                'rental_id' => $rental->id,
+                'inspection_type' => RentalAiInspection::TYPE_LIVE_PREVIEW,
+                'model_used' => $result->modelUsed,
+                'extracted_odometer' => $result->extractedOdometer,
+                'extracted_fuel_level' => $result->extractedFuelLevel,
+                'condition_summary' => $result->conditionSummary,
+                'overall_status' => $result->overallStatus,
+                'detected_damages' => array_map(fn ($d) => $d->toArray(), $result->damages),
+                'raw_response' => $result->rawResponse,
+                'created_by_user_id' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'inspection' => [
+                    'id' => $inspection->id,
+                    'extracted_odometer' => $inspection->extracted_odometer,
+                    'extracted_fuel_level' => $inspection->extracted_fuel_level,
+                    'condition_summary' => $inspection->condition_summary,
+                    'overall_status' => $inspection->overall_status,
+                    'detected_damages' => $inspection->detected_damages,
+                    'created_at' => $inspection->created_at?->toIso8601String(),
+                ],
+                'message' => __('rental.ai.inspection_success'),
+            ]);
+        } catch (Throwable $e) {
+            Log::error('[PublicRental AI Return Inspection] '.$e->getMessage(), ['rental_id' => $rental->id]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function submitReturn(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+        RentalHandoverMedia $handoverMedia,
+        RentalInvoiceService $invoices,
+        RentalAccountingService $accounting,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        abort_if(
+            $rental->status !== Rental::STATUS_ACTIVE,
+            422,
+            __('rental.errors.return_active_only'),
+        );
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
+        $data = $request->validate([
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
+            'end_odometer' => ['nullable', 'integer', 'min:0'],
+            'end_fuel_level' => ['nullable', 'string', Rule::in(RentalHandoverChecklist::fuelLevels())],
+            'return_checklist' => ['nullable', 'array'],
+            'return_checklist.*' => ['boolean'],
+            'return_notes' => ['nullable', 'string', 'max:1000'],
+            'return_photos' => ['required', 'array', 'min:1', 'max:5'],
+            'return_photos.*' => ['string', 'starts_with:data:image/'],
+            'customer_signature' => ['required', 'string', 'starts_with:data:image/'],
+        ], [
+            'return_photos.required' => __('rental.errors.handover_photo_required'),
+            'return_photos.min' => __('rental.errors.handover_photo_required'),
+            'return_photos.max' => __('rental.errors.handover_photo_max', ['max' => 5]),
+            'customer_signature.required' => __('rental.errors.handover_signature_required'),
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
+            return $error;
+        }
+
+        $photos = $handoverMedia->storePhotos($data['return_photos'], 'rental/handover-photos');
+        $signaturePath = $handoverMedia->storeSignature($data['customer_signature'], 'rental/return-signatures');
+
+        $actualReturnDate = now()->toDateString();
+        $endOdometer = ! empty($data['end_odometer']) ? (int) $data['end_odometer'] : null;
+
+        $excessKm = null;
+        $excessAmount = 0.0;
+        if ($endOdometer && $rental->start_odometer && $rental->km_limit_per_period) {
+            $totalKmDriven = $endOdometer - $rental->start_odometer;
+            $allowedKm = $rental->km_limit_per_period * $rental->total_periods;
+            $excessKm = max(0, $totalKmDriven - $allowedKm);
+            $excessAmount = (float) ($excessKm * (float) ($rental->excess_km_rate ?? 0));
+        }
+
+        $overdueDays = Rental::computeOverdueDays(
+            $rental->end_date->toDateString(),
+            $actualReturnDate,
+        );
+        $lateFeeAmount = (float) ($overdueDays * $rental->resolveLateFeePerDay());
+
+        $rental->update([
+            'status' => Rental::STATUS_RETURNED,
+            'actual_return_date' => $actualReturnDate,
+            'returned_at' => now(),
+            'end_odometer' => $endOdometer,
+            'end_fuel_level' => $data['end_fuel_level'] ?? null,
+            'return_checklist' => RentalHandoverChecklist::normalize($data['return_checklist'] ?? []),
+            'return_notes' => $data['return_notes'] ?? null,
+            'return_photos' => $photos,
+            'return_signature_path' => $signaturePath,
+            'return_signed_at' => now(),
+            'excess_km' => $excessKm,
+            'excess_amount' => $excessAmount,
+            'overdue_days' => $overdueDays,
+            'late_fee_amount' => $lateFeeAmount,
+        ]);
+
+        $rental->recalculateTotalAmount();
+        $rental->refresh();
+
+        $invoices->invoiceExcessKm($rental);
+        $invoices->invoiceLateFee($rental);
+        $accounting->issueDraftInvoices($rental->fresh());
+
+        if ((float) $rental->deposit_amount <= 0) {
+            $rental->settleDeposit([
+                'deposit_applied_amount' => 0,
+                'deposit_refunded_amount' => 0,
+            ]);
+        }
+
+        try {
+            app(RentalWhatsAppNotifier::class)
+                ->sendReturnReceipt($rental->fresh(['vehicle', 'partner']));
+        } catch (Throwable $e) {
+            Log::warning('[PublicRental Return WhatsApp] '.$e->getMessage(), ['rental_id' => $rental->id]);
+        }
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', __('rental.messages.returned'));
+    }
+
     public function history(Request $request, PassengerOtpService $otp): Response
     {
         $this->ensureAvailable();
@@ -1518,6 +1712,30 @@ class PublicRentalBookingController extends Controller
                 'terms_agreed' => (bool) $rental->pickup_terms_agreed,
                 'notes' => $rental->pickup_notes,
                 'can_request' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at) && $upfrontPaid,
+            ],
+            'can_self_return' => $rental->status === Rental::STATUS_ACTIVE,
+            'ai_inspection_enabled' => CentralAiSettings::isEnabled() && (bool) (RentalGeneralSettings::all()['ai_inspection_enabled'] ?? false),
+            'handover_checklist_keys' => RentalHandoverChecklist::itemKeys(),
+            'fuel_levels' => RentalHandoverChecklist::fuelLevels(),
+            'checkout_details' => [
+                'start_odometer' => $rental->start_odometer,
+                'start_fuel_level' => $rental->start_fuel_level,
+                'checkout_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->checkout_photos),
+                'checkout_signed_at' => $rental->checkout_signed_at?->format('d M Y, H:i').' WIB',
+            ],
+            'return_details' => [
+                'returned_at' => $rental->returned_at?->format('d M Y, H:i').' WIB',
+                'actual_return_date' => $rental->actual_return_date?->toDateString(),
+                'end_odometer' => $rental->end_odometer,
+                'end_fuel_level' => $rental->end_fuel_level,
+                'excess_km' => $rental->excess_km,
+                'excess_amount' => (float) $rental->excess_amount,
+                'overdue_days' => $rental->overdue_days,
+                'late_fee_amount' => (float) $rental->late_fee_amount,
+                'return_notes' => $rental->return_notes,
+                'return_checklist' => $rental->return_checklist,
+                'return_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->return_photos),
+                'return_signature_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->return_signature_path),
             ],
         ];
     }

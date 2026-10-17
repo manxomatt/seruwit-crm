@@ -154,6 +154,30 @@ interface Booking {
         notes: string | null;
         can_request: boolean;
     };
+    can_self_return?: boolean;
+    ai_inspection_enabled?: boolean;
+    handover_checklist_keys?: string[];
+    fuel_levels?: string[];
+    checkout_details?: {
+        start_odometer?: number | null;
+        start_fuel_level?: string | null;
+        checkout_photos?: string[];
+        checkout_signed_at?: string | null;
+    };
+    return_details?: {
+        returned_at?: string | null;
+        actual_return_date?: string | null;
+        end_odometer?: number | null;
+        end_fuel_level?: string | null;
+        excess_km?: number | null;
+        excess_amount?: number;
+        overdue_days?: number;
+        late_fee_amount?: number;
+        return_notes?: string | null;
+        return_checklist?: Record<string, boolean>;
+        return_photos?: string[];
+        return_signature_url?: string | null;
+    };
 }
 
 interface Props {
@@ -469,6 +493,116 @@ export default function BookingView({ brand, booking, gateway_available, company
         customer_signature: '',
         pickup_notes: '',
     });
+
+    const [showReturnModal, setShowReturnModal] = useState(false);
+    const [scanningReturnPhotos, setScanningReturnPhotos] = useState(false);
+    const [returnAiInspection, setReturnAiInspection] = useState<any>(null);
+    const [returnAiError, setReturnAiError] = useState<string | null>(null);
+
+    const returnForm = useForm({
+        booker_phone: booking.booker_phone ?? '',
+        otp_code: '',
+        end_odometer: '',
+        end_fuel_level: booking.checkout_details?.start_fuel_level || 'full',
+        return_checklist: {
+            exterior_body: true,
+            interior: true,
+            keys: true,
+            documents: true,
+        } as Record<string, boolean>,
+        return_notes: '',
+        return_photos: [] as string[],
+        customer_signature: '',
+    });
+
+    const handleReturnPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const remainingSlots = 5 - returnForm.data.return_photos.length;
+        const toProcess = files.slice(0, remainingSlots);
+
+        toProcess.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                const dataUrl = loadEvent.target?.result as string;
+                if (dataUrl && dataUrl.startsWith('data:image/')) {
+                    returnForm.setData('return_photos', (prev) => {
+                        if (prev.length < 5) {
+                            return [...prev, dataUrl];
+                        }
+                        return prev;
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+        e.target.value = '';
+    };
+
+    const removeReturnPhoto = (idx: number) => {
+        returnForm.setData('return_photos', returnForm.data.return_photos.filter((_, i) => i !== idx));
+    };
+
+    const runReturnAiInspection = async () => {
+        if (returnForm.data.return_photos.length === 0) {
+            setReturnAiError('Unggah minimal 1 foto kendaraan pengembalian terlebih dahulu.');
+            return;
+        }
+
+        setScanningReturnPhotos(true);
+        setReturnAiError(null);
+
+        try {
+            const url = typeof route === 'function' && route().has('book.rental.booking.inspect_return')
+                ? route('book.rental.booking.inspect_return', booking.public_token)
+                : `/book/rental/booking/${booking.public_token}/inspect-return`;
+
+            const { data } = await axios.post(url, {
+                return_photos: returnForm.data.return_photos,
+            });
+
+            if (data.success && data.inspection) {
+                setReturnAiInspection(data.inspection);
+                if (data.inspection.extracted_odometer) {
+                    returnForm.setData('end_odometer', String(data.inspection.extracted_odometer));
+                }
+                if (data.inspection.extracted_fuel_level) {
+                    returnForm.setData('end_fuel_level', data.inspection.extracted_fuel_level);
+                }
+            } else {
+                setReturnAiError(data.message || 'Gagal menjalankan inspeksi AI.');
+            }
+        } catch (err: any) {
+            setReturnAiError(err.response?.data?.message || 'Gagal memproses inspeksi visual AI.');
+        } finally {
+            setScanningReturnPhotos(false);
+        }
+    };
+
+    const submitReturnRequest = (e: FormEvent) => {
+        e.preventDefault();
+        returnForm.clearErrors();
+
+        if (returnForm.data.return_photos.length === 0) {
+            returnForm.setError('return_photos', 'Unggah minimal 1 foto kondisi kendaraan pengembalian.');
+            return;
+        }
+
+        if (!returnForm.data.customer_signature) {
+            returnForm.setError('customer_signature', 'Silakan bubuhkan tanda tangan digital Anda pada kotak yang tersedia.');
+            return;
+        }
+
+        const url = typeof route === 'function' && route().has('book.rental.booking.return')
+            ? route('book.rental.booking.return', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/return`;
+
+        returnForm.post(url, {
+            preserveScroll: true,
+            onSuccess: () => setShowReturnModal(false),
+        });
+    };
 
     const sendOtp = async (phone: string) => {
         if (!phone) {
@@ -1701,6 +1835,304 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             </button>
                                         </form>
                                     )}
+                                </div>
+                            )}
+
+                            {/* Self-Return Card (When Active) */}
+                            {booking.status === 'active' && (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-emerald-200 bg-emerald-50/20 shadow-xs space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-sm">
+                                                🚗
+                                            </span>
+                                            <div>
+                                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Pengembalian Unit Mandiri
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500">
+                                                    Selesaikan sewa & serah terima BAST akhir secara mandiri.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!isVerified) {
+                                                    alert('Verifikasi nomor WhatsApp terlebih dahulu');
+                                                    return;
+                                                }
+                                                setShowReturnModal(!showReturnModal);
+                                            }}
+                                            className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 text-xs font-black transition shadow-xs"
+                                        >
+                                            {showReturnModal ? 'Tutup Form' : 'Mulai Pengembalian'}
+                                        </button>
+                                    </div>
+
+                                    {showReturnModal && isVerified && (
+                                        <form onSubmit={submitReturnRequest} className="mt-4 pt-4 border-t border-emerald-100 space-y-5" noValidate>
+                                            {/* Step 1: Upload Return Photos */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                                                        1. Foto Kondisi Pengembalian ({returnForm.data.return_photos.length}/5)
+                                                    </label>
+                                                    <span className="text-[10px] text-slate-400">
+                                                        Wajib: 4 Sisi Mobil & Spidometer
+                                                    </span>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                                                    {returnForm.data.return_photos.map((src, i) => (
+                                                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group bg-slate-100">
+                                                            <img src={src} alt={`Return photo ${i + 1}`} className="w-full h-full object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeReturnPhoto(i)}
+                                                                className="absolute top-1 right-1 h-5 w-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shadow opacity-80 group-hover:opacity-100"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {returnForm.data.return_photos.length < 5 && (
+                                                        <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-white flex flex-col items-center justify-center cursor-pointer transition p-2 text-center">
+                                                            <span className="text-xl">📸</span>
+                                                            <span className="text-[10px] font-bold text-slate-600 mt-1">Tambah Foto</span>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                multiple
+                                                                onChange={handleReturnPhotoUpload}
+                                                                className="hidden"
+                                                            />
+                                                        </label>
+                                                    )}
+                                                </div>
+                                                {returnForm.errors.return_photos && (
+                                                    <p className="text-xs text-rose-600 font-medium">{returnForm.errors.return_photos}</p>
+                                                )}
+                                            </div>
+
+                                            {/* Step 2: AI Fast-Scan Button & Results */}
+                                            {booking.ai_inspection_enabled !== false && returnForm.data.return_photos.length > 0 && (
+                                                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 space-y-2.5">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-black text-blue-950 flex items-center gap-1.5">
+                                                            <span>✨</span> AI Vision Inspector
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            disabled={scanningReturnPhotos}
+                                                            onClick={runReturnAiInspection}
+                                                            className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black px-3 py-1 transition disabled:opacity-50"
+                                                        >
+                                                            {scanningReturnPhotos ? 'Menganalisis Foto...' : 'Pindai Odometer & Bodi'}
+                                                        </button>
+                                                    </div>
+
+                                                    {scanningReturnPhotos && (
+                                                        <div className="flex items-center gap-2 text-xs text-blue-800">
+                                                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                                                            <span>AI sedang memeriksa odometer, sisa BBM, dan goresan bodi baru...</span>
+                                                        </div>
+                                                    )}
+
+                                                    {returnAiError && (
+                                                        <div className="text-xs text-rose-700 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                                                            {returnAiError}
+                                                        </div>
+                                                    )}
+
+                                                    {returnAiInspection && (
+                                                        <div className="space-y-2 pt-1 text-xs">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <span className={`px-2 py-0.5 rounded font-bold border ${returnAiInspection.overall_status === 'clean' ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-amber-100 border-amber-300 text-amber-900'}`}>
+                                                                    {returnAiInspection.overall_status === 'clean' ? 'Bodi Sesuai ✓' : 'Kerusakan Baru Terdeteksi'}
+                                                                </span>
+                                                                {returnAiInspection.extracted_odometer && (
+                                                                    <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold">
+                                                                        Odo: {returnAiInspection.extracted_odometer} KM
+                                                                    </span>
+                                                                )}
+                                                                {returnAiInspection.extracted_fuel_level && (
+                                                                    <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold">
+                                                                        BBM: {returnAiInspection.extracted_fuel_level}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                                                {returnAiInspection.condition_summary}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Step 3: Odometer & Fuel Inputs */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                                        Odometer Akhir (KM)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={returnForm.data.end_odometer}
+                                                        onChange={(e) => returnForm.setData('end_odometer', e.target.value)}
+                                                        placeholder={booking.checkout_details?.start_odometer ? `Awal: ${booking.checkout_details.start_odometer} KM` : 'Contoh: 45200'}
+                                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                                        Level BBM Akhir
+                                                    </label>
+                                                    <select
+                                                        value={returnForm.data.end_fuel_level}
+                                                        onChange={(e) => returnForm.setData('end_fuel_level', e.target.value)}
+                                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
+                                                    >
+                                                        {(booking.fuel_levels || ['empty', '1/4', '1/2', '3/4', 'full']).map((lvl) => (
+                                                            <option key={lvl} value={lvl}>{lvl.toUpperCase()}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Checklist */}
+                                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                                                <span className="text-[11px] font-black uppercase text-slate-700 block">
+                                                    2. Checklist Serah Terima
+                                                </span>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                    <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={Boolean(returnForm.data.return_checklist?.interior)}
+                                                            onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, interior: e.target.checked })}
+                                                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                                        />
+                                                        <span>Interior Bersih & Rapi</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={Boolean(returnForm.data.return_checklist?.keys)}
+                                                            onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, keys: e.target.checked })}
+                                                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                                        />
+                                                        <span>Kunci Fisik & STNK Lengkap</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={Boolean(returnForm.data.return_checklist?.documents)}
+                                                            onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, documents: e.target.checked })}
+                                                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                                        />
+                                                        <span>Tidak Ada Barang Tertinggal</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={Boolean(returnForm.data.return_checklist?.exterior_body)}
+                                                            onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, exterior_body: e.target.checked })}
+                                                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                                        />
+                                                        <span>Bodi Kendaraan Sesuai</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {/* Return Notes */}
+                                            <div>
+                                                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                                    Catatan Pengembalian (Opsional)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Contoh: Kunci dititipkan ke security lobby"
+                                                    value={returnForm.data.return_notes}
+                                                    onChange={(e) => returnForm.setData('return_notes', e.target.value)}
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-slate-900 focus:outline-none"
+                                                />
+                                            </div>
+
+                                            {/* Digital Signature */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                                                    3. Tanda Tangan BAST Pengembalian
+                                                </label>
+                                                <DigitalSignaturePad
+                                                    value={returnForm.data.customer_signature}
+                                                    onChange={(val) => returnForm.setData('customer_signature', val)}
+                                                />
+                                                {returnForm.errors.customer_signature && (
+                                                    <p className="text-xs text-rose-600 font-medium">{returnForm.errors.customer_signature}</p>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={returnForm.processing || scanningReturnPhotos}
+                                                className="w-full h-11 flex items-center justify-center rounded-xl bg-emerald-700 hover:bg-emerald-800 text-xs font-black uppercase text-white shadow-sm transition disabled:opacity-50"
+                                            >
+                                                {returnForm.processing ? 'Menyimpan Pengembalian...' : 'Selesaikan Pengembalian Unit'}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Returned Summary Card (When Returned or Completed) */}
+                            {(booking.status === 'returned' || booking.status === 'completed') && (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-3.5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-sm">
+                                                ✓
+                                            </span>
+                                            <div>
+                                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Unit Berhasil Dikembalikan
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500">
+                                                    {booking.return_details?.returned_at || 'Pengembalian telah dicatat'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 text-xs font-bold">
+                                            BAST Selesai
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                                        {booking.return_details?.end_odometer && (
+                                            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                                <span className="text-[10px] text-slate-400 block font-bold uppercase">Odo Akhir</span>
+                                                <span className="font-extrabold text-slate-800">{booking.return_details.end_odometer} KM</span>
+                                            </div>
+                                        )}
+                                        {booking.return_details?.end_fuel_level && (
+                                            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                                <span className="text-[10px] text-slate-400 block font-bold uppercase">BBM Akhir</span>
+                                                <span className="font-extrabold text-slate-800">{booking.return_details.end_fuel_level.toUpperCase()}</span>
+                                            </div>
+                                        )}
+                                        {booking.pdf_urls?.handover && (
+                                            <a
+                                                href={booking.pdf_urls.handover}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="bg-blue-50 hover:bg-blue-100 p-2.5 rounded-xl border border-blue-200 text-blue-800 font-bold flex flex-col justify-center items-center text-center transition"
+                                            >
+                                                <span className="text-[10px] block uppercase font-bold text-blue-600">Unduh Dokumen</span>
+                                                <span>PDF BAST Resmi</span>
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
