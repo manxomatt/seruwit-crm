@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
-import Select from '@/Components/Select';
+import Select, { SelectOption } from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { router, useForm } from '@inertiajs/react';
@@ -31,6 +31,14 @@ const CATEGORY_MAP: Record<string, { label: string; icon: string; badgeClass: st
     protection: { label: 'Proteksi', icon: '🛡️', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
 };
 
+const CATEGORY_OPTIONS: SelectOption[] = [
+    { value: 'accessory', label: '🧳 Aksesoris Kendaraan', description: 'Kursi bayi, roof box, aksesoris fisik' },
+    { value: 'service', label: '👨‍✈️ Layanan & Sopir', description: 'Supir tambahan, valet delivery' },
+    { value: 'comfort', label: '💳 Kenyamanan & Perjalanan', description: 'E-toll card, fasilitas perjalanan' },
+    { value: 'fuel', label: '⛽ Bahan Bakar (BBM)', description: 'Paket prepaid BBM awal' },
+    { value: 'protection', label: '🛡️ Proteksi & Asuransi', description: 'Paket proteksi ekstra' },
+];
+
 const ICON_PRESETS: Array<{ value: string; label: string; emoji: string }> = [
     { value: 'baby', label: 'Kursi Bayi (Baby Seat)', emoji: '👶' },
     { value: 'box', label: 'Roof Box / Rak Atas', emoji: '📦' },
@@ -43,6 +51,16 @@ const ICON_PRESETS: Array<{ value: string; label: string; emoji: string }> = [
     { value: 'wifi', label: 'Wi-Fi / Modem', emoji: '📶' },
     { value: 'phone', label: 'Holder / Charger HP', emoji: '📱' },
     { value: 'star', label: 'Fasilitas Spesial', emoji: '⭐' },
+];
+
+const ICON_OPTIONS: SelectOption[] = ICON_PRESETS.map((p) => ({
+    value: p.value,
+    label: `${p.emoji} ${p.label}`,
+}));
+
+const PRICE_TYPE_OPTIONS: SelectOption[] = [
+    { value: 'daily', label: 'Per Hari (Daily)', description: 'Dikalikan dengan total durasi hari sewa kendaraan' },
+    { value: 'flat', label: 'Flat (Sekali Sewa)', description: 'Biaya tetap satu kali per transaksi sewa' },
 ];
 
 function addonEmoji(icon: string): string {
@@ -425,15 +443,10 @@ export default function AddonsPanel({
                             <Select
                                 id="addon_category"
                                 value={form.data.category}
-                                onChange={(e) => form.setData('category', e.target.value)}
+                                onChange={(val) => form.setData('category', val)}
+                                options={CATEGORY_OPTIONS}
                                 className="mt-1 w-full text-xs"
-                            >
-                                <option value="accessory">🧳 Aksesoris Kendaraan</option>
-                                <option value="service">👨‍✈️ Layanan & Pengemudi</option>
-                                <option value="comfort">💳 Kenyamanan & Perjalanan</option>
-                                <option value="fuel">⛽ Bahan Bakar (BBM)</option>
-                                <option value="protection">🛡️ Proteksi & Asuransi</option>
-                            </Select>
+                            />
                             <InputError message={form.errors.category} className="mt-1" />
                         </div>
 
@@ -443,15 +456,10 @@ export default function AddonsPanel({
                             <Select
                                 id="addon_icon"
                                 value={form.data.icon}
-                                onChange={(e) => form.setData('icon', e.target.value)}
+                                onChange={(val) => form.setData('icon', val)}
+                                options={ICON_OPTIONS}
                                 className="mt-1 w-full text-xs"
-                            >
-                                {ICON_PRESETS.map((p) => (
-                                    <option key={p.value} value={p.value}>
-                                        {p.emoji} {p.label}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                             <InputError message={form.errors.icon} className="mt-1" />
                         </div>
 
@@ -461,12 +469,10 @@ export default function AddonsPanel({
                             <Select
                                 id="addon_price_type"
                                 value={form.data.price_type}
-                                onChange={(e) => form.setData('price_type', e.target.value)}
+                                onChange={(val) => form.setData('price_type', val)}
+                                options={PRICE_TYPE_OPTIONS}
                                 className="mt-1 w-full text-xs"
-                            >
-                                <option value="daily">Per Hari (Dikalikan lama sewa)</option>
-                                <option value="flat">Flat (Sekali sewa)</option>
-                            </Select>
+                            />
                             <InputError message={form.errors.price_type} className="mt-1" />
                         </div>
 
