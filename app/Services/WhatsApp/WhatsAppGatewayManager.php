@@ -16,9 +16,10 @@ class WhatsAppGatewayManager
             return new LogWhatsAppGateway;
         }
 
-        $provider = (string) Setting::getValue('whatsapp.provider', 'fonnte');
+        $provider = (string) Setting::getValue('whatsapp.provider', 'seruwit');
 
         return match ($provider) {
+            'seruwit' => app(SeruwitWhatsAppGateway::class),
             'fonnte' => new FonnteGateway(
                 token: (string) Setting::getValue('whatsapp.fonnte_token', ''),
             ),
@@ -26,7 +27,7 @@ class WhatsAppGatewayManager
                 endpointUrl: (string) Setting::getValue('whatsapp.custom_url', ''),
                 apiToken: (string) Setting::getValue('whatsapp.custom_token', ''),
             ),
-            default => new LogWhatsAppGateway,
+            default => app(SeruwitWhatsAppGateway::class),
         };
     }
 

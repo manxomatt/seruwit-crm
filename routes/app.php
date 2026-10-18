@@ -15,6 +15,7 @@ use App\Http\Controllers\Module\RoleController as ModuleRoleController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\SubscriptionController as ModuleSubscriptionController;
 use App\Http\Controllers\Module\UserController as ModuleUserController;
+use App\Http\Controllers\Module\WhatsAppSettingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
@@ -199,6 +200,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/domain/{domain}/verify', [CustomDomainController::class, 'verify'])->middleware('permission:settings,update')->name('settings.domain.verify');
         Route::post('/settings/domain/{domain}/primary', [CustomDomainController::class, 'setPrimary'])->middleware('permission:settings,update')->name('settings.domain.primary');
         Route::delete('/settings/domain/{domain}', [CustomDomainController::class, 'destroy'])->middleware('permission:settings,update')->name('settings.domain.destroy');
+        Route::get('/settings/whatsapp', [WhatsAppSettingController::class, 'index'])->middleware('permission:settings,view')->name('settings.whatsapp');
+        Route::post('/settings/whatsapp/start', [WhatsAppSettingController::class, 'startSession'])->middleware('permission:settings,update')->name('settings.whatsapp.start');
+        Route::post('/settings/whatsapp/pair-code', [WhatsAppSettingController::class, 'pairWithCode'])->middleware('permission:settings,update')->name('settings.whatsapp.pair');
+        Route::get('/settings/whatsapp/status', [WhatsAppSettingController::class, 'status'])->middleware('permission:settings,view')->name('settings.whatsapp.status');
+        Route::post('/settings/whatsapp/logout', [WhatsAppSettingController::class, 'logout'])->middleware('permission:settings,update')->name('settings.whatsapp.logout');
+        Route::post('/settings/whatsapp/test', [WhatsAppSettingController::class, 'sendTest'])->middleware('permission:settings,update')->name('settings.whatsapp.test');
         Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
 
         // Subscription activation — available even during trial/suspended state.

@@ -400,6 +400,15 @@ export default function Group({
                                 <span>{t('settings.domain.nav_custom_domain')}</span>
                             </Link>
                         )}
+                        {Boolean(currentTenant) && (
+                            <Link
+                                href={prefixedRoute('settings.whatsapp')}
+                                className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all shrink-0"
+                            >
+                                <span>💬</span>
+                                <span>WhatsApp Gateway</span>
+                            </Link>
+                        )}
                     </nav>
 
                     {canManageStructure && (
