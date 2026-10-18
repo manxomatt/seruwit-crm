@@ -3,18 +3,17 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, ReactNode, useState } from 'react';
 
 export interface WhatsappSettings {
     is_enabled: boolean;
-    provider: string;
-    fonnte_token: string;
-    custom_url: string;
-    custom_token: string;
+    provider?: string;
+    fonnte_token?: string;
+    custom_url?: string;
+    custom_token?: string;
     send_on_booking_confirmed: boolean;
     send_on_checkout: boolean;
     send_on_return: boolean;
@@ -25,6 +24,8 @@ export interface WhatsappSettings {
 export interface DeviceStatus {
     connected: boolean;
     status: string;
+    phone?: string;
+    push_name?: string;
     message?: string;
 }
 
@@ -58,7 +59,7 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
 
     const form = useForm({
         is_enabled: settings.is_enabled,
-        provider: settings.provider || 'fonnte',
+        provider: settings.provider || 'seruwit',
         fonnte_token: settings.fonnte_token || '',
         custom_url: settings.custom_url || '',
         custom_token: settings.custom_token || '',
@@ -97,43 +98,68 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
 
     return (
         <div className="space-y-8">
-            {/* Status Koneksi Banner */}
+            {/* Status Koneksi WhatsApp Bisnis Banner */}
             <div
-                className={`flex flex-col gap-3 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between ${
+                className={`flex flex-col gap-4 rounded-3xl border p-6 sm:flex-row sm:items-center sm:justify-between shadow-sm ${
                     isConnected
-                        ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-200'
-                        : 'border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200'
+                        ? 'border-emerald-200 bg-emerald-50/70 text-emerald-950 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-100'
+                        : 'border-amber-200 bg-amber-50/70 text-amber-950 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100'
                 }`}
             >
-                <div className="flex items-center gap-3">
-                    <span className="flex h-3.5 w-3.5 relative">
+                <div className="flex items-center gap-3.5">
+                    <span className="relative flex h-4 w-4">
                         <span
                             className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
                                 isConnected ? 'bg-emerald-400' : 'bg-amber-400'
                             }`}
                         />
                         <span
-                            className={`relative inline-flex h-3.5 w-3.5 rounded-full ${
+                            className={`relative inline-flex h-4 w-4 rounded-full ${
                                 isConnected ? 'bg-emerald-500' : 'bg-amber-500'
                             }`}
                         />
                     </span>
                     <div>
-                        <h4 className="text-sm font-semibold">
-                            Status WhatsApp Gateway: {isConnected ? 'Terhubung (Ready)' : 'Belum Terhubung'}
+                        <h4 className="text-base font-bold">
+                            Nomor WhatsApp Bisnis:{' '}
+                            {isConnected ? (
+                                <span className="text-emerald-700 dark:text-emerald-300">
+                                    🟢 Terhubung {deviceStatus?.phone ? `(+${deviceStatus.phone})` : ''}
+                                </span>
+                            ) : (
+                                <span className="text-amber-700 dark:text-amber-300">
+                                    ⚪ Belum Terhubung
+                                </span>
+                            )}
                         </h4>
                         <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-                            {deviceStatus?.message || 'Konfigurasikan token API untuk mengaktifkan pengiriman pesan otomatis.'}
+                            {isConnected
+                                ? `Koneksi gateway aktif. Semua notifikasi modul rental akan dikirim menggunakan nomor ini.`
+                                : `Nomor WhatsApp belum terhubung ke sistem. Hubungkan nomor bisnis Anda di Pengaturan Tenant.`}
                         </p>
                     </div>
+                </div>
+
+                <div className="shrink-0">
+                    <Link
+                        href={prefixedRoute('settings.whatsapp')}
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold shadow-sm transition-all ${
+                            isConnected
+                                ? 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white'
+                                : 'bg-amber-600 text-white hover:bg-amber-700'
+                        }`}
+                    >
+                        <span>💬</span>
+                        <span>{isConnected ? 'Kelola Nomor di Pengaturan' : 'Hubungkan Nomor Sekarang ➔'}</span>
+                    </Link>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* 1. Pengaturan Utama */}
+                {/* 1. Aktivasi Notifikasi Rental */}
                 <Section
-                    title="Aktivasi & Provider Gateway"
-                    subtitle="Pilih layanan gateway pengiriman pesan WhatsApp untuk nomor bisnis rental Anda."
+                    title="Aktivasi Notifikasi Rental"
+                    subtitle="Aktifkan atau nonaktifkan pengiriman pesan WhatsApp otomatis khusus untuk operasional sewa kendaraan."
                 >
                     <div className="flex items-center gap-3">
                         <Checkbox
@@ -143,95 +169,18 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                         />
                         <InputLabel
                             htmlFor="is_enabled"
-                            value="Aktifkan Notifikasi Otomatis WhatsApp"
-                            className="cursor-pointer font-medium"
+                            value="Aktifkan Notifikasi Otomatis WhatsApp untuk Modul Rental"
+                            className="cursor-pointer font-bold text-sm"
                         />
                     </div>
-
-                    <div className="max-w-md">
-                        <InputLabel htmlFor="provider" value="Penyedia Gateway (Provider)" />
-                        <Select
-                            id="provider"
-                            value={form.data.provider}
-                            onChange={(value) => form.setData('provider', value)}
-                            options={[
-                                { value: 'fonnte', label: 'Fonnte (Rekomendasi - Mudah & Scan QR)' },
-                                { value: 'custom', label: 'Custom Gateway Sendiri (Self-Hosted / Webhook)' },
-                                { value: 'log', label: 'Mode Simulasi (Log Only - Tanpa Kuota)' },
-                            ]}
-                            searchable={false}
-                            className="mt-1 w-full"
-                        />
-                        <p className="mt-1.5 text-xs text-slate-500">
-                            Setiap tenant menggunakan kredensial WhatsApp masing-masing agar pesan dikirim atas nama nomor CS kantor sendiri.
-                        </p>
-                    </div>
-
-                    {form.data.provider === 'fonnte' && (
-                        <div className="space-y-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
-                            <div>
-                                <InputLabel htmlFor="fonnte_token" value="Token API Fonnte" />
-                                <TextInput
-                                    id="fonnte_token"
-                                    type="password"
-                                    value={form.data.fonnte_token}
-                                    onChange={(e) => form.setData('fonnte_token', e.target.value)}
-                                    placeholder="Masukkan token dari dashboard Fonnte..."
-                                    className="mt-1 w-full font-mono text-sm"
-                                />
-                                <InputError message={form.errors.fonnte_token} className="mt-1" />
-                                <p className="mt-1.5 text-xs text-slate-500">
-                                    Dapatkan token perangkat dengan mendaftarkan nomor CS Anda di{' '}
-                                    <a
-                                        href="https://fonnte.com"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-600 underline hover:text-emerald-700"
-                                    >
-                                        fonnte.com
-                                    </a>
-                                    .
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {form.data.provider === 'custom' && (
-                        <div className="space-y-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
-                            <div>
-                                <InputLabel htmlFor="custom_url" value="Endpoint URL WhatsApp Gateway Anda" />
-                                <TextInput
-                                    id="custom_url"
-                                    type="url"
-                                    value={form.data.custom_url}
-                                    onChange={(e) => form.setData('custom_url', e.target.value)}
-                                    placeholder="https://wa.domainanda.com/api/send"
-                                    className="mt-1 w-full font-mono text-sm"
-                                />
-                                <InputError message={form.errors.custom_url} className="mt-1" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="custom_token" value="Bearer Token / Secret API Key (Opsional)" />
-                                <TextInput
-                                    id="custom_token"
-                                    type="password"
-                                    value={form.data.custom_token}
-                                    onChange={(e) => form.setData('custom_token', e.target.value)}
-                                    placeholder="Secret token untuk otentikasi..."
-                                    className="mt-1 w-full font-mono text-sm"
-                                />
-                                <InputError message={form.errors.custom_token} className="mt-1" />
-                            </div>
-                        </div>
-                    )}
                 </Section>
 
-                {/* 2. Pemicu Pengiriman Otomatis */}
+                {/* 2. Pemicu Pengiriman Otomatis Modul Rental */}
                 <Section
                     title="Pemicu Pengiriman Pesan (Automation Triggers)"
-                    subtitle="Pilih kejadian apa saja yang akan memicu pengiriman pesan WhatsApp otomatis ke pelanggan."
+                    subtitle="Pilih kejadian apa saja di rental yang akan memicu pengiriman pesan WhatsApp otomatis ke pelanggan atau driver."
                 >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <label className="flex items-start gap-3 cursor-pointer">
                             <Checkbox
                                 checked={form.data.send_on_booking_confirmed}
@@ -239,11 +188,11 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                                 className="mt-1"
                             />
                             <div>
-                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
                                     Konfirmasi Booking & Bukti Pembayaran Lunas
                                 </span>
-                                <p className="text-xs text-slate-500">
-                                    Mengirimkan rincian armada, jadwal sewa, status lunas QRIS/VA, dan link voucher sewa saat booking dikonfirmasi.
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Mengirimkan rincian armada, jadwal sewa, status lunas pembayaran, dan link voucher sewa saat booking dikonfirmasi.
                                 </p>
                             </div>
                         </label>
@@ -255,11 +204,11 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                                 className="mt-1"
                             />
                             <div>
-                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
                                     Berita Acara Serah Terima (Handover Checkout)
                                 </span>
-                                <p className="text-xs text-slate-500">
-                                    Mengirimkan catatan odometer awal, level bensin, dan link Surat Perjanjian Sewa PDF ke penyewa saat serah kunci.
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Mengirimkan catatan odometer awal, level bensin, dan link Surat Perjanjian Sewa PDF ke penyewa saat serah kunci armada.
                                 </p>
                             </div>
                         </label>
@@ -271,10 +220,10 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                                 className="mt-1"
                             />
                             <div>
-                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
                                     Bukti Pengembalian & Status Pengembalian Deposit
                                 </span>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 mt-0.5">
                                     Mengirimkan total kilometer yang ditempuh, konfirmasi unit diterima kembali, dan informasi refund uang jaminan deposit.
                                 </p>
                             </div>
@@ -287,10 +236,10 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                                 className="mt-1"
                             />
                             <div>
-                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
                                     Informasi Penugasan Pengemudi ke Pelanggan
                                 </span>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 mt-0.5">
                                     Mengirimkan nama pengemudi, nomor kontak WhatsApp sopir, dan konfirmasi unit ke penyewa saat sopir ditugaskan.
                                 </p>
                             </div>
@@ -303,11 +252,11 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                                 className="mt-1"
                             />
                             <div>
-                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                                    Kirim Surat Tugas (SPPD) ke WhatsApp Driver
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
+                                    Kirim Surat Perintah Jalan (SPPD) ke WhatsApp Driver
                                 </span>
-                                <p className="text-xs text-slate-500">
-                                    Mengirimkan rincian surat tugas (nama tamu, no telp, titik jemput, tujuan, jam keberangkatan & uang jalan) langsung ke pengemudi.
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Mengirimkan rincian surat tugas (nama tamu, no telepon, titik jemput, jam keberangkatan & uang jalan) langsung ke WhatsApp pengemudi.
                                 </p>
                             </div>
                         </label>
@@ -317,20 +266,20 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                 {/* Tombol Simpan */}
                 <div className="flex items-center justify-between pt-2">
                     <p className="text-xs text-slate-500">
-                        {form.isDirty ? '⚠️ Ada perubahan belum disimpan' : 'Semua perubahan tersimpan'}
+                        {form.isDirty ? '⚠️ Ada perubahan belum disimpan' : 'Semua pemicu tersimpan'}
                     </p>
-                    <PrimaryButton disabled={form.processing}>
-                        {form.processing ? 'Menyimpan…' : 'Simpan Pengaturan WhatsApp'}
+                    <PrimaryButton disabled={form.processing} className="!rounded-xl shadow-sm">
+                        {form.processing ? 'Menyimpan…' : 'Simpan Pemicu Notifikasi Rental'}
                     </PrimaryButton>
                 </div>
             </form>
 
-            {/* 3. Panel Pengujian Pengiriman Pesan */}
+            {/* 3. Panel Pengujian Pengiriman Pesan Rental */}
             <Section
-                title="Uji Coba Pengiriman Pesan"
-                subtitle="Kirimkan pesan uji coba ke nomor WhatsApp Anda untuk memastikan gateway bekerja dengan sempurna."
+                title="Uji Coba Pengiriman Notifikasi Rental"
+                subtitle="Kirimkan pesan uji coba ke nomor WhatsApp Anda untuk memvalidasi pesan notifikasi rental."
             >
-                <form onSubmit={handleSendTest} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <form onSubmit={handleSendTest} className="flex flex-col gap-3 sm:flex-row sm:items-end max-w-xl">
                     <div className="flex-1">
                         <InputLabel htmlFor="target_phone" value="Nomor WhatsApp Penerima" />
                         <TextInput
@@ -339,22 +288,27 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                             value={testForm.data.target_phone}
                             onChange={(e) => testForm.setData('target_phone', e.target.value)}
                             placeholder="081234567890"
-                            className="mt-1 w-full"
+                            className="mt-1 w-full !rounded-xl !py-2 text-xs"
                             required
                         />
                         <InputError message={testForm.errors.target_phone} className="mt-1" />
                     </div>
                     <SecondaryButton
                         type="submit"
-                        disabled={testForm.processing || !testForm.data.target_phone}
-                        className="h-10 shrink-0"
+                        disabled={testForm.processing || !testForm.data.target_phone || !isConnected}
+                        className="h-9 shrink-0 !rounded-xl text-xs"
                     >
-                        {testForm.processing ? 'Mengirim…' : '📱 Kirim Pesan Tes'}
+                        {testForm.processing ? 'Mengirim…' : '📱 Kirim Pesan Tes Rental'}
                     </SecondaryButton>
                 </form>
                 {testSent && (
                     <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                         ✓ Permintaan pengiriman pesan uji coba berhasil diproses. Silakan periksa aplikasi WhatsApp Anda.
+                    </p>
+                )}
+                {!isConnected && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                        * Hubungkan nomor WhatsApp bisnis Anda terlebih dahulu di Pengaturan Tenant agar tombol tes aktif.
                     </p>
                 )}
             </Section>

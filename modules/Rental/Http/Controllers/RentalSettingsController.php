@@ -212,7 +212,7 @@ class RentalSettingsController extends Controller
     {
         $validated = $request->validate([
             'is_enabled' => ['required', 'boolean'],
-            'provider' => ['required', 'string', 'in:fonnte,custom,log'],
+            'provider' => ['sometimes', 'nullable', 'string', 'in:seruwit,fonnte,custom,log'],
             'fonnte_token' => ['nullable', 'string', 'max:255'],
             'custom_url' => ['nullable', 'url', 'max:255'],
             'custom_token' => ['nullable', 'string', 'max:255'],

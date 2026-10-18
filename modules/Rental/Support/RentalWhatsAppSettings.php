@@ -46,7 +46,7 @@ class RentalWhatsAppSettings
     {
         return [
             'is_enabled' => filter_var(Setting::getValue(self::KEY_IS_ENABLED, false), FILTER_VALIDATE_BOOLEAN),
-            'provider' => (string) Setting::getValue(self::KEY_PROVIDER, 'fonnte'),
+            'provider' => (string) Setting::getValue(self::KEY_PROVIDER, 'seruwit'),
             'fonnte_token' => (string) Setting::getValue(self::KEY_FONNTE_TOKEN, ''),
             'custom_url' => (string) Setting::getValue(self::KEY_CUSTOM_URL, ''),
             'custom_token' => (string) Setting::getValue(self::KEY_CUSTOM_TOKEN, ''),
@@ -64,7 +64,7 @@ class RentalWhatsAppSettings
     public static function update(array $data): void
     {
         self::put(self::KEY_IS_ENABLED, ! empty($data['is_enabled']) ? '1' : '0', 'boolean');
-        self::put(self::KEY_PROVIDER, (string) ($data['provider'] ?? 'fonnte'), 'string');
+        self::put(self::KEY_PROVIDER, (string) ($data['provider'] ?? 'seruwit'), 'string');
         self::put(self::KEY_FONNTE_TOKEN, (string) ($data['fonnte_token'] ?? ''), 'string');
         self::put(self::KEY_CUSTOM_URL, (string) ($data['custom_url'] ?? ''), 'string');
         self::put(self::KEY_CUSTOM_TOKEN, (string) ($data['custom_token'] ?? ''), 'string');

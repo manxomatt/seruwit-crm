@@ -6,6 +6,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
+import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import PageHeader from '@/Components/PageHeader';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -45,6 +46,8 @@ export default function WhatsAppSettings({ deviceStatus: initialStatus, sessionI
     const [sendingTest, setSendingTest] = useState(false);
     const [testFeedback, setTestFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [logoutProcessing, setLogoutProcessing] = useState(false);
+    const [confirmingLogout, setConfirmingLogout] = useState(false);
+    const [logoutError, setLogoutError] = useState<string | null>(null);
 
     // Live status polling when scanning QR or waiting for pairing
     useEffect(() => {
@@ -127,11 +130,8 @@ export default function WhatsAppSettings({ deviceStatus: initialStatus, sessionI
     };
 
     const handleLogout = async () => {
-        if (!confirm('Apakah Anda yakin ingin memutuskan nomor WhatsApp bisnis ini dari sistem?')) {
-            return;
-        }
-
         setLogoutProcessing(true);
+        setLogoutError(null);
         try {
             await axios.post(prefixedRoute('settings.whatsapp.logout'));
             setStatus({
@@ -141,9 +141,10 @@ export default function WhatsAppSettings({ deviceStatus: initialStatus, sessionI
             });
             setQrCode('');
             setPairingCode('');
+            setConfirmingLogout(false);
             router.reload();
         } catch (err: any) {
-            alert(err?.response?.data?.error || 'Gagal memutuskan sesi WhatsApp.');
+            setLogoutError(err?.response?.data?.error || 'Gagal memutuskan sesi WhatsApp. Silakan coba lagi.');
         } finally {
             setLogoutProcessing(false);
         }
@@ -275,11 +276,15 @@ export default function WhatsAppSettings({ deviceStatus: initialStatus, sessionI
                                     </span>
                                 </div>
                                 <DangerButton
-                                    onClick={handleLogout}
+                                    type="button"
+                                    onClick={() => {
+                                        setLogoutError(null);
+                                        setConfirmingLogout(true);
+                                    }}
                                     disabled={logoutProcessing}
-                                    className="!rounded-xl text-xs py-2"
+                                    className="!rounded-xl text-xs py-2 shadow-sm"
                                 >
-                                    {logoutProcessing ? 'Memutuskan…' : 'Putuskan Nomor'}
+                                    Putuskan Nomor
                                 </DangerButton>
                             </div>
                         )}
@@ -488,6 +493,112 @@ export default function WhatsAppSettings({ deviceStatus: initialStatus, sessionI
                         )}
                     </form>
                 </div>
+
+                {/* Modal Konfirmasi Putuskan Sambungan WhatsApp */}
+                <Modal
+                    show={confirmingLogout}
+                    onClose={() => {
+                        if (!logoutProcessing) {
+                            setConfirmingLogout(false);
+                            setLogoutError(null);
+                        }
+                    }}
+                    maxWidth="md"
+                >
+                    <div className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40 shadow-sm">
+                                <svg
+                                    className="h-6 w-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.75}
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    Putuskan Sambungan WhatsApp?
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    Apakah Anda yakin ingin memutuskan nomor WhatsApp bisnis ini dari sistem Seruwit CRM?
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Rincian Nomor yang Terhubung */}
+                        <div className="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 p-4 space-y-2.5">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-500 dark:text-slate-400 font-medium">Nomor Terhubung</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-white">
+                                    {status.phone ? `+${status.phone}` : '-'}
+                                </span>
+                            </div>
+                            {status.push_name && (
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400 font-medium">Nama Akun WhatsApp</span>
+                                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                        {status.push_name}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Catatan Dampak Pemutusan */}
+                        <div className="mt-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 p-3.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+                            <span className="text-base leading-none shrink-0">⚠️</span>
+                            <div className="leading-relaxed">
+                                <span className="font-bold">Dampak:</span> Seluruh modul tidak akan dapat mengirimkan pesan atau notifikasi otomatis (seperti booking rental, invoice, atau update tugas) ke pelanggan dan driver sampai Anda menautkan nomor kembali.
+                            </div>
+                        </div>
+
+                        {/* Pesan Kesalahan jika Gagal */}
+                        {logoutError && (
+                            <div className="mt-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-300">
+                                {logoutError}
+                            </div>
+                        )}
+
+                        {/* Tombol Aksi */}
+                        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => {
+                                    setConfirmingLogout(false);
+                                    setLogoutError(null);
+                                }}
+                                disabled={logoutProcessing}
+                                className="!rounded-xl text-xs py-2 px-4"
+                            >
+                                Batal
+                            </SecondaryButton>
+                            <DangerButton
+                                type="button"
+                                onClick={handleLogout}
+                                disabled={logoutProcessing}
+                                className="!rounded-xl text-xs py-2 px-4 shadow-sm inline-flex items-center gap-2"
+                            >
+                                {logoutProcessing ? (
+                                    <>
+                                        <svg className="animate-spin -ml-0.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                        </svg>
+                                        <span>Memutuskan…</span>
+                                    </>
+                                ) : (
+                                    'Ya, Putuskan Nomor'
+                                )}
+                            </DangerButton>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </DynamicLayout>
     );
