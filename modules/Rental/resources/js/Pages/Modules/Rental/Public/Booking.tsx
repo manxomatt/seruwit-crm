@@ -998,6 +998,22 @@ export default function BookingView({ brand, booking, gateway_available, company
     const contractSigned = Boolean(booking.pickup_request?.requested_at);
     const unitHandedOver = ['active', 'returned', 'completed'].includes(booking.status);
 
+    const timeline = useMemo(() => booking.tracking_timeline || [], [booking.tracking_timeline]);
+    const totalSteps = timeline.length || 7;
+    const currentStepIndex = useMemo(() => timeline.findIndex((item) => item.status === 'current'), [timeline]);
+    const completedCount = useMemo(() => timeline.filter((item) => item.status === 'completed').length, [timeline]);
+    const activeIndex = currentStepIndex !== -1
+        ? currentStepIndex
+        : (completedCount === totalSteps ? totalSteps - 1 : Math.min(completedCount, totalSteps - 1));
+    const activeItem = timeline[activeIndex] || null;
+    const progressPercent = useMemo(() => {
+        if (totalSteps === 0) return 0;
+        if (completedCount === totalSteps) return 100;
+        const base = (completedCount / totalSteps) * 100;
+        const currentBonus = currentStepIndex !== -1 ? (0.5 / totalSteps) * 100 : 0;
+        return Math.min(95, Math.round(base + currentBonus));
+    }, [completedCount, totalSteps, currentStepIndex]);
+
     return (
         <div 
             className="min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col justify-between"
@@ -1073,61 +1089,123 @@ export default function BookingView({ brand, booking, gateway_available, company
                     
                     {/* Visual Live Status Tracking Timeline */}
                     <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-xs border border-slate-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <span className="flex h-2.5 w-2.5 relative">
+                        {/* Header with Title and Live Indicator */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-2.5">
+                                <span className="flex h-3 w-3 relative">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                                 </span>
-                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                    Progres Pemesanan & Status Kendaraan
-                                </h3>
+                                <div>
+                                    <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900">
+                                        Progres Pemesanan & Status Kendaraan
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500 font-medium">
+                                        Pantau alur sewa mulai dari reservasi hingga penyelesaian & refund deposit
+                                    </p>
+                                </div>
                             </div>
-                            <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-                                <svg className="w-3.5 h-3.5 text-emerald-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                </svg>
-                                Live Polling Aktif · Real-Time Update
-                            </span>
+                            <div className="flex items-center gap-2 self-start sm:self-center">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-[11px] font-bold text-emerald-800 shadow-2xs">
+                                    <svg className="w-3 h-3 text-emerald-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    Live Polling Aktif
+                                </span>
+                            </div>
                         </div>
 
-                        {booking.tracking_timeline && booking.tracking_timeline.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                                {booking.tracking_timeline.map((item, idx) => {
+                        {/* Top Progress Bar & Percentage Summary */}
+                        <div className="space-y-2 mb-5">
+                            <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-400">Status Saat Ini:</span>
+                                    <span className="text-slate-900 font-black">
+                                        {completedCount === totalSteps
+                                            ? 'Semua Tahap Selesai (100%)'
+                                            : `Tahap ${activeIndex + 1} dari ${totalSteps}: ${activeItem?.title || 'Sedang Berjalan'}`}
+                                    </span>
+                                </div>
+                                <span className="font-mono text-emerald-700 bg-emerald-50 border border-emerald-250 px-2.5 py-0.5 rounded-full text-xs font-black">
+                                    {progressPercent}% Selesai
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200/80">
+                                <div
+                                    className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 h-full rounded-full transition-all duration-700 ease-out shadow-xs"
+                                    style={{ width: `${progressPercent}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Timeline Stepper Cards: 7 Columns on Desktop, Swipeable on Mobile */}
+                        {timeline && timeline.length > 0 ? (
+                            <div className="flex overflow-x-auto snap-x scrollbar-thin pb-2 sm:pb-0 sm:grid sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                                {timeline.map((item, idx) => {
                                     const isDone = item.status === 'completed';
                                     const isCurrent = item.status === 'current';
+                                    const hasValidTimestamp = item.timestamp && item.timestamp.trim() !== 'WIB' && item.timestamp.trim() !== '';
+
                                     return (
                                         <div
-                                            key={item.key}
-                                            className={`relative p-3.5 rounded-2xl border transition-all ${
+                                            key={item.key || `timeline-step-${idx}`}
+                                            className={`relative flex flex-col justify-between p-3 rounded-xl border transition-all min-w-[190px] sm:min-w-0 snap-start shrink-0 sm:shrink ${
                                                 isDone
-                                                    ? 'bg-emerald-50/70 border-emerald-200/90 text-emerald-950'
+                                                    ? 'bg-emerald-50/70 border-emerald-250 text-emerald-950 shadow-2xs'
                                                     : isCurrent
-                                                      ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/20 text-amber-950'
-                                                      : 'bg-slate-50 border-slate-200/80 text-slate-400'
+                                                      ? 'bg-amber-50/90 border-amber-300 ring-2 ring-amber-400/30 text-amber-950 shadow-xs'
+                                                      : 'bg-slate-50/70 border-slate-200/90 text-slate-500'
                                             }`}
                                         >
-                                            <div className="flex items-center justify-between mb-1.5">
-                                                <span
-                                                    className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${
-                                                        isDone
-                                                            ? 'bg-emerald-200/70 text-emerald-900'
-                                                            : isCurrent
-                                                              ? 'bg-amber-200 text-amber-900'
-                                                              : 'bg-slate-200 text-slate-600'
-                                                    }`}
-                                                >
-                                                    Tahap {idx + 1}
-                                                </span>
-                                                {isDone && <span className="text-emerald-700 text-xs font-black">✓</span>}
-                                                {isCurrent && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
+                                            <div>
+                                                {/* Step Pill & Status Node */}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span
+                                                        className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
+                                                            isDone
+                                                                ? 'bg-emerald-200/80 text-emerald-900'
+                                                                : isCurrent
+                                                                  ? 'bg-amber-200 text-amber-900'
+                                                                  : 'bg-slate-200 text-slate-600'
+                                                        }`}
+                                                    >
+                                                        Tahap {idx + 1}
+                                                    </span>
+
+                                                    {isDone && (
+                                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[11px] font-black shadow-2xs">
+                                                            ✓
+                                                        </span>
+                                                    )}
+                                                    {isCurrent && (
+                                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-black ring-2 ring-amber-200 animate-pulse shadow-2xs">
+                                                            {idx + 1}
+                                                        </span>
+                                                    )}
+                                                    {!isDone && !isCurrent && (
+                                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold">
+                                                            {idx + 1}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Step Title & Description */}
+                                                <div className={`text-xs font-black leading-tight ${isDone ? 'text-emerald-950' : isCurrent ? 'text-amber-950' : 'text-slate-800'}`}>
+                                                    {item.title}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                                    {item.description}
+                                                </div>
                                             </div>
-                                            <div className="text-xs font-black leading-tight text-slate-900">{item.title}</div>
-                                            <div className="text-[10px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{item.description}</div>
-                                            {item.timestamp && (
-                                                <div className="text-[9px] font-mono font-bold text-slate-400 mt-2 pt-1.5 border-t border-slate-200/50">
-                                                    {item.timestamp}
+
+                                            {/* Timestamp (with guard against blank 'WIB') */}
+                                            {hasValidTimestamp && (
+                                                <div className="text-[9px] font-mono font-bold text-slate-500 mt-2.5 pt-1.5 border-t border-slate-200/60 flex items-center gap-1">
+                                                    <svg className="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span className="truncate">{item.timestamp}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -1158,6 +1236,55 @@ export default function BookingView({ brand, booking, gateway_available, company
                                         <div className="text-xs font-black">{stage.label}</div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Active Stage Callout / Action Reminder */}
+                        {activeItem && activeItem.status !== 'completed' && (
+                            <div className="mt-4 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-amber-50/70 to-orange-50/40 border border-amber-250 flex items-start sm:items-center justify-between gap-3 shadow-2xs">
+                                <div className="flex items-start sm:items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white font-black text-xs shadow-xs">
+                                        {activeIndex + 1}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded">
+                                                Langkah Saat Ini
+                                            </span>
+                                            <span className="text-xs sm:text-sm font-black text-slate-900">
+                                                {activeItem.title}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                                            {activeItem.description}
+                                        </p>
+                                    </div>
+                                </div>
+                                {activeItem.timestamp && activeItem.timestamp.trim() !== 'WIB' && (
+                                    <div className="hidden md:block shrink-0 text-right">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                                            Update Terakhir
+                                        </span>
+                                        <span className="text-xs font-mono font-bold text-slate-700">
+                                            {activeItem.timestamp}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {completedCount === totalSteps && totalSteps > 0 && (
+                            <div className="mt-4 p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-250 flex items-center gap-3 shadow-2xs">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-black text-xs shadow-xs">
+                                    ✓
+                                </div>
+                                <div>
+                                    <div className="text-xs sm:text-sm font-black text-emerald-950">
+                                        Semua Proses Sewa Selesai
+                                    </div>
+                                    <p className="text-xs text-emerald-800 mt-0.5">
+                                        Unit telah berhasil dikembalikan dan seluruh kewajiban sewa serta refund deposit telah terselesaikan. Terima kasih telah mempercayai kami!
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>

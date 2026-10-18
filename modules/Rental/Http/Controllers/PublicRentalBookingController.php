@@ -1931,7 +1931,7 @@ class PublicRentalBookingController extends Controller
                     'status' => in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
                         ? 'completed'
                         : ($rental->status === Rental::STATUS_CONFIRMED ? 'current' : 'pending'),
-                    'timestamp' => $rental->checked_out_at?->format('d M Y, H:i').' WIB',
+                    'timestamp' => $rental->checked_out_at ? $rental->checked_out_at->format('d M Y, H:i').' WIB' : null,
                 ],
                 [
                     'key' => 'return_completed',
@@ -1942,7 +1942,7 @@ class PublicRentalBookingController extends Controller
                     'status' => in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true)
                         ? 'completed'
                         : 'pending',
-                    'timestamp' => $rental->returned_at?->format('d M Y, H:i').' WIB',
+                    'timestamp' => $rental->returned_at ? $rental->returned_at->format('d M Y, H:i').' WIB' : null,
                 ],
                 [
                     'key' => 'deposit_refund_settled',
@@ -1959,7 +1959,7 @@ class PublicRentalBookingController extends Controller
                     'status' => ((float) $rental->deposit_amount <= 0 || in_array($rental->resolveDepositRefundStatus(), [Rental::REFUND_STATUS_REFUNDED, Rental::REFUND_STATUS_FORFEITED], true))
                         ? (in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true) ? 'completed' : 'pending')
                         : (in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true) ? 'current' : 'pending'),
-                    'timestamp' => $rental->deposit_refunded_at?->format('d M Y, H:i').' WIB',
+                    'timestamp' => $rental->deposit_refunded_at ? $rental->deposit_refunded_at->format('d M Y, H:i').' WIB' : null,
                 ],
             ],
             'vehicle' => $rental->vehicle ? [
