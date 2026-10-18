@@ -95,6 +95,7 @@ class Setting extends Model
     {
         return [
             'rental_internal',
+            'rental_whatsapp',
             'maintenance',
             'orders',
             'invoicing',
