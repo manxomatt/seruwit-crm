@@ -934,20 +934,27 @@ export default function VehicleShow({
                                     </div>
 
                                     {/* Emergency Contact & Risk Mitigation */}
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm">🚨</span>
+                                    <div className="rounded-2xl border border-slate-250/80 bg-slate-50/70 p-3.5 sm:p-4 space-y-3.5 shadow-2xs">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-2xs">
+                                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                                </svg>
+                                            </div>
                                             <div>
-                                                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-wider">Kontak Darurat (Emergency Contact)</h4>
+                                                <h4 className="text-xs font-bold text-slate-900">Kontak Darurat (Emergency Contact)</h4>
                                                 <p className="text-[10px] text-slate-500 font-medium">Verifikasi keamanan & penanggung jawab perjalanan</p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
+                                        <div className="space-y-3">
                                             <div>
-                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">Nama Kontak <span className="text-rose-500">*</span></label>
+                                                <label className="text-[11px] font-bold text-slate-700 block">
+                                                    Nama Kontak <span className="text-rose-500">*</span>
+                                                </label>
                                                 <input
                                                     type="text"
-                                                    placeholder="Nama Lengkap Kerabat"
+                                                    placeholder="Nama lengkap kerabat"
                                                     className={fieldClassName}
                                                     value={form.data.emergency_contact_name}
                                                     onChange={(e) => form.setData('emergency_contact_name', e.target.value)}
@@ -955,35 +962,43 @@ export default function VehicleShow({
                                                 />
                                                 {errors.emergency_contact_name && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.emergency_contact_name}</p>}
                                             </div>
-                                            <div>
-                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">No. Telepon Kontak <span className="text-rose-500">*</span></label>
-                                                <input
-                                                    type="tel"
-                                                    placeholder="08xxxxxxxxxx"
-                                                    className={fieldClassName}
-                                                    value={form.data.emergency_contact_phone}
-                                                    onChange={(e) => form.setData('emergency_contact_phone', e.target.value)}
-                                                    required
-                                                />
-                                                {errors.emergency_contact_phone && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.emergency_contact_phone}</p>}
+
+                                            <div className="grid grid-cols-2 gap-2.5">
+                                                <div>
+                                                    <label className="text-[11px] font-bold text-slate-700 block">
+                                                        Hubungan <span className="text-rose-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={form.data.emergency_contact_relation}
+                                                        onChange={(e) => form.setData('emergency_contact_relation', e.target.value)}
+                                                        className={fieldClassName}
+                                                    >
+                                                        <option value="Keluarga">Keluarga</option>
+                                                        <option value="Pasangan">Pasangan</option>
+                                                        <option value="Teman">Teman</option>
+                                                        <option value="Rekan Kerja">Rekan Kerja</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[11px] font-bold text-slate-700 block">
+                                                        No. Telepon Kontak <span className="text-rose-500">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        placeholder="08xxxxxxxxxx"
+                                                        className={fieldClassName}
+                                                        value={form.data.emergency_contact_phone}
+                                                        onChange={(e) => form.setData('emergency_contact_phone', e.target.value)}
+                                                        required
+                                                    />
+                                                    {errors.emergency_contact_phone && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.emergency_contact_phone}</p>}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
                                             <div>
-                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">Hubungan</label>
-                                                <select
-                                                    value={form.data.emergency_contact_relation}
-                                                    onChange={(e) => form.setData('emergency_contact_relation', e.target.value)}
-                                                    className={fieldClassName}
-                                                >
-                                                    <option value="Keluarga">Keluarga (Family)</option>
-                                                    <option value="Pasangan">Pasangan / Suami / Istri (Spouse)</option>
-                                                    <option value="Teman">Teman / Sahabat (Friend)</option>
-                                                    <option value="Rekan Kerja">Rekan Kerja (Colleague)</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-extrabold text-slate-600 block uppercase">Akun Media Sosial (Opsional)</label>
+                                                <label className="text-[11px] font-bold text-slate-700 block">
+                                                    Akun Media Sosial Penyewa <span className="text-slate-400 font-normal">(Opsional)</span>
+                                                </label>
                                                 <input
                                                     type="text"
                                                     placeholder="Contoh: @instagram / LinkedIn"
@@ -991,6 +1006,7 @@ export default function VehicleShow({
                                                     value={form.data.social_media_account}
                                                     onChange={(e) => form.setData('social_media_account', e.target.value)}
                                                 />
+                                                <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Opsional, untuk mempercepat proses verifikasi sewa.</p>
                                             </div>
                                         </div>
                                     </div>
