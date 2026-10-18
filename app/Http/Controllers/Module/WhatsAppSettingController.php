@@ -32,17 +32,32 @@ class WhatsAppSettingController extends Controller
         $statusRes = $this->whatsappService->getStatus($sessionId);
 
         $connected = (($statusRes['status'] ?? '') === 'CONNECTED');
-        if ($connected && Setting::getValue('whatsapp.is_enabled') !== '1') {
-            Setting::query()->updateOrCreate(
-                ['key' => 'whatsapp.is_enabled'],
-                [
-                    'group' => 'rental_whatsapp',
-                    'value' => '1',
-                    'type' => 'boolean',
-                    'label' => 'Is enabled',
-                    'is_public' => false,
-                ]
-            );
+        if ($connected) {
+            if (Setting::getValue('whatsapp.is_enabled') !== '1') {
+                Setting::query()->updateOrCreate(
+                    ['key' => 'whatsapp.is_enabled'],
+                    [
+                        'group' => 'rental_whatsapp',
+                        'value' => '1',
+                        'type' => 'boolean',
+                        'label' => 'Is enabled',
+                        'is_public' => false,
+                    ]
+                );
+            }
+
+            if (Setting::getValue('whatsapp.provider') !== 'seruwit') {
+                Setting::query()->updateOrCreate(
+                    ['key' => 'whatsapp.provider'],
+                    [
+                        'group' => 'rental_whatsapp',
+                        'value' => 'seruwit',
+                        'type' => 'string',
+                        'label' => 'Provider',
+                        'is_public' => false,
+                    ]
+                );
+            }
         }
 
         $deviceStatus = [
@@ -95,17 +110,32 @@ class WhatsAppSettingController extends Controller
     {
         $result = $this->whatsappService->getStatus($this->getSessionId());
 
-        if (($result['status'] ?? '') === 'CONNECTED' && Setting::getValue('whatsapp.is_enabled') !== '1') {
-            Setting::query()->updateOrCreate(
-                ['key' => 'whatsapp.is_enabled'],
-                [
-                    'group' => 'rental_whatsapp',
-                    'value' => '1',
-                    'type' => 'boolean',
-                    'label' => 'Is enabled',
-                    'is_public' => false,
-                ]
-            );
+        if (($result['status'] ?? '') === 'CONNECTED') {
+            if (Setting::getValue('whatsapp.is_enabled') !== '1') {
+                Setting::query()->updateOrCreate(
+                    ['key' => 'whatsapp.is_enabled'],
+                    [
+                        'group' => 'rental_whatsapp',
+                        'value' => '1',
+                        'type' => 'boolean',
+                        'label' => 'Is enabled',
+                        'is_public' => false,
+                    ]
+                );
+            }
+
+            if (Setting::getValue('whatsapp.provider') !== 'seruwit') {
+                Setting::query()->updateOrCreate(
+                    ['key' => 'whatsapp.provider'],
+                    [
+                        'group' => 'rental_whatsapp',
+                        'value' => 'seruwit',
+                        'type' => 'string',
+                        'label' => 'Provider',
+                        'is_public' => false,
+                    ]
+                );
+            }
         }
 
         return response()->json($result);

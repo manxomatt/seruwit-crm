@@ -56,11 +56,21 @@ class RentalWhatsAppSettings
      */
     public static function all(): array
     {
+        $provider = (string) Setting::getValue(self::KEY_PROVIDER, 'seruwit');
+        $customUrl = (string) Setting::getValue(self::KEY_CUSTOM_URL, '');
+        $fonnteToken = (string) Setting::getValue(self::KEY_FONNTE_TOKEN, '');
+
+        if ($provider === 'custom' && blank($customUrl)) {
+            $provider = 'seruwit';
+        } elseif ($provider === 'fonnte' && blank($fonnteToken)) {
+            $provider = 'seruwit';
+        }
+
         return [
             'is_enabled' => filter_var(Setting::getValue(self::KEY_IS_ENABLED, false), FILTER_VALIDATE_BOOLEAN),
-            'provider' => (string) Setting::getValue(self::KEY_PROVIDER, 'seruwit'),
-            'fonnte_token' => (string) Setting::getValue(self::KEY_FONNTE_TOKEN, ''),
-            'custom_url' => (string) Setting::getValue(self::KEY_CUSTOM_URL, ''),
+            'provider' => $provider,
+            'fonnte_token' => $fonnteToken,
+            'custom_url' => $customUrl,
             'custom_token' => (string) Setting::getValue(self::KEY_CUSTOM_TOKEN, ''),
             'send_on_booking_confirmed' => filter_var(Setting::getValue(self::KEY_SEND_ON_BOOKING_CONFIRMED, true), FILTER_VALIDATE_BOOLEAN),
             'send_on_checkout' => filter_var(Setting::getValue(self::KEY_SEND_ON_CHECKOUT, true), FILTER_VALIDATE_BOOLEAN),
@@ -76,10 +86,20 @@ class RentalWhatsAppSettings
      */
     public static function update(array $data): void
     {
+        $provider = (string) ($data['provider'] ?? 'seruwit');
+        $customUrl = (string) ($data['custom_url'] ?? '');
+        $fonnteToken = (string) ($data['fonnte_token'] ?? '');
+
+        if ($provider === 'custom' && blank($customUrl)) {
+            $provider = 'seruwit';
+        } elseif ($provider === 'fonnte' && blank($fonnteToken)) {
+            $provider = 'seruwit';
+        }
+
         self::put(self::KEY_IS_ENABLED, ! empty($data['is_enabled']) ? '1' : '0', 'boolean');
-        self::put(self::KEY_PROVIDER, (string) ($data['provider'] ?? 'seruwit'), 'string');
-        self::put(self::KEY_FONNTE_TOKEN, (string) ($data['fonnte_token'] ?? ''), 'string');
-        self::put(self::KEY_CUSTOM_URL, (string) ($data['custom_url'] ?? ''), 'string');
+        self::put(self::KEY_PROVIDER, $provider, 'string');
+        self::put(self::KEY_FONNTE_TOKEN, $fonnteToken, 'string');
+        self::put(self::KEY_CUSTOM_URL, $customUrl, 'string');
         self::put(self::KEY_CUSTOM_TOKEN, (string) ($data['custom_token'] ?? ''), 'string');
         self::put(self::KEY_SEND_ON_BOOKING_CONFIRMED, ! empty($data['send_on_booking_confirmed']) ? '1' : '0', 'boolean');
         self::put(self::KEY_SEND_ON_CHECKOUT, ! empty($data['send_on_checkout']) ? '1' : '0', 'boolean');

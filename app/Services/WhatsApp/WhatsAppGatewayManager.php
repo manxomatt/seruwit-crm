@@ -23,6 +23,14 @@ class WhatsAppGatewayManager
 
         $sessionId = $this->getSessionId();
         $provider = (string) Setting::getValue('whatsapp.provider', 'seruwit');
+        $customUrl = (string) Setting::getValue('whatsapp.custom_url', '');
+        $fonnteToken = (string) Setting::getValue('whatsapp.fonnte_token', '');
+
+        if ($provider === 'custom' && blank($customUrl)) {
+            $provider = 'seruwit';
+        } elseif ($provider === 'fonnte' && blank($fonnteToken)) {
+            $provider = 'seruwit';
+        }
 
         return match ($provider) {
             'seruwit' => new SeruwitWhatsAppGateway(
@@ -30,10 +38,10 @@ class WhatsAppGatewayManager
                 sessionId: $sessionId,
             ),
             'fonnte' => new FonnteGateway(
-                token: (string) Setting::getValue('whatsapp.fonnte_token', ''),
+                token: $fonnteToken,
             ),
             'custom' => new CustomWebhookGateway(
-                endpointUrl: (string) Setting::getValue('whatsapp.custom_url', ''),
+                endpointUrl: $customUrl,
                 apiToken: (string) Setting::getValue('whatsapp.custom_token', ''),
             ),
             default => new SeruwitWhatsAppGateway(
