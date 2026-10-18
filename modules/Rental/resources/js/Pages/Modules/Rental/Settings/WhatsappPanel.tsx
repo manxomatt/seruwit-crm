@@ -6,7 +6,8 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, ReactNode, useState } from 'react';
+import axios from 'axios';
+import { FormEventHandler, ReactNode, useEffect, useState } from 'react';
 
 export interface WhatsappSettings {
     is_enabled: boolean;
@@ -96,7 +97,40 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
         });
     };
 
-    const isConnected = Boolean(deviceStatus?.connected || deviceStatus?.status === 'CONNECTED');
+    const [status, setStatus] = useState<DeviceStatus>(deviceStatus || { connected: false, status: 'DISCONNECTED' });
+    const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+    const checkLiveStatus = async () => {
+        setIsCheckingStatus(true);
+        try {
+            const res = await axios.get(prefixedRoute('settings.whatsapp.status'));
+            if (res.data && res.data.success) {
+                const isConn = res.data.status === 'CONNECTED';
+                setStatus({
+                    connected: isConn,
+                    status: res.data.status,
+                    phone: res.data.phone,
+                    push_name: res.data.push_name,
+                    message: isConn
+                        ? `Terhubung ke nomor ${res.data.phone}`
+                        : 'WhatsApp belum terhubung. Hubungkan nomor bisnis Anda di Pengaturan Tenant.',
+                });
+            }
+        } catch (e) {
+            // Ignore background polling errors
+        } finally {
+            setIsCheckingStatus(false);
+        }
+    };
+
+    useEffect(() => {
+        if (deviceStatus) {
+            setStatus(deviceStatus);
+        }
+        checkLiveStatus();
+    }, [deviceStatus]);
+
+    const isConnected = Boolean(status?.connected || status?.status === 'CONNECTED');
 
     return (
         <div className="space-y-8">
@@ -122,15 +156,20 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                         />
                     </span>
                     <div>
-                        <h4 className="text-base font-bold">
-                            Nomor WhatsApp Bisnis:{' '}
+                        <h4 className="text-base font-bold flex items-center gap-2">
+                            <span>Nomor WhatsApp Bisnis:</span>
                             {isConnected ? (
                                 <span className="text-emerald-700 dark:text-emerald-300">
-                                    🟢 Terhubung {deviceStatus?.phone ? `(+${deviceStatus.phone})` : ''}
+                                    🟢 Terhubung {status?.phone ? `(+${status.phone})` : ''}
                                 </span>
                             ) : (
                                 <span className="text-amber-700 dark:text-amber-300">
                                     ⚪ Belum Terhubung
+                                </span>
+                            )}
+                            {isCheckingStatus && (
+                                <span className="text-[11px] font-normal text-slate-400 animate-pulse">
+                                    (memeriksa...)
                                 </span>
                             )}
                         </h4>
@@ -142,7 +181,16 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                     </div>
                 </div>
 
-                <div className="shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
+                    <button
+                        type="button"
+                        onClick={checkLiveStatus}
+                        disabled={isCheckingStatus}
+                        title="Perbarui Status Koneksi"
+                        className="inline-flex items-center justify-center rounded-xl p-2.5 text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm transition dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300"
+                    >
+                        <span className={isCheckingStatus ? 'animate-spin inline-block' : 'inline-block'}>🔄</span>
+                    </button>
                     <Link
                         href={prefixedRoute('settings.whatsapp')}
                         className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold shadow-sm transition-all ${
