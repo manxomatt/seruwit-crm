@@ -44,6 +44,7 @@ use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Rental\Support\RentalRateResolver;
 use Modules\Rental\Support\RentalStatusHint;
 use Modules\Rental\Support\RentalWhatsAppNotifier;
+use Modules\Rental\Support\RentalWhatsAppSettings;
 use Modules\Shuttle\Support\PassengerOtpService;
 use Throwable;
 
