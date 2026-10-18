@@ -13,11 +13,14 @@ use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Rental\Http\Requests\StoreRentalAddonRequest;
 use Modules\Rental\Http\Requests\UpdateDocumentTemplateRequest;
+use Modules\Rental\Http\Requests\UpdateRentalAddonRequest;
 use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
 use Modules\Rental\Http\Requests\UpdateRentalStorefrontSettingsRequest;
 use Modules\Rental\Http\Requests\UpdateRentalTestimonialsRequest;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalAddon;
 use Modules\Rental\Support\DocumentTemplateManager;
 use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverChecklist;
@@ -28,7 +31,7 @@ use Modules\Rental\Support\RentalWhatsAppSettings;
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'storefront', 'testimonials', 'documents', 'whatsapp'];
+    public const TABS = ['general', 'addons', 'storefront', 'testimonials', 'documents', 'whatsapp'];
 
     protected function getRoutePrefix(): string
     {
@@ -49,6 +52,7 @@ class RentalSettingsController extends Controller
         return Inertia::render('Modules/Rental/Settings/Index', [
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
+            'addons' => RentalAddon::query()->orderBy('sort_order')->orderBy('id')->get(),
             'storefront' => RentalStorefrontSettings::all(),
             'testimonials' => RentalTestimonials::all(),
             'documents' => DocumentTemplateManager::all(),
@@ -85,6 +89,42 @@ class RentalSettingsController extends Controller
         RentalTestimonials::save($request->validated()['testimonials'] ?? []);
 
         return back()->with('success', __('rental.messages.settings_updated'));
+    }
+
+    public function storeAddon(StoreRentalAddonRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
+
+        RentalAddon::create($data);
+
+        return back()->with('success', 'Item add-on berhasil ditambahkan.');
+    }
+
+    public function updateAddon(UpdateRentalAddonRequest $request, RentalAddon $addon): RedirectResponse
+    {
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
+
+        $addon->update($data);
+
+        return back()->with('success', 'Item add-on berhasil diperbarui.');
+    }
+
+    public function toggleAddon(RentalAddon $addon): RedirectResponse
+    {
+        $addon->update(['is_active' => ! $addon->is_active]);
+
+        return back()->with('success', $addon->is_active ? 'Item add-on diaktifkan.' : 'Item add-on dinonaktifkan.');
+    }
+
+    public function destroyAddon(RentalAddon $addon): RedirectResponse
+    {
+        $addon->delete();
+
+        return back()->with('success', 'Item add-on berhasil dihapus.');
     }
 
     public function updateDocument(UpdateDocumentTemplateRequest $request, string $code): RedirectResponse

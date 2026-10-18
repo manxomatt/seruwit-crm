@@ -13,6 +13,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import RentalNav from '../../../../RentalNav';
+import AddonsPanel, { RentalAddonItem } from './AddonsPanel';
 import DocumentsPanel from './DocumentsPanel';
 import StorefrontPanel, { DEFAULT_STOREFRONT, StorefrontSettings } from './StorefrontPanel';
 import TestimonialsPanel, { TestimonialItem } from './TestimonialsPanel';
@@ -49,8 +50,9 @@ interface DocumentTemplate {
 }
 
 interface Props {
-    tab: 'general' | 'storefront' | 'testimonials' | 'rates' | 'documents' | 'whatsapp';
+    tab: 'general' | 'addons' | 'storefront' | 'testimonials' | 'rates' | 'documents' | 'whatsapp';
     general?: GeneralSettings;
+    addons?: RentalAddonItem[];
     storefront?: StorefrontSettings;
     testimonials?: TestimonialItem[];
     documents?: Record<string, DocumentTemplate>;
@@ -793,6 +795,7 @@ const DEFAULT_WHATSAPP: WhatsappSettings = {
 export default function Index({
     tab,
     general = DEFAULT_GENERAL,
+    addons = [],
     storefront = DEFAULT_STOREFRONT,
     testimonials = [],
     documents = DEFAULT_DOCUMENTS,
@@ -805,6 +808,7 @@ export default function Index({
 
     const tabs = [
         { key: 'general' as const, label: t('rental.settings.tab_general', undefined, 'Umum') },
+        { key: 'addons' as const, label: '📦 Katalog Add-on' },
         { key: 'storefront' as const, label: t('rental.settings.tab_storefront', undefined, 'Tampilan Storefront') },
         { key: 'testimonials' as const, label: t('rental.settings.tab_testimonials', undefined, 'Testimoni') },
         { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Template Dokumen') },
@@ -847,6 +851,8 @@ export default function Index({
             </div>
 
             {tab === 'general' && <GeneralPanel general={general} centralAiEnabled={centralAiEnabled} />}
+
+            {tab === 'addons' && <AddonsPanel addons={addons} />}
 
             {tab === 'storefront' && <StorefrontPanel storefront={storefront} />}
 

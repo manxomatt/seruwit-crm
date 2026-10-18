@@ -51,6 +51,14 @@ class RentalAddonCatalog
             self::NO_SHOW_FEE,
         ];
 
+        if (Schema::hasTable('rental_addons')) {
+            $addonCodes = \Modules\Rental\Models\RentalAddon::query()
+                ->pluck('code')
+                ->all();
+
+            $codes = array_values(array_unique([...$codes, ...$addonCodes]));
+        }
+
         if (Schema::hasTable('rental_insurance_packages')) {
             $packageCodes = RentalInsurancePackage::query()
                 ->orderBy('sort_order')
@@ -72,6 +80,13 @@ class RentalAddonCatalog
 
             if ($package) {
                 return $package->name;
+            }
+        }
+
+        if (Schema::hasTable('rental_addons')) {
+            $addon = \Modules\Rental\Models\RentalAddon::query()->where('code', $code)->first();
+            if ($addon) {
+                return $addon->name;
             }
         }
 
@@ -117,82 +132,118 @@ class RentalAddonCatalog
         $driverRate = (float) ($settings['default_driver_rate'] ?? 150000);
         $deliveryFee = (float) ($settings['default_airport_delivery_fee'] ?? 50000);
 
-        $catalog = [
-            [
-                'code' => self::BABY_SEAT,
-                'name' => 'Kursi Bayi / Child Safety Seat',
-                'category' => 'accessory',
-                'description' => 'Kursi pengaman anak/bayi ergonomis bersertifikasi keselamatan standar internasional.',
-                'icon' => 'baby',
-                'price_type' => 'daily',
-                'unit_price' => 50000.0,
-                'max_quantity' => 2,
-            ],
-            [
-                'code' => self::ROOF_BOX,
-                'name' => 'Roof Box & Rak Bagasi Atas',
-                'category' => 'accessory',
-                'description' => 'Bagasi ekstra kapasitas 400 Liter + crossbar kuat untuk kenyamanan perjalanan jauh.',
-                'icon' => 'box',
-                'price_type' => 'daily',
-                'unit_price' => 75000.0,
-                'max_quantity' => 1,
-            ],
-            [
-                'code' => self::DASHCAM,
-                'name' => 'Kamera Dashcam / Action Cam 4K',
-                'category' => 'accessory',
-                'description' => 'Kamera perekam jalan wide-angle resolusi 4K + MicroSD 64GB untuk proteksi dan dokumentasi.',
-                'icon' => 'camera',
-                'price_type' => 'daily',
-                'unit_price' => 50000.0,
-                'max_quantity' => 1,
-            ],
-            [
-                'code' => self::ETOLL_CARD,
-                'name' => 'Kartu E-Toll Card Siap Pakai',
-                'category' => 'comfort',
-                'description' => 'Kartu tol elektronik aktif siap digunakan saat melintasi ruas tol tanpa repot membeli kartu baru.',
-                'icon' => 'card',
-                'price_type' => 'flat',
-                'unit_price' => 25000.0,
-                'max_quantity' => 2,
-            ],
-            [
-                'code' => self::FUEL,
-                'name' => 'Paket BBM Awal (Prepaid Fuel Free Return)',
-                'category' => 'fuel',
-                'description' => 'Bebas kembalikan kendaraan dengan level bensin berapa pun tanpa denda pengisian BBM.',
-                'icon' => 'fuel',
-                'price_type' => 'flat',
-                'unit_price' => 250000.0,
-                'max_quantity' => 1,
-            ],
-        ];
+        $catalog = [];
 
-        if ($rental->isSelfDrive()) {
+        if (Schema::hasTable('rental_addons') && \Modules\Rental\Models\RentalAddon::query()->exists()) {
+            $addons = \Modules\Rental\Models\RentalAddon::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+
+            foreach ($addons as $addon) {
+                if ($addon->code === self::CHAUFFEUR && ! $rental->isSelfDrive()) {
+                    continue;
+                }
+
+                $price = (float) $addon->price;
+                if ($price <= 0) {
+                    if ($addon->code === self::CHAUFFEUR) {
+                        $price = $driverRate > 0 ? $driverRate : 150000.0;
+                    } elseif ($addon->code === self::DELIVERY) {
+                        $price = $deliveryFee > 0 ? $deliveryFee : 50000.0;
+                    }
+                }
+
+                $catalog[] = [
+                    'code' => $addon->code,
+                    'name' => $addon->name,
+                    'category' => $addon->category,
+                    'description' => (string) ($addon->description ?? ''),
+                    'icon' => $addon->icon ?: 'box',
+                    'price_type' => $addon->price_type === 'flat' ? 'flat' : 'daily',
+                    'unit_price' => $price,
+                    'max_quantity' => max(1, (int) $addon->max_quantity),
+                ];
+            }
+        } else {
+            $catalog = [
+                [
+                    'code' => self::BABY_SEAT,
+                    'name' => 'Kursi Bayi / Child Safety Seat',
+                    'category' => 'accessory',
+                    'description' => 'Kursi pengaman anak/bayi ergonomis bersertifikasi keselamatan standar internasional.',
+                    'icon' => 'baby',
+                    'price_type' => 'daily',
+                    'unit_price' => 50000.0,
+                    'max_quantity' => 2,
+                ],
+                [
+                    'code' => self::ROOF_BOX,
+                    'name' => 'Roof Box & Rak Bagasi Atas',
+                    'category' => 'accessory',
+                    'description' => 'Bagasi ekstra kapasitas 400 Liter + crossbar kuat untuk kenyamanan perjalanan jauh.',
+                    'icon' => 'box',
+                    'price_type' => 'daily',
+                    'unit_price' => 75000.0,
+                    'max_quantity' => 1,
+                ],
+                [
+                    'code' => self::DASHCAM,
+                    'name' => 'Kamera Dashcam / Action Cam 4K',
+                    'category' => 'accessory',
+                    'description' => 'Kamera perekam jalan wide-angle resolusi 4K + MicroSD 64GB untuk proteksi dan dokumentasi.',
+                    'icon' => 'camera',
+                    'price_type' => 'daily',
+                    'unit_price' => 50000.0,
+                    'max_quantity' => 1,
+                ],
+                [
+                    'code' => self::ETOLL_CARD,
+                    'name' => 'Kartu E-Toll Card Siap Pakai',
+                    'category' => 'comfort',
+                    'description' => 'Kartu tol elektronik aktif siap digunakan saat melintasi ruas tol tanpa repot membeli kartu baru.',
+                    'icon' => 'card',
+                    'price_type' => 'flat',
+                    'unit_price' => 25000.0,
+                    'max_quantity' => 2,
+                ],
+                [
+                    'code' => self::FUEL,
+                    'name' => 'Paket BBM Awal (Prepaid Fuel Free Return)',
+                    'category' => 'fuel',
+                    'description' => 'Bebas kembalikan kendaraan dengan level bensin berapa pun tanpa denda pengisian BBM.',
+                    'icon' => 'fuel',
+                    'price_type' => 'flat',
+                    'unit_price' => 250000.0,
+                    'max_quantity' => 1,
+                ],
+            ];
+
+            if ($rental->isSelfDrive()) {
+                $catalog[] = [
+                    'code' => self::CHAUFFEUR,
+                    'name' => 'Driver / Sopir Tambahan Profesional',
+                    'category' => 'service',
+                    'description' => 'Layanan pengemudi berpengalaman, ramah, dan menguasai rute perjalanan wisata & bisnis.',
+                    'icon' => 'user',
+                    'price_type' => 'daily',
+                    'unit_price' => $driverRate > 0 ? $driverRate : 150000.0,
+                    'max_quantity' => 1,
+                ];
+            }
+
             $catalog[] = [
-                'code' => self::CHAUFFEUR,
-                'name' => 'Driver / Sopir Tambahan Profesional',
+                'code' => self::DELIVERY,
+                'name' => 'Layanan Antar/Jemput Khusus (Valet Delivery)',
                 'category' => 'service',
-                'description' => 'Layanan pengemudi berpengalaman, ramah, dan menguasai rute perjalanan wisata & bisnis.',
-                'icon' => 'user',
-                'price_type' => 'daily',
-                'unit_price' => $driverRate > 0 ? $driverRate : 150000.0,
+                'description' => 'Pengantaran atau penjemputan unit ke lokasi khusus / stasiun / bandara pilihan Anda.',
+                'icon' => 'car',
+                'price_type' => 'flat',
+                'unit_price' => $deliveryFee > 0 ? $deliveryFee : 50000.0,
                 'max_quantity' => 1,
             ];
         }
-
-        $catalog[] = [
-            'code' => self::DELIVERY,
-            'name' => 'Layanan Antar/Jemput Khusus (Valet Delivery)',
-            'category' => 'service',
-            'description' => 'Pengantaran atau penjemputan unit ke lokasi khusus / stasiun / bandara pilihan Anda.',
-            'icon' => 'car',
-            'price_type' => 'flat',
-            'unit_price' => $deliveryFee > 0 ? $deliveryFee : 50000.0,
-            'max_quantity' => 1,
-        ];
 
         if (Schema::hasTable('rental_insurance_packages')) {
             $packages = RentalInsurancePackage::query()

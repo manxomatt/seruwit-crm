@@ -142,6 +142,18 @@ class RentalModule implements ModuleContract
         Route::post('/rental/settings/whatsapp/test', [RentalSettingsController::class, 'testWhatsapp'])
             ->middleware('permission:rental,settings')
             ->name('rental.settings.whatsapp.test');
+        Route::post('/rental/settings/addons', [RentalSettingsController::class, 'storeAddon'])
+            ->middleware('permission:rental,settings')
+            ->name('rental.settings.addons.store');
+        Route::patch('/rental/settings/addons/{addon}', [RentalSettingsController::class, 'updateAddon'])
+            ->middleware('permission:rental,settings')
+            ->name('rental.settings.addons.update');
+        Route::patch('/rental/settings/addons/{addon}/toggle', [RentalSettingsController::class, 'toggleAddon'])
+            ->middleware('permission:rental,settings')
+            ->name('rental.settings.addons.toggle');
+        Route::delete('/rental/settings/addons/{addon}', [RentalSettingsController::class, 'destroyAddon'])
+            ->middleware('permission:rental,settings')
+            ->name('rental.settings.addons.destroy');
 
         // Tariff rates (CRUD)
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,rates')->name('rental.rates.index');
