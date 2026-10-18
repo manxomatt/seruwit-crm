@@ -1,6 +1,6 @@
 import { Head, Link, useForm, usePage, router, usePoll } from '@inertiajs/react';
 import axios from 'axios';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Modal from '@/Components/Modal';
 
 interface Brand {
