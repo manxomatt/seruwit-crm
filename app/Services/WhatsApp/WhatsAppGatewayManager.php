@@ -8,11 +8,16 @@ use Illuminate\Support\Str;
 
 class WhatsAppGatewayManager
 {
-    public function driver(): WhatsAppGatewayInterface
+    public function getSessionId(): string
+    {
+        return 'tenant_'.(function_exists('tenant') && tenant('id') ? tenant('id') : 'default');
+    }
+
+    public function driver(bool $forceRealDriver = false): WhatsAppGatewayInterface
     {
         $isEnabled = filter_var(Setting::getValue('whatsapp.is_enabled', false), FILTER_VALIDATE_BOOLEAN);
 
-        if (! $isEnabled) {
+        if (! $isEnabled && ! $forceRealDriver) {
             return new LogWhatsAppGateway;
         }
 
@@ -29,6 +34,16 @@ class WhatsAppGatewayManager
             ),
             default => app(SeruwitWhatsAppGateway::class),
         };
+    }
+
+    /**
+     * Get the device connection status from the real configured gateway driver.
+     *
+     * @return array{connected: bool, status: string, message?: string, phone?: string, push_name?: string, qr_base64?: string}
+     */
+    public function getDeviceStatus(): array
+    {
+        return $this->driver(forceRealDriver: true)->getDeviceStatus();
     }
 
     /**

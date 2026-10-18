@@ -13,8 +13,8 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
         protected WhatsAppService $service,
         protected ?string $sessionId = null,
     ) {
-        if (! $this->sessionId && function_exists('tenant') && tenant('id')) {
-            $this->sessionId = 'tenant_' . tenant('id');
+        if (! $this->sessionId) {
+            $this->sessionId = 'tenant_'.(function_exists('tenant') && tenant('id') ? tenant('id') : 'default');
         }
     }
 
@@ -25,6 +25,7 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
     {
         if (blank($this->sessionId)) {
             Log::warning('[SeruwitWhatsAppGateway] Tenant session ID is missing.');
+
             return false;
         }
 
@@ -38,14 +39,14 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
 
             Log::error('[SeruwitWhatsAppGateway] Failed to dispatch message', [
                 'session_id' => $this->sessionId,
-                'target'     => $normalizedPhone,
-                'result'     => $result,
+                'target' => $normalizedPhone,
+                'result' => $result,
             ]);
 
             return false;
         } catch (Throwable $e) {
             Log::error('[SeruwitWhatsAppGateway] Exception during send', [
-                'error'  => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'target' => $targetPhone,
             ]);
 
@@ -59,6 +60,7 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
     public function sendMedia(string $targetPhone, string $caption, string $mediaUrl, ?string $fileName = null): bool
     {
         $text = $caption ? "{$caption}\n\n{$mediaUrl}" : $mediaUrl;
+
         return $this->sendMessage($targetPhone, $text);
     }
 
@@ -72,8 +74,8 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
         if (blank($this->sessionId)) {
             return [
                 'connected' => false,
-                'status'    => 'DISCONNECTED',
-                'message'   => 'Sesi tenant tidak ditemukan.',
+                'status' => 'DISCONNECTED',
+                'message' => 'Sesi tenant tidak ditemukan.',
             ];
         }
 
@@ -81,10 +83,10 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
             $res = $this->service->getStatus($this->sessionId);
 
             if (($res['success'] ?? false) === true) {
-                $status    = $res['status'] ?? 'DISCONNECTED';
+                $status = $res['status'] ?? 'DISCONNECTED';
                 $connected = ($status === 'CONNECTED');
-                $phone     = $res['phone'] ?? '';
-                $pushName  = $res['push_name'] ?? '';
+                $phone = $res['phone'] ?? '';
+                $pushName = $res['push_name'] ?? '';
 
                 $msg = $connected
                     ? ($pushName ? "Terhubung ke {$phone} ({$pushName})" : "Terhubung ke {$phone}")
@@ -92,24 +94,24 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
 
                 return [
                     'connected' => $connected,
-                    'status'    => $status,
-                    'phone'     => $phone,
+                    'status' => $status,
+                    'phone' => $phone,
                     'push_name' => $pushName,
-                    'message'   => $msg,
+                    'message' => $msg,
                     'qr_base64' => $res['qr_base64'] ?? '',
                 ];
             }
 
             return [
                 'connected' => false,
-                'status'    => 'DISCONNECTED',
-                'message'   => $res['error'] ?? 'WhatsApp Gateway belum terhubung.',
+                'status' => 'DISCONNECTED',
+                'message' => $res['error'] ?? 'WhatsApp Gateway belum terhubung.',
             ];
         } catch (Throwable $e) {
             return [
                 'connected' => false,
-                'status'    => 'ERROR',
-                'message'   => 'Gagal menghubungi server Seruwit WA Gateway.',
+                'status' => 'ERROR',
+                'message' => 'Gagal menghubungi server Seruwit WA Gateway.',
             ];
         }
     }

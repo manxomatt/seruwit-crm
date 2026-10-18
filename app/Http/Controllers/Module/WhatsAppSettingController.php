@@ -20,7 +20,7 @@ class WhatsAppSettingController extends Controller
 
     protected function getSessionId(): string
     {
-        return 'tenant_' . (tenant('id') ?? 'default');
+        return $this->gatewayManager->getSessionId();
     }
 
     /**
@@ -34,19 +34,19 @@ class WhatsAppSettingController extends Controller
         $connected = (($statusRes['status'] ?? '') === 'CONNECTED');
         $deviceStatus = [
             'connected' => $connected,
-            'status'    => $statusRes['status'] ?? 'DISCONNECTED',
-            'phone'     => $statusRes['phone'] ?? '',
+            'status' => $statusRes['status'] ?? 'DISCONNECTED',
+            'phone' => $statusRes['phone'] ?? '',
             'push_name' => $statusRes['push_name'] ?? '',
             'qr_base64' => $statusRes['qr_base64'] ?? '',
-            'message'   => $connected
-                ? "Terhubung ke nomor {$statusRes['phone']}" . ($statusRes['push_name'] ? " ({$statusRes['push_name']})" : '')
+            'message' => $connected
+                ? "Terhubung ke nomor {$statusRes['phone']}".($statusRes['push_name'] ? " ({$statusRes['push_name']})" : '')
                 : 'WhatsApp belum terhubung. Silakan scan QR Code atau hubungkan dengan kode pairing.',
         ];
 
         return Inertia::render('Modules/Settings/WhatsApp', [
             'deviceStatus' => $deviceStatus,
-            'sessionId'    => $sessionId,
-            'isEnabled'    => filter_var(Setting::getValue('whatsapp.is_enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'sessionId' => $sessionId,
+            'isEnabled' => filter_var(Setting::getValue('whatsapp.is_enabled', true), FILTER_VALIDATE_BOOLEAN),
         ]);
     }
 
@@ -101,12 +101,12 @@ class WhatsAppSettingController extends Controller
     public function sendTest(Request $request): JsonResponse
     {
         $request->validate([
-            'phone'   => ['required', 'string'],
+            'phone' => ['required', 'string'],
             'message' => ['nullable', 'string'],
         ]);
 
         $phone = WhatsAppGatewayManager::normalizePhone($request->string('phone')->toString());
-        $text  = $request->filled('message')
+        $text = $request->filled('message')
             ? $request->string('message')->toString()
             : 'Halo! Ini adalah pesan uji coba dari Seruwit WA Gateway. Nomor WhatsApp bisnis Anda berhasil terhubung.';
 

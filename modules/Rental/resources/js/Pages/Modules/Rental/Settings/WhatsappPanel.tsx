@@ -96,7 +96,7 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
         });
     };
 
-    const isConnected = deviceStatus?.connected ?? false;
+    const isConnected = Boolean(deviceStatus?.connected || deviceStatus?.status === 'CONNECTED');
 
     return (
         <div className="space-y-8">

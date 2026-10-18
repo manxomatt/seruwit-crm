@@ -52,7 +52,7 @@ class RentalSettingsController extends Controller
             'testimonials' => RentalTestimonials::all(),
             'documents' => DocumentTemplateManager::all(),
             'whatsapp' => RentalWhatsAppSettings::all(),
-            'deviceStatus' => $whatsappManager->driver()->getDeviceStatus(),
+            'deviceStatus' => $whatsappManager->getDeviceStatus(),
             'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
         ]);
     }
@@ -241,7 +241,7 @@ class RentalSettingsController extends Controller
         $testMessage = "Halo! Ini adalah pesan uji coba dari sistem *{$companyName}*.\n\n"
             .'WhatsApp Gateway Anda telah berhasil terhubung dan siap digunakan untuk notifikasi rental!';
 
-        $success = $manager->driver()->sendMessage($phone, $testMessage);
+        $success = $manager->driver(forceRealDriver: true)->sendMessage($phone, $testMessage);
 
         if ($success) {
             return back()->with('success', "Pesan uji coba WhatsApp berhasil dikirim ke nomor {$phone}.");
