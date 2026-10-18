@@ -92,6 +92,30 @@ class CustomerPortalTest extends TestCase
             ]);
     }
 
+    public function test_send_otp_fails_when_whatsapp_gateway_fails_in_production(): void
+    {
+        config(['app.env' => 'production']);
+        Setting::query()->updateOrCreate(['key' => 'system.mode'], ['value' => 'production', 'group' => 'system', 'type' => 'string']);
+
+        $mockGateway = \Mockery::mock(\App\Contracts\WhatsAppGatewayInterface::class);
+        $mockGateway->shouldReceive('sendMessage')->once()->andReturn(false);
+
+        $mockManager = \Mockery::mock(\App\Services\WhatsApp\WhatsAppGatewayManager::class);
+        $mockManager->shouldReceive('driver')->andReturn($mockGateway);
+
+        $this->app->instance(\App\Services\WhatsApp\WhatsAppGatewayManager::class, $mockManager);
+
+        $response = $this->postJson(route('book.rental.login.otp'), [
+            'phone' => '081234567890',
+        ]);
+
+        $response->assertStatus(503)
+            ->assertJson([
+                'ok' => false,
+                'success' => false,
+            ]);
+    }
+
     public function test_verify_otp_logs_in_customer_and_creates_account_if_new(): void
     {
         $phone = '081234567890';

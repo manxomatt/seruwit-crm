@@ -18,12 +18,23 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
         }
     }
 
+    public function getSessionId(): string
+    {
+        if (! blank($this->sessionId)) {
+            return $this->sessionId;
+        }
+
+        return 'tenant_'.(function_exists('tenant') && tenant('id') ? tenant('id') : 'default');
+    }
+
     /**
      * Send plain text message
      */
     public function sendMessage(string $targetPhone, string $message): bool
     {
-        if (blank($this->sessionId)) {
+        $sessionId = $this->getSessionId();
+
+        if (blank($sessionId)) {
             Log::warning('[SeruwitWhatsAppGateway] Tenant session ID is missing.');
 
             return false;
@@ -31,14 +42,14 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
 
         try {
             $normalizedPhone = WhatsAppGatewayManager::normalizePhone($targetPhone);
-            $result = $this->service->sendText($this->sessionId, $normalizedPhone, $message);
+            $result = $this->service->sendText($sessionId, $normalizedPhone, $message);
 
             if (($result['success'] ?? false) === true) {
                 return true;
             }
 
             Log::error('[SeruwitWhatsAppGateway] Failed to dispatch message', [
-                'session_id' => $this->sessionId,
+                'session_id' => $sessionId,
                 'target' => $normalizedPhone,
                 'result' => $result,
             ]);
@@ -71,7 +82,9 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
      */
     public function getDeviceStatus(): array
     {
-        if (blank($this->sessionId)) {
+        $sessionId = $this->getSessionId();
+
+        if (blank($sessionId)) {
             return [
                 'connected' => false,
                 'status' => 'DISCONNECTED',
@@ -80,7 +93,7 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
         }
 
         try {
-            $res = $this->service->getStatus($this->sessionId);
+            $res = $this->service->getStatus($sessionId);
 
             if (($res['success'] ?? false) === true) {
                 $status = $res['status'] ?? 'DISCONNECTED';

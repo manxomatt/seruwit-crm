@@ -6,7 +6,6 @@ use App\Models\Setting;
 use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -16,6 +15,10 @@ use Throwable;
 class PassengerOtpService
 {
     private const TTL_SECONDS = 300;
+
+    protected ?bool $lastDispatchSuccess = null;
+
+    protected ?string $lastDispatchError = null;
 
     public function __construct(
         protected ?WhatsAppGatewayManager $gatewayManager = null,
@@ -34,9 +37,19 @@ class PassengerOtpService
             Log::info('Passenger OTP generated', ['phone' => $phone, 'code' => $code]);
         }
 
-        $this->sendWhatsAppOtp($phone, $code);
+        $this->lastDispatchSuccess = $this->sendWhatsAppOtp($phone, $code);
 
         return $code;
+    }
+
+    public function wasLastDispatchSuccessful(): ?bool
+    {
+        return $this->lastDispatchSuccess;
+    }
+
+    public function getLastDispatchError(): ?string
+    {
+        return $this->lastDispatchError;
     }
 
     public function verify(string $phone, string $code): bool
@@ -80,8 +93,14 @@ class PassengerOtpService
 
             $targetPhone = WhatsAppGatewayManager::normalizePhone($phone);
 
-            return $this->gatewayManager->driver()->sendMessage($targetPhone, $message);
+            $success = $this->gatewayManager->driver()->sendMessage($targetPhone, $message);
+            if (! $success) {
+                $this->lastDispatchError = 'Pengiriman pesan WhatsApp gagal. Pastikan nomor terdaftar dan WhatsApp Gateway terhubung.';
+            }
+
+            return $success;
         } catch (Throwable $e) {
+            $this->lastDispatchError = $e->getMessage();
             Log::error('[PassengerOtpService] Failed to send WhatsApp OTP', [
                 'phone' => $phone,
                 'error' => $e->getMessage(),

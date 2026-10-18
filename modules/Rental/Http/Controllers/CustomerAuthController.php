@@ -52,6 +52,25 @@ class CustomerAuthController extends Controller
 
         $normalized = $this->otp->normalize($validated['phone']);
         $code = $this->otp->send($normalized);
+        $dispatched = $this->otp->wasLastDispatchSuccessful();
+
+        if ($dispatched === false) {
+            $isDev = \App\Support\SystemMode::shouldExposeDebugOtp();
+            if ($isDev) {
+                return response()->json([
+                    'ok' => true,
+                    'success' => true,
+                    'message' => 'WhatsApp Gateway belum terhubung/gagal kirim. Mode Development: Kode OTP adalah '.$code,
+                    'debug_otp' => $code,
+                ]);
+            }
+
+            return response()->json([
+                'ok' => false,
+                'success' => false,
+                'message' => 'Gagal mengirim pesan OTP ke nomor WhatsApp Anda. Pastikan gateway WhatsApp aktif dan nomor terhubung, atau hubungi customer support.',
+            ], 503);
+        }
 
         $response = [
             'ok' => true,

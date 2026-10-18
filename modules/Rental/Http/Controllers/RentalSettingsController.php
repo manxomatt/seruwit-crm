@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -229,7 +230,7 @@ class RentalSettingsController extends Controller
         return back()->with('success', 'Pengaturan WhatsApp Gateway berhasil disimpan.');
     }
 
-    public function testWhatsapp(Request $request, WhatsAppGatewayManager $manager): RedirectResponse
+    public function testWhatsapp(Request $request, WhatsAppGatewayManager $manager): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'target_phone' => ['required', 'string', 'max:30'],
@@ -242,6 +243,15 @@ class RentalSettingsController extends Controller
             .'WhatsApp Gateway Anda telah berhasil terhubung dan siap digunakan untuk notifikasi rental!';
 
         $success = $manager->driver(forceRealDriver: true)->sendMessage($phone, $testMessage);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => $success,
+                'message' => $success
+                    ? "Pesan uji coba WhatsApp berhasil dikirim ke nomor {$phone}."
+                    : "Gagal mengirim pesan uji coba ke nomor {$phone}. Silakan periksa token atau status koneksi WhatsApp Anda.",
+            ], $success ? 200 : 422);
+        }
 
         if ($success) {
             return back()->with('success', "Pesan uji coba WhatsApp berhasil dikirim ke nomor {$phone}.");

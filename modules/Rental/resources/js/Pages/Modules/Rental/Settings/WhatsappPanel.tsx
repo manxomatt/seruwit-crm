@@ -77,7 +77,8 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
         target_phone: '',
     });
 
-    const [testSent, setTestSent] = useState(false);
+    const [testFeedback, setTestFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [sendingTest, setSendingTest] = useState(false);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -86,15 +87,33 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
         });
     };
 
-    const handleSendTest: FormEventHandler = (e) => {
+    const handleSendTest: FormEventHandler = async (e) => {
         e.preventDefault();
-        testForm.post(prefixedRoute('rental.settings.whatsapp.test'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setTestSent(true);
-                setTimeout(() => setTestSent(false), 5000);
-            },
-        });
+        setSendingTest(true);
+        setTestFeedback(null);
+        try {
+            const res = await axios.post(prefixedRoute('rental.settings.whatsapp.test'), {
+                target_phone: testForm.data.target_phone,
+            });
+            if (res.data && res.data.success) {
+                setTestFeedback({
+                    type: 'success',
+                    message: res.data.message || 'Pesan uji coba berhasil dikirim ke nomor WhatsApp Anda.',
+                });
+            } else {
+                setTestFeedback({
+                    type: 'error',
+                    message: res.data?.message || 'Gagal mengirim pesan uji coba.',
+                });
+            }
+        } catch (err: any) {
+            setTestFeedback({
+                type: 'error',
+                message: err.response?.data?.message || 'Gagal mengirim pesan uji coba.',
+            });
+        } finally {
+            setSendingTest(false);
+        }
     };
 
     const [status, setStatus] = useState<DeviceStatus>(deviceStatus || { connected: false, status: 'DISCONNECTED' });
@@ -372,16 +391,23 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                     </div>
                     <SecondaryButton
                         type="submit"
-                        disabled={testForm.processing || !testForm.data.target_phone || !isConnected}
+                        disabled={sendingTest || !testForm.data.target_phone || !isConnected}
                         className="h-9 shrink-0 !rounded-xl text-xs"
                     >
-                        {testForm.processing ? 'Mengirim…' : '📱 Kirim Pesan Tes Rental'}
+                        {sendingTest ? 'Mengirim…' : '📱 Kirim Pesan Tes Rental'}
                     </SecondaryButton>
                 </form>
-                {testSent && (
-                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        ✓ Permintaan pengiriman pesan uji coba berhasil diproses. Silakan periksa aplikasi WhatsApp Anda.
-                    </p>
+                {testFeedback && (
+                    <div
+                        className={`p-3 rounded-xl text-xs font-medium border ${
+                            testFeedback.type === 'success'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                                : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+                        }`}
+                    >
+                        {testFeedback.type === 'success' ? '✓ ' : '✕ '}
+                        {testFeedback.message}
+                    </div>
                 )}
                 {!isConnected && (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
