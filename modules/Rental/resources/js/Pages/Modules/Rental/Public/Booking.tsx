@@ -237,11 +237,26 @@ export interface OrderedAddon {
     created_at?: string;
 }
 
+interface QrisMerchant {
+    is_enabled: boolean;
+    image_url: string;
+    merchant_name?: string | null;
+    nmid?: string | null;
+    instructions?: string | null;
+    bank_account?: {
+        id: number;
+        name: string;
+        bank_name?: string | null;
+        account_number?: string | null;
+    } | null;
+}
+
 interface Props {
     brand: Brand;
     booking: Booking;
     gateway_available: boolean;
     company_bank_accounts?: CompanyBankAccount[];
+    qris_merchant?: QrisMerchant | null;
     require_otp?: boolean;
 }
 
@@ -368,7 +383,14 @@ function DigitalSignaturePad({
     );
 }
 
-export default function BookingView({ brand, booking, gateway_available, company_bank_accounts = [], require_otp = true }: Props) {
+export default function BookingView({
+    brand,
+    booking,
+    gateway_available,
+    company_bank_accounts = [],
+    qris_merchant = null,
+    require_otp = true,
+}: Props) {
     const { flash } = usePage().props as {
         flash?: { success?: string; error?: string };
     };
@@ -396,7 +418,11 @@ export default function BookingView({ brand, booking, gateway_available, company
     const [cancellingExtend, setCancellingExtend] = useState(false);
     const [showDocs, setShowDocs] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
-    const [depositTab, setDepositTab] = useState<'transfer' | 'online'>('transfer');
+    const [showQrisModal, setShowQrisModal] = useState<boolean>(false);
+    const [copiedAmount, setCopiedAmount] = useState<boolean>(false);
+    const [depositTab, setDepositTab] = useState<'transfer' | 'qris' | 'online'>(
+        company_bank_accounts.length > 0 ? 'transfer' : (qris_merchant?.image_url ? 'qris' : 'transfer')
+    );
     const [copiedAccount, setCopiedAccount] = useState<boolean>(false);
     const [linkCopied, setLinkCopied] = useState(false);
 
@@ -444,11 +470,13 @@ export default function BookingView({ brand, booking, gateway_available, company
     const proofForm = useForm<{
         booker_phone: string;
         otp_code: string;
+        payment_method: 'transfer' | 'qris';
         company_bank_account_id: string;
         deposit_proof: File | null;
     }>({
         booker_phone: booking.booker_phone ?? '',
         otp_code: '',
+        payment_method: 'transfer',
         company_bank_account_id: company_bank_accounts.length > 0 ? String(company_bank_accounts[0].id) : '',
         deposit_proof: null,
     });
@@ -848,18 +876,27 @@ export default function BookingView({ brand, booking, gateway_available, company
         payForm.post(url);
     };
 
-    const submitProof = (e: FormEvent) => {
+    const submitProof = (e: FormEvent, methodOverride?: 'transfer' | 'qris') => {
         e.preventDefault();
         proofForm.clearErrors();
 
         if (!proofForm.data.deposit_proof) {
-            proofForm.setError('deposit_proof', 'Pilih file bukti transfer (Foto/PDF) terlebih dahulu');
+            proofForm.setError('deposit_proof', 'Pilih file bukti pembayaran (Foto/PDF) terlebih dahulu');
             return;
         }
 
+        const activeMethod = methodOverride || (depositTab === 'qris' ? 'qris' : 'transfer');
         const url = typeof route === 'function' && route().has('book.rental.booking.upload_deposit_proof')
             ? route('book.rental.booking.upload_deposit_proof', booking.public_token)
             : `/book/rental/booking/${booking.public_token}/deposit-proof`;
+
+        proofForm.transform((data) => ({
+            ...data,
+            payment_method: activeMethod,
+            company_bank_account_id: activeMethod === 'qris'
+                ? (String(qris_merchant?.bank_account?.id || data.company_bank_account_id || ''))
+                : data.company_bank_account_id,
+        }));
 
         proofForm.post(url, {
             forceFormData: true,
@@ -2113,6 +2150,16 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             >
                                                 Transfer Bank
                                             </button>
+                                            {qris_merchant?.image_url && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDepositTab('qris')}
+                                                    className={`rounded-lg px-3 py-1.5 transition flex items-center gap-1.5 ${depositTab === 'qris' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
+                                                >
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                    QRIS
+                                                </button>
+                                            )}
                                             {gateway_available && (
                                                 <button
                                                     type="button"
@@ -2131,73 +2178,216 @@ export default function BookingView({ brand, booking, gateway_available, company
                                         </p>
                                     ) : (
                                         <>
-                                            {depositTab === 'transfer' && (
-                                                <form onSubmit={submitProof} className="space-y-4" noValidate>
-                                                    {(() => {
-                                                        const selectedBank = company_bank_accounts.find(
-                                                            (a) => String(a.id) === proofForm.data.company_bank_account_id
-                                                        ) || company_bank_accounts[0];
+                                            {(() => {
+                                                const payableAmount = isBalancePayable
+                                                    ? Number(booking.payment.balance_due)
+                                                    : (Number(booking.deposit_amount) > 0 ? Number(booking.deposit_amount) : Number(booking.total_amount));
 
-                                                        if (!selectedBank) return null;
+                                                return (
+                                                    <>
+                                                        {depositTab === 'transfer' && (
+                                                            <form onSubmit={(e) => submitProof(e, 'transfer')} className="space-y-4" noValidate>
+                                                                {(() => {
+                                                                    const selectedBank = company_bank_accounts.find(
+                                                                        (a) => String(a.id) === proofForm.data.company_bank_account_id
+                                                                    ) || company_bank_accounts[0];
 
-                                                        const payableAmount = isBalancePayable
-                                                            ? Number(booking.payment.balance_due)
-                                                            : (Number(booking.deposit_amount) > 0 ? Number(booking.deposit_amount) : Number(booking.total_amount));
+                                                                    if (!selectedBank) {
+                                                                        return (
+                                                                            <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                                                                                Belum ada rekening bank yang dikonfigurasi.
+                                                                            </p>
+                                                                        );
+                                                                    }
 
-                                                        return (
-                                                            <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-2">
-                                                                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                                                                    <span className="uppercase tracking-wider text-[10px]">
-                                                                        {selectedBank.bank_name || 'Bank Transfer'}
-                                                                    </span>
-                                                                    <span className="text-[10px] text-slate-500">a.n. {selectedBank.account_holder || selectedBank.name}</span>
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="font-mono text-lg font-black text-slate-900 tracking-wider">
-                                                                        {selectedBank.account_number || '—'}
-                                                                    </span>
-                                                                    {selectedBank.account_number && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                navigator.clipboard.writeText(selectedBank.account_number || '');
-                                                                                setCopiedAccount(true);
-                                                                                setTimeout(() => setCopiedAccount(false), 2000);
-                                                                            }}
-                                                                            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-slate-800 transition"
-                                                                        >
-                                                                            {copiedAccount ? 'Tersalin ✓' : 'Salin Rekening'}
-                                                                        </button>
+                                                                    return (
+                                                                        <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-2">
+                                                                            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                                                                                <span className="uppercase tracking-wider text-[10px]">
+                                                                                    {selectedBank.bank_name || 'Bank Transfer'}
+                                                                                </span>
+                                                                                <span className="text-[10px] text-slate-500">a.n. {selectedBank.account_holder || selectedBank.name}</span>
+                                                                            </div>
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="font-mono text-lg font-black text-slate-900 tracking-wider">
+                                                                                    {selectedBank.account_number || '—'}
+                                                                                </span>
+                                                                                {selectedBank.account_number && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            navigator.clipboard.writeText(selectedBank.account_number || '');
+                                                                                            setCopiedAccount(true);
+                                                                                            setTimeout(() => setCopiedAccount(false), 2000);
+                                                                                        }}
+                                                                                        className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-slate-800 transition"
+                                                                                    >
+                                                                                        {copiedAccount ? 'Tersalin ✓' : 'Salin Rekening'}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-[11px] text-slate-600 font-semibold leading-relaxed">
+                                                                                Transfer nominal: <b className="text-slate-950 font-black">{money(payableAmount)}</b>
+                                                                            </p>
+                                                                        </div>
+                                                                    );
+                                                                })()}
+
+                                                                <div>
+                                                                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                                                        Upload Bukti Transfer (Foto / PDF) *
+                                                                    </label>
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*,.pdf"
+                                                                        onChange={(e) => proofForm.setData('deposit_proof', e.target.files?.[0] ?? null)}
+                                                                        className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
+                                                                    />
+                                                                    {proofForm.errors.deposit_proof && (
+                                                                        <p className="text-xs text-rose-500 font-bold mt-1">{proofForm.errors.deposit_proof}</p>
                                                                     )}
                                                                 </div>
-                                                                <p className="text-[11px] text-slate-600 font-semibold leading-relaxed">
-                                                                    Transfer nominal: <b className="text-slate-950 font-black">{money(payableAmount)}</b>
-                                                                </p>
+
+                                                                <button
+                                                                    type="submit"
+                                                                    disabled={proofForm.processing}
+                                                                    className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
+                                                                >
+                                                                    {proofForm.processing ? 'Mengunggah...' : 'Kirim Bukti Pembayaran'}
+                                                                </button>
+                                                            </form>
+                                                        )}
+
+                                                        {depositTab === 'qris' && qris_merchant && (
+                                                            <div className="space-y-4">
+                                                                {/* QRIS Merchant Header Banner */}
+                                                                <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 text-white p-4 sm:p-5 shadow-sm space-y-3">
+                                                                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="font-black text-xs tracking-widest text-rose-500 bg-white px-2 py-0.5 rounded font-mono shadow-xs">
+                                                                                QRIS
+                                                                            </span>
+                                                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                                                                                Pembayaran Merchant
+                                                                            </span>
+                                                                        </div>
+                                                                        <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                                            Semua Bank & E-Wallet
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                                                        <div>
+                                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                                                                                Nama Merchant
+                                                                            </span>
+                                                                            <h4 className="text-sm sm:text-base font-black text-white tracking-wide">
+                                                                                {qris_merchant.merchant_name || brand.name}
+                                                                            </h4>
+                                                                            {qris_merchant.nmid && (
+                                                                                <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
+                                                                                    NMID: {qris_merchant.nmid}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div className="bg-white/10 backdrop-blur-xs rounded-xl px-3.5 py-2 border border-white/10 text-center sm:text-right shrink-0">
+                                                                            <span className="text-[10px] uppercase font-bold text-slate-300 block">
+                                                                                Nominal Tagihan
+                                                                            </span>
+                                                                            <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-end">
+                                                                                <span className="text-base sm:text-lg font-black font-mono text-emerald-400">
+                                                                                    {money(payableAmount)}
+                                                                                </span>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        navigator.clipboard.writeText(String(payableAmount));
+                                                                                        setCopiedAmount(true);
+                                                                                        setTimeout(() => setCopiedAmount(false), 2000);
+                                                                                    }}
+                                                                                    className="text-[10px] font-bold bg-white text-slate-900 px-2 py-1 rounded-md hover:bg-slate-100 transition shadow-xs"
+                                                                                    title="Salin Nominal Tagihan"
+                                                                                >
+                                                                                    {copiedAmount ? 'Tersalin ✓' : 'Salin'}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* QR Code Container */}
+                                                                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                                                    <div className="relative bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
+                                                                        <img
+                                                                            src={qris_merchant.image_url}
+                                                                            alt={`QRIS ${qris_merchant.merchant_name || brand.name}`}
+                                                                            className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl"
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Action buttons */}
+                                                                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                                                                        <a
+                                                                            href={qris_merchant.image_url}
+                                                                            download="QRIS-Payment.png"
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition"
+                                                                        >
+                                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                                            </svg>
+                                                                            Unduh Gambar QRIS
+                                                                        </a>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setShowQrisModal(true)}
+                                                                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white hover:bg-slate-100 text-slate-800 px-3.5 py-2 text-xs font-bold shadow-xs transition"
+                                                                        >
+                                                                            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                                                            </svg>
+                                                                            Perbesar QR
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <p className="text-[11px] text-slate-500 max-w-md leading-relaxed">
+                                                                        {qris_merchant.instructions || 'Buka m-banking (BCA, Mandiri, BRI, BNI) atau e-wallet (GoPay, OVO, Dana, ShopeePay). Scan QRIS di atas, masukkan nominal yang sesuai, dan upload screenshot bukti pembayaran.'}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Form Upload Bukti Transaksi QRIS */}
+                                                                <form onSubmit={(e) => submitProof(e, 'qris')} className="space-y-4 pt-1" noValidate>
+                                                                    <div>
+                                                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                                                            Upload Bukti Pembayaran QRIS (Foto / Screenshot / PDF) *
+                                                                        </label>
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/*,.pdf"
+                                                                            onChange={(e) => proofForm.setData('deposit_proof', e.target.files?.[0] ?? null)}
+                                                                            className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
+                                                                        />
+                                                                        {proofForm.errors.deposit_proof && (
+                                                                            <p className="text-xs text-rose-500 font-bold mt-1">{proofForm.errors.deposit_proof}</p>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <button
+                                                                        type="submit"
+                                                                        disabled={proofForm.processing}
+                                                                        className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
+                                                                    >
+                                                                        {proofForm.processing ? 'Mengunggah...' : 'Kirim Bukti Pembayaran QRIS'}
+                                                                    </button>
+                                                                </form>
                                                             </div>
-                                                        );
-                                                    })()}
-
-                                                    <div>
-                                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                            Upload Bukti Transfer (Foto / PDF) *
-                                                        </label>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*,.pdf"
-                                                            onChange={(e) => proofForm.setData('deposit_proof', e.target.files?.[0] ?? null)}
-                                                            className="text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
-                                                        />
-                                                    </div>
-
-                                                    <button
-                                                        type="submit"
-                                                        disabled={proofForm.processing}
-                                                        className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
-                                                    >
-                                                        {proofForm.processing ? 'Mengunggah...' : 'Kirim Bukti Pembayaran'}
-                                                    </button>
-                                                </form>
-                                            )}
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
 
                                             {depositTab === 'online' && (
                                                 <form onSubmit={pay} className="space-y-3">
@@ -3660,6 +3850,55 @@ export default function BookingView({ brand, booking, gateway_available, company
                     </form>
                 </div>
             </Modal>
+
+            {/* QRIS Enlarged Modal */}
+            {qris_merchant && (
+                <Modal show={showQrisModal} onClose={() => setShowQrisModal(false)} maxWidth="md">
+                    <div className="p-6 text-center space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="text-left">
+                                <span className="font-black text-xs uppercase tracking-wider text-slate-400 block">QRIS Merchant</span>
+                                <h4 className="text-sm font-black text-slate-900">{qris_merchant.merchant_name || brand.name}</h4>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowQrisModal(false)}
+                                className="h-8 w-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center font-bold text-sm"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="bg-white p-4 rounded-2xl border border-slate-200 inline-block shadow-md">
+                            <img
+                                src={qris_merchant.image_url}
+                                alt="QRIS Merchant"
+                                className="max-h-[380px] w-auto mx-auto object-contain rounded-xl"
+                            />
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                            <a
+                                href={qris_merchant.image_url}
+                                download="QRIS-Payment.png"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-slate-800 transition"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Unduh Gambar QRIS
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => setShowQrisModal(false)}
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }

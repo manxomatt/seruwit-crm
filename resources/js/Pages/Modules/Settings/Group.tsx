@@ -44,11 +44,13 @@ interface Props {
     appearanceResetUrl?: string | null;
     mailConfig?: MailConfig | null;
     mailConfigUpdateUrl?: string | null;
+    companyBankAccounts?: { value: string; label: string }[];
 }
 
 const GROUP_ICONS: Record<string, string> = {
     general: '⚙️',
     site: '🌐',
+    payment: '💳',
     seo: '🔍',
     appearance: '🎨',
     email: '✉️',
@@ -57,7 +59,10 @@ const GROUP_ICONS: Record<string, string> = {
     maintenance: '🛠️',
 };
 
-const getSelectOptions = (t: (key: string, params?: Record<string, string | number>, fallback?: string) => string): Record<string, { value: string; label: string; badge?: string; description?: string }[]> => ({
+const getSelectOptions = (
+    t: (key: string, params?: Record<string, string | number>, fallback?: string) => string,
+    companyBankAccounts: { value: string; label: string }[] = []
+): Record<string, { value: string; label: string; badge?: string; description?: string }[]> => ({
     'general.system_mode': [
         {
             value: 'development',
@@ -71,6 +76,14 @@ const getSelectOptions = (t: (key: string, params?: Record<string, string | numb
             badge: 'LIVE',
             description: t('settings.system_mode_options.production_desc', undefined, 'Mode produksi (email nyata & sistem keamanan penuh)'),
         },
+    ],
+    'payment.qris_bank_account_id': [
+        {
+            value: '',
+            label: '— Tidak dihubungkan ke rekening tertentu —',
+            description: 'Pilih rekening operasional jika ingin setoran QRIS otomatis teralokasi ke rekening ini',
+        },
+        ...companyBankAccounts,
     ],
 });
 
@@ -256,6 +269,7 @@ export default function Group({
     appearanceResetUrl = null,
     mailConfig = null,
     mailConfigUpdateUrl = null,
+    companyBankAccounts = [],
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -269,7 +283,7 @@ export default function Group({
     const [resetProcessing, setResetProcessing] = useState(false);
     const isAppearanceGroup = currentGroup === 'appearance';
 
-    const selectOptions = getSelectOptions(t);
+    const selectOptions = getSelectOptions(t, companyBankAccounts);
 
     const getSettingLabel = (setting: Setting): string => {
         const key = `settings.definitions.${setting.key}.label`;

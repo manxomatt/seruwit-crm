@@ -55,12 +55,28 @@ class SettingController extends Controller
         $user = Auth::user();
         $canEditValues = $user->hasPermissionFor('settings', 'update');
 
+        $companyBankAccounts = [];
+        if ($group === 'payment' && class_exists(\Modules\Accounting\Models\CompanyBankAccount::class)) {
+            $companyBankAccounts = \Modules\Accounting\Models\CompanyBankAccount::query()
+                ->where('is_active', true)
+                ->where('kind', \Modules\Accounting\Models\CompanyBankAccount::KIND_BANK)
+                ->orderBy('name')
+                ->get(['id', 'name', 'bank_name', 'account_number'])
+                ->map(fn ($b) => [
+                    'value' => (string) $b->id,
+                    'label' => trim(($b->bank_name ? "{$b->bank_name} - " : '')."{$b->name} ({$b->account_number})"),
+                ])
+                ->values()
+                ->all();
+        }
+
         return Inertia::render('Modules/Settings/Group', [
             // Named distinctly from the shared Inertia `settings` map (site_name,
             // logo, …) so the sidebar brand is not overwritten by this list.
             'groupSettings' => $settings,
             'groups' => $groups,
             'currentGroup' => $group,
+            'companyBankAccounts' => $companyBankAccounts,
             // A tenant with the ordinary settings:update permission can edit
             // the *values* of its own settings (settings.bulk-update exists on
             // every domain). Defining, renaming, or deleting a setting stays a

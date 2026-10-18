@@ -349,6 +349,7 @@ class PublicRentalBookingController extends Controller
             'booking' => $this->bookingPayload($rental),
             'gateway_available' => $this->gatewayAvailable(),
             'company_bank_accounts' => $this->companyBankAccounts(),
+            'qris_merchant' => \App\Support\GlobalPaymentSettings::getQrisPayload(),
             'require_otp' => RentalWhatsAppSettings::isOtpRequired(),
         ]);
     }
@@ -509,10 +510,18 @@ class PublicRentalBookingController extends Controller
 
         $proofPath = $docMedia->storeDepositProof($request->file('deposit_proof'), $rental->id);
 
+        $paymentMethod = $request->input('payment_method') === 'qris' ? 'qris' : 'transfer';
+
         $bankAccountId = ! empty($data['company_bank_account_id']) ? (int) $data['company_bank_account_id'] : null;
+        if ($paymentMethod === 'qris' && empty($bankAccountId)) {
+            $qrisBankId = Setting::getValue(\App\Support\GlobalPaymentSettings::KEY_QRIS_BANK_ACCOUNT_ID);
+            if (! empty($qrisBankId)) {
+                $bankAccountId = (int) $qrisBankId;
+            }
+        }
 
         $rental->update([
-            'deposit_payment_method' => 'transfer',
+            'deposit_payment_method' => $paymentMethod,
             'deposit_company_bank_account_id' => $bankAccountId,
             'deposit_proof_path' => $proofPath,
             'deposit_proof_uploaded_at' => now(),

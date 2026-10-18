@@ -29,6 +29,7 @@ return [
         'capacity' => 'Armada & Kapasitas',
         'billing' => 'Billing & Pembayaran',
         'site' => 'Situs',
+        'payment' => 'Pembayaran',
         'seo' => 'SEO',
         'appearance' => 'Tampilan',
         'email' => 'Email',

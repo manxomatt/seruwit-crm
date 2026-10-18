@@ -29,6 +29,7 @@ return [
         'capacity' => 'Fleet & Capacity',
         'billing' => 'Billing & Payments',
         'site' => 'Site',
+        'payment' => 'Payment',
         'seo' => 'SEO',
         'appearance' => 'Appearance',
         'email' => 'Email',

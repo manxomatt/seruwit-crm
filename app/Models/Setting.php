@@ -114,6 +114,7 @@ class Setting extends Model
         return [
             'general',
             'site',
+            'payment',
             'seo',
             'appearance',
             'email',
