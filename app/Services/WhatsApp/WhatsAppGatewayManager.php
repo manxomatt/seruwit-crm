@@ -22,6 +22,7 @@ class WhatsAppGatewayManager
         }
 
         $sessionId = $this->getSessionId();
+        $provider = (string) Setting::getValue('whatsapp.provider', 'seruwit');
 
         return match ($provider) {
             'seruwit' => new SeruwitWhatsAppGateway(
