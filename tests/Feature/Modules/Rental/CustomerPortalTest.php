@@ -66,6 +66,32 @@ class CustomerPortalTest extends TestCase
             ]);
     }
 
+    public function test_send_otp_dispatches_message_via_whatsapp_gateway(): void
+    {
+        $mockGateway = \Mockery::mock(\App\Contracts\WhatsAppGatewayInterface::class);
+        $mockGateway->shouldReceive('sendMessage')
+            ->once()
+            ->withArgs(function ($targetPhone, $message) {
+                return $targetPhone === '6281234567890' && str_contains($message, 'KODE VERIFIKASI (OTP)');
+            })
+            ->andReturn(true);
+
+        $mockManager = \Mockery::mock(\App\Services\WhatsApp\WhatsAppGatewayManager::class);
+        $mockManager->shouldReceive('driver')->andReturn($mockGateway);
+
+        $this->app->instance(\App\Services\WhatsApp\WhatsAppGatewayManager::class, $mockManager);
+
+        $response = $this->postJson(route('book.rental.login.otp'), [
+            'phone' => '081234567890',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'ok' => true,
+                'success' => true,
+            ]);
+    }
+
     public function test_verify_otp_logs_in_customer_and_creates_account_if_new(): void
     {
         $phone = '081234567890';

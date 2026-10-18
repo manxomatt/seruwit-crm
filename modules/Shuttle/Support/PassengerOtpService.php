@@ -2,18 +2,26 @@
 
 namespace Modules\Shuttle\Support;
 
+use App\Models\Setting;
+use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
- * Phone OTP for passenger self-booking. Codes live in cache (no SMS provider
- * required for MVP). In system development mode the code is returned to the
- * client and logged for local testing.
+ * Phone OTP for passenger self-booking and customer login.
+ * Codes live in cache with a 5-minute TTL and are dispatched via WhatsApp Gateway.
  */
 class PassengerOtpService
 {
     private const TTL_SECONDS = 300;
+
+    public function __construct(
+        protected ?WhatsAppGatewayManager $gatewayManager = null,
+    ) {
+        $this->gatewayManager ??= app(WhatsAppGatewayManager::class);
+    }
 
     public function send(string $phone): string
     {
@@ -23,8 +31,10 @@ class PassengerOtpService
         Cache::put($this->cacheKey($phone), $code, self::TTL_SECONDS);
 
         if (\App\Support\SystemMode::shouldExposeDebugOtp()) {
-            Log::info('Shuttle passenger OTP', ['phone' => $phone, 'code' => $code]);
+            Log::info('Passenger OTP generated', ['phone' => $phone, 'code' => $code]);
         }
+
+        $this->sendWhatsAppOtp($phone, $code);
 
         return $code;
     }
@@ -51,13 +61,34 @@ class PassengerOtpService
 
     public function normalize(string $phone): string
     {
-        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        return WhatsAppGatewayManager::normalizePhone($phone);
+    }
 
-        if (Str::startsWith($digits, '0')) {
-            $digits = '62'.substr($digits, 1);
+    protected function sendWhatsAppOtp(string $phone, string $code): bool
+    {
+        try {
+            $companyName = (string) Setting::getValue(
+                'general.site_name',
+                Setting::getValue('site.company_name', config('app.name', 'Seruwit Rental'))
+            );
+
+            $message = "🔐 *KODE VERIFIKASI (OTP)*\n"
+                ."*{$companyName}*\n\n"
+                ."Kode OTP Anda adalah:\n"
+                ."*{$code}*\n\n"
+                ."Kode ini berlaku selama 5 menit. Demi keamanan akun Anda, *JANGAN* bagikan kode ini kepada siapa pun termasuk pihak {$companyName}.";
+
+            $targetPhone = WhatsAppGatewayManager::normalizePhone($phone);
+
+            return $this->gatewayManager->driver()->sendMessage($targetPhone, $message);
+        } catch (Throwable $e) {
+            Log::error('[PassengerOtpService] Failed to send WhatsApp OTP', [
+                'phone' => $phone,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
         }
-
-        return $digits;
     }
 
     private function cacheKey(string $phone): string
