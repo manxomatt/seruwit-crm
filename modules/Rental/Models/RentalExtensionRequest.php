@@ -14,6 +14,8 @@ class RentalExtensionRequest extends Model
 
     public const STATUS_REJECTED = 'rejected';
 
+    public const STATUS_CANCELLED = 'cancelled';
+
     /** @var list<string> */
     protected $fillable = [
         'rental_id',

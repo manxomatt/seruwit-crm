@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalDispatch;
 use Modules\Rental\Models\RentalDutyOrder;
+use Modules\Rental\Models\RentalExtensionRequest;
 use Throwable;
 
 class RentalWhatsAppNotifier
@@ -333,6 +334,140 @@ class RentalWhatsAppNotifier
             .($rental->deposit_refund_notes ? "📝 *Catatan Finance:*\n{$rental->deposit_refund_notes}\n\n" : '')
             .($portalUrl ? "Lihat tanda terima & bukti transfer melalui portal resmi:\n{$portalUrl}\n\n" : '')
             ."Terima kasih banyak telah mempercayakan rental kendaraan kepada {$companyName}. Sampai jumpa pada perjalanan berikutnya!";
+
+        return $this->dispatch($phone, $message);
+    }
+
+    public function sendExtensionRequested(Rental $rental, RentalExtensionRequest $request): bool
+    {
+        $phone = $this->resolvePhone($rental);
+        if (blank($phone)) {
+            return false;
+        }
+
+        $rental->loadMissing(['vehicle', 'partner']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $rental->partner?->name ?? 'Pelanggan';
+        $vehicleInfo = $rental->vehicle ? "{$rental->vehicle->name} [{$rental->vehicle->plate_number}]" : 'Unit Kendaraan';
+        $portalUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
+
+        $newEndDate = $request->requested_end_date ? $request->requested_end_date->format('d/m/Y') : '-';
+        $formattedAmount = 'Rp '.number_format((float) $request->estimated_amount, 0, ',', '.');
+        $periods = (int) $request->estimated_periods;
+
+        $conflictNotice = $request->has_conflict
+            ? '⚠️ *Catatan Jadwal:* Tanggal yang Anda pilih beririsan dengan jadwal pemesanan pelanggan lain. Tim operasional kami sedang memeriksa opsi alokasi unit armada pengganti. *Mohon TIDAK melakukan pembayaran atau transfer sebelum pengajuan ini disetujui staf.*'
+            : '✅ *Ketersediaan:* Unit tersedia bebas bentrok. Pengajuan sedang diproses untuk verifikasi operasional.';
+
+        $message = "⏱️ *PENGAJUAN PERPANJANGAN SEWA - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Permohonan perpanjangan durasi sewa untuk pesanan *{$rental->code}* telah berhasil kami terima:\n\n"
+            ."📋 *Rincian Pengajuan:*\n"
+            ."• Kendaraan: *{$vehicleInfo}*\n"
+            ."• Jadwal Selesai Baru: *{$newEndDate}* (+{$periods} hari)\n"
+            ."• Estimasi Tagihan Tambahan: *{$formattedAmount}*\n\n"
+            ."{$conflictNotice}\n\n"
+            .($portalUrl ? "Pantau status pengajuan perpanjangan Anda melalui portal:\n{$portalUrl}\n\n" : '')
+            .'Terima kasih atas kepercayaan Anda!';
+
+        return $this->dispatch($phone, $message);
+    }
+
+    public function sendExtensionApproved(Rental $rental, RentalExtensionRequest $request): bool
+    {
+        $phone = $this->resolvePhone($rental);
+        if (blank($phone)) {
+            return false;
+        }
+
+        $rental->loadMissing(['vehicle', 'partner']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $rental->partner?->name ?? 'Pelanggan';
+        $vehicleInfo = $rental->vehicle ? "{$rental->vehicle->name} [{$rental->vehicle->plate_number}]" : 'Unit Kendaraan';
+        $portalUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
+
+        $newEndDate = $request->requested_end_date ? $request->requested_end_date->format('d/m/Y') : '-';
+        $formattedAmount = 'Rp '.number_format((float) $request->estimated_amount, 0, ',', '.');
+
+        $message = "🎉 *PERPANJANGAN SEWA DISETUJUI - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Kabar gembira! Pengajuan perpanjangan sewa untuk pesanan *{$rental->code}* telah *DISETUJUI* oleh staf operasional kami.\n\n"
+            ."📋 *Status Sewa Terkini:*\n"
+            ."• Kendaraan: *{$vehicleInfo}*\n"
+            ."• Jadwal Selesai Baru: *{$newEndDate}*\n"
+            ."• Total Tagihan Tambahan: *{$formattedAmount}*\n\n"
+            .($request->staff_notes ? "📝 *Catatan Staf:*\n{$request->staff_notes}\n\n" : '')
+            ."💳 Invoice perpanjangan telah diterbitkan. Silakan lakukan pembayaran tagihan secara online melalui portal resmi:\n"
+            ."{$portalUrl}\n\n"
+            ."Terima kasih dan selamat menikmati perjalanan Anda bersama {$companyName}!";
+
+        return $this->dispatch($phone, $message);
+    }
+
+    public function sendExtensionRejected(Rental $rental, RentalExtensionRequest $request): bool
+    {
+        $phone = $this->resolvePhone($rental);
+        if (blank($phone)) {
+            return false;
+        }
+
+        $rental->loadMissing(['vehicle', 'partner']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $rental->partner?->name ?? 'Pelanggan';
+        $vehicleInfo = $rental->vehicle ? "{$rental->vehicle->name} [{$rental->vehicle->plate_number}]" : 'Unit Kendaraan';
+        $portalUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
+
+        $currentEndDate = $rental->end_date ? $rental->end_date->format('d/m/Y') : '-';
+        $returnLoc = $rental->return_delivery_address ?: ($rental->return_location ?: 'Pool Garasi');
+
+        $message = "⚠️ *PEMBERITAHUAN PERPANJANGAN SEWA - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Mohon maaf, pengajuan perpanjangan sewa untuk pesanan *{$rental->code}* ({$vehicleInfo}) *BELUM DAPAT KAMI SETUJUI*.\n\n"
+            .($request->staff_notes ? "📝 *Alasan / Catatan Staf:*\n{$request->staff_notes}\n\n" : '')
+            ."Mohon untuk tetap mengembalikan kendaraan tepat waktu sesuai jadwal awal:\n"
+            ."• Batas Pengembalian: *{$currentEndDate}*\n"
+            ."• Lokasi Pengembalian: *{$returnLoc}*\n\n"
+            .($portalUrl ? "Lihat rincian pemesanan Anda melalui portal:\n{$portalUrl}\n\n" : '')
+            .'Terima kasih atas pengertian dan kerja sama Anda.';
+
+        return $this->dispatch($phone, $message);
+    }
+
+    /**
+     * @param  list<\Modules\Rental\Models\RentalCharge>  $charges
+     */
+    public function sendAddonPurchased(Rental $rental, array $charges): bool
+    {
+        $phone = $this->resolvePhone($rental);
+        if (blank($phone) || empty($charges)) {
+            return false;
+        }
+
+        $rental->loadMissing(['vehicle', 'partner']);
+        $companyName = (string) Setting::getValue('site.company_name', config('app.name', 'Rental Mobil'));
+        $customerName = $rental->partner?->name ?? 'Pelanggan';
+        $vehicleInfo = $rental->vehicle ? "{$rental->vehicle->name} [{$rental->vehicle->plate_number}]" : 'Unit Kendaraan';
+        $portalUrl = $rental->public_token ? url('/book/rental/booking/'.$rental->public_token) : '';
+
+        $totalAdditional = 0.0;
+        $itemsText = '';
+        foreach ($charges as $charge) {
+            $amt = (float) $charge->amount;
+            $totalAdditional += $amt;
+            $itemsText .= "• {$charge->description}: *Rp ".number_format($amt, 0, ',', '.')."*\n";
+        }
+
+        $formattedTotal = 'Rp '.number_format($totalAdditional, 0, ',', '.');
+
+        $message = "📦 *LAYANAN & AKSESORIS TAMBAHAN DITERIMA - {$companyName}*\n\n"
+            ."Halo Bpk/Ibu *{$customerName}*,\n"
+            ."Pesanan layanan dan aksesoris tambahan untuk booking *{$rental->code}* ({$vehicleInfo}) telah berhasil dicatat.\n\n"
+            ."📋 *Rincian Add-ons yang Dipesan:*\n"
+            .$itemsText."\n"
+            ."💵 *Total Biaya Tambahan: {$formattedTotal}*\n\n"
+            ."Tagihan invoice telah diterbitkan secara otomatis. Anda dapat melakukan pembayaran dan memeriksa status pemesanan melalui portal:\n"
+            ."{$portalUrl}\n\n"
+            ."Terima kasih telah mempercayakan perjalanan Anda bersama {$companyName}!";
 
         return $this->dispatch($phone, $message);
     }

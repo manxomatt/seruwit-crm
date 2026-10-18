@@ -32,6 +32,7 @@ use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalHandoverService;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalMailer;
+use Modules\Rental\Support\RentalWhatsAppNotifier;
 
 class RentalActionController extends Controller
 {
@@ -575,6 +576,8 @@ class RentalActionController extends Controller
                 reviewedBy: $request->user()?->id,
                 staffNotes: $data['staff_notes'] ?? null,
             );
+
+            app(RentalWhatsAppNotifier::class)->sendExtensionApproved($rental->fresh(), $extensionRequest->fresh());
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors());
         }
@@ -602,6 +605,8 @@ class RentalActionController extends Controller
                 refundStatus: $data['refund_status'] ?? null,
                 transferAmountReported: isset($data['transfer_amount_reported']) ? (float) $data['transfer_amount_reported'] : null,
             );
+
+            app(RentalWhatsAppNotifier::class)->sendExtensionRejected($rental->fresh(), $extensionRequest->fresh());
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors());
         }

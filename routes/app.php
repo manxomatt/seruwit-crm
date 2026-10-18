@@ -88,7 +88,9 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
     Route::post('/booking/{token}/deposit-proof', [PublicRentalBookingController::class, 'uploadDepositProof'])->name('booking.upload_deposit_proof');
     Route::post('/booking/{token}/pay-invoice', [PublicRentalBookingController::class, 'payInvoice'])->name('booking.pay_invoice');
     Route::post('/booking/{token}/cancel', [PublicRentalBookingController::class, 'cancel'])->name('booking.cancel');
+    Route::post('/booking/{token}/extend-quote', [PublicRentalBookingController::class, 'quoteExtend'])->name('booking.extend_quote');
     Route::post('/booking/{token}/extend-request', [PublicRentalBookingController::class, 'requestExtend'])->name('booking.extend_request');
+    Route::post('/booking/{token}/extend-request/cancel', [PublicRentalBookingController::class, 'cancelExtendRequest'])->name('booking.extend_request_cancel');
     Route::post('/booking/{token}/request-pickup', [PublicRentalBookingController::class, 'requestPickup'])->name('booking.request_pickup');
     Route::post('/booking/{token}/documents', [PublicRentalBookingController::class, 'uploadDocuments'])->name('booking.documents');
     Route::post('/booking/{token}/ocr', [PublicRentalBookingController::class, 'scanDocument'])
@@ -101,6 +103,8 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
         ->name('booking.return');
     Route::post('/booking/{token}/refund-account', [PublicRentalBookingController::class, 'submitRefundAccount'])
         ->name('booking.refund_account');
+    Route::post('/booking/{token}/addons', [PublicRentalBookingController::class, 'orderAddons'])
+        ->name('booking.addons');
     Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
 
     // Customer Authentication (Option A+C)

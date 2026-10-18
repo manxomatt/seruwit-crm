@@ -21,6 +21,12 @@ class Rental extends Model
     /** @use HasFactory<RentalFactory> */
     use HasFactory;
 
+    public const PERIOD_DAILY = 'daily';
+
+    public const PERIOD_WEEKLY = 'weekly';
+
+    public const PERIOD_MONTHLY = 'monthly';
+
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_PENDING = 'pending';

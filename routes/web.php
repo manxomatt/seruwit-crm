@@ -8,6 +8,7 @@ use App\Http\Controllers\Central\ResellerLandingPageController;
 use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\SubscriptionTierController;
 use App\Http\Controllers\Central\WebhookController;
+use App\Http\Controllers\Central\WhatsAppWebhookController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\LiveUpdateController;
@@ -50,6 +51,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::post('/webhooks/payment', [WebhookController::class, 'handlePaymentWebhook'])->name('webhooks.payment');
+Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('webhooks.whatsapp');
 
 /*
 |--------------------------------------------------------------------------

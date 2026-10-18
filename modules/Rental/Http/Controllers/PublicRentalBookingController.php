@@ -24,11 +24,13 @@ use Modules\Rental\Http\Requests\Public\CancelPublicRentalBookingRequest;
 use Modules\Rental\Http\Requests\Public\StorePublicRentalBookingRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalAiInspection;
+use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalExtensionRequest;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\PublicRentalCatalog;
 use Modules\Rental\Support\RentalAccountingService;
+use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalBookingPolicy;
 use Modules\Rental\Support\RentalDepositProofNotifier;
 use Modules\Rental\Support\RentalExtensionService;
@@ -602,6 +604,8 @@ class PublicRentalBookingController extends Controller
                 Rental::CHANNEL_WEB,
                 $data['notes'] ?? null,
             );
+
+            app(RentalWhatsAppNotifier::class)->sendExtensionRequested($rental->fresh(), $extRequest);
         } catch (Throwable $e) {
             $message = $e instanceof \Illuminate\Validation\ValidationException
                 ? collect($e->errors())->flatten()->first()
@@ -617,6 +621,104 @@ class PublicRentalBookingController extends Controller
         return redirect()
             ->route('book.rental.booking.show', $token)
             ->with('success', $message);
+    }
+
+    public function quoteExtend(
+        Request $request,
+        string $token,
+    ): JsonResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        if ($rental->status !== Rental::STATUS_ACTIVE) {
+            return response()->json([
+                'success' => false,
+                'message' => __('rental.public.extend_active_only'),
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'new_end_date' => ['required', 'date', 'after:'.$rental->end_date?->toDateString()],
+        ]);
+
+        $newEndDate = $validated['new_end_date'];
+        $currentEndDate = $rental->end_date?->toDateString();
+
+        $extendedPeriods = Rental::computePeriods(
+            $rental->end_date->copy()->addDay()->toDateString(),
+            $newEndDate,
+            $rental->period_type,
+        );
+
+        $ratePerPeriod = (float) $rental->rate_per_period;
+        $additionalAmount = round($extendedPeriods * $ratePerPeriod, 2);
+        $estimatedNewTotal = (float) $rental->total_amount + $additionalAmount;
+
+        $conflicts = Rental::findConflictingRentals(
+            (int) $rental->vehicle_id,
+            $rental->end_date->copy()->addDay()->toDateString(),
+            $newEndDate,
+            $rental->id,
+        );
+
+        $hasConflict = $conflicts->isNotEmpty();
+
+        return response()->json([
+            'success' => true,
+            'current_end_date' => $currentEndDate,
+            'new_end_date' => $newEndDate,
+            'extended_periods' => $extendedPeriods,
+            'period_type' => $rental->period_type,
+            'rate_per_period' => $ratePerPeriod,
+            'additional_amount' => $additionalAmount,
+            'estimated_new_total' => $estimatedNewTotal,
+            'has_conflict' => $hasConflict,
+            'conflict_message' => $hasConflict
+                ? 'Tanggal ini beririsan dengan jadwal pemesanan pelanggan lain. Pengajuan Anda tetap dapat dikirim dan akan ditinjau tim operasional untuk alokasi unit pengganti.'
+                : 'Unit kendaraan tersedia bebas bentrok untuk perpanjangan ini.',
+        ]);
+    }
+
+    public function cancelExtendRequest(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
+        $data = $request->validate([
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
+            return $error;
+        }
+
+        $pending = RentalExtensionRequest::query()
+            ->where('rental_id', $rental->id)
+            ->where('status', RentalExtensionRequest::STATUS_PENDING)
+            ->latest('id')
+            ->first();
+
+        if (! $pending) {
+            return back()->with('error', 'Tidak ada pengajuan perpanjangan aktif yang dapat dibatalkan.');
+        }
+
+        $pending->update([
+            'status' => RentalExtensionRequest::STATUS_CANCELLED,
+            'staff_notes' => 'Dibatalkan oleh pelanggan melalui portal mandiri.',
+        ]);
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', 'Pengajuan perpanjangan sewa telah berhasil dibatalkan.');
     }
 
     public function uploadDocuments(
@@ -1145,6 +1247,116 @@ class PublicRentalBookingController extends Controller
         return redirect()
             ->route('book.rental.booking.show', $token)
             ->with('success', 'Data rekening pengembalian deposit berhasil disimpan.');
+    }
+
+    public function orderAddons(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+        RentalInvoiceService $invoices,
+        RentalAccountingService $accounting,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        abort_if(
+            ! in_array($rental->status, [
+                Rental::STATUS_PENDING,
+                Rental::STATUS_PENDING_RESERVED,
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+            ], true),
+            422,
+            'Pemesanan add-on tidak dapat dilakukan pada status sewa saat ini.'
+        );
+
+        $phone = $request->input('booker_phone') ?: $rental->booker_phone;
+        $isVerified = $phone !== null && $otp->isVerified($phone);
+
+        $data = $request->validate([
+            'booker_phone' => [$isVerified ? 'nullable' : 'required', 'string', 'max:32'],
+            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.code' => ['required', 'string', Rule::in(RentalAddonCatalog::codes())],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:5'],
+            'items.*.notes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'] ?? null, $data['otp_code'] ?? null)) {
+            return $error;
+        }
+
+        $periods = max(1, (int) $rental->total_periods);
+        $createdCharges = [];
+
+        foreach ($data['items'] as $item) {
+            $code = (string) $item['code'];
+            $qty = (int) $item['quantity'];
+            $notes = isset($item['notes']) ? trim((string) $item['notes']) : '';
+
+            $pricing = RentalAddonCatalog::resolveItemPricing($rental, $code);
+            if (! $pricing) {
+                continue;
+            }
+
+            $rate = (float) $pricing['unit_price'];
+            $isDaily = $pricing['price_type'] === 'daily';
+            $chargeAmount = $isDaily
+                ? round($rate * $periods * $qty, 2)
+                : round($rate * $qty, 2);
+
+            if ($chargeAmount <= 0) {
+                continue;
+            }
+
+            $desc = $pricing['name'];
+            if ($qty > 1 && $isDaily) {
+                $desc .= " ({$qty} unit x {$periods} hari)";
+            } elseif ($qty > 1) {
+                $desc .= " ({$qty} unit)";
+            } elseif ($isDaily) {
+                $desc .= " ({$periods} hari)";
+            }
+
+            if ($notes !== '') {
+                $desc .= " - {$notes}";
+            }
+
+            $charge = RentalCharge::query()->create([
+                'rental_id' => $rental->id,
+                'kind' => RentalCharge::KIND_ADDON,
+                'addon_code' => $code,
+                'amount' => $chargeAmount,
+                'description' => $desc,
+            ]);
+
+            $createdCharges[] = $charge;
+        }
+
+        if (empty($createdCharges)) {
+            return back()->with('error', 'Tidak ada add-on valid yang dapat ditambahkan.');
+        }
+
+        $rental->recalculateTotalAmount();
+        $freshRental = $rental->fresh();
+
+        foreach ($createdCharges as $charge) {
+            $invoices->invoiceAddon($freshRental, $charge);
+        }
+
+        $accounting->issueDraftInvoices($freshRental);
+
+        try {
+            app(RentalWhatsAppNotifier::class)
+                ->sendAddonPurchased($freshRental->fresh(['vehicle', 'partner']), $createdCharges);
+        } catch (Throwable $e) {
+            Log::warning('[PublicRental Addons WhatsApp] '.$e->getMessage(), ['rental_id' => $rental->id]);
+        }
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', 'Layanan & aksesoris tambahan berhasil ditambahkan ke pesanan Anda.');
     }
 
     public function history(Request $request, PassengerOtpService $otp): Response
@@ -1746,8 +1958,29 @@ class PublicRentalBookingController extends Controller
                 ], true),
             'cancel' => app(RentalBookingPolicy::class)->passengerCancelAssessment($rental),
             'payment' => $paymentPayload,
-            'can_request_extend' => $rental->status === Rental::STATUS_ACTIVE,
-            'extend_request' => $this->pendingExtendRequestPayload($rental),
+            'can_request_extend' => $rental->status === Rental::STATUS_ACTIVE && ! RentalExtensionRequest::query()
+                ->where('rental_id', $rental->id)
+                ->where('status', RentalExtensionRequest::STATUS_PENDING)
+                ->exists(),
+            'extend_request' => $this->latestExtendRequestPayload($rental),
+            'has_pending_extend' => RentalExtensionRequest::query()
+                ->where('rental_id', $rental->id)
+                ->where('status', RentalExtensionRequest::STATUS_PENDING)
+                ->exists(),
+            'extensions_history' => $rental->extensions()
+                ->latest('id')
+                ->get()
+                ->map(fn ($ext): array => [
+                    'id' => $ext->id,
+                    'original_end_date' => $ext->original_end_date?->toDateString(),
+                    'new_end_date' => $ext->new_end_date?->toDateString(),
+                    'extended_periods' => (int) $ext->extended_periods,
+                    'additional_amount' => (float) $ext->additional_amount,
+                    'notes' => $ext->notes,
+                    'created_at' => $ext->created_at?->format('d M Y, H:i').' WIB',
+                ])
+                ->values()
+                ->all(),
             'documents' => [
                 'ktp_uploaded' => filled($rental->passenger_ktp_path),
                 'sim_uploaded' => filled($rental->passenger_sim_path),
@@ -1822,6 +2055,27 @@ class PublicRentalBookingController extends Controller
                 'refunded_at' => $rental->deposit_refunded_at?->format('d M Y, H:i').' WIB',
                 'can_submit_bank' => $rental->canSubmitRefundAccount(),
             ],
+            'can_order_addons' => in_array($rental->status, [
+                Rental::STATUS_PENDING,
+                Rental::STATUS_PENDING_RESERVED,
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+            ], true),
+            'available_addons' => RentalAddonCatalog::selfServiceCatalog($rental),
+            'ordered_addons' => $rental->charges()
+                ->where('kind', RentalCharge::KIND_ADDON)
+                ->orderBy('id')
+                ->get()
+                ->map(fn ($charge): array => [
+                    'id' => $charge->id,
+                    'addon_code' => $charge->addon_code,
+                    'description' => $charge->description,
+                    'amount' => (float) $charge->amount,
+                    'is_invoiced' => $charge->isInvoiced(),
+                    'created_at' => $charge->created_at?->format('d M Y, H:i').' WIB',
+                ])
+                ->values()
+                ->all(),
         ];
     }
 
@@ -1860,13 +2114,12 @@ class PublicRentalBookingController extends Controller
     }
 
     /**
-     * @return array{id: int, requested_end_date: string, estimated_periods: int, estimated_amount: float, status: string}|null
+     * @return array{id: int, requested_end_date: string|null, estimated_periods: int, estimated_amount: float, status: string, has_conflict: bool, notes: string|null, staff_notes: string|null, reviewed_at: string|null, created_at: string|null}|null
      */
-    private function pendingExtendRequestPayload(Rental $rental): ?array
+    private function latestExtendRequestPayload(Rental $rental): ?array
     {
         $request = RentalExtensionRequest::query()
             ->where('rental_id', $rental->id)
-            ->where('status', RentalExtensionRequest::STATUS_PENDING)
             ->latest('id')
             ->first();
 
@@ -1881,6 +2134,10 @@ class PublicRentalBookingController extends Controller
             'estimated_amount' => (float) $request->estimated_amount,
             'status' => $request->status,
             'has_conflict' => (bool) $request->has_conflict,
+            'notes' => $request->notes,
+            'staff_notes' => $request->staff_notes,
+            'reviewed_at' => $request->reviewed_at?->format('d M Y, H:i').' WIB',
+            'created_at' => $request->created_at?->format('d M Y, H:i').' WIB',
         ];
     }
 

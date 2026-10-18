@@ -17,8 +17,11 @@ use Modules\Rental\AI\DTO\HandoverInspectionResult;
 use Modules\Rental\AI\DTO\KycDocumentResult;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalAiInspection;
+use Modules\Rental\Models\RentalCharge;
+use Modules\Rental\Models\RentalExtensionRequest;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\MobileRentalBookingService;
+use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalWhatsAppSettings;
 use Modules\Shuttle\Support\PassengerOtpService;
 use Tests\TestCase;
@@ -970,5 +973,497 @@ class PublicRentalSelfServiceCoreTest extends TestCase
         $this->assertSame(Rental::REFUND_STATUS_REFUNDED, $rental->deposit_refund_status);
         $this->assertNotNull($rental->deposit_refunded_at);
         $this->assertSame('Transfer manual via m-BCA berhasil.', $rental->deposit_refund_notes);
+    }
+
+    public function test_customer_can_quote_rental_extension_in_real_time(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'status' => Rental::STATUS_ACTIVE,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->addDay(),
+            'period_type' => Rental::PERIOD_DAILY,
+            'rate_per_period' => 350_000,
+            'total_amount' => 1_050_000,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        // Quote 2 additional days
+        $targetEndDate = now()->addDays(3)->toDateString();
+        $response = $this->postJson(route('book.rental.booking.extend_quote', $rental->public_token), [
+            'new_end_date' => $targetEndDate,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'new_end_date' => $targetEndDate,
+            'extended_periods' => 2,
+            'rate_per_period' => 350_000,
+            'additional_amount' => 700_000,
+            'estimated_new_total' => 1_750_000,
+            'has_conflict' => false,
+        ]);
+
+        // If another booking conflicts with the target date
+        Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'status' => Rental::STATUS_CONFIRMED,
+            'start_date' => now()->addDays(2),
+            'end_date' => now()->addDays(4),
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $conflictResponse = $this->postJson(route('book.rental.booking.extend_quote', $rental->public_token), [
+            'new_end_date' => $targetEndDate,
+        ]);
+
+        $conflictResponse->assertOk();
+        $conflictResponse->assertJson([
+            'success' => true,
+            'has_conflict' => true,
+        ]);
+    }
+
+    public function test_customer_can_request_rental_extension_and_dispatches_whatsapp(): void
+    {
+        RentalWhatsAppSettings::update([
+            'is_enabled' => true,
+            'provider' => 'log',
+        ]);
+
+        $phone = '081234567890';
+        $otp = app(PassengerOtpService::class);
+        $normalizedPhone = $otp->normalize($phone);
+
+        $vehicle = Vehicle::factory()->create();
+        $partner = Partner::factory()->create(['phone' => $normalizedPhone]);
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => $normalizedPhone,
+            'status' => Rental::STATUS_ACTIVE,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->addDay(),
+            'period_type' => Rental::PERIOD_DAILY,
+            'rate_per_period' => 300_000,
+            'total_amount' => 900_000,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $code = $otp->send($phone);
+
+        $targetDate = now()->addDays(3)->toDateString();
+        $response = $this->post(route('book.rental.booking.extend_request', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+            'new_end_date' => $targetDate,
+            'notes' => 'Perpanjang sewa untuk urusan dinas tambahan.',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('book.rental.booking.show', $rental->public_token));
+
+        $extRequest = RentalExtensionRequest::where('rental_id', $rental->id)->latest('id')->first();
+        $this->assertNotNull($extRequest);
+        $this->assertSame(RentalExtensionRequest::STATUS_PENDING, $extRequest->status);
+        $this->assertSame($targetDate, $extRequest->requested_end_date->toDateString());
+        $this->assertSame(2, $extRequest->estimated_periods);
+        $this->assertEquals(600_000.0, (float) $extRequest->estimated_amount);
+        $this->assertSame('Perpanjang sewa untuk urusan dinas tambahan.', $extRequest->notes);
+
+        // Verify booking payload reflects pending request
+        $showResponse = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $showResponse->assertOk();
+        $bookingData = $showResponse->original->getData()['page']['props']['booking'];
+        $this->assertFalse($bookingData['can_request_extend']);
+        $this->assertTrue($bookingData['has_pending_extend']);
+        $this->assertSame('pending', $bookingData['extend_request']['status']);
+    }
+
+    public function test_customer_can_cancel_pending_rental_extension_request(): void
+    {
+        $phone = '081234567890';
+        $otp = app(PassengerOtpService::class);
+        $normalizedPhone = $otp->normalize($phone);
+
+        $rental = Rental::factory()->create([
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => $normalizedPhone,
+            'status' => Rental::STATUS_ACTIVE,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->addDay(),
+            'period_type' => Rental::PERIOD_DAILY,
+            'rate_per_period' => 300_000,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $extRequest = RentalExtensionRequest::create([
+            'rental_id' => $rental->id,
+            'requested_end_date' => now()->addDays(3)->toDateString(),
+            'estimated_periods' => 2,
+            'estimated_amount' => 600_000,
+            'status' => RentalExtensionRequest::STATUS_PENDING,
+            'has_conflict' => false,
+            'channel' => Rental::CHANNEL_WEB,
+        ]);
+
+        $code = $otp->send($phone);
+
+        $response = $this->post(route('book.rental.booking.extend_request_cancel', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('book.rental.booking.show', $rental->public_token));
+
+        $extRequest->refresh();
+        $this->assertSame(RentalExtensionRequest::STATUS_CANCELLED, $extRequest->status);
+
+        // Verify can_request_extend is now true again
+        $showResponse = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $showResponse->assertOk();
+        $bookingData = $showResponse->original->getData()['page']['props']['booking'];
+        $this->assertTrue($bookingData['can_request_extend']);
+        $this->assertFalse($bookingData['has_pending_extend']);
+    }
+
+    public function test_staff_can_approve_rental_extension_and_dispatches_whatsapp(): void
+    {
+        RentalWhatsAppSettings::update([
+            'is_enabled' => true,
+            'provider' => 'log',
+        ]);
+
+        $vehicle = Vehicle::factory()->create();
+        $partner = Partner::factory()->create(['phone' => '081234567890']);
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '081234567890',
+            'status' => Rental::STATUS_ACTIVE,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->addDay(),
+            'total_periods' => 3,
+            'period_type' => Rental::PERIOD_DAILY,
+            'rate_per_period' => 300_000,
+            'base_amount' => 900_000,
+            'total_amount' => 900_000,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $targetDate = now()->addDays(3)->toDateString();
+        $extRequest = RentalExtensionRequest::create([
+            'rental_id' => $rental->id,
+            'requested_end_date' => $targetDate,
+            'estimated_periods' => 2,
+            'estimated_amount' => 600_000,
+            'status' => RentalExtensionRequest::STATUS_PENDING,
+            'has_conflict' => false,
+            'channel' => Rental::CHANNEL_WEB,
+        ]);
+
+        $user = \App\Models\User::factory()->create();
+
+        $response = $this->actingAs($user)->post(
+            route('module.rental.extension_requests.approve', [$rental->id, $extRequest->id]),
+            ['staff_notes' => 'Disetujui, unit siap lanjut sewa.']
+        );
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $extRequest->refresh();
+        $rental->refresh();
+
+        $this->assertSame(RentalExtensionRequest::STATUS_APPROVED, $extRequest->status);
+        $this->assertSame($targetDate, $rental->end_date->toDateString());
+        $this->assertSame(5, $rental->total_periods);
+        $this->assertEquals(1_500_000.0, (float) $rental->total_amount);
+
+        // Verify booking payload displays approved status and extensions history
+        $showResponse = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $showResponse->assertOk();
+        $bookingData = $showResponse->original->getData()['page']['props']['booking'];
+        $this->assertSame('approved', $bookingData['extend_request']['status']);
+        $this->assertNotEmpty($bookingData['extensions_history']);
+        $this->assertSame(2, $bookingData['extensions_history'][0]['extended_periods']);
+    }
+
+    public function test_staff_can_reject_rental_extension_and_dispatches_whatsapp(): void
+    {
+        RentalWhatsAppSettings::update([
+            'is_enabled' => true,
+            'provider' => 'log',
+        ]);
+
+        $vehicle = Vehicle::factory()->create();
+        $partner = Partner::factory()->create(['phone' => '081234567890']);
+        $rental = Rental::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '081234567890',
+            'status' => Rental::STATUS_ACTIVE,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->addDay(),
+            'period_type' => Rental::PERIOD_DAILY,
+            'rate_per_period' => 300_000,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $extRequest = RentalExtensionRequest::create([
+            'rental_id' => $rental->id,
+            'requested_end_date' => now()->addDays(3)->toDateString(),
+            'estimated_periods' => 2,
+            'estimated_amount' => 600_000,
+            'status' => RentalExtensionRequest::STATUS_PENDING,
+            'has_conflict' => true,
+            'channel' => Rental::CHANNEL_WEB,
+        ]);
+
+        $user = \App\Models\User::factory()->create();
+
+        $response = $this->actingAs($user)->post(
+            route('module.rental.extension_requests.reject', [$rental->id, $extRequest->id]),
+            ['staff_notes' => 'Armada sudah ada booking berikutnya dan tidak ada unit pengganti.']
+        );
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $extRequest->refresh();
+        $this->assertSame(RentalExtensionRequest::STATUS_REJECTED, $extRequest->status);
+        $this->assertSame('Armada sudah ada booking berikutnya dan tidak ada unit pengganti.', $extRequest->staff_notes);
+
+        // Verify booking payload displays rejected status with staff notes
+        $showResponse = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $showResponse->assertOk();
+        $bookingData = $showResponse->original->getData()['page']['props']['booking'];
+        $this->assertSame('rejected', $bookingData['extend_request']['status']);
+        $this->assertSame('Armada sudah ada booking berikutnya dan tidak ada unit pengganti.', $bookingData['extend_request']['staff_notes']);
+    }
+
+    public function test_public_booking_payload_contains_addon_catalog_and_ordered_addons(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create(['phone' => '08123456789']);
+
+        $rental = Rental::create([
+            'code' => 'RNT-ADDON-001',
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'service_type' => Rental::SERVICE_SELF_DRIVE,
+            'status' => Rental::STATUS_CONFIRMED,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+            'period_type' => 'daily',
+            'total_periods' => 3,
+            'rate_per_period' => 300_000,
+            'base_amount' => 900_000,
+            'total_amount' => 900_000,
+            'deposit_amount' => 500_000,
+            'booker_phone' => '628123456789',
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $response = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $response->assertOk();
+
+        $booking = $response->original->getData()['page']['props']['booking'];
+        $this->assertTrue($booking['can_order_addons']);
+        $this->assertIsArray($booking['available_addons']);
+        $this->assertNotEmpty($booking['available_addons']);
+
+        // Verify available addons include baby_seat and roof_box
+        $codes = collect($booking['available_addons'])->pluck('code')->all();
+        $this->assertContains(RentalAddonCatalog::BABY_SEAT, $codes);
+        $this->assertContains(RentalAddonCatalog::ROOF_BOX, $codes);
+        $this->assertContains(RentalAddonCatalog::DASHCAM, $codes);
+
+        // Verify daily pricing calculation: 50,000 * 3 days = 150,000
+        $babySeat = collect($booking['available_addons'])->firstWhere('code', RentalAddonCatalog::BABY_SEAT);
+        $this->assertSame(50000.0, (float) $babySeat['unit_price']);
+        $this->assertSame(150000.0, (float) $babySeat['calculated_total']);
+        $this->assertFalse($babySeat['is_already_added']);
+
+        $this->assertIsArray($booking['ordered_addons']);
+        $this->assertEmpty($booking['ordered_addons']);
+    }
+
+    public function test_customer_can_order_post_booking_addons_with_otp_verification(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create(['phone' => '08123456789']);
+        $phone = '081234567890';
+        $otp = app(PassengerOtpService::class);
+        $normalizedPhone = $otp->normalize($phone);
+
+        $rental = Rental::create([
+            'code' => 'RNT-ADDON-002',
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'service_type' => Rental::SERVICE_SELF_DRIVE,
+            'status' => Rental::STATUS_CONFIRMED,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+            'period_type' => 'daily',
+            'total_periods' => 3,
+            'rate_per_period' => 300_000,
+            'base_amount' => 900_000,
+            'total_amount' => 900_000,
+            'deposit_amount' => 500_000,
+            'booker_phone' => $normalizedPhone,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $code = $otp->send($phone);
+
+        $response = $this->post(route('book.rental.booking.addons', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+            'items' => [
+                [
+                    'code' => RentalAddonCatalog::BABY_SEAT,
+                    'quantity' => 1,
+                    'notes' => 'Untuk balita 2 tahun',
+                ],
+                [
+                    'code' => RentalAddonCatalog::ROOF_BOX,
+                    'quantity' => 1,
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('book.rental.booking.show', $rental->public_token));
+
+        // Verify RentalCharges created
+        $charges = RentalCharge::query()->where('rental_id', $rental->id)->where('kind', RentalCharge::KIND_ADDON)->get();
+        $this->assertCount(2, $charges);
+
+        $babyCharge = $charges->firstWhere('addon_code', RentalAddonCatalog::BABY_SEAT);
+        $this->assertNotNull($babyCharge);
+        // 50,000 * 3 periods = 150,000
+        $this->assertSame(150000.0, (float) $babyCharge->amount);
+        $this->assertStringContainsString('Untuk balita 2 tahun', $babyCharge->description);
+
+        $roofCharge = $charges->firstWhere('addon_code', RentalAddonCatalog::ROOF_BOX);
+        $this->assertNotNull($roofCharge);
+        // 75,000 * 3 periods = 225,000
+        $this->assertSame(225000.0, (float) $roofCharge->amount);
+
+        // Verify rental total_amount updated: 900,000 + 150,000 + 225,000 = 1,275,000
+        $rental->refresh();
+        $this->assertSame(1275000.0, (float) $rental->total_amount);
+
+        // Verify invoices raised for both charges
+        $this->assertTrue($babyCharge->fresh()->isInvoiced());
+        $this->assertTrue($roofCharge->fresh()->isInvoiced());
+
+        // Verify show page includes ordered addons
+        $showResponse = $this->get(route('book.rental.booking.show', $rental->public_token));
+        $showResponse->assertOk();
+        $booking = $showResponse->original->getData()['page']['props']['booking'];
+        $this->assertCount(2, $booking['ordered_addons']);
+        $this->assertSame(1275000.0, (float) $booking['total_amount']);
+
+        // Baby seat and roof box are now marked as already added in available catalog
+        $availBaby = collect($booking['available_addons'])->firstWhere('code', RentalAddonCatalog::BABY_SEAT);
+        $this->assertTrue($availBaby['is_already_added']);
+    }
+
+    public function test_customer_ordering_addons_requires_valid_otp_when_not_verified(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create(['phone' => '08123456789']);
+        $phone = '628123456789';
+
+        $rental = Rental::create([
+            'code' => 'RNT-ADDON-003',
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'service_type' => Rental::SERVICE_SELF_DRIVE,
+            'status' => Rental::STATUS_CONFIRMED,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+            'period_type' => 'daily',
+            'total_periods' => 3,
+            'rate_per_period' => 300_000,
+            'base_amount' => 900_000,
+            'total_amount' => 900_000,
+            'deposit_amount' => 500_000,
+            'booker_phone' => $phone,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $response = $this->post(route('book.rental.booking.addons', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => '999999',
+            'items' => [
+                [
+                    'code' => RentalAddonCatalog::BABY_SEAT,
+                    'quantity' => 1,
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors('otp_code');
+        $this->assertDatabaseMissing('rental_charges', [
+            'rental_id' => $rental->id,
+            'addon_code' => RentalAddonCatalog::BABY_SEAT,
+        ]);
+    }
+
+    public function test_ordering_addons_blocked_for_completed_or_cancelled_status(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create(['phone' => '08123456789']);
+        $phone = '081234567890';
+        $otp = app(PassengerOtpService::class);
+        $normalizedPhone = $otp->normalize($phone);
+
+        $rental = Rental::create([
+            'code' => 'RNT-ADDON-004',
+            'vehicle_id' => $vehicle->id,
+            'partner_id' => $partner->id,
+            'channel' => Rental::CHANNEL_WEB,
+            'service_type' => Rental::SERVICE_SELF_DRIVE,
+            'status' => Rental::STATUS_CANCELLED,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+            'period_type' => 'daily',
+            'total_periods' => 3,
+            'rate_per_period' => 300_000,
+            'base_amount' => 900_000,
+            'total_amount' => 900_000,
+            'deposit_amount' => 500_000,
+            'booker_phone' => $normalizedPhone,
+            'public_token' => \Illuminate\Support\Str::random(40),
+        ]);
+
+        $code = $otp->send($phone);
+
+        $response = $this->post(route('book.rental.booking.addons', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $code,
+            'items' => [
+                [
+                    'code' => RentalAddonCatalog::BABY_SEAT,
+                    'quantity' => 1,
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422);
     }
 }

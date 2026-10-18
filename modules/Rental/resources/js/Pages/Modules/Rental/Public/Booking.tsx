@@ -106,7 +106,21 @@ interface Booking {
         estimated_amount: number;
         status: string;
         has_conflict?: boolean;
+        notes?: string | null;
+        staff_notes?: string | null;
+        reviewed_at?: string | null;
+        created_at?: string | null;
     } | null;
+    has_pending_extend?: boolean;
+    extensions_history?: Array<{
+        id: number;
+        original_end_date: string;
+        new_end_date: string;
+        extended_periods: number;
+        additional_amount: number;
+        notes?: string | null;
+        created_at?: string | null;
+    }>;
     documents: {
         ktp_uploaded: boolean;
         sim_uploaded: boolean;
@@ -196,6 +210,31 @@ interface Booking {
         refunded_at: string | null;
         can_submit_bank: boolean;
     };
+    can_order_addons?: boolean;
+    available_addons?: AvailableAddon[];
+    ordered_addons?: OrderedAddon[];
+}
+
+export interface AvailableAddon {
+    code: string;
+    name: string;
+    category: string;
+    description: string;
+    icon: string;
+    price_type: 'daily' | 'flat';
+    unit_price: number;
+    calculated_total: number;
+    max_quantity: number;
+    is_already_added: boolean;
+}
+
+export interface OrderedAddon {
+    id: number;
+    addon_code: string | null;
+    description: string;
+    amount: number;
+    is_invoiced: boolean;
+    created_at?: string;
 }
 
 interface Props {
@@ -340,6 +379,20 @@ export default function BookingView({ brand, booking, gateway_available, company
     const [showCancel, setShowCancel] = useState(false);
     const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
     const [showExtend, setShowExtend] = useState(false);
+    const [extendQuoteLoading, setExtendQuoteLoading] = useState(false);
+    const [extendQuoteData, setExtendQuoteData] = useState<{
+        current_end_date: string;
+        new_end_date: string;
+        extended_periods: number;
+        rate_per_period: number;
+        additional_amount: number;
+        estimated_new_total: number;
+        has_conflict: boolean;
+        conflict_message: string;
+    } | null>(null);
+    const [extendQuoteError, setExtendQuoteError] = useState<string | null>(null);
+    const [showCancelExtendConfirm, setShowCancelExtendConfirm] = useState(false);
+    const [cancellingExtend, setCancellingExtend] = useState(false);
     const [showDocs, setShowDocs] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
     const [depositTab, setDepositTab] = useState<'transfer' | 'online'>('transfer');
@@ -652,6 +705,66 @@ export default function BookingView({ brand, booking, gateway_available, company
         );
     };
 
+    const [showAddonsModal, setShowAddonsModal] = useState(false);
+    const [selectedAddonCategory, setSelectedAddonCategory] = useState<string>('all');
+    const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>({});
+    const [addonNotes, setAddonNotes] = useState<Record<string, string>>({});
+
+    const addonsForm = useForm({
+        booker_phone: booking.booker_phone ?? '',
+        otp_code: '',
+        items: [] as Array<{ code: string; quantity: number; notes?: string }>,
+    });
+
+    const submitAddons = (e: FormEvent) => {
+        e.preventDefault();
+        const selectedItems = Object.entries(addonQuantities)
+            .filter(([_, qty]) => qty > 0)
+            .map(([code, qty]) => ({
+                code,
+                quantity: qty,
+                notes: addonNotes[code] || undefined,
+            }));
+
+        if (selectedItems.length === 0) {
+            alert('Pilih minimal satu layanan atau aksesoris tambahan.');
+            return;
+        }
+
+        addonsForm.transform((data) => ({
+            ...data,
+            booker_phone: booking.booker_phone ?? data.booker_phone,
+            otp_code: isVerified ? '' : data.otp_code,
+            items: selectedItems,
+        })).post(
+            typeof route === 'function' && route().has('book.rental.booking.addons')
+                ? route('book.rental.booking.addons', booking.public_token)
+                : `/book/rental/booking/${booking.public_token}/addons`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setShowAddonsModal(false);
+                    setAddonQuantities({});
+                    setAddonNotes({});
+                },
+            }
+        );
+    };
+
+    const addonEmoji = (icon: string) => {
+        switch (icon) {
+            case 'baby': return '👶';
+            case 'box': return '🧳';
+            case 'camera': return '📹';
+            case 'card': return '💳';
+            case 'fuel': return '⛽';
+            case 'user': return '👨‍✈️';
+            case 'car': return '🚗';
+            case 'shield': return '🛡️';
+            default: return '📦';
+        }
+    };
+
     const sendOtp = async (phone: string) => {
         if (!phone) {
             alert('Masukkan nomor telepon terlebih dahulu');
@@ -766,13 +879,66 @@ export default function BookingView({ brand, booking, gateway_available, company
         });
     };
 
+    const handleNewEndDateChange = async (date: string) => {
+        extendForm.setData('new_end_date', date);
+        setExtendQuoteError(null);
+        if (!date) {
+            setExtendQuoteData(null);
+            return;
+        }
+
+        setExtendQuoteLoading(true);
+        try {
+            const url = typeof route === 'function' && route().has('book.rental.booking.extend_quote')
+                ? route('book.rental.booking.extend_quote', booking.public_token)
+                : `/book/rental/booking/${booking.public_token}/extend-quote`;
+
+            const { data } = await axios.post(url, {
+                new_end_date: date,
+            });
+
+            if (data.success) {
+                setExtendQuoteData(data);
+            } else {
+                setExtendQuoteError(data.message || 'Gagal menghitung simulasi perpanjangan');
+                setExtendQuoteData(null);
+            }
+        } catch (err: any) {
+            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : 'Gagal memeriksa ketersediaan tanggal');
+            setExtendQuoteError(typeof msg === 'string' ? msg : 'Gagal memeriksa ketersediaan tanggal');
+            setExtendQuoteData(null);
+        } finally {
+            setExtendQuoteLoading(false);
+        }
+    };
+
     const requestExtend = (e: FormEvent) => {
         e.preventDefault();
         const url = typeof route === 'function' && route().has('book.rental.booking.extend_request')
             ? route('book.rental.booking.extend_request', booking.public_token)
             : `/book/rental/booking/${booking.public_token}/extend-request`;
         extendForm.post(url, {
-            onSuccess: () => setShowExtend(false),
+            onSuccess: () => {
+                setShowExtend(false);
+                setExtendQuoteData(null);
+            },
+        });
+    };
+
+    const cancelExtendRequest = () => {
+        setCancellingExtend(true);
+        const url = typeof route === 'function' && route().has('book.rental.booking.extend_request_cancel')
+            ? route('book.rental.booking.extend_request_cancel', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/extend-request/cancel`;
+
+        router.post(url, {
+            booker_phone: booking.booker_phone ?? '',
+            otp_code: isVerified ? '' : verificationCode,
+        }, {
+            onFinish: () => {
+                setCancellingExtend(false);
+                setShowCancelExtendConfirm(false);
+            },
         });
     };
 
@@ -1315,6 +1481,105 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             )}
 
+                            {/* Post-Booking Add-ons & Extra Accessories Hub */}
+                            <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg border border-amber-200/60 shadow-xs">
+                                            📦
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                Katalog Add-on & Aksesoris Tambahan
+                                            </h3>
+                                            <p className="text-xs text-slate-500">
+                                                Perlengkapan dan layanan ekstra selama masa sewa kendaraan Anda
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {booking.can_order_addons && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!isVerified) {
+                                                    alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
+                                                    return;
+                                                }
+                                                setShowAddonsModal(true);
+                                            }}
+                                            className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black shadow-xs transition ${
+                                                !isVerified
+                                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                                                    : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                            }`}
+                                        >
+                                            <span>+</span>
+                                            <span>Pesan Layanan Tambahan</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Ordered Addons List */}
+                                {booking.ordered_addons && booking.ordered_addons.length > 0 ? (
+                                    <div className="space-y-3">
+                                        <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/60 p-1">
+                                            {booking.ordered_addons.map((addon) => (
+                                                <div key={addon.id} className="flex items-center justify-between p-3 text-xs">
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-bold text-slate-900 flex items-center gap-2">
+                                                            <span>{addon.description}</span>
+                                                            {addon.is_invoiced && (
+                                                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                                    ✓ Masuk Tagihan
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {addon.created_at && (
+                                                            <p className="text-[11px] text-slate-400">Dipesan: {addon.created_at}</p>
+                                                        )}
+                                                    </div>
+                                                    <span className="font-black text-slate-900 tabular-nums text-sm">
+                                                        {money(addon.amount)}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {booking.payment?.balance_due > 0 && (
+                                            <div className="rounded-xl bg-blue-50 border border-blue-200/80 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900">
+                                                <div className="flex items-center gap-2">
+                                                    <span>💳</span>
+                                                    <span>
+                                                        Sisa tagihan (termasuk add-on): <strong>{money(booking.payment.balance_due)}</strong>
+                                                    </span>
+                                                </div>
+                                                {booking.payment.can_pay_balance && (
+                                                    <a
+                                                        href="#section-payment"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            document.getElementById('section-payment')?.scrollIntoView({ behavior: 'smooth' });
+                                                        }}
+                                                        className="inline-flex items-center justify-center font-bold underline hover:text-blue-700"
+                                                    >
+                                                        Bayar Tagihan Sekarang ➔
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center space-y-2">
+                                        <p className="text-xs text-slate-500">
+                                            Belum ada aksesoris atau layanan tambahan yang dipesan.
+                                        </p>
+                                        <p className="text-[11px] text-slate-400">
+                                            Tersedia kursi bayi (baby seat), roof box & rak bagasi, kamera dashcam 4K, kartu e-toll, prepaid BBM, hingga supir tambahan.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Documents Upload Section */}
                             <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
                                 <div className="flex items-center justify-between">
@@ -1705,7 +1970,7 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                             {/* Payment Box (Deposit / Extension / Balance) */}
                             {(booking.can_pay_deposit || isBalancePayable) && booking.deposit_proof?.status !== 'pending' && (
-                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
+                                <div id="section-payment" className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                                             {isBalancePayable
@@ -2389,79 +2654,307 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 </div>
                             )}
 
-                            {/* Pending Extension Request Card */}
-                            {booking.extend_request && (
-                                <div className={`rounded-2xl p-5 border shadow-xs space-y-2.5 ${
-                                    booking.extend_request.has_conflict
-                                        ? 'bg-amber-50/80 border-amber-200 text-amber-950'
-                                        : 'bg-indigo-50/80 border-indigo-200 text-indigo-950'
-                                }`}>
+                            {/* Self-Service Rental Extension Hub Card */}
+                            {(booking.can_request_extend || booking.extend_request || (booking.extensions_history && booking.extensions_history.length > 0)) && (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
-                                            <span>{booking.extend_request.has_conflict ? '⚠️' : '⏱️'}</span>
-                                            <span>{booking.extend_request.has_conflict ? 'Perpanjangan Menunggu Review Armada' : 'Perpanjangan Sedang Ditinjau'}</span>
-                                        </h3>
-                                        <span className="rounded-md bg-white px-2 py-0.5 text-[10px] font-black uppercase shadow-2xs">
-                                            {booking.extend_request.status}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">⏱️</span>
+                                            <div>
+                                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Perpanjangan Sewa Mandiri
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500 font-medium">
+                                                    Tambah durasi sewa armada langsung dari portal
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {booking.extend_request?.status === 'pending' && (
+                                            <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-800 animate-pulse">
+                                                Menunggu Review
+                                            </span>
+                                        )}
+                                        {booking.extend_request?.status === 'approved' && (
+                                            <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-800">
+                                                Disetujui
+                                            </span>
+                                        )}
+                                        {booking.extend_request?.status === 'rejected' && (
+                                            <span className="rounded-full bg-rose-100 border border-rose-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-800">
+                                                Ditolak
+                                            </span>
+                                        )}
                                     </div>
-                                    <p className="text-xs leading-relaxed">
-                                        Pengajuan perpanjangan s/d <strong>{booking.extend_request.requested_end_date}</strong> (+{booking.extend_request.estimated_periods} hari).
-                                    </p>
-                                    {booking.extend_request.has_conflict && (
-                                        <div className="rounded-xl bg-amber-100/90 border border-amber-300 p-3 text-[11px] leading-relaxed text-amber-950 font-medium space-y-1">
-                                            <p className="font-bold">🛑 PENTING: Mohon Jangan Transfer Sekarang</p>
-                                            <p>
-                                                Kendaraan ini memiliki jadwal pemesanan pelanggan lain pada tanggal tersebut. Tim kami sedang menyiapkan opsi armada pengganti. <strong>Mohon TIDAK melakukan pembayaran atau transfer manual sebelum pengajuan ini disetujui staf.</strong>
+
+                                    {/* Pending Request Detail View */}
+                                    {booking.extend_request && booking.extend_request.status === 'pending' && (
+                                        <div className={`rounded-xl p-4 border text-xs space-y-3 ${
+                                            booking.extend_request.has_conflict
+                                                ? 'bg-amber-50/90 border-amber-300 text-amber-950'
+                                                : 'bg-indigo-50/90 border-indigo-200 text-indigo-950'
+                                        }`}>
+                                            <div className="flex items-center justify-between font-bold">
+                                                <span className="flex items-center gap-1.5">
+                                                    <span>{booking.extend_request.has_conflict ? '⚠️' : '⏳'}</span>
+                                                    <span>{booking.extend_request.has_conflict ? 'Pengajuan Menunggu Penyesuaian Armada' : 'Pengajuan Sedang Ditinjau Tim Operasional'}</span>
+                                                </span>
+                                                {booking.extend_request.created_at && (
+                                                    <span className="text-[11px] text-slate-500">{booking.extend_request.created_at}</span>
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                                                <div className="bg-white/80 rounded-lg p-2.5 border border-slate-200/60">
+                                                    <span className="text-slate-500 block">Tanggal Selesai Baru</span>
+                                                    <strong className="text-slate-900 text-xs">{booking.extend_request.requested_end_date}</strong>
+                                                    <span className="text-slate-500 text-[10px] block mt-0.5">(+{booking.extend_request.estimated_periods} hari)</span>
+                                                </div>
+                                                <div className="bg-white/80 rounded-lg p-2.5 border border-slate-200/60">
+                                                    <span className="text-slate-500 block">Estimasi Tagihan Tambahan</span>
+                                                    <strong className="text-indigo-700 text-xs">{money(booking.extend_request.estimated_amount)}</strong>
+                                                    <span className="text-slate-500 text-[10px] block mt-0.5">Sesuai tarif sewa aktif</span>
+                                                </div>
+                                            </div>
+
+                                            {booking.extend_request.notes && (
+                                                <p className="text-[11px] italic bg-white/60 p-2 rounded-lg border border-slate-200/40">
+                                                    "{booking.extend_request.notes}"
+                                                </p>
+                                            )}
+
+                                            {booking.extend_request.has_conflict ? (
+                                                <div className="rounded-lg bg-amber-100/90 border border-amber-300 p-2.5 text-[11px] leading-relaxed text-amber-950 font-medium">
+                                                    🛑 <strong>Perhatian:</strong> Tanggal yang Anda ajukan beririsan dengan pesanan pelanggan lain. Staf kami sedang memeriksa opsi alokasi unit armada pengganti. <strong>Mohon TIDAK melakukan transfer manual sebelum pengajuan ini disetujui staf.</strong>
+                                                </div>
+                                            ) : (
+                                                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-[11px] leading-relaxed text-emerald-900 font-medium">
+                                                    ✅ <strong>Unit Bebas Bentrok:</strong> Kendaraan tersedia. Pengajuan sedang dalam antrean verifikasi staf operasional.
+                                                </div>
+                                            )}
+
+                                            <div className="pt-1 flex items-center justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCancelExtendConfirm(true)}
+                                                    className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline inline-flex items-center gap-1"
+                                                >
+                                                    <span>✕</span>
+                                                    <span>Batalkan Pengajuan Ini</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Recently Approved Banner */}
+                                    {booking.extend_request && booking.extend_request.status === 'approved' && (
+                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs text-emerald-950 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 font-black text-emerald-900">
+                                                    <span>🎉</span> Perpanjangan Disetujui
+                                                </div>
+                                                {booking.extend_request.reviewed_at && (
+                                                    <span className="text-[11px] text-emerald-700">{booking.extend_request.reviewed_at}</span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs leading-relaxed text-emerald-900">
+                                                Sewa Anda telah resmi diperpanjang hingga <strong>{booking.extend_request.requested_end_date}</strong>.
+                                            </p>
+                                            {booking.extend_request.staff_notes && (
+                                                <p className="text-[11px] italic bg-white/60 p-2 rounded-lg border border-emerald-200 text-emerald-800">
+                                                    Catatan Staf: "{booking.extend_request.staff_notes}"
+                                                </p>
+                                            )}
+                                            {booking.payment?.balance_due > 0 && (
+                                                <div className="pt-1 flex items-center justify-between">
+                                                    <span className="text-[11px] font-bold text-emerald-900">Sisa Tagihan Tambahan:</span>
+                                                    <span className="font-black text-sm text-emerald-800">{money(booking.payment.balance_due)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Recently Rejected Banner */}
+                                    {booking.extend_request && booking.extend_request.status === 'rejected' && (
+                                        <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-950 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 font-black text-rose-900">
+                                                    <span>⚠️</span> Pengajuan Perpanjangan Belum Dapat Disetujui
+                                                </div>
+                                                {booking.extend_request.reviewed_at && (
+                                                    <span className="text-[11px] text-rose-700">{booking.extend_request.reviewed_at}</span>
+                                                )}
+                                            </div>
+                                            {booking.extend_request.staff_notes ? (
+                                                <p className="text-xs leading-relaxed text-rose-900">
+                                                    Alasan Staf: <em>"{booking.extend_request.staff_notes}"</em>
+                                                </p>
+                                            ) : (
+                                                <p className="text-xs leading-relaxed text-rose-900">
+                                                    Jadwal kendaraan tidak memungkinkan untuk diperpanjang pada tanggal tersebut.
+                                                </p>
+                                            )}
+                                            <p className="text-[11px] font-medium text-rose-800">
+                                                Harap mengembalikan armada sesuai jadwal batas sewa semula pada <strong>{booking.end_date}</strong>.
                                             </p>
                                         </div>
                                     )}
-                                </div>
-                            )}
 
-                            {/* Additional Actions: Request Extend */}
-                            {booking.can_request_extend && !booking.extend_request && (
-                                <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-xs space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Perpanjangan Sewa</h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (!isVerified) {
-                                                    alert('Verifikasi WhatsApp terlebih dahulu');
-                                                    return;
-                                                }
-                                                setShowExtend(!showExtend);
-                                            }}
-                                            className={`text-xs font-bold underline ${!isVerified ? 'text-slate-400 cursor-not-allowed' : 'text-slate-900'}`}
-                                        >
-                                            {showExtend ? 'Tutup' : 'Ajukan Perpanjangan'}
-                                        </button>
-                                    </div>
-
-                                    {showExtend && isVerified && (
-                                        <form onSubmit={requestExtend} className="mt-3 pt-3 border-t border-slate-100 space-y-3">
-                                            <p className="text-[11px] text-slate-500">
-                                                💡 <em>Jika tanggal perpanjangan berbenturan dengan jadwal penyewa lain, pengajuan akan ditinjau tim operasional untuk alokasi unit.</em>
-                                            </p>
-                                            <div>
-                                                <label className="text-[11px] font-bold text-slate-700 block">Tanggal Selesai Baru</label>
-                                                <input
-                                                    type="date"
-                                                    className={fieldClassName}
-                                                    value={extendForm.data.new_end_date}
-                                                    onChange={(e) => extendForm.setData('new_end_date', e.target.value)}
-                                                    required
-                                                />
+                                    {/* Extensions History (Past Approved Extensions) */}
+                                    {booking.extensions_history && booking.extensions_history.length > 0 && (
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 space-y-2 text-xs">
+                                            <div className="flex items-center justify-between font-bold text-slate-700 text-[11px]">
+                                                <span className="flex items-center gap-1">
+                                                    <span>📜</span> Riwayat Perpanjangan Sewa
+                                                </span>
+                                                <span className="text-slate-400 font-normal">{booking.extensions_history.length} kali diperpanjang</span>
                                             </div>
-                                            <button
-                                                type="submit"
-                                                disabled={extendForm.processing}
-                                                className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase text-white transition disabled:opacity-50"
-                                            >
-                                                {extendForm.processing ? 'Mengirim...' : 'Kirim Pengajuan'}
-                                            </button>
-                                        </form>
+                                            <div className="space-y-1.5">
+                                                {booking.extensions_history.map((h) => (
+                                                    <div key={h.id} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200 text-[11px]">
+                                                        <div>
+                                                            <span className="font-bold text-slate-800">➔ {h.new_end_date}</span>
+                                                            <span className="ml-2 text-slate-500 font-medium">(+{h.extended_periods} hari)</span>
+                                                            {h.created_at && <span className="ml-2 text-slate-400 text-[10px]">{h.created_at}</span>}
+                                                        </div>
+                                                        <span className="font-black text-indigo-600 tabular-nums">{money(h.additional_amount)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Extension Form (Available when can_request_extend) */}
+                                    {booking.can_request_extend && (
+                                        <div className="pt-2 border-t border-slate-100 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold text-slate-800">
+                                                    {showExtend ? 'Formulir Perpanjangan Sewa' : 'Ingin menambah hari sewa kendaraan?'}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!isVerified) {
+                                                            alert('Verifikasi nomor WhatsApp terlebih dahulu');
+                                                            return;
+                                                        }
+                                                        setShowExtend(!showExtend);
+                                                    }}
+                                                    className={`text-xs font-black uppercase tracking-wide px-3 py-1.5 rounded-lg transition ${
+                                                        !isVerified
+                                                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                                            : showExtend
+                                                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs'
+                                                    }`}
+                                                >
+                                                    {showExtend ? 'Tutup Formulir' : '+ Ajukan Perpanjangan'}
+                                                </button>
+                                            </div>
+
+                                            {showExtend && isVerified && (
+                                                <form onSubmit={requestExtend} className="space-y-3 pt-2">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[11px] font-bold text-slate-700 block">
+                                                            Pilih Tanggal Selesai Baru <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            className={fieldClassName}
+                                                            min={booking.end_date || undefined}
+                                                            value={extendForm.data.new_end_date}
+                                                            onChange={(e) => void handleNewEndDateChange(e.target.value)}
+                                                            required
+                                                        />
+                                                        <p className="text-[10px] text-slate-400">
+                                                            Jadwal selesai saat ini: <strong className="text-slate-600">{booking.end_date}</strong>
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Loading State */}
+                                                    {extendQuoteLoading && (
+                                                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+                                                            <span className="animate-spin text-base">⏳</span>
+                                                            <span>Menghitung simulasi biaya & ketersediaan armada...</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Error Message */}
+                                                    {extendQuoteError && (
+                                                        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 font-medium">
+                                                            ⚠️ {extendQuoteError}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Live Quotation Breakdown Card */}
+                                                    {extendQuoteData && !extendQuoteLoading && (
+                                                        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 space-y-3 text-xs">
+                                                            <div className="flex items-center justify-between font-bold text-indigo-950">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <span>📊</span> Rincian Simulasi Perpanjangan
+                                                                </span>
+                                                                <span className="text-[11px] text-indigo-700 font-black">+{extendQuoteData.extended_periods} Hari</span>
+                                                            </div>
+
+                                                            <div className="space-y-1.5 text-[11px] text-indigo-900 border-t border-indigo-200/60 pt-2">
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-slate-600">Durasi Tambahan:</span>
+                                                                    <span className="font-bold">{extendQuoteData.extended_periods} Hari</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-slate-600">Tarif per Hari:</span>
+                                                                    <span className="font-bold">{money(extendQuoteData.rate_per_period)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-xs pt-1 border-t border-indigo-200/60 font-black text-indigo-950">
+                                                                    <span>Subtotal Biaya Tambahan:</span>
+                                                                    <span className="text-indigo-700">{money(extendQuoteData.additional_amount)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-[11px] text-slate-500 pt-0.5">
+                                                                    <span>Estimasi Total Sewa Baru:</span>
+                                                                    <span className="font-bold text-slate-800">{money(extendQuoteData.estimated_new_total)}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Conflict / Availability Indicator */}
+                                                            <div className={`rounded-lg p-2.5 text-[11px] leading-relaxed font-medium ${
+                                                                extendQuoteData.has_conflict
+                                                                    ? 'bg-amber-100 border border-amber-300 text-amber-950'
+                                                                    : 'bg-emerald-100 border border-emerald-300 text-emerald-950'
+                                                            }`}>
+                                                                <div className="flex items-start gap-1.5">
+                                                                    <span>{extendQuoteData.has_conflict ? '⚠️' : '✅'}</span>
+                                                                    <span>{extendQuoteData.conflict_message}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="space-y-1">
+                                                        <label className="text-[11px] font-bold text-slate-700 block">
+                                                            Catatan / Keperluan Perpanjangan (Opsional)
+                                                        </label>
+                                                        <textarea
+                                                            rows={2}
+                                                            className={fieldClassName}
+                                                            placeholder="Contoh: Perjalanan dinas diperpanjang 2 hari, rute ke area luar kota."
+                                                            value={extendForm.data.notes}
+                                                            onChange={(e) => extendForm.setData('notes', e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    <button
+                                                        type="submit"
+                                                        disabled={extendForm.processing || !extendForm.data.new_end_date || extendQuoteLoading}
+                                                        className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white transition disabled:opacity-50 shadow-2xs"
+                                                    >
+                                                        {extendForm.processing
+                                                            ? 'Mengirim Pengajuan...'
+                                                            : extendQuoteData
+                                                                ? `Kirim Pengajuan Perpanjangan (+${extendQuoteData.extended_periods} Hari)`
+                                                                : 'Kirim Pengajuan Perpanjangan'}
+                                                    </button>
+                                                </form>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -2631,6 +3124,45 @@ export default function BookingView({ brand, booking, gateway_available, company
                 </div>
             </Modal>
 
+            {/* Cancel Extension Request Confirmation Modal */}
+            <Modal show={showCancelExtendConfirm} onClose={() => setShowCancelExtendConfirm(false)} maxWidth="sm">
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-800 font-bold text-lg">
+                            ⚠️
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                Batalkan Pengajuan?
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                                Permohonan perpanjangan sewa
+                            </p>
+                        </div>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        Apakah Anda yakin ingin membatalkan pengajuan perpanjangan sewa hingga <strong>{booking.extend_request?.requested_end_date}</strong> (+{booking.extend_request?.estimated_periods} hari)?
+                    </p>
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowCancelExtendConfirm(false)}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                        >
+                            Kembali
+                        </button>
+                        <button
+                            type="button"
+                            disabled={cancellingExtend}
+                            onClick={cancelExtendRequest}
+                            className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase px-4 py-2 transition disabled:opacity-50"
+                        >
+                            {cancellingExtend ? 'Membatalkan...' : 'Ya, Batalkan Pengajuan'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* Refund Account Input Modal */}
             <Modal show={showRefundModal} onClose={() => setShowRefundModal(false)} maxWidth="md">
                 <div className="p-6 space-y-4">
@@ -2772,6 +3304,231 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 {refundAccountForm.processing ? 'Menyimpan...' : 'Simpan Rekening'}
                             </button>
                         </div>
+                    </form>
+                </div>
+            </Modal>
+
+            {/* Post-Booking Add-ons & Extra Accessories Catalog Modal */}
+            <Modal show={showAddonsModal} onClose={() => setShowAddonsModal(false)} maxWidth="2xl">
+                <div className="p-5 sm:p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 text-lg border border-amber-200">
+                                📦
+                            </span>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900">Katalog Add-on & Layanan Tambahan</h3>
+                                <p className="text-xs text-slate-500">Booking {booking.code} • Periode sewa {booking.total_periods} {booking.period_type}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowAddonsModal(false)}
+                            className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Filter categories */}
+                    <div className="flex flex-wrap gap-1.5 text-xs">
+                        {[
+                            { key: 'all', label: 'Semua Item' },
+                            { key: 'accessory', label: '🧳 Aksesoris' },
+                            { key: 'service', label: '👨‍✈️ Sopir & Layanan' },
+                            { key: 'protection', label: '🛡️ Proteksi Asuransi' },
+                            { key: 'comfort', label: '💳 Kenyamanan' },
+                            { key: 'fuel', label: '⛽ BBM' },
+                        ].map((cat) => (
+                            <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => setSelectedAddonCategory(cat.key)}
+                                className={`rounded-lg px-3 py-1.5 font-bold transition ${
+                                    selectedAddonCategory === cat.key
+                                        ? 'bg-slate-900 text-white shadow-xs'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                {cat.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <form onSubmit={submitAddons} className="space-y-4">
+                        <div className="space-y-3">
+                            {booking.available_addons
+                                ?.filter((item) => selectedAddonCategory === 'all' || item.category === selectedAddonCategory)
+                                .map((item) => {
+                                    const qty = addonQuantities[item.code] || 0;
+                                    const isSelected = qty > 0;
+
+                                    return (
+                                        <div
+                                            key={item.code}
+                                            className={`rounded-xl border p-4 transition ${
+                                                item.is_already_added
+                                                    ? 'border-slate-200 bg-slate-50/70 opacity-80'
+                                                    : isSelected
+                                                    ? 'border-amber-400 bg-amber-50/30 ring-1 ring-amber-400/80 shadow-xs'
+                                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl">
+                                                        {addonEmoji(item.icon)}
+                                                    </span>
+                                                    <div className="space-y-1">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h4 className="text-xs font-black text-slate-900">{item.name}</h4>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                                                                {item.price_type === 'daily' ? 'Per Hari' : 'Sekali Sewa (Flat)'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-500 leading-relaxed max-w-md">
+                                                            {item.description}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
+                                                    <div className="text-right">
+                                                        <div className="text-xs font-black text-slate-900 tabular-nums">
+                                                            {money(item.unit_price)}
+                                                            <span className="text-[10px] font-medium text-slate-500">
+                                                                {item.price_type === 'daily' ? ' /hari' : ' flat'}
+                                                            </span>
+                                                        </div>
+                                                        {item.price_type === 'daily' && (
+                                                            <div className="text-[10px] text-slate-400 tabular-nums">
+                                                                {booking.total_periods} hari = {money(item.calculated_total)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {item.is_already_added ? (
+                                                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                                            ✓ Sudah Dipesan
+                                                        </span>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5 bg-white rounded-lg border border-slate-250 p-1 shadow-2xs">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setAddonQuantities((prev) => ({ ...prev, [item.code]: Math.max(0, (prev[item.code] || 0) - 1) }))}
+                                                                disabled={qty <= 0}
+                                                                className="w-7 h-7 rounded flex items-center justify-center font-black text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition"
+                                                            >
+                                                                -
+                                                            </button>
+                                                            <span className="w-6 text-center font-black text-xs tabular-nums text-slate-800">
+                                                                {qty}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setAddonQuantities((prev) => ({ ...prev, [item.code]: Math.min(item.max_quantity, (prev[item.code] || 0) + 1) }))}
+                                                                disabled={qty >= item.max_quantity}
+                                                                className="w-7 h-7 rounded flex items-center justify-center font-black text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {isSelected && (
+                                                <div className="mt-3 pt-2.5 border-t border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Catatan / permintaan khusus untuk item ini (opsional)"
+                                                        value={addonNotes[item.code] || ''}
+                                                        onChange={(e) => setAddonNotes((prev) => ({ ...prev, [item.code]: e.target.value }))}
+                                                        className="text-xs rounded-lg border border-slate-250 bg-white px-2.5 py-1.5 text-slate-800 w-full sm:w-2/3 focus:border-amber-500 focus:outline-none"
+                                                    />
+                                                    <div className="text-right text-xs font-bold text-slate-600">
+                                                        Subtotal: <strong className="text-slate-900">{money(item.calculated_total * qty)}</strong>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                        </div>
+
+                        {/* Order Summary & OTP */}
+                        {(() => {
+                            const selectedItems = Object.entries(addonQuantities)
+                                .filter(([_, q]) => q > 0)
+                                .map(([code, q]) => {
+                                    const item = booking.available_addons?.find((a) => a.code === code);
+                                    return {
+                                        code,
+                                        qty: q,
+                                        total: item ? item.calculated_total * q : 0,
+                                    };
+                                });
+                            const totalAmount = selectedItems.reduce((acc, curr) => acc + curr.total, 0);
+
+                            return (
+                                <div className="space-y-4 pt-2">
+                                    <div className="rounded-xl bg-slate-900 text-white p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-300">
+                                                {selectedItems.length > 0
+                                                    ? `${selectedItems.length} Layanan Dipilih`
+                                                    : 'Pilih layanan di atas'}
+                                            </p>
+                                            <p className="text-base font-black tabular-nums text-white">
+                                                Total Tambahan: {money(totalAmount)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {!isVerified && selectedItems.length > 0 && (
+                                        <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 space-y-2 text-amber-900">
+                                            <p className="text-[11px] font-bold">Verifikasi WhatsApp Booker Diperlukan</p>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="6 digit kode OTP"
+                                                    maxLength={6}
+                                                    value={addonsForm.data.otp_code}
+                                                    onChange={(e) => addonsForm.setData('otp_code', e.target.value)}
+                                                    className={`${fieldClassName} font-mono text-center tracking-widest`}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => sendOtp(booking.booker_phone || addonsForm.data.booker_phone)}
+                                                    disabled={sendingPageOtp}
+                                                    className="rounded-xl bg-slate-900 text-white font-bold px-3 py-1.5 text-xs whitespace-nowrap shadow-xs"
+                                                >
+                                                    {sendingPageOtp ? '...' : 'Kirim OTP'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddonsModal(false)}
+                                            className="rounded-xl border border-slate-250 bg-white px-4 py-2.5 font-bold text-slate-600 hover:bg-slate-50 transition"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={addonsForm.processing || selectedItems.length === 0}
+                                            className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black px-5 py-2.5 shadow-xs transition disabled:opacity-50"
+                                        >
+                                            {addonsForm.processing ? 'Memproses...' : `Konfirmasi Pemesanan (${money(totalAmount)})`}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </form>
                 </div>
             </Modal>
