@@ -100,6 +100,13 @@ const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 const fieldClassName =
     'mt-1 w-full rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 transition focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10';
 
+const RELATION_OPTIONS = [
+    { value: 'Keluarga', label: 'Keluarga' },
+    { value: 'Pasangan', label: 'Pasangan' },
+    { value: 'Teman', label: 'Teman' },
+    { value: 'Rekan Kerja', label: 'Rekan Kerja' },
+];
+
 export default function VehicleShow({
     brand,
     vehicle,
@@ -968,16 +975,14 @@ export default function VehicleShow({
                                                     <label className="text-[11px] font-bold text-slate-700 block">
                                                         Hubungan <span className="text-rose-500">*</span>
                                                     </label>
-                                                    <select
-                                                        value={form.data.emergency_contact_relation}
-                                                        onChange={(e) => form.setData('emergency_contact_relation', e.target.value)}
-                                                        className={fieldClassName}
-                                                    >
-                                                        <option value="Keluarga">Keluarga</option>
-                                                        <option value="Pasangan">Pasangan</option>
-                                                        <option value="Teman">Teman</option>
-                                                        <option value="Rekan Kerja">Rekan Kerja</option>
-                                                    </select>
+                                                    <div className="mt-1">
+                                                        <PublicSelect
+                                                            value={form.data.emergency_contact_relation}
+                                                            onChange={(val) => form.setData('emergency_contact_relation', val)}
+                                                            options={RELATION_OPTIONS}
+                                                            placeholder="Pilih Hubungan"
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <label className="text-[11px] font-bold text-slate-700 block">
