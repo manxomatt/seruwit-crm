@@ -209,6 +209,9 @@ class CustomerPortalTest extends TestCase
 
         $this->get(route('book.rental.portal.dashboard'))->assertOk();
         $this->get(route('book.rental.portal.rentals.index'))->assertOk();
+        $this->get(route('book.rental.portal.rentals.index', ['tab' => 'active']))->assertOk();
+        $this->get(route('book.rental.portal.rentals.index', ['tab' => 'completed']))->assertOk();
+        $this->get(route('book.rental.portal.rentals.index', ['tab' => 'cancelled']))->assertOk();
         $this->get(route('book.rental.portal.documents.index'))->assertOk();
         $this->get(route('book.rental.portal.profile'))->assertOk();
     }

@@ -49,6 +49,8 @@ class Rental extends Model
 
     public const STATUS_NO_SHOW_PAID = 'no_show_paid';
 
+    public const STATUS_ABANDONED = 'abandoned';
+
     public const CHANNEL_STAFF = 'staff';
 
     public const CHANNEL_MOBILE = 'mobile';

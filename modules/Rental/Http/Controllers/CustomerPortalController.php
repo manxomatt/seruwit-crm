@@ -106,9 +106,15 @@ class CustomerPortalController extends Controller
                 Rental::STATUS_ACTIVE,
             ]);
         } elseif ($tab === 'completed') {
-            $query->where('status', Rental::STATUS_COMPLETED);
+            $query->whereIn('status', [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED]);
         } elseif ($tab === 'cancelled') {
-            $query->whereIn('status', [Rental::STATUS_CANCELLED, Rental::STATUS_ABANDONED]);
+            $query->whereIn('status', [
+                Rental::STATUS_CANCELLED,
+                Rental::STATUS_CANCELLED_PAID,
+                Rental::STATUS_NO_SHOW,
+                Rental::STATUS_NO_SHOW_PAID,
+                Rental::STATUS_ABANDONED,
+            ]);
         }
 
         $rentals = $query->paginate(10)->withQueryString();
