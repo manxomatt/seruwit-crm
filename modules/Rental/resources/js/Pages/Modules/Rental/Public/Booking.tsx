@@ -783,7 +783,7 @@ export default function BookingView({ brand, booking, gateway_available, company
             if (data.already_verified) {
                 setDevOtpCode(null);
                 setOtpHint('Nomor WhatsApp Anda sudah terverifikasi ✓');
-                router.reload({ only: ['booking'] });
+                router.reload();
             } else {
                 if (data.debug_code) {
                     const codeStr = String(data.debug_code);

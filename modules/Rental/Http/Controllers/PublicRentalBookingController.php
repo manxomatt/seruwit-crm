@@ -294,9 +294,12 @@ class PublicRentalBookingController extends Controller
         ]);
 
         $phone = $otp->normalize($data['booker_phone']);
-        $alreadyVerified = $otp->isVerified($phone) || (auth('customer')->check() && auth('customer')->user()->phone === $phone);
+        $isCustomerMatched = auth('customer')->check() && $otp->normalize((string) auth('customer')->user()->phone) === $phone;
+        $alreadyVerified = $otp->isVerified($phone) || $isCustomerMatched;
 
         if ($alreadyVerified) {
+            \Illuminate\Support\Facades\Cache::put('shuttle_otp_ok:'.$phone, true, 1800);
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'ok' => true,
@@ -1820,7 +1823,9 @@ class PublicRentalBookingController extends Controller
 
         $phoneVerified = false;
         if ($rental->booker_phone !== null) {
-            $phoneVerified = app(PassengerOtpService::class)->isVerified($rental->booker_phone);
+            $normalizedBooker = app(PassengerOtpService::class)->normalize($rental->booker_phone);
+            $phoneVerified = app(PassengerOtpService::class)->isVerified($rental->booker_phone)
+                || (auth('customer')->check() && app(PassengerOtpService::class)->normalize((string) auth('customer')->user()->phone) === $normalizedBooker);
         }
 
         $assignedDriver = $rental->driver;
