@@ -242,14 +242,23 @@ class RentalSettingsController extends Controller
         $testMessage = "Halo! Ini adalah pesan uji coba dari sistem *{$companyName}*.\n\n"
             .'WhatsApp Gateway Anda telah berhasil terhubung dan siap digunakan untuk notifikasi rental!';
 
-        $success = $manager->driver(forceRealDriver: true)->sendMessage($phone, $testMessage);
+        $driver = $manager->driver(forceRealDriver: true);
+        $success = $driver->sendMessage($phone, $testMessage);
+        $error = method_exists($driver, 'getLastError') ? $driver->getLastError() : null;
+
+        $errorMessage = $error
+            ? "Gagal mengirim pesan uji coba ke nomor {$phone}: {$error}"
+            : "Gagal mengirim pesan uji coba ke nomor {$phone}. Silakan periksa token atau status koneksi WhatsApp Anda.";
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => $success,
+                'provider' => Setting::getValue('whatsapp.provider', 'seruwit'),
+                'session_id' => $manager->getSessionId(),
+                'error_detail' => $error,
                 'message' => $success
                     ? "Pesan uji coba WhatsApp berhasil dikirim ke nomor {$phone}."
-                    : "Gagal mengirim pesan uji coba ke nomor {$phone}. Silakan periksa token atau status koneksi WhatsApp Anda.",
+                    : $errorMessage,
             ], $success ? 200 : 422);
         }
 
@@ -257,7 +266,7 @@ class RentalSettingsController extends Controller
             return back()->with('success', "Pesan uji coba WhatsApp berhasil dikirim ke nomor {$phone}.");
         }
 
-        return back()->with('error', "Gagal mengirim pesan uji coba ke nomor {$phone}. Silakan periksa token atau status koneksi WhatsApp Anda.");
+        return back()->with('error', $errorMessage);
     }
 
     private function company(): array

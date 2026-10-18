@@ -18,6 +18,13 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
         }
     }
 
+    protected ?string $lastError = null;
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
+
     public function getSessionId(): string
     {
         if (! blank($this->sessionId)) {
@@ -32,9 +39,11 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
      */
     public function sendMessage(string $targetPhone, string $message): bool
     {
+        $this->lastError = null;
         $sessionId = $this->getSessionId();
 
         if (blank($sessionId)) {
+            $this->lastError = 'Tenant session ID is missing.';
             Log::warning('[SeruwitWhatsAppGateway] Tenant session ID is missing.');
 
             return false;
@@ -48,6 +57,8 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
                 return true;
             }
 
+            $this->lastError = (string) ($result['error'] ?? 'WhatsApp Gateway service returned unsuccessful response');
+
             Log::error('[SeruwitWhatsAppGateway] Failed to dispatch message', [
                 'session_id' => $sessionId,
                 'target' => $normalizedPhone,
@@ -56,6 +67,8 @@ class SeruwitWhatsAppGateway implements WhatsAppGatewayInterface
 
             return false;
         } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+
             Log::error('[SeruwitWhatsAppGateway] Exception during send', [
                 'error' => $e->getMessage(),
                 'target' => $targetPhone,

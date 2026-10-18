@@ -11,11 +11,20 @@ class FonnteGateway implements WhatsAppGatewayInterface
 {
     protected string $baseUrl = 'https://api.fonnte.com';
 
+    protected ?string $lastError = null;
+
     public function __construct(protected ?string $token = null) {}
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
 
     public function sendMessage(string $targetPhone, string $message): bool
     {
+        $this->lastError = null;
         if (blank($this->token)) {
+            $this->lastError = 'Token Fonnte belum dikonfigurasi.';
             Log::warning('[FonnteGateway] Token is missing, skipping WhatsApp message dispatch.', [
                 'to' => $targetPhone,
             ]);
