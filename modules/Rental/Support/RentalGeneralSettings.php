@@ -38,6 +38,8 @@ class RentalGeneralSettings
 
     public const KEY_INSURANCE_PACKAGES_ENABLED = 'rental.insurance_packages_enabled';
 
+    public const KEY_ADDONS_ENABLED = 'rental.addons_enabled';
+
     public const KEY_DEFAULT_DRIVER_RATE = 'rental.default_driver_rate';
 
     public const KEY_DEFAULT_AIRPORT_DELIVERY_FEE = 'rental.default_airport_delivery_fee';
@@ -67,6 +69,7 @@ class RentalGeneralSettings
             self::KEY_AI_PRICING_OPTIMIZER_ENABLED,
             self::KEY_MOBILE_RATE_LIMITING_ENABLED,
             self::KEY_INSURANCE_PACKAGES_ENABLED,
+            self::KEY_ADDONS_ENABLED,
             self::KEY_DEFAULT_DRIVER_RATE,
             self::KEY_DEFAULT_AIRPORT_DELIVERY_FEE,
             self::KEY_DEFAULT_SECURITY_DEPOSIT,
@@ -91,6 +94,7 @@ class RentalGeneralSettings
      *     ai_pricing_optimizer_enabled: bool,
      *     mobile_rate_limiting_enabled: bool,
      *     insurance_packages_enabled: bool,
+     *     addons_enabled: bool,
      *     default_driver_rate: string,
      *     default_airport_delivery_fee: string,
      *     default_security_deposit: string,
@@ -115,6 +119,7 @@ class RentalGeneralSettings
             'ai_pricing_optimizer_enabled' => Setting::getValue(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, '1') === '1',
             'mobile_rate_limiting_enabled' => Setting::getValue(self::KEY_MOBILE_RATE_LIMITING_ENABLED, '0') === '1',
             'insurance_packages_enabled' => Setting::getValue(self::KEY_INSURANCE_PACKAGES_ENABLED, '1') === '1',
+            'addons_enabled' => Setting::getValue(self::KEY_ADDONS_ENABLED, '1') === '1',
             'default_driver_rate' => (string) Setting::getValue(self::KEY_DEFAULT_DRIVER_RATE, '150000'),
             'default_airport_delivery_fee' => (string) Setting::getValue(self::KEY_DEFAULT_AIRPORT_DELIVERY_FEE, '50000'),
             'default_security_deposit' => (string) Setting::getValue(self::KEY_DEFAULT_SECURITY_DEPOSIT, '500000'),
@@ -139,6 +144,7 @@ class RentalGeneralSettings
      *     ai_pricing_optimizer_enabled?: bool,
      *     mobile_rate_limiting_enabled?: bool,
      *     insurance_packages_enabled?: bool,
+     *     addons_enabled?: bool,
      *     default_driver_rate?: int|float|string,
      *     default_airport_delivery_fee?: int|float|string,
      *     default_security_deposit?: int|float|string,
@@ -158,6 +164,7 @@ class RentalGeneralSettings
         self::put(self::KEY_PUBLIC_MASK_PLATES, $data['public_mask_plates'] ? '1' : '0', 'boolean', 'Mask plates on public booking pages', 16);
         self::put(self::KEY_CALENDAR_CLICK_TO_BOOK, $data['calendar_click_to_book'] ? '1' : '0', 'boolean', 'Calendar click to book', 20);
         self::put(self::KEY_INSURANCE_PACKAGES_ENABLED, ! empty($data['insurance_packages_enabled']) ? '1' : '0', 'boolean', 'Insurance Packages & Protection', 25);
+        self::put(self::KEY_ADDONS_ENABLED, ! empty($data['addons_enabled']) ? '1' : '0', 'boolean', 'Self-service Add-ons & Extra Accessories Hub', 26);
         self::put(self::KEY_AI_INSPECTION_ENABLED, ! empty($data['ai_inspection_enabled']) ? '1' : '0', 'boolean', 'AI Visual Inspection (Handover)', 30);
         self::put(self::KEY_AI_KYC_ENABLED, ! empty($data['ai_kyc_enabled']) ? '1' : '0', 'boolean', 'AI Smart KYC & Document OCR', 31);
         self::put(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, ! empty($data['ai_pricing_optimizer_enabled']) ? '1' : '0', 'boolean', 'AI Dynamic Pricing & Fleet Optimizer', 32);

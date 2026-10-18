@@ -32,6 +32,7 @@ class UpdateRentalGeneralSettingsRequest extends FormRequest
             'public_mask_plates' => ['required', 'boolean'],
             'calendar_click_to_book' => ['required', 'boolean'],
             'insurance_packages_enabled' => ['sometimes', 'boolean'],
+            'addons_enabled' => ['sometimes', 'boolean'],
             'ai_inspection_enabled' => ['sometimes', 'boolean'],
             'ai_kyc_enabled' => ['sometimes', 'boolean'],
             'ai_pricing_optimizer_enabled' => ['sometimes', 'boolean'],

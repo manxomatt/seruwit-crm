@@ -34,6 +34,7 @@ interface GeneralSettings {
     ai_pricing_optimizer_enabled: boolean;
     mobile_rate_limiting_enabled?: boolean;
     insurance_packages_enabled?: boolean;
+    addons_enabled?: boolean;
     default_driver_rate?: string;
     default_airport_delivery_fee?: string;
     default_security_deposit?: string;
@@ -74,6 +75,7 @@ const DEFAULT_GENERAL: GeneralSettings = {
     ai_pricing_optimizer_enabled: true,
     mobile_rate_limiting_enabled: false,
     insurance_packages_enabled: true,
+    addons_enabled: true,
     default_driver_rate: '150000',
     default_airport_delivery_fee: '50000',
     default_security_deposit: '500000',
@@ -169,6 +171,7 @@ function GeneralPanel({
         ai_pricing_optimizer_enabled: general.ai_pricing_optimizer_enabled ?? true,
         mobile_rate_limiting_enabled: general.mobile_rate_limiting_enabled ?? false,
         insurance_packages_enabled: general.insurance_packages_enabled ?? true,
+        addons_enabled: general.addons_enabled ?? true,
         default_driver_rate: general.default_driver_rate ?? '150000',
         default_airport_delivery_fee: general.default_airport_delivery_fee ?? '50000',
         default_security_deposit: general.default_security_deposit ?? '500000',
@@ -318,6 +321,13 @@ function GeneralPanel({
                                     onChange={(checked) => setData('insurance_packages_enabled', checked)}
                                     label={t('rental.settings.insurance_packages_enabled', undefined, 'Paket Proteksi & Asuransi')}
                                     description={t('rental.settings.insurance_packages_enabled_hint', undefined, 'Aktifkan seksi pemilihan paket asuransi & proteksi kendaraan pada form reservasi sewa.')}
+                                />
+                                <ToggleSwitch
+                                    id="addons_enabled"
+                                    checked={data.addons_enabled ?? true}
+                                    onChange={(checked) => setData('addons_enabled', checked)}
+                                    label={t('rental.settings.addons_enabled', undefined, 'Katalog Add-on & Aksesoris Tambahan')}
+                                    description={t('rental.settings.addons_enabled_hint', undefined, 'Aktifkan penawaran perlengkapan dan layanan ekstra (kursi bayi, roof box, e-toll, dll.) di halaman booking pelanggan.')}
                                 />
                             </div>
                         </div>

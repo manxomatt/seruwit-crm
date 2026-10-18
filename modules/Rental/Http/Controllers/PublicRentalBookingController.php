@@ -1288,6 +1288,13 @@ class PublicRentalBookingController extends Controller
 
         $rental = $this->findPassengerBooking($token);
 
+        $settings = RentalGeneralSettings::all();
+        abort_if(
+            empty($settings['addons_enabled']),
+            422,
+            'Layanan pemesanan add-on dan aksesoris tambahan saat ini tidak diaktifkan.'
+        );
+
         abort_if(
             ! in_array($rental->status, [
                 Rental::STATUS_PENDING,
@@ -2093,13 +2100,14 @@ class PublicRentalBookingController extends Controller
                 'refunded_at' => $rental->deposit_refunded_at?->format('d M Y, H:i').' WIB',
                 'can_submit_bank' => $rental->canSubmitRefundAccount(),
             ],
-            'can_order_addons' => in_array($rental->status, [
+            'addons_enabled' => ! empty(RentalGeneralSettings::all()['addons_enabled']),
+            'can_order_addons' => ! empty(RentalGeneralSettings::all()['addons_enabled']) && in_array($rental->status, [
                 Rental::STATUS_PENDING,
                 Rental::STATUS_PENDING_RESERVED,
                 Rental::STATUS_CONFIRMED,
                 Rental::STATUS_ACTIVE,
             ], true),
-            'available_addons' => RentalAddonCatalog::selfServiceCatalog($rental),
+            'available_addons' => ! empty(RentalGeneralSettings::all()['addons_enabled']) ? RentalAddonCatalog::selfServiceCatalog($rental) : [],
             'ordered_addons' => $rental->charges()
                 ->where('kind', RentalCharge::KIND_ADDON)
                 ->orderBy('id')

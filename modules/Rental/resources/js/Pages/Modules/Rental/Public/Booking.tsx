@@ -210,6 +210,7 @@ interface Booking {
         refunded_at: string | null;
         can_submit_bank: boolean;
     };
+    addons_enabled?: boolean;
     can_order_addons?: boolean;
     available_addons?: AvailableAddon[];
     ordered_addons?: OrderedAddon[];
@@ -1647,103 +1648,107 @@ export default function BookingView({
                             )}
 
                             {/* Post-Booking Add-ons & Extra Accessories Hub */}
-                            <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg border border-amber-200/60 shadow-xs">
-                                            📦
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                Katalog Add-on & Aksesoris Tambahan
-                                            </h3>
-                                            <p className="text-xs text-slate-500">
-                                                Perlengkapan dan layanan ekstra selama masa sewa kendaraan Anda
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {booking.can_order_addons && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (!isVerified) {
-                                                    alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
-                                                    return;
-                                                }
-                                                setShowAddonsModal(true);
-                                            }}
-                                            className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black shadow-xs transition ${
-                                                !isVerified
-                                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                                                    : 'bg-amber-500 hover:bg-amber-600 text-white'
-                                            }`}
-                                        >
-                                            <span>+</span>
-                                            <span>Pesan Layanan Tambahan</span>
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Ordered Addons List */}
-                                {booking.ordered_addons && booking.ordered_addons.length > 0 ? (
-                                    <div className="space-y-3">
-                                        <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/60 p-1">
-                                            {booking.ordered_addons.map((addon) => (
-                                                <div key={addon.id} className="flex items-center justify-between p-3 text-xs">
-                                                    <div className="space-y-0.5">
-                                                        <div className="font-bold text-slate-900 flex items-center gap-2">
-                                                            <span>{addon.description}</span>
-                                                            {addon.is_invoiced && (
-                                                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                                                    ✓ Masuk Tagihan
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {addon.created_at && (
-                                                            <p className="text-[11px] text-slate-400">Dipesan: {addon.created_at}</p>
-                                                        )}
-                                                    </div>
-                                                    <span className="font-black text-slate-900 tabular-nums text-sm">
-                                                        {money(addon.amount)}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {booking.payment?.balance_due > 0 && (
-                                            <div className="rounded-xl bg-blue-50 border border-blue-200/80 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900">
-                                                <div className="flex items-center gap-2">
-                                                    <span>💳</span>
-                                                    <span>
-                                                        Sisa tagihan (termasuk add-on): <strong>{money(booking.payment.balance_due)}</strong>
-                                                    </span>
-                                                </div>
-                                                {booking.payment.can_pay_balance && (
-                                                    <a
-                                                        href="#section-payment"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            document.getElementById('section-payment')?.scrollIntoView({ behavior: 'smooth' });
-                                                        }}
-                                                        className="inline-flex items-center justify-center font-bold underline hover:text-blue-700"
-                                                    >
-                                                        Bayar Tagihan Sekarang ➔
-                                                    </a>
-                                                )}
+                            {((booking.addons_enabled ?? true) || (booking.ordered_addons && booking.ordered_addons.length > 0)) && (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg border border-amber-200/60 shadow-xs">
+                                                📦
                                             </div>
+                                            <div>
+                                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Katalog Add-on & Aksesoris Tambahan
+                                                </h3>
+                                                <p className="text-xs text-slate-500">
+                                                    {booking.addons_enabled ?? true
+                                                        ? 'Perlengkapan dan layanan ekstra selama masa sewa kendaraan Anda'
+                                                        : 'Layanan tambahan yang telah dipesan untuk masa sewa Anda'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {booking.can_order_addons && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!isVerified) {
+                                                        alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
+                                                        return;
+                                                    }
+                                                    setShowAddonsModal(true);
+                                                }}
+                                                className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black shadow-xs transition ${
+                                                    !isVerified
+                                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                                                        : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                                }`}
+                                            >
+                                                <span>+</span>
+                                                <span>Pesan Layanan Tambahan</span>
+                                            </button>
                                         )}
                                     </div>
-                                ) : (
-                                    <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center space-y-2">
-                                        <p className="text-xs text-slate-500">
-                                            Belum ada aksesoris atau layanan tambahan yang dipesan.
-                                        </p>
-                                        <p className="text-[11px] text-slate-400">
-                                            Tersedia kursi bayi (baby seat), roof box & rak bagasi, kamera dashcam 4K, kartu e-toll, prepaid BBM, hingga supir tambahan.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
+
+                                    {/* Ordered Addons List */}
+                                    {booking.ordered_addons && booking.ordered_addons.length > 0 ? (
+                                        <div className="space-y-3">
+                                            <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/60 p-1">
+                                                {booking.ordered_addons.map((addon) => (
+                                                    <div key={addon.id} className="flex items-center justify-between p-3 text-xs">
+                                                        <div className="space-y-0.5">
+                                                            <div className="font-bold text-slate-900 flex items-center gap-2">
+                                                                <span>{addon.description}</span>
+                                                                {addon.is_invoiced && (
+                                                                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                                        ✓ Masuk Tagihan
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {addon.created_at && (
+                                                                <p className="text-[11px] text-slate-400">Dipesan: {addon.created_at}</p>
+                                                            )}
+                                                        </div>
+                                                        <span className="font-black text-slate-900 tabular-nums text-sm">
+                                                            {money(addon.amount)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {booking.payment?.balance_due > 0 && (
+                                                <div className="rounded-xl bg-blue-50 border border-blue-200/80 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>💳</span>
+                                                        <span>
+                                                            Sisa tagihan (termasuk add-on): <strong>{money(booking.payment.balance_due)}</strong>
+                                                        </span>
+                                                    </div>
+                                                    {booking.payment.can_pay_balance && (
+                                                        <a
+                                                            href="#section-payment"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                document.getElementById('section-payment')?.scrollIntoView({ behavior: 'smooth' });
+                                                            }}
+                                                            className="inline-flex items-center justify-center font-bold underline hover:text-blue-700"
+                                                        >
+                                                            Bayar Tagihan Sekarang ➔
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center space-y-2">
+                                            <p className="text-xs text-slate-500">
+                                                Belum ada aksesoris atau layanan tambahan yang dipesan.
+                                            </p>
+                                            <p className="text-[11px] text-slate-400">
+                                                Tersedia kursi bayi (baby seat), roof box & rak bagasi, kamera dashcam 4K, kartu e-toll, prepaid BBM, hingga supir tambahan.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Documents Upload Section */}
                             <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
