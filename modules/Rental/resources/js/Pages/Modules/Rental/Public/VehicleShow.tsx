@@ -124,6 +124,28 @@ export default function VehicleShow({
     const [sendingOtp, setSendingOtp] = useState(false);
     const [quoting, setQuoting] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(Boolean(customer));
+    const isGenericCustomerName = useMemo(() => {
+        if (!customer?.name) return true;
+        const trimmed = customer.name.trim();
+        return (
+            trimmed === customer.phone ||
+            trimmed.toLowerCase() === `customer ${customer.phone}`.toLowerCase() ||
+            /^Customer\s+\d+$/i.test(trimmed)
+        );
+    }, [customer]);
+
+    const customerDisplayName = useMemo(() => {
+        if (!customer) return '';
+        return isGenericCustomerName ? (customer.phone || 'Pelanggan') : customer.name;
+    }, [customer, isGenericCustomerName]);
+
+    const customerSubtitle = useMemo(() => {
+        if (!customer) return '';
+        if (isGenericCustomerName) {
+            return customer.email ? customer.email : 'Nomor WhatsApp terverifikasi';
+        }
+        return `${customer.phone}${customer.email ? ` · ${customer.email}` : ''}`;
+    }, [customer, isGenericCustomerName]);
 
     const form = useForm({
         vehicle_id: vehicle.id,
@@ -141,7 +163,7 @@ export default function VehicleShow({
         pickup_time: '08:00',
         return_time: '17:00',
         insurance_package_id: insurance_packages_enabled && filters.insurance_package_id ? String(filters.insurance_package_id) : '',
-        customer_name: customer?.name || '',
+        customer_name: (customer?.name && !/^Customer\s+\d+$/i.test(customer.name.trim()) && customer.name.trim() !== customer.phone) ? customer.name : '',
         customer_email: customer?.email || '',
         booker_phone: customer?.phone || '',
         otp_code: (!require_otp || customer) ? '000000' : '',
@@ -811,26 +833,31 @@ export default function VehicleShow({
                                 {/* Booker Identity Section */}
                                 <div className="space-y-3 pt-1 border-t border-slate-100">
                                     {customer ? (
-                                        <div className="rounded-xl border border-emerald-250 bg-emerald-50/70 p-3 flex items-start justify-between gap-3 text-xs">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-black text-white text-xs shadow-2xs">
-                                                    ✓
+                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 sm:p-3.5 flex items-center justify-between gap-3 text-xs shadow-2xs">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-2xs">
+                                                    <svg className="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                    </svg>
                                                 </div>
-                                                <div>
-                                                    <div className="font-extrabold text-emerald-950 flex items-center gap-1.5">
-                                                        <span>{customer.name}</span>
-                                                        <span className="rounded-full bg-emerald-200/80 px-2 py-0.5 text-[9px] font-bold text-emerald-900">
+                                                <div className="min-w-0">
+                                                    <div className="font-extrabold text-emerald-950 flex items-center gap-1.5 flex-wrap">
+                                                        <span className="truncate max-w-[140px] sm:max-w-[200px]">{customerDisplayName}</span>
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-200/80 px-2 py-0.5 text-[9px] font-bold text-emerald-900 whitespace-nowrap shrink-0">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 shrink-0"></span>
                                                             Akun Terverifikasi
                                                         </span>
                                                     </div>
-                                                    <div className="text-[11px] text-emerald-800">{customer.phone} {customer.email ? `· ${customer.email}` : ''}</div>
+                                                    <div className="text-[11px] text-emerald-800 font-medium truncate mt-0.5">
+                                                        {customerSubtitle}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <Link
                                                 href={route('book.rental.logout')}
                                                 method="post"
                                                 as="button"
-                                                className="text-[10px] font-bold text-slate-500 hover:text-slate-900 underline shrink-0 mt-0.5"
+                                                className="inline-flex items-center justify-center rounded-lg border border-emerald-300/80 bg-white/90 px-2.5 py-1 text-[11px] font-bold text-emerald-900 transition hover:bg-emerald-100 hover:text-emerald-950 shadow-2xs shrink-0 whitespace-nowrap"
                                             >
                                                 Ganti Akun
                                             </Link>
