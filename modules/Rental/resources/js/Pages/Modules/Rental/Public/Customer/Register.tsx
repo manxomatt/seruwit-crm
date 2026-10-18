@@ -12,9 +12,10 @@ interface Brand {
 interface Props {
     brand: Brand;
     redirect?: string | null;
+    require_otp?: boolean;
 }
 
-export default function Register({ brand, redirect }: Props) {
+export default function Register({ brand, redirect, require_otp = true }: Props) {
     const brandColor = brand.color || '#0f766e';
 
     const [otpSent, setOtpSent] = useState(false);
@@ -139,36 +140,47 @@ export default function Register({ brand, redirect }: Props) {
                             )}
                         </div>
 
-                        {/* WhatsApp Phone + OTP Trigger */}
+                        {/* WhatsApp Phone */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-700 block">
                                 Nomor WhatsApp <span className="text-rose-500">*</span>
                             </label>
-                            <div className="flex gap-2">
+                            {require_otp ? (
+                                <div className="flex gap-2">
+                                    <input
+                                        type="tel"
+                                        value={form.data.phone}
+                                        onChange={(e) => form.setData('phone', e.target.value)}
+                                        placeholder="081234567890"
+                                        className="flex-1 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleSendOtp}
+                                        disabled={otpSending || !form.data.phone}
+                                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition disabled:opacity-50 shrink-0"
+                                    >
+                                        {otpSending ? 'Mengirim…' : otpSent ? 'Kirim Ulang' : 'Kirim OTP'}
+                                    </button>
+                                </div>
+                            ) : (
                                 <input
                                     type="tel"
                                     value={form.data.phone}
                                     onChange={(e) => form.setData('phone', e.target.value)}
                                     placeholder="081234567890"
-                                    className="flex-1 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                     required
                                 />
-                                <button
-                                    type="button"
-                                    onClick={handleSendOtp}
-                                    disabled={otpSending || !form.data.phone}
-                                    className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition disabled:opacity-50 shrink-0"
-                                >
-                                    {otpSending ? 'Mengirim…' : otpSent ? 'Kirim Ulang' : 'Kirim OTP'}
-                                </button>
-                            </div>
+                            )}
                             {form.errors.phone && (
                                 <p className="text-xs font-bold text-rose-600">{form.errors.phone}</p>
                             )}
                         </div>
 
-                        {/* OTP Verification Input */}
-                        {otpSent && (
+                        {/* OTP Verification Input (Only if require_otp is active) */}
+                        {require_otp && otpSent && (
                             <div className="space-y-1.5 p-3 rounded-2xl bg-teal-50 border border-teal-200">
                                 <div className="flex items-center justify-between text-xs text-teal-900 font-bold">
                                     <span>Masukkan 6 Digit OTP</span>
@@ -195,13 +207,15 @@ export default function Register({ brand, redirect }: Props) {
                             </div>
                         )}
 
-                        {/* Email (Optional) */}
+                        {/* Email - Wajib jika OTP WA tidak aktif */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-slate-700 block">
-                                    Email
+                                    Alamat Email {!require_otp ? <span className="text-rose-500">*</span> : null}
                                 </label>
-                                <span className="text-[10px] text-slate-400">Opsional (untuk e-receipt)</span>
+                                <span className="text-[10px] text-slate-400">
+                                    {!require_otp ? 'Wajib untuk identitas akun & login' : 'Opsional (untuk e-receipt)'}
+                                </span>
                             </div>
                             <input
                                 type="email"
@@ -209,19 +223,22 @@ export default function Register({ brand, redirect }: Props) {
                                 onChange={(e) => form.setData('email', e.target.value)}
                                 placeholder="budi@contoh.com"
                                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
+                                required={!require_otp}
                             />
                             {form.errors.email && (
                                 <p className="text-xs font-bold text-rose-600">{form.errors.email}</p>
                             )}
                         </div>
 
-                        {/* Password (Optional) */}
+                        {/* Password */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-slate-700 block">
-                                    Kata Sandi
+                                    Kata Sandi {!require_otp ? <span className="text-rose-500">*</span> : null}
                                 </label>
-                                <span className="text-[10px] text-slate-400">Opsional (bisa login OTP tanpa sandi)</span>
+                                <span className="text-[10px] text-slate-400">
+                                    {!require_otp ? 'Wajib minimal 6 karakter' : 'Opsional (bisa login OTP tanpa sandi)'}
+                                </span>
                             </div>
                             <input
                                 type="password"
@@ -229,6 +246,7 @@ export default function Register({ brand, redirect }: Props) {
                                 onChange={(e) => form.setData('password', e.target.value)}
                                 placeholder="Minimal 6 karakter"
                                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
+                                required={!require_otp}
                             />
                             {form.errors.password && (
                                 <p className="text-xs font-bold text-rose-600">{form.errors.password}</p>
@@ -237,7 +255,7 @@ export default function Register({ brand, redirect }: Props) {
 
                         <button
                             type="submit"
-                            disabled={form.processing || (!otpSent && !form.data.code)}
+                            disabled={form.processing || (require_otp ? (!otpSent && !form.data.code && !form.data.password) : (!form.data.email || !form.data.password))}
                             className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:opacity-95 disabled:opacity-50 mt-2"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >

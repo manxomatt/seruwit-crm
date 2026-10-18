@@ -242,6 +242,7 @@ interface Props {
     booking: Booking;
     gateway_available: boolean;
     company_bank_accounts?: CompanyBankAccount[];
+    require_otp?: boolean;
 }
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
@@ -367,7 +368,7 @@ function DigitalSignaturePad({
     );
 }
 
-export default function BookingView({ brand, booking, gateway_available, company_bank_accounts = [] }: Props) {
+export default function BookingView({ brand, booking, gateway_available, company_bank_accounts = [], require_otp = true }: Props) {
     const { flash } = usePage().props as {
         flash?: { success?: string; error?: string };
     };
@@ -987,7 +988,7 @@ export default function BookingView({ brand, booking, gateway_available, company
 
     const statusBadge = getStatusBadge();
     const brandColor = brand.color || '#0f766e';
-    const isVerified = booking.booker_phone_verified;
+    const isVerified = !require_otp || booking.booker_phone_verified;
     const paymentSettled =
         booking.deposit_received ||
         (Number(booking.deposit_amount) <= 0 &&

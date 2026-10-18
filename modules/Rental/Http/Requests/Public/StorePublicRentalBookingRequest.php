@@ -17,6 +17,7 @@ class StorePublicRentalBookingRequest extends FormRequest
      */
     public function rules(): array
     {
+        $requireOtp = \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired();
         $phone = $this->input('booker_phone') ?? '';
         $isVerified = ($phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone)) || auth('customer')->check();
         $hydrator = app(\Modules\Rental\Support\RentalLocationHydrator::class);
@@ -30,9 +31,13 @@ class StorePublicRentalBookingRequest extends FormRequest
             'return_time' => ['nullable', 'date_format:H:i'],
             'period_type' => ['required', 'string', Rule::in(['daily', 'weekly', 'monthly'])],
             'customer_name' => ['required', 'string', 'max:120'],
-            'customer_email' => ['nullable', 'email', 'max:255'],
+            'customer_email' => $requireOtp
+                ? ['nullable', 'email', 'max:255']
+                : ['required', 'email', 'max:255'],
             'booker_phone' => ['required', 'string', 'max:32'],
-            'otp_code' => [$isVerified ? 'nullable' : 'required', 'string', 'size:6'],
+            'otp_code' => ($requireOtp && ! $isVerified)
+                ? ['required', 'string', 'size:6']
+                : ['nullable', 'string'],
             'pickup_location_id' => $hydrator->depotIdRules($depotRequired),
             'return_location_id' => $hydrator->depotIdRules(),
             'service_type' => ['nullable', 'string', Rule::in(['self_drive', 'with_driver'])],
@@ -65,6 +70,8 @@ class StorePublicRentalBookingRequest extends FormRequest
     {
         return [
             'customer_name.required' => __('rental.public.validation.customer_name_required'),
+            'customer_email.required' => 'Alamat email wajib diisi untuk registrasi dan konfirmasi pemesanan.',
+            'customer_email.email' => 'Format alamat email tidak valid.',
             'booker_phone.required' => __('rental.public.validation.booker_phone_required'),
             'otp_code.required' => __('rental.public.validation.otp_required'),
             'otp_code.size' => __('rental.public.validation.otp_size'),

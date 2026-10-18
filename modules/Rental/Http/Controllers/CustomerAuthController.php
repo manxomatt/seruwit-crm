@@ -32,11 +32,20 @@ class CustomerAuthController extends Controller
         return Inertia::render('Modules/Rental/Public/Customer/Login', [
             'brand' => $this->brand(),
             'redirect' => $request->query('redirect'),
+            'require_otp' => \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired(),
         ]);
     }
 
     public function sendOtp(Request $request): JsonResponse
     {
+        if (! \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired()) {
+            return response()->json([
+                'ok' => false,
+                'success' => false,
+                'message' => 'Layanan WhatsApp OTP saat ini dinonaktifkan.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'phone' => ['required', 'string', 'max:30'],
         ]);
@@ -180,34 +189,54 @@ class CustomerAuthController extends Controller
         return Inertia::render('Modules/Rental/Public/Customer/Register', [
             'brand' => $this->brand(),
             'redirect' => $request->query('redirect'),
+            'require_otp' => \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired(),
         ]);
     }
 
     public function register(Request $request): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $requireOtp = \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired();
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
-            'code' => ['nullable', 'string', 'max:10'],
-            'otp_code' => ['nullable', 'string', 'max:10'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'password' => ['nullable', 'string', 'min:6'],
             'redirect' => ['nullable', 'string', 'max:500'],
+        ];
+
+        if ($requireOtp) {
+            $rules['code'] = ['nullable', 'string', 'max:10'];
+            $rules['otp_code'] = ['nullable', 'string', 'max:10'];
+            $rules['email'] = ['nullable', 'email', 'max:255'];
+            $rules['password'] = ['nullable', 'string', 'min:6'];
+        } else {
+            $rules['email'] = ['required', 'email', 'max:255'];
+            $rules['password'] = ['required', 'string', 'min:6'];
+        }
+
+        $validated = $request->validate($rules, [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'phone.required' => 'Nomor WhatsApp wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi untuk registrasi akun.',
+            'email.email' => 'Format alamat email tidak valid.',
+            'password.required' => 'Kata sandi wajib diisi untuk keamanan akun.',
+            'password.min' => 'Kata sandi minimal 6 karakter.',
         ]);
 
         $normalized = $this->otp->normalize($validated['phone']);
         $code = (string) ($validated['code'] ?? $validated['otp_code'] ?? '');
 
-        if ($code !== '') {
-            if (! $this->otp->verify($normalized, $code)) {
+        if ($requireOtp) {
+            if ($code !== '') {
+                if (! $this->otp->verify($normalized, $code)) {
+                    throw ValidationException::withMessages([
+                        'code' => 'Kode OTP salah atau telah kedaluwarsa. Silakan minta kode baru.',
+                    ]);
+                }
+            } elseif (empty($validated['password'])) {
                 throw ValidationException::withMessages([
-                    'code' => 'Kode OTP salah atau telah kedaluwarsa. Silakan minta kode baru.',
+                    'code' => 'Kode OTP atau password wajib diisi untuk mendaftar.',
                 ]);
             }
-        } elseif (empty($validated['password'])) {
-            throw ValidationException::withMessages([
-                'code' => 'Kode OTP atau password wajib diisi untuk mendaftar.',
-            ]);
         }
 
         $customer = Customer::query()->where('phone', $normalized)->first();

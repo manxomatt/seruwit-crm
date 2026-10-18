@@ -28,6 +28,17 @@ class RentalWhatsAppSettings
 
     public const KEY_SEND_TO_DRIVER_ON_DUTY = 'whatsapp.send_to_driver_on_duty';
 
+    public const KEY_REQUIRE_OTP_ON_SELF_SERVICE = 'whatsapp.require_otp_on_self_service';
+
+    /**
+     * Check if OTP verification is required on the public self-service booking page.
+     * When false, booking/registration must require email instead of WhatsApp OTP.
+     */
+    public static function isOtpRequired(): bool
+    {
+        return filter_var(Setting::getValue(self::KEY_REQUIRE_OTP_ON_SELF_SERVICE, true), FILTER_VALIDATE_BOOLEAN);
+    }
+
     /**
      * @return array{
      *     is_enabled: bool,
@@ -39,7 +50,8 @@ class RentalWhatsAppSettings
      *     send_on_checkout: bool,
      *     send_on_return: bool,
      *     send_on_driver_assigned: bool,
-     *     send_to_driver_on_duty: bool
+     *     send_to_driver_on_duty: bool,
+     *     require_otp_on_self_service: bool
      * }
      */
     public static function all(): array
@@ -55,6 +67,7 @@ class RentalWhatsAppSettings
             'send_on_return' => filter_var(Setting::getValue(self::KEY_SEND_ON_RETURN, true), FILTER_VALIDATE_BOOLEAN),
             'send_on_driver_assigned' => filter_var(Setting::getValue(self::KEY_SEND_ON_DRIVER_ASSIGNED, true), FILTER_VALIDATE_BOOLEAN),
             'send_to_driver_on_duty' => filter_var(Setting::getValue(self::KEY_SEND_TO_DRIVER_ON_DUTY, true), FILTER_VALIDATE_BOOLEAN),
+            'require_otp_on_self_service' => self::isOtpRequired(),
         ];
     }
 
@@ -73,6 +86,7 @@ class RentalWhatsAppSettings
         self::put(self::KEY_SEND_ON_RETURN, ! empty($data['send_on_return']) ? '1' : '0', 'boolean');
         self::put(self::KEY_SEND_ON_DRIVER_ASSIGNED, ! empty($data['send_on_driver_assigned']) ? '1' : '0', 'boolean');
         self::put(self::KEY_SEND_TO_DRIVER_ON_DUTY, ! empty($data['send_to_driver_on_duty']) ? '1' : '0', 'boolean');
+        self::put(self::KEY_REQUIRE_OTP_ON_SELF_SERVICE, ! empty($data['require_otp_on_self_service']) ? '1' : '0', 'boolean');
     }
 
     private static function put(string $key, string $value, string $type): void

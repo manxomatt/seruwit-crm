@@ -19,6 +19,7 @@ export interface WhatsappSettings {
     send_on_return: boolean;
     send_on_driver_assigned?: boolean;
     send_to_driver_on_duty?: boolean;
+    require_otp_on_self_service?: boolean;
 }
 
 export interface DeviceStatus {
@@ -68,6 +69,7 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
         send_on_return: settings.send_on_return ?? true,
         send_on_driver_assigned: settings.send_on_driver_assigned ?? true,
         send_to_driver_on_duty: settings.send_to_driver_on_duty ?? true,
+        require_otp_on_self_service: settings.require_otp_on_self_service ?? true,
     });
 
     const testForm = useForm({
@@ -263,13 +265,40 @@ export default function WhatsappPanel({ settings, deviceStatus }: Props): JSX.El
                     </div>
                 </Section>
 
+                {/* 3. Keamanan & Verifikasi Pemesanan Mandiri (Self-Service) */}
+                <Section
+                    title="Verifikasi Pemesanan Mandiri (Customer Self-Service)"
+                    subtitle="Atur metode autentikasi & validasi identitas pemesan pada halaman pemesanan mandiri."
+                >
+                    <div className="space-y-4">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <Checkbox
+                                checked={form.data.require_otp_on_self_service}
+                                onChange={(e) => form.setData('require_otp_on_self_service', e.target.checked)}
+                                className="mt-1"
+                            />
+                            <div className="space-y-1">
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
+                                    Wajibkan Verifikasi Kode OTP WhatsApp pada Pemesanan Mandiri
+                                </span>
+                                <p className="text-xs text-slate-500 leading-relaxed">
+                                    Jika <strong>aktif</strong>: Pelanggan yang memesan unit melalui halaman website publik wajib memverifikasi nomor WhatsApp menggunakan kode OTP 6-digit sebelum menyelesaikan reservasi.
+                                </p>
+                                <p className="text-xs text-amber-700 dark:text-amber-300 font-medium leading-relaxed bg-amber-50/80 dark:bg-amber-950/30 p-2.5 rounded-xl border border-amber-200/80 dark:border-amber-900/40">
+                                    ⚠️ Jika <strong>dinonaktifkan</strong>: Kotak input dan pengiriman OTP WhatsApp ditiadakan. Sebagai gantinya, pelanggan <strong>wajib mengisi Alamat Email aktif</strong> pada formulir pemesanan / registrasi.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </Section>
+
                 {/* Tombol Simpan */}
                 <div className="flex items-center justify-between pt-2">
                     <p className="text-xs text-slate-500">
                         {form.isDirty ? '⚠️ Ada perubahan belum disimpan' : 'Semua pemicu tersimpan'}
                     </p>
                     <PrimaryButton disabled={form.processing} className="!rounded-xl shadow-sm">
-                        {form.processing ? 'Menyimpan…' : 'Simpan Pemicu Notifikasi Rental'}
+                        {form.processing ? 'Menyimpan…' : 'Simpan Pengaturan WhatsApp Rental'}
                     </PrimaryButton>
                 </div>
             </form>

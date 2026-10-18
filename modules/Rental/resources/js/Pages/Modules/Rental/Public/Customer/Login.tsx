@@ -12,10 +12,11 @@ interface Brand {
 interface Props {
     brand: Brand;
     redirect?: string | null;
+    require_otp?: boolean;
 }
 
-export default function Login({ brand, redirect }: Props) {
-    const [loginMethod, setLoginMethod] = useState<'otp' | 'password'>('otp');
+export default function Login({ brand, redirect, require_otp = true }: Props) {
+    const [loginMethod, setLoginMethod] = useState<'otp' | 'password'>(require_otp ? 'otp' : 'password');
     const brandColor = brand.color || '#0f766e';
 
     // OTP Flow State
@@ -148,39 +149,41 @@ export default function Login({ brand, redirect }: Props) {
                         </p>
                     </div>
 
-                    {/* Method Selector Tabs */}
-                    <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200/80">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setLoginMethod('otp');
-                                setOtpError(null);
-                            }}
-                            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-                                loginMethod === 'otp'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-900'
-                            }`}
-                        >
-                            <span>💬</span>
-                            <span>WhatsApp OTP</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setLoginMethod('password');
-                                setOtpError(null);
-                            }}
-                            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-                                loginMethod === 'password'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-900'
-                            }`}
-                        >
-                            <span>🔑</span>
-                            <span>Kata Sandi</span>
-                        </button>
-                    </div>
+                    {/* Method Selector Tabs (Only if require_otp is enabled) */}
+                    {require_otp && (
+                        <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200/80">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLoginMethod('otp');
+                                    setOtpError(null);
+                                }}
+                                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                                    loginMethod === 'otp'
+                                        ? 'bg-white text-slate-900 shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>💬</span>
+                                <span>WhatsApp OTP</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLoginMethod('password');
+                                    setOtpError(null);
+                                }}
+                                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                                    loginMethod === 'password'
+                                        ? 'bg-white text-slate-900 shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>🔑</span>
+                                <span>Kata Sandi</span>
+                            </button>
+                        </div>
+                    )}
 
                     {/* Method 1: WhatsApp OTP Flow */}
                     {loginMethod === 'otp' && (

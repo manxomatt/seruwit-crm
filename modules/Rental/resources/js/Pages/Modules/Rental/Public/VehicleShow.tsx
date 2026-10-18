@@ -92,6 +92,7 @@ interface Props {
     hold_ttl_minutes: number;
     gateway_available: boolean;
     is_dev_mode?: boolean;
+    require_otp?: boolean;
 }
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
@@ -110,6 +111,7 @@ export default function VehicleShow({
     insurance_packages_enabled = true,
     hold_ttl_minutes,
     is_dev_mode = false,
+    require_otp = true,
 }: Props) {
     const { flash, errors } = usePage().props as {
         flash?: { success?: string; error?: string };
@@ -142,7 +144,7 @@ export default function VehicleShow({
         customer_name: customer?.name || '',
         customer_email: customer?.email || '',
         booker_phone: customer?.phone || '',
-        otp_code: customer ? '000000' : '',
+        otp_code: (!require_otp || customer) ? '000000' : '',
         emergency_contact_name: '',
         emergency_contact_phone: '',
         emergency_contact_relation: 'Keluarga',
@@ -883,6 +885,27 @@ export default function VehicleShow({
                                         {errors.booker_phone && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.booker_phone}</p>}
                                     </div>
 
+                                    {/* Alamat Email - Wajib jika OTP WhatsApp nonaktif */}
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-700 block">
+                                            Alamat Email {!require_otp ? <span className="text-rose-500">*</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            className={fieldClassName}
+                                            placeholder="nama@email.com"
+                                            value={form.data.customer_email}
+                                            onChange={(e) => form.setData('customer_email', e.target.value)}
+                                            required={!require_otp}
+                                        />
+                                        <p className="text-[10px] text-slate-500 mt-0.5">
+                                            {!require_otp
+                                                ? 'Alamat email wajib diisi untuk registrasi, konfirmasi reservasi, dan bukti invoice sewa.'
+                                                : 'Bukti konfirmasi pemesanan dan invoice elektronik akan dikirimkan ke email ini.'}
+                                        </p>
+                                        {errors.customer_email && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.customer_email}</p>}
+                                    </div>
+
                                     {/* Emergency Contact & Risk Mitigation */}
                                     <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
                                         <div className="flex items-center gap-2">
@@ -946,79 +969,81 @@ export default function VehicleShow({
                                     </div>
 
                                     {/* OTP Verification Block */}
-                                    {customer ? (
-                                        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800 flex items-center gap-2 shadow-2xs">
-                                            <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <span>Akun terverifikasi. Kode OTP tidak diperlukan.</span>
-                                        </div>
-                                    ) : (
-                                        <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 space-y-2.5">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-extrabold text-slate-800">Verifikasi Kode OTP *</span>
-                                                {!phoneVerified && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => void sendOtp()}
-                                                        disabled={sendingOtp || !form.data.booker_phone}
-                                                        className="rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800 disabled:opacity-50 shadow-2xs"
-                                                    >
-                                                        {sendingOtp ? 'Mengirim...' : 'Kirim OTP'}
-                                                    </button>
-                                                )}
+                                    {require_otp ? (
+                                        customer ? (
+                                            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800 flex items-center gap-2 shadow-2xs">
+                                                <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>Akun terverifikasi. Kode OTP tidak diperlukan.</span>
                                             </div>
-
-                                            {phoneVerified ? (
-                                                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-bold text-emerald-800 flex items-center gap-2">
-                                                    <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    Terverifikasi ✓ (OTP tidak diperlukan)
+                                        ) : (
+                                            <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 space-y-2.5">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[11px] font-extrabold text-slate-800">Verifikasi Kode OTP *</span>
+                                                    {!phoneVerified && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => void sendOtp()}
+                                                            disabled={sendingOtp || !form.data.booker_phone}
+                                                            className="rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800 disabled:opacity-50 shadow-2xs"
+                                                        >
+                                                            {sendingOtp ? 'Mengirim...' : 'Kirim OTP'}
+                                                        </button>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <input
-                                                    type="text"
-                                                    className={`${fieldClassName} tracking-widest text-center text-sm font-black bg-white`}
-                                                    placeholder="0 0 0 0 0 0"
-                                                    maxLength={6}
-                                                    value={form.data.otp_code}
-                                                    onChange={(e) => form.setData('otp_code', e.target.value)}
-                                                    required
-                                                />
-                                            )}
 
-                                            {devOtpCode && !phoneVerified && (
-                                                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 shadow-2xs space-y-2">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-xs font-black text-white shadow-2xs">
-                                                                ⚡
-                                                            </span>
-                                                            <div>
-                                                                <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
-                                                                <span className="text-[11px] text-amber-700 font-medium">OTP tidak dikirim ke HP. Kode OTP:</span>
+                                                {phoneVerified ? (
+                                                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-bold text-emerald-800 flex items-center gap-2">
+                                                        <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        Terverifikasi ✓ (OTP tidak diperlukan)
+                                                    </div>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        className={`${fieldClassName} tracking-widest text-center text-sm font-black bg-white`}
+                                                        placeholder="0 0 0 0 0 0"
+                                                        maxLength={6}
+                                                        value={form.data.otp_code}
+                                                        onChange={(e) => form.setData('otp_code', e.target.value)}
+                                                        required
+                                                    />
+                                                )}
+
+                                                {devOtpCode && !phoneVerified && (
+                                                    <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 shadow-2xs space-y-2">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-xs font-black text-white shadow-2xs">
+                                                                    ⚡
+                                                                </span>
+                                                                <div>
+                                                                    <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
+                                                                    <span className="text-[11px] text-amber-700 font-medium">OTP tidak dikirim ke HP. Kode OTP:</span>
+                                                                </div>
                                                             </div>
+                                                            <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
+                                                                {devOtpCode}
+                                                            </span>
                                                         </div>
-                                                        <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
-                                                            {devOtpCode}
-                                                        </span>
+                                                        <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
+                                                            <span>✓</span>
+                                                            <span>Kode OTP telah diisikan otomatis ke kotak input di atas.</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
-                                                        <span>✓</span>
-                                                        <span>Kode OTP telah diisikan otomatis ke kotak input di atas.</span>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                )}
 
-                                            {otpHint && !devOtpCode && !phoneVerified && (
-                                                <p className="rounded-lg bg-teal-50 p-2 text-xs font-medium text-teal-800 border border-teal-200">
-                                                    {otpHint}
-                                                </p>
-                                            )}
-                                            {errors.otp_code && <p className="text-[10px] text-rose-600 font-bold">{errors.otp_code}</p>}
-                                        </div>
-                                    )}
+                                                {otpHint && !devOtpCode && !phoneVerified && (
+                                                    <p className="rounded-lg bg-teal-50 p-2 text-xs font-medium text-teal-800 border border-teal-200">
+                                                        {otpHint}
+                                                    </p>
+                                                )}
+                                                {errors.otp_code && <p className="text-[10px] text-rose-600 font-bold">{errors.otp_code}</p>}
+                                            </div>
+                                        )
+                                    ) : null}
                                 </div>
 
                                 {/* Booking CTA Button */}

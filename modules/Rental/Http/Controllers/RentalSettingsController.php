@@ -221,6 +221,7 @@ class RentalSettingsController extends Controller
             'send_on_return' => ['required', 'boolean'],
             'send_on_driver_assigned' => ['sometimes', 'boolean'],
             'send_to_driver_on_duty' => ['sometimes', 'boolean'],
+            'require_otp_on_self_service' => ['sometimes', 'boolean'],
         ]);
 
         RentalWhatsAppSettings::update($validated);

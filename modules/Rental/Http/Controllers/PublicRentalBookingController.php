@@ -201,6 +201,7 @@ class PublicRentalBookingController extends Controller
             'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
             'gateway_available' => $this->gatewayAvailable(),
             'is_dev_mode' => \App\Support\SystemMode::shouldExposeDebugOtp(),
+            'require_otp' => RentalWhatsAppSettings::isOtpRequired(),
         ]);
     }
 
@@ -245,8 +246,10 @@ class PublicRentalBookingController extends Controller
             $data['insurance_package_id'] = null;
         }
 
-        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'] ?? null)) {
-            return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')])->withInput();
+        if (RentalWhatsAppSettings::isOtpRequired()) {
+            if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'] ?? null)) {
+                return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')])->withInput();
+            }
         }
 
         $phone = $otp->normalize($data['booker_phone']);
@@ -273,6 +276,17 @@ class PublicRentalBookingController extends Controller
     public function sendOtp(Request $request, PassengerOtpService $otp): JsonResponse|RedirectResponse
     {
         $this->ensureAvailable();
+
+        if (! RentalWhatsAppSettings::isOtpRequired()) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Verifikasi WhatsApp OTP saat ini dinonaktifkan.',
+                ], 422);
+            }
+
+            return back()->with('error', 'Verifikasi WhatsApp OTP saat ini dinonaktifkan.');
+        }
 
         $data = $request->validate([
             'booker_phone' => ['required', 'string', 'max:32'],
@@ -331,6 +345,7 @@ class PublicRentalBookingController extends Controller
             'booking' => $this->bookingPayload($rental),
             'gateway_available' => $this->gatewayAvailable(),
             'company_bank_accounts' => $this->companyBankAccounts(),
+            'require_otp' => RentalWhatsAppSettings::isOtpRequired(),
         ]);
     }
 
@@ -1573,6 +1588,10 @@ class PublicRentalBookingController extends Controller
 
     private function assertOtp(PassengerOtpService $otp, string $phone, ?string $code): bool
     {
+        if (! RentalWhatsAppSettings::isOtpRequired()) {
+            return true;
+        }
+
         if (auth('customer')->check()) {
             return true;
         }
@@ -1594,6 +1613,10 @@ class PublicRentalBookingController extends Controller
         ?string $phone,
         ?string $code,
     ): ?RedirectResponse {
+        if (! RentalWhatsAppSettings::isOtpRequired()) {
+            return null;
+        }
+
         $effectivePhone = $phone ?: $rental->booker_phone;
         if ($effectivePhone === null) {
             return back()->with('error', __('rental.public.forbidden'));
