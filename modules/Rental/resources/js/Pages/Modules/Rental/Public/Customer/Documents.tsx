@@ -1,6 +1,7 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import { useTrans } from '@/hooks/useTrans';
 import { useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { ChangeEvent, DragEvent, FormEvent, useRef, useState } from 'react';
@@ -80,6 +81,8 @@ function DocumentUploadBox({
     ocrSupported,
     onTriggerScan,
 }: FileUploaderBoxProps) {
+    const { locale } = useTrans();
+    const tr = (idStr: string, enStr: string) => (locale === 'en' ? enStr : idStr);
     const inputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -128,7 +131,7 @@ function DocumentUploadBox({
                         onClick={onTriggerScan}
                         className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 transition"
                     >
-                        <span>⚡ Pindai Ulang OCR</span>
+                        <span>{tr('⚡ Pindai Ulang OCR', '⚡ Rescan OCR')}</span>
                     </button>
                 )}
             </div>
@@ -158,7 +161,7 @@ function DocumentUploadBox({
                                     <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <span className="text-[9px] font-black uppercase tracking-wider mt-0.5">Dokumen PDF</span>
+                                    <span className="text-[9px] font-black uppercase tracking-wider mt-0.5">{tr('Dokumen PDF', 'PDF Document')}</span>
                                 </div>
                             ) : (
                                 <>
@@ -179,20 +182,20 @@ function DocumentUploadBox({
                         <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                                    {file ? 'File Baru Dipilih' : 'Tersimpan'}
+                                    {file ? tr('File Baru Dipilih', 'New File Selected') : tr('Tersimpan', 'Saved')}
                                 </span>
                                 {isScanning && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800 animate-pulse">
                                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-                                        Membaca OCR...
+                                        {tr('Membaca OCR...', 'Reading OCR...')}
                                     </span>
                                 )}
                             </div>
                             <p className="truncate text-xs font-black text-slate-800">
-                                {file ? file.name : 'Dokumen Tersimpan'}
+                                {file ? file.name : tr('Dokumen Tersimpan', 'Saved Document')}
                             </p>
                             <p className="text-[10px] text-slate-500 font-medium">
-                                {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Siap diverifikasi tim rental'}
+                                {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : tr('Siap diverifikasi tim rental', 'Ready for rental team verification')}
                             </p>
                         </div>
 
@@ -203,7 +206,7 @@ function DocumentUploadBox({
                                 disabled={isScanning}
                                 className="rounded-xl border border-slate-250 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-950 transition disabled:opacity-50"
                             >
-                                Ganti
+                                {tr('Ganti', 'Change')}
                             </button>
                             {file && (
                                 <button
@@ -212,7 +215,7 @@ function DocumentUploadBox({
                                     disabled={isScanning}
                                     className="rounded-xl px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition disabled:opacity-50"
                                 >
-                                    Batal
+                                    {tr('Batal', 'Cancel')}
                                 </button>
                             )}
                         </div>
@@ -238,14 +241,17 @@ function DocumentUploadBox({
 
                     <div className="mt-3 space-y-1">
                         <div className="text-xs font-black text-slate-800 group-hover:text-teal-700 transition">
-                            Klik atau Seret Foto ke Sini
+                            {tr('Klik atau Seret Foto ke Sini', 'Click or Drag Photo Here')}
                         </div>
                         <p className="text-[11px] text-slate-500 font-medium">
-                            Format JPG, PNG, WEBP, atau PDF (Maks. 10MB)
+                            {tr('Format JPG, PNG, WEBP, atau PDF (Maks. 10MB)', 'JPG, PNG, WEBP, or PDF format (Max. 10MB)')}
                         </p>
                         {ocrSupported && (
                             <p className="text-[10px] text-indigo-600 font-semibold mt-1">
-                                ✨ Didukung OCR Otomatis: Data NIK / SIM akan terbaca otomatis
+                                {tr(
+                                    '✨ Didukung OCR Otomatis: Data NIK / SIM akan terbaca otomatis',
+                                    '✨ Automatic OCR Supported: ID / License numbers will be extracted automatically',
+                                )}
                             </p>
                         )}
                     </div>
@@ -262,6 +268,8 @@ function DocumentUploadBox({
 }
 
 export default function Documents({ brand, customer, partner, ocrEnabled = true }: Props) {
+    const { locale } = useTrans();
+    const tr = (idStr: string, enStr: string) => (locale === 'en' ? enStr : idStr);
     const isVerified = partner.kyc_status === 'verified';
     const isPending = partner.kyc_status === 'pending';
     const isRejected = partner.kyc_status === 'rejected';
@@ -336,12 +344,18 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     updates.id_number = cleanNik;
                     setOcrFeedback({
                         type: 'ktp',
-                        message: `NIK (${cleanNik})${updates.kyc_extracted_name ? ` & Nama (${updates.kyc_extracted_name})` : ''} berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
+                        message: tr(
+                            `NIK (${cleanNik})${updates.kyc_extracted_name ? ` & Nama (${updates.kyc_extracted_name})` : ''} berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
+                            `ID Number (${cleanNik})${updates.kyc_extracted_name ? ` & Name (${updates.kyc_extracted_name})` : ''} extracted via OCR (${Math.round(confidence * 100)}% accuracy).`,
+                        ),
                     });
                 } else {
                     setOcrFeedback({
                         type: 'ktp',
-                        message: 'Foto KTP terdeteksi, namun nomor NIK belum terbaca jelas. Mohon periksa kembali kolom NIK.',
+                        message: tr(
+                            'Foto KTP terdeteksi, namun nomor NIK belum terbaca jelas. Mohon periksa kembali kolom NIK.',
+                            'ID Card photo detected, but the ID number was not clearly readable. Please check the ID number field.',
+                        ),
                     });
                 }
                 if (Object.keys(updates).length > 0) {
@@ -350,12 +364,12 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
             } else {
                 setOcrFeedback({
                     type: 'ktp',
-                    message: res.data?.message || 'Gagal memindai KTP.',
+                    message: res.data?.message || tr('Gagal memindai KTP.', 'Failed to scan ID Card.'),
                     isError: true,
                 });
             }
         } catch (err: any) {
-            const message = err?.response?.data?.message || err?.message || 'Gagal menjalankan pemindaian OCR KTP.';
+            const message = err?.response?.data?.message || err?.message || tr('Gagal menjalankan pemindaian OCR KTP.', 'Failed to run ID Card OCR scan.');
             setOcrFeedback({
                 type: 'ktp',
                 message,
@@ -412,12 +426,18 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     updates.license_number = cleanSim;
                     setOcrFeedback({
                         type: 'sim',
-                        message: `Nomor SIM (${cleanSim}) berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
+                        message: tr(
+                            `Nomor SIM (${cleanSim}) berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
+                            `License Number (${cleanSim}) extracted via OCR (${Math.round(confidence * 100)}% accuracy).`,
+                        ),
                     });
                 } else {
                     setOcrFeedback({
                         type: 'sim',
-                        message: 'Foto SIM terdeteksi, namun nomor SIM belum terbaca jelas. Mohon periksa kembali kolom nomor SIM.',
+                        message: tr(
+                            'Foto SIM terdeteksi, namun nomor SIM belum terbaca jelas. Mohon periksa kembali kolom nomor SIM.',
+                            'Driver License photo detected, but the license number was not clearly readable. Please check the license number field.',
+                        ),
                     });
                 }
                 if (Object.keys(updates).length > 0) {
@@ -426,12 +446,12 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
             } else {
                 setOcrFeedback({
                     type: 'sim',
-                    message: res.data?.message || 'Gagal memindai SIM.',
+                    message: res.data?.message || tr('Gagal memindai SIM.', 'Failed to scan Driver License.'),
                     isError: true,
                 });
             }
         } catch (err: any) {
-            const message = err?.response?.data?.message || err?.message || 'Gagal menjalankan pemindaian OCR SIM.';
+            const message = err?.response?.data?.message || err?.message || tr('Gagal menjalankan pemindaian OCR SIM.', 'Failed to run Driver License OCR scan.');
             setOcrFeedback({
                 type: 'sim',
                 message,
@@ -467,39 +487,55 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
     };
 
     return (
-        <CustomerPortalLayout brand={brand} title="Manajemen Dokumen KYC">
+        <CustomerPortalLayout brand={brand} title={tr('Manajemen Dokumen KYC', 'KYC Document Management')}>
             <div className="max-w-4xl space-y-6">
                 {/* Status Notice */}
                 {isVerified ? (
                     <div className="rounded-3xl bg-emerald-50 border border-emerald-200 p-5 sm:p-6 text-xs text-emerald-900 space-y-1">
                         <div className="font-black text-sm flex items-center gap-1.5 text-emerald-950">
                             <span>✅</span>
-                            <span>Dokumen KYC Anda Sudah Terverifikasi Resmi</span>
+                            <span>{tr('Dokumen KYC Anda Sudah Terverifikasi Resmi', 'Your KYC Documents Are Officially Verified')}</span>
                         </div>
                         <p className="text-emerald-800 leading-relaxed">
-                            Identitas Anda telah diverifikasi oleh tim rental. Semua pemesanan mobil berikutnya dapat langsung disetujui tanpa perlu mengunggah ulang dokumen.
+                            {tr(
+                                'Identitas Anda telah diverifikasi oleh tim rental. Semua pemesanan mobil berikutnya dapat langsung disetujui tanpa perlu mengunggah ulang dokumen.',
+                                'Your identity has been verified by the rental team. All future car bookings can be approved directly without re-uploading documents.',
+                            )}
                         </p>
                     </div>
                 ) : isPending ? (
                     <div className="rounded-3xl bg-blue-50 border border-blue-200 p-5 sm:p-6 text-xs text-blue-900 space-y-1">
                         <div className="font-black text-sm flex items-center gap-1.5 text-blue-950">
                             <span>⏳</span>
-                            <span>Dokumen Sedang Dalam Proses Peninjauan</span>
+                            <span>{tr('Dokumen Sedang Dalam Proses Peninjauan', 'Documents Are Currently Under Review')}</span>
                         </div>
                         <p className="text-blue-800 leading-relaxed">
-                            Dokumen yang Anda kirimkan sedang diperiksa oleh staf admin kami. Anda dapat memperbarui dokumen di bawah jika ada foto yang buram.
+                            {tr(
+                                'Dokumen yang Anda kirimkan sedang diperiksa oleh staf admin kami. Anda dapat memperbarui dokumen di bawah jika ada foto yang buram.',
+                                'The documents you submitted are being reviewed by our admin staff. You can update the documents below if any photo is blurry.',
+                            )}
                         </p>
                     </div>
                 ) : (
                     <div className="rounded-3xl bg-amber-50 border border-amber-300 p-5 sm:p-6 text-xs text-amber-900 space-y-1">
                         <div className="font-black text-sm flex items-center gap-1.5 text-amber-950">
                             <span>⚠️</span>
-                            <span>{isRejected ? 'Dokumen Perlu Diperbaiki' : 'Lengkapi Dokumen Identitas Anda'}</span>
+                            <span>
+                                {isRejected
+                                    ? tr('Dokumen Perlu Diperbaiki', 'Documents Need Revision')
+                                    : tr('Lengkapi Dokumen Identitas Anda', 'Complete Your Identity Documents')}
+                            </span>
                         </div>
                         <p className="text-amber-800 leading-relaxed">
                             {partner.kyc_rejected_reason
-                                ? `Catatan koreksi: ${partner.kyc_rejected_reason}. Silakan unggah foto dokumen yang lebih jelas dan terbaca.`
-                                : 'Unggah foto KTP dan SIM Anda satu kali agar akun Anda mendapatkan status verifikasi resmi.'}
+                                ? tr(
+                                      `Catatan koreksi: ${partner.kyc_rejected_reason}. Silakan unggah foto dokumen yang lebih jelas dan terbaca.`,
+                                      `Correction note: ${partner.kyc_rejected_reason}. Please upload a clearer, legible photo of your document.`,
+                                  )
+                                : tr(
+                                      'Unggah foto KTP dan SIM Anda satu kali agar akun Anda mendapatkan status verifikasi resmi.',
+                                      'Upload your ID Card and Driver License photos once to get official verification status on your account.',
+                                  )}
                         </p>
                     </div>
                 )}
@@ -532,8 +568,11 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                         <div className="space-y-4">
                             <DocumentUploadBox
                                 id="ktp_upload"
-                                title="Foto KTP Asli (e-KTP)"
-                                hint="Pastikan NIK, nama, dan foto pada KTP terlihat jelas, terang, dan tidak buram."
+                                title={tr('Foto KTP Asli (e-KTP)', 'Original ID Card Photo (KTP / Passport)')}
+                                hint={tr(
+                                    'Pastikan NIK, nama, dan foto pada KTP terlihat jelas, terang, dan tidak buram.',
+                                    'Make sure the ID number, name, and photo on the ID Card are clear, bright, and not blurry.',
+                                )}
                                 file={form.data.ktp}
                                 existingUrl={partner.id_card_url}
                                 onFileSelected={handleKtpSelected}
@@ -549,44 +588,47 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1.5 font-black text-indigo-950">
                                             <span>🪪</span>
-                                            <span>Hasil Ekstraksi OCR KTP</span>
+                                            <span>{tr('Hasil Ekstraksi OCR KTP', 'ID Card OCR Extraction Result')}</span>
                                         </div>
                                         {ktpOcr.confidence && (
                                             <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800">
-                                                Akurasi {Math.round(ktpOcr.confidence * 100)}%
+                                                {tr('Akurasi', 'Accuracy')} {Math.round(ktpOcr.confidence * 100)}%
                                             </span>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-700 bg-white/70 p-2.5 rounded-xl border border-indigo-100">
                                         <div>
-                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">NIK Terdeteksi</span>
+                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('NIK Terdeteksi', 'Detected ID Number')}</span>
                                             <span className="font-mono font-bold text-indigo-900">{ktpOcr.nik || '-'}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">Nama di KTP</span>
+                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('Nama di KTP', 'Name on ID Card')}</span>
                                             <span className="font-semibold text-slate-900">{ktpOcr.name || '-'}</span>
                                         </div>
                                         {ktpOcr.birth_date && (
                                             <div>
-                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Tgl Lahir</span>
+                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('Tgl Lahir', 'Birth Date')}</span>
                                                 <span className="font-medium text-slate-800">{ktpOcr.birth_date}</span>
                                             </div>
                                         )}
                                         {ktpOcr.address && (
                                             <div className="col-span-2">
-                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Alamat</span>
+                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('Alamat', 'Address')}</span>
                                                 <span className="font-medium text-slate-800 truncate block">{ktpOcr.address}</span>
                                             </div>
                                         )}
                                     </div>
                                     <p className="text-[10px] text-indigo-700 font-medium">
-                                        ✓ NIK telah otomatis diisikan ke input form di bawah. Anda tetap dapat mengedit jika diperlukan.
+                                        {tr(
+                                            '✓ NIK telah otomatis diisikan ke input form di bawah. Anda tetap dapat mengedit jika diperlukan.',
+                                            '✓ ID Number has been auto-filled into the field below. You can still edit it if needed.',
+                                        )}
                                     </p>
                                 </div>
                             )}
 
                             <div>
-                                <InputLabel htmlFor="id_number" value="Nomor NIK KTP (16 Digit)" />
+                                <InputLabel htmlFor="id_number" value={tr('Nomor NIK KTP (16 Digit)', 'ID Card Number / NIK (16 Digits)')} />
                                 <TextInput
                                     id="id_number"
                                     value={form.data.id_number}
@@ -598,16 +640,19 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="kyc_extracted_name" value="Nama Lengkap Sesuai KTP / SIM" />
+                                <InputLabel htmlFor="kyc_extracted_name" value={tr('Nama Lengkap Sesuai KTP / SIM', 'Full Name as on ID Card / Driver License')} />
                                 <TextInput
                                     id="kyc_extracted_name"
                                     value={form.data.kyc_extracted_name}
                                     onChange={(e) => form.setData('kyc_extracted_name', e.target.value)}
-                                    placeholder={customer.name || 'Nama sesuai dokumen identitas'}
+                                    placeholder={customer.name || tr('Nama sesuai dokumen identitas', 'Name as on identity document')}
                                     className="w-full mt-1.5 text-sm font-semibold"
                                 />
                                 <p className="text-[10px] text-slate-400 mt-1">
-                                    Akan digunakan untuk memperbarui nama resmi akun Anda setelah verifikasi KYC disetujui admin.
+                                    {tr(
+                                        'Akan digunakan untuk memperbarui nama resmi akun Anda setelah verifikasi KYC disetujui admin.',
+                                        'Will be used to update your official account name once KYC verification is approved by admin.',
+                                    )}
                                 </p>
                                 <InputError message={form.errors.kyc_extracted_name} className="mt-1" />
                             </div>
@@ -617,8 +662,11 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                         <div className="space-y-4">
                             <DocumentUploadBox
                                 id="sim_upload"
-                                title="Foto SIM A / SIM B Asli"
-                                hint="Pastikan masa berlaku SIM masih aktif untuk keperluan sewa kendaraan lepas kunci."
+                                title={tr('Foto SIM A / SIM B Asli', 'Original Driver License Photo (SIM A / B)')}
+                                hint={tr(
+                                    'Pastikan masa berlaku SIM masih aktif untuk keperluan sewa kendaraan lepas kunci.',
+                                    'Ensure your driver license is still valid for self-drive vehicle rentals.',
+                                )}
                                 file={form.data.sim}
                                 existingUrl={partner.driver_license_url}
                                 onFileSelected={handleSimSelected}
@@ -634,44 +682,47 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1.5 font-black text-indigo-950">
                                             <span>🚗</span>
-                                            <span>Hasil Ekstraksi OCR SIM</span>
+                                            <span>{tr('Hasil Ekstraksi OCR SIM', 'Driver License OCR Extraction Result')}</span>
                                         </div>
                                         {simOcr.confidence && (
                                             <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-800">
-                                                Akurasi {Math.round(simOcr.confidence * 100)}%
+                                                {tr('Akurasi', 'Accuracy')} {Math.round(simOcr.confidence * 100)}%
                                             </span>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-700 bg-white/70 p-2.5 rounded-xl border border-indigo-100">
                                         <div>
-                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">No. SIM Terdeteksi</span>
+                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('No. SIM Terdeteksi', 'Detected License No.')}</span>
                                             <span className="font-mono font-bold text-indigo-900">{simOcr.license_number || '-'}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">Golongan SIM</span>
+                                            <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('Golongan SIM', 'License Class')}</span>
                                             <span className="font-semibold text-slate-900">{simOcr.license_type || 'SIM A'}</span>
                                         </div>
                                         {simOcr.name && (
                                             <div>
-                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Nama di SIM</span>
+                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('Nama di SIM', 'Name on License')}</span>
                                                 <span className="font-semibold text-slate-900">{simOcr.name}</span>
                                             </div>
                                         )}
                                         {simOcr.expires_at && (
                                             <div>
-                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Masa Berlaku</span>
+                                                <span className="block text-[10px] text-slate-400 font-bold uppercase">{tr('Masa Berlaku', 'Valid Until')}</span>
                                                 <span className="font-bold text-emerald-800">{simOcr.expires_at}</span>
                                             </div>
                                         )}
                                     </div>
                                     <p className="text-[10px] text-indigo-700 font-medium">
-                                        ✓ Nomor SIM telah otomatis diisikan ke input form di bawah. Anda tetap dapat mengedit jika diperlukan.
+                                        {tr(
+                                            '✓ Nomor SIM telah otomatis diisikan ke input form di bawah. Anda tetap dapat mengedit jika diperlukan.',
+                                            '✓ Driver License number has been auto-filled into the field below. You can still edit it if needed.',
+                                        )}
                                     </p>
                                 </div>
                             )}
 
                             <div>
-                                <InputLabel htmlFor="license_number" value="Nomor Surat Izin Mengemudi (SIM)" />
+                                <InputLabel htmlFor="license_number" value={tr('Nomor Surat Izin Mengemudi (SIM)', 'Driver License Number (SIM)')} />
                                 <TextInput
                                     id="license_number"
                                     value={form.data.license_number}
@@ -687,25 +738,30 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     {/* Emergency Contact */}
                     <div className="border-t border-slate-100 pt-6 space-y-4">
                         <div>
-                            <h4 className="text-sm font-black text-slate-900">Kontak Darurat Keluarga / Kerabat</h4>
-                            <p className="text-xs text-slate-500">Dihubungi jika terjadi keadaan darurat selama periode sewa kendaraan.</p>
+                            <h4 className="text-sm font-black text-slate-900">{tr('Kontak Darurat Keluarga / Kerabat', 'Emergency Family / Relative Contact')}</h4>
+                            <p className="text-xs text-slate-500">
+                                {tr(
+                                    'Dihubungi jika terjadi keadaan darurat selama periode sewa kendaraan.',
+                                    'Contacted in case of an emergency during the vehicle rental period.',
+                                )}
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="emergency_contact_name" value="Nama Kontak Darurat" />
+                                <InputLabel htmlFor="emergency_contact_name" value={tr('Nama Kontak Darurat', 'Emergency Contact Name')} />
                                 <TextInput
                                     id="emergency_contact_name"
                                     value={form.data.emergency_contact_name}
                                     onChange={(e) => form.setData('emergency_contact_name', e.target.value)}
-                                    placeholder="Contoh: Istri / Orang Tua / Saudara"
+                                    placeholder={tr('Contoh: Istri / Orang Tua / Saudara', 'Example: Spouse / Parent / Sibling')}
                                     className="w-full mt-1.5 text-sm"
                                 />
                                 <InputError message={form.errors.emergency_contact_name} className="mt-1" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="emergency_contact_phone" value="Nomor Telepon Darurat" />
+                                <InputLabel htmlFor="emergency_contact_phone" value={tr('Nomor Telepon Darurat', 'Emergency Phone Number')} />
                                 <TextInput
                                     id="emergency_contact_phone"
                                     value={form.data.emergency_contact_phone}
@@ -726,7 +782,9 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                             className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 disabled:opacity-50"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >
-                            {form.processing ? 'Menyimpan Dokumen…' : 'Simpan & Ajukan Verifikasi'}
+                            {form.processing
+                                ? tr('Menyimpan Dokumen…', 'Saving Documents…')
+                                : tr('Simpan & Ajukan Verifikasi', 'Save & Submit Verification')}
                         </button>
                     </div>
                 </form>

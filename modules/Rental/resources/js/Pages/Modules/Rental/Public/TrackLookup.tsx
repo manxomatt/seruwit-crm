@@ -1,5 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
+import LanguageToggle from '@/Components/LanguageToggle';
+import { useTrans } from '@/hooks/useTrans';
 
 interface Brand {
     name: string;
@@ -18,6 +20,9 @@ const fieldClassName =
     'mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5';
 
 export default function TrackLookup({ brand }: Props) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
+
     const { data, setData, post, processing, errors } = useForm({
         booking_code: '',
         phone: '',
@@ -35,7 +40,7 @@ export default function TrackLookup({ brand }: Props) {
             className="min-h-screen bg-slate-50/60 font-sans antialiased text-slate-800 flex flex-col justify-between"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`Lacak Status Pemesanan — ${brand.name}`} />
+            <Head title={`${tr('Lacak Status Pemesanan', 'Track Booking Status')} — ${brand.name}`} />
 
             {/* Top Navigation */}
             <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200/80 px-4 py-3.5">
@@ -55,17 +60,18 @@ export default function TrackLookup({ brand }: Props) {
                     </Link>
 
                     <div className="flex items-center gap-2 text-xs">
+                        <LanguageToggle />
                         <Link
                             href={route('book.rental.search')}
                             className="text-slate-600 hover:text-slate-900 font-semibold px-2.5 py-1.5 rounded-lg transition hover:bg-slate-100"
                         >
-                            Sewa Mobil
+                            {tr('Sewa Mobil', 'Rent a Car')}
                         </Link>
                         <Link
                             href={route('book.rental.history')}
                             className="text-slate-600 hover:text-slate-900 font-semibold px-2.5 py-1.5 rounded-lg transition hover:bg-slate-100"
                         >
-                            Riwayat
+                            {tr('Riwayat', 'History')}
                         </Link>
                     </div>
                 </div>
@@ -83,18 +89,25 @@ export default function TrackLookup({ brand }: Props) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Lacak Status Pemesanan</h1>
+                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                            {tr('Lacak Status Pemesanan', 'Track Booking Status')}
+                        </h1>
                         <p className="text-xs md:text-sm text-slate-500 mt-1 max-w-md mx-auto">
-                            Pantau status verifikasi, penyiapan unit & driver, kontrak sewa digital, dan serah terima kendaraan secara real-time.
+                            {tr(
+                                'Pantau status verifikasi, penyiapan unit & driver, kontrak sewa digital, dan serah terima kendaraan secara real-time.',
+                                'Monitor verification status, vehicle & driver preparation, digital rental contract, and vehicle handover in real-time.'
+                            )}
                         </p>
                     </div>
 
                     <form onSubmit={submit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-slate-700">Kode Booking / Reservasi *</label>
+                            <label className="block text-xs font-bold text-slate-700">
+                                {tr('Kode Booking / Reservasi *', 'Booking / Reservation Code *')}
+                            </label>
                             <input
                                 type="text"
-                                placeholder="Contoh: RNT-202610-0001"
+                                placeholder={tr('Contoh: RNT-202610-0001', 'e.g. RNT-202610-0001')}
                                 value={data.booking_code}
                                 onChange={(e) => setData('booking_code', e.target.value.toUpperCase())}
                                 className={fieldClassName}
@@ -105,10 +118,12 @@ export default function TrackLookup({ brand }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-700">Nomor WhatsApp Pemesan *</label>
+                            <label className="block text-xs font-bold text-slate-700">
+                                {tr('Nomor WhatsApp Pemesan *', 'Booker WhatsApp Number *')}
+                            </label>
                             <input
                                 type="tel"
-                                placeholder="Contoh: 081234567890"
+                                placeholder={tr('Contoh: 081234567890', 'e.g. 081234567890')}
                                 value={data.phone}
                                 onChange={(e) => setData('phone', e.target.value)}
                                 className={fieldClassName}
@@ -116,7 +131,10 @@ export default function TrackLookup({ brand }: Props) {
                             />
                             {errors.phone && <p className="mt-1 text-xs text-rose-600 font-semibold">{errors.phone}</p>}
                             <p className="text-[11px] text-slate-400 mt-1">
-                                Masukkan nomor WhatsApp yang digunakan saat melakukan pemesanan rental.
+                                {tr(
+                                    'Masukkan nomor WhatsApp yang digunakan saat melakukan pemesanan rental.',
+                                    'Enter the WhatsApp number used when making the rental reservation.'
+                                )}
                             </p>
                         </div>
 
@@ -126,12 +144,14 @@ export default function TrackLookup({ brand }: Props) {
                             className="w-full mt-2 py-3.5 rounded-2xl text-white font-bold text-sm shadow-md transition transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{ backgroundColor: brandColor }}
                         >
-                            {processing ? 'Mencari Reservasi...' : 'Lacak Status Sekarang →'}
+                            {processing
+                                ? tr('Mencari Reservasi...', 'Searching Reservation...')
+                                : tr('Lacak Status Sekarang →', 'Track Status Now →')}
                         </button>
                     </form>
 
                     <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs gap-3">
-                        <span className="text-slate-500">Lupa Kode Booking Anda?</span>
+                        <span className="text-slate-500">{tr('Lupa Kode Booking Anda?', 'Forgot your Booking Code?')}</span>
                         <Link
                             href={route('book.rental.history')}
                             className="font-bold text-slate-700 hover:text-slate-900 underline flex items-center gap-1"
@@ -139,7 +159,7 @@ export default function TrackLookup({ brand }: Props) {
                             <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Cari via Riwayat Nomor WhatsApp
+                            {tr('Cari via Riwayat Nomor WhatsApp', 'Search via WhatsApp Number History')}
                         </Link>
                     </div>
                 </div>
@@ -153,8 +173,10 @@ export default function TrackLookup({ brand }: Props) {
                             </svg>
                         </div>
                         <div>
-                            <h4 className="text-xs font-bold text-slate-900">Live Status Real-Time</h4>
-                            <p className="text-[11px] text-slate-500 mt-0.5">Pembaruan progres otomatis tanpa perlu chat admin.</p>
+                            <h4 className="text-xs font-bold text-slate-900">{tr('Live Status Real-Time', 'Real-Time Live Status')}</h4>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                {tr('Pembaruan progres otomatis tanpa perlu chat admin.', 'Automatic progress updates without needing to chat with admin.')}
+                            </p>
                         </div>
                     </div>
 
@@ -165,8 +187,10 @@ export default function TrackLookup({ brand }: Props) {
                             </svg>
                         </div>
                         <div>
-                            <h4 className="text-xs font-bold text-slate-900">Rincian Driver & Mobil</h4>
-                            <p className="text-[11px] text-slate-500 mt-0.5">Kontak sopir dan pelat nomor mobil terpampang jelas.</p>
+                            <h4 className="text-xs font-bold text-slate-900">{tr('Rincian Driver & Mobil', 'Driver & Car Details')}</h4>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                {tr('Kontak sopir dan pelat nomor mobil terpampang jelas.', 'Driver contact and vehicle license plate clearly displayed.')}
+                            </p>
                         </div>
                     </div>
 
@@ -177,8 +201,10 @@ export default function TrackLookup({ brand }: Props) {
                             </svg>
                         </div>
                         <div>
-                            <h4 className="text-xs font-bold text-slate-900">Unduh PDF Resmi</h4>
-                            <p className="text-[11px] text-slate-500 mt-0.5">Kontrak Sewa Digital & BAST sah dapat diunduh kapan saja.</p>
+                            <h4 className="text-xs font-bold text-slate-900">{tr('Unduh PDF Resmi', 'Download Official PDF')}</h4>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                {tr('Kontrak Sewa Digital & BAST sah dapat diunduh kapan saja.', 'Valid Digital Rental Contract & Handover Report downloadable anytime.')}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -187,7 +213,7 @@ export default function TrackLookup({ brand }: Props) {
             {/* Footer */}
             <footer className="border-t border-slate-200 bg-white py-6 px-4 text-center text-xs text-slate-500">
                 <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p>© {new Date().getFullYear()} {brand.name}. Seluruh hak cipta dilindungi.</p>
+                    <p>© {new Date().getFullYear()} {brand.name}. {tr('Seluruh hak cipta dilindungi.', 'All rights reserved.')}</p>
                     {brand.support_phone && (
                         <a
                             href={`https://wa.me/${brand.support_phone.replace(/[^0-9]/g, '')}`}
@@ -195,7 +221,7 @@ export default function TrackLookup({ brand }: Props) {
                             rel="noreferrer"
                             className="font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5"
                         >
-                            <span>Bantuan Pelanggan</span>
+                            <span>{tr('Bantuan Pelanggan', 'Customer Support')}</span>
                             <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-mono">
                                 WhatsApp
                             </span>

@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import axios from 'axios';
+import { useTrans } from '@/hooks/useTrans';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import CustomerPortalLayout from './CustomerPortalLayout';
 
@@ -52,27 +52,30 @@ interface Props {
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
-const statusBadge = (status: string) => {
-    switch (status) {
-        case 'active':
-            return { label: 'Sedang Digunakan', bg: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
-        case 'confirmed':
-            return { label: 'Terkonfirmasi · Siap Ambil', bg: 'bg-blue-50 text-blue-800 border-blue-300' };
-        case 'pending_reserved':
-            return { label: 'Menunggu Pembayaran', bg: 'bg-amber-50 text-amber-800 border-amber-300' };
-        case 'completed':
-            return { label: 'Selesai Dikembalikan', bg: 'bg-slate-100 text-slate-700 border-slate-300' };
-        case 'cancelled':
-        case 'abandoned':
-            return { label: 'Dibatalkan', bg: 'bg-rose-50 text-rose-800 border-rose-200' };
-        default:
-            return { label: status, bg: 'bg-slate-100 text-slate-700 border-slate-200' };
-    }
-};
+export default function RentalDetail({ brand, rental }: Props) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
 
-export default function RentalDetail({ brand, rental, gatewayAvailable }: Props) {
+    const statusBadge = (status: string) => {
+        switch (status) {
+            case 'active':
+                return { label: tr('Sedang Digunakan', 'In Use'), bg: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+            case 'confirmed':
+                return { label: tr('Terkonfirmasi · Siap Ambil', 'Confirmed · Ready for Pickup'), bg: 'bg-blue-50 text-blue-800 border-blue-300' };
+            case 'pending_reserved':
+                return { label: tr('Menunggu Pembayaran', 'Awaiting Payment'), bg: 'bg-amber-50 text-amber-800 border-amber-300' };
+            case 'completed':
+                return { label: tr('Selesai Dikembalikan', 'Returned & Completed'), bg: 'bg-slate-100 text-slate-700 border-slate-300' };
+            case 'cancelled':
+            case 'abandoned':
+                return { label: tr('Dibatalkan', 'Cancelled'), bg: 'bg-rose-50 text-rose-800 border-rose-200' };
+            default:
+                return { label: status, bg: 'bg-slate-100 text-slate-700 border-slate-200' };
+        }
+    };
+
     const badge = statusBadge(rental.status);
-    const [paying, setPaying] = useState(false);
+    const [paying] = useState(false);
 
     // Direct actions link to existing public token actions
     const handlePayDeposit = () => {
@@ -83,10 +86,16 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
         router.post(route('book.rental.booking.pay_invoice', rental.public_token));
     };
 
+    const periodLabel = rental.period_type === 'weekly'
+        ? tr('minggu', 'weeks')
+        : rental.period_type === 'monthly'
+          ? tr('bulan', 'months')
+          : tr('hari', 'days');
+
     return (
         <CustomerPortalLayout
             brand={brand}
-            title={`Detail Sewa ${rental.code}`}
+            title={`${tr('Detail Sewa', 'Rental Detail')} ${rental.code}`}
             headerAction={
                 <div className="flex items-center gap-2">
                     <Link
@@ -94,7 +103,7 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition"
                     >
                         <span>←</span>
-                        <span>Semua Pesanan</span>
+                        <span>{tr('Semua Pesanan', 'All Bookings')}</span>
                     </Link>
                 </div>
             }
@@ -106,7 +115,9 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                     <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-2xs space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                             <div>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Nomor Reservasi</span>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                                    {tr('Nomor Reservasi', 'Reservation Number')}
+                                </span>
                                 <h3 className="text-xl font-mono font-black text-slate-900">{rental.code}</h3>
                             </div>
                             <span className={`text-xs font-black px-3 py-1 rounded-full border ${badge.bg}`}>
@@ -136,13 +147,13 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                                 )}
                                 <h4 className="text-lg font-black text-slate-900">{rental.vehicle?.name}</h4>
                                 <p className="text-xs font-mono font-bold text-slate-500">
-                                    Pelat Nomor: {rental.vehicle?.plate_number || 'Ditentukan saat serah terima'}
+                                    {tr('Pelat Nomor:', 'License Plate:')} {rental.vehicle?.plate_number || tr('Ditentukan saat serah terima', 'Assigned at handover')}
                                 </p>
 
                                 <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-500">
-                                    {rental.vehicle?.capacity_seats && <span>👥 {rental.vehicle.capacity_seats} Kursi</span>}
+                                    {rental.vehicle?.capacity_seats && <span>👥 {rental.vehicle.capacity_seats} {tr('Kursi', 'Seats')}</span>}
                                     {rental.vehicle?.fuel_label && <span>⛽ {rental.vehicle.fuel_label}</span>}
-                                    {rental.vehicle?.model_year && <span>📅 Th {rental.vehicle.model_year}</span>}
+                                    {rental.vehicle?.model_year && <span>📅 {tr('Th', 'Yr')} {rental.vehicle.model_year}</span>}
                                 </div>
                             </div>
                         </div>
@@ -151,15 +162,17 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                     {/* Schedule & Depot Card */}
                     <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-2xs space-y-5">
                         <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider text-slate-400">
-                            Jadwal & Lokasi Serah Terima
+                            {tr('Jadwal & Lokasi Serah Terima', 'Schedule & Handover Location')}
                         </h4>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200/80 space-y-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Penjemputan / Ambil Mobil</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    {tr('Penjemputan / Ambil Mobil', 'Pickup / Vehicle Handover')}
+                                </span>
                                 <div className="text-sm font-black text-slate-900">{rental.start_date}</div>
                                 <div className="text-xs text-slate-600 font-semibold pt-1">
-                                    📍 {rental.pickup_location?.name || 'Depot Resmi Tenant'}
+                                    📍 {rental.pickup_location?.name || tr('Depot Resmi Tenant', 'Official Tenant Depot')}
                                 </div>
                                 {rental.pickup_location?.address && (
                                     <p className="text-[11px] text-slate-500">{rental.pickup_location.address}</p>
@@ -167,10 +180,12 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                             </div>
 
                             <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200/80 space-y-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pengembalian Mobil</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    {tr('Pengembalian Mobil', 'Vehicle Return')}
+                                </span>
                                 <div className="text-sm font-black text-slate-900">{rental.end_date}</div>
                                 <div className="text-xs text-slate-600 font-semibold pt-1">
-                                    🏁 {rental.return_location?.name || 'Depot Resmi Tenant'}
+                                    🏁 {rental.return_location?.name || tr('Depot Resmi Tenant', 'Official Tenant Depot')}
                                 </div>
                                 {rental.return_location?.address && (
                                     <p className="text-[11px] text-slate-500">{rental.return_location.address}</p>
@@ -182,14 +197,19 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                     {/* Direct Public Link Helper */}
                     <div className="rounded-3xl bg-slate-100/80 border border-slate-200/80 p-5 flex items-center justify-between gap-3 text-xs">
                         <div>
-                            <span className="font-bold text-slate-800 block">Tautan Pesanan Publik</span>
-                            <span className="text-slate-500">Gunakan tautan ini jika ingin membuka pesanan di perangkat lain tanpa login.</span>
+                            <span className="font-bold text-slate-800 block">{tr('Tautan Pesanan Publik', 'Public Booking Link')}</span>
+                            <span className="text-slate-500">
+                                {tr(
+                                    'Gunakan tautan ini jika ingin membuka pesanan di perangkat lain tanpa login.',
+                                    'Use this link to open your booking on another device without signing in.',
+                                )}
+                            </span>
                         </div>
                         <Link
                             href={route('book.rental.booking.show', rental.public_token)}
                             className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-800 hover:bg-slate-50 transition shrink-0"
                         >
-                            Buka Tautan Publik ↗
+                            {tr('Buka Tautan Publik ↗', 'Open Public Link ↗')}
                         </Link>
                     </div>
                 </div>
@@ -197,41 +217,44 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                 {/* Right: Payment Breakdown & Action Center */}
                 <div className="lg:col-span-4 space-y-6">
                     <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm space-y-5">
-                        <h4 className="text-sm font-black text-slate-900">Rincian Pembayaran</h4>
+                        <h4 className="text-sm font-black text-slate-900">{tr('Rincian Pembayaran', 'Payment Breakdown')}</h4>
 
                         <div className="space-y-3 text-xs divide-y divide-slate-100">
                             <div className="flex justify-between pt-2">
-                                <span className="text-slate-500">Tarif Sewa ({rental.total_periods} {rental.period_type})</span>
+                                <span className="text-slate-500">{tr('Tarif Sewa', 'Rental Rate')} ({rental.total_periods} {periodLabel})</span>
                                 <span className="font-bold text-slate-800">{money(rental.base_amount)}</span>
                             </div>
 
                             {rental.one_way_fee_amount != null && rental.one_way_fee_amount > 0 && (
                                 <div className="flex justify-between pt-2">
-                                    <span className="text-slate-500">Biaya Antar Cabang (One-Way)</span>
+                                    <span className="text-slate-500">{tr('Biaya Antar Cabang (One-Way)', 'Inter-Branch Fee (One-Way)')}</span>
                                     <span className="font-bold text-slate-800">{money(rental.one_way_fee_amount)}</span>
                                 </div>
                             )}
 
                             {rental.insurance_package && (
                                 <div className="flex justify-between pt-2">
-                                    <span className="text-slate-500">Proteksi: {rental.insurance_package.name}</span>
+                                    <span className="text-slate-500">{tr('Proteksi:', 'Protection:')} {rental.insurance_package.name}</span>
                                     <span className="font-bold text-slate-800">{money(rental.insurance_package.amount)}</span>
                                 </div>
                             )}
 
                             <div className="flex justify-between pt-3 text-sm font-black text-slate-900">
-                                <span>Total Tagihan Sewa</span>
+                                <span>{tr('Total Tagihan Sewa', 'Total Rental Charge')}</span>
                                 <span>{money(rental.total_amount)}</span>
                             </div>
 
                             {rental.deposit_amount > 0 && (
                                 <div className="pt-3 space-y-1">
                                     <div className="flex justify-between text-xs font-bold text-slate-700">
-                                        <span>Jaminan Deposit</span>
+                                        <span>{tr('Jaminan Deposit', 'Security Deposit')}</span>
                                         <span>{money(rental.deposit_amount)}</span>
                                     </div>
                                     <span className="text-[10px] text-slate-400 block">
-                                        *Deposit dikembalikan penuh setelah unit diperiksa saat pengembalian.
+                                        {tr(
+                                            '*Deposit dikembalikan penuh setelah unit diperiksa saat pengembalian.',
+                                            '*Deposit is refunded in full after the vehicle is inspected upon return.',
+                                        )}
                                     </span>
                                 </div>
                             )}
@@ -242,36 +265,38 @@ export default function RentalDetail({ brand, rental, gatewayAvailable }: Props)
                             {rental.status === 'pending_reserved' && (
                                 <button
                                     type="button"
+                                    disabled={paying}
                                     onClick={handlePayDeposit}
                                     className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 flex items-center justify-center gap-1.5"
                                     style={{ backgroundColor: 'var(--brand-color)' }}
                                 >
                                     <span>💳</span>
-                                    <span>Bayar Sekarang (Online / Transfer)</span>
+                                    <span>{tr('Bayar Sekarang (Online / Transfer)', 'Pay Now (Online / Transfer)')}</span>
                                 </button>
                             )}
 
                             {rental.status === 'confirmed' && (
                                 <button
                                     type="button"
+                                    disabled={paying}
                                     onClick={handlePayInvoice}
                                     className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 flex items-center justify-center gap-1.5"
                                     style={{ backgroundColor: 'var(--brand-color)' }}
                                 >
                                     <span>💳</span>
-                                    <span>Bayar Biaya Sewa Mobil</span>
+                                    <span>{tr('Bayar Biaya Sewa Mobil', 'Pay Car Rental Fee')}</span>
                                 </button>
                             )}
 
                             {brand.support_phone && (
                                 <a
-                                    href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}?text=${encodeURIComponent('Halo ' + brand.name + ', saya ingin bertanya mengenai pesanan rental nomor: ' + rental.code)}`}
+                                    href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}?text=${encodeURIComponent(tr('Halo ' + brand.name + ', saya ingin bertanya mengenai pesanan rental nomor: ' + rental.code, 'Hello ' + brand.name + ', I would like to ask about rental booking number: ' + rental.code))}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition flex items-center justify-center gap-2"
                                 >
                                     <span>💬</span>
-                                    <span>Hubungi CS WhatsApp</span>
+                                    <span>{tr('Hubungi CS WhatsApp', 'Contact WhatsApp CS')}</span>
                                 </a>
                             )}
                         </div>

@@ -1,4 +1,6 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import LanguageToggle from '@/Components/LanguageToggle';
+import { useTrans } from '@/hooks/useTrans';
+import { Head, Link, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEvent, useState } from 'react';
 
@@ -16,6 +18,8 @@ interface Props {
 }
 
 export default function Register({ brand, redirect, require_otp = true }: Props) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
     const brandColor = brand.color || '#0f766e';
 
     const [otpSent, setOtpSent] = useState(false);
@@ -34,7 +38,7 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
 
     const handleSendOtp = async () => {
         if (!form.data.phone.trim()) {
-            setOtpError('Silakan masukkan nomor WhatsApp Anda terlebih dahulu.');
+            setOtpError(tr('Silakan masukkan nomor WhatsApp Anda terlebih dahulu.', 'Please enter your WhatsApp number first.'));
             return;
         }
 
@@ -53,7 +57,7 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                 }
             }
         } catch (err: any) {
-            setOtpError(err.response?.data?.message || 'Gagal mengirim kode OTP.');
+            setOtpError(err.response?.data?.message || tr('Gagal mengirim kode OTP.', 'Failed to send OTP code.'));
         } finally {
             setOtpSending(false);
         }
@@ -71,7 +75,7 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
             className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800 flex flex-col justify-between selection:bg-teal-500 selection:text-white"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`Daftar Akun Pelanggan · ${brand.name}`} />
+            <Head title={`${tr('Daftar Akun Pelanggan', 'Register Customer Account')} · ${brand.name}`} />
 
             {/* Top Bar */}
             <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 w-full flex items-center justify-between">
@@ -89,12 +93,15 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                     <span className="text-sm font-black text-slate-900">{brand.name}</span>
                 </Link>
 
-                <Link
-                    href={route('book.rental.search')}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center gap-1"
-                >
-                    <span>←</span> Kembali ke Katalog Mobil
-                </Link>
+                <div className="flex items-center gap-3">
+                    <LanguageToggle />
+                    <Link
+                        href={route('book.rental.search')}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center gap-1"
+                    >
+                        <span>←</span> {tr('Kembali ke Katalog Mobil', 'Back to Car Catalog')}
+                    </Link>
+                </div>
             </div>
 
             {/* Register Card */}
@@ -109,9 +116,14 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                             </svg>
                         </div>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Daftar Akun Pelanggan</h2>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                            {tr('Daftar Akun Pelanggan', 'Register Customer Account')}
+                        </h2>
                         <p className="text-xs text-slate-500">
-                            Nikmati kemudahan sewa mobil mandiri, simpan dokumen KYC, dan pantau status unit Anda.
+                            {tr(
+                                'Nikmati kemudahan sewa mobil mandiri, simpan dokumen KYC, dan pantau status unit Anda.',
+                                'Enjoy convenient self-service car rentals, save KYC documents, and track your vehicle status.',
+                            )}
                         </p>
                     </div>
 
@@ -125,13 +137,13 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                         {/* Name */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-700 block">
-                                Nama Lengkap Sesuai KTP <span className="text-rose-500">*</span>
+                                {tr('Nama Lengkap Sesuai KTP', 'Full Name as on ID Card')} <span className="text-rose-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={form.data.name}
                                 onChange={(e) => form.setData('name', e.target.value)}
-                                placeholder="Contoh: Budi Santoso"
+                                placeholder={tr('Contoh: Budi Santoso', 'Example: Budi Santoso')}
                                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                 required
                             />
@@ -143,7 +155,7 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                         {/* WhatsApp Phone */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-700 block">
-                                Nomor WhatsApp <span className="text-rose-500">*</span>
+                                {tr('Nomor WhatsApp', 'WhatsApp Number')} <span className="text-rose-500">*</span>
                             </label>
                             {require_otp ? (
                                 <div className="flex gap-2">
@@ -161,7 +173,7 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                                         disabled={otpSending || !form.data.phone}
                                         className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition disabled:opacity-50 shrink-0"
                                     >
-                                        {otpSending ? 'Mengirim…' : otpSent ? 'Kirim Ulang' : 'Kirim OTP'}
+                                        {otpSending ? tr('Mengirim…', 'Sending…') : otpSent ? tr('Kirim Ulang', 'Resend') : tr('Kirim OTP', 'Send OTP')}
                                     </button>
                                 </div>
                             ) : (
@@ -183,7 +195,7 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                         {require_otp && otpSent && (
                             <div className="space-y-1.5 p-3 rounded-2xl bg-teal-50 border border-teal-200">
                                 <div className="flex items-center justify-between text-xs text-teal-900 font-bold">
-                                    <span>Masukkan 6 Digit OTP</span>
+                                    <span>{tr('Masukkan 6 Digit OTP', 'Enter 6-Digit OTP')}</span>
                                     {debugOtp && (
                                         <span className="font-mono bg-white px-2 py-0.5 rounded text-[10px]">
                                             OTP: {debugOtp}
@@ -211,17 +223,17 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-slate-700 block">
-                                    Alamat Email {!require_otp ? <span className="text-rose-500">*</span> : null}
+                                    {tr('Alamat Email', 'Email Address')} {!require_otp ? <span className="text-rose-500">*</span> : null}
                                 </label>
                                 <span className="text-[10px] text-slate-400">
-                                    {!require_otp ? 'Wajib untuk identitas akun & login' : 'Opsional (untuk e-receipt)'}
+                                    {!require_otp ? tr('Wajib untuk identitas akun & login', 'Required for account identity & login') : tr('Opsional (untuk e-receipt)', 'Optional (for e-receipt)')}
                                 </span>
                             </div>
                             <input
                                 type="email"
                                 value={form.data.email}
                                 onChange={(e) => form.setData('email', e.target.value)}
-                                placeholder="budi@contoh.com"
+                                placeholder={tr('budi@contoh.com', 'budi@example.com')}
                                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                 required={!require_otp}
                             />
@@ -234,17 +246,17 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-slate-700 block">
-                                    Kata Sandi {!require_otp ? <span className="text-rose-500">*</span> : null}
+                                    {tr('Kata Sandi', 'Password')} {!require_otp ? <span className="text-rose-500">*</span> : null}
                                 </label>
                                 <span className="text-[10px] text-slate-400">
-                                    {!require_otp ? 'Wajib minimal 6 karakter' : 'Opsional (bisa login OTP tanpa sandi)'}
+                                    {!require_otp ? tr('Wajib minimal 6 karakter', 'Required min. 6 characters') : tr('Opsional (bisa login OTP tanpa sandi)', 'Optional (can login via OTP without password)')}
                                 </span>
                             </div>
                             <input
                                 type="password"
                                 value={form.data.password}
                                 onChange={(e) => form.setData('password', e.target.value)}
-                                placeholder="Minimal 6 karakter"
+                                placeholder={tr('Minimal 6 karakter', 'Minimum 6 characters')}
                                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                 required={!require_otp}
                             />
@@ -259,24 +271,24 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                             className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:opacity-95 disabled:opacity-50 mt-2"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >
-                            {form.processing ? 'Mendaftarkan Akun…' : 'Daftar & Masuk'}
+                            {form.processing ? tr('Mendaftarkan Akun…', 'Registering Account…') : tr('Daftar & Masuk', 'Register & Sign In')}
                         </button>
                     </form>
 
                     <div className="border-t border-slate-100 pt-4 text-center text-xs text-slate-500">
-                        <span>Sudah memiliki akun? </span>
+                        <span>{tr('Sudah memiliki akun? ', 'Already have an account? ')}</span>
                         <Link
                             href={route('book.rental.login') + (redirect ? `?redirect=${encodeURIComponent(redirect)}` : '')}
                             className="font-bold text-teal-700 hover:text-teal-900 transition"
                         >
-                            Masuk Disini
+                            {tr('Masuk Disini', 'Sign In Here')}
                         </Link>
                     </div>
                 </div>
             </div>
 
             <div className="py-4 text-center text-[11px] text-slate-400">
-                © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                © 2026 {brand.name}. {tr('Seluruh Hak Cipta Dilindungi.', 'All Rights Reserved.')}
             </div>
         </div>
     );

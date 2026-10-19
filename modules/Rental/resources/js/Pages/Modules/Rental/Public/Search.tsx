@@ -75,13 +75,13 @@ interface Props {
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
-const formatIndoDate = (dateStr: string | null): string => {
+const formatIndoDate = (dateStr: string | null, locale = 'id'): string => {
     if (!dateStr) return '';
     try {
         const parts = dateStr.split('-');
         if (parts.length === 3) {
             const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            return date.toLocaleDateString('id-ID', {
+            return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
@@ -110,7 +110,8 @@ export default function Search({
     needs_depot = false,
     hold_ttl_minutes,
 }: Props) {
-    const { t } = useTrans();
+    const { t, locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
     const customer = (usePage().props as any)?.auth?.customer;
     const [selectedCategory, setSelectedCategory] = useState<string>(filters.rental_class ?? '');
     const [searching, setSearching] = useState(false);
@@ -125,9 +126,9 @@ export default function Search({
     const todayStr = useMemo(() => toISODate(new Date()), []);
 
     const periodOptions = [
-        { value: 'daily', label: t('rental.storefront_ui.period_daily', undefined, 'Sewa Harian'), badge: 'Populer' },
-        { value: 'weekly', label: t('rental.storefront_ui.period_weekly', undefined, 'Sewa Mingguan'), badge: 'Hemat' },
-        { value: 'monthly', label: t('rental.storefront_ui.period_monthly', undefined, 'Sewa Bulanan'), badge: 'Terbaik' },
+        { value: 'daily', label: t('rental.storefront_ui.period_daily', undefined, tr('Sewa Harian', 'Daily Rental')), badge: tr('Populer', 'Popular') },
+        { value: 'weekly', label: t('rental.storefront_ui.period_weekly', undefined, tr('Sewa Mingguan', 'Weekly Rental')), badge: tr('Hemat', 'Save') },
+        { value: 'monthly', label: t('rental.storefront_ui.period_monthly', undefined, tr('Sewa Bulanan', 'Monthly Rental')), badge: tr('Terbaik', 'Best Value') },
     ];
 
     const form = useForm({
@@ -155,13 +156,13 @@ export default function Search({
     );
 
     const pickupOptions = useMemo(
-        () => [{ value: '', label: t('rental.storefront_ui.pickup_placeholder', undefined, 'Pilih Depot Penjemputan') }, ...depotOptions],
-        [depotOptions, t],
+        () => [{ value: '', label: t('rental.storefront_ui.pickup_placeholder', undefined, tr('Pilih Depot Penjemputan', 'Select Pickup Depot')) }, ...depotOptions],
+        [depotOptions, t, locale],
     );
 
     const returnOptions = useMemo(
-        () => [{ value: '', label: 'Sama dengan Lokasi Jemput' }, ...depotOptions],
-        [depotOptions],
+        () => [{ value: '', label: tr('Sama dengan Lokasi Jemput', 'Same as Pickup Location') }, ...depotOptions],
+        [depotOptions, locale],
     );
 
     const periodCount = useMemo(() => {
@@ -185,10 +186,10 @@ export default function Search({
     }, [form.data.end_date, form.data.period_type, form.data.start_date]);
 
     const periodUnit = form.data.period_type === 'weekly'
-        ? t('rental.storefront_ui.unit_week', undefined, 'minggu')
+        ? t('rental.storefront_ui.unit_week', undefined, tr('minggu', 'weeks'))
         : form.data.period_type === 'monthly'
-          ? t('rental.storefront_ui.unit_month', undefined, 'bulan')
-          : t('rental.storefront_ui.unit_day', undefined, 'hari');
+          ? t('rental.storefront_ui.unit_month', undefined, tr('bulan', 'months'))
+          : t('rental.storefront_ui.unit_day', undefined, tr('hari', 'days'));
 
     // Quick Date Presets
     const applyDatePreset = (daysToAdd: number) => {
@@ -306,7 +307,7 @@ export default function Search({
             className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800 flex flex-col justify-between selection:bg-teal-500 selection:text-white"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`${brand.name} · Katalog & Pemesanan Sewa Mobil Online`} />
+            <Head title={`${brand.name} · ${tr('Katalog & Pemesanan Sewa Mobil Online', 'Online Car Rental Catalog & Booking')}`} />
 
             <div>
                 {/* Modern Floating Header Navbar */}
@@ -334,7 +335,7 @@ export default function Search({
                                     {brand.name}
                                 </h1>
                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">
-                                    {t('rental.storefront_ui.tagline', undefined, 'Showroom & Rental Resmi')}
+                                    {t('rental.storefront_ui.tagline', undefined, tr('Showroom & Rental Resmi', 'Official Showroom & Rental'))}
                                 </span>
                             </div>
                         </Link>
@@ -350,7 +351,7 @@ export default function Search({
                                     <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-[9px] font-black text-white">
                                         {customer.name?.charAt(0).toUpperCase() || 'P'}
                                     </div>
-                                    <span className="hidden sm:inline">Portal Pelanggan</span>
+                                    <span className="hidden sm:inline">{tr('Portal Pelanggan', 'Customer Portal')}</span>
                                     <span className="sm:hidden">Portal</span>
                                 </Link>
                             ) : (
@@ -361,14 +362,14 @@ export default function Search({
                                     <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                     </svg>
-                                    <span className="hidden sm:inline">Masuk / Daftar</span>
-                                    <span className="sm:hidden">Masuk</span>
+                                    <span className="hidden sm:inline">{tr('Masuk / Daftar', 'Sign In / Register')}</span>
+                                    <span className="sm:hidden">{tr('Masuk', 'Sign In')}</span>
                                 </Link>
                             )}
 
                             {brand.support_phone && (
                                 <a
-                                    href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}?text=${encodeURIComponent('Halo ' + brand.name + ', saya ingin bertanya mengenai ketersediaan sewa mobil.')}`}
+                                    href={`https://wa.me/${brand.support_phone.replace(/\D/g, '')}?text=${encodeURIComponent(tr('Halo ' + brand.name + ', saya ingin bertanya mengenai ketersediaan sewa mobil.', 'Hello ' + brand.name + ', I would like to inquire about car rental availability.'))}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 shadow-2xs transition hover:bg-emerald-100"
@@ -377,7 +378,7 @@ export default function Search({
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
                                     </span>
-                                    <span className="hidden sm:inline">{t('rental.storefront_ui.whatsapp_cs', undefined, 'Bantuan CS')}</span>
+                                    <span className="hidden sm:inline">{t('rental.storefront_ui.whatsapp_cs', undefined, tr('Bantuan CS', 'CS Support'))}</span>
                                     <span className="sm:hidden">CS</span>
                                 </a>
                             )}
@@ -413,30 +414,30 @@ export default function Search({
                         <div className="text-center max-w-3xl mx-auto space-y-4">
                             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold bg-white/10 text-white border border-white/15 backdrop-blur-md shadow-inner">
                                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                                <span>{t('rental.storefront_ui.hero_badge', undefined, 'Showroom Resmi · Unit Terawat & Bergaransi')}</span>
+                                <span>{t('rental.storefront_ui.hero_badge', undefined, tr('Showroom Resmi · Unit Terawat & Bergaransi', 'Official Showroom · Well-Maintained & Guaranteed Units'))}</span>
                             </div>
 
                             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15]">
-                                {brand.hero_title || t('rental.storefront_ui.hero_title', undefined, 'Temukan Kendaraan Nyaman Untuk Setiap Perjalanan')}
+                                {brand.hero_title || t('rental.storefront_ui.hero_title', undefined, tr('Temukan Kendaraan Nyaman Untuk Setiap Perjalanan', 'Find a Comfortable Vehicle for Every Journey'))}
                             </h2>
 
                             <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto">
-                                {brand.hero_subtitle || t('rental.storefront_ui.hero_subtitle', undefined, 'Pilihan lengkap mobil lepas kunci & berizin resmi. Proses booking instan, transparan, tanpa biaya tersembunyi.')}
+                                {brand.hero_subtitle || t('rental.storefront_ui.hero_subtitle', undefined, tr('Pilihan lengkap mobil lepas kunci & berizin resmi. Proses booking instan, transparan, tanpa biaya tersembunyi.', 'Complete selection of licensed self-drive & chauffeured cars. Instant, transparent booking with no hidden fees.'))}
                             </p>
 
                             {/* Trust Highlights Checklist */}
                             <div className="pt-2 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs font-semibold text-slate-300">
                                 <div className="flex items-center gap-1.5 bg-slate-800/60 backdrop-blur-xs px-3 py-1 rounded-full border border-slate-700/60">
-                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_clean', undefined, 'Unit Bersih & Higienis')}
+                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_clean', undefined, tr('Unit Bersih & Higienis', 'Clean & Hygienic Units'))}
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-800/60 backdrop-blur-xs px-3 py-1 rounded-full border border-slate-700/60">
-                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_depot', undefined, 'Serah Terima di Depot Resmi')}
+                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_depot', undefined, tr('Serah Terima di Depot Resmi', 'Handover at Official Depot'))}
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-800/60 backdrop-blur-xs px-3 py-1 rounded-full border border-slate-700/60">
-                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_otp', undefined, 'Verifikasi Nomor Cepat')}
+                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_otp', undefined, tr('Verifikasi Nomor Cepat', 'Fast Phone Verification'))}
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-800/60 backdrop-blur-xs px-3 py-1 rounded-full border border-slate-700/60">
-                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_cs', undefined, 'Layanan CS Responsif')}
+                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_cs', undefined, tr('Layanan CS Responsif', 'Responsive CS Support'))}
                                 </div>
                             </div>
                         </div>
@@ -463,8 +464,8 @@ export default function Search({
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
-                                    <span>Lepas Kunci</span>
-                                    <span className="hidden sm:inline-block text-[10px] opacity-75 font-normal">(Self-Drive)</span>
+                                    <span>{tr('Lepas Kunci', 'Self-Drive')}</span>
+                                    {locale !== 'en' && <span className="hidden sm:inline-block text-[10px] opacity-75 font-normal">(Self-Drive)</span>}
                                 </button>
                                 <button
                                     type="button"
@@ -480,15 +481,19 @@ export default function Search({
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                    <span>Dengan Sopir</span>
-                                    <span className="hidden sm:inline-block text-[10px] opacity-75 font-normal">(With Driver)</span>
-                                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-emerald-500 text-white ml-1">Praktis</span>
+                                    <span>{tr('Dengan Sopir', 'With Driver')}</span>
+                                    {locale !== 'en' && <span className="hidden sm:inline-block text-[10px] opacity-75 font-normal">(With Driver)</span>}
+                                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-emerald-500 text-white ml-1">{tr('Praktis', 'Easy')}</span>
                                 </button>
                             </div>
 
                             <div className="text-xs text-slate-500 font-medium hidden sm:flex items-center gap-1.5">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
-                                <span>{form.data.service_type === 'with_driver' ? 'Termasuk jasa driver profesional & berpengalaman' : 'Bebas bepergian sendiri dengan verifikasi identitas mudah'}</span>
+                                <span>
+                                    {form.data.service_type === 'with_driver'
+                                        ? tr('Termasuk jasa driver profesional & berpengalaman', 'Includes a professional & experienced driver')
+                                        : tr('Bebas bepergian sendiri dengan verifikasi identitas mudah', 'Drive freely on your own with easy ID verification')}
+                                </span>
                             </div>
                         </div>
 
@@ -527,34 +532,34 @@ export default function Search({
 
                             {/* Quick Date Shortcuts */}
                             <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-semibold text-slate-600">
-                                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mr-1 hidden sm:inline">Pilihan Cepat:</span>
+                                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mr-1 hidden sm:inline">{tr('Pilihan Cepat:', 'Quick Select:')}</span>
                                 <button
                                     type="button"
                                     onClick={() => applyDatePreset(2)}
                                     className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                                 >
-                                    2 Hari
+                                    {tr('2 Hari', '2 Days')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => applyDatePreset(3)}
                                     className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                                 >
-                                    3 Hari
+                                    {tr('3 Hari', '3 Days')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={applyWeekendPreset}
                                     className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                                 >
-                                    Akhir Pekan
+                                    {tr('Akhir Pekan', 'Weekend')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => applyDatePreset(7)}
                                     className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                                 >
-                                    1 Minggu
+                                    {tr('1 Minggu', '1 Week')}
                                 </button>
                             </div>
                         </div>
@@ -567,7 +572,7 @@ export default function Search({
                                     <label className="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
                                         <span className="flex items-center gap-1">
                                             <span className="text-teal-600">📍</span>
-                                            {t('rental.storefront_ui.pickup_location', undefined, 'Lokasi Jemput')}
+                                            {t('rental.storefront_ui.pickup_location', undefined, tr('Lokasi Jemput', 'Pickup Location'))}
                                             {locations.length > 0 && <span className="text-rose-500 font-bold">*</span>}
                                         </span>
                                     </label>
@@ -582,11 +587,11 @@ export default function Search({
                                             });
                                         }}
                                         options={pickupOptions}
-                                        placeholder={t('rental.storefront_ui.pickup_placeholder', undefined, 'Pilih Depot Penjemputan')}
+                                        placeholder={t('rental.storefront_ui.pickup_placeholder', undefined, tr('Pilih Depot Penjemputan', 'Select Pickup Depot'))}
                                     />
                                     {depotError && (
                                         <p className="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1">
-                                            <span>⚠️</span> Silakan pilih lokasi depot penjemputan.
+                                            <span>⚠️</span> {tr('Silakan pilih lokasi depot penjemputan.', 'Please select a pickup depot location.')}
                                         </p>
                                     )}
                                 </div>
@@ -597,7 +602,7 @@ export default function Search({
                                         <div className="flex items-center justify-between">
                                             <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1">
                                                 <span className="text-indigo-600">🔄</span>
-                                                {t('rental.storefront_ui.return_location', undefined, 'Lokasi Kembali')}
+                                                {t('rental.storefront_ui.return_location', undefined, tr('Lokasi Kembali', 'Return Location'))}
                                             </label>
                                             <button
                                                 type="button"
@@ -607,14 +612,14 @@ export default function Search({
                                                 }}
                                                 className="text-[10px] text-teal-700 hover:underline font-bold"
                                             >
-                                                Sama dgn jemput
+                                                {tr('Sama dgn jemput', 'Same as pickup')}
                                             </button>
                                         </div>
                                         <PublicSelect
                                             value={form.data.return_location_id}
                                             onChange={(val) => form.setData('return_location_id', val)}
                                             options={returnOptions}
-                                            placeholder={t('rental.storefront_ui.return_placeholder', undefined, 'Sama dengan lokasi jemput')}
+                                            placeholder={t('rental.storefront_ui.return_placeholder', undefined, tr('Sama dengan lokasi jemput', 'Same as pickup location'))}
                                         />
                                     </div>
                                 ) : (
@@ -625,7 +630,7 @@ export default function Search({
                                 <div className={`${diffReturnDepot ? 'md:col-span-2' : 'md:col-span-3'} space-y-1.5`}>
                                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1">
                                         <span>🗓️</span>
-                                        {t('rental.storefront_ui.start_date', undefined, 'Mulai Sewa')}
+                                        {t('rental.storefront_ui.start_date', undefined, tr('Mulai Sewa', 'Start Date'))}
                                     </label>
                                     <input
                                         type="date"
@@ -649,7 +654,7 @@ export default function Search({
                                     <div className="flex items-center justify-between">
                                         <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1">
                                             <span>🏁</span>
-                                            {t('rental.storefront_ui.end_date', undefined, 'Selesai Sewa')}
+                                            {t('rental.storefront_ui.end_date', undefined, tr('Selesai Sewa', 'End Date'))}
                                         </label>
                                         {periodCount !== null && (
                                             <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -681,14 +686,14 @@ export default function Search({
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                                                 </svg>
-                                                <span>Mencari…</span>
+                                                <span>{tr('Mencari…', 'Searching…')}</span>
                                             </>
                                         ) : (
                                             <>
                                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                                 </svg>
-                                                <span>Cari Mobil</span>
+                                                <span>{tr('Cari Mobil', 'Search Cars')}</span>
                                             </>
                                         )}
                                     </button>
@@ -704,19 +709,19 @@ export default function Search({
                                             onClick={() => setDiffReturnDepot(true)}
                                             className="text-xs font-semibold text-teal-700 hover:text-teal-900 transition flex items-center gap-1"
                                         >
-                                            <span>+</span> Kembalikan ke cabang/depot berbeda
+                                            <span>+</span> {tr('Kembalikan ke cabang/depot berbeda', 'Return to a different branch/depot')}
                                         </button>
                                     )}
                                 </div>
 
                                 <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                                    <span className="text-emerald-600 font-bold">🔒 Aman:</span>
+                                    <span className="text-emerald-600 font-bold">🔒 {tr('Aman:', 'Secure:')}</span>
                                     <span>
-                                        {t('rental.storefront_ui.hold_notice_before', undefined, 'Unit pesanan dikunci aman hingga')}{' '}
+                                        {t('rental.storefront_ui.hold_notice_before', undefined, tr('Unit pesanan dikunci aman hingga', 'Selected vehicle is held securely for'))}{' '}
                                         <strong className="text-slate-800 font-black">
-                                            {hold_ttl_minutes} {t('rental.storefront_ui.minutes', undefined, 'menit')}
+                                            {hold_ttl_minutes} {t('rental.storefront_ui.minutes', undefined, tr('menit', 'minutes'))}
                                         </strong>{' '}
-                                        {t('rental.storefront_ui.hold_notice_after', undefined, 'setelah checkout.')}
+                                        {t('rental.storefront_ui.hold_notice_after', undefined, tr('setelah checkout.', 'after checkout.'))}
                                     </span>
                                 </div>
                             </div>
@@ -732,15 +737,15 @@ export default function Search({
                             <div>
                                 <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-800 bg-teal-50 px-3 py-1 rounded-full mb-1.5 border border-teal-200">
                                     <span>🚗</span>
-                                    <span>Armada Siap Jalan</span>
+                                    <span>{tr('Armada Siap Jalan', 'Ready Fleet')}</span>
                                 </div>
                                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                                    {t('rental.storefront_ui.catalog_title', undefined, 'Pilihan Mobil Tersedia')}
+                                    {t('rental.storefront_ui.catalog_title', undefined, tr('Pilihan Mobil Tersedia', 'Available Cars'))}
                                 </h3>
                                 <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                                     {selectedPickupDepot
-                                        ? `Menampilkan mobil yang siap diambil di ${selectedPickupDepot.name}`
-                                        : t('rental.storefront_ui.catalog_subtitle', undefined, 'Pilih armada yang paling cocok untuk rencana perjalanan Anda.')}
+                                        ? tr(`Menampilkan mobil yang siap diambil di ${selectedPickupDepot.name}`, `Showing cars ready for pickup at ${selectedPickupDepot.name}`)
+                                        : t('rental.storefront_ui.catalog_subtitle', undefined, tr('Pilih armada yang paling cocok untuk rencana perjalanan Anda.', 'Choose the vehicle that best fits your travel plans.'))}
                                 </p>
                             </div>
 
@@ -752,7 +757,7 @@ export default function Search({
                                         type="text"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Cari model mobil…"
+                                        placeholder={tr('Cari model mobil…', 'Search car model…')}
                                         className="w-full rounded-xl border border-slate-250 bg-white py-2 pl-8 pr-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                     />
                                     <svg className="h-4 w-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -775,10 +780,10 @@ export default function Search({
                                     onChange={(e) => setSortBy(e.target.value as any)}
                                     className="rounded-xl border border-slate-250 bg-white py-2 px-3 text-xs font-semibold text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                 >
-                                    <option value="recommended">Rekomendasi</option>
-                                    <option value="price_asc">Harga: Termurah</option>
-                                    <option value="price_desc">Harga: Tertinggi</option>
-                                    <option value="seats_desc">Kapasitas Kursi Terbanyak</option>
+                                    <option value="recommended">{tr('Rekomendasi', 'Recommended')}</option>
+                                    <option value="price_asc">{tr('Harga: Termurah', 'Price: Lowest First')}</option>
+                                    <option value="price_desc">{tr('Harga: Tertinggi', 'Price: Highest First')}</option>
+                                    <option value="seats_desc">{tr('Kapasitas Kursi Terbanyak', 'Most Seats')}</option>
                                 </select>
                             </div>
                         </div>
@@ -794,7 +799,7 @@ export default function Search({
                                         : 'bg-white border border-slate-250 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                                 }`}
                             >
-                                <span>{t('rental.storefront_ui.all_classes', undefined, 'Semua Kelas')}</span>
+                                <span>{t('rental.storefront_ui.all_classes', undefined, tr('Semua Kelas', 'All Classes'))}</span>
                                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${!selectedCategory ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-500'}`}>
                                     {vehicles.length}
                                 </span>
@@ -824,12 +829,12 @@ export default function Search({
                     {searched && (
                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 bg-white px-4 py-2.5 rounded-xl border border-slate-200/80">
                             <div>
-                                Ditemukan <strong className="text-slate-900 font-black">{displayedVehicles.length} armada</strong>
+                                {tr('Ditemukan', 'Found')} <strong className="text-slate-900 font-black">{displayedVehicles.length} {tr('armada', 'vehicles')}</strong>
                                 {form.data.start_date && form.data.end_date ? (
                                     <span>
-                                        {' '}untuk periode sewa{' '}
+                                        {' '}{tr('untuk periode sewa', 'for rental period')}{' '}
                                         <strong className="text-slate-800 font-bold">
-                                            {formatIndoDate(form.data.start_date)} – {formatIndoDate(form.data.end_date)}
+                                            {formatIndoDate(form.data.start_date, locale)} – {formatIndoDate(form.data.end_date, locale)}
                                         </strong>{' '}
                                         ({periodCount} {periodUnit})
                                     </span>
@@ -857,13 +862,13 @@ export default function Search({
                             </div>
                             <h3 className="mt-5 text-xl font-black text-slate-900">
                                 {needs_depot
-                                    ? t('rental.storefront_ui.needs_depot_title', undefined, 'Pilih Lokasi Depot Terlebih Dahulu')
-                                    : t('rental.storefront_ui.empty_start_title', undefined, 'Mulai Pencarian Armada Anda')}
+                                    ? t('rental.storefront_ui.needs_depot_title', undefined, tr('Pilih Lokasi Depot Terlebih Dahulu', 'Select a Depot Location First'))
+                                    : t('rental.storefront_ui.empty_start_title', undefined, tr('Mulai Pencarian Armada Anda', 'Start Your Fleet Search'))}
                             </h3>
                             <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal max-w-md mx-auto leading-relaxed">
                                 {needs_depot
-                                    ? t('rental.storefront_ui.needs_depot_body', undefined, 'Pilih cabang depot di kolom pencarian di atas untuk memeriksa armada mobil yang siap disewa pada tanggal perjalanan Anda.')
-                                    : t('rental.storefront_ui.empty_start_body', undefined, 'Tentukan jadwal dan lokasi penjemputan untuk menemukan mobil yang sesuai dengan kebutuhan Anda.')}
+                                    ? t('rental.storefront_ui.needs_depot_body', undefined, tr('Pilih cabang depot di kolom pencarian di atas untuk memeriksa armada mobil yang siap disewa pada tanggal perjalanan Anda.', 'Select a depot branch in the search box above to check cars available for your travel dates.'))
+                                    : t('rental.storefront_ui.empty_start_body', undefined, tr('Tentukan jadwal dan lokasi penjemputan untuk menemukan mobil yang sesuai dengan kebutuhan Anda.', 'Set your schedule and pickup location to find the right vehicle for your needs.'))}
                             </p>
                         </div>
                     )}
@@ -876,9 +881,9 @@ export default function Search({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 text-lg font-black text-slate-900">{t('rental.storefront_ui.empty_none_title', undefined, 'Unit Tidak Ditemukan')}</h3>
+                            <h3 className="mt-4 text-lg font-black text-slate-900">{t('rental.storefront_ui.empty_none_title', undefined, tr('Unit Tidak Ditemukan', 'No Units Found'))}</h3>
                             <p className="mt-1 text-xs text-slate-500 leading-relaxed max-w-md mx-auto font-medium">
-                                {t('rental.storefront_ui.empty_none_body', undefined, 'Tidak ada armada yang tersedia untuk kriteria dan tanggal yang Anda pilih. Silakan ganti jadwal sewa atau pilih kelas lainnya.')}
+                                {t('rental.storefront_ui.empty_none_body', undefined, tr('Tidak ada armada yang tersedia untuk kriteria dan tanggal yang Anda pilih. Silakan ganti jadwal sewa atau pilih kelas lainnya.', 'No vehicles are available for the selected criteria and dates. Please change your schedule or select another class.'))}
                             </p>
                             {searchQuery && (
                                 <button
@@ -886,7 +891,7 @@ export default function Search({
                                     onClick={() => setSearchQuery('')}
                                     className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 transition border border-teal-200"
                                 >
-                                    Reset Pencarian Model
+                                    {tr('Reset Pencarian Model', 'Reset Model Search')}
                                 </button>
                             )}
                         </div>
@@ -916,7 +921,7 @@ export default function Search({
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
                                                     <span className="mt-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                                                        {t('rental.storefront_ui.card_photo_soon', undefined, 'Foto Unit Menyusul')}
+                                                        {t('rental.storefront_ui.card_photo_soon', undefined, tr('Foto Unit Menyusul', 'Photo Coming Soon'))}
                                                     </span>
                                                 </div>
                                             )}
@@ -940,18 +945,18 @@ export default function Search({
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                                                 </span>
-                                                <span>{t('rental.storefront_ui.card_available', undefined, 'Tersedia')}</span>
+                                                <span>{t('rental.storefront_ui.card_available', undefined, tr('Tersedia', 'Available'))}</span>
                                             </span>
 
                                             {/* Available Units Count pill (bottom right photo) */}
                                             <span className="absolute right-3.5 bottom-3 rounded-lg bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
-                                                {vehicle.available_count} Unit Siap
+                                                {vehicle.available_count} {tr('Unit Siap', 'Units Ready')}
                                             </span>
 
                                             {/* With Driver indicator */}
                                             {form.data.service_type === 'with_driver' && (
                                                 <span className="absolute left-3.5 bottom-3 rounded-lg bg-emerald-700/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
-                                                    <span>👨‍✈️</span> Dengan Sopir
+                                                    <span>👨‍✈️</span> {tr('Dengan Sopir', 'With Driver')}
                                                 </span>
                                             )}
                                         </div>
@@ -963,7 +968,7 @@ export default function Search({
                                                     {vehicle.name}
                                                 </h4>
                                                 <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                                    {vehicle.fuel_label ? `Bahan Bakar: ${vehicle.fuel_label}` : 'Perawatan Berkala Terjamin'}
+                                                    {vehicle.fuel_label ? `${tr('Bahan Bakar:', 'Fuel:')} ${vehicle.fuel_label}` : tr('Perawatan Berkala Terjamin', 'Regular Maintenance Guaranteed')}
                                                 </p>
                                             </div>
 
@@ -972,21 +977,21 @@ export default function Search({
                                                 <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-2.5 border border-slate-200/60 text-center">
                                                     <span className="text-sm">👥</span>
                                                     <span className="mt-1 text-[11px] font-bold text-slate-800">
-                                                        {vehicle.capacity_seats ? `${vehicle.capacity_seats} Kursi` : '4-5 Kursi'}
+                                                        {vehicle.capacity_seats ? `${vehicle.capacity_seats} ${tr('Kursi', 'Seats')}` : tr('4-5 Kursi', '4-5 Seats')}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-2.5 border border-slate-200/60 text-center">
                                                     <span className="text-sm">⛽</span>
                                                     <span className="mt-1 text-[11px] font-bold text-slate-800 line-clamp-1">
-                                                        {vehicle.fuel_label || 'Bensin'}
+                                                        {vehicle.fuel_label || tr('Bensin', 'Gasoline')}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-2.5 border border-slate-200/60 text-center">
                                                     <span className="text-sm">📅</span>
                                                     <span className="mt-1 text-[11px] font-bold text-slate-800">
-                                                        {vehicle.model_year ? `Th ${vehicle.model_year}` : 'Terawat'}
+                                                        {vehicle.model_year ? `${tr('Th', 'Yr')} ${vehicle.model_year}` : tr('Terawat', 'Well-Kept')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -997,7 +1002,7 @@ export default function Search({
                                     <div className="border-t border-slate-100 p-5 sm:p-6 bg-slate-50/70 flex items-center justify-between">
                                         <div>
                                             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                                                {form.data.start_date && form.data.end_date ? 'Total Estimasi Sewa' : 'Mulai Dari'}
+                                                {form.data.start_date && form.data.end_date ? tr('Total Estimasi Sewa', 'Estimated Total Rental') : tr('Mulai Dari', 'Starting From')}
                                             </span>
                                             {vehicle.total_amount != null ? (
                                                 <div>
@@ -1019,7 +1024,7 @@ export default function Search({
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="text-xs text-slate-500 font-bold">Hubungi Customer Service</div>
+                                                <div className="text-xs text-slate-500 font-bold">{tr('Hubungi Customer Service', 'Contact Customer Service')}</div>
                                             )}
                                         </div>
 
@@ -1027,7 +1032,7 @@ export default function Search({
                                             className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-md transition-all group-hover:scale-105"
                                             style={{ backgroundColor: 'var(--brand-color)' }}
                                         >
-                                            <span>Pesan Unit</span>
+                                            <span>{tr('Pesan Unit', 'Book Unit')}</span>
                                             <svg className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                             </svg>
@@ -1044,13 +1049,16 @@ export default function Search({
                     <div className="mx-auto max-w-7xl px-4 sm:px-6">
                         <div className="text-center max-w-2xl mx-auto space-y-2 mb-12">
                             <span className="text-xs font-bold text-teal-800 bg-teal-50 px-3 py-1 rounded-full uppercase tracking-wider border border-teal-200">
-                                Keunggulan Layanan
+                                {tr('Keunggulan Layanan', 'Service Excellence')}
                             </span>
                             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                Kenapa Memilih Sewa Mobil di {brand.name}?
+                                {tr(`Kenapa Memilih Sewa Mobil di ${brand.name}?`, `Why Rent a Car with ${brand.name}?`)}
                             </h3>
                             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                                Kami mengutamakan kenyamanan, transparansi tarif, dan kepastian unit untuk setiap perjalanan Anda.
+                                {tr(
+                                    'Kami mengutamakan kenyamanan, transparansi tarif, dan kepastian unit untuk setiap perjalanan Anda.',
+                                    'We prioritize comfort, transparent rates, and guaranteed unit availability for every journey.',
+                                )}
                             </p>
                         </div>
 
@@ -1059,9 +1067,12 @@ export default function Search({
                                 <div className="h-12 w-12 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-xl font-bold">
                                     🧼
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Armada Bersih & Prima</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Armada Bersih & Prima', 'Clean & Prime Fleet')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Setiap mobil dicek berkala di bengkel resmi serta dicuci dan disanitasi sebelum diserahterimakan.
+                                    {tr(
+                                        'Setiap mobil dicek berkala di bengkel resmi serta dicuci dan disanitasi sebelum diserahterimakan.',
+                                        'Every car is routinely inspected at authorized workshops and washed & sanitized before handover.',
+                                    )}
                                 </p>
                             </div>
 
@@ -1069,9 +1080,12 @@ export default function Search({
                                 <div className="h-12 w-12 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-xl font-bold">
                                     🏷️
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Harga Pasti & Transparan</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Harga Pasti & Transparan', 'Fixed & Transparent Pricing')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Tarif sewa dan nilai deposit tertera jelas di muka. Tidak ada biaya tambahan tak terduga saat pengembalian.
+                                    {tr(
+                                        'Tarif sewa dan nilai deposit tertera jelas di muka. Tidak ada biaya tambahan tak terduga saat pengembalian.',
+                                        'Rental rates and deposit amounts are clearly stated upfront. No surprise extra charges upon return.',
+                                    )}
                                 </p>
                             </div>
 
@@ -1079,9 +1093,12 @@ export default function Search({
                                 <div className="h-12 w-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl font-bold">
                                     ⚡
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Pemesanan Cepat & Praktis</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Pemesanan Cepat & Praktis', 'Fast & Convenient Booking')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Booking langsung lewat ponsel tanpa antre. Notifikasi status dan detail kontrak dikirimkan instan ke WhatsApp.
+                                    {tr(
+                                        'Booking langsung lewat ponsel tanpa antre. Notifikasi status dan detail kontrak dikirimkan instan ke WhatsApp.',
+                                        'Book directly from your phone without queuing. Status notifications and contract details are sent instantly via WhatsApp.',
+                                    )}
                                 </p>
                             </div>
 
@@ -1089,9 +1106,12 @@ export default function Search({
                                 <div className="h-12 w-12 rounded-2xl bg-rose-100 text-rose-800 flex items-center justify-center text-xl font-bold">
                                     🛡️
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Proteksi & CS Siaga</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Proteksi & CS Siaga', 'Protection & Standby CS')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Dilengkapi opsi paket proteksi asuransi serta layanan darurat jalan raya yang siap mendampingi Anda 24 jam.
+                                    {tr(
+                                        'Dilengkapi opsi paket proteksi asuransi serta layanan darurat jalan raya yang siap mendampingi Anda 24 jam.',
+                                        'Equipped with optional insurance protection packages and 24-hour roadside emergency assistance.',
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -1103,13 +1123,16 @@ export default function Search({
                     <div className="mx-auto max-w-7xl px-4 sm:px-6">
                         <div className="text-center max-w-2xl mx-auto space-y-2 mb-12">
                             <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-wider border border-indigo-200">
-                                Panduan Mudah
+                                {tr('Panduan Mudah', 'Easy Guide')}
                             </span>
                             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                3 Langkah Mudah Sewa Mobil
+                                {tr('3 Langkah Mudah Sewa Mobil', '3 Easy Steps to Rent a Car')}
                             </h3>
                             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                                Proses reservasi kendaraan cepat dan tanpa prosedur berbelit-belit.
+                                {tr(
+                                    'Proses reservasi kendaraan cepat dan tanpa prosedur berbelit-belit.',
+                                    'Fast vehicle reservation process without complicated procedures.',
+                                )}
                             </p>
                         </div>
 
@@ -1122,9 +1145,12 @@ export default function Search({
                                 <div className="h-14 w-14 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center text-2xl font-bold">
                                     🚗
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Pilih Mobil & Jadwal</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Pilih Mobil & Jadwal', 'Choose Car & Schedule')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Tentukan tanggal mulai, tanggal selesai, dan pilih unit mobil yang pas dengan kapasitas penumpang Anda.
+                                    {tr(
+                                        'Tentukan tanggal mulai, tanggal selesai, dan pilih unit mobil yang pas dengan kapasitas penumpang Anda.',
+                                        'Select your start date, end date, and choose the car unit that fits your passenger capacity.',
+                                    )}
                                 </p>
                             </div>
 
@@ -1136,9 +1162,12 @@ export default function Search({
                                 <div className="h-14 w-14 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl font-bold">
                                     📄
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Isi Data & Verifikasi</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Isi Data & Verifikasi', 'Fill Details & Verify')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Lengkapi identitas KTP & SIM Anda secara aman untuk mengunci unit dan mendapatkan bukti reservasi resmi.
+                                    {tr(
+                                        'Lengkapi identitas KTP & SIM Anda secara aman untuk mengunci unit dan mendapatkan bukti reservasi resmi.',
+                                        'Complete your ID Card & Driver License details securely to lock the unit and receive official reservation proof.',
+                                    )}
                                 </p>
                             </div>
 
@@ -1150,9 +1179,12 @@ export default function Search({
                                 <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl font-bold">
                                     🔑
                                 </div>
-                                <h4 className="text-base font-bold text-slate-900">Ambil Kunci & Jalan</h4>
+                                <h4 className="text-base font-bold text-slate-900">{tr('Ambil Kunci & Jalan', 'Pick Up Keys & Go')}</h4>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    Temui tim kami di depot resmi, periksa checklist kendaraan bersama, dan mobil siap menemani perjalanan Anda!
+                                    {tr(
+                                        'Temui tim kami di depot resmi, periksa checklist kendaraan bersama, dan mobil siap menemani perjalanan Anda!',
+                                        'Meet our team at the official depot, review the vehicle checklist together, and your car is ready to hit the road!',
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -1163,32 +1195,47 @@ export default function Search({
                 <section id="ketentuan" className="mx-auto max-w-5xl px-4 sm:px-6 py-12">
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm space-y-6">
                         <div className="text-center max-w-xl mx-auto space-y-1">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Informasi Penting</span>
-                            <h3 className="text-xl sm:text-2xl font-black text-slate-900">Ketentuan Sewa & Tanya Jawab</h3>
-                            <p className="text-xs text-slate-500">Hal-hal yang perlu Anda ketahui sebelum melakukan pemesanan.</p>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr('Informasi Penting', 'Important Information')}</span>
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-900">{tr('Ketentuan Sewa & Tanya Jawab', 'Rental Terms & FAQ')}</h3>
+                            <p className="text-xs text-slate-500">{tr('Hal-hal yang perlu Anda ketahui sebelum melakukan pemesanan.', 'Things you need to know before placing a booking.')}</p>
                         </div>
 
                         <div className="space-y-3 pt-2">
                             {[
                                 {
-                                    q: 'Apa saja dokumen yang wajib dibawa saat serah terima unit?',
-                                    a: 'Penyewa wajib menunjukkan dokumen identitas asli berupa KTP fisik dan SIM A (atau SIM B) yang masih berlaku. Foto dokumen juga diunggah ke sistem saat verifikasi online untuk keamanan bersama.',
+                                    q: tr('Apa saja dokumen yang wajib dibawa saat serah terima unit?', 'What documents must be brought during vehicle handover?'),
+                                    a: tr(
+                                        'Penyewa wajib menunjukkan dokumen identitas asli berupa KTP fisik dan SIM A (atau SIM B) yang masih berlaku. Foto dokumen juga diunggah ke sistem saat verifikasi online untuk keamanan bersama.',
+                                        'Renters must present original physical ID Card (KTP/Passport) and a valid Driver License (SIM A/B). Photos of these documents are also uploaded during online verification for mutual security.',
+                                    ),
                                 },
                                 {
-                                    q: `Berapa lama batas waktu pembayaran dan penahanan unit?`,
-                                    a: `Setelah formulir pesanan dibuat, unit mobil akan kami tahan aman selama ${hold_ttl_minutes} menit. Jika pembayaran atau konfirmasi belum dilakukan melewati batas waktu tersebut, sistem secara otomatis merilis unit agar dapat dipesan kembali oleh pelanggan lain.`,
+                                    q: tr('Berapa lama batas waktu pembayaran dan penahanan unit?', 'How long is the payment deadline and vehicle hold duration?'),
+                                    a: tr(
+                                        `Setelah formulir pesanan dibuat, unit mobil akan kami tahan aman selama ${hold_ttl_minutes} menit. Jika pembayaran atau konfirmasi belum dilakukan melewati batas waktu tersebut, sistem secara otomatis merilis unit agar dapat dipesan kembali oleh pelanggan lain.`,
+                                        `Once the booking form is submitted, we securely hold the vehicle unit for ${hold_ttl_minutes} minutes. If payment or confirmation is not completed within that time limit, the system automatically releases the unit so other customers can book it.`,
+                                    ),
                                 },
                                 {
-                                    q: 'Bagaimana ketentuan deposit jaminan sewa?',
-                                    a: 'Deposit diperlukan sebagai jaminan keamanan selama masa sewa kendaraan. Setelah unit mobil dikembalikan dalam kondisi baik dan checklist serah terima selesai, dana deposit akan dikembalikan penuh ke rekening Anda.',
+                                    q: tr('Bagaimana ketentuan deposit jaminan sewa?', 'What are the terms for the rental security deposit?'),
+                                    a: tr(
+                                        'Deposit diperlukan sebagai jaminan keamanan selama masa sewa kendaraan. Setelah unit mobil dikembalikan dalam kondisi baik dan checklist serah terima selesai, dana deposit akan dikembalikan penuh ke rekening Anda.',
+                                        'A security deposit is required during the rental period. After the vehicle is returned in good condition and the return checklist is completed, the deposit is refunded in full to your bank account.',
+                                    ),
                                 },
                                 {
-                                    q: 'Apakah bisa mengembalikan kendaraan di lokasi/cabang depot berbeda?',
-                                    a: 'Bisa. Anda cukup mengaktifkan opsi lokasi kembali yang berbeda di kolom pencarian. Biaya antar cabang (one-way fee) akan terhitung secara otomatis dan transparan.',
+                                    q: tr('Apakah bisa mengembalikan kendaraan di lokasi/cabang depot berbeda?', 'Can I return the vehicle to a different depot branch/location?'),
+                                    a: tr(
+                                        'Bisa. Anda cukup mengaktifkan opsi lokasi kembali yang berbeda di kolom pencarian. Biaya antar cabang (one-way fee) akan terhitung secara otomatis dan transparan.',
+                                        'Yes. Simply enable the different return location option in the search box. Any inter-branch (one-way) fee will be calculated automatically and transparently.',
+                                    ),
                                 },
                                 {
-                                    q: 'Bagaimana dengan kebijakan privasi dan data pribadi saya?',
-                                    a: 'Data pribadi Anda (nama, WhatsApp, KTP/SIM) disimpan dengan enkripsi aman dan hanya digunakan untuk keperluan verifikasi pesanan rental dan serah terima kendaraan.',
+                                    q: tr('Bagaimana dengan kebijakan privasi dan data pribadi saya?', 'What about privacy policy and my personal data?'),
+                                    a: tr(
+                                        'Data pribadi Anda (nama, WhatsApp, KTP/SIM) disimpan dengan enkripsi aman dan hanya digunakan untuk keperluan verifikasi pesanan rental dan serah terima kendaraan.',
+                                        'Your personal data (name, WhatsApp, ID/Driver License) is stored with secure encryption and used strictly for rental booking verification and vehicle handover.',
+                                    ),
                                 },
                             ].map((faq, idx) => {
                                 const isOpen = openFaq === idx;
@@ -1235,29 +1282,29 @@ export default function Search({
                                 <span className="font-black text-white tracking-tight text-base">{brand.name}</span>
                             </div>
                             <p className="text-xs font-normal text-slate-400 leading-relaxed max-w-sm">
-                                {t('rental.storefront_ui.footer_desc', undefined, 'Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.')}
+                                {t('rental.storefront_ui.footer_desc', undefined, tr('Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.', 'Official, safe, and licensed vehicle rental service. We provide well-maintained fleets with extra comfort guarantee and wide branch handover support.'))}
                             </p>
                         </div>
 
                         {/* Column 2: Quick Links */}
                         <div className="md:col-span-3 space-y-3.5">
                             <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">
-                                {t('rental.storefront_ui.footer_quick_nav', undefined, 'Navigasi Cepat')}
+                                {t('rental.storefront_ui.footer_quick_nav', undefined, tr('Navigasi Cepat', 'Quick Links'))}
                             </h4>
                             <ul className="space-y-2 text-xs font-medium text-slate-400">
                                 <li>
                                     <Link href={route('book.rental.search')} className="hover:text-white transition-colors">
-                                        {t('rental.storefront_ui.footer_catalog', undefined, 'Katalog Kendaraan')}
+                                        {t('rental.storefront_ui.footer_catalog', undefined, tr('Katalog Kendaraan', 'Vehicle Catalog'))}
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href={route('book.rental.history')} className="hover:text-white transition-colors">
-                                        {t('rental.storefront_ui.footer_history', undefined, 'Riwayat & Cek Status')}
+                                        {t('rental.storefront_ui.footer_history', undefined, tr('Riwayat & Cek Status', 'History & Check Status'))}
                                     </Link>
                                 </li>
                                 <li>
                                     <a href="#ketentuan" className="hover:text-white transition-colors">
-                                        Ketentuan & Tanya Jawab
+                                        {tr('Ketentuan & Tanya Jawab', 'Terms & FAQ')}
                                     </a>
                                 </li>
                             </ul>
@@ -1266,11 +1313,11 @@ export default function Search({
                         {/* Column 3: Contact / Support */}
                         <div className="md:col-span-4 space-y-3.5">
                             <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">
-                                {t('rental.storefront_ui.footer_help_title', undefined, 'Pusat Bantuan')}
+                                {t('rental.storefront_ui.footer_help_title', undefined, tr('Pusat Bantuan', 'Help Center'))}
                             </h4>
                             <div className="text-xs font-medium text-slate-400 space-y-2.5">
                                 <p className="leading-relaxed">
-                                    {t('rental.storefront_ui.footer_help_body', undefined, 'Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:')}
+                                    {t('rental.storefront_ui.footer_help_body', undefined, tr('Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:', 'Need fleet consultation or bank transfer confirmation? Contact our support team:'))}
                                 </p>
                                 {brand.support_phone ? (
                                     <a
@@ -1294,7 +1341,7 @@ export default function Search({
                                     </ul>
                                 ) : (
                                     <span className="font-bold text-slate-300">
-                                        {t('rental.storefront_ui.footer_no_phone', undefined, 'Silakan hubungi cabang terdekat.')}
+                                        {t('rental.storefront_ui.footer_no_phone', undefined, tr('Silakan hubungi cabang terdekat.', 'Please contact the nearest branch.'))}
                                     </span>
                                 )}
                             </div>
@@ -1303,14 +1350,14 @@ export default function Search({
 
                     <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
                         <div>
-                            © 2026 {brand.name}. {t('rental.storefront_ui.rights', undefined, 'Seluruh Hak Cipta Dilindungi.')}
+                            © 2026 {brand.name}. {t('rental.storefront_ui.rights', undefined, tr('Seluruh Hak Cipta Dilindungi.', 'All Rights Reserved.'))}
                         </div>
                         <div className="flex gap-4">
                             <a href={brand.terms_url || '#ketentuan'} className="hover:text-slate-300 transition-colors">
-                                Syarat & Ketentuan
+                                {tr('Syarat & Ketentuan', 'Terms & Conditions')}
                             </a>
                             <a href={brand.privacy_url || '#ketentuan'} className="hover:text-slate-300 transition-colors">
-                                Kebijakan Privasi
+                                {tr('Kebijakan Privasi', 'Privacy Policy')}
                             </a>
                         </div>
                     </div>

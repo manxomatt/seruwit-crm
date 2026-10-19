@@ -1,4 +1,5 @@
 import LanguageToggle from '@/Components/LanguageToggle';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode } from 'react';
 
@@ -16,6 +17,8 @@ interface Props extends PropsWithChildren {
 }
 
 export default function CustomerPortalLayout({ brand, title, headerAction, children }: Props) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
     const page = usePage<any>();
     const { auth, flash } = page.props;
     const url = page.url || '';
@@ -28,25 +31,25 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
 
     const navLinks = [
         {
-            name: 'Dashboard',
+            name: tr('Dashboard', 'Dashboard'),
             href: route('book.rental.portal.dashboard'),
             active: url === '/book/rental/portal' || url.startsWith('/book/rental/portal?'),
             icon: '📊',
         },
         {
-            name: 'Sewa Saya',
+            name: tr('Sewa Saya', 'My Rentals'),
             href: route('book.rental.portal.rentals.index'),
             active: url.startsWith('/book/rental/portal/rentals'),
             icon: '🚗',
         },
         {
-            name: 'Dokumen KYC',
+            name: tr('Dokumen KYC', 'KYC Documents'),
             href: route('book.rental.portal.documents.index'),
             active: url.startsWith('/book/rental/portal/documents'),
             icon: '📄',
         },
         {
-            name: 'Profil Saya',
+            name: tr('Profil Saya', 'My Profile'),
             href: route('book.rental.portal.profile'),
             active: url.startsWith('/book/rental/portal/profile'),
             icon: '👤',
@@ -58,7 +61,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
             className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800 flex flex-col justify-between selection:bg-teal-500 selection:text-white"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`${title} · Portal Pelanggan ${brand.name}`} />
+            <Head title={`${title} · ${tr('Portal Pelanggan', 'Customer Portal')} ${brand.name}`} />
 
             <div>
                 {/* Modern Portal Header */}
@@ -89,7 +92,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                                             {brand.name}
                                         </span>
                                         <span className="text-[10px] text-teal-700 font-bold uppercase tracking-wider block">
-                                            Portal Pelanggan
+                                            {tr('Portal Pelanggan', 'Customer Portal')}
                                         </span>
                                     </div>
                                 </Link>
@@ -98,7 +101,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                                 <nav className="hidden md:flex items-center gap-1.5 pl-4 border-l border-slate-200">
                                     {navLinks.map((item) => (
                                         <Link
-                                            key={item.name}
+                                            key={item.href}
                                             href={item.href}
                                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                                                 item.active
@@ -120,7 +123,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                                     className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 hover:bg-teal-100 transition shadow-2xs"
                                 >
                                     <span>🔍</span>
-                                    <span>Cari Mobil</span>
+                                    <span>{tr('Cari Mobil', 'Search Cars')}</span>
                                 </Link>
 
                                 <LanguageToggle />
@@ -159,7 +162,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                                         <button
                                             type="button"
                                             onClick={handleLogout}
-                                            title="Keluar"
+                                            title={tr('Keluar', 'Sign Out')}
                                             className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
                                         >
                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -175,7 +178,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                         <div className="md:hidden flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-100 no-scrollbar">
                             {navLinks.map((item) => (
                                 <Link
-                                    key={item.name}
+                                    key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
                                         item.active
@@ -197,7 +200,10 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                         <div>
                             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{title}</h2>
                             <p className="text-xs text-slate-500 font-medium mt-0.5">
-                                Kelola sewa kendaraan, jadwal serah terima, dan dokumen identitas Anda.
+                                {tr(
+                                    'Kelola sewa kendaraan, jadwal serah terima, dan dokumen identitas Anda.',
+                                    'Manage your vehicle rentals, handover schedules, and identity documents.',
+                                )}
                             </p>
                         </div>
                         {headerAction && <div>{headerAction}</div>}
@@ -235,15 +241,15 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
             <footer className="mt-16 bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 font-medium">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
-                        © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                        © 2026 {brand.name}. {tr('Seluruh Hak Cipta Dilindungi.', 'All Rights Reserved.')}
                     </div>
                     <div className="flex items-center gap-4 text-slate-400">
                         <Link href={route('book.rental.search')} className="hover:text-slate-600 transition">
-                            Katalog Kendaraan
+                            {tr('Katalog Kendaraan', 'Vehicle Catalog')}
                         </Link>
                         <span>·</span>
                         <Link href={route('book.rental.history')} className="hover:text-slate-600 transition">
-                            Riwayat Sewa
+                            {tr('Riwayat Sewa', 'Rental History')}
                         </Link>
                         {brand.support_phone && (
                             <>

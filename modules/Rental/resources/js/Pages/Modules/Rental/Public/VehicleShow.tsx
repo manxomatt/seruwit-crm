@@ -1,4 +1,6 @@
+import LanguageToggle from '@/Components/LanguageToggle';
 import PublicSelect from '@/Components/PublicSelect';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEvent, useMemo, useState } from 'react';
@@ -100,13 +102,6 @@ const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 const fieldClassName =
     'mt-1 w-full rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 transition focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10';
 
-const RELATION_OPTIONS = [
-    { value: 'Keluarga', label: 'Keluarga' },
-    { value: 'Pasangan', label: 'Pasangan' },
-    { value: 'Teman', label: 'Teman' },
-    { value: 'Rekan Kerja', label: 'Rekan Kerja' },
-];
-
 export default function VehicleShow({
     brand,
     vehicle,
@@ -120,6 +115,19 @@ export default function VehicleShow({
     is_dev_mode = false,
     require_otp = true,
 }: Props) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
+
+    const RELATION_OPTIONS = useMemo(
+        () => [
+            { value: 'Keluarga', label: tr('Keluarga', 'Family') },
+            { value: 'Pasangan', label: tr('Pasangan', 'Spouse / Partner') },
+            { value: 'Teman', label: tr('Teman', 'Friend') },
+            { value: 'Rekan Kerja', label: tr('Rekan Kerja', 'Colleague') },
+        ],
+        [locale],
+    );
+
     const { flash, errors } = usePage().props as {
         flash?: { success?: string; error?: string };
         errors: Record<string, string>;
@@ -143,16 +151,16 @@ export default function VehicleShow({
 
     const customerDisplayName = useMemo(() => {
         if (!customer) return '';
-        return isGenericCustomerName ? (customer.phone || 'Pelanggan') : customer.name;
-    }, [customer, isGenericCustomerName]);
+        return isGenericCustomerName ? (customer.phone || tr('Pelanggan', 'Customer')) : customer.name;
+    }, [customer, isGenericCustomerName, locale]);
 
     const customerSubtitle = useMemo(() => {
         if (!customer) return '';
         if (isGenericCustomerName) {
-            return customer.email ? customer.email : 'Nomor WhatsApp terverifikasi';
+            return customer.email ? customer.email : tr('Nomor WhatsApp terverifikasi', 'Verified WhatsApp number');
         }
         return `${customer.phone}${customer.email ? ` · ${customer.email}` : ''}`;
-    }, [customer, isGenericCustomerName]);
+    }, [customer, isGenericCustomerName, locale]);
 
     const form = useForm({
         vehicle_id: vehicle.id,
@@ -191,24 +199,24 @@ export default function VehicleShow({
     );
 
     const pickupOptions = useMemo(
-        () => [{ value: '', label: 'Pilih Depot Penjemputan' }, ...depotOptions],
-        [depotOptions],
+        () => [{ value: '', label: tr('Pilih Depot Penjemputan', 'Select Pickup Depot') }, ...depotOptions],
+        [depotOptions, locale],
     );
 
     const returnOptions = useMemo(
-        () => [{ value: '', label: 'Sama dengan Lokasi Jemput' }, ...depotOptions],
-        [depotOptions],
+        () => [{ value: '', label: tr('Sama dengan Lokasi Jemput', 'Same as Pickup Location') }, ...depotOptions],
+        [depotOptions, locale],
     );
 
     const insuranceOptions = useMemo(
         () => [
-            { value: '', label: 'Tanpa Asuransi Tambahan' },
+            { value: '', label: tr('Tanpa Asuransi Tambahan', 'No Additional Insurance') },
             ...insurance_packages.map((pkg) => ({
                 value: String(pkg.id),
                 label: `${pkg.name} (${money(pkg.amount)})`,
             })),
         ],
-        [insurance_packages],
+        [insurance_packages, locale],
     );
 
     const refreshQuote = async (overrides: Partial<typeof form.data> = {}) => {
@@ -237,7 +245,7 @@ export default function VehicleShow({
 
     const sendOtp = async () => {
         if (!form.data.booker_phone) {
-            alert('Masukkan nomor telepon terlebih dahulu');
+            alert(tr('Masukkan nomor telepon terlebih dahulu', 'Please enter your phone number first'));
             return;
         }
         setSendingOtp(true);
@@ -251,34 +259,34 @@ export default function VehicleShow({
                 setPhoneVerified(true);
                 setDevOtpCode(null);
                 form.setData('otp_code', '000000');
-                setOtpHint('Nomor WhatsApp Anda sudah terverifikasi ✓');
+                setOtpHint(tr('Nomor WhatsApp Anda sudah terverifikasi ✓', 'Your WhatsApp number is already verified ✓'));
             } else {
                 setPhoneVerified(false);
                 if (data.debug_code) {
                     const codeStr = String(data.debug_code);
                     setDevOtpCode(codeStr);
                     form.setData('otp_code', codeStr);
-                    setOtpHint(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`);
+                    setOtpHint(tr(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`, `Development Mode: OTP code is ${codeStr} (not sent to phone).`));
                 } else {
                     setDevOtpCode(null);
-                    setOtpHint(data.message || 'OTP berhasil dikirim ke nomor WhatsApp Anda.');
+                    setOtpHint(data.message || tr('OTP berhasil dikirim ke nomor WhatsApp Anda.', 'OTP sent to your WhatsApp number.'));
                 }
             }
         } catch (err: any) {
             setPhoneVerified(false);
             setDevOtpCode(null);
-            setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP. Periksa nomor telepon.');
+            setOtpHint(err.response?.data?.message || tr('Gagal mengirim OTP. Periksa nomor telepon.', 'Failed to send OTP. Please check your phone number.'));
         } finally {
             setSendingOtp(false);
         }
     };
 
-    const periodUnit = form.data.period_type === 'weekly' ? 'minggu' : form.data.period_type === 'monthly' ? 'bulan' : 'hari';
+    const periodUnit = form.data.period_type === 'weekly' ? tr('minggu', 'week(s)') : form.data.period_type === 'monthly' ? tr('bulan', 'month(s)') : tr('hari', 'day(s)');
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
         if (locations.length > 0 && !form.data.pickup_location_id) {
-            form.setError('pickup_location_id', 'Pilih lokasi jemput.');
+            form.setError('pickup_location_id', tr('Pilih lokasi jemput.', 'Please select a pickup location.'));
             return;
         }
         form.post(route('book.rental.bookings.store'), {
@@ -345,11 +353,12 @@ export default function VehicleShow({
                             )}
                             <div>
                                 <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">Showroom & Rental Resmi</span>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{tr('Showroom & Rental Resmi', 'Official Showroom & Rental')}</span>
                             </div>
                         </Link>
 
                         <div className="flex items-center gap-2 sm:gap-3">
+                            <LanguageToggle />
                             <Link
                                 href={route('book.rental.search')}
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
@@ -357,7 +366,7 @@ export default function VehicleShow({
                                 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                                 </svg>
-                                <span>Katalog</span>
+                                <span>{tr('Katalog', 'Catalog')}</span>
                             </Link>
 
                             {customer ? (
@@ -368,8 +377,8 @@ export default function VehicleShow({
                                     <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-[9px] font-black text-white">
                                         {customer.name?.charAt(0).toUpperCase() || 'P'}
                                     </div>
-                                    <span className="hidden sm:inline">Portal Pelanggan</span>
-                                    <span className="sm:hidden">Portal</span>
+                                    <span className="hidden sm:inline">{tr('Portal Pelanggan', 'Customer Portal')}</span>
+                                    <span className="sm:hidden">{tr('Portal', 'Portal')}</span>
                                 </Link>
                             ) : (
                                 <Link
@@ -379,7 +388,7 @@ export default function VehicleShow({
                                     <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                     </svg>
-                                    <span className="hidden sm:inline">Masuk</span>
+                                    <span className="hidden sm:inline">{tr('Masuk', 'Sign In')}</span>
                                 </Link>
                             )}
 
@@ -403,7 +412,7 @@ export default function VehicleShow({
                     
                     {/* Breadcrumbs */}
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                        <Link href={route('book.rental.search')} className="hover:text-slate-900">Katalog Kendaraan</Link>
+                        <Link href={route('book.rental.search')} className="hover:text-slate-900">{tr('Katalog Kendaraan', 'Vehicle Catalog')}</Link>
                         <span>/</span>
                         <span className="text-slate-700">{vehicle.name}</span>
                     </div>
@@ -421,7 +430,7 @@ export default function VehicleShow({
                             <div className="flex items-start gap-2.5">
                                 <span className="text-base leading-none">⛔</span>
                                 <div>
-                                    <p className="text-xs font-bold text-rose-950 uppercase tracking-wider">Pemesanan Belum Dapat Diproses</p>
+                                    <p className="text-xs font-bold text-rose-950 uppercase tracking-wider">{tr('Pemesanan Belum Dapat Diproses', 'Booking Could Not Be Processed')}</p>
                                     <ul className="mt-1 list-disc list-inside space-y-0.5 text-rose-850">
                                         {errorMessages.map((msg, idx) => (
                                             <li key={idx}>{msg}</li>
@@ -448,7 +457,7 @@ export default function VehicleShow({
                                             <svg className="h-16 w-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            <span className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Foto unit menyusul</span>
+                                            <span className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">{tr('Foto unit menyusul', 'Unit photo coming soon')}</span>
                                         </div>
                                     )}
 
@@ -463,7 +472,7 @@ export default function VehicleShow({
 
                                     <span className="absolute right-4 top-4 rounded-lg bg-white/95 px-3 py-1 text-xs font-black text-emerald-800 shadow-2xs border border-slate-200 flex items-center gap-1.5">
                                         <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                        Unit Siap Pakai
+                                        {tr('Unit Siap Pakai', 'Ready to Use')}
                                     </span>
                                 </div>
 
@@ -473,7 +482,10 @@ export default function VehicleShow({
                                             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{vehicle.name}</h2>
                                             {vehicle.similar_available > 1 && (
                                                 <p className="mt-2 text-sm font-medium text-slate-600">
-                                                    Ada {vehicle.similar_available} unit sejenis. Kami pilihkan yang siap pada tanggal ini. Nomor plat muncul setelah pesanan dibuat.
+                                                    {tr(
+                                                        `Ada ${vehicle.similar_available} unit sejenis. Kami pilihkan yang siap pada tanggal ini. Nomor plat muncul setelah pesanan dibuat.`,
+                                                        `There are ${vehicle.similar_available} similar units available. We will assign the best unit ready for your dates. License plate will appear after booking.`
+                                                    )}
                                                 </p>
                                             )}
                                         </div>
@@ -481,22 +493,22 @@ export default function VehicleShow({
 
                                     {/* 4-column Specification Grid */}
                                     <div className="pt-2">
-                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Spesifikasi Unit</h3>
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{tr('Spesifikasi Unit', 'Unit Specifications')}</h3>
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-bold text-slate-700">
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
-                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Kapasitas</span>
-                                                <div className="text-sm font-black text-slate-900">{vehicle.capacity_seats ? `${vehicle.capacity_seats} Kursi` : '—'}</div>
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">{tr('Kapasitas', 'Capacity')}</span>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.capacity_seats ? `${vehicle.capacity_seats} ${tr('Kursi', 'Seats')}` : '—'}</div>
                                             </div>
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
-                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Bahan Bakar</span>
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">{tr('Bahan Bakar', 'Fuel Type')}</span>
                                                 <div className="text-sm font-black text-slate-900">{vehicle.fuel_label || '—'}</div>
                                             </div>
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
-                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Tahun Rilis</span>
-                                                <div className="text-sm font-black text-slate-900">{vehicle.model_year ? `Tahun ${vehicle.model_year}` : '—'}</div>
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">{tr('Tahun Rilis', 'Model Year')}</span>
+                                                <div className="text-sm font-black text-slate-900">{vehicle.model_year ? `${tr('Tahun', 'Year')} ${vehicle.model_year}` : '—'}</div>
                                             </div>
                                             <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-1">
-                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Warna</span>
+                                                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">{tr('Warna', 'Color')}</span>
                                                 <div className="text-sm font-black text-slate-900">{vehicle.color || '—'}</div>
                                             </div>
                                         </div>
@@ -506,20 +518,20 @@ export default function VehicleShow({
 
                             {/* Inclusions & Guarantees Card */}
                             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-3.5">
-                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Jaminan Standar Kenyamanan Kami</h3>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">{tr('Jaminan Standar Kenyamanan Kami', 'Our Standard Comfort Guarantee')}</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 font-medium">
                                     <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/70">
                                         <span className="text-emerald-600 font-black">✓</span>
                                         <div>
-                                            <div className="font-bold text-slate-900">Kondisi Bersih & Terawat</div>
-                                            <div className="text-[11px] text-slate-500 mt-0.5">Disinfeksi dan cuci menyeluruh sebelum diserahterimakan.</div>
+                                            <div className="font-bold text-slate-900">{tr('Kondisi Bersih & Terawat', 'Clean & Well-Maintained')}</div>
+                                            <div className="text-[11px] text-slate-500 mt-0.5">{tr('Disinfeksi dan cuci menyeluruh sebelum diserahterimakan.', 'Thoroughly washed and sanitized before handover.')}</div>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/70">
                                         <span className="text-emerald-600 font-black">✓</span>
                                         <div>
-                                            <div className="font-bold text-slate-900">Bantuan Darurat 24 Jam</div>
-                                            <div className="text-[11px] text-slate-500 mt-0.5">Dukungan teknis sigap kapan pun Anda membutuhkan.</div>
+                                            <div className="font-bold text-slate-900">{tr('Bantuan Darurat 24 Jam', '24-Hour Emergency Assistance')}</div>
+                                            <div className="text-[11px] text-slate-500 mt-0.5">{tr('Dukungan teknis sigap kapan pun Anda membutuhkan.', 'Responsive technical support whenever you need it.')}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -532,9 +544,9 @@ export default function VehicleShow({
                             <form onSubmit={submit} className="rounded-2xl bg-white p-6 shadow-md border border-slate-200 space-y-5">
                                 
                                 <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Formulir Reservasi</h3>
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">{tr('Formulir Reservasi', 'Reservation Form')}</h3>
                                     <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-full">
-                                        Booking Instan
+                                        {tr('Booking Instan', 'Instant Booking')}
                                     </span>
                                 </div>
 
@@ -543,7 +555,7 @@ export default function VehicleShow({
                                     {/* Service Type Switcher */}
                                     <div>
                                         <label className="text-[11px] font-bold text-slate-700 block mb-1.5">
-                                            Jenis Layanan
+                                            {tr('Jenis Layanan', 'Service Type')}
                                         </label>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
@@ -559,7 +571,7 @@ export default function VehicleShow({
                                                 }`}
                                             >
                                                 <span>🔑</span>
-                                                <span>Lepas Kunci</span>
+                                                <span>{tr('Lepas Kunci', 'Self Drive')}</span>
                                             </button>
                                             <button
                                                 type="button"
@@ -574,7 +586,7 @@ export default function VehicleShow({
                                                 }`}
                                             >
                                                 <span>👨‍✈️</span>
-                                                <span>Dengan Sopir</span>
+                                                <span>{tr('Dengan Sopir', 'With Driver')}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -582,13 +594,13 @@ export default function VehicleShow({
                                     {/* Delivery Method Options */}
                                     <div>
                                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                            Metode Penjemputan Unit
+                                            {tr('Metode Penjemputan Unit', 'Unit Pickup Method')}
                                         </label>
                                         <div className="grid grid-cols-3 gap-2">
                                             {[
-                                                { id: 'depot', label: 'Depot Pool', icon: '🏢' },
-                                                { id: 'airport', label: 'Bandara', icon: '✈️' },
-                                                { id: 'custom_address', label: 'Alamat / Hotel', icon: '📍' },
+                                                { id: 'depot', label: tr('Depot Pool', 'Depot Pool'), icon: '🏢' },
+                                                { id: 'airport', label: tr('Bandara', 'Airport'), icon: '✈️' },
+                                                { id: 'custom_address', label: tr('Alamat / Hotel', 'Address / Hotel'), icon: '📍' },
                                             ].map((del) => (
                                                 <button
                                                     key={del.id}
@@ -613,10 +625,10 @@ export default function VehicleShow({
                                     {form.data.delivery_type !== 'depot' && (
                                         <div className="space-y-2 rounded-xl bg-slate-50 p-3.5 border border-slate-200">
                                             <label className="text-[11px] font-bold text-slate-700 block">
-                                                Alamat / Lokasi Pengantaran Unit <span className="text-rose-500">*</span>
+                                                {tr('Alamat / Lokasi Pengantaran Unit', 'Unit Delivery Address / Location')} <span className="text-rose-500">*</span>
                                                 <input
                                                     type="text"
-                                                    placeholder={form.data.delivery_type === 'airport' ? 'Contoh: Bandara Terminal 3 Ultimate' : 'Nama hotel / nama jalan & nomor'}
+                                                    placeholder={form.data.delivery_type === 'airport' ? tr('Contoh: Bandara Terminal 3 Ultimate', 'E.g.: Airport Terminal 3 Ultimate') : tr('Nama hotel / nama jalan & nomor', 'Hotel name / street & number')}
                                                     className={fieldClassName}
                                                     value={form.data.delivery_address}
                                                     onChange={(e) => form.setData('delivery_address', e.target.value)}
@@ -624,10 +636,10 @@ export default function VehicleShow({
                                                 />
                                             </label>
                                             <label className="text-[11px] font-bold text-slate-700 block">
-                                                Patokan / Petunjuk Tambahan (Opsional)
+                                                {tr('Patokan / Petunjuk Tambahan (Opsional)', 'Landmark / Additional Instructions (Optional)')}
                                                 <input
                                                     type="text"
-                                                    placeholder="Contoh: Gate 2 Keberangkatan / Lobby Hotel"
+                                                    placeholder={tr('Contoh: Gate 2 Keberangkatan / Lobby Hotel', 'E.g.: Departure Gate 2 / Hotel Lobby')}
                                                     className={fieldClassName}
                                                     value={form.data.delivery_landmark}
                                                     onChange={(e) => form.setData('delivery_landmark', e.target.value)}
@@ -638,7 +650,7 @@ export default function VehicleShow({
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <label className="text-[11px] font-bold text-slate-700">
-                                            Mulai Sewa
+                                            {tr('Mulai Sewa', 'Start Date')}
                                             <input
                                                 type="date"
                                                 className={fieldClassName}
@@ -651,7 +663,7 @@ export default function VehicleShow({
                                             />
                                         </label>
                                         <label className="text-[11px] font-bold text-slate-700">
-                                            Selesai Sewa
+                                            {tr('Selesai Sewa', 'End Date')}
                                             <input
                                                 type="date"
                                                 className={fieldClassName}
@@ -667,7 +679,7 @@ export default function VehicleShow({
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <label className="text-[11px] font-bold text-slate-700">
-                                            Jam jemput
+                                            {tr('Jam jemput', 'Pickup time')}
                                             <input
                                                 type="time"
                                                 className={fieldClassName}
@@ -677,7 +689,7 @@ export default function VehicleShow({
                                             />
                                         </label>
                                         <label className="text-[11px] font-bold text-slate-700">
-                                            Jam kembali
+                                            {tr('Jam kembali', 'Return time')}
                                             <input
                                                 type="time"
                                                 className={fieldClassName}
@@ -690,7 +702,7 @@ export default function VehicleShow({
 
                                     <div>
                                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                            Lokasi Jemput {locations.length > 0 && <span className="text-rose-500">*</span>}
+                                            {tr('Lokasi Jemput', 'Pickup Location')} {locations.length > 0 && <span className="text-rose-500">*</span>}
                                         </label>
                                         <PublicSelect
                                             value={form.data.pickup_location_id}
@@ -708,7 +720,7 @@ export default function VehicleShow({
                                                 });
                                             }}
                                             options={pickupOptions}
-                                            placeholder="Pilih Lokasi Depot"
+                                            placeholder={tr('Pilih Lokasi Depot', 'Select Depot Location')}
                                         />
                                         {form.errors.pickup_location_id && (
                                             <p className="text-[10px] text-rose-600 font-bold mt-1">{form.errors.pickup_location_id}</p>
@@ -716,7 +728,7 @@ export default function VehicleShow({
                                     </div>
 
                                     <div>
-                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Lokasi Kembali</label>
+                                        <label className="text-[11px] font-bold text-slate-700 block mb-1">{tr('Lokasi Kembali', 'Return Location')}</label>
                                         <PublicSelect
                                             value={form.data.return_location_id}
                                             onChange={(val) => {
@@ -724,13 +736,13 @@ export default function VehicleShow({
                                                 void refreshQuote({ return_location_id: val });
                                             }}
                                             options={returnOptions}
-                                            placeholder="Sama dengan lokasi jemput"
+                                            placeholder={tr('Sama dengan lokasi jemput', 'Same as pickup location')}
                                         />
                                     </div>
 
                                     {insurance_packages_enabled && insurance_packages.length > 0 && (
                                         <div>
-                                            <label className="text-[11px] font-bold text-slate-700 block mb-1">Paket Asuransi Tambahan</label>
+                                            <label className="text-[11px] font-bold text-slate-700 block mb-1">{tr('Paket Asuransi Tambahan', 'Additional Insurance Package')}</label>
                                             <PublicSelect
                                                 value={form.data.insurance_package_id}
                                                 onChange={(val) => {
@@ -738,7 +750,7 @@ export default function VehicleShow({
                                                     void refreshQuote({ insurance_package_id: val });
                                                 }}
                                                 options={insuranceOptions}
-                                                placeholder="Tanpa Asuransi Tambahan"
+                                                placeholder={tr('Tanpa Asuransi Tambahan', 'No Additional Insurance')}
                                             />
                                         </div>
                                     )}
@@ -753,31 +765,31 @@ export default function VehicleShow({
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                                 </svg>
-                                                Kalkulasi tarif...
+                                                {tr('Kalkulasi tarif...', 'Calculating rates...')}
                                             </div>
                                         </div>
                                     )}
 
                                     <div className="flex items-center justify-between text-xs font-extrabold text-slate-900 border-b border-slate-200 pb-2">
-                                        <span>Rincian Estimasi Biaya</span>
+                                        <span>{tr('Rincian Estimasi Biaya', 'Estimated Price Breakdown')}</span>
                                         <span className="text-[11px] text-slate-700 font-bold">{quote.total_periods} {periodUnit}</span>
                                     </div>
 
                                     {!quote.available ? (
                                         <div className="text-xs text-rose-700 font-bold p-2 bg-rose-50 rounded-lg">
-                                            {quote.reasons[0] || 'Unit tidak tersedia untuk jadwal ini.'}
+                                            {quote.reasons[0] || tr('Unit tidak tersedia untuk jadwal ini.', 'Unit is not available for this schedule.')}
                                         </div>
                                     ) : (
                                         <div className="space-y-2 text-xs">
                                             <div className="flex justify-between text-slate-600 font-medium">
-                                                <span>Sewa Dasar Unit</span>
+                                                <span>{tr('Sewa Dasar Unit', 'Base Unit Rental')}</span>
                                                 <span className="font-bold text-slate-900">{quote.base_amount ? money(quote.base_amount) : '—'}</span>
                                             </div>
 
                                             {quote.driver_fee_amount != null && quote.driver_fee_amount > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
                                                     <span className="flex items-center gap-1">
-                                                        <span>👨‍✈️</span> Jasa Pengemudi ({quote.total_periods} hari)
+                                                        <span>👨‍✈️</span> {tr('Jasa Pengemudi', 'Driver Service')} ({quote.total_periods} {tr('hari', 'days')})
                                                     </span>
                                                     <span className="font-bold text-slate-900">{money(quote.driver_fee_amount)}</span>
                                                 </div>
@@ -786,7 +798,7 @@ export default function VehicleShow({
                                             {quote.delivery_fee != null && quote.delivery_fee > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
                                                     <span className="flex items-center gap-1">
-                                                        <span>✈️</span> Biaya Pengantaran ({quote.delivery_type})
+                                                        <span>✈️</span> {tr('Biaya Pengantaran', 'Delivery Fee')} ({quote.delivery_type})
                                                     </span>
                                                     <span className="font-bold text-slate-900">{money(quote.delivery_fee)}</span>
                                                 </div>
@@ -795,7 +807,7 @@ export default function VehicleShow({
                                             {quote.return_delivery_fee != null && quote.return_delivery_fee > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
                                                     <span className="flex items-center gap-1">
-                                                        <span>🔄</span> Biaya Pengambilan Kembali
+                                                        <span>🔄</span> {tr('Biaya Pengambilan Kembali', 'Return Pickup Fee')}
                                                     </span>
                                                     <span className="font-bold text-slate-900">{money(quote.return_delivery_fee)}</span>
                                                 </div>
@@ -803,30 +815,30 @@ export default function VehicleShow({
 
                                             {insurance_packages_enabled && quote.insurance_amount != null && quote.insurance_amount > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
-                                                    <span>Proteksi Asuransi</span>
+                                                    <span>{tr('Proteksi Asuransi', 'Insurance Protection')}</span>
                                                     <span className="font-bold text-slate-900">{money(quote.insurance_amount)}</span>
                                                 </div>
                                             )}
 
                                             {quote.one_way_fee_amount != null && quote.one_way_fee_amount > 0 && (
                                                 <div className="flex justify-between text-slate-600 font-medium">
-                                                    <span>Biaya antar cabang</span>
+                                                    <span>{tr('Biaya antar cabang', 'Inter-branch drop-off fee')}</span>
                                                     <span className="font-bold text-slate-900">{money(quote.one_way_fee_amount)}</span>
                                                 </div>
                                             )}
 
                                             <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-xs font-extrabold text-slate-900">
-                                                <span>Total sewa</span>
+                                                <span>{tr('Total sewa', 'Total rental')}</span>
                                                 <span className="text-sm text-slate-900 font-black">{quote.total_amount ? money(quote.total_amount) : '—'}</span>
                                             </div>
 
-                                            <p className="text-[11px] font-medium text-slate-500">Tanggal selesai ikut dihitung.</p>
+                                            <p className="text-[11px] font-medium text-slate-500">{tr('Tanggal selesai ikut dihitung.', 'End date is included in the duration.')}</p>
 
                                             {quote.deposit_amount != null && quote.deposit_amount > 0 && (
                                                 <div className="rounded-lg bg-white p-3 border border-slate-200 flex items-center justify-between text-xs font-bold mt-1 shadow-2xs">
                                                     <div>
-                                                        <div className="text-slate-900 font-black">Deposit Jaminan Unit</div>
-                                                        <div className="text-[9px] text-emerald-700 font-bold">Dapat dikembalikan penuh · Bayar dalam {hold_ttl_minutes} menit</div>
+                                                        <div className="text-slate-900 font-black">{tr('Deposit Jaminan Unit', 'Security Deposit')}</div>
+                                                        <div className="text-[9px] text-emerald-700 font-bold">{tr(`Dapat dikembalikan penuh · Bayar dalam ${hold_ttl_minutes} menit`, `Fully refundable · Pay within ${hold_ttl_minutes} minutes`)}</div>
                                                     </div>
                                                     <div className="text-sm font-black text-slate-900">
                                                         {money(quote.deposit_amount)}
@@ -852,7 +864,7 @@ export default function VehicleShow({
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px]">{customerDisplayName}</span>
                                                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-200/80 px-2 py-0.5 text-[9px] font-bold text-emerald-900 whitespace-nowrap shrink-0">
                                                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 shrink-0"></span>
-                                                            Akun Terverifikasi
+                                                            {tr('Akun Terverifikasi', 'Verified Account')}
                                                         </span>
                                                     </div>
                                                     <div className="text-[11px] text-emerald-800 font-medium truncate mt-0.5">
@@ -866,31 +878,31 @@ export default function VehicleShow({
                                                 as="button"
                                                 className="inline-flex items-center justify-center rounded-lg border border-emerald-300/80 bg-white/90 px-2.5 py-1 text-[11px] font-bold text-emerald-900 transition hover:bg-emerald-100 hover:text-emerald-950 shadow-2xs shrink-0 whitespace-nowrap"
                                             >
-                                                Ganti Akun
+                                                {tr('Ganti Akun', 'Switch Account')}
                                             </Link>
                                         </div>
                                     ) : (
                                         <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 flex items-center justify-between gap-3 text-xs">
                                             <div className="text-[11px] text-slate-600">
-                                                Sudah punya akun pelanggan?
+                                                {tr('Sudah punya akun pelanggan?', 'Already have a customer account?')}
                                             </div>
                                             <Link
                                                 href={route('book.rental.login')}
                                                 className="text-[11px] font-bold text-slate-900 hover:underline shrink-0"
                                             >
-                                                Masuk di sini →
+                                                {tr('Masuk di sini →', 'Sign in here →')}
                                             </Link>
                                         </div>
                                     )}
 
                                     <div>
                                         <label className="text-[11px] font-bold text-slate-700 block">
-                                            Nama Lengkap <span className="text-rose-500">*</span>
+                                            {tr('Nama Lengkap', 'Full Name')} <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             className={fieldClassName}
-                                            placeholder="Contoh: Budi Pratama"
+                                            placeholder={tr('Contoh: Budi Pratama', 'E.g.: Budi Pratama')}
                                             value={form.data.customer_name}
                                             onChange={(e) => form.setData('customer_name', e.target.value)}
                                             required
@@ -900,7 +912,7 @@ export default function VehicleShow({
 
                                     <div>
                                         <label className="text-[11px] font-bold text-slate-700 block">
-                                            Nomor WhatsApp <span className="text-rose-500">*</span>
+                                            {tr('Nomor WhatsApp', 'WhatsApp Number')} <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             type="tel"
@@ -922,20 +934,20 @@ export default function VehicleShow({
                                     {/* Alamat Email - Wajib jika OTP WhatsApp nonaktif */}
                                     <div>
                                         <label className="text-[11px] font-bold text-slate-700 block">
-                                            Alamat Email {!require_otp ? <span className="text-rose-500">*</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
+                                            {tr('Alamat Email', 'Email Address')} {!require_otp ? <span className="text-rose-500">*</span> : <span className="text-slate-400 font-normal">{tr('(Opsional)', '(Optional)')}</span>}
                                         </label>
                                         <input
                                             type="email"
                                             className={fieldClassName}
-                                            placeholder="nama@email.com"
+                                            placeholder={tr('nama@email.com', 'name@email.com')}
                                             value={form.data.customer_email}
                                             onChange={(e) => form.setData('customer_email', e.target.value)}
                                             required={!require_otp}
                                         />
                                         <p className="text-[10px] text-slate-500 mt-0.5">
                                             {!require_otp
-                                                ? 'Alamat email wajib diisi untuk registrasi, konfirmasi reservasi, dan bukti invoice sewa.'
-                                                : 'Bukti konfirmasi pemesanan dan invoice elektronik akan dikirimkan ke email ini.'}
+                                                ? tr('Alamat email wajib diisi untuk registrasi, konfirmasi reservasi, dan bukti invoice sewa.', 'Email address is required for registration, booking confirmation, and rental invoice.')
+                                                : tr('Bukti konfirmasi pemesanan dan invoice elektronik akan dikirimkan ke email ini.', 'Booking confirmation and electronic invoice will be sent to this email.')}
                                         </p>
                                         {errors.customer_email && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{errors.customer_email}</p>}
                                     </div>
@@ -949,19 +961,19 @@ export default function VehicleShow({
                                                 </svg>
                                             </div>
                                             <div>
-                                                <h4 className="text-xs font-bold text-slate-900">Kontak Darurat (Emergency Contact)</h4>
-                                                <p className="text-[10px] text-slate-500 font-medium">Verifikasi keamanan & penanggung jawab perjalanan</p>
+                                                <h4 className="text-xs font-bold text-slate-900">{tr('Kontak Darurat (Emergency Contact)', 'Emergency Contact')}</h4>
+                                                <p className="text-[10px] text-slate-500 font-medium">{tr('Verifikasi keamanan & penanggung jawab perjalanan', 'Security verification & trip emergency contact')}</p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-3">
                                             <div>
                                                 <label className="text-[11px] font-bold text-slate-700 block">
-                                                    Nama Kontak <span className="text-rose-500">*</span>
+                                                    {tr('Nama Kontak', 'Contact Name')} <span className="text-rose-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    placeholder="Nama lengkap kerabat"
+                                                    placeholder={tr('Nama lengkap kerabat', 'Relative full name')}
                                                     className={fieldClassName}
                                                     value={form.data.emergency_contact_name}
                                                     onChange={(e) => form.setData('emergency_contact_name', e.target.value)}
@@ -973,20 +985,20 @@ export default function VehicleShow({
                                             <div className="grid grid-cols-2 gap-2.5">
                                                 <div>
                                                     <label className="text-[11px] font-bold text-slate-700 block">
-                                                        Hubungan <span className="text-rose-500">*</span>
+                                                        {tr('Hubungan', 'Relationship')} <span className="text-rose-500">*</span>
                                                     </label>
                                                     <div className="mt-1">
                                                         <PublicSelect
                                                             value={form.data.emergency_contact_relation}
                                                             onChange={(val) => form.setData('emergency_contact_relation', val)}
                                                             options={RELATION_OPTIONS}
-                                                            placeholder="Pilih Hubungan"
+                                                            placeholder={tr('Pilih Hubungan', 'Select Relationship')}
                                                         />
                                                     </div>
                                                 </div>
                                                 <div>
                                                     <label className="text-[11px] font-bold text-slate-700 block">
-                                                        No. Telepon Kontak <span className="text-rose-500">*</span>
+                                                        {tr('No. Telepon Kontak', 'Contact Phone No.')} <span className="text-rose-500">*</span>
                                                     </label>
                                                     <input
                                                         type="tel"
@@ -1002,16 +1014,16 @@ export default function VehicleShow({
 
                                             <div>
                                                 <label className="text-[11px] font-bold text-slate-700 block">
-                                                    Akun Media Sosial Penyewa <span className="text-slate-400 font-normal">(Opsional)</span>
+                                                    {tr('Akun Media Sosial Penyewa', 'Renter Social Media Account')} <span className="text-slate-400 font-normal">{tr('(Opsional)', '(Optional)')}</span>
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    placeholder="Contoh: @instagram / LinkedIn"
+                                                    placeholder={tr('Contoh: @instagram / LinkedIn', 'E.g.: @instagram / LinkedIn')}
                                                     className={fieldClassName}
                                                     value={form.data.social_media_account}
                                                     onChange={(e) => form.setData('social_media_account', e.target.value)}
                                                 />
-                                                <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Opsional, untuk mempercepat proses verifikasi sewa.</p>
+                                                <p className="text-[10px] text-slate-400 mt-0.5 font-medium">{tr('Opsional, untuk mempercepat proses verifikasi sewa.', 'Optional, to speed up rental verification.')}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1023,12 +1035,12 @@ export default function VehicleShow({
                                                 <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                <span>Akun terverifikasi. Kode OTP tidak diperlukan.</span>
+                                                <span>{tr('Akun terverifikasi. Kode OTP tidak diperlukan.', 'Verified account. OTP code is not required.')}</span>
                                             </div>
                                         ) : (
                                             <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 space-y-2.5">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[11px] font-extrabold text-slate-800">Verifikasi Kode OTP *</span>
+                                                    <span className="text-[11px] font-extrabold text-slate-800">{tr('Verifikasi Kode OTP *', 'OTP Code Verification *')}</span>
                                                     {!phoneVerified && (
                                                         <button
                                                             type="button"
@@ -1036,7 +1048,7 @@ export default function VehicleShow({
                                                             disabled={sendingOtp || !form.data.booker_phone}
                                                             className="rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800 disabled:opacity-50 shadow-2xs"
                                                         >
-                                                            {sendingOtp ? 'Mengirim...' : 'Kirim OTP'}
+                                                            {sendingOtp ? tr('Mengirim...', 'Sending...') : tr('Kirim OTP', 'Send OTP')}
                                                         </button>
                                                     )}
                                                 </div>
@@ -1046,7 +1058,7 @@ export default function VehicleShow({
                                                         <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
-                                                        Terverifikasi ✓ (OTP tidak diperlukan)
+                                                        {tr('Terverifikasi ✓ (OTP tidak diperlukan)', 'Verified ✓ (OTP not required)')}
                                                     </div>
                                                 ) : (
                                                     <input
@@ -1068,8 +1080,8 @@ export default function VehicleShow({
                                                                     ⚡
                                                                 </span>
                                                                 <div>
-                                                                    <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
-                                                                    <span className="text-[11px] text-amber-700 font-medium">OTP tidak dikirim ke HP. Kode OTP:</span>
+                                                                    <span className="font-black text-amber-900 block leading-tight">{tr('Mode Development', 'Development Mode')}</span>
+                                                                    <span className="text-[11px] text-amber-700 font-medium">{tr('OTP tidak dikirim ke HP. Kode OTP:', 'OTP not sent to phone. OTP Code:')}</span>
                                                                 </div>
                                                             </div>
                                                             <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
@@ -1078,7 +1090,7 @@ export default function VehicleShow({
                                                         </div>
                                                         <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
                                                             <span>✓</span>
-                                                            <span>Kode OTP telah diisikan otomatis ke kotak input di atas.</span>
+                                                            <span>{tr('Kode OTP telah diisikan otomatis ke kotak input di atas.', 'OTP code has been automatically filled in the input above.')}</span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -1101,7 +1113,7 @@ export default function VehicleShow({
                                     className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:opacity-95 disabled:opacity-50"
                                     style={{ backgroundColor: 'var(--brand-color)' }}
                                 >
-                                    {form.processing ? 'Memproses pesanan...' : 'Pesan sekarang'}
+                                    {form.processing ? tr('Memproses pesanan...', 'Processing booking...') : tr('Pesan sekarang', 'Book now')}
                                 </button>
                             </form>
                         </div>
@@ -1123,22 +1135,25 @@ export default function VehicleShow({
                                 <span className="font-black text-white tracking-tight text-sm">{brand.name}</span>
                             </div>
                             <p className="text-xs font-normal text-slate-400 leading-relaxed max-w-sm">
-                                Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.
+                                {tr(
+                                    'Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.',
+                                    'Official, safe, and licensed vehicle rental service. We provide well-maintained fleets with extra comfort guarantees and wide branch handover support.'
+                                )}
                             </p>
                         </div>
 
                         {/* Column 2: Quick Links */}
                         <div className="md:col-span-3 space-y-3.5">
-                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Navigasi Cepat</h4>
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">{tr('Navigasi Cepat', 'Quick Links')}</h4>
                             <ul className="space-y-2 text-xs font-medium text-slate-400">
                                 <li>
                                     <Link href={route('book.rental.search')} className="hover:text-white transition-colors">
-                                        Katalog Kendaraan
+                                        {tr('Katalog Kendaraan', 'Vehicle Catalog')}
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href={route('book.rental.history')} className="hover:text-white transition-colors">
-                                        Riwayat & Cek Status
+                                        {tr('Riwayat & Cek Status', 'History & Check Status')}
                                     </Link>
                                 </li>
                             </ul>
@@ -1146,10 +1161,13 @@ export default function VehicleShow({
 
                         {/* Column 3: Contact/Support */}
                         <div className="md:col-span-4 space-y-3.5">
-                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Pusat Bantuan</h4>
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">{tr('Pusat Bantuan', 'Support Center')}</h4>
                             <div className="text-xs font-medium text-slate-400 space-y-2.5">
                                 <p className="leading-relaxed">
-                                    Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:
+                                    {tr(
+                                        'Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:',
+                                        'Need fleet consultation or bank transfer confirmation? Contact our support team:'
+                                    )}
                                 </p>
                                 {brand.support_phone ? (
                                     <a
@@ -1162,7 +1180,7 @@ export default function VehicleShow({
                                         WhatsApp Hotline: {brand.support_phone} ↗
                                     </a>
                                 ) : (
-                                    <span className="font-bold text-slate-300">Silakan hubungi cabang terdekat.</span>
+                                    <span className="font-bold text-slate-300">{tr('Silakan hubungi cabang terdekat.', 'Please contact the nearest branch.')}</span>
                                 )}
                             </div>
                         </div>
@@ -1170,11 +1188,11 @@ export default function VehicleShow({
 
                     <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
                         <div>
-                            © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                            © 2026 {brand.name}. {tr('Seluruh Hak Cipta Dilindungi.', 'All Rights Reserved.')}
                         </div>
                         <div className="flex gap-4">
-                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">Syarat & Ketentuan</a>
-                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">Kebijakan Privasi</a>
+                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">{tr('Syarat & Ketentuan', 'Terms & Conditions')}</a>
+                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">{tr('Kebijakan Privasi', 'Privacy Policy')}</a>
                         </div>
                     </div>
                 </div>

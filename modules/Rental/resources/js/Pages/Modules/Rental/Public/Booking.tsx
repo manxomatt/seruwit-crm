@@ -1,7 +1,9 @@
+import LanguageToggle from '@/Components/LanguageToggle';
+import Modal from '@/Components/Modal';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm, usePage, router, usePoll } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import Modal from '@/Components/Modal';
 
 interface Brand {
     name: string;
@@ -281,22 +283,14 @@ const formatDeadlineTime = (isoString?: string | null) => {
 const fieldClassName =
     'mt-1 w-full rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 transition focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10';
 
-const statusBadgeConfig: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-    pending_reserved: { label: 'Menunggu Deposit', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' },
-    pending: { label: 'Kedaluwarsa', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-400' },
-    confirmed: { label: 'Siap diambil', color: 'text-emerald-800', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
-    active: { label: 'Sedang disewa', color: 'text-blue-800', bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500' },
-    returned: { label: 'Telah Dikembalikan', color: 'text-indigo-800', bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500' },
-    completed: { label: 'Sewa Selesai', color: 'text-slate-800', bg: 'bg-slate-100 border-slate-200', dot: 'bg-slate-500' },
-    cancelled: { label: 'Reservasi Dibatalkan', color: 'text-rose-800', bg: 'bg-rose-50 border-rose-200', dot: 'bg-rose-500' },
-};
-
 function DigitalSignaturePad({
     onChange,
 }: {
     value?: string;
     onChange: (val: string) => void;
 }) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
     const [drawing, setDrawing] = useState(false);
     const [hasDrawn, setHasDrawn] = useState(false);
 
@@ -352,7 +346,7 @@ function DigitalSignaturePad({
     return (
         <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-700">Area Tanda Tangan Digital *</span>
+                <span className="font-bold text-slate-700">{tr('Area Tanda Tangan Digital *', 'Digital Signature Area *')}</span>
                 {hasDrawn && (
                     <button
                         type="button"
@@ -363,7 +357,7 @@ function DigitalSignaturePad({
                         }}
                         className="text-[11px] font-bold text-rose-600 underline"
                     >
-                        Hapus / Ulangi
+                        {tr('Hapus / Ulangi', 'Clear / Redo')}
                     </button>
                 )}
             </div>
@@ -380,7 +374,7 @@ function DigitalSignaturePad({
                 className="w-full h-28 rounded-xl border border-slate-300 bg-white touch-none cursor-crosshair shadow-inner"
             />
             <p className="text-[10px] text-slate-400">
-                Gunakan jari atau kursor Anda pada kotak di atas untuk menandatangani kontrak.
+                {tr('Gunakan jari atau kursor Anda pada kotak di atas untuk menandatangani kontrak.', 'Use your finger or cursor in the box above to sign the contract.')}
             </p>
         </div>
     );
@@ -394,6 +388,19 @@ export default function BookingView({
     qris_merchant = null,
     require_otp = true,
 }: Props) {
+    const { locale } = useTrans();
+    const tr = (id: string, en: string) => (locale === 'en' ? en : id);
+
+    const statusBadgeConfig: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+        pending_reserved: { label: tr('Menunggu Deposit', 'Awaiting Deposit'), color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' },
+        pending: { label: tr('Kedaluwarsa', 'Expired'), color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-400' },
+        confirmed: { label: tr('Siap diambil', 'Ready for Pickup'), color: 'text-emerald-800', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
+        active: { label: tr('Sedang disewa', 'Currently Rented'), color: 'text-blue-800', bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500' },
+        returned: { label: tr('Telah Dikembalikan', 'Returned'), color: 'text-indigo-800', bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500' },
+        completed: { label: tr('Sewa Selesai', 'Rental Completed'), color: 'text-slate-800', bg: 'bg-slate-100 border-slate-200', dot: 'bg-slate-500' },
+        cancelled: { label: tr('Reservasi Dibatalkan', 'Reservation Cancelled'), color: 'text-rose-800', bg: 'bg-rose-50 border-rose-200', dot: 'bg-rose-500' },
+    };
+
     const { flash } = usePage().props as {
         flash?: { success?: string; error?: string };
     };
@@ -502,7 +509,7 @@ export default function BookingView({
     const cancelForm = useForm({
         booker_phone: booking.booker_phone ?? '',
         otp_code: '',
-        cancelled_reason: 'Dibatalkan oleh pemesan',
+        cancelled_reason: tr('Dibatalkan oleh pemesan', 'Cancelled by customer'),
     });
 
     const extendForm = useForm({
@@ -585,11 +592,11 @@ export default function BookingView({
                     if (data.result.data?.expires_at) docsForm.setData('license_expires_at', data.result.data.expires_at);
                 }
             } else {
-                if (docType === 'ktp') setKtpOcrError(data.message || 'Gagal memindai KTP');
-                else setSimOcrError(data.message || 'Gagal memindai SIM');
+                if (docType === 'ktp') setKtpOcrError(data.message || tr('Gagal memindai KTP', 'Failed to scan ID Card'));
+                else setSimOcrError(data.message || tr('Gagal memindai SIM', 'Failed to scan Driver License'));
             }
         } catch (err: any) {
-            const msg = err.response?.data?.message || 'Gagal memproses OCR dokumen. Mohon pastikan foto cukup terang.';
+            const msg = err.response?.data?.message || tr('Gagal memproses OCR dokumen. Mohon pastikan foto cukup terang.', 'Failed to process document OCR. Please ensure the photo is well-lit.');
             if (docType === 'ktp') setKtpOcrError(msg);
             else setSimOcrError(msg);
         } finally {
@@ -664,7 +671,7 @@ export default function BookingView({
 
     const runReturnAiInspection = async () => {
         if (returnForm.data.return_photos.length === 0) {
-            setReturnAiError('Unggah minimal 1 foto kendaraan pengembalian terlebih dahulu.');
+            setReturnAiError(tr('Unggah minimal 1 foto kendaraan pengembalian terlebih dahulu.', 'Please upload at least 1 return vehicle photo first.'));
             return;
         }
 
@@ -689,10 +696,10 @@ export default function BookingView({
                     returnForm.setData('end_fuel_level', data.inspection.extracted_fuel_level);
                 }
             } else {
-                setReturnAiError(data.message || 'Gagal menjalankan inspeksi AI.');
+                setReturnAiError(data.message || tr('Gagal menjalankan inspeksi AI.', 'Failed to run AI inspection.'));
             }
         } catch (err: any) {
-            setReturnAiError(err.response?.data?.message || 'Gagal memproses inspeksi visual AI.');
+            setReturnAiError(err.response?.data?.message || tr('Gagal memproses inspeksi visual AI.', 'Failed to process AI visual inspection.'));
         } finally {
             setScanningReturnPhotos(false);
         }
@@ -703,12 +710,12 @@ export default function BookingView({
         returnForm.clearErrors();
 
         if (returnForm.data.return_photos.length === 0) {
-            returnForm.setError('return_photos', 'Unggah minimal 1 foto kondisi kendaraan pengembalian.');
+            returnForm.setError('return_photos', tr('Unggah minimal 1 foto kondisi kendaraan pengembalian.', 'Please upload at least 1 photo of the returned vehicle condition.'));
             return;
         }
 
         if (!returnForm.data.customer_signature) {
-            returnForm.setError('customer_signature', 'Silakan bubuhkan tanda tangan digital Anda pada kotak yang tersedia.');
+            returnForm.setError('customer_signature', tr('Silakan bubuhkan tanda tangan digital Anda pada kotak yang tersedia.', 'Please provide your digital signature in the box provided.'));
             return;
         }
 
@@ -774,7 +781,7 @@ export default function BookingView({
             }));
 
         if (selectedItems.length === 0) {
-            alert('Pilih minimal satu layanan atau aksesoris tambahan.');
+            alert(tr('Pilih minimal satu layanan atau aksesoris tambahan.', 'Select at least one additional service or accessory.'));
             return;
         }
 
@@ -814,7 +821,7 @@ export default function BookingView({
 
     const sendOtp = async (phone: string) => {
         if (!phone) {
-            alert('Masukkan nomor telepon terlebih dahulu');
+            alert(tr('Masukkan nomor telepon terlebih dahulu', 'Please enter your phone number first'));
             return;
         }
         setSendingPageOtp(true);
@@ -828,22 +835,22 @@ export default function BookingView({
             const { data } = await axios.post(url, { booker_phone: phone });
             if (data.already_verified) {
                 setDevOtpCode(null);
-                setOtpHint('Nomor WhatsApp Anda sudah terverifikasi ✓');
+                setOtpHint(tr('Nomor WhatsApp Anda sudah terverifikasi ✓', 'Your WhatsApp number is already verified ✓'));
                 router.reload();
             } else {
                 if (data.debug_code) {
                     const codeStr = String(data.debug_code);
                     setDevOtpCode(codeStr);
                     setVerificationCode(codeStr);
-                    setOtpHint(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`);
+                    setOtpHint(tr(`Mode Development: Kode OTP adalah ${codeStr} (tidak dikirim ke HP).`, `Development Mode: OTP code is ${codeStr} (not sent to phone).`));
                 } else {
                     setDevOtpCode(null);
-                    setOtpHint(data.message || 'OTP berhasil dikirim ke WhatsApp Anda.');
+                    setOtpHint(data.message || tr('OTP berhasil dikirim ke WhatsApp Anda.', 'OTP sent to your WhatsApp.'));
                 }
             }
         } catch (err: any) {
             setDevOtpCode(null);
-            setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP');
+            setOtpHint(err.response?.data?.message || tr('Gagal mengirim OTP', 'Failed to send OTP'));
         } finally {
             setSendingPageOtp(false);
         }
@@ -852,7 +859,7 @@ export default function BookingView({
     const handleVerifyPageOtp = async (e: FormEvent) => {
         e.preventDefault();
         if (!verificationCode || verificationCode.length !== 6) {
-            setVerificationError('Kode OTP harus 6 digit');
+            setVerificationError(tr('Kode OTP harus 6 digit', 'OTP code must be 6 digits'));
             return;
         }
         setVerifyingOtp(true);
@@ -865,7 +872,7 @@ export default function BookingView({
             });
             router.reload({ only: ['booking'] });
         } catch (err: any) {
-            setVerificationError(err.response?.data?.message || 'Gagal memverifikasi OTP');
+            setVerificationError(err.response?.data?.message || tr('Gagal memverifikasi OTP', 'Failed to verify OTP'));
         } finally {
             setVerifyingOtp(false);
         }
@@ -901,7 +908,7 @@ export default function BookingView({
         proofForm.clearErrors();
 
         if (!proofForm.data.deposit_proof) {
-            proofForm.setError('deposit_proof', 'Pilih file bukti pembayaran (Foto/PDF) terlebih dahulu');
+            proofForm.setError('deposit_proof', tr('Pilih file bukti pembayaran (Foto/PDF) terlebih dahulu', 'Please select a payment proof file (Photo/PDF) first'));
             return;
         }
 
@@ -958,12 +965,12 @@ export default function BookingView({
             if (data.success) {
                 setExtendQuoteData(data);
             } else {
-                setExtendQuoteError(data.message || 'Gagal menghitung simulasi perpanjangan');
+                setExtendQuoteError(data.message || tr('Gagal menghitung simulasi perpanjangan', 'Failed to calculate extension quote'));
                 setExtendQuoteData(null);
             }
         } catch (err: any) {
-            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : 'Gagal memeriksa ketersediaan tanggal');
-            setExtendQuoteError(typeof msg === 'string' ? msg : 'Gagal memeriksa ketersediaan tanggal');
+            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : tr('Gagal memeriksa ketersediaan tanggal', 'Failed to check date availability'));
+            setExtendQuoteError(typeof msg === 'string' ? msg : tr('Gagal memeriksa ketersediaan tanggal', 'Failed to check date availability'));
             setExtendQuoteData(null);
         } finally {
             setExtendQuoteLoading(false);
@@ -1014,7 +1021,7 @@ export default function BookingView({
     const submitPickupRequest = (e: FormEvent) => {
         e.preventDefault();
         if (!pickupForm.data.customer_signature) {
-            pickupForm.setError('customer_signature', 'Silakan bubuhkan tanda tangan digital Anda pada kotak yang tersedia.');
+            pickupForm.setError('customer_signature', tr('Silakan bubuhkan tanda tangan digital Anda pada kotak yang tersedia.', 'Please provide your digital signature in the box provided.'));
             return;
         }
         const url = typeof route === 'function' && route().has('book.rental.booking.request_pickup')
@@ -1027,13 +1034,13 @@ export default function BookingView({
 
     const getStatusBadge = () => {
         if (booking.deposit_proof?.status === 'pending') {
-            return { label: 'Menunggu Konfirmasi Bukti Transfer', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' };
+            return { label: tr('Menunggu Konfirmasi Bukti Transfer', 'Awaiting Transfer Proof Verification'), color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' };
         }
         if (booking.status === 'pending_reserved') {
             if (Number(booking.deposit_amount) <= 0) {
-                return { label: 'Menunggu Pelunasan', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' };
+                return { label: tr('Menunggu Pelunasan', 'Awaiting Full Payment'), color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' };
             }
-            return { label: 'Menunggu Pembayaran Deposit', color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' };
+            return { label: tr('Menunggu Pembayaran Deposit', 'Awaiting Deposit Payment'), color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' };
         }
         return statusBadgeConfig[booking.status] || {
             label: booking.status,
@@ -1055,7 +1062,70 @@ export default function BookingView({
     const contractSigned = Boolean(booking.pickup_request?.requested_at);
     const unitHandedOver = ['active', 'returned', 'completed'].includes(booking.status);
 
-    const timeline = useMemo(() => booking.tracking_timeline || [], [booking.tracking_timeline]);
+    const timeline = useMemo(() => {
+        const raw = booking.tracking_timeline || [];
+        if (locale !== 'en') return raw;
+        return raw.map((item) => {
+            switch (item.key) {
+                case 'booking_created':
+                    return {
+                        ...item,
+                        title: 'Reservation Created',
+                        description: 'Order recorded in system and unit schedule reserved.',
+                    };
+                case 'kyc_verified':
+                    return {
+                        ...item,
+                        title: 'KYC & Document Verification',
+                        description: item.status === 'completed'
+                            ? 'ID Card & Driver License documents have been uploaded.'
+                            : 'Please upload your ID Card (KTP) and Driver License (SIM) for verification.',
+                    };
+                case 'payment_deposit':
+                    return {
+                        ...item,
+                        title: 'Deposit / Rental Payment',
+                        description: item.status === 'completed'
+                            ? 'Deposit / rental payment has been received & verified.'
+                            : 'Complete deposit or rental payment before the deadline.',
+                    };
+                case 'confirmation_unit':
+                    return {
+                        ...item,
+                        title: 'Unit Confirmed & Prepared',
+                        description: item.status === 'completed'
+                            ? 'Unit has been confirmed and prepared by the operational team.'
+                            : 'Operational team prepares the unit after verification.',
+                    };
+                case 'handover_active':
+                    return {
+                        ...item,
+                        title: 'Unit Handover & Active Rental',
+                        description: item.status === 'completed'
+                            ? 'Vehicle handed over & rental is active.'
+                            : 'Sign the digital contract & complete vehicle handover.',
+                    };
+                case 'return_completed':
+                    return {
+                        ...item,
+                        title: 'Unit Return & Inspection',
+                        description: item.status === 'completed'
+                            ? 'Vehicle has been returned and inspected.'
+                            : 'Return the vehicle according to schedule & complete final inspection.',
+                    };
+                case 'deposit_refund_settled':
+                    return {
+                        ...item,
+                        title: 'Deposit Settlement & Refund',
+                        description: item.status === 'completed'
+                            ? 'Security deposit has been settled / refunded.'
+                            : 'Security deposit refund process after return inspection.',
+                    };
+                default:
+                    return item;
+            }
+        });
+    }, [booking.tracking_timeline, locale]);
     const totalSteps = timeline.length || 7;
     const currentStepIndex = useMemo(() => timeline.findIndex((item) => item.status === 'current'), [timeline]);
     const completedCount = useMemo(() => timeline.filter((item) => item.status === 'completed').length, [timeline]);
@@ -1076,7 +1146,7 @@ export default function BookingView({
             className="min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col justify-between"
             style={{ ['--brand-color' as string]: brandColor }}
         >
-            <Head title={`Reservasi #${booking.code} · ${brand.name}`} />
+            <Head title={`${tr('Reservasi', 'Reservation')} #${booking.code} · ${brand.name}`} />
 
             <div>
                 {/* Modern Crisp Glass Navbar */}
@@ -1101,11 +1171,12 @@ export default function BookingView({
                             )}
                             <div>
                                 <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">Showroom & Rental Resmi</span>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{tr('Showroom & Rental Resmi', 'Official Showroom & Rental')}</span>
                             </div>
                         </Link>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <LanguageToggle />
                             <Link
                                 href={route('book.rental.track')}
                                 className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
@@ -1113,7 +1184,7 @@ export default function BookingView({
                                 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <span>Lacak Pesanan</span>
+                                <span>{tr('Lacak Pesanan', 'Track Booking')}</span>
                             </Link>
 
                             <Link
@@ -1123,7 +1194,7 @@ export default function BookingView({
                                 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                                 </svg>
-                                <span>Sewa Baru</span>
+                                <span>{tr('Sewa Baru', 'New Rental')}</span>
                             </Link>
 
                             {brand.support_phone && (
@@ -1155,10 +1226,10 @@ export default function BookingView({
                                 </span>
                                 <div>
                                     <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900">
-                                        Progres Pemesanan & Status Kendaraan
+                                        {tr('Progres Pemesanan & Status Kendaraan', 'Booking Progress & Vehicle Status')}
                                     </h3>
                                     <p className="text-[11px] text-slate-500 font-medium">
-                                        Pantau alur sewa mulai dari reservasi hingga penyelesaian & refund deposit
+                                        {tr('Pantau alur sewa mulai dari reservasi hingga penyelesaian & refund deposit', 'Track your rental flow from reservation to completion & deposit refund')}
                                     </p>
                                 </div>
                             </div>
@@ -1168,7 +1239,7 @@ export default function BookingView({
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
-                                    Live Polling Aktif
+                                    {tr('Live Polling Aktif', 'Live Polling Active')}
                                 </span>
                             </div>
                         </div>
@@ -1177,15 +1248,15 @@ export default function BookingView({
                         <div className="space-y-2 mb-5">
                             <div className="flex items-center justify-between text-xs font-bold text-slate-600">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-slate-400">Status Saat Ini:</span>
+                                    <span className="text-slate-400">{tr('Status Saat Ini:', 'Current Status:')}</span>
                                     <span className="text-slate-900 font-black">
                                         {completedCount === totalSteps
-                                            ? 'Semua Tahap Selesai (100%)'
-                                            : `Tahap ${activeIndex + 1} dari ${totalSteps}: ${activeItem?.title || 'Sedang Berjalan'}`}
+                                            ? tr('Semua Tahap Selesai (100%)', 'All Stages Completed (100%)')
+                                            : `${tr('Tahap', 'Step')} ${activeIndex + 1} ${tr('dari', 'of')} ${totalSteps}: ${activeItem?.title || tr('Sedang Berjalan', 'In Progress')}`}
                                     </span>
                                 </div>
                                 <span className="font-mono text-emerald-700 bg-emerald-50 border border-emerald-250 px-2.5 py-0.5 rounded-full text-xs font-black">
-                                    {progressPercent}% Selesai
+                                    {progressPercent}% {tr('Selesai', 'Complete')}
                                 </span>
                             </div>
                             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200/80">
@@ -1227,7 +1298,7 @@ export default function BookingView({
                                                                   : 'bg-slate-200 text-slate-600'
                                                         }`}
                                                     >
-                                                        Tahap {idx + 1}
+                                                        {tr('Tahap', 'Step')} {idx + 1}
                                                     </span>
 
                                                     {isDone && (
@@ -1272,10 +1343,10 @@ export default function BookingView({
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                                 {[
-                                    { done: paymentSettled, current: false, label: paymentSettled ? 'Pembayaran selesai ✓' : 'Bayar' },
-                                    { done: documentsReady, current: false, label: documentsReady ? 'Dokumen diunggah ✓' : 'Unggah KTP/SIM' },
-                                    { done: contractSigned, current: paymentSettled && !contractSigned && booking.status === 'confirmed', label: contractSigned ? 'Kontrak ditandatangani ✓' : 'Tanda tangan kontrak' },
-                                    { done: unitHandedOver, current: contractSigned && !unitHandedOver, label: unitHandedOver ? 'Unit sudah diserahkan ✓' : 'Datang ke depot' },
+                                    { done: paymentSettled, current: false, label: paymentSettled ? tr('Pembayaran selesai ✓', 'Payment completed ✓') : tr('Bayar', 'Pay') },
+                                    { done: documentsReady, current: false, label: documentsReady ? tr('Dokumen diunggah ✓', 'Documents uploaded ✓') : tr('Unggah KTP/SIM', 'Upload ID/License') },
+                                    { done: contractSigned, current: paymentSettled && !contractSigned && booking.status === 'confirmed', label: contractSigned ? tr('Kontrak ditandatangani ✓', 'Contract signed ✓') : tr('Tanda tangan kontrak', 'Sign contract') },
+                                    { done: unitHandedOver, current: contractSigned && !unitHandedOver, label: unitHandedOver ? tr('Unit sudah diserahkan ✓', 'Unit handed over ✓') : tr('Datang ke depot', 'Visit depot') },
                                 ].map((stage, index) => (
                                     <div
                                         key={`stage-${index}`}
@@ -1288,7 +1359,7 @@ export default function BookingView({
                                         }`}
                                     >
                                         <span className={`text-[10px] font-black uppercase tracking-widest block ${stage.done ? 'text-emerald-600' : stage.current ? 'text-amber-600' : 'text-slate-400'}`}>
-                                            Tahap {index + 1}
+                                            {tr('Tahap', 'Step')} {index + 1}
                                         </span>
                                         <div className="text-xs font-black">{stage.label}</div>
                                     </div>
@@ -1306,7 +1377,7 @@ export default function BookingView({
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] font-black uppercase tracking-wider bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded">
-                                                Langkah Saat Ini
+                                                {tr('Langkah Saat Ini', 'Current Step')}
                                             </span>
                                             <span className="text-xs sm:text-sm font-black text-slate-900">
                                                 {activeItem.title}
@@ -1320,7 +1391,7 @@ export default function BookingView({
                                 {activeItem.timestamp && activeItem.timestamp.trim() !== 'WIB' && (
                                     <div className="hidden md:block shrink-0 text-right">
                                         <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-                                            Update Terakhir
+                                            {tr('Update Terakhir', 'Last Updated')}
                                         </span>
                                         <span className="text-xs font-mono font-bold text-slate-700">
                                             {activeItem.timestamp}
@@ -1336,10 +1407,10 @@ export default function BookingView({
                                 </div>
                                 <div>
                                     <div className="text-xs sm:text-sm font-black text-emerald-950">
-                                        Semua Proses Sewa Selesai
+                                        {tr('Semua Proses Sewa Selesai', 'All Rental Processes Completed')}
                                     </div>
                                     <p className="text-xs text-emerald-800 mt-0.5">
-                                        Unit telah berhasil dikembalikan dan seluruh kewajiban sewa serta refund deposit telah terselesaikan. Terima kasih telah mempercayai kami!
+                                        {tr('Unit telah berhasil dikembalikan dan seluruh kewajiban sewa serta refund deposit telah terselesaikan. Terima kasih telah mempercayai kami!', 'The unit has been returned and all rental obligations and deposit refunds have been settled. Thank you for trusting us!')}
                                     </p>
                                 </div>
                             </div>
@@ -1361,7 +1432,7 @@ export default function BookingView({
                             {/* Booking Code Card */}
                             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div className="text-center sm:text-left">
-                                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block">KODE BOOKING</span>
+                                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block">{tr('KODE BOOKING', 'BOOKING CODE')}</span>
                                     <h2 className="text-3xl font-mono font-black tracking-wider text-slate-900 mt-0.5">{booking.code}</h2>
                                     <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:justify-start">
                                         <button
@@ -1373,15 +1444,15 @@ export default function BookingView({
                                             }}
                                             className="text-xs font-bold text-slate-600 underline"
                                         >
-                                            {linkCopied ? 'Tautan tersalin' : 'Salin tautan pesanan'}
+                                            {linkCopied ? tr('Tautan tersalin', 'Link copied') : tr('Salin tautan pesanan', 'Copy booking link')}
                                         </button>
                                         <a
-                                            href={`https://wa.me/?text=${encodeURIComponent(`Kode booking ${booking.code}. Buka pesanan: ${window.location.href}`)}`}
+                                            href={`https://wa.me/?text=${encodeURIComponent(`${tr('Kode booking', 'Booking code')} ${booking.code}. ${tr('Buka pesanan', 'Open booking')}: ${window.location.href}`)}`}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="text-xs font-bold text-slate-600 underline"
                                         >
-                                            Kirim ke WhatsApp saya
+                                            {tr('Kirim ke WhatsApp saya', 'Send to my WhatsApp')}
                                         </a>
                                     </div>
                                 </div>
@@ -1410,9 +1481,9 @@ export default function BookingView({
                                             </div>
                                             <div>
                                                 <h3 className="text-base font-black tracking-tight">
-                                                    {Number(booking.deposit_amount) <= 0 ? 'Menunggu Pelunasan' : 'Batas Waktu Penahanan Unit'}
+                                                    {Number(booking.deposit_amount) <= 0 ? tr('Menunggu Pelunasan', 'Awaiting Full Payment') : tr('Batas Waktu Penahanan Unit', 'Unit Hold Deadline')}
                                                 </h3>
-                                                <p className="text-xs text-amber-100 font-medium">Selesaikan sebelum batas waktu berakhir</p>
+                                                <p className="text-xs text-amber-100 font-medium">{tr('Selesaikan sebelum batas waktu berakhir', 'Complete before the deadline expires')}</p>
                                             </div>
                                         </div>
                                         {booking.reserved_until && (
@@ -1434,10 +1505,10 @@ export default function BookingView({
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-black text-amber-950">
-                                                    Pemesanan Ini Telah Kedaluwarsa
+                                                    {tr('Pemesanan Ini Telah Kedaluwarsa', 'This Booking Has Expired')}
                                                 </h3>
                                                 <p className="text-xs text-amber-800 font-medium">
-                                                    Batas waktu penahanan unit telah berakhir dan unit telah dirilis kembali. Tagihan dan opsi pembayaran telah ditutup.
+                                                    {tr('Batas waktu penahanan unit telah berakhir dan unit telah dirilis kembali. Tagihan dan opsi pembayaran telah ditutup.', 'The unit hold deadline has expired and the unit has been released. Invoices and payment options have been closed.')}
                                                 </p>
                                             </div>
                                         </div>
@@ -1445,7 +1516,7 @@ export default function BookingView({
                                             href="/book/rental"
                                             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2 text-xs font-black uppercase text-white shadow-xs transition shrink-0"
                                         >
-                                            Buat Pesanan Baru →
+                                            {tr('Buat Pesanan Baru →', 'Create New Booking →')}
                                         </a>
                                     </div>
                                 </div>
@@ -1461,10 +1532,10 @@ export default function BookingView({
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-black text-rose-950">
-                                                    Pemesanan Telah Dibatalkan
+                                                    {tr('Pemesanan Telah Dibatalkan', 'Booking Has Been Cancelled')}
                                                 </h3>
                                                 <p className="text-xs text-rose-800 font-medium">
-                                                    Reservasi ini telah dibatalkan{booking.cancelled_reason ? ` (${booking.cancelled_reason})` : ''}. Pembayaran dan serah terima tidak dapat diproses.
+                                                    {tr(`Reservasi ini telah dibatalkan${booking.cancelled_reason ? ` (${booking.cancelled_reason})` : ''}. Pembayaran dan serah terima tidak dapat diproses.`, `This reservation has been cancelled${booking.cancelled_reason ? ` (${booking.cancelled_reason})` : ''}. Payment and handover cannot be processed.`)}
                                                 </p>
                                             </div>
                                         </div>
@@ -1472,7 +1543,7 @@ export default function BookingView({
                                             href="/book/rental"
                                             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-black uppercase text-white shadow-xs transition shrink-0"
                                         >
-                                            Buat Pesanan Baru →
+                                            {tr('Buat Pesanan Baru →', 'Create New Booking →')}
                                         </a>
                                     </div>
                                 </div>
@@ -1487,10 +1558,10 @@ export default function BookingView({
                                         </div>
                                         <div>
                                             <h3 className="text-sm font-black text-amber-900">
-                                                Bukti Transfer Sedang Diverifikasi
+                                                {tr('Bukti Transfer Sedang Diverifikasi', 'Transfer Proof Under Verification')}
                                             </h3>
                                             <p className="text-xs text-amber-800">
-                                                Bukti pembayaran Anda telah kami terima dan sedang diverifikasi oleh staf operasional.
+                                                {tr('Bukti pembayaran Anda telah kami terima dan sedang diverifikasi oleh staf operasional.', 'We have received your payment proof and it is currently being verified by our operations staff.')}
                                             </p>
                                         </div>
                                     </div>
@@ -1506,10 +1577,10 @@ export default function BookingView({
                                         </div>
                                         <div>
                                             <h3 className="text-sm font-black text-rose-900">
-                                                Bukti Transfer Ditolak
+                                                {tr('Bukti Transfer Ditolak', 'Transfer Proof Rejected')}
                                             </h3>
                                             <p className="text-xs text-rose-800">
-                                                {booking.deposit_proof.rejected_reason || 'Mohon unggah kembali bukti transfer yang valid dan sesuai nominal.'}
+                                                {booking.deposit_proof.rejected_reason || tr('Mohon unggah kembali bukti transfer yang valid dan sesuai nominal.', 'Please re-upload a valid transfer proof matching the required amount.')}
                                             </p>
                                         </div>
                                     </div>
@@ -1527,7 +1598,7 @@ export default function BookingView({
                                         )}
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-slate-900">{booking.vehicle?.name ?? 'Kendaraan'}</h3>
+                                        <h3 className="text-xl font-black text-slate-900">{booking.vehicle?.name ?? tr('Kendaraan', 'Vehicle')}</h3>
                                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                                             <span className="text-xs font-mono font-bold text-slate-400">{booking.vehicle?.plate_number}</span>
                                             <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
@@ -1535,11 +1606,11 @@ export default function BookingView({
                                                     ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                                                     : 'bg-slate-100 text-slate-800 border border-slate-300'
                                             }`}>
-                                                {booking.service_type === 'with_driver' ? '👨‍✈️ Dengan Sopir' : '🔑 Lepas Kunci'}
+                                                {booking.service_type === 'with_driver' ? tr('👨‍✈️ Dengan Sopir', '👨‍✈️ With Driver') : tr('🔑 Lepas Kunci', '🔑 Self Drive')}
                                             </span>
                                             {booking.delivery_type && booking.delivery_type !== 'depot' && (
                                                 <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
-                                                    ✈️ Antar {booking.delivery_type === 'airport' ? 'Bandara' : 'Lokasi'}
+                                                    ✈️ {tr('Antar', 'Delivery')} {booking.delivery_type === 'airport' ? tr('Bandara', 'Airport') : tr('Lokasi', 'Location')}
                                                 </span>
                                             )}
                                         </div>
@@ -1550,7 +1621,7 @@ export default function BookingView({
                                 <div className="p-5 sm:p-6 space-y-4 text-xs text-slate-700">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
-                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Mulai Sewa</span>
+                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">{tr('Mulai Sewa', 'Start Date')}</span>
                                             <span className="font-black text-slate-900 text-sm block">{booking.start_date ?? '—'}{booking.pickup_time ? ` · ${booking.pickup_time}` : ''}</span>
                                             {booking.pickup_location && (
                                                 <span className="block text-[11px] text-slate-500 font-medium">{booking.pickup_location}</span>
@@ -1558,7 +1629,7 @@ export default function BookingView({
                                         </div>
 
                                         <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
-                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Selesai Sewa</span>
+                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">{tr('Selesai Sewa', 'End Date')}</span>
                                             <span className="font-black text-slate-900 text-sm block">{booking.end_date ?? '—'}{booking.return_time ? ` · ${booking.return_time}` : ''}</span>
                                             {booking.return_location && (
                                                 <span className="block text-[11px] text-slate-500 font-medium">{booking.return_location}</span>
@@ -1569,10 +1640,10 @@ export default function BookingView({
                                     {/* Delivery details if custom / airport */}
                                     {booking.delivery_address && (
                                         <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
-                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Titik Pengantaran Unit ({booking.delivery_type})</span>
+                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">{tr('Titik Pengantaran Unit', 'Unit Delivery Point')} ({booking.delivery_type})</span>
                                             <span className="font-bold text-slate-900 text-xs block">{booking.delivery_address}</span>
                                             {booking.delivery_landmark && (
-                                                <span className="block text-[11px] text-slate-500 font-medium">Patokan: {booking.delivery_landmark}</span>
+                                                <span className="block text-[11px] text-slate-500 font-medium">{tr('Patokan', 'Landmark')}: {booking.delivery_landmark}</span>
                                             )}
                                         </div>
                                     )}
@@ -1580,19 +1651,19 @@ export default function BookingView({
                                     {/* Emergency contact info */}
                                     {booking.emergency_contact?.name && (
                                         <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/70 space-y-1">
-                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">Kontak Darurat Penjamin</span>
+                                            <span className="block font-extrabold text-slate-400 uppercase text-[9px] tracking-wider">{tr('Kontak Darurat Penjamin', 'Emergency Guarantor Contact')}</span>
                                             <span className="font-bold text-slate-900 text-xs block">
-                                                {booking.emergency_contact.name} ({booking.emergency_contact.relation || 'Kerabat'}) · {booking.emergency_contact.phone}
+                                                {booking.emergency_contact.name} ({booking.emergency_contact.relation || tr('Kerabat', 'Relative')}) · {booking.emergency_contact.phone}
                                             </span>
                                             {booking.social_media_account && (
-                                                <span className="block text-[11px] text-slate-500 font-medium">Medsos: {booking.social_media_account}</span>
+                                                <span className="block text-[11px] text-slate-500 font-medium">{tr('Medsos', 'Social Media')}: {booking.social_media_account}</span>
                                             )}
                                         </div>
                                     )}
 
                                     {booking.insurance_package && (
                                         <div className="flex items-center justify-between rounded-xl bg-teal-50 p-3 border border-teal-200 text-teal-900 text-xs">
-                                            <span>Paket Proteksi: <b className="font-black">{booking.insurance_package.name}</b></span>
+                                            <span>{tr('Paket Proteksi', 'Protection Package')}: <b className="font-black">{booking.insurance_package.name}</b></span>
                                             <span className="font-black">{money(booking.insurance_package.amount)}</span>
                                         </div>
                                     )}
@@ -1606,12 +1677,12 @@ export default function BookingView({
                                         <div className="flex items-center gap-2">
                                             <span className="text-base">👨‍✈️</span>
                                             <div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">Sopir Ditugaskan</span>
-                                                <h4 className="text-sm font-black text-white">Driver Siap Melayani Perjalanan Anda</h4>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">{tr('Sopir Ditugaskan', 'Driver Assigned')}</span>
+                                                <h4 className="text-sm font-black text-white">{tr('Driver Siap Melayani Perjalanan Anda', 'Driver Ready to Serve Your Trip')}</h4>
                                             </div>
                                         </div>
                                         <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                                            Driver Siap
+                                            {tr('Driver Siap', 'Driver Ready')}
                                         </span>
                                     </div>
 
@@ -1629,25 +1700,25 @@ export default function BookingView({
                                         )}
                                         <div className="flex-1 min-w-0">
                                             <h5 className="text-base font-black truncate">{booking.driver.name}</h5>
-                                            <p className="text-xs text-slate-300 font-mono mt-0.5">{booking.driver.phone || 'Nomor HP via konfirmasi'}</p>
+                                            <p className="text-xs text-slate-300 font-mono mt-0.5">{booking.driver.phone || tr('Nomor HP via konfirmasi', 'Phone number upon confirmation')}</p>
                                         </div>
                                     </div>
 
                                     {booking.driver.phone && (
                                         <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap gap-2.5">
                                             <a
-                                                href={`https://wa.me/${booking.driver.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo Pak ${booking.driver.name}, saya penyewa unit rental dengan kode ${booking.code}.`)}`}
+                                                href={`https://wa.me/${booking.driver.phone.replace(/\D/g, '')}?text=${encodeURIComponent(tr(`Halo Pak ${booking.driver.name}, saya penyewa unit rental dengan kode ${booking.code}.`, `Hello ${booking.driver.name}, I am the renter for booking code ${booking.code}.`))}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-4 py-2.5 text-xs font-black text-white transition shadow-sm"
                                             >
-                                                <span>Chat WhatsApp Driver</span>
+                                                <span>{tr('Chat WhatsApp Driver', 'WhatsApp Driver')}</span>
                                             </a>
                                             <a
                                                 href={`tel:${booking.driver.phone}`}
                                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-black text-white transition"
                                             >
-                                                <span>Telepon</span>
+                                                <span>{tr('Telepon', 'Call')}</span>
                                             </a>
                                         </div>
                                     )}
@@ -1661,13 +1732,13 @@ export default function BookingView({
                                         <div className="flex items-center gap-2">
                                             <span className="text-base">📄</span>
                                             <div>
-                                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Dokumen & Kontrak Digital</h4>
-                                                <p className="text-xs text-slate-400">Unduh berkas legalitas resmi sewa kendaraan Anda</p>
+                                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">{tr('Dokumen & Kontrak Digital', 'Digital Documents & Contract')}</h4>
+                                                <p className="text-xs text-slate-400">{tr('Unduh berkas legalitas resmi sewa kendaraan Anda', 'Download your official vehicle rental legal documents')}</p>
                                             </div>
                                         </div>
                                         {booking.contract?.signed && (
                                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                                ✓ TTD Digital Sah
+                                                ✓ {tr('TTD Digital Sah', 'Valid Digital Signature')}
                                             </span>
                                         )}
                                     </div>
@@ -1685,8 +1756,8 @@ export default function BookingView({
                                                         PDF
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">Kontrak Sewa</div>
-                                                        <div className="text-[10px] text-slate-400">Perjanjian & Tanda Tangan</div>
+                                                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">{tr('Kontrak Sewa', 'Rental Contract')}</div>
+                                                        <div className="text-[10px] text-slate-400">{tr('Perjanjian & Tanda Tangan', 'Agreement & Signature')}</div>
                                                     </div>
                                                 </div>
                                                 <svg className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1707,8 +1778,8 @@ export default function BookingView({
                                                         PDF
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">Berita Acara (BAST)</div>
-                                                        <div className="text-[10px] text-slate-400">Kondisi Serah Terima Fisik</div>
+                                                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">{tr('Berita Acara (BAST)', 'Handover Report (BAST)')}</div>
+                                                        <div className="text-[10px] text-slate-400">{tr('Kondisi Serah Terima Fisik', 'Physical Handover Condition')}</div>
                                                     </div>
                                                 </div>
                                                 <svg className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1730,12 +1801,12 @@ export default function BookingView({
                                             </div>
                                             <div>
                                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                    Katalog Add-on & Aksesoris Tambahan
+                                                    {tr('Katalog Add-on & Aksesoris Tambahan', 'Add-ons & Extra Accessories Catalog')}
                                                 </h3>
                                                 <p className="text-xs text-slate-500">
                                                     {booking.addons_enabled ?? true
-                                                        ? 'Perlengkapan dan layanan ekstra selama masa sewa kendaraan Anda'
-                                                        : 'Layanan tambahan yang telah dipesan untuk masa sewa Anda'}
+                                                        ? tr('Perlengkapan dan layanan ekstra selama masa sewa kendaraan Anda', 'Extra equipment and services during your vehicle rental period')
+                                                        : tr('Layanan tambahan yang telah dipesan untuk masa sewa Anda', 'Additional services ordered for your rental period')}
                                                 </p>
                                             </div>
                                         </div>
@@ -1744,7 +1815,7 @@ export default function BookingView({
                                                 type="button"
                                                 onClick={() => {
                                                     if (!isVerified) {
-                                                        alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
+                                                        alert(tr('Verifikasi nomor WhatsApp Anda terlebih dahulu', 'Please verify your WhatsApp number first'));
                                                         return;
                                                     }
                                                     setShowAddonsModal(true);
@@ -1756,7 +1827,7 @@ export default function BookingView({
                                                 }`}
                                             >
                                                 <span>+</span>
-                                                <span>Pesan Layanan Tambahan</span>
+                                                <span>{tr('Pesan Layanan Tambahan', 'Order Add-on Services')}</span>
                                             </button>
                                         )}
                                     </div>
@@ -1772,12 +1843,12 @@ export default function BookingView({
                                                                 <span>{addon.description}</span>
                                                                 {addon.is_invoiced && (
                                                                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                                                        ✓ Masuk Tagihan
+                                                                        ✓ {tr('Masuk Tagihan', 'Invoiced')}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                             {addon.created_at && (
-                                                                <p className="text-[11px] text-slate-400">Dipesan: {addon.created_at}</p>
+                                                                <p className="text-[11px] text-slate-400">{tr('Dipesan', 'Ordered')}: {addon.created_at}</p>
                                                             )}
                                                         </div>
                                                         <span className="font-black text-slate-900 tabular-nums text-sm">
@@ -1792,7 +1863,7 @@ export default function BookingView({
                                                     <div className="flex items-center gap-2">
                                                         <span>💳</span>
                                                         <span>
-                                                            Sisa tagihan (termasuk add-on): <strong>{money(booking.payment.balance_due)}</strong>
+                                                            {tr('Sisa tagihan (termasuk add-on):', 'Remaining balance (including add-ons):')} <strong>{money(booking.payment.balance_due)}</strong>
                                                         </span>
                                                     </div>
                                                     {booking.payment.can_pay_balance && (
@@ -1804,7 +1875,7 @@ export default function BookingView({
                                                             }}
                                                             className="inline-flex items-center justify-center font-bold underline hover:text-blue-700"
                                                         >
-                                                            Bayar Tagihan Sekarang ➔
+                                                            {tr('Bayar Tagihan Sekarang ➔', 'Pay Balance Now ➔')}
                                                         </a>
                                                     )}
                                                 </div>
@@ -1813,10 +1884,10 @@ export default function BookingView({
                                     ) : (
                                         <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center space-y-2">
                                             <p className="text-xs text-slate-500">
-                                                Belum ada aksesoris atau layanan tambahan yang dipesan.
+                                                {tr('Belum ada aksesoris atau layanan tambahan yang dipesan.', 'No extra accessories or add-on services ordered yet.')}
                                             </p>
                                             <p className="text-[11px] text-slate-400">
-                                                Tersedia kursi bayi (baby seat), roof box & rak bagasi, kamera dashcam 4K, kartu e-toll, prepaid BBM, hingga supir tambahan.
+                                                {tr('Tersedia kursi bayi (baby seat), roof box & rak bagasi, kamera dashcam 4K, kartu e-toll, prepaid BBM, hingga supir tambahan.', 'Available: baby seat, roof box & luggage rack, 4K dashcam, e-toll card, prepaid fuel, and additional driver.')}
                                             </p>
                                         </div>
                                     )}
@@ -1827,39 +1898,39 @@ export default function BookingView({
                             <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Dokumen Verifikasi (KTP & SIM)</h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">KTP dan SIM keduanya wajib. Foto harus utuh, terang, dan tulisan masih terbaca.</p>
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">{tr('Dokumen Verifikasi (KTP & SIM)', 'Verification Documents (ID Card & License)')}</h3>
+                                        <p className="text-xs text-slate-400 mt-0.5">{tr('KTP dan SIM keduanya wajib. Foto harus utuh, terang, dan tulisan masih terbaca.', 'Both ID Card (KTP) and Driver License (SIM) are required. Photos must be clear, complete, and legible.')}</p>
                                     </div>
                                     {!isExpired && !isCancelled && (
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 if (!isVerified) {
-                                                    alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
+                                                    alert(tr('Verifikasi nomor WhatsApp Anda terlebih dahulu', 'Please verify your WhatsApp number first'));
                                                     return;
                                                 }
                                                 setShowDocs(!showDocs);
                                             }}
                                             className={`text-xs font-black underline ${!isVerified ? 'text-slate-400 cursor-not-allowed' : 'text-slate-900'}`}
                                         >
-                                            {showDocs ? 'Sembunyikan' : 'Kelola Dokumen'}
+                                            {showDocs ? tr('Sembunyikan', 'Hide') : tr('Kelola Dokumen', 'Manage Documents')}
                                         </button>
                                     )}
                                 </div>
 
                                 <div className="flex flex-wrap gap-2.5 text-xs">
                                     <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.ktp_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                                        KTP: {booking.documents?.ktp_uploaded ? 'Terunggah ✓' : 'Belum'}
+                                        {tr('KTP:', 'ID Card (KTP):')} {booking.documents?.ktp_uploaded ? tr('Terunggah ✓', 'Uploaded ✓') : tr('Belum', 'Missing')}
                                     </span>
                                     <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.sim_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                                        SIM A: {booking.documents?.sim_uploaded ? 'Terunggah ✓' : 'Belum'}
+                                        {tr('SIM A:', 'Driver License:')} {booking.documents?.sim_uploaded ? tr('Terunggah ✓', 'Uploaded ✓') : tr('Belum', 'Missing')}
                                     </span>
                                     <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents?.guarantor_uploaded ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                                        Dokumen Penjamin: {booking.documents?.guarantor_uploaded ? 'Terunggah ✓' : 'Belum'}
+                                        {tr('Dokumen Penjamin:', 'Guarantor Doc:')} {booking.documents?.guarantor_uploaded ? tr('Terunggah ✓', 'Uploaded ✓') : tr('Belum', 'Missing')}
                                     </span>
                                     {booking.documents?.ai_kyc_assessment && (
                                         <span className={`rounded-lg px-2.5 py-1 font-bold border ${booking.documents.ai_kyc_assessment.status === 'verified' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
-                                            e-KYC AI: {booking.documents.ai_kyc_assessment.status === 'verified' ? 'Terverifikasi ✓' : 'Perlu Review Staff'}
+                                            e-KYC AI: {booking.documents.ai_kyc_assessment.status === 'verified' ? tr('Terverifikasi ✓', 'Verified ✓') : tr('Perlu Review Staff', 'Needs Staff Review')}
                                         </span>
                                     )}
                                     {!booking.documents?.ai_kyc_assessment && booking.documents?.partner_identity?.id_number && (
@@ -1874,7 +1945,7 @@ export default function BookingView({
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                                    Foto KTP Penyewa
+                                                    {tr('Foto KTP Penyewa', 'Renter ID Card (KTP) Photo')}
                                                     {booking.documents?.ai_ocr_enabled !== false && (
                                                         <span className="ml-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                                                             ⚡ Auto-Scan OCR
@@ -1898,7 +1969,7 @@ export default function BookingView({
                                                     <div className="mt-2.5 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2.5">
                                                         <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
                                                         <span className="text-xs font-semibold text-blue-800">
-                                                            AI sedang memindai KTP & membaca NIK...
+                                                            {tr('AI sedang memindai KTP & membaca NIK...', 'AI is scanning ID Card & reading ID Number...')}
                                                         </span>
                                                     </div>
                                                 )}
@@ -1913,15 +1984,15 @@ export default function BookingView({
                                                     <div className="mt-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                                                         <div className="flex items-center justify-between text-xs">
                                                             <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                                                                <span className="text-emerald-600">✓</span> Hasil OCR KTP
+                                                                <span className="text-emerald-600">✓</span> {tr('Hasil OCR KTP', 'ID Card OCR Result')}
                                                             </span>
                                                             {ktpOcrValidation?.checks?.nik_16_digits?.passed ? (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                                    16 Digit Valid
+                                                                    {tr('16 Digit Valid', 'Valid 16 Digits')}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
-                                                                    Periksa NIK
+                                                                    {tr('Periksa NIK', 'Check ID Number')}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -1929,24 +2000,24 @@ export default function BookingView({
                                                         <div className="space-y-1.5 pt-1">
                                                             <div>
                                                                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                                                                    NIK (16 Digit)
+                                                                    {tr('NIK (16 Digit)', 'ID Number / NIK (16 Digits)')}
                                                                 </label>
                                                                 <input
                                                                     type="text"
                                                                     maxLength={16}
                                                                     value={docsForm.data.id_number}
                                                                     onChange={(e) => docsForm.setData('id_number', e.target.value)}
-                                                                    placeholder="Contoh: 3201234567890001"
+                                                                    placeholder={tr('Contoh: 3201234567890001', 'E.g.: 3201234567890001')}
                                                                     className="w-full mt-0.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
                                                                 />
                                                             </div>
 
                                                             {ktpOcrResult.data?.name && (
                                                                 <div className="text-xs text-slate-600">
-                                                                    <span className="text-slate-400">Nama di KTP:</span> <b>{ktpOcrResult.data.name}</b>
+                                                                    <span className="text-slate-400">{tr('Nama di KTP:', 'Name on ID:')}</span> <b>{ktpOcrResult.data.name}</b>
                                                                     {ktpOcrValidation?.checks?.name_match?.passed !== undefined && (
                                                                         <span className={`ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${ktpOcrValidation.checks.name_match.passed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                                                                            {ktpOcrValidation.checks.name_match.passed ? 'Nama Sesuai' : 'Beda Nama'}
+                                                                            {ktpOcrValidation.checks.name_match.passed ? tr('Nama Sesuai', 'Name Matches') : tr('Beda Nama', 'Different Name')}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -1964,7 +2035,7 @@ export default function BookingView({
 
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                                    Foto SIM A Penyewa
+                                                    {tr('Foto SIM A Penyewa', 'Renter Driver License (SIM A) Photo')}
                                                     {booking.documents?.ai_ocr_enabled !== false && (
                                                         <span className="ml-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                                                             ⚡ Auto-Scan OCR
@@ -1988,7 +2059,7 @@ export default function BookingView({
                                                     <div className="mt-2.5 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2.5">
                                                         <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
                                                         <span className="text-xs font-semibold text-blue-800">
-                                                            AI sedang memindai SIM & masa berlaku...
+                                                            {tr('AI sedang memindai SIM & masa berlaku...', 'AI is scanning Driver License & expiry date...')}
                                                         </span>
                                                     </div>
                                                 )}
@@ -2003,15 +2074,15 @@ export default function BookingView({
                                                     <div className="mt-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                                                         <div className="flex items-center justify-between text-xs">
                                                             <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                                                                <span className="text-emerald-600">✓</span> Hasil OCR SIM
+                                                                <span className="text-emerald-600">✓</span> {tr('Hasil OCR SIM', 'License OCR Result')}
                                                             </span>
                                                             {simOcrValidation?.checks?.sim_expiry?.passed ? (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                                    SIM Aktif
+                                                                    {tr('SIM Aktif', 'License Active')}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
-                                                                    {simOcrValidation?.checks?.sim_expiry?.is_expired ? 'SIM Kedaluwarsa' : 'Periksa Masa Berlaku'}
+                                                                    {simOcrValidation?.checks?.sim_expiry?.is_expired ? tr('SIM Kedaluwarsa', 'License Expired') : tr('Periksa Masa Berlaku', 'Check Expiry')}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -2019,19 +2090,19 @@ export default function BookingView({
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                                                             <div>
                                                                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                                                                    Nomor SIM
+                                                                    {tr('Nomor SIM', 'License Number')}
                                                                 </label>
                                                                 <input
                                                                     type="text"
                                                                     value={docsForm.data.license_number}
                                                                     onChange={(e) => docsForm.setData('license_number', e.target.value)}
-                                                                    placeholder="Nomor SIM"
+                                                                    placeholder={tr('Nomor SIM', 'License Number')}
                                                                     className="w-full mt-0.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
                                                                 />
                                                             </div>
                                                             <div>
                                                                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                                                                    Masa Berlaku
+                                                                    {tr('Masa Berlaku', 'Expiry Date')}
                                                                 </label>
                                                                 <input
                                                                     type="date"
@@ -2053,23 +2124,23 @@ export default function BookingView({
 
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                                    Jenis Dokumen Penjamin
+                                                    {tr('Jenis Dokumen Penjamin', 'Guarantor Document Type')}
                                                 </label>
                                                 <select
                                                     value={docsForm.data.guarantor_doc_type}
                                                     onChange={(e) => docsForm.setData('guarantor_doc_type', e.target.value)}
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-slate-900 focus:outline-none"
                                                 >
-                                                    <option value="flight_ticket">Tiket Pesawat Pulang-Pergi</option>
-                                                    <option value="hotel_booking">Voucher Reservasi Hotel</option>
-                                                    <option value="employee_id">ID Card Karyawan / Kartu Nama</option>
-                                                    <option value="family_card">Kartu Keluarga (KK)</option>
-                                                    <option value="other">Dokumen Lainnya</option>
+                                                    <option value="flight_ticket">{tr('Tiket Pesawat Pulang-Pergi', 'Round-Trip Flight Ticket')}</option>
+                                                    <option value="hotel_booking">{tr('Voucher Reservasi Hotel', 'Hotel Reservation Voucher')}</option>
+                                                    <option value="employee_id">{tr('ID Card Karyawan / Kartu Nama', 'Employee ID / Business Card')}</option>
+                                                    <option value="family_card">{tr('Kartu Keluarga (KK)', 'Family Card (KK)')}</option>
+                                                    <option value="other">{tr('Dokumen Lainnya', 'Other Document')}</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                                    Unggah Dokumen Penjamin
+                                                    {tr('Unggah Dokumen Penjamin', 'Upload Guarantor Document')}
                                                 </label>
                                                 <input
                                                     type="file"
@@ -2085,7 +2156,7 @@ export default function BookingView({
                                             disabled={docsForm.processing || scanningKtp || scanningSim}
                                             className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase text-white shadow-sm transition disabled:opacity-50"
                                         >
-                                            {docsForm.processing ? 'Mengunggah & Memproses...' : 'Simpan Dokumen'}
+                                            {docsForm.processing ? tr('Mengunggah & Memproses...', 'Uploading & Processing...') : tr('Simpan Dokumen', 'Save Documents')}
                                         </button>
                                     </form>
                                 )}
@@ -2104,10 +2175,10 @@ export default function BookingView({
                                         </div>
                                         <div>
                                             <h3 className="text-xs font-black uppercase tracking-wider text-amber-900">
-                                                Verifikasi Akses Pemesan
+                                                {tr('Verifikasi Akses Pemesan', 'Customer Access Verification')}
                                             </h3>
                                             <p className="text-xs text-amber-800 leading-relaxed mt-0.5 font-medium">
-                                                Verifikasi nomor WhatsApp <b>{booking.booker_phone}</b> untuk membuka menu pembayaran dan serah terima unit.
+                                                {tr('Verifikasi nomor WhatsApp', 'Verify WhatsApp number')} <b>{booking.booker_phone}</b> {tr('untuk membuka menu pembayaran dan serah terima unit.', 'to unlock payment and unit handover options.')}
                                             </p>
                                         </div>
                                     </div>
@@ -2116,7 +2187,7 @@ export default function BookingView({
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
-                                                placeholder="6 Digit OTP"
+                                                placeholder={tr('6 Digit OTP', '6-Digit OTP')}
                                                 className="w-full rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-black text-slate-800 tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                                 maxLength={6}
                                                 value={verificationCode}
@@ -2129,7 +2200,7 @@ export default function BookingView({
                                                 disabled={sendingPageOtp}
                                                 className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 text-xs font-black uppercase transition disabled:opacity-50 shrink-0"
                                             >
-                                                {sendingPageOtp ? 'Kirim...' : 'Kirim OTP'}
+                                                {sendingPageOtp ? tr('Kirim...', 'Sending...') : tr('Kirim OTP', 'Send OTP')}
                                             </button>
                                         </div>
 
@@ -2141,8 +2212,8 @@ export default function BookingView({
                                                             ⚡
                                                         </span>
                                                         <div>
-                                                            <span className="font-black text-amber-900 block leading-tight">Mode Development</span>
-                                                            <span className="text-[11px] text-amber-700 font-medium">Kode OTP:</span>
+                                                            <span className="font-black text-amber-900 block leading-tight">{tr('Mode Development', 'Development Mode')}</span>
+                                                            <span className="text-[11px] text-amber-700 font-medium">{tr('Kode OTP:', 'OTP Code:')}</span>
                                                         </div>
                                                     </div>
                                                     <span className="font-mono text-sm font-black bg-white px-2.5 py-1 rounded-lg border border-amber-300 tracking-widest text-slate-900 shadow-xs shrink-0">
@@ -2151,7 +2222,7 @@ export default function BookingView({
                                                 </div>
                                                 <div className="text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg border border-amber-200/80 font-semibold flex items-center gap-1">
                                                     <span>✓</span>
-                                                    <span>Kode OTP telah diisikan otomatis.</span>
+                                                    <span>{tr('Kode OTP telah diisikan otomatis.', 'OTP code has been automatically filled.')}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -2171,7 +2242,7 @@ export default function BookingView({
                                             disabled={verifyingOtp}
                                             className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase text-white transition disabled:opacity-50 shadow-sm"
                                         >
-                                            {verifyingOtp ? 'Memverifikasi...' : 'Buka Kunci Akses'}
+                                            {verifyingOtp ? tr('Memverifikasi...', 'Verifying...') : tr('Buka Kunci Akses', 'Unlock Access')}
                                         </button>
                                     </form>
                                 </div>
@@ -2180,38 +2251,38 @@ export default function BookingView({
                             {/* Pricing & Deposit Summary */}
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 border-b pb-2 border-slate-100">
-                                    Rincian Tagihan
+                                    {tr('Rincian Tagihan', 'Billing Summary')}
                                 </h3>
                                 <div className="space-y-3 text-xs">
                                     <div className="flex justify-between text-slate-600 font-medium">
-                                        <span>Sewa ({booking.total_periods} {booking.period_type === 'weekly' ? 'minggu' : booking.period_type === 'monthly' ? 'bulan' : 'hari'})</span>
+                                        <span>{tr('Sewa', 'Rental')} ({booking.total_periods} {booking.period_type === 'weekly' ? tr('minggu', 'week(s)') : booking.period_type === 'monthly' ? tr('bulan', 'month(s)') : tr('hari', 'day(s)')})</span>
                                         <span className="font-black text-slate-900">{money(booking.base_amount)}</span>
                                     </div>
 
                                     <div className="flex justify-between text-slate-600 font-medium">
-                                        <span>Wajib Deposit</span>
+                                        <span>{tr('Wajib Deposit', 'Required Deposit')}</span>
                                         <span className="font-black text-slate-900">
-                                            {Number(booking.deposit_amount) > 0 ? money(booking.deposit_amount) : 'Tanpa Deposit'}
+                                            {Number(booking.deposit_amount) > 0 ? money(booking.deposit_amount) : tr('Tanpa Deposit', 'No Deposit')}
                                         </span>
                                     </div>
 
                                     <div className="flex justify-between items-center text-slate-600 font-medium pt-1 border-t border-slate-100">
-                                        <span>Status Deposit</span>
+                                        <span>{tr('Status Deposit', 'Deposit Status')}</span>
                                         {isExpired ? (
-                                            <span className="rounded-full bg-slate-100 px-3 py-0.5 font-bold text-slate-600">Kedaluwarsa</span>
+                                            <span className="rounded-full bg-slate-100 px-3 py-0.5 font-bold text-slate-600">{tr('Kedaluwarsa', 'Expired')}</span>
                                         ) : isCancelled ? (
-                                            <span className="rounded-full bg-rose-100 px-3 py-0.5 font-bold text-rose-800">Dibatalkan</span>
+                                            <span className="rounded-full bg-rose-100 px-3 py-0.5 font-bold text-rose-800">{tr('Dibatalkan', 'Cancelled')}</span>
                                         ) : Number(booking.deposit_amount) <= 0 ? (
                                             <span className="font-bold text-slate-500">-</span>
                                         ) : booking.deposit_received ? (
-                                            <span className="rounded-full bg-emerald-100 px-3 py-0.5 font-bold text-emerald-800">Lunas / Diterima</span>
+                                            <span className="rounded-full bg-emerald-100 px-3 py-0.5 font-bold text-emerald-800">{tr('Lunas / Diterima', 'Paid / Received')}</span>
                                         ) : (
-                                            <span className="rounded-full bg-amber-100 px-3 py-0.5 font-bold text-amber-800">Belum Dibayar</span>
+                                            <span className="rounded-full bg-amber-100 px-3 py-0.5 font-bold text-amber-800">{tr('Belum Dibayar', 'Unpaid')}</span>
                                         )}
                                     </div>
 
                                     <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm font-black text-slate-900">
-                                        <span>Total Tagihan</span>
+                                        <span>{tr('Total Tagihan', 'Total Amount')}</span>
                                         <span className="text-base text-slate-900">{money(booking.total_amount)}</span>
                                     </div>
                                 </div>
@@ -2226,24 +2297,24 @@ export default function BookingView({
                                         </span>
                                         <div>
                                             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                Pemesanan Kedaluwarsa
+                                                {tr('Pemesanan Kedaluwarsa', 'Booking Expired')}
                                             </h3>
                                             <p className="text-[11px] text-slate-500 font-medium">
-                                                Batas waktu pembayaran telah berakhir
+                                                {tr('Batas waktu pembayaran telah berakhir', 'Payment deadline has expired')}
                                             </p>
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-600 leading-relaxed">
-                                        Pemesanan dengan kode <strong className="text-slate-900 font-bold">{booking.code}</strong> telah kedaluwarsa karena pembayaran tidak diselesaikan sebelum batas waktu. Unit kendaraan telah dirilis kembali untuk pemesan lain.
+                                        {tr('Pemesanan dengan kode', 'Booking with code')} <strong className="text-slate-900 font-bold">{booking.code}</strong> {tr('telah kedaluwarsa karena pembayaran tidak diselesaikan sebelum batas waktu. Unit kendaraan telah dirilis kembali untuk pemesan lain.', 'has expired because payment was not completed before the deadline. The vehicle unit has been released for other customers.')}
                                     </p>
                                     <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900 font-semibold space-y-1">
-                                        <p>⚠️ <strong>Jangan melakukan transfer</strong> untuk pemesanan ini karena sistem tidak dapat memproses reservasi yang telah kedaluwarsa.</p>
+                                        <p>⚠️ <strong>{tr('Jangan melakukan transfer', 'Do not make a bank transfer')}</strong> {tr('untuk pemesanan ini karena sistem tidak dapat memproses reservasi yang telah kedaluwarsa.', 'for this booking as the system cannot process expired reservations.')}</p>
                                     </div>
                                     <a
                                         href="/book/rental"
                                         className="flex items-center justify-center gap-2 w-full rounded-xl bg-slate-900 hover:bg-slate-800 py-3 text-xs font-black uppercase tracking-wider text-white transition shadow-sm"
                                     >
-                                        <span>+ Buat Reservasi Baru</span>
+                                        <span>{tr('+ Buat Reservasi Baru', '+ Create New Reservation')}</span>
                                     </a>
                                 </div>
                             ) : isCancelled ? (
@@ -2254,21 +2325,21 @@ export default function BookingView({
                                         </span>
                                         <div>
                                             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                Pemesanan Dibatalkan
+                                                {tr('Pemesanan Dibatalkan', 'Booking Cancelled')}
                                             </h3>
                                             <p className="text-[11px] text-slate-500 font-medium">
-                                                Reservasi ini telah dibatalkan
+                                                {tr('Reservasi ini telah dibatalkan', 'This reservation has been cancelled')}
                                             </p>
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-600 leading-relaxed">
-                                        Pemesanan dengan kode <strong className="text-slate-900 font-bold">{booking.code}</strong> telah dibatalkan. Pembayaran dan serah terima unit tidak dapat diproses lagi.
+                                        {tr('Pemesanan dengan kode', 'Booking with code')} <strong className="text-slate-900 font-bold">{booking.code}</strong> {tr('telah dibatalkan. Pembayaran dan serah terima unit tidak dapat diproses lagi.', 'has been cancelled. Payment and unit handover can no longer be processed.')}
                                     </p>
                                     <a
                                         href="/book/rental"
                                         className="flex items-center justify-center gap-2 w-full rounded-xl bg-slate-900 hover:bg-slate-800 py-3 text-xs font-black uppercase tracking-wider text-white transition shadow-sm"
                                     >
-                                        <span>+ Buat Reservasi Baru</span>
+                                        <span>{tr('+ Buat Reservasi Baru', '+ Create New Reservation')}</span>
                                     </a>
                                 </div>
                             ) : (booking.can_pay_deposit || isBalancePayable) && booking.deposit_proof?.status !== 'pending' ? (
@@ -2276,8 +2347,8 @@ export default function BookingView({
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                                             {isBalancePayable
-                                                ? 'Pembayaran Tagihan / Perpanjangan Sewa'
-                                                : (Number(booking.deposit_amount) > 0 ? 'Pembayaran Deposit' : 'Pembayaran Sewa')}
+                                                ? tr('Pembayaran Tagihan / Perpanjangan Sewa', 'Invoice / Extension Payment')
+                                                : (Number(booking.deposit_amount) > 0 ? tr('Pembayaran Deposit', 'Deposit Payment') : tr('Pembayaran Sewa', 'Rental Payment'))}
                                         </h3>
                                         <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[10px] font-bold">
                                             <button
@@ -2285,7 +2356,7 @@ export default function BookingView({
                                                 onClick={() => setDepositTab('transfer')}
                                                 className={`rounded-lg px-3 py-1.5 transition ${depositTab === 'transfer' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
                                             >
-                                                Transfer Bank
+                                                {tr('Transfer Bank', 'Bank Transfer')}
                                             </button>
                                             {qris_merchant?.image_url && (
                                                 <button
@@ -2303,7 +2374,7 @@ export default function BookingView({
                                                     onClick={() => setDepositTab('online')}
                                                     className={`rounded-lg px-3 py-1.5 transition ${depositTab === 'online' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
                                                 >
-                                                    Bayar online
+                                                    {tr('Bayar online', 'Pay online')}
                                                 </button>
                                             )}
                                         </div>
@@ -2311,7 +2382,7 @@ export default function BookingView({
 
                                     {!isVerified ? (
                                         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4 font-semibold text-center leading-relaxed">
-                                            Verifikasi nomor WhatsApp Anda di atas untuk membuka opsi pembayaran.
+                                            {tr('Verifikasi nomor WhatsApp Anda di atas untuk membuka opsi pembayaran.', 'Verify your WhatsApp number above to unlock payment options.')}
                                         </p>
                                     ) : (
                                         <>
@@ -2332,7 +2403,7 @@ export default function BookingView({
                                                                     if (!selectedBank) {
                                                                         return (
                                                                             <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-                                                                                Belum ada rekening bank yang dikonfigurasi.
+                                                                                {tr('Belum ada rekening bank yang dikonfigurasi.', 'No bank account configured yet.')}
                                                                             </p>
                                                                         );
                                                                     }
@@ -2359,12 +2430,12 @@ export default function BookingView({
                                                                                         }}
                                                                                         className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-slate-800 transition"
                                                                                     >
-                                                                                        {copiedAccount ? 'Tersalin ✓' : 'Salin Rekening'}
+                                                                                        {copiedAccount ? tr('Tersalin ✓', 'Copied ✓') : tr('Salin Rekening', 'Copy Account')}
                                                                                     </button>
                                                                                 )}
                                                                             </div>
                                                                             <p className="text-[11px] text-slate-600 font-semibold leading-relaxed">
-                                                                                Transfer nominal: <b className="text-slate-950 font-black">{money(payableAmount)}</b>
+                                                                                {tr('Transfer nominal:', 'Transfer amount:')} <b className="text-slate-950 font-black">{money(payableAmount)}</b>
                                                                             </p>
                                                                         </div>
                                                                     );
@@ -2372,7 +2443,7 @@ export default function BookingView({
 
                                                                 <div>
                                                                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                                        Upload Bukti Transfer (Foto / PDF) *
+                                                                        {tr('Upload Bukti Transfer (Foto / PDF) *', 'Upload Transfer Proof (Photo / PDF) *')}
                                                                     </label>
                                                                     <input
                                                                         type="file"
@@ -2390,7 +2461,7 @@ export default function BookingView({
                                                                     disabled={proofForm.processing}
                                                                     className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
                                                                 >
-                                                                    {proofForm.processing ? 'Mengunggah...' : 'Kirim Bukti Pembayaran'}
+                                                                    {proofForm.processing ? tr('Mengunggah...', 'Uploading...') : tr('Kirim Bukti Pembayaran', 'Submit Payment Proof')}
                                                                 </button>
                                                             </form>
                                                         )}
@@ -2405,19 +2476,19 @@ export default function BookingView({
                                                                                 QRIS
                                                                             </span>
                                                                             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
-                                                                                Pembayaran Merchant
+                                                                                {tr('Pembayaran Merchant', 'Merchant Payment')}
                                                                             </span>
                                                                         </div>
                                                                         <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                                                                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                                                            Semua Bank & E-Wallet
+                                                                            {tr('Semua Bank & E-Wallet', 'All Banks & E-Wallets')}
                                                                         </span>
                                                                     </div>
 
                                                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
                                                                         <div>
                                                                             <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-                                                                                Nama Merchant
+                                                                                {tr('Nama Merchant', 'Merchant Name')}
                                                                             </span>
                                                                             <h4 className="text-sm sm:text-base font-black text-white tracking-wide">
                                                                                 {qris_merchant.merchant_name || brand.name}
@@ -2431,7 +2502,7 @@ export default function BookingView({
 
                                                                         <div className="bg-white/10 backdrop-blur-xs rounded-xl px-3.5 py-2 border border-white/10 text-center sm:text-right shrink-0">
                                                                             <span className="text-[10px] uppercase font-bold text-slate-300 block">
-                                                                                Nominal Tagihan
+                                                                                {tr('Nominal Tagihan', 'Amount Due')}
                                                                             </span>
                                                                             <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-end">
                                                                                 <span className="text-base sm:text-lg font-black font-mono text-emerald-400">
@@ -2445,9 +2516,9 @@ export default function BookingView({
                                                                                         setTimeout(() => setCopiedAmount(false), 2000);
                                                                                     }}
                                                                                     className="text-[10px] font-bold bg-white text-slate-900 px-2 py-1 rounded-md hover:bg-slate-100 transition shadow-xs"
-                                                                                    title="Salin Nominal Tagihan"
+                                                                                    title={tr('Salin Nominal Tagihan', 'Copy Amount')}
                                                                                 >
-                                                                                    {copiedAmount ? 'Tersalin ✓' : 'Salin'}
+                                                                                    {copiedAmount ? tr('Tersalin ✓', 'Copied ✓') : tr('Salin', 'Copy')}
                                                                                 </button>
                                                                             </div>
                                                                         </div>
@@ -2476,7 +2547,7 @@ export default function BookingView({
                                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                                             </svg>
-                                                                            Unduh Gambar QRIS
+                                                                            {tr('Unduh Gambar QRIS', 'Download QRIS Image')}
                                                                         </a>
                                                                         <button
                                                                             type="button"
@@ -2486,12 +2557,12 @@ export default function BookingView({
                                                                             <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
                                                                             </svg>
-                                                                            Perbesar QR
+                                                                            {tr('Perbesar QR', 'Enlarge QR')}
                                                                         </button>
                                                                     </div>
 
                                                                     <p className="text-[11px] text-slate-500 max-w-md leading-relaxed">
-                                                                        {qris_merchant.instructions || 'Buka m-banking (BCA, Mandiri, BRI, BNI) atau e-wallet (GoPay, OVO, Dana, ShopeePay). Scan QRIS di atas, masukkan nominal yang sesuai, dan upload screenshot bukti pembayaran.'}
+                                                                        {qris_merchant.instructions || tr('Buka m-banking (BCA, Mandiri, BRI, BNI) atau e-wallet (GoPay, OVO, Dana, ShopeePay). Scan QRIS di atas, masukkan nominal yang sesuai, dan upload screenshot bukti pembayaran.', 'Open your mobile banking or e-wallet app. Scan the QRIS code above, enter the exact amount, and upload a screenshot of your payment receipt.')}
                                                                     </p>
                                                                 </div>
 
@@ -2499,7 +2570,7 @@ export default function BookingView({
                                                                 <form onSubmit={(e) => submitProof(e, 'qris')} className="space-y-4 pt-1" noValidate>
                                                                     <div>
                                                                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                                            Upload Bukti Pembayaran QRIS (Foto / Screenshot / PDF) *
+                                                                            {tr('Upload Bukti Pembayaran QRIS (Foto / Screenshot / PDF) *', 'Upload QRIS Payment Proof (Photo / Screenshot / PDF) *')}
                                                                         </label>
                                                                         <input
                                                                             type="file"
@@ -2517,7 +2588,7 @@ export default function BookingView({
                                                                         disabled={proofForm.processing}
                                                                         className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
                                                                     >
-                                                                        {proofForm.processing ? 'Mengunggah...' : 'Kirim Bukti Pembayaran QRIS'}
+                                                                        {proofForm.processing ? tr('Mengunggah...', 'Uploading...') : tr('Kirim Bukti Pembayaran QRIS', 'Submit QRIS Payment Proof')}
                                                                     </button>
                                                                 </form>
                                                             </div>
@@ -2529,7 +2600,7 @@ export default function BookingView({
                                             {depositTab === 'online' && (
                                                 <form onSubmit={pay} className="space-y-3">
                                                     <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                                        Anda akan diarahkan ke gerbang pembayaran online Midtrans Snap untuk menyelesaikan transaksi.
+                                                        {tr('Anda akan diarahkan ke gerbang pembayaran online Midtrans Snap untuk menyelesaikan transaksi.', 'You will be redirected to the Midtrans Snap online payment gateway to complete the transaction.')}
                                                     </p>
                                                     <button
                                                         type="submit"
@@ -2537,7 +2608,7 @@ export default function BookingView({
                                                         className="w-full h-11 flex items-center justify-center rounded-xl text-xs font-black uppercase text-white shadow-sm transition"
                                                         style={{ backgroundColor: 'var(--brand-color)' }}
                                                     >
-                                                        Bayar online ({money(
+                                                        {tr('Bayar online', 'Pay online')} ({money(
                                                             isBalancePayable
                                                                 ? Number(booking.payment.balance_due)
                                                                 : (Number(booking.deposit_amount) > 0 ? Number(booking.deposit_amount) : Number(booking.total_amount))
@@ -2555,22 +2626,22 @@ export default function BookingView({
                                 <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
                                     <div className="space-y-1">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                            Tanda tangan kontrak
+                                            {tr('Tanda tangan kontrak', 'Sign rental contract')}
                                         </h3>
                                         <p className="text-[11px] font-medium leading-relaxed text-slate-500">
-                                            Unit baru diserahkan setelah staf depot menyelesaikan serah terima.
+                                            {tr('Unit baru diserahkan setelah staf depot menyelesaikan serah terima.', 'The vehicle will be handed over after depot staff completes the physical handover.')}
                                         </p>
                                     </div>
 
                                     {booking.pickup_request?.requested_at ? (
                                         <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-950 space-y-2">
-                                            <div className="font-bold">Kontrak ditandatangani ✓</div>
-                                            <p className="leading-relaxed">Tunjukkan layar ini kepada staf depot. Unit belum diserahkan.</p>
-                                            <p className="leading-relaxed font-medium">Datang ke depot sesuai jadwal. Staf yang akan menyerahkan kunci.</p>
+                                            <div className="font-bold">{tr('Kontrak ditandatangani ✓', 'Contract signed ✓')}</div>
+                                            <p className="leading-relaxed">{tr('Tunjukkan layar ini kepada staf depot. Unit belum diserahkan.', 'Show this screen to depot staff. The vehicle has not been handed over yet.')}</p>
+                                            <p className="leading-relaxed font-medium">{tr('Datang ke depot sesuai jadwal. Staf yang akan menyerahkan kunci.', 'Visit the depot as scheduled. Staff will hand over the keys.')}</p>
                                         </div>
                                     ) : !isVerified ? (
                                         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4 font-semibold text-center">
-                                            Verifikasi nomor WhatsApp di atas untuk mengisi kontrak digital.
+                                            {tr('Verifikasi nomor WhatsApp di atas untuk mengisi kontrak digital.', 'Verify your WhatsApp number above to sign the digital contract.')}
                                         </p>
                                     ) : (
                                         <form onSubmit={submitPickupRequest} className="space-y-4" noValidate>
@@ -2584,7 +2655,7 @@ export default function BookingView({
                                                         required
                                                     />
                                                     <span>
-                                                        Saya menyetujui seluruh ketentuan sewa & mematuhi batas waktu pengembalian.
+                                                        {tr('Saya menyetujui seluruh ketentuan sewa & mematuhi batas waktu pengembalian.', 'I agree to all rental terms & conditions and will comply with the return deadline.')}
                                                     </span>
                                                 </label>
                                             </div>
@@ -2599,7 +2670,7 @@ export default function BookingView({
                                                 disabled={pickupForm.processing}
                                                 className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white shadow-sm transition disabled:opacity-50"
                                             >
-                                                {pickupForm.processing ? 'Mengirim...' : 'Tanda tangani kontrak'}
+                                                {pickupForm.processing ? tr('Mengirim...', 'Submitting...') : tr('Tanda tangani kontrak', 'Sign contract')}
                                             </button>
                                         </form>
                                     )}
@@ -2616,10 +2687,10 @@ export default function BookingView({
                                             </span>
                                             <div>
                                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                    Pengembalian Unit Mandiri
+                                                    {tr('Pengembalian Unit Mandiri', 'Self-Service Vehicle Return')}
                                                 </h3>
                                                 <p className="text-[11px] text-slate-500">
-                                                    Selesaikan sewa & serah terima BAST akhir secara mandiri.
+                                                    {tr('Selesaikan sewa & serah terima BAST akhir secara mandiri.', 'Complete your rental & final handover independently.')}
                                                 </p>
                                             </div>
                                         </div>
@@ -2627,14 +2698,14 @@ export default function BookingView({
                                             type="button"
                                             onClick={() => {
                                                 if (!isVerified) {
-                                                    alert('Verifikasi nomor WhatsApp terlebih dahulu');
+                                                    alert(tr('Verifikasi nomor WhatsApp terlebih dahulu', 'Please verify your WhatsApp number first'));
                                                     return;
                                                 }
                                                 setShowReturnModal(!showReturnModal);
                                             }}
                                             className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 text-xs font-black transition shadow-xs"
                                         >
-                                            {showReturnModal ? 'Tutup Form' : 'Mulai Pengembalian'}
+                                            {showReturnModal ? tr('Tutup Form', 'Close Form') : tr('Mulai Pengembalian', 'Start Return')}
                                         </button>
                                     </div>
 
@@ -2644,10 +2715,10 @@ export default function BookingView({
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                     <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-                                                        1. Foto Kondisi Pengembalian ({returnForm.data.return_photos.length}/5)
+                                                        {tr('1. Foto Kondisi Pengembalian', '1. Return Condition Photos')} ({returnForm.data.return_photos.length}/5)
                                                     </label>
                                                     <span className="text-[10px] text-slate-400">
-                                                        Wajib: 4 Sisi Mobil & Spidometer
+                                                        {tr('Wajib: 4 Sisi Mobil & Spidometer', 'Required: 4 Vehicle Sides & Speedometer')}
                                                     </span>
                                                 </div>
 
@@ -2668,7 +2739,7 @@ export default function BookingView({
                                                     {returnForm.data.return_photos.length < 5 && (
                                                         <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-white flex flex-col items-center justify-center cursor-pointer transition p-2 text-center">
                                                             <span className="text-xl">📸</span>
-                                                            <span className="text-[10px] font-bold text-slate-600 mt-1">Tambah Foto</span>
+                                                            <span className="text-[10px] font-bold text-slate-600 mt-1">{tr('Tambah Foto', 'Add Photo')}</span>
                                                             <input
                                                                 type="file"
                                                                 accept="image/*"
@@ -2697,14 +2768,14 @@ export default function BookingView({
                                                             onClick={runReturnAiInspection}
                                                             className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black px-3 py-1 transition disabled:opacity-50"
                                                         >
-                                                            {scanningReturnPhotos ? 'Menganalisis Foto...' : 'Pindai Odometer & Bodi'}
+                                                            {scanningReturnPhotos ? tr('Menganalisis Foto...', 'Analyzing Photos...') : tr('Pindai Odometer & Bodi', 'Scan Odometer & Body')}
                                                         </button>
                                                     </div>
 
                                                     {scanningReturnPhotos && (
                                                         <div className="flex items-center gap-2 text-xs text-blue-800">
                                                             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
-                                                            <span>AI sedang memeriksa odometer, sisa BBM, dan goresan bodi baru...</span>
+                                                            <span>{tr('AI sedang memeriksa odometer, sisa BBM, dan goresan bodi baru...', 'AI is inspecting odometer, remaining fuel, and new body scratches...')}</span>
                                                         </div>
                                                     )}
 
@@ -2718,7 +2789,7 @@ export default function BookingView({
                                                         <div className="space-y-2 pt-1 text-xs">
                                                             <div className="flex flex-wrap items-center gap-2">
                                                                 <span className={`px-2 py-0.5 rounded font-bold border ${returnAiInspection.overall_status === 'clean' ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-amber-100 border-amber-300 text-amber-900'}`}>
-                                                                    {returnAiInspection.overall_status === 'clean' ? 'Bodi Sesuai ✓' : 'Kerusakan Baru Terdeteksi'}
+                                                                    {returnAiInspection.overall_status === 'clean' ? tr('Bodi Sesuai ✓', 'Body Matches ✓') : tr('Kerusakan Baru Terdeteksi', 'New Damage Detected')}
                                                                 </span>
                                                                 {returnAiInspection.extracted_odometer && (
                                                                     <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold">
@@ -2727,7 +2798,7 @@ export default function BookingView({
                                                                 )}
                                                                 {returnAiInspection.extracted_fuel_level && (
                                                                     <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold">
-                                                                        BBM: {returnAiInspection.extracted_fuel_level}
+                                                                        {tr('BBM', 'Fuel')}: {returnAiInspection.extracted_fuel_level}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -2743,19 +2814,19 @@ export default function BookingView({
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div>
                                                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                        Odometer Akhir (KM)
+                                                        {tr('Odometer Akhir (KM)', 'Final Odometer (KM)')}
                                                     </label>
                                                     <input
                                                         type="number"
                                                         value={returnForm.data.end_odometer}
                                                         onChange={(e) => returnForm.setData('end_odometer', e.target.value)}
-                                                        placeholder={booking.checkout_details?.start_odometer ? `Awal: ${booking.checkout_details.start_odometer} KM` : 'Contoh: 45200'}
+                                                        placeholder={booking.checkout_details?.start_odometer ? `${tr('Awal', 'Initial')}: ${booking.checkout_details.start_odometer} KM` : tr('Contoh: 45200', 'Example: 45200')}
                                                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 focus:border-slate-900 focus:outline-none"
                                                     />
                                                 </div>
                                                 <div>
                                                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                        Level BBM Akhir
+                                                        {tr('Level BBM Akhir', 'Final Fuel Level')}
                                                     </label>
                                                     <select
                                                         value={returnForm.data.end_fuel_level}
@@ -2772,7 +2843,7 @@ export default function BookingView({
                                             {/* Checklist */}
                                             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
                                                 <span className="text-[11px] font-black uppercase text-slate-700 block">
-                                                    2. Checklist Serah Terima
+                                                    {tr('2. Checklist Serah Terima', '2. Handover Checklist')}
                                                 </span>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                                     <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
@@ -2782,7 +2853,7 @@ export default function BookingView({
                                                             onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, interior: e.target.checked })}
                                                             className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                                                         />
-                                                        <span>Interior Bersih & Rapi</span>
+                                                        <span>{tr('Interior Bersih & Rapi', 'Clean & Neat Interior')}</span>
                                                     </label>
                                                     <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                                                         <input
@@ -2791,7 +2862,7 @@ export default function BookingView({
                                                             onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, keys: e.target.checked })}
                                                             className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                                                         />
-                                                        <span>Kunci Fisik & STNK Lengkap</span>
+                                                        <span>{tr('Kunci Fisik & STNK Lengkap', 'Physical Key & Registration Complete')}</span>
                                                     </label>
                                                     <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                                                         <input
@@ -2800,7 +2871,7 @@ export default function BookingView({
                                                             onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, documents: e.target.checked })}
                                                             className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                                                         />
-                                                        <span>Tidak Ada Barang Tertinggal</span>
+                                                        <span>{tr('Tidak Ada Barang Tertinggal', 'No Personal Belongings Left Behind')}</span>
                                                     </label>
                                                     <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                                                         <input
@@ -2809,7 +2880,7 @@ export default function BookingView({
                                                             onChange={(e) => returnForm.setData('return_checklist', { ...returnForm.data.return_checklist, exterior_body: e.target.checked })}
                                                             className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                                                         />
-                                                        <span>Bodi Kendaraan Sesuai</span>
+                                                        <span>{tr('Bodi Kendaraan Sesuai', 'Vehicle Body Matches Condition')}</span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -2817,11 +2888,11 @@ export default function BookingView({
                                             {/* Return Notes */}
                                             <div>
                                                 <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                    Catatan Pengembalian (Opsional)
+                                                    {tr('Catatan Pengembalian (Opsional)', 'Return Notes (Optional)')}
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    placeholder="Contoh: Kunci dititipkan ke security lobby"
+                                                    placeholder={tr('Contoh: Kunci dititipkan ke security lobby', 'Example: Key left with lobby security')}
                                                     value={returnForm.data.return_notes}
                                                     onChange={(e) => returnForm.setData('return_notes', e.target.value)}
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-slate-900 focus:outline-none"
@@ -2831,7 +2902,7 @@ export default function BookingView({
                                             {/* Digital Signature */}
                                             <div className="space-y-1">
                                                 <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-                                                    3. Tanda Tangan BAST Pengembalian
+                                                    {tr('3. Tanda Tangan BAST Pengembalian', '3. Return Handover Signature')}
                                                 </label>
                                                 <DigitalSignaturePad
                                                     value={returnForm.data.customer_signature}
@@ -2847,7 +2918,7 @@ export default function BookingView({
                                                 disabled={returnForm.processing || scanningReturnPhotos}
                                                 className="w-full h-11 flex items-center justify-center rounded-xl bg-emerald-700 hover:bg-emerald-800 text-xs font-black uppercase text-white shadow-sm transition disabled:opacity-50"
                                             >
-                                                {returnForm.processing ? 'Menyimpan Pengembalian...' : 'Selesaikan Pengembalian Unit'}
+                                                {returnForm.processing ? tr('Menyimpan Pengembalian...', 'Saving Return...') : tr('Selesaikan Pengembalian Unit', 'Complete Vehicle Return')}
                                             </button>
                                         </form>
                                     )}
@@ -2864,28 +2935,28 @@ export default function BookingView({
                                             </span>
                                             <div>
                                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                    Unit Berhasil Dikembalikan
+                                                    {tr('Unit Berhasil Dikembalikan', 'Vehicle Returned Successfully')}
                                                 </h3>
                                                 <p className="text-[11px] text-slate-500">
-                                                    {booking.return_details?.returned_at || 'Pengembalian telah dicatat'}
+                                                    {booking.return_details?.returned_at || tr('Pengembalian telah dicatat', 'Return has been recorded')}
                                                 </p>
                                             </div>
                                         </div>
                                         <span className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 text-xs font-bold">
-                                            BAST Selesai
+                                            {tr('BAST Selesai', 'Handover Complete')}
                                         </span>
                                     </div>
 
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-xs">
                                         {booking.return_details?.end_odometer && (
                                             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                                <span className="text-[10px] text-slate-400 block font-bold uppercase">Odo Akhir</span>
+                                                <span className="text-[10px] text-slate-400 block font-bold uppercase">{tr('Odo Akhir', 'Final Odo')}</span>
                                                 <span className="font-extrabold text-slate-800">{booking.return_details.end_odometer} KM</span>
                                             </div>
                                         )}
                                         {booking.return_details?.end_fuel_level && (
                                             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                                <span className="text-[10px] text-slate-400 block font-bold uppercase">BBM Akhir</span>
+                                                <span className="text-[10px] text-slate-400 block font-bold uppercase">{tr('BBM Akhir', 'Final Fuel')}</span>
                                                 <span className="font-extrabold text-slate-800">{booking.return_details.end_fuel_level.toUpperCase()}</span>
                                             </div>
                                         )}
@@ -2896,8 +2967,8 @@ export default function BookingView({
                                                 rel="noreferrer"
                                                 className="bg-blue-50 hover:bg-blue-100 p-2.5 rounded-xl border border-blue-200 text-blue-800 font-bold flex flex-col justify-center items-center text-center transition"
                                             >
-                                                <span className="text-[10px] block uppercase font-bold text-blue-600">Unduh Dokumen</span>
-                                                <span>PDF BAST Resmi</span>
+                                                <span className="text-[10px] block uppercase font-bold text-blue-600">{tr('Unduh Dokumen', 'Download Document')}</span>
+                                                <span>{tr('PDF BAST Resmi', 'Official Handover PDF')}</span>
                                             </a>
                                         )}
                                     </div>
@@ -2914,10 +2985,10 @@ export default function BookingView({
                                             </span>
                                             <div>
                                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                    Pusat Pengembalian Deposit (Refund Hub)
+                                                    {tr('Pusat Pengembalian Deposit (Refund Hub)', 'Security Deposit Refund Hub')}
                                                 </h3>
                                                 <p className="text-[11px] text-slate-500">
-                                                    Total Jaminan: <strong className="text-slate-800">{money(booking.deposit_refund.deposit_amount)}</strong>
+                                                    {tr('Total Jaminan:', 'Total Deposit:')} <strong className="text-slate-800">{money(booking.deposit_refund.deposit_amount)}</strong>
                                                 </p>
                                             </div>
                                         </div>
@@ -2929,7 +3000,7 @@ export default function BookingView({
                                                 return (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs font-black text-emerald-700 shadow-2xs">
                                                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                        Dana Telah Ditransfer
+                                                        {tr('Dana Telah Ditransfer', 'Funds Transferred')}
                                                     </span>
                                                 );
                                             }
@@ -2937,7 +3008,7 @@ export default function BookingView({
                                                 return (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-300 px-3 py-1 text-xs font-black text-blue-700 shadow-2xs">
                                                         <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                                                        Disetujui • Siap Ditransfer
+                                                        {tr('Disetujui • Siap Ditransfer', 'Approved • Ready for Transfer')}
                                                     </span>
                                                 );
                                             }
@@ -2945,7 +3016,7 @@ export default function BookingView({
                                                 return (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 border border-purple-300 px-3 py-1 text-xs font-black text-purple-700 shadow-2xs">
                                                         <span className="h-2 w-2 rounded-full bg-purple-500"></span>
-                                                        Pemeriksaan E-Tilang & Denda
+                                                        {tr('Pemeriksaan E-Tilang & Denda', 'Traffic Ticket & Fine Inspection')}
                                                     </span>
                                                 );
                                             }
@@ -2953,7 +3024,7 @@ export default function BookingView({
                                                 return (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-300 px-3 py-1 text-xs font-black text-amber-700 shadow-2xs">
                                                         <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping"></span>
-                                                        Perlu Rekening Refund
+                                                        {tr('Perlu Rekening Refund', 'Refund Bank Account Needed')}
                                                     </span>
                                                 );
                                             }
@@ -2961,20 +3032,20 @@ export default function BookingView({
                                                 return (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-300 px-3 py-1 text-xs font-black text-teal-700 shadow-2xs">
                                                         <span className="h-2 w-2 rounded-full bg-teal-500"></span>
-                                                        Rekening Tersimpan
+                                                        {tr('Rekening Tersimpan', 'Bank Account Saved')}
                                                     </span>
                                                 );
                                             }
                                             if (s === 'forfeited') {
                                                 return (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-300 px-3 py-1 text-xs font-black text-slate-700 shadow-2xs">
-                                                        Dipotong Pelunasan Sewa
+                                                        {tr('Dipotong Pelunasan Sewa', 'Applied to Rental Settlement')}
                                                     </span>
                                                 );
                                             }
                                             return (
                                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
-                                                    Ditahan Selama Sewa
+                                                    {tr('Ditahan Selama Sewa', 'Held During Rental')}
                                                 </span>
                                             );
                                         })()}
@@ -2983,17 +3054,17 @@ export default function BookingView({
                                     {/* Calculation Summary Box */}
                                     <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 text-xs space-y-2">
                                         <div className="flex justify-between items-center text-slate-600">
-                                            <span>Uang Jaminan Deposit Awal:</span>
+                                            <span>{tr('Uang Jaminan Deposit Awal:', 'Initial Security Deposit:')}</span>
                                             <span className="font-bold text-slate-800">{money(booking.deposit_refund.deposit_amount)}</span>
                                         </div>
                                         {booking.deposit_refund.deposit_applied_amount > 0 && (
                                             <div className="flex justify-between items-center text-rose-600">
-                                                <span>Potongan Biaya / Kerusakan / Denda:</span>
+                                                <span>{tr('Potongan Biaya / Kerusakan / Denda:', 'Deductions / Damages / Fines:')}</span>
                                                 <span className="font-bold">- {money(booking.deposit_refund.deposit_applied_amount)}</span>
                                             </div>
                                         )}
                                         <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-slate-900 font-black">
-                                            <span>Total Pengembalian Bersih:</span>
+                                            <span>{tr('Total Pengembalian Bersih:', 'Total Net Refund:')}</span>
                                             <span className={`text-sm ${booking.deposit_refund.refund_status === 'refunded' ? 'text-emerald-600' : 'text-slate-900'}`}>
                                                 {money(booking.deposit_refund.deposit_status === 'settled'
                                                     ? booking.deposit_refund.deposit_refunded_amount
@@ -3007,21 +3078,21 @@ export default function BookingView({
                                         <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                                                    <span>🏦</span> Rekening Tujuan Pengembalian:
+                                                    <span>🏦</span> {tr('Rekening Tujuan Pengembalian:', 'Refund Destination Account:')}
                                                 </span>
                                                 {booking.deposit_refund.can_submit_bank && (
                                                     <button
                                                         type="button"
                                                         onClick={() => {
                                                             if (!isVerified) {
-                                                                alert('Mohon verifikasi nomor WhatsApp Anda terlebih dahulu.');
+                                                                alert(tr('Mohon verifikasi nomor WhatsApp Anda terlebih dahulu.', 'Please verify your WhatsApp number first.'));
                                                                 return;
                                                             }
                                                             setShowRefundModal(true);
                                                         }}
                                                         className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline"
                                                     >
-                                                        Ubah Rekening
+                                                        {tr('Ubah Rekening', 'Change Account')}
                                                     </button>
                                                 )}
                                             </div>
@@ -3029,11 +3100,11 @@ export default function BookingView({
                                                 {booking.deposit_refund.bank_name} • {booking.deposit_refund.account_number}
                                             </div>
                                             <div className="text-slate-600 text-xs">
-                                                Atas Nama: <strong className="text-slate-800">{booking.deposit_refund.account_name}</strong>
+                                                {tr('Atas Nama:', 'Account Holder:')} <strong className="text-slate-800">{booking.deposit_refund.account_name}</strong>
                                             </div>
                                             {booking.deposit_refund.bank_submitted_at && (
                                                 <div className="text-[10px] text-slate-500 pt-1">
-                                                    Diajukan pada {booking.deposit_refund.bank_submitted_at}
+                                                    {tr('Diajukan pada', 'Submitted on')} {booking.deposit_refund.bank_submitted_at}
                                                 </div>
                                             )}
                                         </div>
@@ -3042,9 +3113,12 @@ export default function BookingView({
                                             <div className="flex items-start gap-2.5">
                                                 <span className="text-lg">💳</span>
                                                 <div>
-                                                    <h4 className="font-bold text-amber-950">Rekening Pengembalian Belum Terdaftar</h4>
+                                                    <h4 className="font-bold text-amber-950">{tr('Rekening Pengembalian Belum Terdaftar', 'Refund Bank Account Not Registered')}</h4>
                                                     <p className="text-[11px] text-amber-900/80 mt-0.5 leading-relaxed">
-                                                        Agar dana deposit dapat langsung ditransfer kembali setelah masa sewa selesai, silakan daftarkan nomor rekening bank atau e-wallet Anda.
+                                                        {tr(
+                                                            'Agar dana deposit dapat langsung ditransfer kembali setelah masa sewa selesai, silakan daftarkan nomor rekening bank atau e-wallet Anda.',
+                                                            'So that your security deposit can be transferred back immediately after the rental ends, please register your bank account or e-wallet number.'
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>
@@ -3053,14 +3127,14 @@ export default function BookingView({
                                                     type="button"
                                                     onClick={() => {
                                                         if (!isVerified) {
-                                                            alert('Mohon verifikasi nomor WhatsApp Anda terlebih dahulu.');
+                                                            alert(tr('Mohon verifikasi nomor WhatsApp Anda terlebih dahulu.', 'Please verify your WhatsApp number first.'));
                                                             return;
                                                         }
                                                         setShowRefundModal(true);
                                                     }}
                                                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 text-xs shadow-xs transition"
                                                 >
-                                                    <span>Input Rekening Pengembalian Sekarang</span>
+                                                    <span>{tr('Input Rekening Pengembalian Sekarang', 'Enter Refund Account Now')}</span>
                                                     <span>→</span>
                                                 </button>
                                             )}
@@ -3072,7 +3146,7 @@ export default function BookingView({
                                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-2.5">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 font-bold text-slate-900">
-                                                    <span>🧾</span> Bukti Transfer Pengembalian Dana
+                                                    <span>🧾</span> {tr('Bukti Transfer Pengembalian Dana', 'Refund Transfer Receipt')}
                                                 </div>
                                                 {booking.deposit_refund.refunded_at && (
                                                     <span className="text-[11px] text-slate-500">{booking.deposit_refund.refunded_at}</span>
@@ -3091,12 +3165,12 @@ export default function BookingView({
                                                     className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50 transition shadow-2xs"
                                                 >
                                                     <span>📎</span>
-                                                    <span>Lihat Bukti Transfer Bank (Struk)</span>
+                                                    <span>{tr('Lihat Bukti Transfer Bank (Struk)', 'View Bank Transfer Receipt')}</span>
                                                     <span>↗</span>
                                                 </a>
                                             ) : (
                                                 <p className="text-[11px] text-slate-500">
-                                                    Transfer telah berhasil diselesaikan oleh tim Finance kami.
+                                                    {tr('Transfer telah berhasil diselesaikan oleh tim Finance kami.', 'Transfer has been completed by our Finance team.')}
                                                 </p>
                                             )}
                                         </div>
@@ -3104,7 +3178,7 @@ export default function BookingView({
 
                                     {/* Additional policy information */}
                                     <p className="text-[10px] text-slate-400 leading-relaxed">
-                                        ℹ️ <em>Kebijakan Pengembalian: Uang jaminan deposit diproses 1-3 hari kerja setelah unit dikembalikan untuk memastikan tidak ada denda e-tilang (ETLE) atau kerusakan tersembunyi.</em>
+                                        ℹ️ <em>{tr('Kebijakan Pengembalian: Uang jaminan deposit diproses 1-3 hari kerja setelah unit dikembalikan untuk memastikan tidak ada denda e-tilang (ETLE) atau kerusakan tersembunyi.', 'Refund Policy: Security deposit refunds are processed within 1-3 business days after vehicle return to ensure there are no electronic traffic fines (ETLE) or hidden damages.')}</em>
                                     </p>
                                 </div>
                             )}
@@ -3117,26 +3191,26 @@ export default function BookingView({
                                             <span className="text-lg">⏱️</span>
                                             <div>
                                                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                                    Perpanjangan Sewa Mandiri
+                                                    {tr('Perpanjangan Sewa Mandiri', 'Self-Service Rental Extension')}
                                                 </h3>
                                                 <p className="text-[11px] text-slate-500 font-medium">
-                                                    Tambah durasi sewa armada langsung dari portal
+                                                    {tr('Tambah durasi sewa armada langsung dari portal', 'Extend your vehicle rental duration directly from the portal')}
                                                 </p>
                                             </div>
                                         </div>
                                         {booking.extend_request?.status === 'pending' && (
                                             <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-800 animate-pulse">
-                                                Menunggu Review
+                                                {tr('Menunggu Review', 'Pending Review')}
                                             </span>
                                         )}
                                         {booking.extend_request?.status === 'approved' && (
                                             <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-800">
-                                                Disetujui
+                                                {tr('Disetujui', 'Approved')}
                                             </span>
                                         )}
                                         {booking.extend_request?.status === 'rejected' && (
                                             <span className="rounded-full bg-rose-100 border border-rose-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-800">
-                                                Ditolak
+                                                {tr('Ditolak', 'Rejected')}
                                             </span>
                                         )}
                                     </div>
@@ -3151,7 +3225,7 @@ export default function BookingView({
                                             <div className="flex items-center justify-between font-bold">
                                                 <span className="flex items-center gap-1.5">
                                                     <span>{booking.extend_request.has_conflict ? '⚠️' : '⏳'}</span>
-                                                    <span>{booking.extend_request.has_conflict ? 'Pengajuan Menunggu Penyesuaian Armada' : 'Pengajuan Sedang Ditinjau Tim Operasional'}</span>
+                                                    <span>{booking.extend_request.has_conflict ? tr('Pengajuan Menunggu Penyesuaian Armada', 'Request Awaiting Fleet Adjustment') : tr('Pengajuan Sedang Ditinjau Tim Operasional', 'Request Under Review by Operations Team')}</span>
                                                 </span>
                                                 {booking.extend_request.created_at && (
                                                     <span className="text-[11px] text-slate-500">{booking.extend_request.created_at}</span>
@@ -3160,14 +3234,14 @@ export default function BookingView({
 
                                             <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
                                                 <div className="bg-white/80 rounded-lg p-2.5 border border-slate-200/60">
-                                                    <span className="text-slate-500 block">Tanggal Selesai Baru</span>
+                                                    <span className="text-slate-500 block">{tr('Tanggal Selesai Baru', 'New End Date')}</span>
                                                     <strong className="text-slate-900 text-xs">{booking.extend_request.requested_end_date}</strong>
-                                                    <span className="text-slate-500 text-[10px] block mt-0.5">(+{booking.extend_request.estimated_periods} hari)</span>
+                                                    <span className="text-slate-500 text-[10px] block mt-0.5">(+{booking.extend_request.estimated_periods} {tr('hari', 'days')})</span>
                                                 </div>
                                                 <div className="bg-white/80 rounded-lg p-2.5 border border-slate-200/60">
-                                                    <span className="text-slate-500 block">Estimasi Tagihan Tambahan</span>
+                                                    <span className="text-slate-500 block">{tr('Estimasi Tagihan Tambahan', 'Estimated Additional Charge')}</span>
                                                     <strong className="text-indigo-700 text-xs">{money(booking.extend_request.estimated_amount)}</strong>
-                                                    <span className="text-slate-500 text-[10px] block mt-0.5">Sesuai tarif sewa aktif</span>
+                                                    <span className="text-slate-500 text-[10px] block mt-0.5">{tr('Sesuai tarif sewa aktif', 'Based on active rental rate')}</span>
                                                 </div>
                                             </div>
 
@@ -3179,11 +3253,11 @@ export default function BookingView({
 
                                             {booking.extend_request.has_conflict ? (
                                                 <div className="rounded-lg bg-amber-100/90 border border-amber-300 p-2.5 text-[11px] leading-relaxed text-amber-950 font-medium">
-                                                    🛑 <strong>Perhatian:</strong> Tanggal yang Anda ajukan beririsan dengan pesanan pelanggan lain. Staf kami sedang memeriksa opsi alokasi unit armada pengganti. <strong>Mohon TIDAK melakukan transfer manual sebelum pengajuan ini disetujui staf.</strong>
+                                                    🛑 <strong>{tr('Perhatian:', 'Attention:')}</strong> {tr('Tanggal yang Anda ajukan beririsan dengan pesanan pelanggan lain. Staf kami sedang memeriksa opsi alokasi unit armada pengganti.', 'The dates you requested overlap with another customer booking. Our staff is checking replacement vehicle allocation options.')} <strong>{tr('Mohon TIDAK melakukan transfer manual sebelum pengajuan ini disetujui staf.', 'Please DO NOT make a manual transfer before this request is approved by staff.')}</strong>
                                                 </div>
                                             ) : (
                                                 <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-[11px] leading-relaxed text-emerald-900 font-medium">
-                                                    ✅ <strong>Unit Bebas Bentrok:</strong> Kendaraan tersedia. Pengajuan sedang dalam antrean verifikasi staf operasional.
+                                                    ✅ <strong>{tr('Unit Bebas Bentrok:', 'No Schedule Conflict:')}</strong> {tr('Kendaraan tersedia. Pengajuan sedang dalam antrean verifikasi staf operasional.', 'Vehicle is available. Your request is in the operations verification queue.')}
                                                 </div>
                                             )}
 
@@ -3194,7 +3268,7 @@ export default function BookingView({
                                                     className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline inline-flex items-center gap-1"
                                                 >
                                                     <span>✕</span>
-                                                    <span>Batalkan Pengajuan Ini</span>
+                                                    <span>{tr('Batalkan Pengajuan Ini', 'Cancel This Request')}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -3205,23 +3279,23 @@ export default function BookingView({
                                         <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs text-emerald-950 space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 font-black text-emerald-900">
-                                                    <span>🎉</span> Perpanjangan Disetujui
+                                                    <span>🎉</span> {tr('Perpanjangan Disetujui', 'Extension Approved')}
                                                 </div>
                                                 {booking.extend_request.reviewed_at && (
                                                     <span className="text-[11px] text-emerald-700">{booking.extend_request.reviewed_at}</span>
                                                 )}
                                             </div>
                                             <p className="text-xs leading-relaxed text-emerald-900">
-                                                Sewa Anda telah resmi diperpanjang hingga <strong>{booking.extend_request.requested_end_date}</strong>.
+                                                {tr('Sewa Anda telah resmi diperpanjang hingga', 'Your rental has been officially extended until')} <strong>{booking.extend_request.requested_end_date}</strong>.
                                             </p>
                                             {booking.extend_request.staff_notes && (
                                                 <p className="text-[11px] italic bg-white/60 p-2 rounded-lg border border-emerald-200 text-emerald-800">
-                                                    Catatan Staf: "{booking.extend_request.staff_notes}"
+                                                    {tr('Catatan Staf:', 'Staff Note:')} "{booking.extend_request.staff_notes}"
                                                 </p>
                                             )}
                                             {booking.payment?.balance_due > 0 && (
                                                 <div className="pt-1 flex items-center justify-between">
-                                                    <span className="text-[11px] font-bold text-emerald-900">Sisa Tagihan Tambahan:</span>
+                                                    <span className="text-[11px] font-bold text-emerald-900">{tr('Sisa Tagihan Tambahan:', 'Remaining Additional Balance:')}</span>
                                                     <span className="font-black text-sm text-emerald-800">{money(booking.payment.balance_due)}</span>
                                                 </div>
                                             )}
@@ -3233,7 +3307,7 @@ export default function BookingView({
                                         <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-950 space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 font-black text-rose-900">
-                                                    <span>⚠️</span> Pengajuan Perpanjangan Belum Dapat Disetujui
+                                                    <span>⚠️</span> {tr('Pengajuan Perpanjangan Belum Dapat Disetujui', 'Extension Request Could Not Be Approved')}
                                                 </div>
                                                 {booking.extend_request.reviewed_at && (
                                                     <span className="text-[11px] text-rose-700">{booking.extend_request.reviewed_at}</span>
@@ -3241,15 +3315,15 @@ export default function BookingView({
                                             </div>
                                             {booking.extend_request.staff_notes ? (
                                                 <p className="text-xs leading-relaxed text-rose-900">
-                                                    Alasan Staf: <em>"{booking.extend_request.staff_notes}"</em>
+                                                    {tr('Alasan Staf:', 'Staff Reason:')} <em>"{booking.extend_request.staff_notes}"</em>
                                                 </p>
                                             ) : (
                                                 <p className="text-xs leading-relaxed text-rose-900">
-                                                    Jadwal kendaraan tidak memungkinkan untuk diperpanjang pada tanggal tersebut.
+                                                    {tr('Jadwal kendaraan tidak memungkinkan untuk diperpanjang pada tanggal tersebut.', 'The vehicle schedule does not allow an extension for the selected dates.')}
                                                 </p>
                                             )}
                                             <p className="text-[11px] font-medium text-rose-800">
-                                                Harap mengembalikan armada sesuai jadwal batas sewa semula pada <strong>{booking.end_date}</strong>.
+                                                {tr('Harap mengembalikan armada sesuai jadwal batas sewa semula pada', 'Please return the vehicle according to the original end schedule on')} <strong>{booking.end_date}</strong>.
                                             </p>
                                         </div>
                                     )}
@@ -3259,16 +3333,16 @@ export default function BookingView({
                                         <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 space-y-2 text-xs">
                                             <div className="flex items-center justify-between font-bold text-slate-700 text-[11px]">
                                                 <span className="flex items-center gap-1">
-                                                    <span>📜</span> Riwayat Perpanjangan Sewa
+                                                    <span>📜</span> {tr('Riwayat Perpanjangan Sewa', 'Rental Extension History')}
                                                 </span>
-                                                <span className="text-slate-400 font-normal">{booking.extensions_history.length} kali diperpanjang</span>
+                                                <span className="text-slate-400 font-normal">{booking.extensions_history.length} {tr('kali diperpanjang', 'times extended')}</span>
                                             </div>
                                             <div className="space-y-1.5">
                                                 {booking.extensions_history.map((h) => (
                                                     <div key={h.id} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200 text-[11px]">
                                                         <div>
                                                             <span className="font-bold text-slate-800">➔ {h.new_end_date}</span>
-                                                            <span className="ml-2 text-slate-500 font-medium">(+{h.extended_periods} hari)</span>
+                                                            <span className="ml-2 text-slate-500 font-medium">(+{h.extended_periods} {tr('hari', 'days')})</span>
                                                             {h.created_at && <span className="ml-2 text-slate-400 text-[10px]">{h.created_at}</span>}
                                                         </div>
                                                         <span className="font-black text-indigo-600 tabular-nums">{money(h.additional_amount)}</span>
@@ -3283,13 +3357,13 @@ export default function BookingView({
                                         <div className="pt-2 border-t border-slate-100 space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold text-slate-800">
-                                                    {showExtend ? 'Formulir Perpanjangan Sewa' : 'Ingin menambah hari sewa kendaraan?'}
+                                                    {showExtend ? tr('Formulir Perpanjangan Sewa', 'Rental Extension Form') : tr('Ingin menambah hari sewa kendaraan?', 'Want to add more rental days?')}
                                                 </span>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         if (!isVerified) {
-                                                            alert('Verifikasi nomor WhatsApp terlebih dahulu');
+                                                            alert(tr('Verifikasi nomor WhatsApp terlebih dahulu', 'Please verify your WhatsApp number first'));
                                                             return;
                                                         }
                                                         setShowExtend(!showExtend);
@@ -3302,7 +3376,7 @@ export default function BookingView({
                                                                 : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs'
                                                     }`}
                                                 >
-                                                    {showExtend ? 'Tutup Formulir' : '+ Ajukan Perpanjangan'}
+                                                    {showExtend ? tr('Tutup Formulir', 'Close Form') : tr('+ Ajukan Perpanjangan', '+ Request Extension')}
                                                 </button>
                                             </div>
 
@@ -3310,7 +3384,7 @@ export default function BookingView({
                                                 <form onSubmit={requestExtend} className="space-y-3 pt-2">
                                                     <div className="space-y-1">
                                                         <label className="text-[11px] font-bold text-slate-700 block">
-                                                            Pilih Tanggal Selesai Baru <span className="text-rose-500">*</span>
+                                                            {tr('Pilih Tanggal Selesai Baru', 'Select New End Date')} <span className="text-rose-500">*</span>
                                                         </label>
                                                         <input
                                                             type="date"
@@ -3321,7 +3395,7 @@ export default function BookingView({
                                                             required
                                                         />
                                                         <p className="text-[10px] text-slate-400">
-                                                            Jadwal selesai saat ini: <strong className="text-slate-600">{booking.end_date}</strong>
+                                                            {tr('Jadwal selesai saat ini:', 'Current end schedule:')} <strong className="text-slate-600">{booking.end_date}</strong>
                                                         </p>
                                                     </div>
 
@@ -3329,7 +3403,7 @@ export default function BookingView({
                                                     {extendQuoteLoading && (
                                                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
                                                             <span className="animate-spin text-base">⏳</span>
-                                                            <span>Menghitung simulasi biaya & ketersediaan armada...</span>
+                                                            <span>{tr('Menghitung simulasi biaya & ketersediaan armada...', 'Calculating cost simulation & vehicle availability...')}</span>
                                                         </div>
                                                     )}
 
@@ -3345,26 +3419,26 @@ export default function BookingView({
                                                         <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 space-y-3 text-xs">
                                                             <div className="flex items-center justify-between font-bold text-indigo-950">
                                                                 <span className="flex items-center gap-1.5">
-                                                                    <span>📊</span> Rincian Simulasi Perpanjangan
+                                                                    <span>📊</span> {tr('Rincian Simulasi Perpanjangan', 'Extension Simulation Breakdown')}
                                                                 </span>
-                                                                <span className="text-[11px] text-indigo-700 font-black">+{extendQuoteData.extended_periods} Hari</span>
+                                                                <span className="text-[11px] text-indigo-700 font-black">+{extendQuoteData.extended_periods} {tr('Hari', 'Days')}</span>
                                                             </div>
 
                                                             <div className="space-y-1.5 text-[11px] text-indigo-900 border-t border-indigo-200/60 pt-2">
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-slate-600">Durasi Tambahan:</span>
-                                                                    <span className="font-bold">{extendQuoteData.extended_periods} Hari</span>
+                                                                    <span className="text-slate-600">{tr('Durasi Tambahan:', 'Additional Duration:')}</span>
+                                                                    <span className="font-bold">{extendQuoteData.extended_periods} {tr('Hari', 'Days')}</span>
                                                                 </div>
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-slate-600">Tarif per Hari:</span>
+                                                                    <span className="text-slate-600">{tr('Tarif per Hari:', 'Rate per Day:')}</span>
                                                                     <span className="font-bold">{money(extendQuoteData.rate_per_period)}</span>
                                                                 </div>
                                                                 <div className="flex justify-between text-xs pt-1 border-t border-indigo-200/60 font-black text-indigo-950">
-                                                                    <span>Subtotal Biaya Tambahan:</span>
+                                                                    <span>{tr('Subtotal Biaya Tambahan:', 'Additional Cost Subtotal:')}</span>
                                                                     <span className="text-indigo-700">{money(extendQuoteData.additional_amount)}</span>
                                                                 </div>
                                                                 <div className="flex justify-between text-[11px] text-slate-500 pt-0.5">
-                                                                    <span>Estimasi Total Sewa Baru:</span>
+                                                                    <span>{tr('Estimasi Total Sewa Baru:', 'Estimated New Total Rental:')}</span>
                                                                     <span className="font-bold text-slate-800">{money(extendQuoteData.estimated_new_total)}</span>
                                                                 </div>
                                                             </div>
@@ -3385,12 +3459,12 @@ export default function BookingView({
 
                                                     <div className="space-y-1">
                                                         <label className="text-[11px] font-bold text-slate-700 block">
-                                                            Catatan / Keperluan Perpanjangan (Opsional)
+                                                            {tr('Catatan / Keperluan Perpanjangan (Opsional)', 'Extension Notes / Purpose (Optional)')}
                                                         </label>
                                                         <textarea
                                                             rows={2}
                                                             className={fieldClassName}
-                                                            placeholder="Contoh: Perjalanan dinas diperpanjang 2 hari, rute ke area luar kota."
+                                                            placeholder={tr('Contoh: Perjalanan dinas diperpanjang 2 hari, rute ke area luar kota.', 'Example: Business trip extended by 2 days, out-of-town route.')}
                                                             value={extendForm.data.notes}
                                                             onChange={(e) => extendForm.setData('notes', e.target.value)}
                                                         />
@@ -3402,10 +3476,10 @@ export default function BookingView({
                                                         className="w-full h-11 flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black uppercase tracking-wider text-white transition disabled:opacity-50 shadow-2xs"
                                                     >
                                                         {extendForm.processing
-                                                            ? 'Mengirim Pengajuan...'
+                                                            ? tr('Mengirim Pengajuan...', 'Submitting Request...')
                                                             : extendQuoteData
-                                                                ? `Kirim Pengajuan Perpanjangan (+${extendQuoteData.extended_periods} Hari)`
-                                                                : 'Kirim Pengajuan Perpanjangan'}
+                                                                ? `${tr('Kirim Pengajuan Perpanjangan', 'Submit Extension Request')} (+${extendQuoteData.extended_periods} ${tr('Hari', 'Days')})`
+                                                                : tr('Kirim Pengajuan Perpanjangan', 'Submit Extension Request')}
                                                     </button>
                                                 </form>
                                             )}
@@ -3418,30 +3492,30 @@ export default function BookingView({
                             {!isExpired && !isCancelled && booking.cancel?.can_cancel && (
                                 <div className="rounded-2xl bg-white p-5 border border-slate-200 border-l-4 border-l-rose-500 shadow-xs space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-xs font-black uppercase tracking-wider text-rose-700">Batalkan Reservasi</h3>
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-rose-700">{tr('Batalkan Reservasi', 'Cancel Reservation')}</h3>
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 if (!isVerified) {
-                                                    alert('Verifikasi WhatsApp terlebih dahulu');
+                                                    alert(tr('Verifikasi WhatsApp terlebih dahulu', 'Please verify your WhatsApp number first'));
                                                     return;
                                                 }
                                                 setShowCancel(!showCancel);
                                             }}
                                             className={`text-xs font-bold underline ${!isVerified ? 'text-slate-400 cursor-not-allowed' : 'text-rose-600'}`}
                                         >
-                                            {showCancel ? 'Tutup' : 'Ajukan Batal'}
+                                            {showCancel ? tr('Tutup', 'Close') : tr('Ajukan Batal', 'Request Cancellation')}
                                         </button>
                                     </div>
 
                                     {showCancel && isVerified && (
                                         <form onSubmit={handleOpenCancelModal} className="mt-3 pt-3 border-t border-slate-100 space-y-3">
                                             <div>
-                                                <label className="text-[11px] font-bold text-slate-700 block">Alasan Pembatalan</label>
+                                                <label className="text-[11px] font-bold text-slate-700 block">{tr('Alasan Pembatalan', 'Cancellation Reason')}</label>
                                                 <input
                                                     type="text"
                                                     className={fieldClassName}
-                                                    placeholder="Alasan pembatalan..."
+                                                    placeholder={tr('Alasan pembatalan...', 'Reason for cancellation...')}
                                                     value={cancelForm.data.cancelled_reason}
                                                     onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)}
                                                     required
@@ -3452,7 +3526,7 @@ export default function BookingView({
                                                 disabled={cancelForm.processing}
                                                 className="w-full h-11 flex items-center justify-center rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-black uppercase text-white transition disabled:opacity-50 shadow-sm"
                                             >
-                                                Konfirmasi Pembatalan
+                                                {tr('Konfirmasi Pembatalan', 'Confirm Cancellation')}
                                             </button>
                                         </form>
                                     )}
@@ -3477,22 +3551,25 @@ export default function BookingView({
                                 <span className="font-black text-white tracking-tight text-sm">{brand.name}</span>
                             </div>
                             <p className="text-xs font-normal text-slate-400 leading-relaxed max-w-sm">
-                                Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.
+                                {tr(
+                                    'Layanan penyewaan kendaraan resmi, aman, dan berlisensi. Kami menghadirkan armada terawat dengan jaminan kenyamanan ekstra dan dukungan serah terima cabang yang luas.',
+                                    'Official, safe, and licensed vehicle rental service. We provide well-maintained fleet units with guaranteed extra comfort and wide branch handover support.'
+                                )}
                             </p>
                         </div>
 
                         {/* Column 2: Quick Links */}
                         <div className="md:col-span-3 space-y-3.5">
-                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Navigasi Cepat</h4>
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">{tr('Navigasi Cepat', 'Quick Links')}</h4>
                             <ul className="space-y-2 text-xs font-medium text-slate-400">
                                 <li>
                                     <Link href={route('book.rental.search')} className="hover:text-white transition-colors">
-                                        Katalog Kendaraan
+                                        {tr('Katalog Kendaraan', 'Vehicle Catalog')}
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href={route('book.rental.history')} className="hover:text-white transition-colors">
-                                        Riwayat & Cek Status
+                                        {tr('Riwayat & Cek Status', 'History & Track Status')}
                                     </Link>
                                 </li>
                             </ul>
@@ -3500,10 +3577,13 @@ export default function BookingView({
 
                         {/* Column 3: Contact/Support */}
                         <div className="md:col-span-4 space-y-3.5">
-                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">Pusat Bantuan</h4>
+                            <h4 className="text-xs font-extrabold text-white uppercase tracking-widest">{tr('Pusat Bantuan', 'Help Center')}</h4>
                             <div className="text-xs font-medium text-slate-400 space-y-2.5">
                                 <p className="leading-relaxed">
-                                    Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:
+                                    {tr(
+                                        'Butuh konsultasi armada atau konfirmasi pembayaran transfer? Hubungi tim support kami:',
+                                        'Need fleet consultation or bank transfer payment confirmation? Contact our support team:'
+                                    )}
                                 </p>
                                 {brand.support_phone ? (
                                     <a
@@ -3516,7 +3596,7 @@ export default function BookingView({
                                         WhatsApp Hotline: {brand.support_phone} ↗
                                     </a>
                                 ) : (
-                                    <span className="font-bold text-slate-300">Silakan hubungi cabang terdekat.</span>
+                                    <span className="font-bold text-slate-300">{tr('Silakan hubungi cabang terdekat.', 'Please contact the nearest branch.')}</span>
                                 )}
                             </div>
                         </div>
@@ -3524,11 +3604,11 @@ export default function BookingView({
 
                     <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
                         <div>
-                            © 2026 {brand.name}. Seluruh Hak Cipta Dilindungi.
+                            © 2026 {brand.name}. {tr('Seluruh Hak Cipta Dilindungi.', 'All Rights Reserved.')}
                         </div>
                         <div className="flex gap-4">
-                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">Syarat & Ketentuan</a>
-                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">Kebijakan Privasi</a>
+                            <a href={brand.terms_url || `${route('book.rental.search')}#ketentuan`} className="hover:text-slate-300">{tr('Syarat & Ketentuan', 'Terms & Conditions')}</a>
+                            <a href={brand.privacy_url || `${route('book.rental.search')}#privasi`} className="hover:text-slate-300">{tr('Kebijakan Privasi', 'Privacy Policy')}</a>
                         </div>
                     </div>
                 </div>
@@ -3542,18 +3622,18 @@ export default function BookingView({
                             ⚠️
                         </div>
                         <div>
-                            <h3 className="text-base font-black text-slate-900">Konfirmasi Pembatalan</h3>
-                            <p className="text-xs text-slate-500 font-semibold mt-0.5">Yakin ingin membatalkan reservasi ini?</p>
+                            <h3 className="text-base font-black text-slate-900">{tr('Konfirmasi Pembatalan', 'Confirm Cancellation')}</h3>
+                            <p className="text-xs text-slate-500 font-semibold mt-0.5">{tr('Yakin ingin membatalkan reservasi ini?', 'Are you sure you want to cancel this reservation?')}</p>
                         </div>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs space-y-2 text-slate-700 font-semibold">
                         <div className="flex justify-between border-b border-slate-200 pb-1.5">
-                            <span className="text-slate-400 uppercase text-[9px]">Kode Booking:</span>
+                            <span className="text-slate-400 uppercase text-[9px]">{tr('Kode Booking:', 'Booking Code:')}</span>
                             <span className="font-mono font-black text-slate-900">{booking.code}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-slate-400 uppercase text-[9px]">Kendaraan:</span>
+                            <span className="text-slate-400 uppercase text-[9px]">{tr('Kendaraan:', 'Vehicle:')}</span>
                             <span className="font-black text-slate-900">{booking.vehicle?.name || '-'}</span>
                         </div>
                     </div>
@@ -3565,7 +3645,7 @@ export default function BookingView({
                             onClick={() => setShowConfirmCancelModal(false)}
                             className="rounded-xl border border-slate-250 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
                         >
-                            Batal
+                            {tr('Batal', 'Cancel')}
                         </button>
                         <button
                             type="button"
@@ -3573,7 +3653,7 @@ export default function BookingView({
                             onClick={executeCancel}
                             className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2.5 text-xs font-black uppercase text-white shadow-sm transition disabled:opacity-50"
                         >
-                            {cancelForm.processing ? 'Memproses...' : 'Ya, Batalkan'}
+                            {cancelForm.processing ? tr('Memproses...', 'Processing...') : tr('Ya, Batalkan', 'Yes, Cancel')}
                         </button>
                     </div>
                 </div>
@@ -3588,15 +3668,15 @@ export default function BookingView({
                         </div>
                         <div>
                             <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                                Batalkan Pengajuan?
+                                {tr('Batalkan Pengajuan?', 'Cancel Request?')}
                             </h3>
                             <p className="text-xs text-slate-500">
-                                Permohonan perpanjangan sewa
+                                {tr('Permohonan perpanjangan sewa', 'Rental extension request')}
                             </p>
                         </div>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
-                        Apakah Anda yakin ingin membatalkan pengajuan perpanjangan sewa hingga <strong>{booking.extend_request?.requested_end_date}</strong> (+{booking.extend_request?.estimated_periods} hari)?
+                        {tr('Apakah Anda yakin ingin membatalkan pengajuan perpanjangan sewa hingga', 'Are you sure you want to cancel the rental extension request until')} <strong>{booking.extend_request?.requested_end_date}</strong> (+{booking.extend_request?.estimated_periods} {tr('hari', 'days')})?
                     </p>
                     <div className="flex items-center justify-end gap-2 pt-2">
                         <button
@@ -3604,7 +3684,7 @@ export default function BookingView({
                             onClick={() => setShowCancelExtendConfirm(false)}
                             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
                         >
-                            Kembali
+                            {tr('Kembali', 'Back')}
                         </button>
                         <button
                             type="button"
@@ -3612,7 +3692,7 @@ export default function BookingView({
                             onClick={cancelExtendRequest}
                             className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase px-4 py-2 transition disabled:opacity-50"
                         >
-                            {cancellingExtend ? 'Membatalkan...' : 'Ya, Batalkan Pengajuan'}
+                            {cancellingExtend ? tr('Membatalkan...', 'Cancelling...') : tr('Ya, Batalkan Pengajuan', 'Yes, Cancel Request')}
                         </button>
                     </div>
                 </div>
@@ -3628,7 +3708,7 @@ export default function BookingView({
                             </span>
                             <div>
                                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                                    Rekening Pengembalian Deposit
+                                    {tr('Rekening Pengembalian Deposit', 'Deposit Refund Bank Account')}
                                 </h3>
                                 <p className="text-[11px] text-slate-500 font-medium">
                                     Booking #{booking.code} • Total: {money(booking.deposit_refund?.deposit_amount ?? 0)}
@@ -3645,12 +3725,12 @@ export default function BookingView({
                     </div>
 
                     <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
-                        💡 <em>Pastikan nama lengkap sesuai dengan nama yang tercantum pada rekening bank atau aplikasi e-wallet Anda agar transfer tidak ditolak oleh sistem perbankan.</em>
+                        💡 <em>{tr('Pastikan nama lengkap sesuai dengan nama yang tercantum pada rekening bank atau aplikasi e-wallet Anda agar transfer tidak ditolak oleh sistem perbankan.', 'Ensure the full name matches the name registered on your bank account or e-wallet app so the transfer is not rejected by the banking system.')}</em>
                     </p>
 
                     <form onSubmit={submitRefundAccount} className="space-y-3.5 text-xs">
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-700">Bank / E-Wallet Tujuan *</label>
+                            <label className="block text-[11px] font-bold text-slate-700">{tr('Bank / E-Wallet Tujuan *', 'Destination Bank / E-Wallet *')}</label>
                             <select
                                 value={refundAccountForm.data.bank_name}
                                 onChange={(e) => refundAccountForm.setData('bank_name', e.target.value)}
@@ -3670,16 +3750,16 @@ export default function BookingView({
                                 <option value="GOPAY">E-Wallet GoPay</option>
                                 <option value="OVO">E-Wallet OVO</option>
                                 <option value="SHOPEEPAY">E-Wallet ShopeePay</option>
-                                <option value="LAINNYA">Bank Lainnya...</option>
+                                <option value="LAINNYA">{tr('Bank Lainnya...', 'Other Bank...')}</option>
                             </select>
                         </div>
 
                         {refundAccountForm.data.bank_name === 'LAINNYA' && (
                             <div>
-                                <label className="block text-[11px] font-bold text-slate-700">Nama Bank Lainnya *</label>
+                                <label className="block text-[11px] font-bold text-slate-700">{tr('Nama Bank Lainnya *', 'Other Bank Name *')}</label>
                                 <input
                                     type="text"
-                                    placeholder="Contoh: Bank Danamon / Bank BJB"
+                                    placeholder={tr('Contoh: Bank Danamon / Bank BJB', 'Example: Bank Danamon / Bank BJB')}
                                     value={refundAccountForm.data.custom_bank_name}
                                     onChange={(e) => refundAccountForm.setData('custom_bank_name', e.target.value)}
                                     className={`${fieldClassName} mt-1`}
@@ -3689,10 +3769,10 @@ export default function BookingView({
                         )}
 
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-700">Nomor Rekening / No. HP E-Wallet *</label>
+                            <label className="block text-[11px] font-bold text-slate-700">{tr('Nomor Rekening / No. HP E-Wallet *', 'Account Number / E-Wallet Phone Number *')}</label>
                             <input
                                 type="text"
-                                placeholder="Contoh: 1234567890 atau 08123456789"
+                                placeholder={tr('Contoh: 1234567890 atau 08123456789', 'Example: 1234567890 or 08123456789')}
                                 value={refundAccountForm.data.account_number}
                                 onChange={(e) => refundAccountForm.setData('account_number', e.target.value)}
                                 className={`${fieldClassName} mt-1 font-mono`}
@@ -3704,10 +3784,10 @@ export default function BookingView({
                         </div>
 
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-700">Nama Lengkap Pemilik Rekening *</label>
+                            <label className="block text-[11px] font-bold text-slate-700">{tr('Nama Lengkap Pemilik Rekening *', 'Account Holder Full Name *')}</label>
                             <input
                                 type="text"
-                                placeholder="Nama sesuai buku tabungan / aplikasi"
+                                placeholder={tr('Nama sesuai buku tabungan / aplikasi', 'Name as shown on bank book / app')}
                                 value={refundAccountForm.data.account_name}
                                 onChange={(e) => refundAccountForm.setData('account_name', e.target.value)}
                                 className={`${fieldClassName} mt-1 uppercase`}
@@ -3720,11 +3800,11 @@ export default function BookingView({
 
                         {!isVerified && (
                             <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2 text-amber-900">
-                                <p className="text-[11px] font-bold">Verifikasi WhatsApp Diperlukan</p>
+                                <p className="text-[11px] font-bold">{tr('Verifikasi WhatsApp Diperlukan', 'WhatsApp Verification Required')}</p>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        placeholder="6 digit kode OTP"
+                                        placeholder={tr('6 digit kode OTP', '6-digit OTP code')}
                                         maxLength={6}
                                         value={refundAccountForm.data.otp_code}
                                         onChange={(e) => refundAccountForm.setData('otp_code', e.target.value)}
@@ -3737,7 +3817,7 @@ export default function BookingView({
                                         disabled={sendingPageOtp}
                                         className="rounded-xl bg-slate-900 text-white font-bold px-3 py-1.5 text-xs whitespace-nowrap"
                                     >
-                                        {sendingPageOtp ? '...' : 'Kirim OTP'}
+                                        {sendingPageOtp ? '...' : tr('Kirim OTP', 'Send OTP')}
                                     </button>
                                 </div>
                             </div>
@@ -3749,14 +3829,14 @@ export default function BookingView({
                                 onClick={() => setShowRefundModal(false)}
                                 className="rounded-xl border border-slate-250 bg-white px-4 py-2.5 font-bold text-slate-600 hover:bg-slate-50 transition"
                             >
-                                Batal
+                                {tr('Batal', 'Cancel')}
                             </button>
                             <button
                                 type="submit"
                                 disabled={refundAccountForm.processing}
                                 className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 shadow-xs transition disabled:opacity-50"
                             >
-                                {refundAccountForm.processing ? 'Menyimpan...' : 'Simpan Rekening'}
+                                {refundAccountForm.processing ? tr('Menyimpan...', 'Saving...') : tr('Simpan Rekening', 'Save Account')}
                             </button>
                         </div>
                     </form>
@@ -3772,8 +3852,8 @@ export default function BookingView({
                                 📦
                             </span>
                             <div>
-                                <h3 className="text-sm font-black text-slate-900">Katalog Add-on & Layanan Tambahan</h3>
-                                <p className="text-xs text-slate-500">Booking {booking.code} • Periode sewa {booking.total_periods} {booking.period_type}</p>
+                                <h3 className="text-sm font-black text-slate-900">{tr('Katalog Add-on & Layanan Tambahan', 'Add-on & Extra Services Catalog')}</h3>
+                                <p className="text-xs text-slate-500">Booking {booking.code} • {tr('Periode sewa', 'Rental period')} {booking.total_periods} {booking.period_type}</p>
                             </div>
                         </div>
                         <button
@@ -3788,12 +3868,12 @@ export default function BookingView({
                     {/* Filter categories */}
                     <div className="flex flex-wrap gap-1.5 text-xs">
                         {[
-                            { key: 'all', label: 'Semua Item' },
-                            { key: 'accessory', label: '🧳 Aksesoris' },
-                            { key: 'service', label: '👨‍✈️ Sopir & Layanan' },
-                            { key: 'protection', label: '🛡️ Proteksi Asuransi' },
-                            { key: 'comfort', label: '💳 Kenyamanan' },
-                            { key: 'fuel', label: '⛽ BBM' },
+                            { key: 'all', label: tr('Semua Item', 'All Items') },
+                            { key: 'accessory', label: tr('🧳 Aksesoris', '🧳 Accessories') },
+                            { key: 'service', label: tr('👨‍✈️ Sopir & Layanan', '👨‍✈️ Driver & Services') },
+                            { key: 'protection', label: tr('🛡️ Proteksi Asuransi', '🛡️ Insurance Protection') },
+                            { key: 'comfort', label: tr('💳 Kenyamanan', '💳 Comfort') },
+                            { key: 'fuel', label: tr('⛽ BBM', '⛽ Fuel') },
                         ].map((cat) => (
                             <button
                                 key={cat.key}
@@ -3838,7 +3918,7 @@ export default function BookingView({
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <h4 className="text-xs font-black text-slate-900">{item.name}</h4>
                                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                                                                {item.price_type === 'daily' ? 'Per Hari' : 'Sekali Sewa (Flat)'}
+                                                                {item.price_type === 'daily' ? tr('Per Hari', 'Per Day') : tr('Sekali Sewa (Flat)', 'One-Time (Flat)')}
                                                             </span>
                                                         </div>
                                                         <p className="text-[11px] text-slate-500 leading-relaxed max-w-md">
@@ -3852,19 +3932,19 @@ export default function BookingView({
                                                         <div className="text-xs font-black text-slate-900 tabular-nums">
                                                             {money(item.unit_price)}
                                                             <span className="text-[10px] font-medium text-slate-500">
-                                                                {item.price_type === 'daily' ? ' /hari' : ' flat'}
+                                                                {item.price_type === 'daily' ? tr(' /hari', ' /day') : ' flat'}
                                                             </span>
                                                         </div>
                                                         {item.price_type === 'daily' && (
                                                             <div className="text-[10px] text-slate-400 tabular-nums">
-                                                                {booking.total_periods} hari = {money(item.calculated_total)}
+                                                                {booking.total_periods} {tr('hari', 'days')} = {money(item.calculated_total)}
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     {item.is_already_added ? (
                                                         <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                                            ✓ Sudah Dipesan
+                                                            {tr('✓ Sudah Dipesan', '✓ Already Ordered')}
                                                         </span>
                                                     ) : (
                                                         <div className="flex items-center gap-1.5 bg-white rounded-lg border border-slate-250 p-1 shadow-2xs">
@@ -3896,7 +3976,7 @@ export default function BookingView({
                                                 <div className="mt-3 pt-2.5 border-t border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                     <input
                                                         type="text"
-                                                        placeholder="Catatan / permintaan khusus untuk item ini (opsional)"
+                                                        placeholder={tr('Catatan / permintaan khusus untuk item ini (opsional)', 'Notes / special request for this item (optional)')}
                                                         value={addonNotes[item.code] || ''}
                                                         onChange={(e) => setAddonNotes((prev) => ({ ...prev, [item.code]: e.target.value }))}
                                                         className="text-xs rounded-lg border border-slate-250 bg-white px-2.5 py-1.5 text-slate-800 w-full sm:w-2/3 focus:border-amber-500 focus:outline-none"
@@ -3931,22 +4011,22 @@ export default function BookingView({
                                         <div>
                                             <p className="text-xs font-medium text-slate-300">
                                                 {selectedItems.length > 0
-                                                    ? `${selectedItems.length} Layanan Dipilih`
-                                                    : 'Pilih layanan di atas'}
+                                                    ? `${selectedItems.length} ${tr('Layanan Dipilih', 'Services Selected')}`
+                                                    : tr('Pilih layanan di atas', 'Select services above')}
                                             </p>
                                             <p className="text-base font-black tabular-nums text-white">
-                                                Total Tambahan: {money(totalAmount)}
+                                                {tr('Total Tambahan:', 'Total Additional:')} {money(totalAmount)}
                                             </p>
                                         </div>
                                     </div>
 
                                     {!isVerified && selectedItems.length > 0 && (
                                         <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 space-y-2 text-amber-900">
-                                            <p className="text-[11px] font-bold">Verifikasi WhatsApp Booker Diperlukan</p>
+                                            <p className="text-[11px] font-bold">{tr('Verifikasi WhatsApp Booker Diperlukan', 'Booker WhatsApp Verification Required')}</p>
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
-                                                    placeholder="6 digit kode OTP"
+                                                    placeholder={tr('6 digit kode OTP', '6-digit OTP code')}
                                                     maxLength={6}
                                                     value={addonsForm.data.otp_code}
                                                     onChange={(e) => addonsForm.setData('otp_code', e.target.value)}
@@ -3959,7 +4039,7 @@ export default function BookingView({
                                                     disabled={sendingPageOtp}
                                                     className="rounded-xl bg-slate-900 text-white font-bold px-3 py-1.5 text-xs whitespace-nowrap shadow-xs"
                                                 >
-                                                    {sendingPageOtp ? '...' : 'Kirim OTP'}
+                                                    {sendingPageOtp ? '...' : tr('Kirim OTP', 'Send OTP')}
                                                 </button>
                                             </div>
                                         </div>
@@ -3971,14 +4051,14 @@ export default function BookingView({
                                             onClick={() => setShowAddonsModal(false)}
                                             className="rounded-xl border border-slate-250 bg-white px-4 py-2.5 font-bold text-slate-600 hover:bg-slate-50 transition"
                                         >
-                                            Batal
+                                            {tr('Batal', 'Cancel')}
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={addonsForm.processing || selectedItems.length === 0}
                                             className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black px-5 py-2.5 shadow-xs transition disabled:opacity-50"
                                         >
-                                            {addonsForm.processing ? 'Memproses...' : `Konfirmasi Pemesanan (${money(totalAmount)})`}
+                                            {addonsForm.processing ? tr('Memproses...', 'Processing...') : `${tr('Konfirmasi Pemesanan', 'Confirm Order')} (${money(totalAmount)})`}
                                         </button>
                                     </div>
                                 </div>
@@ -4023,14 +4103,14 @@ export default function BookingView({
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
-                                Unduh Gambar QRIS
+                                {tr('Unduh Gambar QRIS', 'Download QRIS Image')}
                             </a>
                             <button
                                 type="button"
                                 onClick={() => setShowQrisModal(false)}
                                 className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs"
                             >
-                                Tutup
+                                {tr('Tutup', 'Close')}
                             </button>
                         </div>
                     </div>
