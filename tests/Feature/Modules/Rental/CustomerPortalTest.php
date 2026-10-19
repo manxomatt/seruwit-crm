@@ -544,4 +544,75 @@ class CustomerPortalTest extends TestCase
                 ->has('rental.vehicle.fuel_label')
             );
     }
+
+    public function test_send_otp_for_register_returns_conflict_and_login_redirect_when_phone_already_registered(): void
+    {
+        $partner = Partner::query()->create([
+            'code' => Partner::nextCode(),
+            'name' => 'Rina Nose',
+            'phone' => '6281234567890',
+            'sub_type' => 'customer',
+            'account_type' => 'individual',
+            'is_active' => true,
+        ]);
+
+        Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Rina Nose',
+            'phone' => '6281234567890',
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson(route('book.rental.login.otp'), [
+            'phone' => '081234567890',
+            'purpose' => 'register',
+        ]);
+
+        $response->assertStatus(409)
+            ->assertJson([
+                'ok' => false,
+                'success' => false,
+                'already_registered' => true,
+                'redirect_url' => route('book.rental.login', [
+                    'phone' => '081234567890',
+                    'registered' => 1,
+                ]),
+            ]);
+    }
+
+    public function test_register_submit_redirects_to_login_when_phone_already_registered(): void
+    {
+        $partner = Partner::query()->create([
+            'code' => Partner::nextCode(),
+            'name' => 'Rina Nose',
+            'phone' => '6281234567890',
+            'sub_type' => 'customer',
+            'account_type' => 'individual',
+            'is_active' => true,
+        ]);
+
+        $existingCustomer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Rina Nose',
+            'phone' => '6281234567890',
+            'password' => Hash::make('originalpassword'),
+            'is_active' => true,
+        ]);
+
+        $response = $this->post(route('book.rental.register.submit'), [
+            'name' => 'Hacker Name',
+            'phone' => '081234567890',
+            'email' => 'hacker@example.com',
+            'password' => 'newpassword123',
+        ]);
+
+        $response->assertRedirect(route('book.rental.login', [
+            'phone' => '081234567890',
+            'registered' => 1,
+        ]));
+
+        $this->assertFalse(auth('customer')->check());
+        $this->assertSame('Rina Nose', $existingCustomer->fresh()->name);
+        $this->assertTrue(Hash::check('originalpassword', $existingCustomer->fresh()->password));
+    }
 }

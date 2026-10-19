@@ -32,6 +32,8 @@ class CustomerAuthController extends Controller
         return Inertia::render('Modules/Rental/Public/Customer/Login', [
             'brand' => $this->brand(),
             'redirect' => $request->query('redirect'),
+            'phone' => $request->query('phone'),
+            'already_registered' => $request->boolean('registered'),
             'require_otp' => \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired(),
         ]);
     }
@@ -48,9 +50,37 @@ class CustomerAuthController extends Controller
 
         $validated = $request->validate([
             'phone' => ['required', 'string', 'max:30'],
+            'purpose' => ['nullable', 'string', 'in:login,register'],
+            'redirect' => ['nullable', 'string', 'max:500'],
         ]);
 
         $normalized = $this->otp->normalize($validated['phone']);
+
+        if (($validated['purpose'] ?? null) === 'register') {
+            $alreadyRegistered = Customer::query()
+                ->where(function ($query) use ($normalized, $validated): void {
+                    $query->where('phone', $normalized)
+                        ->orWhere('phone', trim($validated['phone']));
+                })
+                ->exists();
+
+            if ($alreadyRegistered) {
+                $loginUrl = route('book.rental.login', array_filter([
+                    'phone' => trim($validated['phone']),
+                    'redirect' => $validated['redirect'] ?? null,
+                    'registered' => 1,
+                ]));
+
+                return response()->json([
+                    'ok' => false,
+                    'success' => false,
+                    'already_registered' => true,
+                    'redirect_url' => $loginUrl,
+                    'message' => 'Nomor WhatsApp ini sudah terdaftar. Silakan masuk menggunakan akun Anda.',
+                ], 409);
+            }
+        }
+
         $code = $this->otp->send($normalized);
         $dispatched = $this->otp->wasLastDispatchSuccessful();
 
@@ -242,6 +272,33 @@ class CustomerAuthController extends Controller
         ]);
 
         $normalized = $this->otp->normalize($validated['phone']);
+
+        $existingCustomer = Customer::query()
+            ->where(function ($query) use ($normalized, $validated): void {
+                $query->where('phone', $normalized)
+                    ->orWhere('phone', trim($validated['phone']));
+            })
+            ->first();
+
+        if ($existingCustomer !== null) {
+            $loginUrl = route('book.rental.login', array_filter([
+                'phone' => trim($validated['phone']),
+                'redirect' => $validated['redirect'] ?? null,
+                'registered' => 1,
+            ]));
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'already_registered' => true,
+                    'redirect_url' => $loginUrl,
+                    'message' => 'Nomor WhatsApp ini sudah terdaftar. Silakan masuk menggunakan akun Anda.',
+                ], 409);
+            }
+
+            return redirect()->to($loginUrl);
+        }
+
         $code = (string) ($validated['code'] ?? $validated['otp_code'] ?? '');
 
         if ($requireOtp) {
@@ -258,33 +315,21 @@ class CustomerAuthController extends Controller
             }
         }
 
-        $customer = Customer::query()->where('phone', $normalized)->first();
+        $partner = $this->partnerResolver->resolve(
+            phone: $normalized,
+            name: $validated['name'],
+            email: $validated['email'] ?? null,
+        );
 
-        if ($customer !== null) {
-            $customer->update([
-                'name' => $validated['name'],
-                'email' => $validated['email'] ?? $customer->email,
-                'password' => ! empty($validated['password']) ? Hash::make($validated['password']) : $customer->password,
-                'phone_verified_at' => now(),
-                'last_login_at' => now(),
-            ]);
-        } else {
-            $partner = $this->partnerResolver->resolve(
-                phone: $normalized,
-                name: $validated['name'],
-                email: $validated['email'] ?? null,
-            );
-
-            $customer = Customer::query()->create([
-                'partner_id' => $partner->id,
-                'name' => $validated['name'],
-                'phone' => $normalized,
-                'email' => $validated['email'] ?? null,
-                'password' => ! empty($validated['password']) ? Hash::make($validated['password']) : null,
-                'phone_verified_at' => now(),
-                'last_login_at' => now(),
-            ]);
-        }
+        $customer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => $validated['name'],
+            'phone' => $normalized,
+            'email' => $validated['email'] ?? null,
+            'password' => ! empty($validated['password']) ? Hash::make($validated['password']) : null,
+            'phone_verified_at' => now(),
+            'last_login_at' => now(),
+        ]);
 
         Auth::guard('customer')->login($customer, true);
         $request->session()->regenerate();

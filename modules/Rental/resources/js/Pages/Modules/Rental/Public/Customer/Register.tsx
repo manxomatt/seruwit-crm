@@ -1,6 +1,6 @@
 import LanguageToggle from '@/Components/LanguageToggle';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEvent, useState } from 'react';
 
@@ -48,7 +48,14 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
         try {
             const response = await axios.post(route('book.rental.login.otp'), {
                 phone: form.data.phone,
+                purpose: 'register',
+                redirect: redirect || undefined,
             });
+
+            if (response.data.already_registered && response.data.redirect_url) {
+                router.visit(response.data.redirect_url);
+                return;
+            }
 
             if (response.data.success) {
                 setOtpSent(true);
@@ -57,6 +64,10 @@ export default function Register({ brand, redirect, require_otp = true }: Props)
                 }
             }
         } catch (err: any) {
+            if (err.response?.data?.already_registered && err.response?.data?.redirect_url) {
+                router.visit(err.response.data.redirect_url);
+                return;
+            }
             setOtpError(err.response?.data?.message || tr('Gagal mengirim kode OTP.', 'Failed to send OTP code.'));
         } finally {
             setOtpSending(false);

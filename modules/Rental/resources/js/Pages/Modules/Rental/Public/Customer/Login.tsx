@@ -14,17 +14,19 @@ interface Brand {
 interface Props {
     brand: Brand;
     redirect?: string | null;
+    phone?: string | null;
+    already_registered?: boolean;
     require_otp?: boolean;
 }
 
-export default function Login({ brand, redirect, require_otp = true }: Props) {
+export default function Login({ brand, redirect, phone, already_registered = false, require_otp = true }: Props) {
     const { locale } = useTrans();
     const tr = (id: string, en: string) => (locale === 'en' ? en : id);
     const [loginMethod, setLoginMethod] = useState<'otp' | 'password'>(require_otp ? 'otp' : 'password');
     const brandColor = brand.color || '#0f766e';
 
     // OTP Flow State
-    const [otpPhone, setOtpPhone] = useState('');
+    const [otpPhone, setOtpPhone] = useState(phone || '');
     const [otpCode, setOtpCode] = useState('');
     const [otpSent, setOtpSent] = useState(false);
     const [otpSending, setOtpSending] = useState(false);
@@ -34,7 +36,7 @@ export default function Login({ brand, redirect, require_otp = true }: Props) {
 
     // Password Flow State
     const passwordForm = useForm({
-        login: '',
+        login: phone || '',
         password: '',
         remember: true,
         redirect: redirect || '',
@@ -160,6 +162,23 @@ export default function Login({ brand, redirect, require_otp = true }: Props) {
                             )}
                         </p>
                     </div>
+
+                    {already_registered && (
+                        <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs font-semibold text-amber-900 flex items-start gap-2.5">
+                            <span className="text-base leading-none shrink-0">ℹ️</span>
+                            <div>
+                                <p className="font-bold">
+                                    {tr('Nomor WhatsApp Sudah Terdaftar', 'WhatsApp Number Already Registered')}
+                                </p>
+                                <p className="text-[11px] font-medium text-amber-800 mt-0.5 leading-relaxed">
+                                    {tr(
+                                        'Nomor Anda sudah terdaftar di sistem kami. Silakan masuk menggunakan kode OTP WhatsApp atau kata sandi Anda.',
+                                        'Your number is already registered in our system. Please sign in using a WhatsApp OTP code or your password.',
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Method Selector Tabs (Only if require_otp is enabled) */}
                     {require_otp && (
