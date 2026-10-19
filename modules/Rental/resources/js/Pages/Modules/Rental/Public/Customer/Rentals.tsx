@@ -89,14 +89,14 @@ export default function Rentals({ brand, rentals, currentTab }: Props) {
         >
             <div className="space-y-6">
                 {/* Tabs Filter */}
-                <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar touch-pan-x -mx-4 px-4 sm:mx-0 sm:px-0">
                     {tabs.map((tab) => {
                         const active = currentTab === tab.key;
                         return (
                             <Link
                                 key={tab.key}
                                 href={route('book.rental.portal.rentals.index') + (tab.key !== 'all' ? `?tab=${tab.key}` : '')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
                                     active
                                         ? 'bg-slate-900 text-white shadow-xs'
                                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'

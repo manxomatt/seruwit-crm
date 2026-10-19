@@ -113,28 +113,28 @@ export default function Login({ brand, redirect, phone, already_registered = fal
             <Head title={`${tr('Masuk Akun', 'Sign In')} · ${brand.name}`} />
 
             {/* Simple Top Bar */}
-            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 w-full flex items-center justify-between">
-                <Link href={route('book.rental.search')} className="flex items-center gap-2.5 group">
+            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 w-full flex items-center justify-between gap-3">
+                <Link href={route('book.rental.search')} className="flex items-center gap-2.5 group min-w-0">
                     {brand.logo_url ? (
-                        <img src={brand.logo_url} alt={brand.name} className="h-8 w-8 rounded-xl object-contain ring-1 ring-slate-200" />
+                        <img src={brand.logo_url} alt={brand.name} className="h-8 w-8 rounded-xl object-contain ring-1 ring-slate-200 shrink-0" />
                     ) : (
                         <div
-                            className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-xs font-black text-xs"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-xs font-black text-xs shrink-0"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >
                             R
                         </div>
                     )}
-                    <span className="text-sm font-black text-slate-900">{brand.name}</span>
+                    <span className="text-sm font-black text-slate-900 truncate max-w-[130px] sm:max-w-none">{brand.name}</span>
                 </Link>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <LanguageToggle />
                     <Link
                         href={route('book.rental.search')}
                         className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center gap-1"
                     >
-                        <span>←</span> {tr('Kembali ke Katalog Mobil', 'Back to Car Catalog')}
+                        <span>←</span> <span className="hidden sm:inline">{tr('Kembali ke Katalog Mobil', 'Back to Car Catalog')}</span><span className="sm:hidden">{tr('Katalog', 'Catalog')}</span>
                     </Link>
                 </div>
             </div>

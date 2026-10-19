@@ -195,7 +195,7 @@ export default function RentalDetail({ brand, rental }: Props) {
                     </div>
 
                     {/* Direct Public Link Helper */}
-                    <div className="rounded-3xl bg-slate-100/80 border border-slate-200/80 p-5 flex items-center justify-between gap-3 text-xs">
+                    <div className="rounded-3xl bg-slate-100/80 border border-slate-200/80 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                         <div>
                             <span className="font-bold text-slate-800 block">{tr('Tautan Pesanan Publik', 'Public Booking Link')}</span>
                             <span className="text-slate-500">
@@ -207,7 +207,7 @@ export default function RentalDetail({ brand, rental }: Props) {
                         </div>
                         <Link
                             href={route('book.rental.booking.show', rental.public_token)}
-                            className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-800 hover:bg-slate-50 transition shrink-0"
+                            className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-800 hover:bg-slate-50 transition shrink-0 self-start sm:self-auto"
                         >
                             {tr('Buka Tautan Publik ↗', 'Open Public Link ↗')}
                         </Link>

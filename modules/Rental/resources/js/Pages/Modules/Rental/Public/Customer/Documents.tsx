@@ -154,8 +154,8 @@ function DocumentUploadBox({
                         <div className="absolute inset-x-0 top-0 h-1 bg-indigo-600 animate-pulse" />
                     )}
 
-                    <div className="flex items-center gap-4">
-                        <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                        <div className="relative h-24 sm:h-20 w-full sm:w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
                             {isPdf ? (
                                 <div className="flex h-full w-full flex-col items-center justify-center bg-rose-50 text-rose-600">
                                     <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,7 +199,7 @@ function DocumentUploadBox({
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-1.5 shrink-0">
+                        <div className="flex sm:flex-col gap-1.5 shrink-0 self-end sm:self-center">
                             <button
                                 type="button"
                                 onClick={() => inputRef.current?.click()}
@@ -779,7 +779,7 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                         <button
                             type="submit"
                             disabled={form.processing || isScanningKtp || isScanningSim}
-                            className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 disabled:opacity-50"
+                            className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 disabled:opacity-50"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >
                             {form.processing

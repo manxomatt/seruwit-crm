@@ -69,29 +69,29 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                     <div className="mx-auto max-w-7xl px-4 sm:px-6">
                         <div className="flex h-16 items-center justify-between">
                             {/* Brand & Customer Portal Tag */}
-                            <div className="flex items-center gap-6">
-                                <Link href={route('book.rental.search')} className="flex items-center gap-3 group">
+                            <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+                                <Link href={route('book.rental.search')} className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
                                     {brand.logo_url ? (
                                         <img
                                             src={brand.logo_url}
                                             alt={brand.name}
-                                            className="h-9 w-9 rounded-xl object-contain ring-1 ring-slate-200 transition-transform group-hover:scale-105"
+                                            className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-xl object-contain ring-1 ring-slate-200 transition-transform group-hover:scale-105"
                                         />
                                     ) : (
                                         <div
-                                            className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs"
+                                            className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                                             style={{ backgroundColor: 'var(--brand-color)' }}
                                         >
-                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-8 4h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
                                     )}
-                                    <div>
-                                        <span className="text-sm font-black tracking-tight text-slate-900 block leading-tight">
+                                    <div className="min-w-0">
+                                        <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 block leading-tight truncate max-w-[120px] sm:max-w-none">
                                             {brand.name}
                                         </span>
-                                        <span className="text-[10px] text-teal-700 font-bold uppercase tracking-wider block">
+                                        <span className="text-[9px] sm:text-[10px] text-teal-700 font-bold uppercase tracking-wider block">
                                             {tr('Portal Pelanggan', 'Customer Portal')}
                                         </span>
                                     </div>
@@ -117,7 +117,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                             </div>
 
                             {/* Header Actions */}
-                            <div className="flex items-center gap-2.5">
+                            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                                 <Link
                                     href={route('book.rental.search')}
                                     className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 hover:bg-teal-100 transition shadow-2xs"
@@ -130,20 +130,20 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
 
                                 {/* User Profile Badge / Logout */}
                                 {customer && (
-                                    <div className="flex items-center gap-2.5 pl-2.5 border-l border-slate-200">
+                                    <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-2.5 border-l border-slate-200">
                                         <Link
                                             href={route('book.rental.portal.profile')}
-                                            className="flex items-center gap-2.5 group rounded-xl p-1 hover:bg-slate-100/80 transition"
+                                            className="flex items-center gap-2 sm:gap-2.5 group rounded-xl p-1 hover:bg-slate-100/80 transition"
                                         >
                                             {customer.avatar_url ? (
                                                 <img
                                                     src={customer.avatar_url}
                                                     alt={customer.name}
-                                                    className="h-8 w-8 rounded-xl object-cover ring-1 ring-slate-200 group-hover:ring-teal-500 transition"
+                                                    className="h-8 w-8 rounded-xl object-cover ring-1 ring-slate-200 group-hover:ring-teal-500 transition shrink-0"
                                                 />
                                             ) : (
                                                 <div
-                                                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black text-white shadow-2xs"
+                                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black text-white shadow-2xs"
                                                     style={{ backgroundColor: 'var(--brand-color)' }}
                                                 >
                                                     {customer.name ? customer.name.charAt(0).toUpperCase() : '👤'}
@@ -163,7 +163,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                                             type="button"
                                             onClick={handleLogout}
                                             title={tr('Keluar', 'Sign Out')}
-                                            className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
+                                            className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200 shrink-0"
                                         >
                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -175,12 +175,12 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                         </div>
 
                         {/* Mobile Navigation Bar */}
-                        <div className="md:hidden flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-100 no-scrollbar">
+                        <div className="md:hidden flex items-center gap-1.5 overflow-x-auto py-2.5 border-t border-slate-100 no-scrollbar -mx-4 px-4 sm:-mx-6 sm:px-6 touch-pan-x">
                             {navLinks.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
                                         item.active
                                             ? 'bg-slate-900 text-white shadow-xs'
                                             : 'text-slate-600 hover:bg-slate-100'
@@ -195,7 +195,7 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
                 </header>
 
                 {/* Sub-header / Title Banner */}
-                <div className="bg-white border-b border-slate-200/80 py-6">
+                <div className="bg-white border-b border-slate-200/80 py-5 sm:py-6">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{title}</h2>

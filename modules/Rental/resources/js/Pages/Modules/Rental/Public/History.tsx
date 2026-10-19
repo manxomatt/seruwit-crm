@@ -113,16 +113,16 @@ export default function History({ brand, phone, bookings }: Props) {
                 {/* Modern Crisp Glass Navbar */}
                 <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3.5 flex items-center justify-between">
-                        <Link href={route('book.rental.search')} className="flex items-center gap-3 group">
+                        <Link href={route('book.rental.search')} className="flex items-center gap-3 group min-w-0">
                             {brand.logo_url ? (
                                 <img
                                     src={brand.logo_url}
                                     alt={brand.name}
-                                    className="h-10 w-10 rounded-xl object-contain transition-transform duration-200 group-hover:scale-105"
+                                    className="h-10 w-10 rounded-xl object-contain transition-transform duration-200 group-hover:scale-105 shrink-0"
                                 />
                             ) : (
                                 <div
-                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-xs transition-transform duration-200 group-hover:scale-105"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-xs transition-transform duration-200 group-hover:scale-105 shrink-0"
                                     style={{ backgroundColor: 'var(--brand-color)' }}
                                 >
                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
@@ -130,24 +130,24 @@ export default function History({ brand, phone, bookings }: Props) {
                                     </svg>
                                 </div>
                             )}
-                            <div>
-                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
+                            <div className="min-w-0">
+                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none truncate max-w-[130px] sm:max-w-none">{brand.name}</h1>
                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">
                                     {tr('Showroom & Rental Resmi', 'Official Showroom & Rental')}
                                 </span>
                             </div>
                         </Link>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                             <LanguageToggle />
                             <Link
                                 href={route('book.rental.search')}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-250 bg-white px-3 sm:px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 shadow-2xs"
                             >
                                 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <span>{tr('Cari Kendaraan', 'Search Vehicles')}</span>
+                                <span><span className="hidden sm:inline">{tr('Cari Kendaraan', 'Search Vehicles')}</span><span className="sm:hidden">{tr('Cari', 'Search')}</span></span>
                             </Link>
 
                             {brand.support_phone && (

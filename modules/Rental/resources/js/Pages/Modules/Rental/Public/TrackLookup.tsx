@@ -44,22 +44,22 @@ export default function TrackLookup({ brand }: Props) {
 
             {/* Top Navigation */}
             <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200/80 px-4 py-3.5">
-                <div className="max-w-xl mx-auto flex items-center justify-between">
-                    <Link href={route('book.rental.search')} className="flex items-center gap-2.5">
+                <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
+                    <Link href={route('book.rental.search')} className="flex items-center gap-2.5 min-w-0">
                         {brand.logo_url ? (
-                            <img src={brand.logo_url} alt={brand.name} className="h-7 w-auto object-contain" />
+                            <img src={brand.logo_url} alt={brand.name} className="h-7 w-auto object-contain shrink-0" />
                         ) : (
                             <div
-                                className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-extrabold text-sm shadow-sm"
+                                className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-extrabold text-sm shadow-sm shrink-0"
                                 style={{ backgroundColor: brandColor }}
                             >
                                 {brand.name.substring(0, 1)}
                             </div>
                         )}
-                        <span className="font-extrabold text-slate-900 tracking-tight text-base">{brand.name}</span>
+                        <span className="font-extrabold text-slate-900 tracking-tight text-base truncate max-w-[120px] sm:max-w-none">{brand.name}</span>
                     </Link>
 
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs shrink-0">
                         <LanguageToggle />
                         <Link
                             href={route('book.rental.search')}

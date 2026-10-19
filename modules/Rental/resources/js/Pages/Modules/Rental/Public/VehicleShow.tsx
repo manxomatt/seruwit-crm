@@ -352,7 +352,7 @@ export default function VehicleShow({
                                 </div>
                             )}
                             <div>
-                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
+                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none truncate max-w-[130px] sm:max-w-none">{brand.name}</h1>
                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{tr('Showroom & Rental Resmi', 'Official Showroom & Rental')}</span>
                             </div>
                         </Link>
@@ -408,7 +408,7 @@ export default function VehicleShow({
                 </header>
 
                 {/* Main Showcase & Checkout Container */}
-                <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
+                <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
                     
                     {/* Breadcrumbs */}
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
@@ -442,7 +442,7 @@ export default function VehicleShow({
                     )}
 
                     {/* Split Layout: Showcase Left + Checkout Right */}
-                    <div className="flex flex-col-reverse lg:flex-row gap-8 items-start">
+                    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
                         
                         {/* Left Column: Showcase & Specs */}
                         <div className="flex-1 w-full space-y-6">

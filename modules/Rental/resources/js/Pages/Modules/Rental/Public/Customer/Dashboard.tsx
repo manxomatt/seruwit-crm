@@ -359,22 +359,26 @@ export default function Dashboard({
                             {recentRentals.map((item) => {
                                 const badge = statusBadge(item.status);
                                 return (
-                                    <div key={item.id} className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition">
-                                        <div className="flex items-center gap-3.5">
+                                    <Link
+                                        key={item.id}
+                                        href={route('book.rental.portal.rentals.show', item.code)}
+                                        className="p-4 sm:p-5 flex items-center justify-between gap-3 sm:gap-4 hover:bg-slate-50/60 transition block"
+                                    >
+                                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
                                             <span className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-base shrink-0">
                                                 🚘
                                             </span>
-                                            <div>
-                                                <h5 className="text-xs sm:text-sm font-bold text-slate-900">
+                                            <div className="min-w-0">
+                                                <h5 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                                                     {item.vehicle?.name || tr('Armada Rental', 'Rental Vehicle')}
                                                 </h5>
-                                                <p className="text-[11px] text-slate-500 font-medium">
+                                                <p className="text-[11px] text-slate-500 font-medium truncate">
                                                     {tr('Kode:', 'Code:')} <span className="font-mono">{item.code}</span> · {item.start_date} → {item.end_date}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4 text-right">
+                                        <div className="flex items-center gap-2 sm:gap-4 text-right shrink-0">
                                             <div>
                                                 <span className="text-xs font-black text-slate-900 block">{money(item.total_amount)}</span>
                                                 <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full border ${badge.bg}`}>
@@ -382,14 +386,11 @@ export default function Dashboard({
                                                 </span>
                                             </div>
 
-                                            <Link
-                                                href={route('book.rental.portal.rentals.show', item.code)}
-                                                className="hidden sm:inline-flex p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
-                                            >
+                                            <span className="hidden sm:inline-flex p-2 rounded-xl text-slate-400">
                                                 →
-                                            </Link>
+                                            </span>
                                         </div>
-                                    </div>
+                                    </Link>
                                 );
                             })}
                         </div>

@@ -61,8 +61,8 @@ export default function PaymentResult({ brand, status, intent, booking, booking_
                             </svg>
                         </div>
                     )}
-                    <h1 className="text-base font-black tracking-tight text-slate-900">{brand.name}</h1>
-                    <div className="ml-auto">
+                    <h1 className="text-base font-black tracking-tight text-slate-900 truncate max-w-[140px] sm:max-w-none">{brand.name}</h1>
+                    <div className="ml-auto shrink-0">
                         <LanguageToggle />
                     </div>
                 </div>

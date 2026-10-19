@@ -1170,7 +1170,7 @@ export default function BookingView({
                                 </div>
                             )}
                             <div>
-                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">{brand.name}</h1>
+                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none truncate max-w-[120px] sm:max-w-none">{brand.name}</h1>
                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{tr('Showroom & Rental Resmi', 'Official Showroom & Rental')}</span>
                             </div>
                         </Link>
@@ -1213,7 +1213,7 @@ export default function BookingView({
                 </header>
 
                 {/* Dashboard Layout Container */}
-                <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
+                <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
                     
                     {/* Visual Live Status Tracking Timeline */}
                     <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-xs border border-slate-200">
@@ -1246,7 +1246,7 @@ export default function BookingView({
 
                         {/* Top Progress Bar & Percentage Summary */}
                         <div className="space-y-2 mb-5">
-                            <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-bold text-slate-600">
                                 <div className="flex items-center gap-2">
                                     <span className="text-slate-400">{tr('Status Saat Ini:', 'Current Status:')}</span>
                                     <span className="text-slate-900 font-black">
@@ -1255,7 +1255,7 @@ export default function BookingView({
                                             : `${tr('Tahap', 'Step')} ${activeIndex + 1} ${tr('dari', 'of')} ${totalSteps}: ${activeItem?.title || tr('Sedang Berjalan', 'In Progress')}`}
                                     </span>
                                 </div>
-                                <span className="font-mono text-emerald-700 bg-emerald-50 border border-emerald-250 px-2.5 py-0.5 rounded-full text-xs font-black">
+                                <span className="self-start sm:self-auto font-mono text-emerald-700 bg-emerald-50 border border-emerald-250 px-2.5 py-0.5 rounded-full text-xs font-black">
                                     {progressPercent}% {tr('Selesai', 'Complete')}
                                 </span>
                             </div>
@@ -2344,17 +2344,17 @@ export default function BookingView({
                                 </div>
                             ) : (booking.can_pay_deposit || isBalancePayable) && booking.deposit_proof?.status !== 'pending' ? (
                                 <div id="section-payment" className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
-                                    <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-slate-100">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                                             {isBalancePayable
                                                 ? tr('Pembayaran Tagihan / Perpanjangan Sewa', 'Invoice / Extension Payment')
                                                 : (Number(booking.deposit_amount) > 0 ? tr('Pembayaran Deposit', 'Deposit Payment') : tr('Pembayaran Sewa', 'Rental Payment'))}
                                         </h3>
-                                        <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[10px] font-bold">
+                                        <div className="flex overflow-x-auto gap-1 rounded-xl bg-slate-100 p-1 text-[10px] font-bold no-scrollbar">
                                             <button
                                                 type="button"
                                                 onClick={() => setDepositTab('transfer')}
-                                                className={`rounded-lg px-3 py-1.5 transition ${depositTab === 'transfer' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
+                                                className={`rounded-lg px-3 py-1.5 transition whitespace-nowrap shrink-0 ${depositTab === 'transfer' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
                                             >
                                                 {tr('Transfer Bank', 'Bank Transfer')}
                                             </button>
@@ -2362,7 +2362,7 @@ export default function BookingView({
                                                 <button
                                                     type="button"
                                                     onClick={() => setDepositTab('qris')}
-                                                    className={`rounded-lg px-3 py-1.5 transition flex items-center gap-1.5 ${depositTab === 'qris' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
+                                                    className={`rounded-lg px-3 py-1.5 transition flex items-center gap-1.5 whitespace-nowrap shrink-0 ${depositTab === 'qris' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
                                                 >
                                                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                                     QRIS
@@ -2372,7 +2372,7 @@ export default function BookingView({
                                                 <button
                                                     type="button"
                                                     onClick={() => setDepositTab('online')}
-                                                    className={`rounded-lg px-3 py-1.5 transition ${depositTab === 'online' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
+                                                    className={`rounded-lg px-3 py-1.5 transition whitespace-nowrap shrink-0 ${depositTab === 'online' ? 'bg-white text-slate-900 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'}`}
                                                 >
                                                     {tr('Bayar online', 'Pay online')}
                                                 </button>

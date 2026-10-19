@@ -252,7 +252,7 @@ export default function Profile({ brand, customer }: Props) {
                         <button
                             type="submit"
                             disabled={profileForm.processing}
-                            className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 disabled:opacity-50"
+                            className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:scale-102 disabled:opacity-50"
                             style={{ backgroundColor: 'var(--brand-color)' }}
                         >
                             {profileForm.processing ? tr('Menyimpan…', 'Saving…') : tr('Simpan Profil', 'Save Profile')}
@@ -328,7 +328,7 @@ export default function Profile({ brand, customer }: Props) {
                         <button
                             type="submit"
                             disabled={passwordForm.processing}
-                            className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition disabled:opacity-50"
+                            className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition disabled:opacity-50"
                         >
                             {passwordForm.processing ? tr('Menyimpan…', 'Saving…') : tr('Simpan Kata Sandi', 'Save Password')}
                         </button>

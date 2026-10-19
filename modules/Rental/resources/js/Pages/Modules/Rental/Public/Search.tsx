@@ -331,7 +331,7 @@ export default function Search({
                                 </div>
                             )}
                             <div>
-                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none group-hover:text-slate-950 transition-colors">
+                                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none group-hover:text-slate-950 transition-colors truncate max-w-[120px] sm:max-w-none">
                                     {brand.name}
                                 </h1>
                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">
@@ -446,16 +446,16 @@ export default function Search({
 
                 {/* Floating Modern Interactive Booking Search Card */}
                 <div className="relative z-20 -mt-16 sm:-mt-20 mx-auto max-w-6xl px-4 sm:px-6">
-                    <div className="rounded-3xl bg-white p-5 sm:p-8 shadow-xl border border-slate-200/90 transition-all">
+                    <div className="rounded-3xl bg-white p-4 sm:p-8 shadow-xl border border-slate-200/90 transition-all">
                         {/* Service Type Switcher: Lepas Kunci vs Dengan Sopir */}
                         <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-100">
-                            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+                            <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         form.setData('service_type', 'self_drive');
                                     }}
-                                    className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                                    className={`flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                                         form.data.service_type === 'self_drive'
                                             ? 'bg-slate-900 text-white shadow-xs'
                                             : 'text-slate-600 hover:text-slate-900'
@@ -472,7 +472,7 @@ export default function Search({
                                     onClick={() => {
                                         form.setData('service_type', 'with_driver');
                                     }}
-                                    className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                                    className={`flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                                         form.data.service_type === 'with_driver'
                                             ? 'bg-slate-900 text-white shadow-xs'
                                             : 'text-slate-600 hover:text-slate-900'
@@ -498,8 +498,8 @@ export default function Search({
                         </div>
 
                         {/* Segmented Rental Period Tabs */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5">
-                            <div className="flex items-center gap-2 p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-5">
+                            <div className="w-full sm:w-auto overflow-x-auto p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60 no-scrollbar touch-pan-x flex items-center gap-1.5">
                                 {periodOptions.map((opt) => {
                                     const active = form.data.period_type === opt.value;
                                     return (
@@ -507,7 +507,7 @@ export default function Search({
                                             key={opt.value}
                                             type="button"
                                             onClick={() => form.setData('period_type', opt.value)}
-                                            className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                            className={`relative px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                                                 active
                                                     ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
                                                     : 'text-slate-600 hover:text-slate-950'
@@ -531,33 +531,33 @@ export default function Search({
                             </div>
 
                             {/* Quick Date Shortcuts */}
-                            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-semibold text-slate-600">
-                                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mr-1 hidden sm:inline">{tr('Pilihan Cepat:', 'Quick Select:')}</span>
+                            <div className="w-full sm:w-auto flex items-center gap-1.5 overflow-x-auto text-[11px] font-semibold text-slate-600 no-scrollbar touch-pan-x pb-1 sm:pb-0">
+                                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mr-1 hidden sm:inline shrink-0">{tr('Pilihan Cepat:', 'Quick Select:')}</span>
                                 <button
                                     type="button"
                                     onClick={() => applyDatePreset(2)}
-                                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                                    className="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0 whitespace-nowrap"
                                 >
                                     {tr('2 Hari', '2 Days')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => applyDatePreset(3)}
-                                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                                    className="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0 whitespace-nowrap"
                                 >
                                     {tr('3 Hari', '3 Days')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={applyWeekendPreset}
-                                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                                    className="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0 whitespace-nowrap"
                                 >
                                     {tr('Akhir Pekan', 'Weekend')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => applyDatePreset(7)}
-                                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                                    className="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0 whitespace-nowrap"
                                 >
                                     {tr('1 Minggu', '1 Week')}
                                 </button>
@@ -750,9 +750,9 @@ export default function Search({
                             </div>
 
                             {/* Search by Car Name & Quick Sort */}
-                            <div className="flex flex-wrap items-center gap-2.5">
+                            <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
                                 {/* Instant Search Input */}
-                                <div className="relative min-w-[200px]">
+                                <div className="relative w-full sm:w-auto sm:min-w-[200px]">
                                     <input
                                         type="text"
                                         value={searchQuery}
@@ -778,7 +778,7 @@ export default function Search({
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value as any)}
-                                    className="rounded-xl border border-slate-250 bg-white py-2 px-3 text-xs font-semibold text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
+                                    className="w-full sm:w-auto rounded-xl border border-slate-250 bg-white py-2 px-3 text-xs font-semibold text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 shadow-2xs"
                                 >
                                     <option value="recommended">{tr('Rekomendasi', 'Recommended')}</option>
                                     <option value="price_asc">{tr('Harga: Termurah', 'Price: Lowest First')}</option>
@@ -999,7 +999,7 @@ export default function Search({
                                     </div>
 
                                     {/* Card Footer: Transparent Pricing & CTA Action */}
-                                    <div className="border-t border-slate-100 p-5 sm:p-6 bg-slate-50/70 flex items-center justify-between">
+                                    <div className="border-t border-slate-100 p-4 sm:p-6 bg-slate-50/70 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
                                         <div>
                                             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
                                                 {form.data.start_date && form.data.end_date ? tr('Total Estimasi Sewa', 'Estimated Total Rental') : tr('Mulai Dari', 'Starting From')}
