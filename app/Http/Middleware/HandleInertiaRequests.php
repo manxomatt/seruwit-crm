@@ -36,8 +36,9 @@ class HandleInertiaRequests extends Middleware
     {
         $rawUser = $request->user();
         $user = ($rawUser instanceof \App\Models\User) ? $rawUser : $request->user('web');
-        $customer = Auth::guard('customer')->user() ?: ($rawUser instanceof \Modules\Rental\Models\Customer ? $rawUser : $request->user('customer'));
-        if ($customer) {
+        $rawCustomer = Auth::guard('customer')->user() ?: ($rawUser instanceof \Modules\Rental\Models\Customer ? $rawUser : $request->user('customer'));
+        $customer = $rawCustomer instanceof \Modules\Rental\Models\Customer ? $rawCustomer : null;
+        if ($customer !== null) {
             $customer->loadMissing('partner');
         }
         $routePrefix = $this->getRoutePrefix($request);

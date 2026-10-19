@@ -1257,4 +1257,56 @@ class PublicRentalBookingTest extends TestCase
         $this->assertNull($partner->picture_url);
         Storage::disk('public')->assertMissing($oldPath);
     }
+
+    public function test_approving_partner_kyc_updates_partner_and_customer_name_to_ktp_name(): void
+    {
+        Storage::fake('public');
+
+        $partner = Partner::factory()->create([
+            'name' => 'Andi',
+            'phone' => '6281299998888',
+            'email' => 'andi@example.com',
+            'kyc_status' => Partner::KYC_STATUS_UNVERIFIED,
+        ]);
+
+        $customer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Andi',
+            'phone' => '6281299998888',
+            'email' => 'andi@example.com',
+        ]);
+
+        $ktpFile = UploadedFile::fake()->image('ktp.jpg', 600, 400);
+
+        $this->actingAs($customer, 'customer')
+            ->post(route('book.rental.portal.documents.update'), [
+                'kyc_extracted_name' => 'ANDI PRATAMA WIJAYA',
+                'id_number' => '3271012345670009',
+                'license_number' => '900512345678',
+                'ktp' => $ktpFile,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $partner->refresh();
+        $this->assertSame(Partner::KYC_STATUS_PENDING, $partner->kyc_status);
+        $this->assertSame('ANDI PRATAMA WIJAYA', $partner->kyc_extracted_name);
+        $this->assertSame('Andi', $partner->name);
+
+        $admin = $this->createAdminUser();
+
+        $this->actingAs($admin)
+            ->post(route('module.partners.kyc-status', $partner->id), [
+                'status' => Partner::KYC_STATUS_VERIFIED,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $partner->refresh();
+        $customer->refresh();
+
+        $this->assertSame(Partner::KYC_STATUS_VERIFIED, $partner->kyc_status);
+        $this->assertSame('ANDI PRATAMA WIJAYA', $partner->name);
+        $this->assertSame('ANDI PRATAMA WIJAYA', $customer->name);
+    }
 }

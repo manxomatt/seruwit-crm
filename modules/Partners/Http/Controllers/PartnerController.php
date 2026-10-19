@@ -325,6 +325,13 @@ class PartnerController extends Controller
             $partner->setAttribute('driver_license_url', $media->publicUrl($partner->driver_license_photo_path));
         }
 
+        if (blank($partner->kyc_extracted_name)) {
+            $resolvedName = $this->resolveKycExtractedName($partner, allowLiveOcr: false);
+            if (filled($resolvedName)) {
+                $partner->setAttribute('kyc_extracted_name', $resolvedName);
+            }
+        }
+
         return Inertia::render('Modules/Partners/Show', [
             'partner' => $partner,
             'can' => [
@@ -339,6 +346,7 @@ class PartnerController extends Controller
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:verified,rejected,pending,unverified'],
             'reason' => ['nullable', 'string', 'max:500'],
+            'verified_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         $status = $validated['status'];
@@ -348,6 +356,26 @@ class PartnerController extends Controller
             $updates['kyc_verified_at'] = now();
             $updates['kyc_verified_by'] = auth()->id();
             $updates['kyc_rejected_reason'] = null;
+
+            $verifiedName = trim((string) ($validated['verified_name'] ?? ''));
+            if ($verifiedName === '') {
+                $verifiedName = (string) ($this->resolveKycExtractedName($partner, allowLiveOcr: true) ?? '');
+            }
+
+            if ($verifiedName !== '') {
+                $updates['name'] = $verifiedName;
+                $updates['kyc_extracted_name'] = $verifiedName;
+
+                if (class_exists(\Modules\Rental\Models\Customer::class)) {
+                    \Modules\Rental\Models\Customer::query()
+                        ->where('partner_id', $partner->id)
+                        ->update(['name' => $verifiedName]);
+                }
+
+                if ($partner->portalUser !== null) {
+                    $partner->portalUser->update(['name' => $verifiedName]);
+                }
+            }
         } elseif ($status === Partner::KYC_STATUS_REJECTED) {
             $updates['kyc_rejected_reason'] = $validated['reason'] ?? 'Dokumen tidak memenuhi persyaratan.';
             $updates['kyc_verified_at'] = null;
@@ -361,6 +389,54 @@ class PartnerController extends Controller
         $partner->update($updates);
 
         return back()->with('success', 'Status verifikasi identitas (KYC) pelanggan berhasil diperbarui.');
+    }
+
+    private function resolveKycExtractedName(Partner $partner, bool $allowLiveOcr = false): ?string
+    {
+        if (filled($partner->kyc_extracted_name)) {
+            return trim((string) $partner->kyc_extracted_name);
+        }
+
+        if (class_exists(\Modules\Rental\Models\Rental::class)) {
+            $latestRentalWithKyc = \Modules\Rental\Models\Rental::query()
+                ->where('partner_id', $partner->id)
+                ->whereNotNull('ai_kyc_assessment')
+                ->latest('id')
+                ->first();
+
+            if ($latestRentalWithKyc !== null && is_array($latestRentalWithKyc->ai_kyc_assessment)) {
+                $assessment = $latestRentalWithKyc->ai_kyc_assessment;
+                $fromAssessment = trim((string) ($assessment['ktp']['name'] ?? $assessment['sim']['name'] ?? ''));
+                if ($fromAssessment !== '') {
+                    $partner->update(['kyc_extracted_name' => $fromAssessment]);
+
+                    return $fromAssessment;
+                }
+            }
+        }
+
+        if ($allowLiveOcr && class_exists(\Modules\Rental\AI\Contracts\DocumentKycServiceInterface::class)) {
+            $scanPath = $partner->id_card_photo_path ?: $partner->driver_license_photo_path;
+            if (filled($scanPath)) {
+                try {
+                    $docType = filled($partner->id_card_photo_path) ? 'ktp' : 'sim';
+                    $ocr = app(\Modules\Rental\AI\Contracts\DocumentKycServiceInterface::class)->scanSingleDocument(
+                        imageSource: (string) $scanPath,
+                        docType: $docType,
+                    );
+                    $ocrName = trim((string) ($ocr['data']['name'] ?? ''));
+                    if ($ocrName !== '') {
+                        $partner->update(['kyc_extracted_name' => $ocrName]);
+
+                        return $ocrName;
+                    }
+                } catch (\Throwable) {
+                    // Ignore OCR failure during manual KYC approval
+                }
+            }
+        }
+
+        return null;
     }
 
     public function edit(Partner $partner): Response

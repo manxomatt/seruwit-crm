@@ -15,6 +15,7 @@ interface Brand {
 
 interface PartnerDocuments {
     kyc_status: string;
+    kyc_extracted_name?: string | null;
     kyc_rejected_reason: string | null;
     id_number: string | null;
     license_number: string | null;
@@ -272,6 +273,7 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
     const [ocrFeedback, setOcrFeedback] = useState<{ type: 'ktp' | 'sim'; message: string; isError?: boolean } | null>(null);
 
     const form = useForm<{
+        kyc_extracted_name: string;
         id_number: string;
         license_number: string;
         ktp: File | null;
@@ -279,6 +281,7 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
         emergency_contact_name: string;
         emergency_contact_phone: string;
     }>({
+        kyc_extracted_name: partner.kyc_extracted_name || '',
         id_number: partner.id_number || '',
         license_number: partner.license_number || '',
         ktp: null,
@@ -324,18 +327,25 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     confidence,
                 });
 
+                const updates: Partial<typeof form.data> = {};
+                if (data.name) {
+                    updates.kyc_extracted_name = String(data.name).trim();
+                }
                 if (data.nik) {
                     const cleanNik = String(data.nik).replace(/\D/g, '');
-                    form.setData('id_number', cleanNik);
+                    updates.id_number = cleanNik;
                     setOcrFeedback({
                         type: 'ktp',
-                        message: `NIK (${cleanNik}) berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
+                        message: `NIK (${cleanNik})${updates.kyc_extracted_name ? ` & Nama (${updates.kyc_extracted_name})` : ''} berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
                     });
                 } else {
                     setOcrFeedback({
                         type: 'ktp',
                         message: 'Foto KTP terdeteksi, namun nomor NIK belum terbaca jelas. Mohon periksa kembali kolom NIK.',
                     });
+                }
+                if (Object.keys(updates).length > 0) {
+                    form.setData((prev) => ({ ...prev, ...updates }));
                 }
             } else {
                 setOcrFeedback({
@@ -393,9 +403,13 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                     confidence,
                 });
 
+                const updates: Partial<typeof form.data> = {};
+                if (data.name && !form.data.kyc_extracted_name) {
+                    updates.kyc_extracted_name = String(data.name).trim();
+                }
                 if (data.license_number) {
                     const cleanSim = String(data.license_number).replace(/\s+/g, '');
-                    form.setData('license_number', cleanSim);
+                    updates.license_number = cleanSim;
                     setOcrFeedback({
                         type: 'sim',
                         message: `Nomor SIM (${cleanSim}) berhasil dibaca via OCR (${Math.round(confidence * 100)}% akurasi).`,
@@ -405,6 +419,9 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                         type: 'sim',
                         message: 'Foto SIM terdeteksi, namun nomor SIM belum terbaca jelas. Mohon periksa kembali kolom nomor SIM.',
                     });
+                }
+                if (Object.keys(updates).length > 0) {
+                    form.setData((prev) => ({ ...prev, ...updates }));
                 }
             } else {
                 setOcrFeedback({
@@ -578,6 +595,21 @@ export default function Documents({ brand, customer, partner, ocrEnabled = true 
                                     className="w-full mt-1.5 text-sm font-semibold"
                                 />
                                 <InputError message={form.errors.id_number} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="kyc_extracted_name" value="Nama Lengkap Sesuai KTP / SIM" />
+                                <TextInput
+                                    id="kyc_extracted_name"
+                                    value={form.data.kyc_extracted_name}
+                                    onChange={(e) => form.setData('kyc_extracted_name', e.target.value)}
+                                    placeholder={customer.name || 'Nama sesuai dokumen identitas'}
+                                    className="w-full mt-1.5 text-sm font-semibold"
+                                />
+                                <p className="text-[10px] text-slate-400 mt-1">
+                                    Akan digunakan untuk memperbarui nama resmi akun Anda setelah verifikasi KYC disetujui admin.
+                                </p>
+                                <InputError message={form.errors.kyc_extracted_name} className="mt-1" />
                             </div>
                         </div>
 

@@ -165,6 +165,7 @@ class CustomerPortalController extends Controller
             'ocrEnabled' => CentralAiSettings::isOcrEnabled() && RentalGeneralSettings::all()['ai_kyc_enabled'],
             'partner' => [
                 'kyc_status' => $partner?->kyc_status ?? Partner::KYC_STATUS_UNVERIFIED,
+                'kyc_extracted_name' => $partner?->kyc_extracted_name,
                 'kyc_rejected_reason' => $partner?->kyc_rejected_reason,
                 'id_number' => $partner?->id_number,
                 'license_number' => $partner?->license_number,
@@ -219,10 +220,19 @@ class CustomerPortalController extends Controller
         }
 
         try {
+            $docType = (string) $request->input('doc_type', 'auto');
             $extracted = $kycService->scanSingleDocument(
                 imageSource: $imageSource,
-                docType: $request->input('doc_type', 'auto'),
+                docType: $docType,
             );
+
+            $extractedName = trim((string) ($extracted['data']['name'] ?? ''));
+            if ($partner !== null && $extractedName !== '') {
+                $resolvedType = (string) ($extracted['doc_type'] ?? $docType);
+                if ($resolvedType === 'ktp' || blank($partner->kyc_extracted_name)) {
+                    $partner->update(['kyc_extracted_name' => $extractedName]);
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -247,6 +257,7 @@ class CustomerPortalController extends Controller
         abort_if($partner === null, 404);
 
         $validated = $request->validate([
+            'kyc_extracted_name' => ['nullable', 'string', 'max:255'],
             'id_number' => ['nullable', 'string', 'max:50'],
             'license_number' => ['nullable', 'string', 'max:50'],
             'id_card_photo_path' => ['nullable', 'string', 'max:2048'],
@@ -271,6 +282,33 @@ class CustomerPortalController extends Controller
             $path = 'rental/partner-kyc/'.$partner->id.'/sim-'.Str::uuid().'.'.$ext;
             Storage::disk('public')->put($path, file_get_contents($file->getRealPath()) ?: '');
             $validated['driver_license_photo_path'] = $path;
+        }
+
+        if (blank($validated['kyc_extracted_name'] ?? null) && ($request->hasFile('ktp') || $request->hasFile('sim'))) {
+            if (CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
+                try {
+                    $scanPath = $validated['id_card_photo_path'] ?? $validated['driver_license_photo_path'] ?? null;
+                    if (filled($scanPath)) {
+                        $ocr = app(DocumentKycServiceInterface::class)->scanSingleDocument((string) $scanPath);
+                        $ocrName = trim((string) ($ocr['data']['name'] ?? ''));
+                        if ($ocrName !== '') {
+                            $validated['kyc_extracted_name'] = $ocrName;
+                        }
+                        if (blank($validated['id_number'] ?? null) && ! empty($ocr['data']['nik'])) {
+                            $validated['id_number'] = preg_replace('/[^0-9]/', '', (string) $ocr['data']['nik']);
+                        }
+                        if (blank($validated['license_number'] ?? null) && ! empty($ocr['data']['license_number'])) {
+                            $validated['license_number'] = (string) $ocr['data']['license_number'];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('[CustomerPortal Auto OCR] '.$e->getMessage());
+                }
+            }
+        }
+
+        if (blank($validated['kyc_extracted_name'] ?? null)) {
+            unset($validated['kyc_extracted_name']);
         }
 
         unset($validated['ktp'], $validated['sim']);

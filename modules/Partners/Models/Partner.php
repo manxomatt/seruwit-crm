@@ -56,6 +56,7 @@ class Partner extends Model
         'comment',
         'status',
         'kyc_status',
+        'kyc_extracted_name',
         'kyc_submitted_at',
         'kyc_verified_at',
         'kyc_verified_by',

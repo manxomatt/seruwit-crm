@@ -235,6 +235,7 @@ interface Partner {
     emergency_contact_name?: string | null;
     emergency_contact_phone?: string | null;
     kyc_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
+    kyc_extracted_name?: string | null;
     kyc_submitted_at?: string | null;
     kyc_verified_at?: string | null;
     kyc_verified_by?: number | null;
@@ -540,6 +541,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
     // KYC Verification State
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
+    const [verifiedKycName, setVerifiedKycName] = useState(partner.kyc_extracted_name || '');
     const [updatingKyc, setUpdatingKyc] = useState(false);
     const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
@@ -550,6 +552,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
             {
                 status,
                 reason: reason || undefined,
+                verified_name: status === 'verified' ? (verifiedKycName.trim() || partner.kyc_extracted_name || undefined) : undefined,
             },
             {
                 preserveScroll: true,
@@ -1333,17 +1336,32 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                 </div>
 
                                 {can.update && (
-                                    <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 shrink-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 pt-2 md:pt-0 shrink-0">
                                         {partner.kyc_status !== 'verified' && (
-                                            <button
-                                                type="button"
-                                                disabled={updatingKyc}
-                                                onClick={() => handleUpdateKycStatus('verified')}
-                                                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-98 transition disabled:opacity-50 cursor-pointer"
-                                            >
-                                                <Icons.Check />
-                                                <span>Setujui Verifikasi KYC</span>
-                                            </button>
+                                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900/80 p-2 shadow-2xs">
+                                                <div className="px-2 py-0.5">
+                                                    <label htmlFor="verified_kyc_name" className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                        Nama Sesuai KTP / SIM
+                                                    </label>
+                                                    <input
+                                                        id="verified_kyc_name"
+                                                        type="text"
+                                                        value={verifiedKycName}
+                                                        onChange={(e) => setVerifiedKycName(e.target.value)}
+                                                        placeholder={partner.kyc_extracted_name || partner.name || 'Nama sesuai KTP/SIM'}
+                                                        className="mt-0.5 w-full sm:w-52 border-0 bg-transparent p-0 text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    disabled={updatingKyc}
+                                                    onClick={() => handleUpdateKycStatus('verified')}
+                                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    <Icons.Check />
+                                                    <span>Setujui Verifikasi KYC</span>
+                                                </button>
+                                            </div>
                                         )}
                                         {partner.kyc_status !== 'rejected' && (
                                             <button
@@ -1453,6 +1471,15 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                                     >
                                                         {copiedKey === 'id_number' ? <Icons.Check /> : <Icons.Copy />}
                                                     </button>
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400 italic font-normal">Belum tercatat</span>
+                                            )}
+                                        </DetailRow>
+                                        <DetailRow label="Nama di KTP / SIM">
+                                            {partner.kyc_extracted_name ? (
+                                                <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                                                    {partner.kyc_extracted_name}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 italic font-normal">Belum tercatat</span>

@@ -825,6 +825,10 @@ class PublicRentalBookingController extends Controller
             if (! empty($updates['passenger_sim_path']) && blank($rental->partner->driver_license_photo_path)) {
                 $partnerUpdates['driver_license_photo_path'] = $updates['passenger_sim_path'];
             }
+            if (($rental->partner->kyc_status ?? 'unverified') === 'unverified') {
+                $partnerUpdates['kyc_status'] = 'pending';
+                $partnerUpdates['kyc_submitted_at'] = now();
+            }
             if ($partnerUpdates !== []) {
                 $rental->partner->forceFill($partnerUpdates)->save();
             }
@@ -832,7 +836,11 @@ class PublicRentalBookingController extends Controller
 
         if (CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
             try {
-                app(DocumentKycServiceInterface::class)->analyzeRentalKyc($rental);
+                $kycResult = app(DocumentKycServiceInterface::class)->analyzeRentalKyc($rental);
+                $extractedName = trim((string) ($kycResult->ktp['name'] ?? $kycResult->sim['name'] ?? ''));
+                if ($rental->partner !== null && $extractedName !== '') {
+                    $rental->partner->update(['kyc_extracted_name' => $extractedName]);
+                }
             } catch (Throwable $e) {
                 Log::warning('[PublicRental AI KYC] '.$e->getMessage(), ['rental_id' => $rental->id]);
             }
@@ -890,6 +898,13 @@ class PublicRentalBookingController extends Controller
 
             $data = (array) ($extracted['data'] ?? []);
             $extractedDocType = (string) ($extracted['doc_type'] ?? $docType);
+
+            $extractedName = trim((string) ($data['name'] ?? ''));
+            if ($rental->partner !== null && $extractedName !== '') {
+                if ($extractedDocType === 'ktp' || blank($rental->partner->kyc_extracted_name)) {
+                    $rental->partner->update(['kyc_extracted_name' => $extractedName]);
+                }
+            }
 
             $validation = [
                 'is_valid' => true,
