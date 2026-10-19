@@ -126,9 +126,9 @@ export default function Search({
     const todayStr = useMemo(() => toISODate(new Date()), []);
 
     const periodOptions = [
-        { value: 'daily', label: t('rental.storefront_ui.period_daily', undefined, tr('Sewa Harian', 'Daily Rental')), badge: tr('Populer', 'Popular') },
-        { value: 'weekly', label: t('rental.storefront_ui.period_weekly', undefined, tr('Sewa Mingguan', 'Weekly Rental')), badge: tr('Hemat', 'Save') },
-        { value: 'monthly', label: t('rental.storefront_ui.period_monthly', undefined, tr('Sewa Bulanan', 'Monthly Rental')), badge: tr('Terbaik', 'Best Value') },
+        { value: 'daily', label: t('rental.storefront_ui.period_daily', undefined, tr('Harian', 'Daily')), badge: tr('Populer', 'Popular') },
+        { value: 'weekly', label: t('rental.storefront_ui.period_weekly', undefined, tr('Mingguan', 'Weekly')), badge: tr('Hemat', 'Save') },
+        { value: 'monthly', label: t('rental.storefront_ui.period_monthly', undefined, tr('Bulanan', 'Monthly')), badge: tr('Terbaik', 'Best Value') },
     ];
 
     const form = useForm({
@@ -499,7 +499,7 @@ export default function Search({
 
                         {/* Segmented Rental Period Tabs */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-5">
-                            <div className="w-full sm:w-auto overflow-x-auto p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60 no-scrollbar touch-pan-x flex items-center gap-1.5">
+                            <div className="w-full sm:w-auto grid grid-cols-3 sm:flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60">
                                 {periodOptions.map((opt) => {
                                     const active = form.data.period_type === opt.value;
                                     return (
@@ -507,16 +507,16 @@ export default function Search({
                                             key={opt.value}
                                             type="button"
                                             onClick={() => form.setData('period_type', opt.value)}
-                                            className={`relative px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+                                            className={`relative px-1.5 sm:px-4 py-2 sm:py-2 rounded-xl text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-center min-w-0 ${
                                                 active
                                                     ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
                                                     : 'text-slate-600 hover:text-slate-950'
                                             }`}
                                         >
-                                            <span>{opt.label}</span>
+                                            <span className="truncate max-w-full">{opt.label}</span>
                                             {opt.badge && (
                                                 <span
-                                                    className={`text-[9px] px-1.5 py-0.2 rounded-md font-extrabold uppercase ${
+                                                    className={`text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded-md font-extrabold uppercase shrink-0 leading-tight ${
                                                         active
                                                             ? 'bg-emerald-100 text-emerald-800'
                                                             : 'bg-slate-200/80 text-slate-600'

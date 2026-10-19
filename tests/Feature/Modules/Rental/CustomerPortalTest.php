@@ -95,7 +95,16 @@ class CustomerPortalTest extends TestCase
     public function test_send_otp_fails_when_whatsapp_gateway_fails_in_production(): void
     {
         config(['app.env' => 'production']);
-        Setting::query()->updateOrCreate(['key' => 'system.mode'], ['value' => 'production', 'group' => 'system', 'type' => 'string']);
+        \App\Models\PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
+        Setting::query()->updateOrCreate(
+            ['key' => \App\Support\SystemMode::KEY],
+            [
+                'label' => 'System Mode',
+                'value' => \App\Support\SystemMode::PRODUCTION,
+                'group' => 'general',
+                'type' => 'string',
+            ]
+        );
 
         $mockGateway = \Mockery::mock(\App\Contracts\WhatsAppGatewayInterface::class);
         $mockGateway->shouldReceive('sendMessage')->once()->andReturn(false);
