@@ -131,7 +131,7 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
         Route::post('/documents', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateDocuments'])->name('documents.update');
         Route::post('/documents/scan', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'scanDocument'])->name('documents.scan');
         Route::get('/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'profile'])->name('profile');
-        Route::put('/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateProfile'])->name('profile.update');
+        Route::match(['put', 'post'], '/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateProfile'])->name('profile.update');
         Route::put('/profile/password', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updatePassword'])->name('profile.password');
     });
 });

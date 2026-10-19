@@ -18,6 +18,7 @@ use Inertia\Response;
 use Modules\Partners\Models\Partner;
 use Modules\Receivables\Support\GatewayCheckoutService;
 use Modules\Rental\AI\Contracts\DocumentKycServiceInterface;
+use Modules\Rental\Http\Requests\Public\UpdateCustomerProfileRequest;
 use Modules\Rental\Models\Customer;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
@@ -316,28 +317,53 @@ class CustomerPortalController extends Controller
                 'name' => $customer->name,
                 'phone' => $customer->phone,
                 'email' => $customer->email,
+                'avatar_url' => $customer->avatarUrl(),
                 'has_password' => filled($customer->password),
                 'created_at' => $customer->created_at?->toFormattedDateString(),
             ],
         ]);
     }
 
-    public function updateProfile(Request $request): RedirectResponse
+    public function updateProfile(UpdateCustomerProfileRequest $request): RedirectResponse
     {
         $customer = $this->activeCustomer();
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-        ]);
+        $updates = [
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+        ];
 
-        $customer->update($validated);
+        $partnerUpdates = [
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? $customer->partner?->email,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            if (filled($customer->avatar_path)) {
+                Storage::disk('public')->delete($customer->avatar_path);
+            }
+
+            $file = $request->file('avatar');
+            $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $path = 'rental/customer-avatars/'.$customer->id.'/avatar-'.Str::uuid().'.'.$ext;
+            Storage::disk('public')->put($path, file_get_contents($file->getRealPath()) ?: '');
+
+            $updates['avatar_path'] = $path;
+            $partnerUpdates['picture_url'] = Storage::disk('public')->url($path);
+        } elseif ($request->boolean('remove_avatar')) {
+            if (filled($customer->avatar_path)) {
+                Storage::disk('public')->delete($customer->avatar_path);
+            }
+
+            $updates['avatar_path'] = null;
+            $partnerUpdates['picture_url'] = null;
+        }
+
+        $customer->update($updates);
 
         if ($customer->partner !== null) {
-            $customer->partner->update([
-                'name' => $validated['name'],
-                'email' => $validated['email'] ?? $customer->partner->email,
-            ]);
+            $customer->partner->update($partnerUpdates);
         }
 
         return back()->with('success', 'Profil Anda berhasil diperbarui.');

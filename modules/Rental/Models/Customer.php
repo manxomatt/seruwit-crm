@@ -22,6 +22,7 @@ class Customer extends Authenticatable
         'name',
         'phone',
         'email',
+        'avatar_path',
         'password',
         'phone_verified_at',
         'email_verified_at',
@@ -60,5 +61,20 @@ class Customer extends Authenticatable
     public function isKycVerified(): bool
     {
         return $this->partner?->isKycVerified() ?? false;
+    }
+
+    public function avatarUrl(): ?string
+    {
+        $raw = $this->avatar_path ?: $this->partner?->picture_url;
+
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://') || str_starts_with($raw, '/')) {
+            return $raw;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($raw);
     }
 }

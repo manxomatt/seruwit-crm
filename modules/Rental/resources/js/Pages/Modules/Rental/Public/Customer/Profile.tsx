@@ -2,7 +2,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
-import { FormEvent } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import CustomerPortalLayout from './CustomerPortalLayout';
 
 interface Brand {
@@ -17,6 +17,7 @@ interface Customer {
     name: string;
     phone: string;
     email: string | null;
+    avatar_url?: string | null;
     has_password: boolean;
     created_at?: string;
 }
@@ -27,9 +28,23 @@ interface Props {
 }
 
 export default function Profile({ brand, customer }: Props) {
-    const profileForm = useForm({
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(customer.avatar_url || null);
+
+    useEffect(() => {
+        setAvatarPreview(customer.avatar_url || null);
+    }, [customer.avatar_url]);
+
+    const profileForm = useForm<{
+        name: string;
+        email: string;
+        avatar: File | null;
+        remove_avatar: boolean;
+    }>({
         name: customer.name || '',
         email: customer.email || '',
+        avatar: null,
+        remove_avatar: false,
     });
 
     const passwordForm = useForm({
@@ -38,10 +53,47 @@ export default function Profile({ brand, customer }: Props) {
         password_confirmation: '',
     });
 
+    const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        if (!file) {
+            return;
+        }
+        profileForm.setData((prev) => ({
+            ...prev,
+            avatar: file,
+            remove_avatar: false,
+        }));
+        const objectUrl = URL.createObjectURL(file);
+        setAvatarPreview(objectUrl);
+    };
+
+    const handleRemoveAvatar = () => {
+        profileForm.setData((prev) => ({
+            ...prev,
+            avatar: null,
+            remove_avatar: true,
+        }));
+        setAvatarPreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleProfileSubmit = (e: FormEvent) => {
         e.preventDefault();
-        profileForm.put(route('book.rental.portal.profile.update'), {
+        profileForm.post(route('book.rental.portal.profile.update'), {
             preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                profileForm.setData((prev) => ({
+                    ...prev,
+                    avatar: null,
+                    remove_avatar: false,
+                }));
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            },
         });
     };
 
@@ -53,6 +105,13 @@ export default function Profile({ brand, customer }: Props) {
         });
     };
 
+    const initials = (profileForm.data.name || customer.name || 'P')
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || '')
+        .join('');
+
     return (
         <CustomerPortalLayout brand={brand} title="Profil Akun Pelanggan">
             <div className="max-w-3xl space-y-8">
@@ -63,7 +122,73 @@ export default function Profile({ brand, customer }: Props) {
                 >
                     <div className="border-b border-slate-100 pb-4">
                         <h3 className="text-base font-black text-slate-900">Informasi Pribadi</h3>
-                        <p className="text-xs text-slate-500">Perbarui data nama dan kontak akun Anda.</p>
+                        <p className="text-xs text-slate-500">Perbarui foto profil, data nama, dan kontak akun Anda.</p>
+                    </div>
+
+                    {/* Profile Photo Upload Section */}
+                    <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4 sm:p-5">
+                        <InputLabel htmlFor="avatar" value="Foto Profil" />
+                        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="relative h-20 w-20 shrink-0">
+                                {avatarPreview ? (
+                                    <img
+                                        src={avatarPreview}
+                                        alt={customer.name}
+                                        className="h-20 w-20 rounded-2xl object-cover border-2 border-white shadow-md ring-1 ring-slate-200"
+                                    />
+                                ) : (
+                                    <div
+                                        className="flex h-20 w-20 items-center justify-center rounded-2xl text-xl font-black text-white shadow-md border-2 border-white ring-1 ring-slate-200"
+                                        style={{ backgroundColor: 'var(--brand-color)' }}
+                                    >
+                                        {initials || '👤'}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex-1 space-y-2">
+                                <input
+                                    ref={fileInputRef}
+                                    id="avatar"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    onChange={handleAvatarChange}
+                                    className="hidden"
+                                />
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-3.5 py-2 text-xs font-bold text-white shadow-2xs transition"
+                                    >
+                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span>{avatarPreview ? 'Ganti Foto' : 'Upload Foto Profil'}</span>
+                                    </button>
+
+                                    {avatarPreview && (
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveAvatar}
+                                            className="inline-flex items-center gap-1 rounded-xl bg-white hover:bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 border border-slate-200 hover:border-rose-200 transition"
+                                        >
+                                            <span>Hapus Foto</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-slate-500 font-medium">
+                                    Format JPG, PNG, atau WEBP. Ukuran maksimal 3 MB.
+                                </p>
+                                {profileForm.data.avatar && (
+                                    <p className="text-[11px] font-bold text-teal-700">
+                                        File dipilih: {profileForm.data.avatar.name} (Klik "Simpan Profil" untuk menyimpan perubahan)
+                                    </p>
+                                )}
+                                <InputError message={profileForm.errors.avatar} className="mt-1" />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="space-y-4">

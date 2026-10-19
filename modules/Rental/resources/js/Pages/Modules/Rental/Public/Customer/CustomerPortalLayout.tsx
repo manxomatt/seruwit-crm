@@ -127,15 +127,34 @@ export default function CustomerPortalLayout({ brand, title, headerAction, child
 
                                 {/* User Profile Badge / Logout */}
                                 {customer && (
-                                    <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-                                        <div className="hidden sm:block text-right">
-                                            <span className="text-xs font-bold text-slate-900 block leading-tight">
-                                                {customer.name}
-                                            </span>
-                                            <span className="text-[10px] text-slate-500 font-medium block">
-                                                {customer.phone}
-                                            </span>
-                                        </div>
+                                    <div className="flex items-center gap-2.5 pl-2.5 border-l border-slate-200">
+                                        <Link
+                                            href={route('book.rental.portal.profile')}
+                                            className="flex items-center gap-2.5 group rounded-xl p-1 hover:bg-slate-100/80 transition"
+                                        >
+                                            {customer.avatar_url ? (
+                                                <img
+                                                    src={customer.avatar_url}
+                                                    alt={customer.name}
+                                                    className="h-8 w-8 rounded-xl object-cover ring-1 ring-slate-200 group-hover:ring-teal-500 transition"
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black text-white shadow-2xs"
+                                                    style={{ backgroundColor: 'var(--brand-color)' }}
+                                                >
+                                                    {customer.name ? customer.name.charAt(0).toUpperCase() : '👤'}
+                                                </div>
+                                            )}
+                                            <div className="hidden sm:block text-right pr-1">
+                                                <span className="text-xs font-bold text-slate-900 group-hover:text-teal-700 transition block leading-tight">
+                                                    {customer.name}
+                                                </span>
+                                                <span className="text-[10px] text-slate-500 font-medium block">
+                                                    {customer.phone}
+                                                </span>
+                                            </div>
+                                        </Link>
 
                                         <button
                                             type="button"

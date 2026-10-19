@@ -12,8 +12,10 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\FleetBaseKind;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
+use Modules\Partners\Models\Partner;
 use Modules\Receivables\Models\GatewayCharge;
 use Modules\Receivables\Models\PaymentGatewayConfig;
+use Modules\Rental\Models\Customer;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalRate;
@@ -1191,5 +1193,68 @@ class PublicRentalBookingTest extends TestCase
 
         $this->assertSame(Rental::STATUS_PENDING, $rental->fresh()->status);
         $this->assertNull($rental->fresh()->reserved_until);
+    }
+
+    public function test_customer_can_upload_and_remove_profile_photo_in_portal(): void
+    {
+        Storage::fake('public');
+
+        $partner = Partner::factory()->create([
+            'name' => 'Budi Santoso',
+            'phone' => '628123456000',
+            'email' => 'budi@example.com',
+        ]);
+
+        $customer = Customer::query()->create([
+            'partner_id' => $partner->id,
+            'name' => 'Budi Santoso',
+            'phone' => '628123456000',
+            'email' => 'budi@example.com',
+        ]);
+
+        $avatarFile = UploadedFile::fake()->image('avatar.jpg', 300, 300);
+
+        $this->actingAs($customer, 'customer')
+            ->post(route('book.rental.portal.profile.update'), [
+                'name' => 'Budi Santoso Updated',
+                'email' => 'budi.new@example.com',
+                'avatar' => $avatarFile,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $customer->refresh();
+        $partner->refresh();
+
+        $this->assertSame('Budi Santoso Updated', $customer->name);
+        $this->assertNotNull($customer->avatar_path);
+        Storage::disk('public')->assertExists($customer->avatar_path);
+        $this->assertNotNull($partner->picture_url);
+        $this->assertSame($customer->avatarUrl(), $partner->picture_url);
+
+        $oldPath = $customer->avatar_path;
+
+        $this->actingAs($customer, 'customer')
+            ->get(route('book.rental.portal.profile'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Public/Customer/Profile')
+                ->where('customer.avatar_url', $customer->avatarUrl()));
+
+        $this->actingAs($customer, 'customer')
+            ->post(route('book.rental.portal.profile.update'), [
+                'name' => 'Budi Santoso Updated',
+                'email' => 'budi.new@example.com',
+                'remove_avatar' => true,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $customer->refresh();
+        $partner->refresh();
+
+        $this->assertNull($customer->avatar_path);
+        $this->assertNull($partner->picture_url);
+        Storage::disk('public')->assertMissing($oldPath);
     }
 }

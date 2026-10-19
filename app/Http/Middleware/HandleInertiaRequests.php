@@ -79,6 +79,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $customer->name,
                     'phone' => $customer->phone,
                     'email' => $customer->email,
+                    'avatar_url' => $customer->avatarUrl(),
                     'partner_id' => $customer->partner_id,
                     'kyc_status' => $customer->partner?->kyc_status ?? 'unverified',
                     'has_id_card' => filled($customer->partner?->id_card_photo_path),
