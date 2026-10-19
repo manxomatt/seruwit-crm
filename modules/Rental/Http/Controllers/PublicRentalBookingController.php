@@ -450,9 +450,8 @@ class PublicRentalBookingController extends Controller
             return back()->with('error', __('rental.public.deposit_already_received'));
         }
 
-        if (! in_array($rental->status, [
+        if ($rental->isExpired() || $rental->isCancelled() || ! in_array($rental->status, [
             Rental::STATUS_DRAFT,
-            Rental::STATUS_PENDING,
             Rental::STATUS_PENDING_RESERVED,
             Rental::STATUS_CONFIRMED,
         ], true)) {
@@ -485,6 +484,15 @@ class PublicRentalBookingController extends Controller
         $this->ensureAvailable();
 
         $rental = $this->findPassengerBooking($token);
+
+        if ($rental->isExpired() || $rental->isCancelled() || ! in_array($rental->status, [
+            Rental::STATUS_DRAFT,
+            Rental::STATUS_PENDING_RESERVED,
+            Rental::STATUS_CONFIRMED,
+            Rental::STATUS_ACTIVE,
+        ], true)) {
+            return back()->with('error', 'Pemesanan ini telah kedaluwarsa atau dibatalkan dan tidak dapat menerima pembayaran.');
+        }
 
         $phone = $request->input('booker_phone') ?: $rental->booker_phone;
         $isVerified = $phone !== null && $otp->isVerified($phone);
@@ -1296,8 +1304,7 @@ class PublicRentalBookingController extends Controller
         );
 
         abort_if(
-            ! in_array($rental->status, [
-                Rental::STATUS_PENDING,
+            $rental->isExpired() || $rental->isCancelled() || ! in_array($rental->status, [
                 Rental::STATUS_PENDING_RESERVED,
                 Rental::STATUS_CONFIRMED,
                 Rental::STATUS_ACTIVE,
@@ -1656,11 +1663,20 @@ class PublicRentalBookingController extends Controller
 
     private function findPassengerBooking(string $token): Rental
     {
-        return Rental::query()
+        $rental = Rental::query()
             ->where('public_token', $token)
             ->whereIn('channel', Rental::passengerChannels())
             ->with(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation', 'driver', 'dutyOrders.driver'])
             ->firstOrFail();
+
+        if ($rental->status === Rental::STATUS_PENDING_RESERVED && $rental->reserved_until !== null && $rental->reserved_until->isPast()) {
+            $rental->update([
+                'status' => Rental::STATUS_PENDING,
+                'reserved_until' => null,
+            ]);
+        }
+
+        return $rental;
     }
 
     /**
@@ -1833,6 +1849,8 @@ class PublicRentalBookingController extends Controller
     private function bookingPayload(Rental $rental): array
     {
         $paymentPayload = $this->paymentPayload($rental);
+        $isExpired = $rental->isExpired();
+        $isCancelled = $rental->isCancelled();
         $upfrontPaid = (float) $rental->deposit_amount > 0
             ? $rental->isDepositReceived()
             : ($rental->deposit_proof_status === Rental::PROOF_APPROVED || ($paymentPayload['balance_due'] <= 0 && ! in_array($paymentPayload['status'], ['unpaid', 'partial', 'draft'], true)));
@@ -1853,6 +1871,8 @@ class PublicRentalBookingController extends Controller
             'code' => $rental->code,
             'public_token' => $rental->public_token,
             'status' => $rental->status,
+            'is_expired' => $isExpired,
+            'is_cancelled' => $isCancelled,
             'channel' => $rental->channel,
             'service_type' => $rental->service_type ?? Rental::SERVICE_SELF_DRIVE,
             'booker_phone' => $rental->booker_phone,
@@ -1994,10 +2014,10 @@ class PublicRentalBookingController extends Controller
                 'name' => $rental->insurancePackage->name,
                 'amount' => (float) $rental->insurancePackage->amount,
             ] : null,
-            'can_pay_deposit' => ((float) $rental->deposit_amount > 0 ? ! $rental->isDepositReceived() : $rental->status !== Rental::STATUS_CONFIRMED)
+            'can_pay_deposit' => ! $isExpired && ! $isCancelled
+                && ((float) $rental->deposit_amount > 0 ? ! $rental->isDepositReceived() : $rental->status !== Rental::STATUS_CONFIRMED)
                 && in_array($rental->status, [
                     Rental::STATUS_DRAFT,
-                    Rental::STATUS_PENDING,
                     Rental::STATUS_PENDING_RESERVED,
                     Rental::STATUS_CONFIRMED,
                 ], true),
@@ -2101,12 +2121,12 @@ class PublicRentalBookingController extends Controller
                 'can_submit_bank' => $rental->canSubmitRefundAccount(),
             ],
             'addons_enabled' => ! empty(RentalGeneralSettings::all()['addons_enabled']),
-            'can_order_addons' => ! empty(RentalGeneralSettings::all()['addons_enabled']) && in_array($rental->status, [
-                Rental::STATUS_PENDING,
-                Rental::STATUS_PENDING_RESERVED,
-                Rental::STATUS_CONFIRMED,
-                Rental::STATUS_ACTIVE,
-            ], true),
+            'can_order_addons' => ! $isExpired && ! $isCancelled
+                && ! empty(RentalGeneralSettings::all()['addons_enabled']) && in_array($rental->status, [
+                    Rental::STATUS_PENDING_RESERVED,
+                    Rental::STATUS_CONFIRMED,
+                    Rental::STATUS_ACTIVE,
+                ], true),
             'available_addons' => ! empty(RentalGeneralSettings::all()['addons_enabled']) ? RentalAddonCatalog::selfServiceCatalog($rental) : [],
             'ordered_addons' => $rental->charges()
                 ->where('kind', RentalCharge::KIND_ADDON)
@@ -2136,6 +2156,7 @@ class PublicRentalBookingController extends Controller
     private function paymentPayload(Rental $rental): array
     {
         $summary = app(RentalInvoiceService::class)->paymentSummary($rental);
+        $isInactive = $rental->isExpired() || $rental->isCancelled();
         $payable = collect($summary['invoices'])
             ->filter(fn (array $invoice): bool => in_array($invoice['status'], [
                 Invoice::STATUS_ISSUED,
@@ -2154,7 +2175,7 @@ class PublicRentalBookingController extends Controller
         return [
             'status' => $summary['status'],
             'balance_due' => (float) $summary['balance_due'],
-            'can_pay_balance' => (float) $summary['balance_due'] > 0,
+            'can_pay_balance' => ! $isInactive && (float) $summary['balance_due'] > 0,
             'invoices' => $payable,
         ];
     }

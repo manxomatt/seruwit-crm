@@ -32,6 +32,8 @@ interface Booking {
     code: string;
     public_token: string;
     status: string;
+    is_expired?: boolean;
+    is_cancelled?: boolean;
     channel: string;
     service_type?: string;
     booker_phone: string | null;
@@ -432,6 +434,21 @@ export default function BookingView({
     const [verificationCode, setVerificationCode] = useState('');
     const [verificationError, setVerificationError] = useState<string | null>(null);
     const [sendingPageOtp, setSendingPageOtp] = useState(false);
+
+    // Expiration and Cancellation status evaluation
+    const isExpired = Boolean(
+        booking.is_expired ||
+        booking.status === 'pending' ||
+        booking.status === 'expired' ||
+        booking.status === 'abandoned' ||
+        (booking.status === 'pending_reserved' && booking.reserved_until && new Date(booking.reserved_until).getTime() < Date.now())
+    );
+
+    const isCancelled = Boolean(
+        booking.is_cancelled ||
+        booking.status === 'cancelled' ||
+        booking.status === 'cancelled_paid'
+    );
 
     // Timer calculation for reserved_until
     useEffect(() => {
@@ -855,6 +872,8 @@ export default function BookingView({
     };
 
     const isBalancePayable =
+        !isExpired &&
+        !isCancelled &&
         (booking.status === 'active' || booking.status === 'confirmed') &&
         Number(booking.payment?.balance_due ?? 0) > 0;
 
@@ -1380,7 +1399,7 @@ export default function BookingView({
                             </div>
 
                             {/* Urgent Hold Countdown Banner */}
-                            {booking.status === 'pending_reserved' && booking.deposit_proof?.status !== 'pending' && (
+                            {!isExpired && booking.status === 'pending_reserved' && booking.deposit_proof?.status !== 'pending' && (
                                 <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 p-5 text-white shadow-sm space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -1401,6 +1420,60 @@ export default function BookingView({
                                                 {formatDeadlineTime(booking.reserved_until)}
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Booking Expired Banner */}
+                            {isExpired && (
+                                <div className="overflow-hidden rounded-2xl bg-amber-500/10 border border-amber-300 p-5 text-amber-950 shadow-xs space-y-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-900 text-lg">
+                                                ⚠️
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-black text-amber-950">
+                                                    Pemesanan Ini Telah Kedaluwarsa
+                                                </h3>
+                                                <p className="text-xs text-amber-800 font-medium">
+                                                    Batas waktu penahanan unit telah berakhir dan unit telah dirilis kembali. Tagihan dan opsi pembayaran telah ditutup.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <a
+                                            href="/book/rental"
+                                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2 text-xs font-black uppercase text-white shadow-xs transition shrink-0"
+                                        >
+                                            Buat Pesanan Baru →
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Booking Cancelled Banner */}
+                            {isCancelled && (
+                                <div className="overflow-hidden rounded-2xl bg-rose-50 border border-rose-300 p-5 text-rose-950 shadow-xs space-y-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-200 text-rose-900 text-lg">
+                                                ✕
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-black text-rose-950">
+                                                    Pemesanan Telah Dibatalkan
+                                                </h3>
+                                                <p className="text-xs text-rose-800 font-medium">
+                                                    Reservasi ini telah dibatalkan{booking.cancelled_reason ? ` (${booking.cancelled_reason})` : ''}. Pembayaran dan serah terima tidak dapat diproses.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <a
+                                            href="/book/rental"
+                                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-black uppercase text-white shadow-xs transition shrink-0"
+                                        >
+                                            Buat Pesanan Baru →
+                                        </a>
                                     </div>
                                 </div>
                             )}
@@ -1666,7 +1739,7 @@ export default function BookingView({
                                                 </p>
                                             </div>
                                         </div>
-                                        {booking.can_order_addons && (
+                                        {!isExpired && !isCancelled && booking.can_order_addons && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -1757,19 +1830,21 @@ export default function BookingView({
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Dokumen Verifikasi (KTP & SIM)</h3>
                                         <p className="text-xs text-slate-400 mt-0.5">KTP dan SIM keduanya wajib. Foto harus utuh, terang, dan tulisan masih terbaca.</p>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (!isVerified) {
-                                                alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
-                                                return;
-                                            }
-                                            setShowDocs(!showDocs);
-                                        }}
-                                        className={`text-xs font-black underline ${!isVerified ? 'text-slate-400 cursor-not-allowed' : 'text-slate-900'}`}
-                                    >
-                                        {showDocs ? 'Sembunyikan' : 'Kelola Dokumen'}
-                                    </button>
+                                    {!isExpired && !isCancelled && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!isVerified) {
+                                                    alert('Verifikasi nomor WhatsApp Anda terlebih dahulu');
+                                                    return;
+                                                }
+                                                setShowDocs(!showDocs);
+                                            }}
+                                            className={`text-xs font-black underline ${!isVerified ? 'text-slate-400 cursor-not-allowed' : 'text-slate-900'}`}
+                                        >
+                                            {showDocs ? 'Sembunyikan' : 'Kelola Dokumen'}
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-wrap gap-2.5 text-xs">
@@ -2021,7 +2096,7 @@ export default function BookingView({
                         <div className="w-full lg:w-[420px] shrink-0 space-y-6">
                             
                             {/* Central Verification Card */}
-                            {!isVerified && (
+                            {!isVerified && !isExpired && !isCancelled && (
                                 <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 sm:p-6 shadow-xs space-y-4">
                                     <div className="flex items-start gap-3">
                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 border border-amber-200 font-bold text-lg">
@@ -2122,7 +2197,11 @@ export default function BookingView({
 
                                     <div className="flex justify-between items-center text-slate-600 font-medium pt-1 border-t border-slate-100">
                                         <span>Status Deposit</span>
-                                        {Number(booking.deposit_amount) <= 0 ? (
+                                        {isExpired ? (
+                                            <span className="rounded-full bg-slate-100 px-3 py-0.5 font-bold text-slate-600">Kedaluwarsa</span>
+                                        ) : isCancelled ? (
+                                            <span className="rounded-full bg-rose-100 px-3 py-0.5 font-bold text-rose-800">Dibatalkan</span>
+                                        ) : Number(booking.deposit_amount) <= 0 ? (
                                             <span className="font-bold text-slate-500">-</span>
                                         ) : booking.deposit_received ? (
                                             <span className="rounded-full bg-emerald-100 px-3 py-0.5 font-bold text-emerald-800">Lunas / Diterima</span>
@@ -2138,8 +2217,61 @@ export default function BookingView({
                                 </div>
                             </div>
 
-                            {/* Payment Box (Deposit / Extension / Balance) */}
-                            {(booking.can_pay_deposit || isBalancePayable) && booking.deposit_proof?.status !== 'pending' && (
+                            {/* Payment Box (Deposit / Extension / Balance) or Expired Notice */}
+                            {isExpired ? (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-amber-300 shadow-md space-y-4">
+                                    <div className="flex items-center gap-3 border-b pb-3 border-slate-100">
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-800 text-base">
+                                            🕒
+                                        </span>
+                                        <div>
+                                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                Pemesanan Kedaluwarsa
+                                            </h3>
+                                            <p className="text-[11px] text-slate-500 font-medium">
+                                                Batas waktu pembayaran telah berakhir
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        Pemesanan dengan kode <strong className="text-slate-900 font-bold">{booking.code}</strong> telah kedaluwarsa karena pembayaran tidak diselesaikan sebelum batas waktu. Unit kendaraan telah dirilis kembali untuk pemesan lain.
+                                    </p>
+                                    <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900 font-semibold space-y-1">
+                                        <p>⚠️ <strong>Jangan melakukan transfer</strong> untuk pemesanan ini karena sistem tidak dapat memproses reservasi yang telah kedaluwarsa.</p>
+                                    </div>
+                                    <a
+                                        href="/book/rental"
+                                        className="flex items-center justify-center gap-2 w-full rounded-xl bg-slate-900 hover:bg-slate-800 py-3 text-xs font-black uppercase tracking-wider text-white transition shadow-sm"
+                                    >
+                                        <span>+ Buat Reservasi Baru</span>
+                                    </a>
+                                </div>
+                            ) : isCancelled ? (
+                                <div className="rounded-2xl bg-white p-5 sm:p-6 border border-rose-200 shadow-md space-y-4">
+                                    <div className="flex items-center gap-3 border-b pb-3 border-slate-100">
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700 text-base">
+                                            ✕
+                                        </span>
+                                        <div>
+                                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                Pemesanan Dibatalkan
+                                            </h3>
+                                            <p className="text-[11px] text-slate-500 font-medium">
+                                                Reservasi ini telah dibatalkan
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        Pemesanan dengan kode <strong className="text-slate-900 font-bold">{booking.code}</strong> telah dibatalkan. Pembayaran dan serah terima unit tidak dapat diproses lagi.
+                                    </p>
+                                    <a
+                                        href="/book/rental"
+                                        className="flex items-center justify-center gap-2 w-full rounded-xl bg-slate-900 hover:bg-slate-800 py-3 text-xs font-black uppercase tracking-wider text-white transition shadow-sm"
+                                    >
+                                        <span>+ Buat Reservasi Baru</span>
+                                    </a>
+                                </div>
+                            ) : (booking.can_pay_deposit || isBalancePayable) && booking.deposit_proof?.status !== 'pending' ? (
                                 <div id="section-payment" className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200 shadow-md space-y-4">
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
@@ -2416,7 +2548,7 @@ export default function BookingView({
                                         </>
                                     )}
                                 </div>
-                            )}
+                            ) : null}
 
                             {/* Contract signature — not the physical handover */}
                             {booking.status === 'confirmed' && (
@@ -3283,7 +3415,7 @@ export default function BookingView({
                             )}
 
                             {/* Cancel Booking Section */}
-                            {booking.cancel?.can_cancel && (
+                            {!isExpired && !isCancelled && booking.cancel?.can_cancel && (
                                 <div className="rounded-2xl bg-white p-5 border border-slate-200 border-l-4 border-l-rose-500 shadow-xs space-y-3">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xs font-black uppercase tracking-wider text-rose-700">Batalkan Reservasi</h3>

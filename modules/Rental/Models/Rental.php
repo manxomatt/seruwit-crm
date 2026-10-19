@@ -503,6 +503,26 @@ class Rental extends Model
             || $this->deposit_received_at !== null;
     }
 
+    public function isExpired(): bool
+    {
+        if (in_array($this->status, [self::STATUS_PENDING, self::STATUS_ABANDONED], true)) {
+            return true;
+        }
+
+        if ($this->status === self::STATUS_PENDING_RESERVED
+            && $this->reserved_until !== null
+            && $this->reserved_until->isPast()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isCancelled(): bool
+    {
+        return in_array($this->status, [self::STATUS_CANCELLED, self::STATUS_CANCELLED_PAID], true);
+    }
+
     /**
      * @param  array{deposit_applied_amount: float|int|string, deposit_refunded_amount: float|int|string, deposit_refund_proof_path?: string|null, deposit_refund_notes?: string|null}  $amounts
      */

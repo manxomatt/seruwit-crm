@@ -77,7 +77,7 @@ class RentalBookingPolicy
      */
     public function passengerCancelAssessment(Rental $rental): array
     {
-        if (! in_array($rental->status, Rental::cancellableStatuses(), true)) {
+        if ($rental->isExpired() || $rental->isCancelled() || ! in_array($rental->status, Rental::cancellableStatuses(), true)) {
             return [
                 'can_cancel' => false,
                 'charge_fee' => false,
@@ -90,7 +90,6 @@ class RentalBookingPolicy
         // Unpaid holds: always free to release the unit.
         if (in_array($rental->status, [
             Rental::STATUS_DRAFT,
-            Rental::STATUS_PENDING,
             Rental::STATUS_PENDING_RESERVED,
         ], true)) {
             return [

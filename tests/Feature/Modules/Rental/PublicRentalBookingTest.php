@@ -1122,4 +1122,74 @@ class PublicRentalBookingTest extends TestCase
 
         $this->assertNull($rental->fresh()->pickup_requested_at);
     }
+
+    public function test_expired_booking_hides_payment_and_disallows_deposit_upload_and_addons(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'public_token' => 'tokenexpired'.str_repeat('x', 20),
+            'status' => Rental::STATUS_PENDING,
+            'channel' => Rental::CHANNEL_WEB,
+            'deposit_amount' => 1000000,
+            'deposit_received_at' => null,
+            'booker_phone' => '08123456789',
+        ]);
+
+        $this->get(route('book.rental.booking.show', $rental->public_token))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Public/Booking')
+                ->where('booking.is_expired', true)
+                ->where('booking.can_pay_deposit', false)
+                ->where('booking.payment.can_pay_balance', false)
+                ->where('booking.can_order_addons', false)
+                ->where('booking.cancel.can_cancel', false));
+
+        $phone = '08123456789';
+        $otp = app(PassengerOtpService::class)->send($phone);
+        $file = UploadedFile::fake()->image('proof.jpg');
+
+        $this->from(route('book.rental.booking.show', $rental->public_token))
+            ->post(route('book.rental.booking.upload_deposit_proof', $rental->public_token), [
+                'booker_phone' => $phone,
+                'otp_code' => $otp,
+                'deposit_proof' => $file,
+            ])
+            ->assertRedirect(route('book.rental.booking.show', $rental->public_token))
+            ->assertSessionHas('error');
+
+        $this->assertNull($rental->fresh()->deposit_proof_path);
+
+        $this->postJson(route('book.rental.booking.addons', $rental->public_token), [
+            'booker_phone' => $phone,
+            'otp_code' => $otp,
+            'items' => [
+                ['code' => 'baby_seat', 'quantity' => 1],
+            ],
+        ])->assertStatus(422);
+    }
+
+    public function test_expired_pending_reserved_with_past_reserved_until_auto_expires_on_show(): void
+    {
+        $rental = Rental::factory()->create([
+            'public_token' => 'tokenpendingres'.str_repeat('y', 19),
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'reserved_until' => now()->subMinutes(30),
+            'channel' => Rental::CHANNEL_WEB,
+            'deposit_amount' => 500000,
+            'deposit_received_at' => null,
+            'booker_phone' => '08123456789',
+        ]);
+
+        $this->get(route('book.rental.booking.show', $rental->public_token))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Public/Booking')
+                ->where('booking.is_expired', true)
+                ->where('booking.can_pay_deposit', false));
+
+        $this->assertSame(Rental::STATUS_PENDING, $rental->fresh()->status);
+        $this->assertNull($rental->fresh()->reserved_until);
+    }
 }
