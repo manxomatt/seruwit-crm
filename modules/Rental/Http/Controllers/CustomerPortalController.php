@@ -388,7 +388,6 @@ class CustomerPortalController extends Controller
             Storage::disk('public')->put($path, file_get_contents($file->getRealPath()) ?: '');
 
             $updates['avatar_path'] = $path;
-            $partnerUpdates['picture_url'] = Storage::disk('public')->url($path);
         } elseif ($request->boolean('remove_avatar')) {
             if (filled($customer->avatar_path)) {
                 Storage::disk('public')->delete($customer->avatar_path);
@@ -399,6 +398,10 @@ class CustomerPortalController extends Controller
         }
 
         $customer->update($updates);
+
+        if ($request->hasFile('avatar')) {
+            $partnerUpdates['picture_url'] = $customer->avatarUrl();
+        }
 
         if ($customer->partner !== null) {
             $customer->partner->update($partnerUpdates);

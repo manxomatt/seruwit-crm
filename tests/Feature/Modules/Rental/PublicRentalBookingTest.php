@@ -1216,11 +1216,14 @@ class PublicRentalBookingTest extends TestCase
 
         $this->actingAs($customer, 'customer')
             ->post(route('book.rental.portal.profile.update'), [
+                '_method' => 'put',
                 'name' => 'Budi Santoso Updated',
                 'email' => 'budi.new@example.com',
                 'avatar' => $avatarFile,
+                'remove_avatar' => 'false',
             ])
             ->assertRedirect()
+            ->assertSessionHasNoErrors()
             ->assertSessionHas('success');
 
         $customer->refresh();
@@ -1243,11 +1246,13 @@ class PublicRentalBookingTest extends TestCase
 
         $this->actingAs($customer, 'customer')
             ->post(route('book.rental.portal.profile.update'), [
+                '_method' => 'put',
                 'name' => 'Budi Santoso Updated',
                 'email' => 'budi.new@example.com',
-                'remove_avatar' => true,
+                'remove_avatar' => 'true',
             ])
             ->assertRedirect()
+            ->assertSessionHasNoErrors()
             ->assertSessionHas('success');
 
         $customer->refresh();

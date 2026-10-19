@@ -11,6 +11,15 @@ class UpdateCustomerProfileRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('remove_avatar')) {
+            $this->merge([
+                'remove_avatar' => $this->boolean('remove_avatar'),
+            ]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -19,7 +28,7 @@ class UpdateCustomerProfileRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'remove_avatar' => ['nullable', 'boolean'],
         ];
     }
@@ -34,7 +43,7 @@ class UpdateCustomerProfileRequest extends FormRequest
             'email.email' => 'Format alamat email tidak valid.',
             'avatar.image' => 'File foto profil harus berupa gambar.',
             'avatar.mimes' => 'Format foto profil harus JPG, JPEG, PNG, atau WEBP.',
-            'avatar.max' => 'Ukuran foto profil maksimal 3 MB.',
+            'avatar.max' => 'Ukuran foto profil maksimal 5 MB.',
         ];
     }
 }

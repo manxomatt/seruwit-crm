@@ -72,9 +72,25 @@ class Customer extends Authenticatable
         }
 
         if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://') || str_starts_with($raw, '/')) {
+            if (function_exists('tenancy') && tenancy()->initialized && preg_match('#/storage/(rental/customer-avatars/.+)$#', $raw, $matches) === 1) {
+                try {
+                    return route('stancl.tenancy.asset', ['path' => $matches[1]], false);
+                } catch (\Throwable) {
+                    return $raw;
+                }
+            }
+
             return $raw;
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($raw);
+        if (function_exists('tenancy') && tenancy()->initialized) {
+            try {
+                return route('stancl.tenancy.asset', ['path' => $raw], false);
+            } catch (\Throwable) {
+                return '/storage/'.ltrim($raw, '/');
+            }
+        }
+
+        return '/storage/'.ltrim($raw, '/');
     }
 }

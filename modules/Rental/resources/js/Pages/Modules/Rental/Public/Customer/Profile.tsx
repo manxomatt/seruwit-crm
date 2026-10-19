@@ -36,15 +36,17 @@ export default function Profile({ brand, customer }: Props) {
     }, [customer.avatar_url]);
 
     const profileForm = useForm<{
+        _method: string;
         name: string;
         email: string;
         avatar: File | null;
-        remove_avatar: boolean;
+        remove_avatar: number;
     }>({
+        _method: 'put',
         name: customer.name || '',
         email: customer.email || '',
         avatar: null,
-        remove_avatar: false,
+        remove_avatar: 0,
     });
 
     const passwordForm = useForm({
@@ -61,7 +63,7 @@ export default function Profile({ brand, customer }: Props) {
         profileForm.setData((prev) => ({
             ...prev,
             avatar: file,
-            remove_avatar: false,
+            remove_avatar: 0,
         }));
         const objectUrl = URL.createObjectURL(file);
         setAvatarPreview(objectUrl);
@@ -71,7 +73,7 @@ export default function Profile({ brand, customer }: Props) {
         profileForm.setData((prev) => ({
             ...prev,
             avatar: null,
-            remove_avatar: true,
+            remove_avatar: 1,
         }));
         setAvatarPreview(null);
         if (fileInputRef.current) {
@@ -88,7 +90,7 @@ export default function Profile({ brand, customer }: Props) {
                 profileForm.setData((prev) => ({
                     ...prev,
                     avatar: null,
-                    remove_avatar: false,
+                    remove_avatar: 0,
                 }));
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
@@ -179,14 +181,14 @@ export default function Profile({ brand, customer }: Props) {
                                     )}
                                 </div>
                                 <p className="text-[11px] text-slate-500 font-medium">
-                                    Format JPG, PNG, atau WEBP. Ukuran maksimal 3 MB.
+                                    Format JPG, PNG, atau WEBP. Ukuran maksimal 5 MB.
                                 </p>
                                 {profileForm.data.avatar && (
                                     <p className="text-[11px] font-bold text-teal-700">
                                         File dipilih: {profileForm.data.avatar.name} (Klik "Simpan Profil" untuk menyimpan perubahan)
                                     </p>
                                 )}
-                                <InputError message={profileForm.errors.avatar} className="mt-1" />
+                                <InputError message={profileForm.errors.avatar || profileForm.errors.remove_avatar} className="mt-1" />
                             </div>
                         </div>
                     </div>
