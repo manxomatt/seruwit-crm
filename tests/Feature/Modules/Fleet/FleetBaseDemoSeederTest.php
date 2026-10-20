@@ -8,9 +8,11 @@ use Database\Seeders\TenantVehicleDemoSeeder;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\FleetBase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\FleetBaseKind;
+use Modules\Partners\Models\Location;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -65,6 +67,32 @@ class FleetBaseDemoSeederTest extends TestCase
                 ->where('notes', 'like', '%'.TenantFleetBaseDemoSeeder::TAG.'%')
                 ->count(),
         );
+    }
+
+    public function test_links_fleet_bases_to_locations_when_available(): void
+    {
+        if (class_exists(Location::class) && Schema::hasTable('locations')) {
+            Location::query()->firstOrCreate(
+                ['code' => 'LOC-0001'],
+                [
+                    'name' => 'Pool Utama Jakarta',
+                    'address' => 'Jl. Gatot Subroto',
+                    'city' => 'Jakarta Selatan',
+                    'is_active' => true,
+                ],
+            );
+        }
+
+        $this->seed(TenantFleetBaseDemoSeeder::class);
+
+        $jakartaBase = FleetBase::query()
+            ->where('code', TenantFleetBaseDemoSeeder::CODE_PREFIX.'-JKT')
+            ->first();
+
+        $this->assertNotNull($jakartaBase);
+        if (class_exists(Location::class) && Schema::hasTable('locations')) {
+            $this->assertNotNull($jakartaBase->location_id);
+        }
     }
 
     public function test_assigns_vehicle_demo_units_to_bases_when_present(): void

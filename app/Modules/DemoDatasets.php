@@ -56,13 +56,13 @@ class DemoDatasets
             ],
             self::VEHICLES => [
                 'label' => 'Vehicles demo',
-                'description' => '30 sample fleet vehicles (trucks, vans, pickups, box) with plates, capacity, and fuel data. Requires Fleet.',
+                'description' => '30 sample fleet vehicles with rental classes, capacity, compliance & insurance, and investor schemes. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantVehicleDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],
             self::FLEET_BASES => [
                 'label' => 'Fleet bases demo',
-                'description' => '5 sample home bases (depot, yard, satellite, workshop) with PIC, hours, and map coordinates. Assigns Vehicles demo units when present. Requires Fleet.',
+                'description' => '5 sample home bases (depot, yard, satellite, workshop) with PIC, operating hours, coordinates, and location links. Assigns Vehicles when present. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantFleetBaseDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],

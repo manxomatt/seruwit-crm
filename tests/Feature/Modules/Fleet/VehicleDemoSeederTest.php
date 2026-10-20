@@ -44,7 +44,23 @@ class VehicleDemoSeederTest extends TestCase
                 ->where('plate_number', 'BE VD 01')
                 ->whereNotNull('capacity_kg')
                 ->whereNotNull('cost_per_km')
+                ->whereNotNull('color')
+                ->whereNotNull('rental_class')
                 ->exists(),
+        );
+
+        // Ownership and investor scheme coverage
+        $this->assertSame(
+            20,
+            Vehicle::query()->where('ownership_type', 'owned')->count(),
+        );
+        $this->assertSame(
+            6,
+            Vehicle::query()->where('ownership_type', 'investor_revenue_share')->count(),
+        );
+        $this->assertSame(
+            4,
+            Vehicle::query()->where('ownership_type', 'investor_fixed_rent')->count(),
         );
     }
 
@@ -55,6 +71,22 @@ class VehicleDemoSeederTest extends TestCase
 
         $this->assertSame(
             30,
+            Vehicle::query()
+                ->where('plate_number', 'like', TenantVehicleDemoSeeder::PLATE_PREFIX.' %')
+                ->count(),
+        );
+    }
+
+    public function test_uninstall_cleans_up_vehicles_and_settlements(): void
+    {
+        $this->seed(TenantVehicleDemoSeeder::class);
+
+        $seeder = new TenantVehicleDemoSeeder;
+        $seeder->uninstall();
+
+        $this->assertFalse($seeder->isInstalled());
+        $this->assertSame(
+            0,
             Vehicle::query()
                 ->where('plate_number', 'like', TenantVehicleDemoSeeder::PLATE_PREFIX.' %')
                 ->count(),

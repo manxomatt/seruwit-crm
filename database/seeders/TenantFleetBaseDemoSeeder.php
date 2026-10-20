@@ -4,13 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\FleetBase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\FleetBaseKind;
+use Modules\Inventory\Models\Warehouse;
+use Modules\Partners\Models\Location;
 
 /**
- * Seeds sample fleet home bases (depot / yard / satellite) with PIC + coords.
+ * Seeds sample fleet home bases (depot / yard / satellite / workshop) with PIC,
+ * operational hours, map coordinates, and links to master locations and warehouse.
  *
  *   php artisan tenants:seed --class=TenantFleetBaseDemoSeeder --tenants={id}
  */
@@ -36,11 +40,15 @@ class TenantFleetBaseDemoSeeder extends Seeder
             return;
         }
 
+        $locationIdsByCode = $this->resolveLocationIds();
+        $warehouseId = $this->resolveWarehouseId();
+        $staffIds = $this->resolveStaffIds($manager);
+
         $created = 0;
         $updated = 0;
         $bases = [];
 
-        foreach ($this->definitions() as $def) {
+        foreach ($this->definitions($locationIdsByCode, $warehouseId) as $def) {
             $code = $def['code'];
             unset($def['code']);
 
@@ -49,7 +57,9 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 array_merge($def, ['manager_id' => $manager->id]),
             );
 
-            $base->users()->syncWithoutDetaching([$manager->id]);
+            if (Schema::hasTable('user_fleet_base')) {
+                $base->users()->syncWithoutDetaching($staffIds);
+            }
 
             if ($base->wasRecentlyCreated) {
                 $created++;
@@ -104,6 +114,12 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 ->update(['home_base_id' => null]);
         }
 
+        if (Schema::hasTable('user_fleet_base')) {
+            DB::table('user_fleet_base')
+                ->whereIn('fleet_base_id', $baseIds)
+                ->delete();
+        }
+
         $deleted = FleetBase::query()
             ->whereIn('id', $baseIds)
             ->delete();
@@ -126,6 +142,40 @@ class TenantFleetBaseDemoSeeder extends Seeder
     }
 
     /**
+     * @return list<int>
+     */
+    private function resolveStaffIds(?User $manager): array
+    {
+        $ids = User::query()->orderBy('id')->limit(4)->pluck('id')->all();
+        if ($manager !== null) {
+            $ids[] = $manager->id;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @return array<string, int> map of location code to location id
+     */
+    private function resolveLocationIds(): array
+    {
+        if (! class_exists(Location::class) || ! Schema::hasTable('locations')) {
+            return [];
+        }
+
+        return Location::query()->pluck('id', 'code')->all();
+    }
+
+    private function resolveWarehouseId(): ?int
+    {
+        if (! class_exists(Warehouse::class) || ! Schema::hasTable('warehouses')) {
+            return null;
+        }
+
+        return Warehouse::query()->value('id');
+    }
+
+    /**
      * @param  list<FleetBase>  $bases
      */
     private function assignDemoVehicles(array $bases): int
@@ -140,9 +190,12 @@ class TenantFleetBaseDemoSeeder extends Seeder
         }
 
         $vehicles = Vehicle::query()
-            ->where('notes', 'like', '%'.TenantVehicleDemoSeeder::TAG.'%')
+            ->where(function ($query) {
+                $query->where('notes', 'like', '%'.TenantVehicleDemoSeeder::TAG.'%')
+                    ->orWhereNull('home_base_id');
+            })
             ->orderBy('id')
-            ->get(['id']);
+            ->get();
 
         if ($vehicles->isEmpty()) {
             return 0;
@@ -161,9 +214,10 @@ class TenantFleetBaseDemoSeeder extends Seeder
     }
 
     /**
+     * @param  array<string, int>  $locationIdsByCode
      * @return list<array<string, mixed>>
      */
-    private function definitions(): array
+    private function definitions(array $locationIdsByCode = [], ?int $warehouseId = null): array
     {
         $tag = self::TAG;
 
@@ -187,6 +241,8 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 'vehicle_capacity' => 48,
                 'allows_overnight' => true,
                 'service_radius_km' => 35,
+                'location_id' => $locationIdsByCode['LOC-0001'] ?? null,
+                'warehouse_id' => $warehouseId,
                 'notes' => "Primary rental & dispatch hub. [{$tag}]",
             ],
             [
@@ -208,6 +264,7 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 'vehicle_capacity' => 36,
                 'allows_overnight' => true,
                 'service_radius_km' => 40,
+                'location_id' => $locationIdsByCode['LOC-0005'] ?? null,
                 'notes' => "East Java operational base. [{$tag}]",
             ],
             [
@@ -229,6 +286,7 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 'vehicle_capacity' => 60,
                 'allows_overnight' => true,
                 'service_radius_km' => 25,
+                'location_id' => $locationIdsByCode['LOC-0004'] ?? null,
                 'notes' => "Holding / overflow yard. [{$tag}]",
             ],
             [
@@ -250,6 +308,7 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 'vehicle_capacity' => 18,
                 'allows_overnight' => true,
                 'service_radius_km' => 30,
+                'location_id' => $locationIdsByCode['LOC-0003'] ?? null,
                 'notes' => "Airport-side satellite for tourist rentals. [{$tag}]",
             ],
             [
@@ -268,9 +327,10 @@ class TenantFleetBaseDemoSeeder extends Seeder
                 'opens_at' => '08:00',
                 'closes_at' => '17:00',
                 'timezone' => 'Asia/Jakarta',
-                'vehicle_capacity' => 12,
+                'vehicle_capacity' => 15,
                 'allows_overnight' => false,
                 'service_radius_km' => 15,
+                'location_id' => $locationIdsByCode['LOC-0002'] ?? null,
                 'notes' => "Maintenance staging base near workshop. [{$tag}]",
             ],
         ];
