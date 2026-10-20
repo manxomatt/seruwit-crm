@@ -6,7 +6,10 @@ use Database\Seeders\TenantPartnerDemoSeeder;
 use Database\Seeders\TenantPartnerIndustriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
+use Modules\Partners\Models\PartnerBankAccount;
+use Modules\Partners\Models\PartnerBlacklist;
 use Modules\Partners\Models\PartnerIndustry;
 use Tests\TestCase;
 
@@ -28,12 +31,61 @@ class TenantPartnerDemoSeederTest extends TestCase
         $this->assertTrue(Partner::query()->whereNotNull('industry_id')->exists());
     }
 
+    public function test_seeds_partner_bank_accounts_locations_kyc_and_blacklists(): void
+    {
+        $this->seed(TenantPartnerDemoSeeder::class);
+
+        // Master Locations (5 seeded)
+        $this->assertSame(
+            5,
+            Location::query()->whereIn('code', TenantPartnerDemoSeeder::DEMO_LOCATION_CODES)->count(),
+        );
+
+        // Bank Accounts seeded
+        $this->assertGreaterThan(10, PartnerBankAccount::query()->count());
+
+        // KYC Statuses: pending, verified, rejected, unverified
+        $this->assertSame(2, Partner::query()->where('kyc_status', Partner::KYC_STATUS_PENDING)->count());
+        $this->assertGreaterThan(5, Partner::query()->where('kyc_status', Partner::KYC_STATUS_VERIFIED)->count());
+        $this->assertSame(1, Partner::query()->where('kyc_status', Partner::KYC_STATUS_REJECTED)->count());
+
+        // Blacklist and Anti-Fraud
+        $this->assertSame(1, Partner::query()->where('is_blacklisted', true)->count());
+        $this->assertSame(2, PartnerBlacklist::query()->count());
+        $this->assertTrue(
+            PartnerBlacklist::query()->where('category', PartnerBlacklist::CATEGORY_CAR_THEFT)->exists()
+        );
+        $this->assertTrue(
+            PartnerBlacklist::query()->where('category', PartnerBlacklist::CATEGORY_BAD_DEBT)->exists()
+        );
+
+        // Contact Types linked
+        $this->assertTrue(
+            Partner::query()->whereHas('types', fn ($q) => $q->where('code', 'travel_agent'))->exists()
+        );
+        $this->assertTrue(
+            Partner::query()->whereHas('types', fn ($q) => $q->where('code', 'shipper'))->exists()
+        );
+
+        // Missing Contact partner demonstration
+        $this->assertTrue(
+            Partner::query()
+                ->where('code', 'PART-B-000005')
+                ->whereNull('email')
+                ->whereNull('phone')
+                ->whereNull('mobile')
+                ->exists()
+        );
+    }
+
     public function test_seeder_is_idempotent(): void
     {
         $this->seed(TenantPartnerDemoSeeder::class);
         $this->seed(TenantPartnerDemoSeeder::class);
 
         $this->assertSame(20, Partner::query()->count());
+        $this->assertSame(5, Location::query()->whereIn('code', TenantPartnerDemoSeeder::DEMO_LOCATION_CODES)->count());
+        $this->assertSame(2, PartnerBlacklist::query()->count());
     }
 
     public function test_reuses_pack_industries_when_code_column_exists(): void
@@ -94,5 +146,7 @@ class TenantPartnerDemoSeederTest extends TestCase
         $this->assertSame(1, Partner::withTrashed()->count());
         $this->assertTrue(Partner::query()->where('code', 'PART-REAL-001')->exists());
         $this->assertFalse(app(TenantPartnerDemoSeeder::class)->isInstalled());
+        $this->assertSame(0, Location::query()->whereIn('code', TenantPartnerDemoSeeder::DEMO_LOCATION_CODES)->count());
+        $this->assertSame(0, PartnerBlacklist::query()->count());
     }
 }

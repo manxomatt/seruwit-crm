@@ -50,7 +50,7 @@ class DemoDatasets
             ],
             self::PARTNERS => [
                 'label' => 'Contacts demo',
-                'description' => 'Sample customers, suppliers, and dual-role contacts with tags and addresses. Also installs contact types and industries.',
+                'description' => 'Sample customers, suppliers, and dual-role contacts with bank accounts, KYC verifications, blacklist entries, and master locations. Also installs contact types and industries.',
                 'seeder' => \Database\Seeders\TenantPartnerDemoSeeder::class,
                 'includes' => [self::PARTNER_TYPES, self::PARTNER_INDUSTRIES],
             ],
