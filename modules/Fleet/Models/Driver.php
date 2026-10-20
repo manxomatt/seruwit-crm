@@ -22,6 +22,10 @@ class Driver extends Model
 
     public const STATUS_AVAILABLE = 'available';
 
+    public const STATUS_ON_TRIP = 'on_trip';
+
+    public const STATUS_OFF_DUTY = 'off_duty';
+
     public const STATUS_ON_LEAVE = 'on_leave';
 
     public const STATUS_INACTIVE = 'inactive';

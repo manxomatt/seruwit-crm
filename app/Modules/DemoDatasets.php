@@ -68,7 +68,7 @@ class DemoDatasets
             ],
             self::DRIVERS => [
                 'label' => 'Drivers demo',
-                'description' => '30 sample fleet drivers with licenses, contacts, and availability statuses. Requires Fleet.',
+                'description' => '30 sample rental fleet drivers (SIM A, A Umum, B1) with portal accounts, compliance documents, and operational statuses. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantDriverDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],
