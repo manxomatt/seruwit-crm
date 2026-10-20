@@ -56,7 +56,7 @@ class DemoDatasets
             ],
             self::VEHICLES => [
                 'label' => 'Vehicles demo',
-                'description' => '30 sample fleet vehicles with rental classes, capacity, compliance & insurance, and investor schemes. Requires Fleet.',
+                'description' => '30 sample rental vehicles (minibus, MPV, SUV) with rental classes, passenger capacity, compliance & insurance, and investor schemes. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantVehicleDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],

@@ -62,6 +62,23 @@ class VehicleDemoSeederTest extends TestCase
             4,
             Vehicle::query()->where('ownership_type', 'investor_fixed_rent')->count(),
         );
+
+        // Strictly rental vehicle types (minibus/van, mpv, suv) - no trucks or buses
+        $this->assertSame(
+            0,
+            Vehicle::query()
+                ->where('plate_number', 'like', TenantVehicleDemoSeeder::PLATE_PREFIX.' %')
+                ->whereIn('type', ['truck', 'bus'])
+                ->count(),
+        );
+
+        $this->assertSame(
+            30,
+            Vehicle::query()
+                ->where('plate_number', 'like', TenantVehicleDemoSeeder::PLATE_PREFIX.' %')
+                ->whereIn('rental_class', ['mpv', 'suv', 'van', 'premium'])
+                ->count(),
+        );
     }
 
     public function test_seeder_is_idempotent(): void
