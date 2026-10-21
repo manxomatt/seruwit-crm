@@ -74,19 +74,19 @@ class DemoDatasets
             ],
             self::FUEL => [
                 'label' => 'Fuel (BBM) demo',
-                'description' => '10 sample fuel fills across vehicles with stations, costs, and km/L. Uses Vehicles demo plates when present. Requires Fleet.',
+                'description' => '10 sample fuel fills across rental vehicles with stations, fuel pricing, efficiency metrics (km/L), and anomaly flags. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantFuelDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],
             self::DOCUMENTS => [
                 'label' => 'Documents demo',
-                'description' => 'Compliance docs (STNK, KIR, SIM, etc.) for Vehicles + Drivers demos, including expired/expiring scenarios. Requires Documents (and Fleet).',
+                'description' => 'Compliance documents (STNK, KIR, SIM A/B1, SKCK, etc.) for rental vehicles and drivers with validity tracking and expiry alerts. Requires Documents (and Fleet).',
                 'seeder' => \Database\Seeders\TenantDocumentDemoSeeder::class,
                 'requires_module' => 'document',
             ],
             self::MAINTENANCE => [
                 'label' => 'Maintenance demo',
-                'description' => 'Sample work orders and preventive schedules across fleet vehicles. Requires Maintenance (uses Fleet vehicles when present).',
+                'description' => 'Sample workshop work orders (in-house & outsource), bay assignments, checklists, parts, and preventive schedules across rental vehicles. Requires Maintenance.',
                 'seeder' => \Database\Seeders\TenantMaintenanceDemoSeeder::class,
                 'requires_module' => 'maintenance',
             ],

@@ -110,29 +110,35 @@ class TenantFuelDemoSeeder extends Seeder
         if ($vehicles->isEmpty()) {
             $vehicles = collect([
                 Vehicle::query()->create([
-                    'name' => 'Demo Fuel Truck',
+                    'name' => 'Demo Fuel Avanza MPV',
                     'plate_number' => 'BE FUEL 01',
-                    'type' => 'truck',
-                    'brand' => 'Hino',
-                    'model_year' => 2021,
-                    'capacity_kg' => 5000,
-                    'tank_capacity_liters' => 120,
-                    'expected_km_per_liter' => 6.5,
-                    'fuel_type' => 'diesel',
+                    'type' => 'car',
+                    'rental_class' => 'mpv',
+                    'brand' => 'Toyota',
+                    'model_year' => 2023,
+                    'capacity_kg' => 500,
+                    'capacity_seats' => 7,
+                    'color' => 'Silver Metalik',
+                    'tank_capacity_liters' => 43,
+                    'expected_km_per_liter' => 13.5,
+                    'fuel_type' => 'petrol',
                     'status' => Vehicle::STATUS_ACTIVE,
                     'odometer_km' => 45000,
                     'notes' => 'Demo fuel seed ['.self::TAG.']',
                 ]),
                 Vehicle::query()->create([
-                    'name' => 'Demo Fuel Van',
+                    'name' => 'Demo Fuel HiAce Minibus',
                     'plate_number' => 'BE FUEL 02',
                     'type' => 'van',
-                    'brand' => 'Mitsubishi',
-                    'model_year' => 2020,
+                    'rental_class' => 'van',
+                    'brand' => 'Toyota',
+                    'model_year' => 2022,
                     'capacity_kg' => 1200,
-                    'tank_capacity_liters' => 55,
-                    'expected_km_per_liter' => 10,
-                    'fuel_type' => 'petrol',
+                    'capacity_seats' => 12,
+                    'color' => 'Putih',
+                    'tank_capacity_liters' => 70,
+                    'expected_km_per_liter' => 9.5,
+                    'fuel_type' => 'diesel',
                     'status' => Vehicle::STATUS_ACTIVE,
                     'odometer_km' => 28000,
                     'notes' => 'Demo fuel seed ['.self::TAG.']',
@@ -143,10 +149,10 @@ class TenantFuelDemoSeeder extends Seeder
         foreach ($vehicles as $vehicle) {
             $updates = [];
             if ($vehicle->tank_capacity_liters === null) {
-                $updates['tank_capacity_liters'] = $vehicle->type === 'truck' ? 120 : 55;
+                $updates['tank_capacity_liters'] = $vehicle->type === 'van' ? 70 : 45;
             }
             if ($vehicle->expected_km_per_liter === null) {
-                $updates['expected_km_per_liter'] = $vehicle->type === 'truck' ? 6.5 : 10;
+                $updates['expected_km_per_liter'] = $vehicle->type === 'van' ? 9.5 : 13.0;
             }
             if ((int) $vehicle->odometer_km < 1000) {
                 $updates['odometer_km'] = 40000 + ((int) $vehicle->id * 1000);
@@ -179,13 +185,13 @@ class TenantFuelDemoSeeder extends Seeder
         $base3 = max(18000, (int) $v3->odometer_km);
 
         return [
-            // Vehicle 1 — 4 fills (normal efficiency)
+            // Vehicle 1 — 4 fills (normal MPV efficiency)
             [
                 'vehicle' => $v1,
                 'driver_id' => $d1,
                 'filled_at' => now()->subDays(45)->toDateString(),
-                'liters' => 80,
-                'cost' => 1120000,
+                'liters' => 38,
+                'cost' => 492100,
                 'odometer_km' => $base1,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_MANUAL,
                 'station_name' => 'SPBU Pertamina Kemiling',
@@ -197,8 +203,8 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v1,
                 'driver_id' => $d1,
                 'filled_at' => now()->subDays(35)->toDateString(),
-                'liters' => 75,
-                'cost' => 1050000,
+                'liters' => 36,
+                'cost' => 466200,
                 'odometer_km' => $base1 + 480,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_VEHICLE,
                 'station_name' => 'SPBU Shell Rajabasa',
@@ -209,8 +215,8 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v1,
                 'driver_id' => $d2,
                 'filled_at' => now()->subDays(22)->toDateString(),
-                'liters' => 78,
-                'cost' => 1092000,
+                'liters' => 40,
+                'cost' => 518000,
                 'odometer_km' => $base1 + 980,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_GPS,
                 'station_name' => 'SPBU Pertamina Way Halim',
@@ -221,8 +227,8 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v1,
                 'driver_id' => $d1,
                 'filled_at' => now()->subDays(10)->toDateString(),
-                'liters' => 82,
-                'cost' => 1148000,
+                'liters' => 39,
+                'cost' => 505050,
                 'odometer_km' => $base1 + 1480,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_VEHICLE,
                 'station_name' => 'SPBU Pertamina Kemiling',
@@ -230,13 +236,13 @@ class TenantFuelDemoSeeder extends Seeder
                 'is_full_tank' => true,
             ],
 
-            // Vehicle 2 — 3 fills (good van efficiency)
+            // Vehicle 2 — 3 fills (minibus diesel efficiency)
             [
                 'vehicle' => $v2,
                 'driver_id' => $d2,
                 'filled_at' => now()->subDays(40)->toDateString(),
-                'liters' => 40,
-                'cost' => 520000,
+                'liters' => 55,
+                'cost' => 715000,
                 'odometer_km' => $base2,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_MANUAL,
                 'station_name' => 'SPBU BP Metro',
@@ -247,9 +253,9 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v2,
                 'driver_id' => $d3 ?? $d2,
                 'filled_at' => now()->subDays(25)->toDateString(),
-                'liters' => 38,
-                'cost' => 494000,
-                'odometer_km' => $base2 + 400,
+                'liters' => 52,
+                'cost' => 676000,
+                'odometer_km' => $base2 + 500,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_VEHICLE,
                 'station_name' => 'SPBU Pertamina Metro',
                 'receipt_number' => self::RECEIPT_PREFIX.'06',
@@ -259,9 +265,9 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v2,
                 'driver_id' => $d2,
                 'filled_at' => now()->subDays(8)->toDateString(),
-                'liters' => 42,
-                'cost' => 546000,
-                'odometer_km' => $base2 + 820,
+                'liters' => 58,
+                'cost' => 754000,
+                'odometer_km' => $base2 + 1040,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_GPS,
                 'station_name' => 'SPBU Shell Bandar Jaya',
                 'receipt_number' => self::RECEIPT_PREFIX.'07',
@@ -273,8 +279,8 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v3,
                 'driver_id' => $d3 ?? $d1,
                 'filled_at' => now()->subDays(30)->toDateString(),
-                'liters' => 50,
-                'cost' => 650000,
+                'liters' => 45,
+                'cost' => 585000,
                 'odometer_km' => $base3,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_MANUAL,
                 'station_name' => 'SPBU Pertamina Pringsewu',
@@ -285,8 +291,8 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v3,
                 'driver_id' => $d3 ?? $d1,
                 'filled_at' => now()->subDays(18)->toDateString(),
-                'liters' => 55,
-                'cost' => 715000,
+                'liters' => 50,
+                'cost' => 650000,
                 'odometer_km' => $base3 + 120,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_VEHICLE,
                 'station_name' => 'SPBU Pertamina Pringsewu',
@@ -298,8 +304,8 @@ class TenantFuelDemoSeeder extends Seeder
                 'vehicle' => $v3,
                 'driver_id' => $d1,
                 'filled_at' => now()->subDays(3)->toDateString(),
-                'liters' => 48,
-                'cost' => 624000,
+                'liters' => 46,
+                'cost' => 598000,
                 'odometer_km' => $base3 + 520,
                 'odometer_source' => FuelLog::ODOMETER_SOURCE_GPS,
                 'station_name' => 'SPBU Shell Tanjung Karang',

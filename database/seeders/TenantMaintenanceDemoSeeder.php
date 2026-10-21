@@ -198,15 +198,27 @@ class TenantMaintenanceDemoSeeder extends Seeder
 
         $this->command?->info('No vehicles found — creating 5 demo vehicles for maintenance.');
 
+        $fallbackTemplates = [
+            ['name' => 'Demo Maint Avanza MPV', 'type' => 'car', 'brand' => 'Toyota', 'rental_class' => 'mpv', 'capacity_seats' => 7, 'capacity_kg' => 500, 'fuel_type' => 'petrol'],
+            ['name' => 'Demo Maint Innova MPV', 'type' => 'car', 'brand' => 'Toyota', 'rental_class' => 'mpv', 'capacity_seats' => 7, 'capacity_kg' => 650, 'fuel_type' => 'diesel'],
+            ['name' => 'Demo Maint HiAce Minibus', 'type' => 'van', 'brand' => 'Toyota', 'rental_class' => 'van', 'capacity_seats' => 12, 'capacity_kg' => 1200, 'fuel_type' => 'diesel'],
+            ['name' => 'Demo Maint Fortuner SUV', 'type' => 'car', 'brand' => 'Toyota', 'rental_class' => 'suv', 'capacity_seats' => 7, 'capacity_kg' => 700, 'fuel_type' => 'diesel'],
+            ['name' => 'Demo Maint Xpander MPV', 'type' => 'car', 'brand' => 'Mitsubishi', 'rental_class' => 'mpv', 'capacity_seats' => 7, 'capacity_kg' => 520, 'fuel_type' => 'petrol'],
+        ];
+
         foreach (range(1, 5) as $i) {
+            $tpl = $fallbackTemplates[$i - 1];
             Vehicle::query()->create([
-                'name' => "Demo Maint Truck #{$i}",
+                'name' => $tpl['name'],
                 'plate_number' => sprintf('BE MNT %02d', $i),
-                'type' => 'truck',
-                'brand' => 'Hino',
+                'type' => $tpl['type'],
+                'brand' => $tpl['brand'],
+                'rental_class' => $tpl['rental_class'],
+                'capacity_seats' => $tpl['capacity_seats'],
+                'capacity_kg' => $tpl['capacity_kg'],
+                'color' => 'Silver Metalik',
                 'model_year' => 2020 + $i,
-                'capacity_kg' => 5000,
-                'fuel_type' => 'diesel',
+                'fuel_type' => $tpl['fuel_type'],
                 'status' => Vehicle::STATUS_ACTIVE,
                 'odometer_km' => 40000 + ($i * 1500),
                 'notes' => self::TAG.' Demo vehicle for maintenance.',
@@ -338,9 +350,9 @@ class TenantMaintenanceDemoSeeder extends Seeder
             ]);
 
             $this->seedItems($completedInHouse, [
-                ['item_type' => 'part', 'name' => 'Oli Mesin SAE 15W-40', 'quantity' => 6, 'unit' => 'liter', 'unit_price' => 35_000, 'total_price' => 210_000],
-                ['item_type' => 'part', 'name' => 'Filter Oli', 'quantity' => 1, 'unit' => 'pcs', 'unit_price' => 10_000, 'total_price' => 10_000],
-                ['item_type' => 'labor', 'name' => 'Jasa Ganti Oli', 'quantity' => 1, 'unit' => 'pekerjaan', 'unit_price' => 150_000, 'total_price' => 150_000],
+                ['item_type' => 'part', 'name' => 'Oli Mesin SAE 5W-30 Full Synthetic', 'quantity' => 4, 'unit' => 'liter', 'unit_price' => 95_000, 'total_price' => 380_000],
+                ['item_type' => 'part', 'name' => 'Filter Oli Original', 'quantity' => 1, 'unit' => 'pcs', 'unit_price' => 45_000, 'total_price' => 45_000],
+                ['item_type' => 'labor', 'name' => 'Jasa Ganti Oli & General Check-up', 'quantity' => 1, 'unit' => 'pekerjaan', 'unit_price' => 125_000, 'total_price' => 125_000],
             ]);
 
             $this->seedChecklist($completedInHouse, [
@@ -453,7 +465,7 @@ class TenantMaintenanceDemoSeeder extends Seeder
                 'waiting_parts' => true,
                 'vehicle_status_before' => Vehicle::STATUS_ACTIVE,
                 'estimated_cost' => 600_000,
-                'notes' => self::TAG.' Menunggu aki 12V 100Ah.',
+                'notes' => self::TAG.' Menunggu aki 12V 65Ah Maintenance Free.',
                 'created_by' => $userId,
                 'approved_by' => $userId,
                 'approved_at' => now()->subDays(2),

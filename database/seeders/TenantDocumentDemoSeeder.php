@@ -271,7 +271,7 @@ class TenantDocumentDemoSeeder extends Seeder
     {
         $pad = sprintf('%02d', $n);
         $simKey = $this->simTypeKey($driver->license_type);
-        $simNumber = sprintf('SIM-%s-DEMO-%s', strtoupper((string) ($driver->license_type ?: 'B2')), $pad);
+        $simNumber = $driver->license_number ?: sprintf('SIM-%s-DEMO-%s', strtoupper((string) ($driver->license_type ?: 'A')), $pad);
 
         match (($n - 1) % 5) {
             0 => $this->driverScenarioExpiredSim($driver, $types, $userId, $pad, $simKey, $simNumber),
@@ -442,11 +442,17 @@ class TenantDocumentDemoSeeder extends Seeder
 
     private function simTypeKey(?string $licenseType): string
     {
-        return match (strtoupper((string) $licenseType)) {
-            'A' => 'sim_a',
-            'B1' => 'sim_b1',
-            default => 'sim_b2',
-        };
+        $normalized = strtoupper((string) $licenseType);
+
+        if (str_starts_with($normalized, 'B1')) {
+            return 'sim_b1';
+        }
+
+        if (str_starts_with($normalized, 'B2')) {
+            return 'sim_b2';
+        }
+
+        return 'sim_a';
     }
 
     /**
