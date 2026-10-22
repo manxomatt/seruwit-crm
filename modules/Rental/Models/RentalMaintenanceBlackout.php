@@ -161,14 +161,20 @@ class RentalMaintenanceBlackout extends Model
             return null;
         }
 
-        return static::query()
+        self::ensurePreventRentalsColumn();
+
+        $query = static::query()
             ->where('vehicle_id', $vehicleId)
-            ->where('prevent_rentals', true)
             ->whereIn('status', self::blockingStatuses())
             ->where('start_date', '<=', $end)
             ->where('end_date', '>=', $start)
-            ->when($excludingId, fn (Builder $q) => $q->where('id', '!=', $excludingId))
-            ->first();
+            ->when($excludingId, fn (Builder $q) => $q->where('id', '!=', $excludingId));
+
+        if (Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+            $query->where('prevent_rentals', true);
+        }
+
+        return $query->first();
     }
 
     /**
@@ -182,14 +188,43 @@ class RentalMaintenanceBlackout extends Model
             return collect();
         }
 
-        return static::query()
-            ->where('prevent_rentals', true)
+        self::ensurePreventRentalsColumn();
+
+        $query = static::query()
             ->whereIn('status', self::blockingStatuses())
             ->where('start_date', '<=', $end)
             ->where('end_date', '>=', $start)
             ->with(['vehicle:id,name,plate_number', 'vendorPartner:id,name'])
-            ->orderBy('start_date')
-            ->get()
-            ->groupBy('vehicle_id');
+            ->orderBy('start_date');
+
+        if (Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+            $query->where('prevent_rentals', true);
+        }
+
+        return $query->get()->groupBy('vehicle_id');
+    }
+
+    /**
+     * Self-heal missing columns if an existing table was created with a partial schema.
+     */
+    public static function ensurePreventRentalsColumn(): void
+    {
+        try {
+            if (Schema::hasTable('rental_maintenance_blackouts') && ! Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+                Schema::table('rental_maintenance_blackouts', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    if (! Schema::hasColumn('rental_maintenance_blackouts', 'type')) {
+                        $table->string('type', 40)->default('preventive_service')->after('code');
+                    }
+                    if (! Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+                        $table->boolean('prevent_rentals')->default(true)->after('status');
+                    }
+                    if (! Schema::hasColumn('rental_maintenance_blackouts', 'completed_at')) {
+                        $table->timestamp('completed_at')->nullable()->after('created_by');
+                    }
+                });
+            }
+        } catch (\Throwable) {
+            // Silently allow fallback query
+        }
     }
 }

@@ -9,6 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('rental_maintenance_blackouts')) {
+            Schema::table('rental_maintenance_blackouts', function (Blueprint $table) {
+                if (! Schema::hasColumn('rental_maintenance_blackouts', 'type')) {
+                    $table->string('type', 40)->default('preventive_service')->after('code');
+                }
+                if (! Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+                    $table->boolean('prevent_rentals')->default(true)->after('status');
+                }
+                if (! Schema::hasColumn('rental_maintenance_blackouts', 'completed_at')) {
+                    $table->timestamp('completed_at')->nullable()->after('created_by');
+                }
+            });
+
             return;
         }
 

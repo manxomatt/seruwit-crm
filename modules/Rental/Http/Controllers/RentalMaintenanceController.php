@@ -319,21 +319,49 @@ class RentalMaintenanceController extends Controller
         if (! Schema::hasTable('rental_maintenance_blackouts')) {
             Schema::create('rental_maintenance_blackouts', function (Blueprint $table) {
                 $table->id();
-                $table->string('code', 40)->unique();
                 $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
-                $table->unsignedBigInteger('work_order_id')->nullable()->index();
-                $table->foreignId('vendor_partner_id')->nullable()->constrained('partners')->nullOnDelete();
-                $table->string('vendor_workshop_name', 191)->nullable();
+                if (Schema::hasTable('work_orders')) {
+                    $table->foreignId('work_order_id')->nullable()->constrained('work_orders')->nullOnDelete();
+                } else {
+                    $table->unsignedBigInteger('work_order_id')->nullable()->index();
+                }
+                $table->string('code', 40)->unique();
+                $table->string('type', 40)->default('preventive_service');
                 $table->string('reason', 191);
                 $table->date('start_date');
                 $table->date('end_date');
-                $table->string('status', 30)->default('scheduled')->index();
+                $table->string('vendor_workshop_name', 150)->nullable();
+                if (Schema::hasTable('partners')) {
+                    $table->foreignId('vendor_partner_id')->nullable()->constrained('partners')->nullOnDelete();
+                } else {
+                    $table->unsignedBigInteger('vendor_partner_id')->nullable();
+                }
                 $table->decimal('estimated_cost', 15, 2)->default(0);
                 $table->decimal('actual_cost', 15, 2)->default(0);
+                $table->string('status', 30)->default('scheduled')->index();
+                $table->boolean('prevent_rentals')->default(true);
                 $table->text('notes')->nullable();
-                $table->foreignId('created_by')->nullable();
+                $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamp('completed_at')->nullable();
                 $table->timestamps();
+
+                $table->index(['vehicle_id', 'start_date', 'end_date']);
+                $table->index(['status', 'start_date']);
             });
+
+            return;
         }
+
+        Schema::table('rental_maintenance_blackouts', function (Blueprint $table) {
+            if (! Schema::hasColumn('rental_maintenance_blackouts', 'type')) {
+                $table->string('type', 40)->default('preventive_service')->after('code');
+            }
+            if (! Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+                $table->boolean('prevent_rentals')->default(true)->after('status');
+            }
+            if (! Schema::hasColumn('rental_maintenance_blackouts', 'completed_at')) {
+                $table->timestamp('completed_at')->nullable()->after('created_by');
+            }
+        });
     }
 }

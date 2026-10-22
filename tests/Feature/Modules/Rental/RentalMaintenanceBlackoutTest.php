@@ -145,4 +145,26 @@ class RentalMaintenanceBlackoutTest extends TestCase
         $vehicle->refresh();
         $this->assertEquals(Vehicle::STATUS_ACTIVE, $vehicle->status);
     }
+
+    public function test_blackout_queries_do_not_crash_if_prevent_rentals_column_is_missing(): void
+    {
+        // Simulate legacy or partial table where prevent_rentals column was not created
+        if (\Illuminate\Support\Facades\Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+            \Illuminate\Support\Facades\Schema::table('rental_maintenance_blackouts', function ($table) {
+                $table->dropColumn('prevent_rentals');
+            });
+        }
+
+        $vehicle = Vehicle::factory()->create(['name' => 'Avanza Test', 'status' => Vehicle::STATUS_ACTIVE]);
+
+        // Calling queries should not throw undefined column SQL exception
+        $blackout = RentalMaintenanceBlackout::findOverlappingBlackout($vehicle->id, '2026-10-19', '2026-10-25');
+        $this->assertNull($blackout);
+
+        $active = RentalMaintenanceBlackout::activeBlackoutsBetween('2026-10-19', '2026-10-25');
+        $this->assertEmpty($active);
+
+        // After self-healing, prevent_rentals must be restored
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals'));
+    }
 }
