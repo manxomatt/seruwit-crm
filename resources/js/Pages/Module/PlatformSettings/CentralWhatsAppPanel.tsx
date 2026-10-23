@@ -79,6 +79,9 @@ export default function CentralWhatsAppPanel({
     };
 
     const isEnabledIndex = findSettingIndex('whatsapp.is_enabled');
+    const isRequirePhoneIndex = findSettingIndex('whatsapp.require_phone_verification');
+    const otpCooldownIndex = findSettingIndex('whatsapp.otp_resend_cooldown_seconds');
+    const otpTemplateIndex = findSettingIndex('whatsapp.otp_template');
     const isWelcomeEnabledIndex = findSettingIndex('whatsapp.onboarding_welcome_enabled');
     const welcomeTemplateIndex = findSettingIndex('whatsapp.onboarding_welcome_template');
     const providerIndex = findSettingIndex('whatsapp.provider');
@@ -87,6 +90,7 @@ export default function CentralWhatsAppPanel({
     const customTokenIndex = findSettingIndex('whatsapp.custom_token');
 
     const isEnabled = isEnabledIndex >= 0 ? formData.settings[isEnabledIndex]?.value === '1' : false;
+    const isRequirePhone = isRequirePhoneIndex >= 0 ? formData.settings[isRequirePhoneIndex]?.value === '1' : true;
     const isWelcomeEnabled = isWelcomeEnabledIndex >= 0 ? formData.settings[isWelcomeEnabledIndex]?.value === '1' : true;
     const currentProvider = providerIndex >= 0 ? formData.settings[providerIndex]?.value || 'seruwit' : 'seruwit';
 
@@ -236,6 +240,12 @@ export default function CentralWhatsAppPanel({
         if (welcomeTemplateIndex < 0) return;
         const current = formData.settings[welcomeTemplateIndex]?.value || '';
         updateValue(welcomeTemplateIndex, `${current} ${varName}`);
+    };
+
+    const insertOtpTemplateVariable = (varName: string) => {
+        if (otpTemplateIndex < 0) return;
+        const current = formData.settings[otpTemplateIndex]?.value || '';
+        updateValue(otpTemplateIndex, `${current} ${varName}`);
     };
 
     return (
@@ -552,6 +562,85 @@ export default function CentralWhatsAppPanel({
                                 />
                                 <div className="peer h-6 w-11 rounded-full bg-slate-200 peer-checked:bg-indigo-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] dark:bg-slate-700" />
                             </label>
+                        </div>
+                    )}
+
+                    {/* Toggle: Require Phone Verification */}
+                    {isRequirePhoneIndex >= 0 && (
+                        <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-850/50">
+                            <div className="pr-4">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                                    Wajibkan Verifikasi Nomor WhatsApp Tenant
+                                </h4>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                    Jika aktif, setiap pengguna baru wajib memverifikasi nomor WhatsApp via OTP 6-digit sebelum dapat membuat atau mengakses workspace tenant.
+                                </p>
+                            </div>
+                            <label className="relative inline-flex cursor-pointer items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={isRequirePhone}
+                                    onChange={(e) => updateValue(isRequirePhoneIndex, e.target.checked ? '1' : '0')}
+                                    className="peer sr-only"
+                                />
+                                <div className="peer h-6 w-11 rounded-full bg-slate-200 peer-checked:bg-indigo-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] dark:bg-slate-700" />
+                            </label>
+                        </div>
+                    )}
+
+                    {/* OTP Settings when verification is active */}
+                    {isRequirePhone && (
+                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20 space-y-4">
+                            {otpCooldownIndex >= 0 && (
+                                <div className="max-w-xs">
+                                    <InputLabel
+                                        value="Waktu Tunggu Kirim Ulang OTP (Detik)"
+                                        className="!text-xs !font-bold"
+                                    />
+                                    <TextInput
+                                        type="number"
+                                        min="10"
+                                        max="600"
+                                        value={formData.settings[otpCooldownIndex]?.value || '60'}
+                                        onChange={(e) => updateValue(otpCooldownIndex, e.target.value)}
+                                        className="mt-1 w-full !text-xs"
+                                    />
+                                </div>
+                            )}
+
+                            {otpTemplateIndex >= 0 && (
+                                <div className="space-y-3">
+                                    <InputLabel
+                                        value="Format Template Pesan OTP WhatsApp"
+                                        className="!text-xs !font-bold"
+                                    />
+                                    <p className="text-xs text-slate-500">
+                                        Klik tag variabel di bawah untuk menyisipkan ke dalam pesan:
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {[
+                                            { label: 'Nama Pengguna', var: '{user_name}' },
+                                            { label: 'Kode OTP 6-Digit', var: '{code}' },
+                                            { label: 'Masa Berlaku (Menit)', var: '{expiry_minutes}' },
+                                        ].map((item) => (
+                                            <button
+                                                key={item.var}
+                                                type="button"
+                                                onClick={() => insertOtpTemplateVariable(item.var)}
+                                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-mono font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-600 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                            >
+                                                + {item.var} ({item.label})
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <textarea
+                                        rows={6}
+                                        value={formData.settings[otpTemplateIndex]?.value || ''}
+                                        onChange={(e) => updateValue(otpTemplateIndex, e.target.value)}
+                                        className="block w-full rounded-2xl border border-slate-200/80 bg-white p-3.5 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 
