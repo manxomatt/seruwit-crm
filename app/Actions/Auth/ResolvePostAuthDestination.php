@@ -19,6 +19,10 @@ class ResolvePostAuthDestination
             return route($this->routeName('verification.notice'), absolute: false);
         }
 
+        if (\App\Models\PlatformSetting::isPhoneVerificationRequired() && ! $user->hasVerifiedPhone()) {
+            return route('central.phone.notice', absolute: false);
+        }
+
         if ($this->hasActiveOnboardingSession($user)) {
             return route('central.onboarding.status', absolute: false);
         }
@@ -44,6 +48,10 @@ class ResolvePostAuthDestination
     public function needsWorkspaceOnboarding(User $user): bool
     {
         if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
+            return false;
+        }
+
+        if (\App\Models\PlatformSetting::isPhoneVerificationRequired() && ! $user->hasVerifiedPhone()) {
             return false;
         }
 

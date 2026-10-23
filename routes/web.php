@@ -4,6 +4,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Central\BillingReportController;
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
+use App\Http\Controllers\Central\PhoneVerificationController;
 use App\Http\Controllers\Central\ResellerLandingPageController;
 use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\SubscriptionTierController;
@@ -140,7 +141,15 @@ Route::domain($centralDomain)
             Route::get('/billing-reports/{tenant}/{year}/{month}', [BillingReportController::class, 'show'])->name('billing-reports.show');
             Route::get('/billing-reports/{tenant}/export/csv', [BillingReportController::class, 'exportCsv'])->name('billing-reports.export.csv');
 
-            Route::middleware('verified')->group(function () {
+            // Phone (WhatsApp) verification routes
+            Route::get('/verify-phone', [PhoneVerificationController::class, 'notice'])->name('phone.notice');
+            Route::post('/verify-phone', [PhoneVerificationController::class, 'verify'])->name('phone.verify');
+            Route::post('/phone/verification-notification', [PhoneVerificationController::class, 'send'])
+                ->middleware('throttle:6,1')
+                ->name('phone.send');
+            Route::patch('/phone', [PhoneVerificationController::class, 'updatePhone'])->name('phone.update');
+
+            Route::middleware(['verified', 'phone.verified'])->group(function () {
                 Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
                 Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
                 Route::get('/onboarding/payment', [OnboardingController::class, 'payment'])->name('onboarding.payment');

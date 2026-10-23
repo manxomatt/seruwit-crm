@@ -47,6 +47,27 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the model's phone number should be unverified.
+     */
+    public function unverifiedPhone(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'phone_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the model's phone number should be verified.
+     */
+    public function verifiedPhone(?string $phone = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'phone' => $phone ?? '628123456789',
+            'phone_verified_at' => now(),
+        ]);
+    }
+
+    /**
      * Assign the admin role to the user after creation.
      */
     public function admin(): static

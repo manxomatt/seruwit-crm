@@ -32,6 +32,8 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
         'name',
         'username',
         'email',
+        'phone',
+        'phone_verified_at',
         'password',
         'last_login_at',
         'locale',
@@ -70,6 +72,8 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
             'name',
             'username',
             'email',
+            'phone',
+            'phone_verified_at',
             'password',
             'locale',
         ];
@@ -106,9 +110,28 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Determine if the user has verified their phone number.
+     */
+    public function hasVerifiedPhone(): bool
+    {
+        return ! is_null($this->phone_verified_at);
+    }
+
+    /**
+     * Mark the given user's phone as verified.
+     */
+    public function markPhoneAsVerified(): bool
+    {
+        return $this->forceFill([
+            'phone_verified_at' => $this->freshTimestamp(),
+        ])->save();
     }
 
     /**

@@ -14,6 +14,7 @@ interface Props {
 interface RegisterForm {
     name: string;
     email: string;
+    phone: string;
     password: string;
     password_confirmation: string;
     terms: boolean;
@@ -29,6 +30,7 @@ export default function Register({ settings, initialCompanyName = '', initialPla
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
         name: '',
         email: '',
+        phone: '',
         password: '',
         password_confirmation: '',
         terms: false,
@@ -294,6 +296,28 @@ export default function Register({ settings, initialCompanyName = '', initialPla
                                                 />
                                             </div>
                                             <InputError message={errors.email} className="mt-1" />
+                                        </div>
+
+                                        {/* WhatsApp Phone Field */}
+                                        <div>
+                                            <label htmlFor="phone" className="mb-1 block text-xs font-bold text-slate-700">
+                                                Nomor WhatsApp Bisnis
+                                            </label>
+                                            <div className="relative">
+                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                    <span className="material-symbols-outlined text-lg">chat</span>
+                                                </div>
+                                                <input
+                                                    id="phone"
+                                                    type="tel"
+                                                    name="phone"
+                                                    value={data.phone}
+                                                    onChange={(e) => setData('phone', e.target.value)}
+                                                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                    placeholder="Contoh: 081234567890"
+                                                />
+                                            </div>
+                                            <InputError message={errors.phone} className="mt-1" />
                                         </div>
 
                                         {/* Password Field */}

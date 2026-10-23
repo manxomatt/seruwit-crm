@@ -62,6 +62,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'phone' => ['nullable', 'string', 'max:32'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['accepted', 'required'],
             'company_name' => ['nullable', 'string', 'max:255'],
@@ -76,10 +77,15 @@ class RegisteredUserController extends Controller
             session(['onboarding_plan' => $request->string('plan')->toString()]);
         }
 
+        $normalizedPhone = $request->filled('phone')
+            ? \App\Services\WhatsApp\WhatsAppGatewayManager::normalizePhone($request->string('phone')->toString())
+            : null;
+
         $user = User::create([
             'global_id' => (string) Str::uuid(),
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $normalizedPhone,
             'password' => Hash::make($request->password),
         ]);
 
@@ -107,6 +113,7 @@ class RegisteredUserController extends Controller
                 [
                     'company_name' => $companyName,
                     'subdomain' => $subdomain,
+                    'phone' => $normalizedPhone,
                     'verticals' => ['rental'],
                     'plan_key' => $planKey,
                     'status' => \App\Models\OnboardingSession::STATUS_DRAFT,

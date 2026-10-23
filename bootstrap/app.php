@@ -84,6 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'requires-module' => \App\Http\Middleware\RequiresModule::class,
             'auth.mobile_passenger' => \Modules\Shuttle\Http\Middleware\AuthenticateMobilePassenger::class,
             'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
+            'phone.verified' => \App\Http\Middleware\EnsurePhoneIsVerified::class,
         ]);
 
         // Route model binding would otherwise resolve /module/carousels/{carousel}

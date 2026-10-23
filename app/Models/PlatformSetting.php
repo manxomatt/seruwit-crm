@@ -158,6 +158,18 @@ class PlatformSetting extends Model
         return static::isWhatsAppEnabled() && filter_var($welcome, FILTER_VALIDATE_BOOLEAN);
     }
 
+    public static function isPhoneVerificationRequired(): bool
+    {
+        $val = static::getValue('whatsapp.require_phone_verification', '1');
+
+        return static::isWhatsAppEnabled() && filter_var($val, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function getOtpResendCooldownSeconds(): int
+    {
+        return (int) static::getValue('whatsapp.otp_resend_cooldown_seconds', 60);
+    }
+
     /**
      * Dynamically apply Platform SMTP settings to Laravel runtime config.
      */
@@ -538,6 +550,36 @@ class PlatformSetting extends Model
                 'description' => 'API Token perangkat dari Fonnte (jika menggunakan provider Fonnte).',
                 'is_public' => false,
                 'sort_order' => 8,
+            ],
+            [
+                'key' => 'whatsapp.require_phone_verification',
+                'group' => 'whatsapp',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Wajibkan Verifikasi WhatsApp Tenant',
+                'description' => 'Wajibkan pengguna untuk memverifikasi nomor WhatsApp via OTP sebelum membuat atau mengakses workspace.',
+                'is_public' => false,
+                'sort_order' => 9,
+            ],
+            [
+                'key' => 'whatsapp.otp_resend_cooldown_seconds',
+                'group' => 'whatsapp',
+                'value' => '60',
+                'type' => 'number',
+                'label' => 'Waktu Tunggu Kirim Ulang OTP (Detik)',
+                'description' => 'Durasi jeda sebelum pengguna dapat meminta pengiriman ulang kode OTP WhatsApp.',
+                'is_public' => false,
+                'sort_order' => 10,
+            ],
+            [
+                'key' => 'whatsapp.otp_template',
+                'group' => 'whatsapp',
+                'value' => "🔐 *KODE VERIFIKASI SERUWIT*\n\nHalo *{user_name}*,\nGunakan kode berikut untuk memverifikasi nomor WhatsApp akun bisnis Anda:\n\n👉 *{code}*\n\nKode ini berlaku selama *5 menit*. Jangan bagikan kode ini kepada siapa pun demi keamanan akun Anda.\n\nSalam,\n*Tim Seruwit Platform*",
+                'type' => 'textarea',
+                'label' => 'Template Pesan OTP WhatsApp',
+                'description' => 'Format pesan OTP verifikasi. Variabel: {user_name}, {code}, {expiry_minutes}.',
+                'is_public' => false,
+                'sort_order' => 11,
             ],
         ];
     }

@@ -36,6 +36,14 @@ class RedirectUnfinishedSignup
             return redirect()->route($this->routeName('verification.notice'));
         }
 
+        if (\App\Models\PlatformSetting::isPhoneVerificationRequired() && ! $user->hasVerifiedPhone()) {
+            if ($this->allowsUnverifiedPhone($request)) {
+                return $next($request);
+            }
+
+            return redirect()->route('central.phone.notice');
+        }
+
         if (! $this->destination->needsWorkspaceOnboarding($user)) {
             if ($this->matches($request, 'central.onboarding.*')) {
                 return redirect()->to($this->destination->url($user));
@@ -62,11 +70,26 @@ class RedirectUnfinishedSignup
         );
     }
 
+    private function allowsUnverifiedPhone(Request $request): bool
+    {
+        return $this->matches(
+            $request,
+            'central.phone.*',
+            'phone.*',
+            'verification.*',
+            'logout',
+            'password.*',
+            'locale.update',
+        );
+    }
+
     private function allowsDuringOnboarding(Request $request): bool
     {
         return $this->matches(
             $request,
             'central.onboarding.*',
+            'central.phone.*',
+            'phone.*',
             'verification.*',
             'logout',
             'password.*',
