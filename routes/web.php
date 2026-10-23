@@ -105,6 +105,11 @@ Route::domain($centralDomain)
         Route::get('/platform-settings', [PlatformSettingController::class, 'index'])->name('platform-settings.index');
         Route::post('/platform-settings/bulk-update', [PlatformSettingController::class, 'bulkUpdate'])->name('platform-settings.bulk-update');
         Route::post('/platform-settings/test-email', [PlatformSettingController::class, 'testEmail'])->name('platform-settings.test-email');
+        Route::post('/platform-settings/whatsapp/start', [PlatformSettingController::class, 'startWhatsApp'])->name('platform-settings.whatsapp.start');
+        Route::post('/platform-settings/whatsapp/pair-code', [PlatformSettingController::class, 'pairWhatsAppWithCode'])->name('platform-settings.whatsapp.pair');
+        Route::get('/platform-settings/whatsapp/status', [PlatformSettingController::class, 'whatsappStatus'])->name('platform-settings.whatsapp.status');
+        Route::post('/platform-settings/whatsapp/logout', [PlatformSettingController::class, 'logoutWhatsApp'])->name('platform-settings.whatsapp.logout');
+        Route::post('/platform-settings/whatsapp/test', [PlatformSettingController::class, 'testWhatsApp'])->name('platform-settings.whatsapp.test');
         Route::patch('/platform-settings', [PlatformSettingController::class, 'update'])->name('platform-settings.update');
         Route::get('/platform-settings/{group}', [PlatformSettingController::class, 'group'])->name('platform-settings.group');
     });

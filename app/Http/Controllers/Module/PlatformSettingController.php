@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlatformSetting;
+use App\Services\WhatsApp\WhatsAppGatewayManager;
+use App\Services\WhatsAppService;
 use App\Support\CentralAiSettings;
 use App\Support\SystemMode;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +24,10 @@ use Inertia\Response;
  */
 class PlatformSettingController extends Controller
 {
+    public function __construct(
+        protected WhatsAppService $whatsappService,
+        protected WhatsAppGatewayManager $gatewayManager,
+    ) {}
     /**
      * Redirect to the first group's page.
      */
@@ -54,12 +61,48 @@ class PlatformSettingController extends Controller
         // Check if SMTP password exists in DB
         $hasSmtpPassword = filled(PlatformSetting::getValue('email.smtp_password'));
 
+        $deviceStatus = null;
+        $whatsappSessionId = null;
+        if ($group === 'whatsapp') {
+            $whatsappSessionId = $this->gatewayManager->getSessionId();
+            $statusRes = $this->whatsappService->getStatus($whatsappSessionId);
+            $connected = (($statusRes['status'] ?? '') === 'CONNECTED');
+
+            if ($connected) {
+                if (PlatformSetting::getValue('whatsapp.is_enabled') !== '1') {
+                    PlatformSetting::query()->updateOrCreate(
+                        ['key' => 'whatsapp.is_enabled'],
+                        [
+                            'group' => 'whatsapp',
+                            'value' => '1',
+                            'type' => 'boolean',
+                            'label' => 'Aktifkan WhatsApp Gateway Central',
+                            'is_public' => false,
+                        ]
+                    );
+                }
+            }
+
+            $deviceStatus = [
+                'connected' => $connected,
+                'status' => $statusRes['status'] ?? 'DISCONNECTED',
+                'phone' => $statusRes['phone'] ?? '',
+                'push_name' => $statusRes['push_name'] ?? '',
+                'qr_base64' => $statusRes['qr_base64'] ?? '',
+                'message' => $connected
+                    ? "Terhubung ke nomor {$statusRes['phone']}".($statusRes['push_name'] ? " ({$statusRes['push_name']})" : '')
+                    : 'WhatsApp Central belum terhubung. Silakan scan QR Code atau hubungkan dengan kode pairing.',
+            ];
+        }
+
         return Inertia::render('Module/PlatformSettings/Group', [
             'groupSettings' => $settings,
             'groups' => $groups,
             'currentGroup' => $group,
             'systemModes' => SystemMode::values(),
             'hasSmtpPassword' => $hasSmtpPassword,
+            'deviceStatus' => $deviceStatus,
+            'sessionId' => $whatsappSessionId,
         ]);
     }
 
@@ -188,5 +231,96 @@ class PlatformSettingController extends Controller
         PlatformSetting::applyCentralMailConfig();
 
         return back()->with('success', __('settings.messages.bulk_updated'));
+    }
+
+    /**
+     * Start Central WhatsApp session and retrieve live QR Code.
+     */
+    public function startWhatsApp(): JsonResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $result = $this->whatsappService->startSession($this->gatewayManager->getSessionId());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Request 8-digit Pairing Code for Central WhatsApp phone number.
+     */
+    public function pairWhatsAppWithCode(Request $request): JsonResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $request->validate([
+            'phone' => ['required', 'string'],
+        ]);
+
+        $phone = WhatsAppGatewayManager::normalizePhone($request->string('phone')->toString());
+        $result = $this->whatsappService->pairWithCode($this->gatewayManager->getSessionId(), $phone);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Check Central WhatsApp connection status for real-time polling.
+     */
+    public function whatsappStatus(): JsonResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $sessionId = $this->gatewayManager->getSessionId();
+        $result = $this->whatsappService->getStatus($sessionId);
+
+        if (($result['status'] ?? '') === 'CONNECTED') {
+            if (PlatformSetting::getValue('whatsapp.is_enabled') !== '1') {
+                PlatformSetting::query()->updateOrCreate(
+                    ['key' => 'whatsapp.is_enabled'],
+                    [
+                        'group' => 'whatsapp',
+                        'value' => '1',
+                        'type' => 'boolean',
+                        'label' => 'Aktifkan WhatsApp Gateway Central',
+                        'is_public' => false,
+                    ]
+                );
+            }
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Disconnect / Logout Central WhatsApp session.
+     */
+    public function logoutWhatsApp(): JsonResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $result = $this->whatsappService->logout($this->gatewayManager->getSessionId());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Send test WhatsApp message from Central account to confirm connectivity.
+     */
+    public function testWhatsApp(Request $request): JsonResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $request->validate([
+            'phone' => ['required', 'string'],
+            'message' => ['nullable', 'string'],
+        ]);
+
+        $phone = WhatsAppGatewayManager::normalizePhone($request->string('phone')->toString());
+        $text = $request->filled('message')
+            ? $request->string('message')->toString()
+            : 'Halo! Ini adalah pesan uji coba dari Seruwit Platform Central. WhatsApp Gateway Central berhasil terhubung.';
+
+        $result = $this->whatsappService->sendText($this->gatewayManager->getSessionId(), $phone, $text);
+
+        return response()->json($result);
     }
 }

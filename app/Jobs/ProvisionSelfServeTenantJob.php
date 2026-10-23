@@ -54,6 +54,15 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                     'status' => OnboardingSession::STATUS_READY,
                     'error_message' => null,
                 ]);
+
+                try {
+                    app(\App\Services\Central\CentralOnboardingWhatsAppNotifier::class)->sendWelcomeNotification($session);
+                } catch (Throwable $e) {
+                    Log::warning('ProvisionSelfServeTenantJob: failed to dispatch welcome WhatsApp message.', [
+                        'session_id' => $session->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
             // For new tenants, FinalizeTenantSetupJob is queued in the pipeline and
             // will mark the session READY (or FAILED) once it completes.

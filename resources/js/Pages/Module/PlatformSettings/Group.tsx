@@ -1,3 +1,4 @@
+import CentralWhatsAppPanel, { DeviceStatus } from './CentralWhatsAppPanel';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -28,6 +29,8 @@ interface Props {
     currentGroup: string;
     systemModes: string[];
     hasSmtpPassword?: boolean;
+    deviceStatus?: DeviceStatus | null;
+    sessionId?: string | null;
 }
 
 const GROUP_ICONS: Record<string, string> = {
@@ -35,6 +38,7 @@ const GROUP_ICONS: Record<string, string> = {
     capacity: '🚗',
     billing: '💳',
     email: '✉️',
+    whatsapp: '💬',
     security: '🛡️',
 };
 
@@ -44,6 +48,8 @@ export default function Group({
     currentGroup,
     systemModes,
     hasSmtpPassword = false,
+    deviceStatus = null,
+    sessionId = null,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { flash, auth } = usePage<{
@@ -1356,8 +1362,20 @@ export default function Group({
                         </div>
                     )}
 
+                    {/* SPECIFIC VIEW: WHATSAPP CENTRAL GROUP */}
+                    {currentGroup === 'whatsapp' && (
+                        <CentralWhatsAppPanel
+                            deviceStatus={deviceStatus}
+                            sessionId={sessionId}
+                            groupSettings={groupSettings}
+                            formData={data}
+                            updateValue={updateValue}
+                            errors={errors as Record<string, string>}
+                        />
+                    )}
+
                     {/* GENERIC FALLBACK FOR OTHER GROUPS */}
-                    {currentGroup !== 'general' && currentGroup !== 'capacity' && currentGroup !== 'email' && currentGroup !== 'security' && (
+                    {currentGroup !== 'general' && currentGroup !== 'capacity' && currentGroup !== 'email' && currentGroup !== 'security' && currentGroup !== 'whatsapp' && (
                         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <div className="flex items-center gap-3">

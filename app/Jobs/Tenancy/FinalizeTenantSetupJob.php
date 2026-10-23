@@ -200,10 +200,22 @@ class FinalizeTenantSetupJob implements ShouldQueue
         });
 
         if ($sessionId !== null) {
-            OnboardingSession::query()->find($sessionId)?->update([
-                'status' => OnboardingSession::STATUS_READY,
-                'error_message' => null,
-            ]);
+            $session = OnboardingSession::query()->find($sessionId);
+            if ($session !== null) {
+                $session->update([
+                    'status' => OnboardingSession::STATUS_READY,
+                    'error_message' => null,
+                ]);
+
+                try {
+                    app(\App\Services\Central\CentralOnboardingWhatsAppNotifier::class)->sendWelcomeNotification($session);
+                } catch (Throwable $e) {
+                    Log::warning('FinalizeTenantSetupJob: failed to dispatch welcome WhatsApp message.', [
+                        'session_id' => $sessionId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
         }
     }
 

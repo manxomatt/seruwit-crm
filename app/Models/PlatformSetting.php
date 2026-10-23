@@ -144,6 +144,20 @@ class PlatformSetting extends Model
         return filter_var($val, FILTER_VALIDATE_BOOLEAN);
     }
 
+    public static function isWhatsAppEnabled(): bool
+    {
+        $val = static::getValue('whatsapp.is_enabled', '0');
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function isOnboardingWelcomeWhatsAppEnabled(): bool
+    {
+        $welcome = static::getValue('whatsapp.onboarding_welcome_enabled', '1');
+
+        return static::isWhatsAppEnabled() && filter_var($welcome, FILTER_VALIDATE_BOOLEAN);
+    }
+
     /**
      * Dynamically apply Platform SMTP settings to Laravel runtime config.
      */
@@ -443,6 +457,88 @@ class PlatformSetting extends Model
                 'is_public' => false,
                 'sort_order' => 3,
             ],
+
+            // WHATSAPP GATEWAY (Central)
+            [
+                'key' => 'whatsapp.is_enabled',
+                'group' => 'whatsapp',
+                'value' => '0',
+                'type' => 'boolean',
+                'label' => 'Aktifkan WhatsApp Gateway Central',
+                'description' => 'Aktifkan pengiriman pesan dan notifikasi WhatsApp resmi dari sistem platform central.',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => 'whatsapp.provider',
+                'group' => 'whatsapp',
+                'value' => 'seruwit',
+                'type' => 'string',
+                'label' => 'Provider WhatsApp',
+                'description' => 'Layanan gateway yang digunakan (seruwit, fonnte, atau custom webhook).',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+            [
+                'key' => 'whatsapp.session_id',
+                'group' => 'whatsapp',
+                'value' => 'central_platform',
+                'type' => 'string',
+                'label' => 'Session ID Central',
+                'description' => 'Identifier sesi koneksi WhatsApp untuk domain platform central.',
+                'is_public' => false,
+                'sort_order' => 3,
+            ],
+            [
+                'key' => 'whatsapp.onboarding_welcome_enabled',
+                'group' => 'whatsapp',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Kirim Sambutan Onboarding Otomatis',
+                'description' => 'Kirim pesan sambutan dan kredensial akses secara otomatis via WhatsApp saat tenant baru selesai dibuat.',
+                'is_public' => false,
+                'sort_order' => 4,
+            ],
+            [
+                'key' => 'whatsapp.onboarding_welcome_template',
+                'group' => 'whatsapp',
+                'value' => "Halo {owner_name}, selamat datang di Seruwit! 🎉\n\nWorkspace bisnis Anda untuk *{company_name}* telah berhasil dibuat dan siap digunakan.\n\nBerikut informasi akses workspace Anda:\n🔗 *URL Workspace:* {workspace_url}\n📧 *Email Login:* {email}\n📦 *Paket:* {plan_name}\n\nSilakan masuk dan mulai kelola armada serta operasional rental Anda. Jika ada kendala, tim kami siap membantu.\n\nSalam hangat,\n*Tim Seruwit*",
+                'type' => 'textarea',
+                'label' => 'Template Pesan Sambutan Onboarding',
+                'description' => 'Format pesan yang dikirimkan ke tenant baru. Variabel: {owner_name}, {company_name}, {workspace_url}, {email}, {plan_name}, {subdomain}.',
+                'is_public' => false,
+                'sort_order' => 5,
+            ],
+            [
+                'key' => 'whatsapp.custom_url',
+                'group' => 'whatsapp',
+                'value' => '',
+                'type' => 'text',
+                'label' => 'Custom Webhook URL',
+                'description' => 'Endpoint URL webhook kustom untuk pengiriman pesan.',
+                'is_public' => false,
+                'sort_order' => 6,
+            ],
+            [
+                'key' => 'whatsapp.custom_token',
+                'group' => 'whatsapp',
+                'value' => '',
+                'type' => 'text',
+                'label' => 'Custom Webhook Token',
+                'description' => 'Token otentikasi Bearer untuk custom webhook.',
+                'is_public' => false,
+                'sort_order' => 7,
+            ],
+            [
+                'key' => 'whatsapp.fonnte_token',
+                'group' => 'whatsapp',
+                'value' => '',
+                'type' => 'text',
+                'label' => 'Fonnte Token',
+                'description' => 'API Token perangkat dari Fonnte (jika menggunakan provider Fonnte).',
+                'is_public' => false,
+                'sort_order' => 8,
+            ],
         ];
     }
 
@@ -474,6 +570,7 @@ class PlatformSetting extends Model
             'general',
             'capacity',
             'email',
+            'whatsapp',
             'security',
         ];
     }
