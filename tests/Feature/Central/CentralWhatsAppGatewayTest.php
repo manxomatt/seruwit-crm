@@ -83,6 +83,7 @@ class CentralWhatsAppGatewayTest extends TestCase
             'global_user_id' => $owner->global_id,
             'company_name' => 'Bintang Kejora Rent',
             'subdomain' => 'bintangkejora',
+            'verticals' => ['rental'],
             'phone' => '081234567890',
             'plan_key' => 'starter',
             'status' => OnboardingSession::STATUS_READY,
@@ -125,6 +126,7 @@ class CentralWhatsAppGatewayTest extends TestCase
             'global_user_id' => $user->global_id,
             'company_name' => 'Test Company',
             'subdomain' => 'testco',
+            'verticals' => ['rental'],
             'phone' => '081234567890',
             'status' => OnboardingSession::STATUS_READY,
         ]);
