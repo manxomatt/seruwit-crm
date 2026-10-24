@@ -129,6 +129,9 @@ Route::domain($centralDomain)
             });
         });
 
+        // Central domain fallback when mobile app calls /api/staff/v1/auth/login directly on seruwit.com
+        Route::post('/api/staff/v1/auth/login', [CentralAuthApiController::class, 'login']);
+
         Route::middleware('auth')->group(function () {
             Route::get('/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
             Route::get('/workspaces/{tenant}/enter', [WorkspaceController::class, 'enter'])->name('workspaces.enter');

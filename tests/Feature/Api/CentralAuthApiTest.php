@@ -193,4 +193,41 @@ class CentralAuthApiTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_central_domain_accepts_api_staff_v1_auth_login_fallback(): void
+    {
+        $tenantId = (string) Str::uuid();
+        $tenant = Tenant::withoutEvents(fn () => Tenant::create([
+            'id' => $tenantId,
+            'name' => 'Direct Fallback Rental',
+            'status' => 'active',
+        ]));
+        $tenant->domains()->create(['domain' => 'direct.seruwit-crm.test']);
+
+        DB::table('tenant_users')->insert([
+            'tenant_id' => $tenantId,
+            'global_user_id' => $this->user->global_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // When a mobile developer hits /api/staff/v1/auth/login directly on central domain (seruwit.com),
+        // it should NOT throw 404 PreventAccessFromCentralDomains. It will hit CentralAuthApiController@login.
+        $response = $this->postJson('/api/staff/v1/auth/login', [
+            'login' => 'budi@seruwit.test',
+            'password' => 'secret123',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'user' => [
+                        'name' => 'Budi Santoso',
+                    ],
+                ],
+            ]);
+
+        $this->assertNotEmpty($response->json('data.central_token'));
+    }
 }

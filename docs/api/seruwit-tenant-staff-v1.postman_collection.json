@@ -6,11 +6,23 @@
   },
   "variable": [
     {
+      "key": "centralUrl",
+      "value": "https://seruwit.com"
+    },
+    {
       "key": "baseUrl",
-      "value": "https://andito.seruwit-crm.test"
+      "value": "https://andito.seruwit.com"
+    },
+    {
+      "key": "centralToken",
+      "value": ""
     },
     {
       "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tenantId",
       "value": ""
     },
     {
@@ -42,7 +54,115 @@
   },
   "item": [
     {
-      "name": "0. Auth & Profil Staf",
+      "name": "0. Central Auth (Pintu Masuk seruwit.com)",
+      "item": [
+        {
+          "name": "Central Login & List Workspaces",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    if (jsonData.data.central_token) {",
+                  "        pm.collectionVariables.set('centralToken', jsonData.data.central_token);",
+                  "    }",
+                  "    if (jsonData.data.token) {",
+                  "        pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    }",
+                  "    if (jsonData.data.api_base_url) {",
+                  "        pm.collectionVariables.set('baseUrl', jsonData.data.api_base_url.replace('/api/staff/v1', ''));",
+                  "    } else if (jsonData.data.tenants && jsonData.data.tenants.length > 0) {",
+                  "        pm.collectionVariables.set('tenantId', jsonData.data.tenants[0].id);",
+                  "        if (jsonData.data.tenants[0].domain) {",
+                  "            pm.collectionVariables.set('baseUrl', 'https://' + jsonData.data.tenants[0].domain);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"owner@seruwit.com\",\n  \"password\": \"password123\",\n  \"device_name\": \"Mobile App\"\n}"
+            },
+            "url": "{{centralUrl}}/api/central/v1/auth/login",
+            "description": "Login satu pintu di domain central (seruwit.com). Mengembalikan daftar seluruh perusahaan/workspace yang terhubung ke user ini."
+          }
+        },
+        {
+          "name": "Pilih Workspace & Dapatkan Token Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    if (jsonData.data.token) {",
+                  "        pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    }",
+                  "    if (jsonData.data.api_base_url) {",
+                  "        pm.collectionVariables.set('baseUrl', jsonData.data.api_base_url.replace('/api/staff/v1', ''));",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{centralToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_name\": \"Samsung S24 Ultra\"\n}"
+            },
+            "url": "{{centralUrl}}/api/central/v1/workspaces/{{tenantId}}/token",
+            "description": "Menukar token central untuk mendapatkan token Sanctum spesifik pada schema tenant yang dipilih."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Tenant Direct Auth & Profil Staf",
       "item": [
         {
           "name": "Login Staf / Driver",
