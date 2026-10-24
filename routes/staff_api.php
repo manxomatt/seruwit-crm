@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use Modules\Rental\Http\Controllers\Api\Staff\StaffApprovalApiController;
 use Modules\Rental\Http\Controllers\Api\Staff\StaffAuthController;
 use Modules\Rental\Http\Controllers\Api\Staff\StaffDashboardApiController;
+use Modules\Rental\Http\Controllers\Api\Staff\StaffDriverDutyApiController;
+use Modules\Rental\Http\Controllers\Api\Staff\StaffHandoverApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +39,23 @@ Route::prefix('api/staff/v1')
 
                 Route::get('/extensions', [StaffApprovalApiController::class, 'extensions'])->name('extensions.index');
                 Route::post('/extensions/{extensionRequest}/review', [StaffApprovalApiController::class, 'reviewExtension'])->name('extensions.review');
+            });
+
+            // Handover & Fleet Inspection (Checker / Ops Staff)
+            Route::prefix('handovers')->name('handovers.')->group(function (): void {
+                Route::get('/today', [StaffHandoverApiController::class, 'today'])->name('today');
+                Route::post('/{rental}/out', [StaffHandoverApiController::class, 'handoverOut'])->name('out');
+                Route::post('/{rental}/in', [StaffHandoverApiController::class, 'handoverIn'])->name('in');
+                Route::post('/{rental}/ai-inspect', [StaffHandoverApiController::class, 'aiInspect'])->name('ai-inspect');
+            });
+
+            // Driver Duties & Expense Claims (Company Driver / Mobile Staff)
+            Route::prefix('driver/duties')->name('driver.duties.')->group(function (): void {
+                Route::get('/', [StaffDriverDutyApiController::class, 'index'])->name('index');
+                Route::get('/{dutyOrder}', [StaffDriverDutyApiController::class, 'show'])->name('show');
+                Route::post('/{dutyOrder}/status', [StaffDriverDutyApiController::class, 'updateStatus'])->name('status');
+                Route::post('/{dutyOrder}/expenses', [StaffDriverDutyApiController::class, 'addExpense'])->name('expenses.store');
+                Route::delete('/{dutyOrder}/expenses/{expense}', [StaffDriverDutyApiController::class, 'deleteExpense'])->name('expenses.destroy');
             });
         });
     });

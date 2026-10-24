@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Central\CentralAuthApiController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Central\BillingReportController;
 use App\Http\Controllers\Central\InvitationController;
@@ -118,6 +119,16 @@ Route::domain($centralDomain)
 Route::domain($centralDomain)
     ->name('central.')
     ->group(function () {
+        // Central Mobile API (Workspace Discovery & Multi-Tenant Token Minting)
+        Route::prefix('api/central/v1')->name('api.v1.')->group(function (): void {
+            Route::post('/auth/login', [CentralAuthApiController::class, 'login'])->name('auth.login');
+
+            Route::middleware('auth:sanctum')->group(function (): void {
+                Route::get('/workspaces', [CentralAuthApiController::class, 'workspaces'])->name('workspaces.index');
+                Route::post('/workspaces/{tenant}/token', [CentralAuthApiController::class, 'exchangeWorkspaceToken'])->name('workspaces.token');
+            });
+        });
+
         Route::middleware('auth')->group(function () {
             Route::get('/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
             Route::get('/workspaces/{tenant}/enter', [WorkspaceController::class, 'enter'])->name('workspaces.enter');

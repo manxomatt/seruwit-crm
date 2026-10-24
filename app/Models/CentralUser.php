@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 use Stancl\Tenancy\Contracts\SyncMaster;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
@@ -22,7 +23,7 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
  */
 class CentralUser extends Authenticatable implements SyncMaster
 {
-    use CentralConnection, Notifiable, ResourceSyncing;
+    use CentralConnection, HasApiTokens, Notifiable, ResourceSyncing;
 
     protected $table = 'users';
 

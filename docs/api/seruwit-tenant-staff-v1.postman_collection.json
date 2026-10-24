@@ -1,0 +1,460 @@
+{
+  "info": {
+    "name": "Seruwit Tenant Staff Mobile API v1",
+    "description": "REST API komprehensif untuk aplikasi mobile internal tenant (Owner, Branch Manager, Checker Lapangan, dan Driver Karyawan).\n\n**Base URL:** `{{baseUrl}}/api/staff/v1` di domain tenant masing-masing (misal: `https://andito.seruwit-crm.test` atau domain kustom).\n\n**Autentikasi:** Bearer Token via Laravel Sanctum (`{{token}}`).\n\n**Modul yang Tersedia:**\n1. **Auth & Profil Staf:** Login berbasis email/username, profil pengguna, dan logout.\n2. **Executive Dashboard:** KPI armada aktif, sewa berjalan, omzet bulanan, dan badge pending review.\n3. **Approval Center:** Konfirmasi bukti bayar rekening & review perpanjangan sewa (rental extension).\n4. **Field Checker & AI Inspection:** Jadwal handover, eksekusi checkout/checkin, kalkulasi denda/excess km otomatis, dan Gemini Vision AI photo analysis.\n5. **Driver Operational & Cash Claims:** Surat Perintah Kerja (SPPD), update perjalanan real-time, dan klaim pengeluaran kas operasional (BBM, tol, parkir).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://andito.seruwit-crm.test"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "rentalId",
+      "value": "1"
+    },
+    {
+      "key": "extensionRequestId",
+      "value": "1"
+    },
+    {
+      "key": "dutyOrderId",
+      "value": "1"
+    },
+    {
+      "key": "expenseId",
+      "value": "1"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "0. Auth & Profil Staf",
+      "item": [
+        {
+          "name": "Login Staf / Driver",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    console.log('Token saved:', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"manager@seruwit.test\",\n  \"password\": \"password123\",\n  \"device_name\": \"Samsung Galaxy S24 Ultra (Checker)\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/auth/login",
+            "description": "Login menggunakan email atau username staf/sopir tenant. Token Sanctum otomatis disimpan ke variabel {{token}}."
+          }
+        },
+        {
+          "name": "Profil Akun Login (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/auth/me",
+            "description": "Mendapatkan profil staf yang sedang login, daftar peran (roles), izin akses, serta profil driver jika terikat."
+          }
+        },
+        {
+          "name": "Logout Staf",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/auth/logout",
+            "description": "Mencabut (revoke) token Sanctum yang sedang aktif pada perangkat ini."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Executive Dashboard (Owner & Manager)",
+      "item": [
+        {
+          "name": "Ringkasan Dashboard (KPI Summary)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/dashboard/summary",
+            "description": "Menampilkan ringkasan armada aktif, pemeliharaan/bengkel, rental berjalan, pendapatan kotor bulan ini, serta jumlah item yang membutuhkan persetujuan."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Approval Center (Finance & Ops)",
+      "item": [
+        {
+          "name": "Daftar Bukti Transfer Pending",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/approvals/payments",
+            "description": "Mengambil daftar pembayaran transfer bank manual pelanggan yang menunggu konfirmasi admin/keuangan."
+          }
+        },
+        {
+          "name": "Konfirmasi Bukti Transfer (Approve Payment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Dana sudah masuk ke rekening BCA operasional, valid.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/approvals/payments/{{rentalId}}/confirm",
+            "description": "Menyetujui bukti transfer, menandai deposit/pembayaran lunas, dan mengubah status rental menjadi 'confirmed'."
+          }
+        },
+        {
+          "name": "Tolak Bukti Transfer (Reject Payment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejection_reason\": \"Nominal transfer tidak sesuai dengan tagihan booking.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/approvals/payments/{{rentalId}}/reject",
+            "description": "Menolak bukti transfer dan mengirimkan alasan penolakan."
+          }
+        },
+        {
+          "name": "Daftar Permintaan Perpanjangan Sewa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/approvals/extensions",
+            "description": "Daftar pengajuan perpanjangan hari sewa dari pelanggan yang belum diputuskan."
+          }
+        },
+        {
+          "name": "Review Perpanjangan Sewa (Approve / Reject)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approved\",\n  \"rejection_reason\": null\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/approvals/extensions/{{extensionRequestId}}/review",
+            "description": "Menyetujui atau menolak perpanjangan sewa. Jika disetujui, tanggal selesai sewa otomatis diupdate dan tagihan baru diterbitkan."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Field Checker & Inspeksi AI (Ops Lapangan)",
+      "item": [
+        {
+          "name": "Jadwal Serah Terima Hari Ini",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/handovers/today?type=all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "handovers",
+                "today"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "all",
+                  "description": "all | pickup | return"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-10-24",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Daftar serah terima armada hari ini (jadwal keberangkatan sewa dan pengembalian unit)."
+          }
+        },
+        {
+          "name": "Eksekusi Handover Out (Serah Terima ke Customer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start_odometer\": 15200,\n  \"start_fuel_level\": \"Full\",\n  \"checkout_notes\": \"Unit mulus, toolkit dan ban cadangan lengkap.\",\n  \"checkout_checklist\": {\n    \"stnk_present\": true,\n    \"spare_tire_present\": true,\n    \"jack_present\": true,\n    \"ac_cold\": true\n  },\n  \"customer_signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\",\n  \"staff_signature\": null\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/handovers/{{rentalId}}/out",
+            "description": "Menyelesaikan serah-terima unit keluar. Status sewa otomatis beralih menjadi 'active'."
+          }
+        },
+        {
+          "name": "Inspeksi AI Kerusakan Bodi (Gemini Vision)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"photos\": [\n    \"https://storage.seruwit.test/photos/return_front.jpg\",\n    \"https://storage.seruwit.test/photos/return_side.jpg\"\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/handovers/{{rentalId}}/ai-inspect",
+            "description": "Menjalankan inspeksi Gemini Vision AI untuk membandingkan foto serah terima dengan foto kepulangan, ekstraksi odometer & level BBM, serta deteksi goresan baru."
+          }
+        },
+        {
+          "name": "Eksekusi Handover In (Pengembalian Unit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"end_odometer\": 15550,\n  \"end_fuel_level\": \"3/4\",\n  \"actual_return_date\": \"2026-10-24\",\n  \"return_notes\": \"Unit kembali tepat waktu, bodi dalam kondisi baik.\",\n  \"return_checklist\": {\n    \"stnk_present\": true,\n    \"spare_tire_present\": true\n  },\n  \"damages\": [\n    {\n      \"description\": \"Baret halus bemper belakang\",\n      \"amount\": 150000\n    }\n  ],\n  \"customer_signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/handovers/{{rentalId}}/in",
+            "description": "Memproses kepulangan mobil, menghitung selisih odometer (excess km), denda keterlambatan (overdue), dan rekonsiliasi deposit."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Driver Duties & Cash Claims (Sopir Karyawan)",
+      "item": [
+        {
+          "name": "Daftar Surat Jalan Driver (Duties)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/driver/duties?status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "driver",
+                "duties"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "all | active | on_duty | completed"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-10-24",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Menampilkan penugasan sopir yang sedang login atau daftar tugas seluruh sopir (jika admin/manager)."
+          }
+        },
+        {
+          "name": "Detail Surat Jalan & Pengeluaran Kas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/driver/duties/{{dutyOrderId}}",
+            "description": "Melihat detail surat tugas, penumpang, armada, uang muka jalan (cash advance), dan daftar bukti pengeluaran yang dicatat sopir."
+          }
+        },
+        {
+          "name": "Update Status Tugas (Berangkat / Selesai)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"on_duty\",\n  \"notes\": \"Driver telah menjemput penumpang di bandara.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/driver/duties/{{dutyOrderId}}/status",
+            "description": "Memperbarui status perjalanan sopir: 'on_duty' (berangkat) atau 'completed' (selesai tugas)."
+          }
+        },
+        {
+          "name": "Klaim Uang Jalan (BBM, Tol, Parkir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"fuel\",\n  \"amount\": 250000,\n  \"date\": \"2026-10-24\",\n  \"receipt_number\": \"SPBU-541234\",\n  \"description\": \"Isi Pertamax 20L di Rest Area KM 57\",\n  \"receipt_photo\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/v1/driver/duties/{{dutyOrderId}}/expenses",
+            "description": "Mencatat pengeluaran kas operasional sopir (kategori: fuel, toll, parking, meal, lodging, repair, other). Otomatis menghitung sisa saldo uang jalan."
+          }
+        },
+        {
+          "name": "Hapus Bukti Pengeluaran",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/v1/driver/duties/{{dutyOrderId}}/expenses/{{expenseId}}",
+            "description": "Menghapus item pengeluaran yang keliru diinput sopir sebelum surat jalan diselesaikan (settled) oleh tim keuangan."
+          }
+        }
+      ]
+    }
+  ]
+}
