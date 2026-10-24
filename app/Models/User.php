@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 use Stancl\Tenancy\Contracts\Syncable;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
 use Stancl\Tenancy\Database\Models\TenantPivot;
@@ -20,7 +21,7 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
 class User extends Authenticatable implements MustVerifyEmail, Syncable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, ResourceSyncing;
+    use HasApiTokens, HasFactory, Notifiable, ResourceSyncing;
 
     /**
      * The attributes that are mass assignable.

@@ -139,6 +139,9 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
 // Capacitor / native passenger API (JSON). CSRF exempt — see bootstrap/app.php.
 require __DIR__.'/mobile_api.php';
 
+// Tenant staff mobile API (JSON). CSRF exempt — see bootstrap/app.php.
+require __DIR__.'/staff_api.php';
+
 // Midtrans payment notifications — tenant domain, no auth, CSRF exempt.
 Route::post('/webhooks/midtrans', [\Modules\Receivables\Http\Controllers\GatewayCheckoutController::class, 'webhook'])
     ->name('webhooks.midtrans');

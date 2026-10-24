@@ -24,7 +24,7 @@ class RedirectUnfinishedSignup
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (tenancy()->initialized || ! ($user = $request->user()) || ! ($user instanceof \App\Models\User)) {
+        if ($request->is('api/*') || $request->expectsJson() || tenancy()->initialized || ! ($user = $request->user()) || ! ($user instanceof \App\Models\User)) {
             return $next($request);
         }
 

@@ -75,6 +75,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhooks/midtrans',
             'webhooks/whatsapp',
             'api/mobile/*',
+            'api/staff/*',
         ]);
 
         $middleware->alias([
