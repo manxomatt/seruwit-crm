@@ -279,6 +279,10 @@ class ModuleRegistry
      */
     private function hiddenKeys(): array
     {
+        if (! Schema::hasTable('module_settings')) {
+            return $this->hiddenKeys ??= [];
+        }
+
         return $this->hiddenKeys ??= ModuleSetting::query()
             ->where('is_hidden', true)
             ->pluck('key')
@@ -290,6 +294,10 @@ class ModuleRegistry
      */
     private function disabledKeys(): array
     {
+        if (! Schema::hasTable('module_settings')) {
+            return $this->disabledKeys ??= [];
+        }
+
         return $this->disabledKeys ??= ModuleSetting::query()
             ->where('is_enabled', false)
             ->pluck('key')

@@ -1,6 +1,8 @@
 import { Head } from '@inertiajs/react';
 import LandingApp from './WelcomeLanding/App';
+import TenantRentalLandingApp from './TenantRentalLanding/App';
 import { DEFAULT_SITE_NAME } from './WelcomeLanding/constants';
+import { TenantRentalLandingProps } from './TenantRentalLanding/types';
 
 interface Settings {
     'general.site_name'?: string;
@@ -23,23 +25,43 @@ interface WelcomeProps {
     laravelVersion: string;
     phpVersion: string;
     settings: Settings;
+    isTenant?: boolean;
+    tenantRentalData?: TenantRentalLandingProps | null;
 }
 
 export default function Welcome({
     settings,
     canLogin,
     canRegister,
+    isTenant = false,
+    tenantRentalData,
 }: WelcomeProps): JSX.Element {
-    const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
+    const siteName =
+        (isTenant && tenantRentalData?.brand?.name) ||
+        settings?.['general.site_name'] ||
+        DEFAULT_SITE_NAME;
 
     return (
         <>
             <Head title={siteName} />
-            <LandingApp
-                settings={settings}
-                canLogin={canLogin}
-                canRegister={canRegister}
-            />
+            {isTenant ? (
+                <TenantRentalLandingApp
+                    settings={settings}
+                    brand={tenantRentalData?.brand}
+                    featuredVehicles={tenantRentalData?.featuredVehicles || []}
+                    locations={tenantRentalData?.locations || []}
+                    classes={tenantRentalData?.classes || []}
+                    customer={tenantRentalData?.customer}
+                    passengerBookingEnabled={tenantRentalData?.passengerBookingEnabled ?? true}
+                    canLogin={canLogin}
+                />
+            ) : (
+                <LandingApp
+                    settings={settings}
+                    canLogin={canLogin}
+                    canRegister={canRegister}
+                />
+            )}
         </>
     );
 }
