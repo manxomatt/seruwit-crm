@@ -155,7 +155,9 @@ export default function Onboarding({
         }
         return 1;
     });
+
     const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+    const [showAdvancedBase, setShowAdvancedBase] = useState<boolean>(false);
 
     const defaultPlanKey = useMemo(() => {
         if (availablePlans.length === 0) {
@@ -200,8 +202,8 @@ export default function Onboarding({
         base_province: failedSession?.base_province ?? savedDraft?.data?.base_province ?? initialBaseProvince ?? '',
         base_phone: failedSession?.base_phone ?? savedDraft?.data?.base_phone ?? initialBasePhone ?? initialPhone ?? '',
         base_email: failedSession?.base_email ?? savedDraft?.data?.base_email ?? initialBaseEmail ?? user.email ?? '',
-        base_opens_at: failedSession?.base_opens_at ?? savedDraft?.data?.base_opens_at ?? initialBaseOpensAt ?? '08:00',
-        base_closes_at: failedSession?.base_closes_at ?? savedDraft?.data?.base_closes_at ?? initialBaseClosesAt ?? '20:00',
+        base_opens_at: failedSession?.base_opens_at ?? savedDraft?.data?.base_opens_at ?? initialBaseOpensAt ?? '00:00',
+        base_closes_at: failedSession?.base_closes_at ?? savedDraft?.data?.base_closes_at ?? initialBaseClosesAt ?? '23:59',
         base_vehicle_capacity: failedSession?.base_vehicle_capacity ?? savedDraft?.data?.base_vehicle_capacity ?? initialBaseVehicleCapacity ?? '',
         plan_key: initialResolvedPlanKey,
         verticals: failedSession?.verticals ?? savedDraft?.data?.verticals ?? (['rental'] as string[]),
@@ -279,6 +281,16 @@ export default function Onboarding({
         }
     };
 
+    const handleCitySelect = (cityName: string): void => {
+        const isDeselect = data.city.toLowerCase() === cityName.toLowerCase();
+        const nextCity = isDeselect ? '' : cityName;
+        setData((prev) => ({
+            ...prev,
+            city: nextCity,
+            base_city: !prev.base_city || prev.base_city === prev.city ? nextCity : prev.base_city,
+        }));
+    };
+
     const toggleVertical = (key: string): void => {
         if (!verticalOptions.some((option) => option.key === key && option.available)) {
             return;
@@ -314,6 +326,7 @@ export default function Onboarding({
         return availablePlans.find((p) => p.key === data.plan_key) || availablePlans[0];
     }, [availablePlans, data.plan_key]);
 
+    // Validation for Step 1: Business Identity & Subdomain
     const validateStep1 = (): boolean => {
         const errs: Record<string, string> = {};
         if (!data.company_name.trim()) {
@@ -340,7 +353,18 @@ export default function Onboarding({
         return Object.keys(errs).length === 0;
     };
 
+    // Validation for Step 2: Rental Model & Fleet Scale
     const validateStep2 = (): boolean => {
+        const errs: Record<string, string> = {};
+        if (data.verticals.length === 0) {
+            errs.verticals = t('central.onboarding.validation.verticals_required', undefined, 'Pilih minimal satu layanan rental.');
+        }
+        setClientErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
+    // Validation for Step 3: Pool & Office Location
+    const validateStep3 = (): boolean => {
         const errs: Record<string, string> = {};
         if (!data.base_name.trim()) {
             errs.base_name = t(
@@ -360,18 +384,10 @@ export default function Onboarding({
         return Object.keys(errs).length === 0;
     };
 
-    const validateStep3 = (): boolean => {
-        const errs: Record<string, string> = {};
-        if (data.verticals.length === 0) {
-            errs.verticals = t('central.onboarding.validation.verticals_required');
-        }
-        setClientErrors(errs);
-        return Object.keys(errs).length === 0;
-    };
-
     const handleNext = (): void => {
         if (currentStep === 1) {
             if (validateStep1()) {
+                // Smart auto-prefills for Step 3
                 if (!data.base_name.trim() && data.company_name) {
                     setData(
                         'base_name',
@@ -395,6 +411,17 @@ export default function Onboarding({
             }
         } else if (currentStep === 3) {
             if (validateStep3()) {
+                // Auto-suggest best plan for Step 4 based on fleet size
+                if (data.fleet_size === '21-50+') {
+                    const proPlan = availablePlans.find((p) => p.key === 'pro');
+                    if (proPlan) setData('plan_key', proPlan.key);
+                } else if (data.fleet_size === '6-20') {
+                    const starterPlan = availablePlans.find((p) => p.key === 'starter' || p.is_popular);
+                    if (starterPlan) setData('plan_key', starterPlan.key);
+                } else {
+                    const payAsYouGo = availablePlans.find((p) => p.key === 'pay_as_you_go' || p.key === 'free');
+                    if (payAsYouGo) setData('plan_key', payAsYouGo.key);
+                }
                 setCurrentStep(4);
             }
         }
@@ -421,9 +448,9 @@ export default function Onboarding({
             onError: (errs) => {
                 if (errs.company_name || errs.subdomain || errs.phone || errs.city) {
                     setCurrentStep(1);
-                } else if (errs.base_name || errs.base_code || errs.base_address || errs.base_city || errs.base_phone) {
-                    setCurrentStep(2);
                 } else if (errs.verticals || errs.fleet_size || errs.rental_model) {
+                    setCurrentStep(2);
+                } else if (errs.base_name || errs.base_code || errs.base_address || errs.base_city || errs.base_phone) {
                     setCurrentStep(3);
                 } else if (errs.plan_key) {
                     setCurrentStep(4);
@@ -436,55 +463,31 @@ export default function Onboarding({
     const siteLogo = settings?.['site.logo'];
 
     const verticalIcon = (key: string): string => {
-        if (key === 'rental') {
-            return 'directions_car';
-        }
-        if (key === 'travel') {
-            return 'airport_shuttle';
-        }
-
+        if (key === 'rental') return 'directions_car';
+        if (key === 'travel') return 'airport_shuttle';
         return 'apps';
     };
 
     const popularCities = ['Jakarta', 'Bali (Denpasar)', 'Surabaya', 'Yogyakarta', 'Bandung', 'Medan', 'Semarang'];
 
-    const handleCityClick = (cityName: string) => {
-        const currentText = data.city ?? '';
-        const currentList = currentText
-            .split(',')
-            .map((c) => c.trim())
-            .filter(Boolean);
-
-        const existingIndex = currentList.findIndex((c) => c.toLowerCase() === cityName.toLowerCase());
-
-        if (existingIndex !== -1) {
-            currentList.splice(existingIndex, 1);
-            setData('city', currentList.join(', '));
-        } else {
-            currentList.push(cityName);
-            setData('city', currentList.join(', '));
-        }
-    };
-
-    const isCitySelected = (cityName: string) => {
-        if (!data.city) return false;
-        const currentList = data.city
-            .split(',')
-            .map((c) => c.trim().toLowerCase())
-            .filter(Boolean);
-        return currentList.includes(cityName.toLowerCase());
+    // Helper to identify if a plan matches the current fleet recommendation
+    const isPlanRecommended = (planKey: string): boolean => {
+        if (data.fleet_size === '21-50+' && planKey === 'pro') return true;
+        if (data.fleet_size === '6-20' && (planKey === 'starter' || planKey === 'business')) return true;
+        if (data.fleet_size === '1-5' && (planKey === 'pay_as_you_go' || planKey === 'free')) return true;
+        return false;
     };
 
     return (
         <>
             <Head title={t('central.onboarding.title')} />
 
-            <div className="relative flex min-h-screen flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/50 to-indigo-50/70 text-slate-800 selection:bg-indigo-500 selection:text-white">
-                {/* Ambient glow effects */}
+            <div className="relative flex min-h-screen flex-col justify-between overflow-x-hidden bg-slate-100/90 text-slate-800 antialiased selection:bg-indigo-600 selection:text-white">
+                {/* Ambient Soft Glow Effects */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -left-28 -top-28 h-96 w-96 rounded-full bg-sky-300/25 blur-[120px]" />
-                    <div className="absolute -right-28 -bottom-28 h-96 w-96 rounded-full bg-indigo-300/25 blur-[120px]" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-emerald-200/20 blur-[140px]" />
+                    <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-indigo-200/40 blur-[130px]" />
+                    <div className="absolute -right-20 -bottom-20 h-96 w-96 rounded-full bg-sky-200/40 blur-[130px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-emerald-100/30 blur-[140px]" />
                 </div>
 
                 {/* Top Bar Navigation */}
@@ -494,15 +497,15 @@ export default function Onboarding({
                         className="group flex items-center gap-2.5 transition focus:outline-none"
                     >
                         {siteLogo ? (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-xs transition group-hover:shadow">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs transition group-hover:shadow">
                                 <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
                             </div>
                         ) : (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-600 text-white shadow-xs shadow-indigo-600/20 transition group-hover:scale-105">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-500/30 bg-indigo-600 text-white shadow-xs shadow-indigo-600/20 transition group-hover:scale-105">
                                 <span className="material-symbols-outlined text-lg">domain_add</span>
                             </div>
                         )}
-                        <span className="text-sm font-extrabold tracking-tight text-slate-900 group-hover:text-indigo-600 transition">
+                        <span className="text-sm font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition">
                             {siteName}
                         </span>
                     </Link>
@@ -510,69 +513,69 @@ export default function Onboarding({
                     <div className="flex items-center gap-3">
                         <LanguageSwitcher
                             compact
-                            className="bg-white/80 border border-slate-200/80 backdrop-blur-md text-xs font-bold shadow-xs [&_button]:text-slate-600 [&_button.bg-white]:bg-indigo-600 [&_button.bg-white]:text-white"
+                            className="bg-white border border-slate-200 backdrop-blur-md text-xs font-bold shadow-xs [&_button]:text-slate-600 [&_button.bg-white]:bg-indigo-600 [&_button.bg-white]:text-white"
                         />
                     </div>
                 </header>
 
-                {/* Main Content: Unified Bento Card Layout */}
+                {/* Main Content: Split Bento Card Layout */}
                 <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-4 sm:px-6">
                     <div className="w-full max-w-5xl">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-3xl border border-white/90 bg-white/85 shadow-2xl shadow-indigo-950/10 backdrop-blur-2xl">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10">
                             
-                            {/* Left Panel: Combined Brand & Stepper Progress (Glassmorphic Gradient) */}
-                            <div className="relative hidden lg:col-span-5 lg:flex lg:flex-col lg:justify-between p-7 sm:p-8 overflow-hidden bg-gradient-to-b from-sky-50/90 via-indigo-50/65 to-indigo-100/90 border-r border-slate-200/60">
+                            {/* Left Panel: Deep Executive Navy & Stepper Progress (Dark Studio Canvas) */}
+                            <div className="relative hidden lg:col-span-5 lg:flex lg:flex-col lg:justify-between p-7 sm:p-8 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white border-r border-slate-800/80">
                                 {/* Ambient Orbs inside left panel */}
-                                <div className="pointer-events-none absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-                                <div className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-sky-400/20 blur-2xl" />
+                                <div className="pointer-events-none absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl" />
+                                <div className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-sky-500/15 blur-2xl" />
 
                                 <div className="relative z-10">
                                     {/* Top Status Pill */}
                                     <div className="flex items-center gap-2">
-                                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/90 bg-white/85 px-3 py-1 text-[11px] font-bold text-emerald-700 shadow-xs backdrop-blur-md">
-                                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            {t('auth_ui.status_provisioning', undefined, 'Instant Setup • Workspace Gratis')}
+                                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-400 backdrop-blur-md">
+                                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                            {t('auth_ui.status_provisioning', undefined, 'Setup Instan • Database Terisolasi')}
                                         </span>
                                     </div>
 
                                     {/* Brand Logo & Tagline Header */}
                                     <div className="mt-5 flex items-center gap-3">
                                         {siteLogo ? (
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white p-2 shadow-sm">
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white p-2 shadow-sm">
                                                 <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
                                             </div>
                                         ) : (
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-indigo-200/80 bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-indigo-400/30 bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
                                                 <span className="material-symbols-outlined text-2xl">domain_add</span>
                                             </div>
                                         )}
                                         <div>
-                                            <div className="text-base font-black tracking-tight text-slate-900 leading-tight">
+                                            <div className="text-base font-black tracking-tight text-white leading-tight">
                                                 {siteName}
                                             </div>
-                                            <div className="text-[11px] font-semibold text-indigo-600">
+                                            <div className="text-[11px] font-bold text-indigo-300">
                                                 {t('auth_ui.brand_sub_rental', undefined, 'Sistem Operasional Rental Kendaraan')}
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Dynamic Step Header */}
-                                    <div className="mt-5">
-                                        <h2 className="text-xl font-black tracking-tight text-slate-900 leading-snug">
+                                    <div className="mt-6">
+                                        <h2 className="text-xl font-black tracking-tight text-white leading-snug">
                                             {currentStep === 1 && t('central.onboarding.step1_title')}
                                             {currentStep === 2 && t('central.onboarding.step2_title')}
                                             {currentStep === 3 && t('central.onboarding.step3_title')}
                                             {currentStep === 4 && t('central.onboarding.step4_title')}
                                         </h2>
-                                        <p className="mt-1.5 text-xs font-medium text-slate-600 leading-relaxed">
-                                            {currentStep === 1 && t('central.onboarding.step1_desc', undefined, 'Tentukan nama usaha rental dan alamat domain workspace khusus untuk bisnis Anda.')}
-                                            {currentStep === 2 && t('central.onboarding.step2_desc', undefined, 'Atur identitas kantor pusat dan pool armada utama yang akan otomatis didaftarkan ke sistem.')}
-                                            {currentStep === 3 && t('central.onboarding.step3_desc', undefined, 'Pilih modul operasional armada dan estimasi kendaraan agar kapasitas sistem terkalibrasi presisi.')}
-                                            {currentStep === 4 && t('central.onboarding.step4_desc', undefined, 'Tinjau ringkasan workspace dan pilih paket langganan terbaik untuk memulai operasional.')}
+                                        <p className="mt-2 text-xs font-medium text-slate-300 leading-relaxed">
+                                            {currentStep === 1 && t('central.onboarding.step1_desc')}
+                                            {currentStep === 2 && t('central.onboarding.step2_desc')}
+                                            {currentStep === 3 && t('central.onboarding.step3_desc')}
+                                            {currentStep === 4 && t('central.onboarding.step4_desc')}
                                         </p>
                                     </div>
 
-                                    {/* Live Step Progress Guide */}
+                                    {/* Live Step Progress Timeline */}
                                     <div className="mt-6 space-y-2.5">
                                         {[
                                             {
@@ -583,21 +586,21 @@ export default function Onboarding({
                                             },
                                             {
                                                 step: 2,
-                                                title: t('central.onboarding.step2_title', undefined, 'Kantor Operasional'),
-                                                icon: 'apartment',
-                                                desc: t('central.onboarding.step2_guide_desc', undefined, 'Pool armada & kantor pusat'),
+                                                title: t('central.onboarding.step2_title', undefined, 'Model Rental & Armada'),
+                                                icon: 'tune',
+                                                desc: t('central.onboarding.step2_guide_desc', undefined, 'Skema sewa & kapasitas unit'),
                                             },
                                             {
                                                 step: 3,
-                                                title: t('central.onboarding.step3_title', undefined, 'Skala & Modul Bisnis'),
-                                                icon: 'tune',
-                                                desc: t('central.onboarding.step3_guide_desc', undefined, 'Rental, shuttle & jumlah unit'),
+                                                title: t('central.onboarding.step3_title', undefined, 'Pool & Kantor Operasional'),
+                                                icon: 'apartment',
+                                                desc: t('central.onboarding.step3_guide_desc', undefined, 'Alamat pool & jam operasional'),
                                             },
                                             {
                                                 step: 4,
                                                 title: t('central.onboarding.step4_title', undefined, 'Paket & Peluncuran'),
                                                 icon: 'rocket_launch',
-                                                desc: t('central.onboarding.step4_guide_desc', undefined, 'Skema paket & database tenant'),
+                                                desc: t('central.onboarding.step4_guide_desc', undefined, 'Rekomendasi paket & aktivasi'),
                                             },
                                         ].map((item) => {
                                             const isDone = currentStep > item.step;
@@ -609,26 +612,28 @@ export default function Onboarding({
                                                     onClick={() => item.step < currentStep && setCurrentStep(item.step)}
                                                     className={`flex items-center gap-3 rounded-2xl border p-2.5 transition-all ${
                                                         isCurrent
-                                                            ? 'border-indigo-500/80 bg-white shadow-sm ring-2 ring-indigo-500/20'
+                                                            ? 'border-indigo-500/80 bg-indigo-950/70 shadow-md ring-1 ring-indigo-400/40 text-white'
                                                             : isDone
-                                                              ? 'border-emerald-200/90 bg-emerald-50/70 cursor-pointer hover:bg-emerald-50 hover:shadow-xs'
-                                                              : 'border-white/80 bg-white/45 opacity-60'
+                                                              ? 'border-emerald-500/30 bg-emerald-950/30 cursor-pointer hover:bg-emerald-900/40 text-emerald-200'
+                                                              : 'border-white/5 bg-white/5 opacity-50 text-slate-400'
                                                     }`}
                                                 >
-                                                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-bold text-xs ${
+                                                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-black text-xs ${
                                                         isDone
-                                                            ? 'bg-emerald-500 text-white shadow-xs'
+                                                            ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
                                                             : isCurrent
-                                                              ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-500/30'
-                                                              : 'bg-slate-100 text-slate-400'
+                                                              ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/40 ring-2 ring-indigo-400/30'
+                                                              : 'bg-slate-800 text-slate-400'
                                                     }`}>
                                                         {isDone ? '✓' : item.step}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <h4 className={`text-xs font-bold leading-tight ${isCurrent ? 'text-indigo-950 font-black' : isDone ? 'text-emerald-900' : 'text-slate-500'}`}>
+                                                        <h4 className={`text-xs font-bold leading-tight ${isCurrent ? 'text-white font-black' : isDone ? 'text-emerald-300' : 'text-slate-400'}`}>
                                                             {item.title}
                                                         </h4>
-                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{item.desc}</p>
+                                                        <p className={`text-[10px] truncate mt-0.5 ${isCurrent ? 'text-indigo-200/80' : isDone ? 'text-emerald-400/70' : 'text-slate-500'}`}>
+                                                            {item.desc}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             );
@@ -636,21 +641,22 @@ export default function Onboarding({
                                     </div>
                                 </div>
 
-                                {/* Bottom Tagline & Brand Alignment */}
-                                <div className="relative z-10 mt-6 pt-3.5 border-t border-slate-200/60">
-                                    <p className="text-[11px] font-semibold text-slate-500 leading-relaxed">
-                                        {t('auth_ui.tagline', { name: siteName })}
-                                    </p>
+                                {/* Bottom Tagline & Trust Indicator */}
+                                <div className="relative z-10 mt-6 pt-3.5 border-t border-slate-800/80">
+                                    <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+                                        <span className="material-symbols-outlined text-sm text-indigo-400">lock</span>
+                                        <span>Data terisolasi di database tenant tersendiri</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Right Panel: Compact Wizard Step Forms */}
-                            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between bg-white/95">
+                            {/* Right Panel: Clean Functional Studio Canvas */}
+                            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between bg-white">
                                 <div>
                                     {/* Stepper Header */}
                                     <div className="mb-5">
                                         <div className="flex items-center justify-between">
-                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-2.5 py-0.5 text-[11px] font-bold text-indigo-700">
+                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold text-indigo-700">
                                                 <span className="material-symbols-outlined text-xs">tune</span>
                                                 {t('central.onboarding.step_indicator', { current: currentStep, total: 4 })}
                                             </span>
@@ -661,16 +667,16 @@ export default function Onboarding({
 
                                         {/* Visual Progress Bar */}
                                         <div className="mt-2.5 grid grid-cols-4 gap-1.5">
-                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 3 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 4 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 1 ? 'bg-indigo-600' : 'bg-slate-100'}`} />
+                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-slate-100'}`} />
+                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 3 ? 'bg-indigo-600' : 'bg-slate-100'}`} />
+                                            <div className={`h-1.5 rounded-full transition-all duration-300 ${currentStep >= 4 ? 'bg-indigo-600' : 'bg-slate-100'}`} />
                                         </div>
                                     </div>
 
                                     {/* Failed Session Banner if any */}
                                     {failedSession && (
-                                        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 p-3.5 backdrop-blur-md">
+                                        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 p-3.5">
                                             <div className="flex items-start gap-2.5">
                                                 <span className="material-symbols-outlined text-rose-600 text-lg">error</span>
                                                 <div>
@@ -689,15 +695,15 @@ export default function Onboarding({
 
                                     <form onSubmit={submit}>
                                         
-                                        {/* STEP 1: PROFIL USAHA & SUBDOMAIN */}
+                                        {/* STEP 1: IDENTITAS USAHA & SUBDOMAIN */}
                                         {currentStep === 1 && (
-                                            <div className="space-y-3.5">
+                                            <div className="space-y-4">
                                                 <div className="mb-2">
                                                     <h3 className="text-base font-black text-slate-900 sm:text-lg">
                                                         {t('central.onboarding.step1_title')}
                                                     </h3>
                                                     <p className="text-xs font-medium text-slate-500">
-                                                        {t('central.onboarding.step1_form_desc', undefined, 'Beri nama bisnis rental Anda dan tentukan alamat website workspace.')}
+                                                        {t('central.onboarding.step1_form_desc')}
                                                     </p>
                                                 </div>
 
@@ -717,8 +723,8 @@ export default function Onboarding({
                                                             required
                                                             autoFocus
                                                             onChange={(e) => handleCompanyNameChange(e.target.value)}
-                                                            className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                            placeholder={t('central.onboarding.company_name_placeholder', undefined, 'Contoh: CV Bintang Kejora Rental')}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                                                            placeholder={t('central.onboarding.company_name_placeholder')}
                                                         />
                                                     </div>
                                                     <InputError message={errors.company_name || clientErrors.company_name} className="mt-1" />
@@ -742,11 +748,11 @@ export default function Onboarding({
                                                                 onChange={(e) =>
                                                                     setData('subdomain', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
                                                                 }
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-mono font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                                className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-mono font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                                                                 placeholder="bintangkejora"
                                                             />
                                                         </div>
-                                                        <span className="shrink-0 font-mono text-xs font-bold text-slate-500 bg-slate-100 px-3 py-2.5 rounded-xl border border-slate-200">
+                                                        <span className="shrink-0 font-mono text-xs font-bold text-slate-600 bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200">
                                                             .{centralHost}
                                                         </span>
                                                     </div>
@@ -754,7 +760,7 @@ export default function Onboarding({
                                                     <InputError message={errors.subdomain || clientErrors.subdomain} className="mt-1" />
                                                 </div>
 
-                                                {/* City & Location */}
+                                                {/* City & Popular Quick Chips */}
                                                 <div>
                                                     <label htmlFor="city" className="mb-1 block text-xs font-bold text-slate-700">
                                                         {t('central.onboarding.city')}
@@ -767,27 +773,34 @@ export default function Onboarding({
                                                             id="city"
                                                             type="text"
                                                             value={data.city}
-                                                            onChange={(e) => setData('city', e.target.value)}
-                                                            className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setData((prev) => ({
+                                                                    ...prev,
+                                                                    city: val,
+                                                                    base_city: !prev.base_city || prev.base_city === prev.city ? val : prev.base_city,
+                                                                }));
+                                                            }}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                                                             placeholder={t('central.onboarding.city_placeholder')}
                                                         />
                                                     </div>
-                                                    {/* Quick City Chips */}
-                                                    <div className="mt-1.5 flex flex-wrap gap-1">
+                                                    {/* Quick City Single Select Chips */}
+                                                    <div className="mt-2 flex flex-wrap gap-1.5">
                                                         {popularCities.map((cityName) => {
-                                                            const selected = isCitySelected(cityName);
+                                                            const isSelected = data.city.toLowerCase() === cityName.toLowerCase();
                                                             return (
                                                                 <button
                                                                     key={cityName}
                                                                     type="button"
-                                                                    onClick={() => handleCityClick(cityName)}
-                                                                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold border transition ${
-                                                                        selected
-                                                                            ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
-                                                                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                                    onClick={() => handleCitySelect(cityName)}
+                                                                    className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold border transition ${
+                                                                        isSelected
+                                                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-xs ring-1 ring-indigo-500/20'
+                                                                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100'
                                                                     }`}
                                                                 >
-                                                                    {selected ? '✓ ' : '+ '}
+                                                                    {isSelected ? '✓ ' : '+ '}
                                                                     {cityName}
                                                                 </button>
                                                             );
@@ -809,8 +822,15 @@ export default function Onboarding({
                                                             id="phone"
                                                             type="tel"
                                                             value={data.phone}
-                                                            onChange={(e) => setData('phone', e.target.value)}
-                                                            className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setData((prev) => ({
+                                                                    ...prev,
+                                                                    phone: val,
+                                                                    base_phone: !prev.base_phone || prev.base_phone === prev.phone ? val : prev.base_phone,
+                                                                }));
+                                                            }}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                                                             placeholder={t('central.onboarding.phone_placeholder')}
                                                         />
                                                     </div>
@@ -822,279 +842,106 @@ export default function Onboarding({
                                                     <button
                                                         type="button"
                                                         onClick={handleNext}
-                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-sky-500 active:scale-[0.99] py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all focus:outline-none focus:ring-4 focus:ring-indigo-500/20"
                                                     >
-                                                        <span>{t('central.onboarding.btn_next_base', undefined, 'Lanjut: Kantor Operasional')}</span>
+                                                        <span>{t('central.onboarding.btn_next_model', undefined, 'Lanjut: Model Rental & Armada')}</span>
                                                         <span className="material-symbols-outlined text-base">arrow_forward</span>
                                                     </button>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* STEP 2: KANTOR OPERASIONAL (BASE UTAMA) */}
+                                        {/* STEP 2: MODEL RENTAL & SKALA ARMADA (VISUAL & ZERO FATIGUE) */}
                                         {currentStep === 2 && (
-                                            <div className="space-y-3.5">
+                                            <div className="space-y-4">
                                                 <div className="mb-2">
                                                     <h3 className="text-base font-black text-slate-900 sm:text-lg">
                                                         {t('central.onboarding.step2_title')}
                                                     </h3>
                                                     <p className="text-xs font-medium text-slate-500">
-                                                        {t('central.onboarding.step2_form_desc', undefined, 'Tentukan identitas kantor pusat dan pool armada utama yang akan otomatis didaftarkan ke sistem.')}
+                                                        {t('central.onboarding.step2_form_desc')}
                                                     </p>
                                                 </div>
 
-                                                {/* Base Name & Code */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                                    <div className="sm:col-span-2">
-                                                        <label htmlFor="base_name" className="mb-1 block text-xs font-bold text-slate-700">
-                                                            {t('central.onboarding.base_name')} <span className="text-rose-500">*</span>
-                                                        </label>
-                                                        <div className="relative">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                                <span className="material-symbols-outlined text-lg">apartment</span>
-                                                            </div>
-                                                            <input
-                                                                id="base_name"
-                                                                type="text"
-                                                                value={data.base_name}
-                                                                required
-                                                                onChange={(e) => {
-                                                                    setData('base_name', e.target.value);
-                                                                    if (clientErrors.base_name) {
-                                                                        setClientErrors((prev) => ({ ...prev, base_name: '' }));
-                                                                    }
-                                                                }}
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                                placeholder={t('central.onboarding.base_name_placeholder')}
-                                                            />
-                                                        </div>
-                                                        <InputError message={errors.base_name || clientErrors.base_name} className="mt-1" />
-                                                    </div>
-
-                                                    <div>
-                                                        <label htmlFor="base_code" className="mb-1 block text-xs font-bold text-slate-700">
-                                                            {t('central.onboarding.base_code')} <span className="text-rose-500">*</span>
-                                                        </label>
-                                                        <div className="relative">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                                <span className="material-symbols-outlined text-lg">tag</span>
-                                                            </div>
-                                                            <input
-                                                                id="base_code"
-                                                                type="text"
-                                                                value={data.base_code}
-                                                                required
-                                                                onChange={(e) => {
-                                                                    setData('base_code', e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''));
-                                                                    if (clientErrors.base_code) {
-                                                                        setClientErrors((prev) => ({ ...prev, base_code: '' }));
-                                                                    }
-                                                                }}
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-mono uppercase font-bold text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                                placeholder="HQ"
-                                                                maxLength={16}
-                                                            />
-                                                        </div>
-                                                        <InputError message={errors.base_code || clientErrors.base_code} className="mt-1" />
-                                                    </div>
-                                                </div>
-
-                                                {/* Base Address */}
+                                                {/* Rental Model Visual Cards */}
                                                 <div>
-                                                    <label htmlFor="base_address" className="mb-1 block text-xs font-bold text-slate-700">
-                                                        {t('central.onboarding.base_address')}
+                                                    <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                                                        {t('central.onboarding.rental_model_title')}
                                                     </label>
-                                                    <div className="relative">
-                                                        <div className="pointer-events-none absolute top-2.5 left-0 flex items-center pl-3 text-slate-400">
-                                                            <span className="material-symbols-outlined text-lg">pin_drop</span>
-                                                        </div>
-                                                        <textarea
-                                                            id="base_address"
-                                                            rows={2}
-                                                            value={data.base_address}
-                                                            onChange={(e) => setData('base_address', e.target.value)}
-                                                            className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                            placeholder={t('central.onboarding.base_address_placeholder')}
-                                                        />
-                                                    </div>
-                                                    <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.base_address_hint')}</p>
-                                                    <InputError message={errors.base_address} className="mt-1" />
-                                                </div>
-
-                                                {/* City & Province */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                                    <div>
-                                                        <label htmlFor="base_city" className="mb-1 block text-xs font-bold text-slate-700">
-                                                            {t('central.onboarding.base_city')}
-                                                        </label>
-                                                        <div className="relative">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                                <span className="material-symbols-outlined text-lg">location_city</span>
-                                                            </div>
-                                                            <input
-                                                                id="base_city"
-                                                                type="text"
-                                                                value={data.base_city}
-                                                                onChange={(e) => setData('base_city', e.target.value)}
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                                placeholder={t('central.onboarding.base_city_placeholder', undefined, 'Contoh: Jakarta Selatan')}
-                                                            />
-                                                        </div>
-                                                        <InputError message={errors.base_city} className="mt-1" />
-                                                    </div>
-
-                                                    <div>
-                                                        <label htmlFor="base_province" className="mb-1 block text-xs font-bold text-slate-700">
-                                                            {t('central.onboarding.base_province')}
-                                                        </label>
-                                                        <div className="relative">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                                <span className="material-symbols-outlined text-lg">map</span>
-                                                            </div>
-                                                            <input
-                                                                id="base_province"
-                                                                type="text"
-                                                                value={data.base_province}
-                                                                onChange={(e) => setData('base_province', e.target.value)}
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                                placeholder={t('central.onboarding.base_province_placeholder', undefined, 'Contoh: DKI Jakarta')}
-                                                            />
-                                                        </div>
-                                                        <InputError message={errors.base_province} className="mt-1" />
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                                        {[
+                                                            {
+                                                                key: 'self',
+                                                                label: t('central.onboarding.rental_model_self', undefined, 'Lepas Kunci'),
+                                                                icon: 'key',
+                                                                desc: 'Sewa mandiri pelanggan',
+                                                            },
+                                                            {
+                                                                key: 'driver',
+                                                                label: t('central.onboarding.rental_model_driver', undefined, 'Dengan Supir'),
+                                                                icon: 'person',
+                                                                desc: 'Layanan sopir & perjalanan',
+                                                            },
+                                                            {
+                                                                key: 'both',
+                                                                label: t('central.onboarding.rental_model_both', undefined, 'Kombinasi Keduanya'),
+                                                                icon: 'stars',
+                                                                desc: 'Fleksibel lepas kunci & sopir',
+                                                            },
+                                                        ].map((opt) => {
+                                                            const isSelected = data.rental_model === opt.key;
+                                                            return (
+                                                                <div
+                                                                    key={opt.key}
+                                                                    onClick={() => setData('rental_model', opt.key)}
+                                                                    className={`flex flex-col items-center text-center p-3 rounded-2xl border cursor-pointer transition-all ${
+                                                                        isSelected
+                                                                            ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs'
+                                                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                                                                    }`}
+                                                                >
+                                                                    <div className={`flex h-8 w-8 items-center justify-center rounded-xl mb-1.5 ${
+                                                                        isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'
+                                                                    }`}>
+                                                                        <span className="material-symbols-outlined text-lg">{opt.icon}</span>
+                                                                    </div>
+                                                                    <span className="text-xs font-bold text-slate-900">{opt.label}</span>
+                                                                    <span className="text-[10px] text-slate-500 mt-0.5">{opt.desc}</span>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
 
-                                                {/* Phone & Parking Capacity */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                                    <div>
-                                                        <label htmlFor="base_phone" className="mb-1 block text-xs font-bold text-slate-700">
-                                                            {t('central.onboarding.base_phone')}
-                                                        </label>
-                                                        <div className="relative">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                                <span className="material-symbols-outlined text-lg">call</span>
-                                                            </div>
-                                                            <input
-                                                                id="base_phone"
-                                                                type="tel"
-                                                                value={data.base_phone}
-                                                                onChange={(e) => setData('base_phone', e.target.value)}
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                                placeholder={t('central.onboarding.base_phone_placeholder', undefined, '081234567890')}
-                                                            />
-                                                        </div>
-                                                        <InputError message={errors.base_phone} className="mt-1" />
+                                                {/* Fleet Size Scale */}
+                                                <div>
+                                                    <label className="mb-1 block text-xs font-bold text-slate-700">
+                                                        {t('central.onboarding.fleet_size_title')}
+                                                    </label>
+                                                    <p className="mb-2 text-[11px] text-slate-400">{t('central.onboarding.fleet_size_hint')}</p>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {[
+                                                            { key: '1-5', title: t('central.onboarding.fleet_size_1_5'), desc: t('central.onboarding.fleet_size_1_5_desc') },
+                                                            { key: '6-20', title: t('central.onboarding.fleet_size_6_20'), desc: t('central.onboarding.fleet_size_6_20_desc') },
+                                                            { key: '21-50+', title: t('central.onboarding.fleet_size_21_plus'), desc: t('central.onboarding.fleet_size_21_plus_desc') },
+                                                        ].map((opt) => {
+                                                            const isSelected = data.fleet_size === opt.key;
+                                                            return (
+                                                                <div
+                                                                    key={opt.key}
+                                                                    onClick={() => setData('fleet_size', opt.key)}
+                                                                    className={`rounded-xl border p-2.5 text-center cursor-pointer transition ${
+                                                                        isSelected
+                                                                            ? 'border-indigo-600 bg-indigo-50/80 ring-2 ring-indigo-500/20 shadow-xs'
+                                                                            : 'border-slate-200 bg-white hover:border-slate-300'
+                                                                    }`}
+                                                                >
+                                                                    <span className="block text-xs font-bold text-slate-900">{opt.title}</span>
+                                                                    <span className="block text-[10px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</span>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
-
-                                                    <div>
-                                                        <label htmlFor="base_vehicle_capacity" className="mb-1 block text-xs font-bold text-slate-700">
-                                                            {t('central.onboarding.base_capacity')}
-                                                        </label>
-                                                        <div className="relative">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                                <span className="material-symbols-outlined text-lg">directions_car</span>
-                                                            </div>
-                                                            <input
-                                                                id="base_vehicle_capacity"
-                                                                type="number"
-                                                                min="1"
-                                                                max="9999"
-                                                                value={data.base_vehicle_capacity ?? ''}
-                                                                onChange={(e) => setData('base_vehicle_capacity', e.target.value ? parseInt(e.target.value, 10) : null)}
-                                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                                                placeholder={t('central.onboarding.base_capacity_placeholder')}
-                                                            />
-                                                        </div>
-                                                        <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.base_capacity_hint')}</p>
-                                                        <InputError message={errors.base_vehicle_capacity} className="mt-1" />
-                                                    </div>
-                                                </div>
-
-                                                {/* Operating Hours */}
-                                                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                                            <span className="material-symbols-outlined text-base text-indigo-600">schedule</span>
-                                                            {t('central.onboarding.base_operating_hours')}
-                                                        </span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => toggle24Hours(!is24Hours)}
-                                                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition ${
-                                                                is24Hours
-                                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                                                    : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
-                                                            }`}
-                                                        >
-                                                            {is24Hours ? '✓ ' : ''}{t('central.onboarding.base_24_hours')}
-                                                        </button>
-                                                    </div>
-
-                                                    {!is24Hours ? (
-                                                        <div className="grid grid-cols-2 gap-2.5 pt-1">
-                                                            <div>
-                                                                <label htmlFor="base_opens_at" className="mb-1 block text-[11px] font-bold text-slate-500">
-                                                                    {t('central.onboarding.base_opens_at')}
-                                                                </label>
-                                                                <input
-                                                                    id="base_opens_at"
-                                                                    type="time"
-                                                                    value={data.base_opens_at}
-                                                                    onChange={(e) => setData('base_opens_at', e.target.value)}
-                                                                    className="block w-full rounded-xl border border-slate-200 bg-white py-1.5 px-3 text-xs font-mono text-slate-900 shadow-xs focus:border-indigo-500 focus:outline-none"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label htmlFor="base_closes_at" className="mb-1 block text-[11px] font-bold text-slate-500">
-                                                                    {t('central.onboarding.base_closes_at')}
-                                                                </label>
-                                                                <input
-                                                                    id="base_closes_at"
-                                                                    type="time"
-                                                                    value={data.base_closes_at}
-                                                                    onChange={(e) => setData('base_closes_at', e.target.value)}
-                                                                    className="block w-full rounded-xl border border-slate-200 bg-white py-1.5 px-3 text-xs font-mono text-slate-900 shadow-xs focus:border-indigo-500 focus:outline-none"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-[11px] text-emerald-700 font-medium">
-                                                            {t('central.onboarding.base_24_hours_note', undefined, 'Base beroperasi penuh 24 jam setiap hari untuk serah terima armada.')}
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Navigation Buttons */}
-                                                <div className="flex gap-2 pt-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleBack}
-                                                        className="w-1/3 rounded-xl border border-slate-200 bg-white py-2.5 sm:py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
-                                                    >
-                                                        ← {t('central.onboarding.btn_back')}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleNext}
-                                                        className="w-2/3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-sky-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200"
-                                                    >
-                                                        <span>{t('central.onboarding.btn_next_scale', undefined, 'Lanjut: Skala & Modul Bisnis')}</span>
-                                                        <span className="material-symbols-outlined text-base">arrow_forward</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* STEP 3: SKALA OPERASIONAL & MODUL BISNIS */}
-                                        {currentStep === 3 && (
-                                            <div className="space-y-4">
-                                                <div className="mb-2">
-                                                    <h3 className="text-base font-black text-slate-900 sm:text-lg">
-                                                        {t('central.onboarding.step3_title')}
-                                                    </h3>
-                                                    <p className="text-xs font-medium text-slate-500">
-                                                        {t('central.onboarding.step3_form_desc', undefined, 'Sesuaikan konfigurasi modul dan perkiraan jumlah unit kendaraan Anda.')}
-                                                    </p>
                                                 </div>
 
                                                 {/* Verticals / Modul */}
@@ -1115,7 +962,7 @@ export default function Onboarding({
                                                                         disabled
                                                                             ? 'cursor-not-allowed border-slate-200/50 bg-slate-100/50 opacity-50'
                                                                             : checked
-                                                                              ? 'cursor-pointer border-indigo-500 bg-indigo-50/70 shadow-xs ring-1 ring-indigo-500/30'
+                                                                              ? 'cursor-pointer border-indigo-600 bg-indigo-50/70 shadow-xs ring-1 ring-indigo-500/30'
                                                                               : 'cursor-pointer border-slate-200 bg-white hover:border-slate-300'
                                                                     }`}
                                                                 >
@@ -1155,61 +1002,6 @@ export default function Onboarding({
                                                     <InputError message={errors.verticals || clientErrors.verticals} className="mt-1" />
                                                 </div>
 
-                                                {/* Fleet Size Chips */}
-                                                <div>
-                                                    <p className="mb-1 text-xs font-bold text-slate-700">
-                                                        {t('central.onboarding.fleet_size_title')}
-                                                    </p>
-                                                    <p className="mb-2 text-[11px] text-slate-400">{t('central.onboarding.fleet_size_hint')}</p>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        {[
-                                                            { key: '1-5', title: t('central.onboarding.fleet_size_1_5'), desc: t('central.onboarding.fleet_size_1_5_desc') },
-                                                            { key: '6-20', title: t('central.onboarding.fleet_size_6_20'), desc: t('central.onboarding.fleet_size_6_20_desc') },
-                                                            { key: '21-50+', title: t('central.onboarding.fleet_size_21_plus'), desc: t('central.onboarding.fleet_size_21_plus_desc') },
-                                                        ].map((opt) => (
-                                                            <div
-                                                                key={opt.key}
-                                                                onClick={() => setData('fleet_size', opt.key)}
-                                                                className={`rounded-xl border p-2.5 text-center cursor-pointer transition ${
-                                                                    data.fleet_size === opt.key
-                                                                        ? 'border-indigo-600 bg-indigo-50/90 shadow-xs ring-1 ring-indigo-500/30'
-                                                                        : 'border-slate-200 bg-white hover:border-slate-300'
-                                                                }`}
-                                                            >
-                                                                <span className="block text-xs font-bold text-slate-900">{opt.title}</span>
-                                                                <span className="block text-[10px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Rental Model Chips */}
-                                                <div>
-                                                    <p className="mb-1 text-xs font-bold text-slate-700">
-                                                        {t('central.onboarding.rental_model_title')}
-                                                    </p>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        {[
-                                                            { key: 'self', label: t('central.onboarding.rental_model_self') },
-                                                            { key: 'driver', label: t('central.onboarding.rental_model_driver') },
-                                                            { key: 'both', label: t('central.onboarding.rental_model_both') },
-                                                        ].map((opt) => (
-                                                            <button
-                                                                key={opt.key}
-                                                                type="button"
-                                                                onClick={() => setData('rental_model', opt.key)}
-                                                                className={`rounded-xl py-2 px-2 text-[11px] font-bold border transition ${
-                                                                    data.rental_model === opt.key
-                                                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                                                                }`}
-                                                            >
-                                                                {opt.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
                                                 {/* Included Core Modules Preview */}
                                                 <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-600">
                                                     <p className="font-bold text-slate-800 text-[11px]">{t('central.onboarding.preview_title')}</p>
@@ -1228,30 +1020,268 @@ export default function Onboarding({
                                                     <button
                                                         type="button"
                                                         onClick={handleNext}
-                                                        className="w-2/3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-sky-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200"
+                                                        className="w-2/3 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all"
                                                     >
-                                                        <span>{t('central.onboarding.btn_next_plan', undefined, 'Lanjut: Konfirmasi Paket')}</span>
+                                                        <span>{t('central.onboarding.btn_next_base', undefined, 'Lanjut: Pool & Kantor Operasional')}</span>
                                                         <span className="material-symbols-outlined text-base">arrow_forward</span>
                                                     </button>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* STEP 4: PILIHAN PAKET & LAUNCHING WORKSPACE */}
+                                        {/* STEP 3: POOL & KANTOR OPERASIONAL (SMART PRE-FILL & TIDAK REDUNDAN) */}
+                                        {currentStep === 3 && (
+                                            <div className="space-y-4">
+                                                <div className="mb-2">
+                                                    <h3 className="text-base font-black text-slate-900 sm:text-lg">
+                                                        {t('central.onboarding.step3_title')}
+                                                    </h3>
+                                                    <p className="text-xs font-medium text-slate-500">
+                                                        {t('central.onboarding.step3_form_desc')}
+                                                    </p>
+                                                </div>
+
+                                                {/* Base Name */}
+                                                <div>
+                                                    <label htmlFor="base_name" className="mb-1 block text-xs font-bold text-slate-700">
+                                                        {t('central.onboarding.base_name')} <span className="text-rose-500">*</span>
+                                                    </label>
+                                                    <div className="relative">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                            <span className="material-symbols-outlined text-lg">apartment</span>
+                                                        </div>
+                                                        <input
+                                                            id="base_name"
+                                                            type="text"
+                                                            value={data.base_name}
+                                                            required
+                                                            onChange={(e) => {
+                                                                setData('base_name', e.target.value);
+                                                                if (clientErrors.base_name) {
+                                                                    setClientErrors((prev) => ({ ...prev, base_name: '' }));
+                                                                }
+                                                            }}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                                                            placeholder={t('central.onboarding.base_name_placeholder')}
+                                                        />
+                                                    </div>
+                                                    <InputError message={errors.base_name || clientErrors.base_name} className="mt-1" />
+                                                </div>
+
+                                                {/* Base Address */}
+                                                <div>
+                                                    <label htmlFor="base_address" className="mb-1 block text-xs font-bold text-slate-700">
+                                                        {t('central.onboarding.base_address')}
+                                                    </label>
+                                                    <div className="relative">
+                                                        <div className="pointer-events-none absolute top-2.5 left-0 flex items-center pl-3 text-slate-400">
+                                                            <span className="material-symbols-outlined text-lg">pin_drop</span>
+                                                        </div>
+                                                        <textarea
+                                                            id="base_address"
+                                                            rows={2}
+                                                            value={data.base_address}
+                                                            onChange={(e) => setData('base_address', e.target.value)}
+                                                            className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                                                            placeholder={t('central.onboarding.base_address_placeholder')}
+                                                        />
+                                                    </div>
+                                                    <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.base_address_hint')}</p>
+                                                    <InputError message={errors.base_address} className="mt-1" />
+                                                </div>
+
+                                                {/* City & Province Grid */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                    <div>
+                                                        <label htmlFor="base_city" className="mb-1 block text-xs font-bold text-slate-700">
+                                                            {t('central.onboarding.base_city')}
+                                                        </label>
+                                                        <div className="relative">
+                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                                <span className="material-symbols-outlined text-lg">location_city</span>
+                                                            </div>
+                                                            <input
+                                                                id="base_city"
+                                                                type="text"
+                                                                value={data.base_city}
+                                                                onChange={(e) => setData('base_city', e.target.value)}
+                                                                className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                                                                placeholder={t('central.onboarding.base_city_placeholder')}
+                                                            />
+                                                        </div>
+                                                        <InputError message={errors.base_city} className="mt-1" />
+                                                    </div>
+
+                                                    <div>
+                                                        <label htmlFor="base_province" className="mb-1 block text-xs font-bold text-slate-700">
+                                                            {t('central.onboarding.base_province')}
+                                                        </label>
+                                                        <div className="relative">
+                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                                <span className="material-symbols-outlined text-lg">map</span>
+                                                            </div>
+                                                            <input
+                                                                id="base_province"
+                                                                type="text"
+                                                                value={data.base_province}
+                                                                onChange={(e) => setData('base_province', e.target.value)}
+                                                                className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all hover:border-slate-300 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                                                                placeholder={t('central.onboarding.base_province_placeholder')}
+                                                            />
+                                                        </div>
+                                                        <InputError message={errors.base_province} className="mt-1" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Operating Hours Box */}
+                                                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                                            <span className="material-symbols-outlined text-base text-indigo-600">schedule</span>
+                                                            {t('central.onboarding.base_operating_hours')}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggle24Hours(!is24Hours)}
+                                                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition ${
+                                                                is24Hours
+                                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                                                    : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                                                            }`}
+                                                        >
+                                                            {is24Hours ? '✓ ' : ''}{t('central.onboarding.base_24_hours')}
+                                                        </button>
+                                                    </div>
+
+                                                    {!is24Hours ? (
+                                                        <div className="grid grid-cols-2 gap-2.5 pt-1">
+                                                            <div>
+                                                                <label htmlFor="base_opens_at" className="mb-1 block text-[11px] font-bold text-slate-500">
+                                                                    {t('central.onboarding.base_opens_at')}
+                                                                </label>
+                                                                <input
+                                                                    id="base_opens_at"
+                                                                    type="time"
+                                                                    value={data.base_opens_at}
+                                                                    onChange={(e) => setData('base_opens_at', e.target.value)}
+                                                                    className="block w-full rounded-xl border border-slate-200 bg-white py-1.5 px-3 text-xs font-mono text-slate-900 shadow-xs focus:border-indigo-600 focus:outline-none"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label htmlFor="base_closes_at" className="mb-1 block text-[11px] font-bold text-slate-500">
+                                                                    {t('central.onboarding.base_closes_at')}
+                                                                </label>
+                                                                <input
+                                                                    id="base_closes_at"
+                                                                    type="time"
+                                                                    value={data.base_closes_at}
+                                                                    onChange={(e) => setData('base_closes_at', e.target.value)}
+                                                                    className="block w-full rounded-xl border border-slate-200 bg-white py-1.5 px-3 text-xs font-mono text-slate-900 shadow-xs focus:border-indigo-600 focus:outline-none"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-[11px] text-emerald-700 font-medium">
+                                                            {t('central.onboarding.base_24_hours_note')}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Advanced Options Accordion (Code & Capacity) */}
+                                                <div className="pt-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAdvancedBase(!showAdvancedBase)}
+                                                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition focus:outline-none"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">
+                                                            {showAdvancedBase ? 'expand_less' : 'expand_more'}
+                                                        </span>
+                                                        <span>
+                                                            {showAdvancedBase ? 'Sembunyikan Pengaturan Tambahan' : 'Pengaturan Lanjutan (Kode Pool & Kapasitas Parkir)'}
+                                                        </span>
+                                                    </button>
+
+                                                    {showAdvancedBase && (
+                                                        <div className="mt-2.5 p-3 rounded-xl border border-slate-200 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                            <div>
+                                                                <label htmlFor="base_code" className="mb-1 block text-[11px] font-bold text-slate-600">
+                                                                    {t('central.onboarding.base_code')} <span className="text-rose-500">*</span>
+                                                                </label>
+                                                                <input
+                                                                    id="base_code"
+                                                                    type="text"
+                                                                    value={data.base_code}
+                                                                    required
+                                                                    onChange={(e) => {
+                                                                        setData('base_code', e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''));
+                                                                        if (clientErrors.base_code) {
+                                                                            setClientErrors((prev) => ({ ...prev, base_code: '' }));
+                                                                        }
+                                                                    }}
+                                                                    className="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-mono uppercase font-bold text-slate-900 shadow-xs focus:border-indigo-600 focus:outline-none"
+                                                                    placeholder="HQ"
+                                                                    maxLength={16}
+                                                                />
+                                                                <InputError message={errors.base_code || clientErrors.base_code} className="mt-1" />
+                                                            </div>
+
+                                                            <div>
+                                                                <label htmlFor="base_vehicle_capacity" className="mb-1 block text-[11px] font-bold text-slate-600">
+                                                                    {t('central.onboarding.base_capacity')}
+                                                                </label>
+                                                                <input
+                                                                    id="base_vehicle_capacity"
+                                                                    type="number"
+                                                                    min="1"
+                                                                    max="9999"
+                                                                    value={data.base_vehicle_capacity ?? ''}
+                                                                    onChange={(e) => setData('base_vehicle_capacity', e.target.value ? parseInt(e.target.value, 10) : null)}
+                                                                    className="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-medium text-slate-900 shadow-xs focus:border-indigo-600 focus:outline-none"
+                                                                    placeholder={t('central.onboarding.base_capacity_placeholder')}
+                                                                />
+                                                                <InputError message={errors.base_vehicle_capacity} className="mt-1" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Navigation Buttons */}
+                                                <div className="flex gap-2 pt-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleBack}
+                                                        className="w-1/3 rounded-xl border border-slate-200 bg-white py-2.5 sm:py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                                                    >
+                                                        ← {t('central.onboarding.btn_back')}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleNext}
+                                                        className="w-2/3 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all"
+                                                    >
+                                                        <span>{t('central.onboarding.btn_next_plan', undefined, 'Lanjut: Pilihan Paket & Peluncuran')}</span>
+                                                        <span className="material-symbols-outlined text-base">arrow_forward</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* STEP 4: PILIHAN PAKET & PELUNCURAN WORKSPACE */}
                                         {currentStep === 4 && (
-                                            <div className="space-y-3.5">
+                                            <div className="space-y-4">
                                                 <div className="mb-2">
                                                     <h3 className="text-base font-black text-slate-900 sm:text-lg">
                                                         {t('central.onboarding.step4_title')}
                                                     </h3>
                                                     <p className="text-xs font-medium text-slate-500">
-                                                        {t('central.onboarding.step4_form_desc', undefined, 'Pilih paket langganan dan luncurkan workspace database terisolasi Anda.')}
+                                                        {t('central.onboarding.step4_form_desc')}
                                                     </p>
                                                 </div>
 
                                                 {/* Live Summary Box */}
-                                                <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 to-sky-50/50 p-3.5 shadow-xs">
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 mb-2 pb-1.5 border-b border-indigo-100/80">
+                                                <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-sky-50/40 p-3.5 shadow-xs">
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 mb-2 pb-1.5 border-b border-indigo-100">
                                                         <span className="material-symbols-outlined text-base text-indigo-600">verified</span>
                                                         <span>{t('central.onboarding.summary_title')}</span>
                                                     </div>
@@ -1274,10 +1304,10 @@ export default function Onboarding({
                                                             <span className="text-slate-400 block">{t('central.onboarding.summary_location')}:</span>
                                                             <span className="font-bold text-slate-800">{data.base_city || data.city || '-'}</span>
                                                         </div>
-                                                        <div className="col-span-2 pt-1 border-t border-indigo-100/60">
+                                                        <div className="col-span-2 pt-1 border-t border-indigo-100/70">
                                                             <span className="text-slate-400 block">{t('central.onboarding.summary_services')}:</span>
                                                             <span className="font-bold text-slate-800">
-                                                                {data.verticals.map((k) => t(`central.onboarding.verticals.${k}`, undefined, k)).join(' + ')} ({data.fleet_size} {t('central.onboarding.summary_units', undefined, 'unit')})
+                                                                {data.verticals.map((k) => t(`central.onboarding.verticals.${k}`, undefined, k)).join(' + ')} • {data.fleet_size} {t('central.onboarding.summary_units', undefined, 'unit')} ({data.rental_model === 'self' ? 'Lepas Kunci' : data.rental_model === 'driver' ? 'Dengan Sopir' : 'Lepas Kunci & Sopir'})
                                                             </span>
                                                         </div>
                                                     </div>
@@ -1293,12 +1323,7 @@ export default function Onboarding({
                                                             {availablePlans.map((p) => {
                                                                 const selected = data.plan_key === p.key;
                                                                 const hasMonthly = p.price && Number(p.price) > 0;
-                                                                const isRecommended = p.key === 'pay_as_you_go' ||
-                                                                                      p.is_popular ||
-                                                                                      p.is_default ||
-                                                                                      (data.fleet_size === '21-50+' && p.key === 'pro') ||
-                                                                                      (data.fleet_size === '6-20' && p.key === 'starter') ||
-                                                                                      (data.fleet_size === '1-5' && p.key === 'free');
+                                                                const isRecommended = isPlanRecommended(p.key) || p.is_popular || p.is_default;
 
                                                                 return (
                                                                     <div
@@ -1306,9 +1331,9 @@ export default function Onboarding({
                                                                         onClick={() => setData('plan_key', p.key)}
                                                                         className={`relative flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border p-2.5 cursor-pointer transition-all ${
                                                                             selected
-                                                                                ? 'border-indigo-600 bg-gradient-to-r from-indigo-50/90 via-white to-sky-50/80 shadow-xs ring-2 ring-indigo-500/20'
+                                                                                ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20 shadow-xs'
                                                                                 : isRecommended
-                                                                                  ? 'border-emerald-300 bg-emerald-50/30 hover:border-emerald-400'
+                                                                                  ? 'border-emerald-300 bg-emerald-50/20 hover:border-emerald-400'
                                                                                   : 'border-slate-200 bg-white hover:border-slate-300'
                                                                         }`}
                                                                     >
@@ -1334,7 +1359,7 @@ export default function Onboarding({
                                                                                     )}
                                                                                     {isRecommended && (!p.badge || !p.badge.toLowerCase().includes('rekomendasi')) && (
                                                                                         <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black text-emerald-800">
-                                                                                            ★ {t('central.onboarding.plan_recommended_badge', undefined, 'Rekomendasi Terbaik')}
+                                                                                            ★ {t('central.onboarding.plan_recommended_badge', undefined, 'Rekomendasi')}
                                                                                         </span>
                                                                                     )}
                                                                                     {p.trial_days !== undefined && p.trial_days !== null && Number(p.trial_days) > 0 ? (
@@ -1390,7 +1415,7 @@ export default function Onboarding({
                                                     <button
                                                         type="submit"
                                                         disabled={processing}
-                                                        className="w-2/3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 disabled:opacity-50"
+                                                        className="w-2/3 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-600/25 transition-all duration-200 disabled:opacity-50"
                                                     >
                                                         {processing ? (
                                                             <>
