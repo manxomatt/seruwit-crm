@@ -8,6 +8,7 @@ use Modules\Rental\Http\Controllers\Api\Staff\StaffAuthController;
 use Modules\Rental\Http\Controllers\Api\Staff\StaffDashboardApiController;
 use Modules\Rental\Http\Controllers\Api\Staff\StaffDriverDutyApiController;
 use Modules\Rental\Http\Controllers\Api\Staff\StaffHandoverApiController;
+use Modules\Rental\Http\Controllers\Api\Staff\StaffRentalReservationApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,16 @@ Route::prefix('api/staff/v1')
                 Route::post('/{rental}/out', [StaffHandoverApiController::class, 'handoverOut'])->name('out');
                 Route::post('/{rental}/in', [StaffHandoverApiController::class, 'handoverIn'])->name('in');
                 Route::post('/{rental}/ai-inspect', [StaffHandoverApiController::class, 'aiInspect'])->name('ai-inspect');
+            });
+
+            // Offline / Field Rental Reservations (Field Operator & Desk Staff)
+            Route::prefix('rental')->name('rental.')->group(function (): void {
+                Route::get('/reservations/available-vehicles', [StaffRentalReservationApiController::class, 'availableVehicles'])->name('reservations.available_vehicles');
+                Route::post('/customers/scan-id', [StaffRentalReservationApiController::class, 'scanDocument'])->name('customers.scan_id');
+                Route::post('/customers/walk-in', [StaffRentalReservationApiController::class, 'storeWalkInCustomer'])->name('customers.walk_in');
+                Route::post('/reservations/quote', [StaffRentalReservationApiController::class, 'quote'])->name('reservations.quote');
+                Route::post('/reservations', [StaffRentalReservationApiController::class, 'store'])->name('reservations.store');
+                Route::post('/reservations/{rental}/collect-payment', [StaffRentalReservationApiController::class, 'collectPayment'])->name('reservations.collect_payment');
             });
 
             // Driver Duties & Expense Claims (Company Driver / Mobile Staff)

@@ -575,6 +575,357 @@
           }
         }
       ]
+    },
+    {
+      "name": "5. Reservasi Offline & Kasir Lapangan (Field Operator & Desk Staff)",
+      "description": "Endpoint khusus operator/staf lapangan untuk menangani pemesanan walk-in secara offline: cek armada, scan OCR identitas, hitung tarif, create booking, dan terima kas/EDC di tempat.",
+      "item": [
+        {
+          "name": "1. Cek Ketersediaan Kendaraan",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/rental/reservations/available-vehicles?start_date=2026-10-26&end_date=2026-10-28&period_type=daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "rental",
+                "reservations",
+                "available-vehicles"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-10-26"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-10-28"
+                },
+                {
+                  "key": "period_type",
+                  "value": "daily"
+                },
+                {
+                  "key": "rental_class",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "transmission",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Melihat daftar kendaraan aktif yang tersedia pada rentang waktu tertentu beserta saran harga sewa per periode."
+          }
+        },
+        {
+          "name": "2. Scan Identitas KTP / SIM dengan AI OCR",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"data:image/jpeg;base64,...\",\n  \"doc_type\": \"ktp\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/rental/customers/scan-id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "rental",
+                "customers",
+                "scan-id"
+              ]
+            },
+            "description": "Scan foto fisik KTP / SIM pelanggan menggunakan Gemini Vision AI OCR untuk mengekstrak NIK, Nama, dan data identitas secara instan."
+          }
+        },
+        {
+          "name": "3. Pendaftaran / Cari Pelanggan Walk-In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.partner_id) {",
+                  "    pm.collectionVariables.set('partnerId', jsonData.data.partner_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Andi Prasetyo\",\n  \"phone\": \"081234567890\",\n  \"email\": \"andi@example.com\",\n  \"id_number\": \"3171012304900001\",\n  \"driver_license_number\": \"SIM-90041234567\",\n  \"address\": \"Jl. Sudirman No. 45, Jakarta Selatan\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/rental/customers/walk-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "rental",
+                "customers",
+                "walk-in"
+              ]
+            },
+            "description": "Mendaftarkan pelanggan walk-in baru atau menggunakan data pelanggan lama yang sudah ada berdasarkan nomor telepon."
+          }
+        },
+        {
+          "name": "4. Hitung Simulasi & Quote Biaya",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_id\": 1,\n  \"start_date\": \"2026-10-26\",\n  \"end_date\": \"2026-10-28\",\n  \"period_type\": \"daily\",\n  \"service_type\": \"self_drive\",\n  \"discount_amount\": 50000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/rental/reservations/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "rental",
+                "reservations",
+                "quote"
+              ]
+            },
+            "description": "Menghitung rincian biaya: tarif pokok, durasi periode, proteksi/asuransi, diskon staf, dan estimasi total tagihan."
+          }
+        },
+        {
+          "name": "5. Simpan Reservasi Baru (Create Booking)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.rental_id) {",
+                  "    pm.collectionVariables.set('rentalId', jsonData.data.rental_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partner_id\": 1,\n  \"vehicle_id\": 1,\n  \"start_date\": \"2026-10-26\",\n  \"pickup_time\": \"09:00\",\n  \"end_date\": \"2026-10-28\",\n  \"return_time\": \"18:00\",\n  \"period_type\": \"daily\",\n  \"service_type\": \"self_drive\",\n  \"notes\": \"Pemesanan walk-in bandara langsung jalan\",\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/rental/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "rental",
+                "reservations"
+              ]
+            },
+            "description": "Menyimpan transaksi sewa rental baru dengan channel staf/offline. Dapat langsung berstatus 'confirmed' sehingga siap handover out."
+          }
+        },
+        {
+          "name": "6. Terima Pembayaran Kasir di Lokasi (On-Spot POS)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_type\": \"deposit\",\n  \"payment_method\": \"cash\",\n  \"amount\": 500000,\n  \"reference_number\": \"CASH-OPR-01\",\n  \"notes\": \"Diterima tunai di meja konter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/v1/rental/reservations/{{rentalId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "v1",
+                "rental",
+                "reservations",
+                "{{rentalId}}",
+                "collect-payment"
+              ]
+            },
+            "description": "Mencatat kas masuk di tempat (Cash, EDC, QRIS, atau Transfer) untuk deposit DP maupun pelunasan rental."
+          }
+        }
+      ]
     }
   ]
 }
