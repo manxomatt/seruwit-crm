@@ -76,4 +76,39 @@ class TenantDefaultHomepageTest extends TestCase
             ->where('tenantRentalData.brand.support_phone', '082188889999')
         );
     }
+
+    public function test_tenant_default_homepage_filters_out_distribution_logistics_tagline_in_favor_of_rental_tagline(): void
+    {
+        Setting::query()->updateOrCreate(
+            ['key' => 'general.site_tagline'],
+            [
+                'value' => 'Operasi distribusi, logistik, dan penjualan dalam satu workspace',
+                'type' => 'string',
+                'label' => 'Tagline',
+                'is_public' => true,
+                'group' => 'general',
+            ]
+        );
+
+        Setting::query()->updateOrCreate(
+            ['key' => 'general.site_description'],
+            [
+                'value' => 'Seruwit Biz adalah platform operasi modular untuk distribusi, logistik, rental, dan penjualan lapangan.',
+                'type' => 'string',
+                'label' => 'Description',
+                'is_public' => true,
+                'group' => 'general',
+            ]
+        );
+
+        $response = $this->get('/?preview_tenant=1');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Welcome')
+            ->where('isTenant', true)
+            ->where('tenantRentalData.brand.tagline', 'Rental Mobil Nyaman, Bersih & Terpercaya')
+            ->where('tenantRentalData.brand.description', 'Pilihan armada kendaraan terlengkap untuk liburan, perjalanan bisnis, atau acara keluarga. Tersedia opsi lepas kunci fleksibel atau dengan sopir berpengalaman, jaminan unit prima dan harga jujur tanpa biaya tersembunyi.')
+        );
+    }
 }

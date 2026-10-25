@@ -96,8 +96,34 @@ class PageController extends Controller
             : [];
 
         $siteName = ($storefront['brand_name'] ?? '') ?: ($settings['general.site_name'] ?? config('app.name', 'Rental Mobil'));
-        $siteTagline = ($storefront['hero_title'] ?? '') ?: ($settings['general.site_tagline'] ?? 'Layanan Rental Mobil Nyaman, Cepat & Terpercaya');
-        $siteDescription = ($storefront['hero_subtitle'] ?? '') ?: ($settings['general.site_description'] ?? 'Pilihan armada terlengkap untuk liburan, bisnis, dan acara keluarga. Sewa lepas kunci bebas ribet atau dengan sopir berpengalaman.');
+
+        $defaultRentalTagline = 'Rental Mobil Nyaman, Bersih & Terpercaya';
+        $defaultRentalDescription = 'Pilihan armada kendaraan terlengkap untuk liburan, perjalanan bisnis, atau acara keluarga. Tersedia opsi lepas kunci fleksibel atau dengan sopir berpengalaman, jaminan unit prima dan harga jujur tanpa biaya tersembunyi.';
+
+        // Ensure tagline is 100% focused on car rental (filter out generic platform/ERP text)
+        $customHeroTitle = ! empty($storefront['hero_title']) ? $storefront['hero_title'] : (! empty($settings['rental.storefront.hero_title']) ? $settings['rental.storefront.hero_title'] : null);
+        if ($customHeroTitle) {
+            $siteTagline = $customHeroTitle;
+        } else {
+            $generalTagline = (string) ($settings['general.site_tagline'] ?? '');
+            $isDistributionErp = (bool) preg_match('/(distribusi|logistik|penjualan|modular|workspace|crm|erp)/i', $generalTagline);
+            $hasRentalKeyword = (bool) preg_match('/(rental|sewa|mobil|kendaraan|driver|sopir|armada|car)/i', $generalTagline);
+
+            $siteTagline = ($hasRentalKeyword && ! $isDistributionErp) ? $generalTagline : $defaultRentalTagline;
+        }
+
+        // Ensure description is also focused on car rental
+        $customHeroSubtitle = ! empty($storefront['hero_subtitle']) ? $storefront['hero_subtitle'] : (! empty($settings['rental.storefront.hero_subtitle']) ? $settings['rental.storefront.hero_subtitle'] : null);
+        if ($customHeroSubtitle) {
+            $siteDescription = $customHeroSubtitle;
+        } else {
+            $generalDesc = (string) ($settings['general.site_description'] ?? '');
+            $isDistributionErp = (bool) preg_match('/(distribusi|logistik|penjualan|modular|workspace|crm|erp)/i', $generalDesc);
+            $hasRentalKeyword = (bool) preg_match('/(rental|sewa|mobil|kendaraan|driver|sopir|armada|car)/i', $generalDesc);
+
+            $siteDescription = ($hasRentalKeyword && ! $isDistributionErp) ? $generalDesc : $defaultRentalDescription;
+        }
+
         $supportPhone = ($storefront['support_phone'] ?? '') ?: ($settings['site.phone'] ?? null);
         $logoUrl = ($storefront['logo_url'] ?? '') ?: ($settings['site.logo'] ?? null);
         $heroImageUrl = ($storefront['hero_image_url'] ?? '') ?: null;

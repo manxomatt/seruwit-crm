@@ -83,17 +83,17 @@ export default function HeroWithBookingWidget({ brand, locations = [], classes =
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 text-xs font-bold tracking-wide backdrop-blur-md">
                         <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>{brand?.name ? `${brand.name} • Official Rental Service` : 'Rental Kendaraan & Mobil Pilihan'}</span>
+                        <span>{brand?.name ? `${brand.name} • Rental Mobil & Transportasi` : 'Layanan Rental Mobil & Transportasi'}</span>
                     </div>
 
                     {/* Headline */}
                     <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white">
-                        {brand?.tagline || 'Perjalanan Nyaman, Unit Bersih & Harga Transparan'}
+                        {brand?.tagline || 'Rental Mobil Nyaman, Bersih & Terpercaya'}
                     </h1>
 
                     {/* Subheadline */}
                     <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                        {brand?.description || 'Temukan kendaraan terbaik untuk liburan atau bisnis Anda. Opsi sewa lepas kunci bebas ribet atau sopir berpengalaman, tanpa biaya siluman.'}
+                        {brand?.description || 'Pilihan armada kendaraan terlengkap untuk liburan, perjalanan bisnis, atau acara keluarga. Opsi sewa lepas kunci fleksibel atau dengan sopir berpengalaman, jaminan unit prima dan harga jujur tanpa biaya tersembunyi.'}
                     </p>
 
                     {/* Trust Highlights */}
