@@ -101,6 +101,9 @@ return [
         'rental_status' => 'Unit Status',
         'logistics' => 'Module: Logistics & Courier',
         'logistics_status' => 'Shipment Status',
+        'maintenance' => 'Module: Maintenance & Workshop',
+        'maintenance_status' => 'Work Order Status',
+        'attention_center' => 'Attention Center & Urgent Actions',
         'fleet_global' => 'Global Fleet & Driver Monitoring',
         'attention' => 'Need Attention & Quick Actions',
         'operational_alerts' => 'Operational Alerts',
@@ -236,6 +239,13 @@ return [
         'stnk_expiring_message' => 'STNK :plate expires in :days days',
         'maintenance_overdue_title' => '[Maintenance] Service Overdue',
         'invoice_overdue_title' => '[Invoice] Payment Overdue',
+        'action_view_rental' => 'View Rental',
+        'action_assign_driver' => 'Assign Driver',
+        'action_check_vehicle' => 'Check Fleet',
+        'action_view_maintenance' => 'View Work Order',
+        'action_view_invoice' => 'Open Invoice',
+        'all_operational_good' => 'All Operations Running Smoothly',
+        'all_operational_good_desc' => 'No overdue rentals, unassigned trips, or urgent expired documents at this time.',
     ],
 
     'quick_actions' => [
@@ -243,6 +253,18 @@ return [
         'issue_travel_ticket' => '+ Issue Travel Ticket',
         'create_logistics_resi' => '+ Create Logistics Shipment',
         'create_manual_invoice' => '+ Create Manual Invoice',
+        'add_vehicle' => '+ Add Fleet Vehicle',
+        'new_work_order' => '+ New Work Order',
+        'new_partner' => '+ New Contact / Partner',
+        'quick_actions_bar' => 'Operational Quick Actions',
+    ],
+
+    'maintenance' => [
+        'open_orders' => 'Open Work Orders',
+        'in_progress' => 'In Progress',
+        'overdue' => 'Overdue Service',
+        'completed_period' => 'Completed This Period',
+        'unit_orders' => 'WO',
     ],
 
     'fleet' => [

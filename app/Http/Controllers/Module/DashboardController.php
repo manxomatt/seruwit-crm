@@ -98,6 +98,7 @@ class DashboardController extends Controller
             'finance' => $finance,
             'modules' => $modules,
             'fleetGlobal' => $fleetGlobal,
+            'logistics' => $this->buildLegacyLogisticsSummary(),
             'alerts' => $alerts,
             'quickActions' => $quickActions,
             'stats' => $stats,
@@ -325,6 +326,7 @@ class DashboardController extends Controller
                 'delta' => $revenueDelta,
                 'delta_label' => $revenueDelta !== null ? ($revenueDelta >= 0 ? '+' : '').$revenueDelta.'% '.__('dashboard.kpi.vs_previous') : null,
                 'direction' => $revenueDelta >= 0 ? 'up' : 'down',
+                'action_url' => $this->routeExists('module.invoicing.invoices.index') ? route($this->resolveNamedRoute('module.invoicing.invoices.index')) : null,
             ];
 
             $outstandingAmount = (float) Invoice::query()
@@ -340,6 +342,7 @@ class DashboardController extends Controller
                 'value' => round($outstandingAmount),
                 'overdue_count' => $overdueCount,
                 'overdue_label' => $overdueCount > 0 ? __('dashboard.kpi.overdue_invoices', ['count' => $overdueCount]) : null,
+                'action_url' => $this->routeExists('module.invoicing.invoices.index') ? route($this->resolveNamedRoute('module.invoicing.invoices.index')) : null,
             ];
         }
 
@@ -378,6 +381,7 @@ class DashboardController extends Controller
                 'in_use' => $inUse,
                 'total_active' => $activeVehicles,
                 'idle_count' => $idleCount,
+                'action_url' => $this->routeExists('module.fleet.vehicles.index') ? route($this->resolveNamedRoute('module.fleet.vehicles.index')) : null,
             ];
         }
 
@@ -427,6 +431,7 @@ class DashboardController extends Controller
             $kpis['compliance'] = [
                 'action_count' => $complianceCount,
                 'details' => $complianceDetails,
+                'action_url' => $this->routeExists('module.fleet.vehicles.index') ? route($this->resolveNamedRoute('module.fleet.vehicles.index')) : null,
             ];
         }
 
@@ -682,6 +687,23 @@ class DashboardController extends Controller
             ];
         }
 
+        if (Modules::available('maintenance')) {
+            $openWorkOrders = WorkOrder::query()->open()->count();
+            $inProgressCount = WorkOrder::query()->where('status', WorkOrder::STATUS_IN_PROGRESS)->count();
+            $overdueCount = WorkOrder::query()->overdue()->count();
+            $completedPeriod = WorkOrder::query()
+                ->where('status', WorkOrder::STATUS_COMPLETED)
+                ->whereBetween('completed_at', [$range['start'], $range['end']])
+                ->count();
+
+            $modules['maintenance'] = [
+                'open_orders' => $openWorkOrders,
+                'in_progress' => $inProgressCount,
+                'overdue_count' => $overdueCount,
+                'completed_period' => $completedPeriod,
+            ];
+        }
+
         return $modules;
     }
 
@@ -740,6 +762,8 @@ class DashboardController extends Controller
                 $hoursLate = max(1, Carbon::parse($rental->end_date)->startOfDay()->diffInHours(Carbon::now()));
                 $alerts[] = [
                     'module' => 'rental',
+                    'type' => 'rental_overdue',
+                    'count' => 1,
                     'severity' => 'danger',
                     'icon' => 'alert-circle',
                     'title' => __('dashboard.alerts.rental_overdue_title'),
@@ -747,6 +771,8 @@ class DashboardController extends Controller
                         'plate' => $plate,
                         'hours' => $hoursLate,
                     ]),
+                    'action_url' => $this->routeExists('module.rental.index') ? route($this->resolveNamedRoute('module.rental.index')) : null,
+                    'action_label' => __('dashboard.alerts.action_view_rental'),
                 ];
             }
         }
@@ -766,6 +792,8 @@ class DashboardController extends Controller
                 $time = Carbon::parse($dep->depart_date->format('Y-m-d').' '.$dep->depart_time)->format('H:i');
                 $alerts[] = [
                     'module' => 'shuttle',
+                    'type' => 'shuttle_no_driver',
+                    'count' => 1,
                     'severity' => 'warning',
                     'icon' => 'user-x',
                     'title' => __('dashboard.alerts.shuttle_no_driver_title'),
@@ -773,6 +801,8 @@ class DashboardController extends Controller
                         'route' => $route,
                         'time' => $time,
                     ]),
+                    'action_url' => $this->routeExists('module.shuttle.departures.index') ? route($this->resolveNamedRoute('module.shuttle.departures.index')) : null,
+                    'action_label' => __('dashboard.alerts.action_assign_driver'),
                 ];
             }
         }
@@ -790,6 +820,8 @@ class DashboardController extends Controller
                 $daysLeft = Carbon::now()->diffInDays($vehicle->stnk_expires_at, false);
                 $alerts[] = [
                     'module' => 'fleet',
+                    'type' => 'stnk_expiring',
+                    'count' => 1,
                     'severity' => 'warning',
                     'icon' => 'file-warning',
                     'title' => __('dashboard.alerts.stnk_expiring_title'),
@@ -797,6 +829,8 @@ class DashboardController extends Controller
                         'plate' => $vehicle->plate_number,
                         'days' => $daysLeft,
                     ]),
+                    'action_url' => $this->routeExists('module.fleet.vehicles.index') ? route($this->resolveNamedRoute('module.fleet.vehicles.index')) : null,
+                    'action_label' => __('dashboard.alerts.action_check_vehicle'),
                 ];
             }
         }
@@ -811,10 +845,14 @@ class DashboardController extends Controller
             foreach ($overdueWO as $wo) {
                 $alerts[] = [
                     'module' => 'maintenance',
+                    'type' => 'maintenance_overdue',
+                    'count' => 1,
                     'severity' => 'info',
                     'icon' => 'wrench',
                     'title' => __('dashboard.alerts.maintenance_overdue_title'),
                     'message' => $wo->reference_number.': '.$wo->title.($wo->vehicle?->plate_number ? ' — '.$wo->vehicle->plate_number : ''),
+                    'action_url' => $this->routeExists('module.maintenance.work-orders.index') ? route($this->resolveNamedRoute('module.maintenance.work-orders.index')) : null,
+                    'action_label' => __('dashboard.alerts.action_view_maintenance'),
                 ];
             }
         }
@@ -830,10 +868,14 @@ class DashboardController extends Controller
             foreach ($overdueInvoices as $inv) {
                 $alerts[] = [
                     'module' => 'invoicing',
+                    'type' => 'invoice_overdue',
+                    'count' => 1,
                     'severity' => 'danger',
                     'icon' => 'file-invoice-dollar',
                     'title' => __('dashboard.alerts.invoice_overdue_title'),
                     'message' => $inv->code.' — '.($inv->partner?->name ?? '—').' : Rp '.number_format((float) $inv->total, 0, ',', '.'),
+                    'action_url' => $this->routeExists('module.invoicing.invoices.index') ? route($this->resolveNamedRoute('module.invoicing.invoices.index')) : null,
+                    'action_label' => __('dashboard.alerts.action_view_invoice'),
                 ];
             }
         }
@@ -885,6 +927,36 @@ class DashboardController extends Controller
                 'icon' => 'file-invoice',
                 'route' => $this->routeExists('module.invoicing.invoices.create') ? route($this->resolveNamedRoute('module.invoicing.invoices.create')) : null,
                 'permission' => 'invoicing.invoices.create',
+            ];
+        }
+
+        if (Modules::available('fleet')) {
+            $actions[] = [
+                'key' => 'add_vehicle',
+                'label' => __('dashboard.quick_actions.add_vehicle'),
+                'icon' => 'truck',
+                'route' => $this->routeExists('module.fleet.vehicles.create') ? route($this->resolveNamedRoute('module.fleet.vehicles.create')) : null,
+                'permission' => 'fleet.create',
+            ];
+        }
+
+        if (Modules::available('maintenance')) {
+            $actions[] = [
+                'key' => 'new_work_order',
+                'label' => __('dashboard.quick_actions.new_work_order'),
+                'icon' => 'wrench',
+                'route' => $this->routeExists('module.maintenance.work-orders.create') ? route($this->resolveNamedRoute('module.maintenance.work-orders.create')) : null,
+                'permission' => 'maintenance.create',
+            ];
+        }
+
+        if (Modules::available('partners')) {
+            $actions[] = [
+                'key' => 'new_partner',
+                'label' => __('dashboard.quick_actions.new_partner'),
+                'icon' => 'user-plus',
+                'route' => $this->routeExists('module.partners.create') ? route($this->resolveNamedRoute('module.partners.create')) : null,
+                'permission' => 'partners.create',
             ];
         }
 
@@ -1115,5 +1187,66 @@ class DashboardController extends Controller
             ->take(10)
             ->values()
             ->toArray();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildLegacyLogisticsSummary(): array
+    {
+        $summary = [];
+
+        if (Modules::available('transportation')) {
+            $trips = Trip::query()->get(['status']);
+            $summary['trips'] = [
+                'total' => $trips->count(),
+                'active' => $trips->whereIn('status', [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS])->count(),
+            ];
+        }
+
+        if (Modules::available('orders')) {
+            $orders = DeliveryOrder::query()->get(['status']);
+            $byStatus = $orders->groupBy('status')->map->count();
+            $summary['orders'] = [
+                'total' => $orders->count(),
+                'by_status' => [
+                    'draft' => $byStatus->get(DeliveryOrder::STATUS_DRAFT, 0),
+                    'delivered' => $byStatus->get(DeliveryOrder::STATUS_DELIVERED, 0),
+                ],
+            ];
+        }
+
+        if (Modules::available('fleet')) {
+            $vehicles = Vehicle::query()->get(['status']);
+            $byStatus = $vehicles->groupBy('status')->map->count();
+            $summary['fleet'] = [
+                'vehicles_total' => $vehicles->count(),
+                'vehicles' => [
+                    'active' => $byStatus->get(Vehicle::STATUS_ACTIVE, 0),
+                    'maintenance' => $byStatus->get(Vehicle::STATUS_MAINTENANCE, 0),
+                ],
+            ];
+        }
+
+        if (Modules::available('partners')) {
+            $partners = Partner::query()->get(['customer_rank', 'supplier_rank']);
+            $summary['partners'] = [
+                'total' => $partners->count(),
+                'customers' => $partners->where('customer_rank', '>', 0)->count(),
+                'suppliers' => $partners->where('supplier_rank', '>', 0)->count(),
+            ];
+        }
+
+        if (Modules::available('invoicing')) {
+            $invoices = Invoice::query()->get(['status', 'due_date']);
+            $byStatus = $invoices->groupBy('status')->map->count();
+            $summary['invoices'] = [
+                'total' => $invoices->count(),
+                'by_status' => $byStatus->toArray(),
+                'overdue' => $invoices->where('status', Invoice::STATUS_ISSUED)->where('due_date', '<', Carbon::today())->count(),
+            ];
+        }
+
+        return $summary;
     }
 }

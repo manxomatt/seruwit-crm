@@ -3,19 +3,21 @@ import DashboardOnboardingCTA, { type OnboardingOverview } from '@/Components/Da
 import SubscriptionPricingSection, { type SubscriptionOverview } from '@/Components/Dashboard/SubscriptionPricingSection';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 interface RevenueKpi {
     value: number;
     delta: number | null;
     delta_label: string | null;
     direction: 'up' | 'down';
+    action_url?: string | null;
 }
 
 interface OutstandingKpi {
     value: number;
     overdue_count: number;
     overdue_label: string | null;
+    action_url?: string | null;
 }
 
 interface FleetUtilizationKpi {
@@ -23,6 +25,7 @@ interface FleetUtilizationKpi {
     in_use: number;
     total_active: number;
     idle_count: number;
+    action_url?: string | null;
 }
 
 interface ComplianceDetail {
@@ -34,6 +37,7 @@ interface ComplianceDetail {
 interface ComplianceKpi {
     action_count: number;
     details: ComplianceDetail[];
+    action_url?: string | null;
 }
 
 interface TopLevelKpis {
@@ -98,10 +102,18 @@ interface LogisticsBreakdown {
     delivered_pod: number;
 }
 
+interface MaintenanceBreakdown {
+    open_orders: number;
+    in_progress: number;
+    overdue_count: number;
+    completed_period: number;
+}
+
 interface ModuleBreakdowns {
     shuttle?: ShuttleBreakdown;
     rental?: RentalBreakdown;
     logistics?: LogisticsBreakdown;
+    maintenance?: MaintenanceBreakdown;
 }
 
 interface FleetGlobal {
@@ -114,10 +126,14 @@ interface FleetGlobal {
 
 interface OperationalAlert {
     module: string;
+    type?: string;
+    count?: number;
     severity: 'danger' | 'warning' | 'info';
     icon: string;
     title: string;
     message: string;
+    action_url?: string | null;
+    action_label?: string | null;
 }
 
 interface QuickAction {
@@ -202,48 +218,51 @@ const LINE_COLORS: Record<string, string> = {
     rental: 'bg-emerald-500',
     shuttle: 'bg-indigo-500',
     logistics: 'bg-amber-500',
-    other: 'bg-gray-400',
+    other: 'bg-slate-400',
 };
 
-const ALERT_STYLES: Record<string, { bg: string; border: string; text: string; iconBg: string; iconColor: string; dot: string }> = {
+const ALERT_STYLES: Record<string, { bg: string; border: string; text: string; subtext: string; iconBg: string; iconColor: string; btn: string }> = {
     danger: {
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        text: 'text-red-900',
-        iconBg: 'bg-red-100',
-        iconColor: 'text-red-600',
-        dot: 'bg-red-500',
+        bg: 'bg-rose-50/90 dark:bg-rose-950/30',
+        border: 'border-rose-200 dark:border-rose-900/50',
+        text: 'text-rose-950 dark:text-rose-200',
+        subtext: 'text-rose-800/90 dark:text-rose-300/80',
+        iconBg: 'bg-rose-100 dark:bg-rose-900/60',
+        iconColor: 'text-rose-600 dark:text-rose-300',
+        btn: 'bg-rose-600 hover:bg-rose-700 text-white dark:bg-rose-500 dark:hover:bg-rose-600',
     },
     warning: {
-        bg: 'bg-amber-50',
-        border: 'border-amber-200',
-        text: 'text-amber-900',
-        iconBg: 'bg-amber-100',
-        iconColor: 'text-amber-600',
-        dot: 'bg-amber-500',
+        bg: 'bg-amber-50/90 dark:bg-amber-950/30',
+        border: 'border-amber-200 dark:border-amber-900/50',
+        text: 'text-amber-950 dark:text-amber-200',
+        subtext: 'text-amber-800/90 dark:text-amber-300/80',
+        iconBg: 'bg-amber-100 dark:bg-amber-900/60',
+        iconColor: 'text-amber-600 dark:text-amber-300',
+        btn: 'bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500 dark:hover:bg-amber-600',
     },
     info: {
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
-        text: 'text-blue-900',
-        iconBg: 'bg-blue-100',
-        iconColor: 'text-blue-600',
-        dot: 'bg-blue-500',
+        bg: 'bg-blue-50/90 dark:bg-blue-950/30',
+        border: 'border-blue-200 dark:border-blue-900/50',
+        text: 'text-blue-950 dark:text-blue-200',
+        subtext: 'text-blue-800/90 dark:text-blue-300/80',
+        iconBg: 'bg-blue-100 dark:bg-blue-900/60',
+        iconColor: 'text-blue-600 dark:text-blue-300',
+        btn: 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600',
     },
 };
 
 const DEPARTURE_STATUS_BADGE: Record<string, string> = {
-    ready: 'bg-green-100 text-green-700',
-    locked: 'bg-gray-100 text-gray-700',
-    optimized: 'bg-indigo-100 text-indigo-700',
-    boarding: 'bg-blue-100 text-blue-700',
-    in_transit: 'bg-amber-100 text-amber-700',
+    ready: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+    locked: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
+    optimized: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300',
+    boarding: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300',
+    in_transit: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
 };
 
 const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Element }> = {
     order: {
-        bg: 'bg-green-100',
-        color: 'text-green-600',
+        bg: 'bg-emerald-100 dark:bg-emerald-900/40',
+        color: 'text-emerald-600 dark:text-emerald-400',
         svg: (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
@@ -251,8 +270,8 @@ const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Eleme
         ),
     },
     trip: {
-        bg: 'bg-blue-100',
-        color: 'text-blue-600',
+        bg: 'bg-blue-100 dark:bg-blue-900/40',
+        color: 'text-blue-600 dark:text-blue-400',
         svg: (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
@@ -260,8 +279,8 @@ const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Eleme
         ),
     },
     rental: {
-        bg: 'bg-emerald-100',
-        color: 'text-emerald-600',
+        bg: 'bg-teal-100 dark:bg-teal-900/40',
+        color: 'text-teal-600 dark:text-teal-400',
         svg: (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
@@ -269,17 +288,17 @@ const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Eleme
         ),
     },
     shuttle: {
-        bg: 'bg-indigo-100',
-        color: 'text-indigo-600',
+        bg: 'bg-indigo-100 dark:bg-indigo-900/40',
+        color: 'text-indigo-600 dark:text-indigo-400',
         svg: (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
             </svg>
         ),
     },
     invoice: {
-        bg: 'bg-amber-100',
-        color: 'text-amber-600',
+        bg: 'bg-amber-100 dark:bg-amber-900/40',
+        color: 'text-amber-600 dark:text-amber-400',
         svg: (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -287,8 +306,8 @@ const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Eleme
         ),
     },
     maintenance: {
-        bg: 'bg-red-100',
-        color: 'text-red-600',
+        bg: 'bg-purple-100 dark:bg-purple-900/40',
+        color: 'text-purple-600 dark:text-purple-400',
         svg: (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.384-3.115A1.61 1.61 0 015 10.654V6.69a1.61 1.61 0 011.036-1.401l5.384-3.115a1.61 1.61 0 011.16 0l5.384 3.115A1.61 1.61 0 0119 6.69v3.965a1.61 1.61 0 01-1.036 1.401l-5.384 3.115a1.61 1.61 0 01-1.16 0z" />
@@ -299,30 +318,42 @@ const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Eleme
 
 const QUICK_ACTION_ICONS: Record<string, JSX.Element> = {
     car: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
         </svg>
     ),
     ticket: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
         </svg>
     ),
     package: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
         </svg>
     ),
     'file-invoice': (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg>
+    ),
+    truck: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
+        </svg>
+    ),
+    wrench: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.06-3.02.816l-7.79 7.79a2.25 2.25 0 01-3.182-3.182l7.79-7.79c.756-.756.907-1.944.816-3.02A4.5 4.5 0 0117.25 2.25h1.5a.75.75 0 01.75.75v1.5a.75.75 0 00.75.75h1.5a.75.75 0 01.75.75v1.5z" />
+        </svg>
+    ),
+    'user-plus': (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.765z" />
         </svg>
     ),
 };
 
-// The workspace's configured currency symbol (ecommerce.currency_symbol), set
-// once from props at render time so the module-level formatCurrency can prefix
-// it without threading the symbol through every call site.
 let dashboardCurrencySymbol = 'Rp';
 
 function formatCurrency(value: number, localeTag: string): string {
@@ -335,13 +366,6 @@ function formatCurrency(value: number, localeTag: string): string {
 
 function formatNumber(value: number, localeTag: string): string {
     return new Intl.NumberFormat(localeTag === 'id' ? 'id-ID' : 'en-US').format(value);
-}
-
-// PAYG tier prices follow the workspace's configured currency symbol
-// (ecommerce.currency_symbol), not the UI locale, so the symbol is prefixed to
-// a plainly-grouped number rather than using locale-based currency formatting.
-function formatMoney(value: number, symbol: string, localeTag: string): string {
-    return `${symbol} ${formatNumber(Math.round(value), localeTag)}`;
 }
 
 function formatRelativeTime(
@@ -367,24 +391,31 @@ function SectionCard({
     title,
     subtitle,
     action,
+    badge,
     children,
+    className = '',
 }: {
     title: string;
     subtitle?: string;
     action?: { label: string; href: string };
+    badge?: React.ReactNode;
     children: React.ReactNode;
+    className?: string;
 }): JSX.Element {
     return (
-        <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            <header className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
-                <div>
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{title}</h3>
+        <section className={`overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all ${className}`}>
+            <header className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 px-6 py-4.5">
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{title}</h3>
+                        {badge}
+                    </div>
                     {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
                 </div>
                 {action && (
                     <Link
                         href={action.href}
-                        className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-800"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-700 dark:hover:text-indigo-300"
                     >
                         {action.label}
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -405,6 +436,7 @@ function KpiCard({
     icon,
     accent = 'indigo',
     footer,
+    href,
 }: {
     label: string;
     value: React.ReactNode;
@@ -412,18 +444,19 @@ function KpiCard({
     icon: JSX.Element;
     accent?: 'emerald' | 'red' | 'indigo' | 'amber';
     footer?: React.ReactNode;
+    href?: string | null;
 }): JSX.Element {
     const tintClasses = {
-        emerald: 'from-emerald-50/80 dark:from-emerald-950/20',
-        red: 'from-rose-50/80 dark:from-rose-950/20',
-        indigo: 'from-indigo-50/80 dark:from-indigo-950/20',
-        amber: 'from-amber-50/80 dark:from-amber-950/20',
+        emerald: 'from-emerald-50/80 dark:from-emerald-950/25 hover:border-emerald-300 dark:hover:border-emerald-800',
+        red: 'from-rose-50/80 dark:from-rose-950/25 hover:border-rose-300 dark:hover:border-rose-800',
+        indigo: 'from-indigo-50/80 dark:from-indigo-950/25 hover:border-indigo-300 dark:hover:border-indigo-800',
+        amber: 'from-amber-50/80 dark:from-amber-950/25 hover:border-amber-300 dark:hover:border-amber-800',
     } as const;
     const iconClasses = {
-        emerald: 'bg-emerald-100/70 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300',
-        red: 'bg-rose-100/70 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300',
-        indigo: 'bg-indigo-100/70 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300',
-        amber: 'bg-amber-100/70 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
+        emerald: 'bg-emerald-100/80 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300',
+        red: 'bg-rose-100/80 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300',
+        indigo: 'bg-indigo-100/80 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300',
+        amber: 'bg-amber-100/80 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300',
     } as const;
     const accentTextClasses = {
         emerald: 'text-emerald-600 dark:text-emerald-400',
@@ -432,33 +465,41 @@ function KpiCard({
         amber: 'text-amber-600 dark:text-amber-400',
     } as const;
 
-    return (
-        <div
-            className={`group relative overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-gradient-to-br ${tintClasses[accent]} to-white to-60% dark:to-slate-900 p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}
-        >
-            <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
-                    <div className="mt-2.5 text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white">
-                        {value}
+    const content = (
+        <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+                <div className="mt-2 text-2xl sm:text-3xl font-black tracking-tight tabular-nums text-slate-900 dark:text-white">
+                    {value}
+                </div>
+                {subValue && (
+                    <div className="mt-1.5 flex items-baseline gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        {subValue}
                     </div>
-                    {subValue && (
-                        <div className="mt-1.5 flex items-baseline gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            {subValue}
-                        </div>
-                    )}
-                    {footer && (
-                        <div className={`mt-3 inline-flex items-center gap-1 text-xs font-bold ${accentTextClasses[accent]}`}>
-                            {footer}
-                        </div>
-                    )}
-                </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconClasses[accent]} transition-transform duration-300 group-hover:scale-105`}>
-                    {icon}
-                </div>
+                )}
+                {footer && (
+                    <div className={`mt-3 inline-flex items-center gap-1 text-xs font-bold ${accentTextClasses[accent]}`}>
+                        {footer}
+                    </div>
+                )}
+            </div>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${iconClasses[accent]} transition-transform duration-300 group-hover:scale-105 shadow-xs`}>
+                {icon}
             </div>
         </div>
     );
+
+    const baseClass = `group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br ${tintClasses[accent]} to-white to-60% dark:to-slate-900 p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md block`;
+
+    if (href) {
+        return (
+            <Link href={href} className={baseClass}>
+                {content}
+            </Link>
+        );
+    }
+
+    return <div className={baseClass}>{content}</div>;
 }
 
 function MiniStat({
@@ -467,23 +508,40 @@ function MiniStat({
     unit,
     subLabel,
     danger,
+    warning,
+    success,
+    icon,
 }: {
     label: string;
     value: string | number;
     unit?: string;
     subLabel?: string;
     danger?: boolean;
+    warning?: boolean;
+    success?: boolean;
+    icon?: React.ReactNode;
 }): JSX.Element {
+    const textColor = danger
+        ? 'text-rose-600 dark:text-rose-400'
+        : warning
+        ? 'text-amber-600 dark:text-amber-400'
+        : success
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-slate-900 dark:text-white';
+
     return (
-        <div className="rounded-xl bg-gray-50 p-4">
-            <div className="text-xs font-medium text-gray-500">{label}</div>
-            <div className="mt-1.5 flex items-baseline gap-1.5">
-                <span className={`text-xl font-bold tabular-nums ${danger ? 'text-red-600' : 'text-gray-900'}`}>
+        <div className="rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/50 p-4 transition-colors">
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</span>
+                {icon && <span className="text-slate-400 dark:text-slate-500">{icon}</span>}
+            </div>
+            <div className="mt-2 flex items-baseline gap-1.5">
+                <span className={`text-xl sm:text-2xl font-extrabold tabular-nums tracking-tight ${textColor}`}>
                     {value}
                 </span>
-                {unit && <span className="text-xs text-gray-400">{unit}</span>}
+                {unit && <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{unit}</span>}
             </div>
-            {subLabel && <div className="mt-1 text-xs text-gray-400">{subLabel}</div>}
+            {subLabel && <div className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{subLabel}</div>}
         </div>
     );
 }
@@ -516,8 +574,7 @@ export default function Dashboard({
     const hasFinance = !!(finance.revenue_by_line || finance.invoices);
     const hasFleetGlobal = Object.keys(fleetGlobal).length > 0;
     const hasCms = !!(stats.posts || stats.pages || stats.carousels);
-    const hasModulesData = !!(modules.shuttle || modules.rental || modules.logistics);
-    const showAttention = alerts.length > 0 || quickActions.length > 0;
+    const hasModulesData = !!(modules.shuttle || modules.rental || modules.logistics || modules.maintenance);
 
     const changePeriod = (key: string) => {
         router.get(route('module.dashboard'), { period: key }, { preserveState: true, preserveScroll: true });
@@ -530,6 +587,15 @@ export default function Dashboard({
         return t('dashboard.greeting.evening');
     };
 
+    const todayFormatted = useMemo(() => {
+        return new Date().toLocaleDateString(localeTag === 'id' ? 'id-ID' : 'en-US', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+    }, [localeTag]);
+
     const dashboardTitle = primaryRole
         ? t('dashboard.title_with_role', { role: primaryRole.name })
         : t('dashboard.title');
@@ -539,21 +605,23 @@ export default function Dashboard({
             header={
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{dashboardTitle}</h2>
+                        <h2 className="text-xl font-bold leading-tight text-slate-800 dark:text-white">{dashboardTitle}</h2>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{todayFormatted}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <div className="inline-flex items-center gap-2 rounded-xl bg-gray-50 p-1 ring-1 ring-gray-200">
-                            <div className="pl-2 text-xs font-medium text-gray-500">
-                                {t('dashboard.filters.period')}
-                            </div>
+                        <div className="inline-flex items-center gap-1 rounded-2xl bg-white dark:bg-slate-800 p-1 border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
+                            <span className="px-2.5 text-xs font-semibold text-slate-400 dark:text-slate-400">
+                                {t('dashboard.filters.period')}:
+                            </span>
                             {filters.periods.map((opt) => (
                                 <button
                                     key={opt.key}
                                     onClick={() => changePeriod(opt.key)}
-                                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${period === opt.key
-                                        ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                        }`}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                                        period === opt.key
+                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60'
+                                    }`}
                                 >
                                     {opt.label}
                                 </button>
@@ -566,51 +634,145 @@ export default function Dashboard({
             <Head title={dashboardTitle} />
 
             <div className="space-y-8">
-                <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 px-6 py-8 text-white shadow-lg">
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-white/60">{getGreeting()}</p>
-                            <h1 className="mt-1 text-3xl font-bold tracking-tight">{user.name}</h1>
-                            {primaryRole && (
-                                <p className="mt-1.5 text-sm text-white/70">
-                                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium ring-1 ring-white/20">
+                {/* Executive Welcome & Action Hero Banner */}
+                <div className="relative overflow-hidden rounded-3xl border border-indigo-900/40 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-lg">
+                    {/* Background Soft Ambient Lights */}
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/10 blur-3xl" />
+                    <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-gradient-to-tr from-emerald-500/15 to-indigo-500/15 blur-3xl" />
+
+                    <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="max-w-xl">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-white/15 backdrop-blur-md">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    {todayFormatted}
+                                </span>
+                                {primaryRole && (
+                                    <span className="inline-flex items-center rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-bold text-indigo-300 ring-1 ring-indigo-400/30">
                                         {primaryRole.name}
                                     </span>
-                                    <span className="ml-2">&middot; {user.roles.join(', ')}</span>
-                                </p>
-                            )}
+                                )}
+                            </div>
+                            <h1 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+                                {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-indigo-300">{user.name}</span>
+                            </h1>
+                            <p className="mt-1.5 text-xs sm:text-sm text-slate-300/90 leading-relaxed">
+                                {alerts.length > 0
+                                    ? `${alerts.length} item operasional memerlukan tindak lanjut Anda hari ini.`
+                                    : t('dashboard.alerts.all_operational_good_desc', undefined, 'Semua armada dan operasional Anda terpantau siap dan berjalan lancar.')}
+                            </p>
                         </div>
+
+                        {/* Quick Actions Strip */}
                         {quickActions.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {quickActions.map((qa) => (
-                                    qa.route ? (
-                                        <Link
-                                            key={qa.key}
-                                            href={qa.route}
-                                            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-all hover:bg-white/90 hover:shadow-md active:scale-[0.98]"
-                                        >
-                                            <span className="text-indigo-600">
-                                                {QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-200/80">
+                                    {t('dashboard.quick_actions.quick_actions_bar', undefined, 'Aksi Cepat Operasional')}
+                                </span>
+                                <div className="flex flex-wrap gap-2.5">
+                                    {quickActions.map((qa) =>
+                                        qa.route ? (
+                                            <Link
+                                                key={qa.key}
+                                                href={qa.route}
+                                                className="inline-flex items-center gap-2 rounded-2xl bg-white/95 dark:bg-slate-800/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-white shadow-sm ring-1 ring-white/20 transition-all hover:bg-white dark:hover:bg-slate-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+                                            >
+                                                <span className="text-indigo-600 dark:text-indigo-400">
+                                                    {QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}
+                                                </span>
+                                                <span>{qa.label}</span>
+                                            </Link>
+                                        ) : (
+                                            <span
+                                                key={qa.key}
+                                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-medium text-white/50"
+                                            >
+                                                <span>{QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}</span>
+                                                <span>{qa.label}</span>
                                             </span>
-                                            {qa.label}
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            key={qa.key}
-                                            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-white/20 px-4 py-2.5 text-sm font-semibold text-white/70"
-                                        >
-                                            <span>{QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}</span>
-                                            {qa.label}
-                                        </span>
-                                    )
-                                ))}
+                                        )
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
 
+                {/* Onboarding Guide (Shown when fleet or contacts need initial setup) */}
                 <DashboardOnboardingCTA onboarding={onboarding} />
 
+                {/* Attention Center & Operational Alerts */}
+                {alerts.length > 0 ? (
+                    <SectionCard
+                        title={t('dashboard.sections.attention_center', undefined, 'Pusat Perhatian & Aksi Mendesak')}
+                        subtitle={`${alerts.length} ${t('dashboard.kpi.action_needed', { count: alerts.length }).toLowerCase()}`}
+                        badge={
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 px-2.5 py-0.5 text-xs font-black text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/20">
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                {alerts.length} Perlu Tindakan
+                            </span>
+                        }
+                    >
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {alerts.map((alert, i) => {
+                                const style = ALERT_STYLES[alert.severity] ?? ALERT_STYLES.info;
+                                return (
+                                    <div
+                                        key={`${alert.module}-${i}`}
+                                        className={`flex flex-col justify-between gap-3 rounded-2xl border ${style.border} ${style.bg} p-4 transition-all hover:shadow-sm`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${style.iconBg} ${style.iconColor}`}>
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                                </svg>
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className={`text-xs sm:text-sm font-bold leading-tight ${style.text}`}>
+                                                    {alert.title}
+                                                </div>
+                                                <div className={`mt-1 text-xs leading-relaxed ${style.subtext}`}>
+                                                    {alert.message}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {alert.action_url && (
+                                            <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800/60 flex justify-end">
+                                                <Link
+                                                    href={alert.action_url}
+                                                    className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold ${style.btn} shadow-xs transition-transform active:scale-95`}
+                                                >
+                                                    <span>{alert.action_label ?? t('dashboard.kpi.view_details', undefined, 'Tindak Lanjuti →')}</span>
+                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                    </svg>
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </SectionCard>
+                ) : (
+                    <div className="flex items-center gap-3.5 rounded-3xl border border-emerald-200/80 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-950/20 px-6 py-4 shadow-xs">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-extrabold text-emerald-950 dark:text-emerald-200">
+                                {t('dashboard.alerts.all_operational_good', undefined, 'Semua Operasional Berjalan Lancar')}
+                            </h3>
+                            <p className="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/70">
+                                {t('dashboard.alerts.all_operational_good_desc', undefined, 'Tidak ada unit sewa overdue, jadwal tanpa supir, atau dokumen pajak yang membutuhkan tindakan mendesak saat ini.')}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Top-Level Executive KPI Cards */}
                 {hasKpis && (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {kpis.revenue && (
@@ -618,8 +780,9 @@ export default function Dashboard({
                                 label={t('dashboard.kpi.revenue')}
                                 value={formatCurrency(kpis.revenue.value, localeTag)}
                                 accent="emerald"
+                                href={kpis.revenue.action_url}
                                 icon={
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 }
@@ -637,30 +800,39 @@ export default function Dashboard({
                             <KpiCard
                                 label={t('dashboard.kpi.outstanding')}
                                 value={formatCurrency(kpis.outstanding.value, localeTag)}
-                                subValue={kpis.outstanding.overdue_count > 0
-                                    ? <span className="font-semibold text-rose-600 dark:text-rose-400">{kpis.outstanding.overdue_label}</span>
-                                    : undefined}
+                                href={kpis.outstanding.action_url}
+                                subValue={kpis.outstanding.overdue_count > 0 ? (
+                                    <span className="font-bold text-rose-600 dark:text-rose-400">
+                                        {kpis.outstanding.overdue_label}
+                                    </span>
+                                ) : undefined}
                                 accent="red"
                                 icon={
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                                     </svg>
                                 }
+                                footer={kpis.outstanding.action_url ? (
+                                    <span>{t('dashboard.actions.manage_invoices', undefined, 'Kelola Tagihan →')}</span>
+                                ) : undefined}
                             />
                         )}
                         {kpis.fleet_utilization && (
                             <KpiCard
                                 label={t('dashboard.kpi.fleet_utilization')}
                                 value={`${kpis.fleet_utilization.percent}%`}
+                                href={kpis.fleet_utilization.action_url}
                                 subValue={
                                     <>
-                                        <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
                                             {kpis.fleet_utilization.in_use}/{kpis.fleet_utilization.total_active}
                                         </span>
-                                        <span>{t('dashboard.kpi.unit_in_use', {
-                                            in_use: kpis.fleet_utilization.in_use,
-                                            total_active: kpis.fleet_utilization.total_active,
-                                        })}</span>
+                                        <span>
+                                            {t('dashboard.kpi.unit_in_use', {
+                                                in_use: kpis.fleet_utilization.in_use,
+                                                total_active: kpis.fleet_utilization.total_active,
+                                            })}
+                                        </span>
                                     </>
                                 }
                                 accent="indigo"
@@ -668,7 +840,7 @@ export default function Dashboard({
                                     <span>{t('dashboard.kpi.idle_ready', { count: kpis.fleet_utilization.idle_count })}</span>
                                 }
                                 icon={
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
                                     </svg>
                                 }
@@ -678,123 +850,36 @@ export default function Dashboard({
                             <KpiCard
                                 label={t('dashboard.kpi.compliance')}
                                 value={kpis.compliance.action_count}
+                                href={kpis.compliance.action_url}
                                 subValue={
-                                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                                    <span className="font-bold text-amber-600 dark:text-amber-400">
                                         {t('dashboard.kpi.action_needed', { count: kpis.compliance.action_count })}
                                     </span>
                                 }
                                 accent="amber"
                                 icon={
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                     </svg>
                                 }
+                                footer={kpis.compliance.details[0]?.label}
                             />
                         )}
                     </div>
                 )}
 
-                {hasFinance && (
-                    <SectionCard
-                        title={t('dashboard.sections.finance_invoice')}
-                        subtitle={t('dashboard.sections.revenue_per_line') + ' & ' + t('dashboard.sections.invoice_status')}
-                    >
-                        <div className="grid gap-8 lg:grid-cols-5">
-                            {finance.revenue_by_line && finance.revenue_by_line.length > 0 && (
-                                <div className="space-y-4 lg:col-span-3">
-                                    <h4 className="text-sm font-semibold text-gray-900">
-                                        {t('dashboard.sections.revenue_per_line')}
-                                    </h4>
-                                    <div className="space-y-4">
-                                        {finance.revenue_by_line.map((line) => (
-                                            <div key={line.key}>
-                                                <div className="mb-1.5 flex items-center justify-between text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`h-2.5 w-2.5 rounded-full ${LINE_COLORS[line.key] ?? 'bg-gray-500'}`} />
-                                                        <span className="font-medium text-gray-700">{line.label}</span>
-                                                    </div>
-                                                    <div className="flex items-baseline gap-2">
-                                                        <span className="font-bold tabular-nums text-gray-900">
-                                                            {formatCurrency(line.amount, localeTag)}
-                                                        </span>
-                                                        <span className="text-xs font-semibold tabular-nums text-gray-500">
-                                                            {line.percent}%
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
-                                                    <div
-                                                        className={`h-full rounded-full ${LINE_COLORS[line.key] ?? 'bg-gray-500'} transition-all`}
-                                                        style={{ width: `${Math.max(line.percent, 0)}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {finance.revenue_chart && finance.revenue_chart.length > 0 && (
-                                        <div className="mt-6 border-t border-gray-100 pt-6">
-                                            <div className="mb-3 flex items-end gap-2" style={{ height: 140 }}>
-                                                {finance.revenue_chart.map((d, i) => {
-                                                    const maxAmount = Math.max(...finance.revenue_chart!.map((x) => x.amount), 1);
-                                                    const height = (d.amount / maxAmount) * 110;
-                                                    return (
-                                                        <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                                                            <div className="text-[10px] font-medium tabular-nums text-gray-500">
-                                                                {formatCurrency(d.amount, localeTag).replace(/[A-Za-z$.,\s]/g, '').length > 4
-                                                                    ? Math.round(d.amount / 1_000_000) + 'M'
-                                                                    : formatCurrency(d.amount, localeTag).replace(/Rp|\.|USD|\$/g, '').slice(0, 5)}
-                                                            </div>
-                                                            <div
-                                                                className="w-full rounded-t-lg bg-gradient-to-t from-indigo-500 to-indigo-400 transition-all hover:from-indigo-600 hover:to-indigo-500"
-                                                                style={{ height: `${Math.max(height, 4)}px` }}
-                                                            />
-                                                            <div className="text-[11px] font-medium text-gray-600">{d.month}</div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {finance.invoices && (
-                                <div className="lg:col-span-2">
-                                    <h4 className="mb-4 text-sm font-semibold text-gray-900">
-                                        {t('dashboard.sections.invoice_status')}
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.draft')}
-                                            value={finance.invoices.draft}
-                                        />
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.issued')}
-                                            value={finance.invoices.issued}
-                                        />
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.paid')}
-                                            value={finance.invoices.paid}
-                                        />
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.overdue')}
-                                            value={finance.invoices.overdue}
-                                            danger={finance.invoices.overdue > 0}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </SectionCard>
-                )}
-
+                {/* Active Vertical Modules (Adaptive Grid) */}
                 {hasModulesData && (
-                    <div className="grid gap-6 xl:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                        {/* Shuttle / Travel Module */}
                         {modules.shuttle && (
                             <SectionCard
                                 title={t('dashboard.sections.shuttle_ops')}
-                                action={routeExists('module.shuttle.departures.index')
-                                    ? { label: t('dashboard.actions.view_all'), href: route(resolveNamedRoute('module.shuttle.departures.index')) }
-                                    : undefined}
+                                action={
+                                    routeExists('module.shuttle.departures.index')
+                                        ? { label: t('dashboard.actions.view_all'), href: route(resolveNamedRoute('module.shuttle.departures.index')) }
+                                        : undefined
+                                }
                             >
                                 <div className="grid grid-cols-2 gap-3 mb-5">
                                     <MiniStat
@@ -809,40 +894,39 @@ export default function Dashboard({
                                             booked: modules.shuttle.booked_seats,
                                             total: modules.shuttle.total_seats,
                                         })}
+                                        success={modules.shuttle.occupancy_percent >= 70}
+                                        warning={modules.shuttle.occupancy_percent < 70 && modules.shuttle.occupancy_percent >= 40}
                                     />
                                 </div>
                                 {modules.shuttle.upcoming_departures.length > 0 ? (
                                     <div className="space-y-2">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                             {t('dashboard.sections.upcoming_departures')}
                                         </div>
-                                        <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100">
+                                        <div className="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
                                             {modules.shuttle.upcoming_departures.map((dep) => (
-                                                <div key={dep.id} className="flex items-center justify-between gap-3 p-3 hover:bg-gray-50">
+                                                <div key={dep.id} className="flex items-center justify-between gap-3 p-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60">
                                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        <div className="shrink-0 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold tabular-nums text-indigo-700 ring-1 ring-indigo-100">
+                                                        <div className="shrink-0 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 text-xs font-extrabold tabular-nums text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-200 dark:ring-indigo-800/40">
                                                             {dep.time}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <div className="truncate text-sm font-semibold text-gray-900">
+                                                            <div className="truncate text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                                                                 {dep.route}
                                                             </div>
-                                                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
-                                                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                                                                </svg>
+                                                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                                                 <span className="tabular-nums">
                                                                     {dep.seats_booked}/{dep.seats_total} {t('dashboard.shuttle.seat_unit')}
                                                                 </span>
                                                                 {!dep.has_driver && (
-                                                                    <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+                                                                    <span className="inline-flex items-center rounded-full bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-300">
                                                                         ! No Driver
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${DEPARTURE_STATUS_BADGE[dep.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                                    <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${DEPARTURE_STATUS_BADGE[dep.status] ?? 'bg-slate-100 text-slate-700'}`}>
                                                         {t(`dashboard.departure_status.${dep.status}`, { defaultValue: dep.status })}
                                                     </span>
                                                 </div>
@@ -853,19 +937,23 @@ export default function Dashboard({
                             </SectionCard>
                         )}
 
+                        {/* Rental Module */}
                         {modules.rental && (
                             <SectionCard
                                 title={t('dashboard.sections.rental')}
                                 subtitle={t('dashboard.sections.rental_status')}
-                                action={routeExists('module.rental.index')
-                                    ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.rental.index')) }
-                                    : undefined}
+                                action={
+                                    routeExists('module.rental.index')
+                                        ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.rental.index')) }
+                                        : undefined
+                                }
                             >
                                 <div className="grid grid-cols-3 gap-3">
                                     <MiniStat
                                         label={t('dashboard.rental_unit.currently_rented')}
                                         value={modules.rental.currently_rented}
                                         unit={t('dashboard.rental_unit.unit_vehicles')}
+                                        success={modules.rental.currently_rented > 0}
                                     />
                                     <MiniStat
                                         label={t('dashboard.rental_unit.idle_ready')}
@@ -883,7 +971,7 @@ export default function Dashboard({
                                     {[
                                         { label: t('dashboard.rental_unit.currently_rented'), count: modules.rental.currently_rented, color: 'bg-emerald-500' },
                                         { label: t('dashboard.rental_unit.idle_ready'), count: modules.rental.idle_ready, color: 'bg-indigo-500' },
-                                        { label: t('dashboard.rental_unit.overdue'), count: modules.rental.overdue_count, color: 'bg-red-500' },
+                                        { label: t('dashboard.rental_unit.overdue'), count: modules.rental.overdue_count, color: 'bg-rose-500' },
                                     ].map((item) => {
                                         const total = modules.rental!.currently_rented + modules.rental!.idle_ready + modules.rental!.overdue_count;
                                         return (
@@ -891,13 +979,13 @@ export default function Dashboard({
                                                 <div className="mb-1 flex items-center justify-between text-xs">
                                                     <span className="flex items-center gap-1.5">
                                                         <span className={`h-2 w-2 rounded-full ${item.color}`} />
-                                                        <span className="font-medium text-gray-600">{item.label}</span>
+                                                        <span className="font-medium text-slate-600 dark:text-slate-400">{item.label}</span>
                                                     </span>
-                                                    <span className="font-semibold tabular-nums text-gray-900">{item.count}</span>
+                                                    <span className="font-bold tabular-nums text-slate-900 dark:text-white">{item.count}</span>
                                                 </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                                                <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                                     <div
-                                                        className={`h-full rounded-full ${item.color}`}
+                                                        className={`h-full rounded-full ${item.color} transition-all duration-500`}
                                                         style={{ width: `${total > 0 ? (item.count / total) * 100 : 0}%` }}
                                                     />
                                                 </div>
@@ -908,13 +996,16 @@ export default function Dashboard({
                             </SectionCard>
                         )}
 
+                        {/* Logistics Module */}
                         {modules.logistics && (
                             <SectionCard
                                 title={t('dashboard.sections.logistics')}
                                 subtitle={t('dashboard.sections.logistics_status')}
-                                action={routeExists('module.orders.index')
-                                    ? { label: t('dashboard.actions.view_all'), href: route(resolveNamedRoute('module.orders.index')) }
-                                    : undefined}
+                                action={
+                                    routeExists('module.orders.index')
+                                        ? { label: t('dashboard.actions.view_all'), href: route(resolveNamedRoute('module.orders.index')) }
+                                        : undefined
+                                }
                             >
                                 <div className="grid grid-cols-3 gap-3">
                                     <MiniStat
@@ -926,11 +1017,13 @@ export default function Dashboard({
                                         label={t('dashboard.logistics_unit.in_transit')}
                                         value={modules.logistics.in_transit}
                                         unit={t('dashboard.logistics_unit.unit_shipments')}
+                                        warning={modules.logistics.in_transit > 0}
                                     />
                                     <MiniStat
                                         label={t('dashboard.logistics_unit.delivered_pod')}
                                         value={modules.logistics.delivered_pod}
                                         unit={t('dashboard.logistics_unit.unit_shipments')}
+                                        success={modules.logistics.delivered_pod > 0}
                                     />
                                 </div>
                                 <div className="mt-5 space-y-3">
@@ -944,13 +1037,13 @@ export default function Dashboard({
                                                 <div className="mb-1 flex items-center justify-between text-xs">
                                                     <span className="flex items-center gap-1.5">
                                                         <span className={`h-2 w-2 rounded-full ${item.color}`} />
-                                                        <span className="font-medium text-gray-600">{item.label}</span>
+                                                        <span className="font-medium text-slate-600 dark:text-slate-400">{item.label}</span>
                                                     </span>
-                                                    <span className="font-semibold tabular-nums text-gray-900">{item.count}</span>
+                                                    <span className="font-bold tabular-nums text-slate-900 dark:text-white">{item.count}</span>
                                                 </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                                                <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                                     <div
-                                                        className={`h-full rounded-full ${item.color}`}
+                                                        className={`h-full rounded-full ${item.color} transition-all duration-500`}
                                                         style={{ width: `${total > 0 ? (item.count / total) * 100 : 0}%` }}
                                                     />
                                                 </div>
@@ -960,32 +1053,89 @@ export default function Dashboard({
                                 </div>
                             </SectionCard>
                         )}
+
+                        {/* Maintenance & Servis Module */}
+                        {modules.maintenance && (
+                            <SectionCard
+                                title={t('dashboard.sections.maintenance', undefined, 'Modul: Servis & Bengkel')}
+                                subtitle={t('dashboard.sections.maintenance_status', undefined, 'Status Work Order & Perawatan')}
+                                action={
+                                    routeExists('module.maintenance.work-orders.index')
+                                        ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.maintenance.work-orders.index')) }
+                                        : undefined
+                                }
+                            >
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                    <MiniStat
+                                        label={t('dashboard.maintenance.open_orders', undefined, 'WO Aktif')}
+                                        value={modules.maintenance.open_orders}
+                                        unit={t('dashboard.maintenance.unit_orders', undefined, 'WO')}
+                                    />
+                                    <MiniStat
+                                        label={t('dashboard.maintenance.in_progress', undefined, 'Dikerjakan')}
+                                        value={modules.maintenance.in_progress}
+                                        unit={t('dashboard.maintenance.unit_orders', undefined, 'WO')}
+                                        warning={modules.maintenance.in_progress > 0}
+                                    />
+                                    <MiniStat
+                                        label={t('dashboard.maintenance.overdue', undefined, 'Overdue')}
+                                        value={modules.maintenance.overdue_count}
+                                        unit={t('dashboard.maintenance.unit_orders', undefined, 'WO')}
+                                        danger={modules.maintenance.overdue_count > 0}
+                                    />
+                                    <MiniStat
+                                        label={t('dashboard.maintenance.completed_period', undefined, 'Selesai')}
+                                        value={modules.maintenance.completed_period}
+                                        unit={t('dashboard.maintenance.unit_orders', undefined, 'WO')}
+                                        success={modules.maintenance.completed_period > 0}
+                                    />
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        Perawatan rutin menjaga unit tetap prima & prima disewa
+                                    </span>
+                                    {routeExists('module.maintenance.work-orders.create') && (
+                                        <Link
+                                            href={route(resolveNamedRoute('module.maintenance.work-orders.create'))}
+                                            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                        >
+                                            + Catat Servis
+                                        </Link>
+                                    )}
+                                </div>
+                            </SectionCard>
+                        )}
                     </div>
                 )}
 
+                {/* Global Fleet Monitoring Card */}
                 {hasFleetGlobal && (
                     <SectionCard
                         title={t('dashboard.sections.fleet_global')}
-                        action={routeExists('module.fleet.vehicles.index')
-                            ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.fleet.vehicles.index')) }
-                            : undefined}
+                        action={
+                            routeExists('module.fleet.vehicles.index')
+                                ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.fleet.vehicles.index')) }
+                                : undefined
+                        }
                     >
-                        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                             <MiniStat
                                 label={t('dashboard.fleet_global.active')}
                                 value={fleetGlobal.vehicles_active}
                                 unit={t('dashboard.fleet_global.unit_vehicles')}
-                                subLabel=""
+                                success={fleetGlobal.vehicles_active > 0}
                             />
                             <MiniStat
                                 label={t('dashboard.fleet_global.maintenance')}
                                 value={fleetGlobal.vehicles_maintenance}
                                 unit={t('dashboard.fleet_global.unit_vehicles')}
+                                warning={fleetGlobal.vehicles_maintenance > 0}
                             />
                             <MiniStat
                                 label={t('dashboard.fleet_global.drivers_ready')}
                                 value={fleetGlobal.drivers_ready}
                                 unit={t('dashboard.fleet_global.unit_people')}
+                                success={fleetGlobal.drivers_ready > 0}
                             />
                             <MiniStat
                                 label={t('dashboard.fleet_global.drivers_leave')}
@@ -1001,87 +1151,173 @@ export default function Dashboard({
                     </SectionCard>
                 )}
 
-                {showAttention && (
-                    <div className="grid gap-6 lg:grid-cols-5">
-                        {alerts.length > 0 && (
-                            <div className="lg:col-span-3">
-                                <SectionCard
-                                    title={t('dashboard.sections.operational_alerts')}
-                                    subtitle={`${alerts.length} ${t('dashboard.kpi.action_needed', { count: alerts.length }).toLowerCase()}`}
-                                >
-                                    <div className="space-y-3">
-                                        {alerts.map((alert, i) => {
-                                            const style = ALERT_STYLES[alert.severity] ?? ALERT_STYLES.info;
-                                            return (
-                                                <div
-                                                    key={`${alert.module}-${i}`}
-                                                    className={`flex items-start gap-4 rounded-xl border ${style.border} ${style.bg} p-4 transition-all hover:shadow-sm`}
-                                                >
-                                                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.iconBg} ${style.iconColor}`}>
-                                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                                                        </svg>
+                {/* Finance & Invoices Performance */}
+                {hasFinance && (
+                    <SectionCard
+                        title={t('dashboard.sections.finance_invoice')}
+                        subtitle={t('dashboard.sections.revenue_per_line') + ' & ' + t('dashboard.sections.invoice_status')}
+                        action={
+                            routeExists('module.invoicing.invoices.index')
+                                ? { label: t('dashboard.actions.manage_invoices'), href: route(resolveNamedRoute('module.invoicing.invoices.index')) }
+                                : undefined
+                        }
+                    >
+                        <div className="grid gap-8 lg:grid-cols-5">
+                            {finance.revenue_by_line && finance.revenue_by_line.length > 0 && (
+                                <div className="space-y-4 lg:col-span-3">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        {t('dashboard.sections.revenue_per_line')}
+                                    </h4>
+                                    <div className="space-y-3.5">
+                                        {finance.revenue_by_line.map((line) => (
+                                            <div key={line.key}>
+                                                <div className="mb-1.5 flex items-center justify-between text-xs sm:text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`h-2.5 w-2.5 rounded-full ${LINE_COLORS[line.key] ?? 'bg-slate-400'}`} />
+                                                        <span className="font-semibold text-slate-700 dark:text-slate-200">{line.label}</span>
                                                     </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className={`text-sm font-semibold ${style.text}`}>
-                                                            {alert.title}
-                                                        </div>
-                                                        <div className="mt-0.5 text-sm text-gray-700/90">
-                                                            {alert.message}
-                                                        </div>
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                                                            {formatCurrency(line.amount, localeTag)}
+                                                        </span>
+                                                        <span className="text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+                                                            {line.percent}%
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+                                                <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                                    <div
+                                                        className={`h-full rounded-full ${LINE_COLORS[line.key] ?? 'bg-slate-500'} transition-all duration-500`}
+                                                        style={{ width: `${Math.max(line.percent, 0)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                </SectionCard>
-                            </div>
-                        )}
 
-                        {recentActivity.length > 0 && (
-                            <div className="lg:col-span-2">
-                                <SectionCard title={t('dashboard.sections.recent_activity')}>
-                                    <div className="max-h-[400px] space-y-0.5 overflow-y-auto -mx-2">
-                                        {recentActivity.map((act, i) => {
-                                            const iconSet = ACTIVITY_ICONS[act.type] ?? ACTIVITY_ICONS.order;
-                                            return (
-                                                <div key={i} className="flex items-start gap-3 rounded-xl px-2 py-2.5 hover:bg-gray-50">
-                                                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconSet.bg} ${iconSet.color}`}>
-                                                        {iconSet.svg}
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-sm text-gray-900 leading-snug">{act.description}</p>
-                                                        <p className="mt-0.5 text-xs text-gray-400 tabular-nums">
-                                                            {formatRelativeTime(act.time, t, localeTag)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                    {/* 6-Month Revenue Bar Chart */}
+                                    {finance.revenue_chart && finance.revenue_chart.length > 0 && (
+                                        <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                                {t('dashboard.sections.monthly_revenue', undefined, 'Tren Revenue 6 Bulan')}
+                                            </div>
+                                            <div className="flex items-end gap-2 sm:gap-3" style={{ height: 140 }}>
+                                                {finance.revenue_chart.map((d, i) => {
+                                                    const maxAmount = Math.max(...finance.revenue_chart!.map((x) => x.amount), 1);
+                                                    const height = (d.amount / maxAmount) * 110;
+                                                    return (
+                                                        <div key={i} className="flex flex-1 flex-col items-center gap-1 group">
+                                                            <div className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-slate-400 opacity-80 group-hover:opacity-100">
+                                                                {d.amount >= 1_000_000
+                                                                    ? `${(d.amount / 1_000_000).toFixed(1)}M`
+                                                                    : d.amount >= 1_000
+                                                                    ? `${Math.round(d.amount / 1_000)}k`
+                                                                    : d.amount}
+                                                            </div>
+                                                            <div
+                                                                className="w-full rounded-t-xl bg-gradient-to-t from-indigo-600 to-indigo-400 dark:from-indigo-700 dark:to-indigo-500 transition-all duration-300 group-hover:from-indigo-500 group-hover:to-indigo-300 shadow-xs"
+                                                                style={{ height: `${Math.max(height, 6)}px` }}
+                                                            />
+                                                            <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{d.month}</div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Invoice Summary Status */}
+                            {finance.invoices && (
+                                <div className="lg:col-span-2">
+                                    <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        {t('dashboard.sections.invoice_status')}
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniStat
+                                            label={t('dashboard.invoice_status_summary.draft')}
+                                            value={finance.invoices.draft}
+                                        />
+                                        <MiniStat
+                                            label={t('dashboard.invoice_status_summary.issued')}
+                                            value={finance.invoices.issued}
+                                            warning={finance.invoices.issued > 0}
+                                        />
+                                        <MiniStat
+                                            label={t('dashboard.invoice_status_summary.paid')}
+                                            value={finance.invoices.paid}
+                                            success={finance.invoices.paid > 0}
+                                        />
+                                        <MiniStat
+                                            label={t('dashboard.invoice_status_summary.overdue')}
+                                            value={finance.invoices.overdue}
+                                            danger={finance.invoices.overdue > 0}
+                                        />
                                     </div>
-                                </SectionCard>
-                            </div>
-                        )}
+                                </div>
+                            )}
+                        </div>
+                    </SectionCard>
+                )}
+
+                {/* Recent Activity Timeline */}
+                {recentActivity.length > 0 && (
+                    <SectionCard
+                        title={t('dashboard.sections.recent_activity')}
+                        subtitle="Aktivitas operasional real-time terbaru"
+                    >
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800 -mx-3">
+                            {recentActivity.map((act, i) => {
+                                const iconSet = ACTIVITY_ICONS[act.type] ?? ACTIVITY_ICONS.order;
+                                return (
+                                    <div key={i} className="flex items-center gap-3.5 px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors">
+                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconSet.bg} ${iconSet.color}`}>
+                                            {iconSet.svg}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                                                {act.description}
+                                            </p>
+                                            <p className="mt-0.5 text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+                                                {formatRelativeTime(act.time, t, localeTag)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </SectionCard>
+                )}
+
+                {/* Tenant PAYG Subscription & Fleet Quota Section (Always visible to tenant owner, independent of CMS!) */}
+                {subscription && subscription.tiers.length > 0 && (
+                    <div className="pt-2">
+                        <SubscriptionPricingSection subscription={subscription} />
                     </div>
                 )}
 
+                {/* Website & Content CMS Management (Separated at bottom if active) */}
                 {hasCms && (
-                    <div className="space-y-6">
-                        <div className="border-t border-gray-200 pt-2">
-                            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                    <div className="space-y-6 pt-4 border-t border-slate-200/80 dark:border-slate-800">
+                        <div>
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                                 {t('dashboard.sections.content')}
                             </h3>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                Kelola artikel blog, landing page, dan aset media website tenant Anda
+                            </p>
                         </div>
 
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             {stats.posts && (
                                 <Link
                                     href={route('module.posts.index')}
-                                    className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                    className="group rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                                 >
-                                    <p className="text-sm text-gray-500">{t('dashboard.content_stats.posts')}</p>
-                                    <p className="mt-1 text-2xl font-bold text-gray-900 tabular-nums">{stats.posts.total}</p>
-                                    <p className="mt-0.5 text-xs text-gray-400">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('dashboard.content_stats.posts')}</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{stats.posts.total}</p>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                         {t('dashboard.content_stats.published_draft', {
                                             published: stats.posts.published,
                                             draft: stats.posts.draft,
@@ -1092,11 +1328,11 @@ export default function Dashboard({
                             {stats.pages && (
                                 <Link
                                     href={route('module.pages.index')}
-                                    className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                    className="group rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                                 >
-                                    <p className="text-sm text-gray-500">{t('dashboard.content_stats.pages')}</p>
-                                    <p className="mt-1 text-2xl font-bold text-gray-900 tabular-nums">{stats.pages.total}</p>
-                                    <p className="mt-0.5 text-xs text-gray-400">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('dashboard.content_stats.pages')}</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{stats.pages.total}</p>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                         {t('dashboard.content_stats.published_draft', {
                                             published: stats.pages.published,
                                             draft: stats.pages.draft,
@@ -1106,11 +1342,11 @@ export default function Dashboard({
                             )}
                             <Link
                                 href={route('module.media.index')}
-                                className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                className="group rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                             >
-                                <p className="text-sm text-gray-500">{t('dashboard.content_stats.media')}</p>
-                                <p className="mt-1 text-2xl font-bold text-gray-900 tabular-nums">{stats.media.total}</p>
-                                <p className="mt-0.5 text-xs text-gray-400">
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('dashboard.content_stats.media')}</p>
+                                <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{stats.media.total}</p>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     {t('dashboard.content_stats.media_detail', {
                                         images: stats.media.images,
                                         documents: stats.media.documents,
@@ -1120,31 +1356,28 @@ export default function Dashboard({
                             {stats.carousels && (
                                 <Link
                                     href={route('module.carousels.index')}
-                                    className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                    className="group rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                                 >
-                                    <p className="text-sm text-gray-500">{t('dashboard.content_stats.carousels')}</p>
-                                    <p className="mt-1 text-2xl font-bold text-gray-900 tabular-nums">{stats.carousels.total}</p>
-                                    <p className="mt-0.5 text-xs text-gray-400">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('dashboard.content_stats.carousels')}</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{stats.carousels.total}</p>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                         {t('dashboard.content_stats.active_count', { count: stats.carousels.active })}
                                     </p>
                                 </Link>
                             )}
                         </div>
 
-                        {subscription && subscription.tiers.length > 0 && (
-                            <SubscriptionPricingSection subscription={subscription} />
-                        )}
-
                         {(recentPosts.length > 0 || recentPages.length > 0) && (
                             <SectionCard title={t('dashboard.sections.recent_content')}>
-                                <div className="mb-4 inline-flex items-center gap-1 rounded-xl bg-gray-50 p-1 ring-1 ring-gray-200">
+                                <div className="mb-4 inline-flex items-center gap-1 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
                                     {stats.posts && (
                                         <button
                                             onClick={() => setActiveContentTab('posts')}
-                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activeContentTab === 'posts'
-                                                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
-                                                : 'text-gray-500 hover:text-gray-800'
-                                                }`}
+                                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                                                activeContentTab === 'posts'
+                                                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                                            }`}
                                         >
                                             {t('dashboard.content_tabs.posts')}
                                         </button>
@@ -1152,16 +1385,17 @@ export default function Dashboard({
                                     {stats.pages && (
                                         <button
                                             onClick={() => setActiveContentTab('pages')}
-                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activeContentTab === 'pages'
-                                                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
-                                                : 'text-gray-500 hover:text-gray-800'
-                                                }`}
+                                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                                                activeContentTab === 'pages'
+                                                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                                            }`}
                                         >
                                             {t('dashboard.content_tabs.pages')}
                                         </button>
                                     )}
                                 </div>
-                                <div className="divide-y divide-gray-100 -mx-2">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800 -mx-3">
                                     {(activeContentTab === 'posts' ? recentPosts : recentPages).map((item) => (
                                         <Link
                                             key={item.id}
@@ -1169,16 +1403,17 @@ export default function Dashboard({
                                                 activeContentTab === 'posts' ? 'module.posts.edit' : 'module.pages.edit',
                                                 item.id,
                                             )}
-                                            className="flex items-center justify-between gap-3 rounded-xl px-2 py-3 hover:bg-gray-50"
+                                            className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                         >
-                                            <span className="truncate text-sm font-medium text-gray-900">
+                                            <span className="truncate text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
                                                 {item.title}
                                             </span>
                                             <span
-                                                className={`ml-2 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${item.is_published
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-amber-100 text-amber-700'
-                                                    }`}
+                                                className={`ml-2 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                                                    item.is_published
+                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                                                }`}
                                             >
                                                 {item.is_published
                                                     ? t('dashboard.status_labels.published')

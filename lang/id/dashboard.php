@@ -101,6 +101,9 @@ return [
         'rental_status' => 'Status Unit',
         'logistics' => 'Modul: Logistik & Kurir',
         'logistics_status' => 'Status Pengiriman',
+        'maintenance' => 'Modul: Servis & Bengkel',
+        'maintenance_status' => 'Status Work Order',
+        'attention_center' => 'Pusat Perhatian & Aksi Mendesak',
         'fleet_global' => 'Monitoring Armada & Driver (Global Fleet)',
         'attention' => 'Perlu Perhatian & Aksi Cepat',
         'operational_alerts' => 'Operational Alerts',
@@ -236,6 +239,13 @@ return [
         'stnk_expiring_message' => 'Pajak STNK :plate jatuh tempo dalam :days hari',
         'maintenance_overdue_title' => '[Maintenance] Servis Overdue',
         'invoice_overdue_title' => '[Invoice] Pembayaran Overdue',
+        'action_view_rental' => 'Lihat Rental',
+        'action_assign_driver' => 'Tugaskan Driver',
+        'action_check_vehicle' => 'Periksa STNK',
+        'action_view_maintenance' => 'Buka Servis',
+        'action_view_invoice' => 'Buka Invoice',
+        'all_operational_good' => 'Semua Operasional Berjalan Lancar',
+        'all_operational_good_desc' => 'Tidak ada unit sewa overdue, jadwal tanpa supir, atau dokumen pajak yang membutuhkan tindakan mendesak saat ini.',
     ],
 
     'quick_actions' => [
@@ -243,6 +253,18 @@ return [
         'issue_travel_ticket' => 'Issue Tiket Travel',
         'create_logistics_resi' => 'Buat Resi Logistik',
         'create_manual_invoice' => 'Buat Invoice Manual',
+        'add_vehicle' => 'Tambah Unit Armada',
+        'new_work_order' => 'Catat Servis / WO',
+        'new_partner' => 'Tambah Kontak / Mitra',
+        'quick_actions_bar' => 'Aksi Cepat Operasional',
+    ],
+
+    'maintenance' => [
+        'open_orders' => 'Work Order Aktif',
+        'in_progress' => 'Sedang Dikerjakan',
+        'overdue' => 'Servis Overdue',
+        'completed_period' => 'Selesai Periode Ini',
+        'unit_orders' => 'WO',
     ],
 
     'fleet' => [

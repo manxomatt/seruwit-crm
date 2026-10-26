@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Maintenance\Models\WorkOrder;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
@@ -38,6 +39,11 @@ class DashboardTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Dashboard')
                 ->has('user')
+                ->has('kpis')
+                ->has('finance')
+                ->has('modules')
+                ->has('fleetGlobal')
+                ->has('quickActions')
                 ->has('stats')
                 ->has('logistics')
                 ->has('alerts')
@@ -48,7 +54,7 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_returns_trip_stats_when_transportation_available(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         Trip::factory()->create(['status' => Trip::STATUS_SCHEDULED]);
         Trip::factory()->create(['status' => Trip::STATUS_IN_PROGRESS]);
         Trip::factory()->create(['status' => Trip::STATUS_COMPLETED]);
@@ -63,7 +69,7 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_returns_order_stats_when_orders_available(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         DeliveryOrder::factory()->create(['status' => DeliveryOrder::STATUS_DRAFT]);
         DeliveryOrder::factory()->create(['status' => DeliveryOrder::STATUS_DELIVERED]);
         DeliveryOrder::factory()->create(['status' => DeliveryOrder::STATUS_DELIVERED]);
@@ -75,12 +81,13 @@ class DashboardTest extends TestCase
                 ->where('logistics.orders.total', 3)
                 ->where('logistics.orders.by_status.delivered', 2)
                 ->where('logistics.orders.by_status.draft', 1)
+                ->has('modules.logistics')
             );
     }
 
     public function test_dashboard_returns_fleet_stats_when_fleet_available(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         Vehicle::factory()->create(['status' => Vehicle::STATUS_MAINTENANCE]);
@@ -92,12 +99,15 @@ class DashboardTest extends TestCase
                 ->where('logistics.fleet.vehicles_total', 3)
                 ->where('logistics.fleet.vehicles.active', 2)
                 ->where('logistics.fleet.vehicles.maintenance', 1)
+                ->has('fleetGlobal')
+                ->where('fleetGlobal.vehicles_active', 2)
+                ->where('fleetGlobal.vehicles_maintenance', 1)
             );
     }
 
     public function test_dashboard_returns_partner_stats(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         Partner::factory()->count(3)->create(['customer_rank' => 1, 'supplier_rank' => 0]);
         Partner::factory()->create(['customer_rank' => 0, 'supplier_rank' => 1]);
 
@@ -113,7 +123,7 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_returns_invoice_stats(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         Invoice::factory()->create(['status' => Invoice::STATUS_DRAFT]);
         Invoice::factory()->create(['status' => Invoice::STATUS_ISSUED, 'total' => 1000000, 'due_date' => now()->addDays(7)]);
         Invoice::factory()->create(['status' => Invoice::STATUS_PAID, 'total' => 2000000, 'paid_at' => now()]);
@@ -124,12 +134,14 @@ class DashboardTest extends TestCase
                 ->has('logistics.invoices')
                 ->has('logistics.invoices.by_status')
                 ->has('logistics.invoices.overdue')
+                ->has('kpis.revenue')
+                ->has('kpis.outstanding')
             );
     }
 
     public function test_dashboard_supports_period_parameter(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
 
         $this->actingAs($user)->get(route('module.dashboard', ['period' => 'today']))
             ->assertOk()
@@ -144,9 +156,9 @@ class DashboardTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('period', 'week'));
     }
 
-    public function test_dashboard_includes_alerts_for_overdue_invoices(): void
+    public function test_dashboard_includes_alerts_for_overdue_invoices_with_action_url(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         Invoice::factory()->create([
             'status' => Invoice::STATUS_ISSUED,
             'total' => 500000,
@@ -162,11 +174,13 @@ class DashboardTest extends TestCase
         $this->assertNotNull($overdueAlert);
         $this->assertEquals('danger', $overdueAlert['severity']);
         $this->assertEquals(1, $overdueAlert['count']);
+        $this->assertNotNull($overdueAlert['action_url']);
+        $this->assertNotNull($overdueAlert['action_label']);
     }
 
     public function test_dashboard_includes_recent_activity(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
         DeliveryOrder::factory()->create(['status' => DeliveryOrder::STATUS_DELIVERED]);
         Trip::factory()->create(['status' => Trip::STATUS_IN_PROGRESS]);
 
@@ -180,12 +194,25 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_includes_cms_stats(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
 
         $this->actingAs($user)->get(route('module.dashboard'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('stats.media')
             );
+    }
+
+    public function test_dashboard_includes_maintenance_breakdown(): void
+    {
+        $user = $this->createUserWithRole();
+        WorkOrder::factory()->create(['status' => WorkOrder::STATUS_IN_PROGRESS]);
+
+        $response = $this->actingAs($user)->get(route('module.dashboard'));
+        $response->assertOk();
+
+        $modules = $response->original->getData()['page']['props']['modules'];
+        $this->assertArrayHasKey('maintenance', $modules);
+        $this->assertGreaterThanOrEqual(1, $modules['maintenance']['open_orders']);
     }
 }
