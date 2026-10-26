@@ -2,7 +2,6 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PageHeader from '@/Components/PageHeader';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Modal from '@/Components/Modal';
@@ -181,14 +180,11 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                     title={t('rental.pages.index.title', undefined, 'Manajemen Rental')}
                     subtitle={t('rental.pages.index.subtitle', undefined, 'Kelola seluruh transaksi sewa kendaraan, jadwal serah terima, dan status pengembalian.')}
                     actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <Link href={prefixedRoute('rental.create')}>
-                                <PrimaryButton className="rounded-xl shadow-sm">
-                                    {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
-                                </PrimaryButton>
-                            </Link>
-                        </div>
+                        <Link href={prefixedRoute('rental.create')}>
+                            <PrimaryButton className="rounded-xl shadow-sm">
+                                {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
+                            </PrimaryButton>
+                        </Link>
                     }
                 />
             }

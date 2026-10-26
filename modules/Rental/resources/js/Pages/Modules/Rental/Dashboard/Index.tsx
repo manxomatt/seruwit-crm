@@ -1,7 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
@@ -93,8 +92,6 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                     subtitle={t('rental.dashboard.subtitle', undefined, 'Monitor utilisasi armada, transaksi berjalan, pendapatan MTD, dan tindak lanjut operasional unit.')}
                     actions={
                         <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-
                             {/* Export CSV Dropdown */}
                             <Menu as="div" className="relative inline-block text-left">
                                 <MenuButton className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">

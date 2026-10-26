@@ -1,6 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { Link, router, useForm, type InertiaFormProps } from '@inertiajs/react';
 import { Head, usePage } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
@@ -194,7 +193,6 @@ export default function FormPage({
                     }
                     actions={
                         <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
                             {mode === 'create' && (
                                 <button
                                     type="button"

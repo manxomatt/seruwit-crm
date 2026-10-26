@@ -1,4 +1,3 @@
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
 import Select, { type SelectOption } from '@/Components/Select';
@@ -356,7 +355,6 @@ export default function Index({
                     subtitle={t('rental.maintenance.subtitle', undefined, 'Manajemen servis bengkel, monitoring STNK/KIR, dan proteksi jadwal kalender rental agar unit servis tidak dapat dibooking.')}
                     actions={
                         <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
                             <Link href={prefixedRoute('rental.calendar.index')}>
                                 <SecondaryButton className="gap-1.5 !rounded-xl !normal-case !tracking-normal shadow-xs">
                                     <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,6 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import SecondaryButton from '@/Components/SecondaryButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -227,15 +226,12 @@ export default function Index({ board, calendarClickToBook = true, rentalClasses
                     title={t('rental.pages.calendar.head', undefined, 'Kalender Penjadwalan Rental')}
                     subtitle={t('rental.pages.calendar.subtitle', undefined, 'Pantau linimasa reservasi armada, ketersediaan harian, dan utilisasi kendaraan.')}
                     actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <Link href={prefixedRoute('rental.create')}>
-                                <PrimaryButton className="gap-1.5 py-2 text-xs font-bold shadow-xs">
-                                    <span>🚀</span>
-                                    <span>{t('rental.actions.create_booking', undefined, 'Buat Booking')}</span>
-                                </PrimaryButton>
-                            </Link>
-                        </div>
+                        <Link href={prefixedRoute('rental.create')}>
+                            <PrimaryButton className="gap-1.5 py-2 text-xs font-bold shadow-xs">
+                                <span>🚀</span>
+                                <span>{t('rental.actions.create_booking', undefined, 'Buat Booking')}</span>
+                            </PrimaryButton>
+                        </Link>
                     }
                 />
             }

@@ -5,7 +5,6 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import Select from '@/Components/Select';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
@@ -417,14 +416,11 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                     title={t('rental.pages.availability.head', undefined, 'Ketersediaan Armada Rental')}
                     subtitle={t('rental.pages.availability.subtitle', undefined, 'Lihat kendaraan yang kosong atau terbooking pada rentang tanggal.')}
                     actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <Link href={prefixedRoute('rental.create')}>
-                                <PrimaryButton className="rounded-xl shadow-sm">
-                                    {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
-                                </PrimaryButton>
-                            </Link>
-                        </div>
+                        <Link href={prefixedRoute('rental.create')}>
+                            <PrimaryButton className="rounded-xl shadow-sm">
+                                {t('rental.actions.new_rental', undefined, 'Buat Rental Baru')}
+                            </PrimaryButton>
+                        </Link>
                     }
                 />
             }

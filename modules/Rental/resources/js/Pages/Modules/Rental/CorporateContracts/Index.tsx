@@ -1,4 +1,3 @@
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import PageHeader from '@/Components/PageHeader';
 import Select, { type SelectOption } from '@/Components/Select';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
@@ -120,15 +119,12 @@ export default function CorporateContractsIndex({ contracts, kpis, filters }: Pr
                     title="Kontrak Sewa Korporat (B2B) & Tagihan Gabungan"
                     subtitle="Kelola kontrak sewa jangka panjang perusahaan, plafon kredit (TOP), SLA unit pengganti, dan penerbitan Consolidated Monthly Invoice."
                     actions={
-                        <div className="flex flex-wrap items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <Link
-                                href={prefixedRoute('rental.corporate.create')}
-                                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition"
-                            >
-                                <span>+ Kontrak Korporat Baru</span>
-                            </Link>
-                        </div>
+                        <Link
+                            href={prefixedRoute('rental.corporate.create')}
+                            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition"
+                        >
+                            <span>+ Kontrak Korporat Baru</span>
+                        </Link>
                     }
                 />
             }

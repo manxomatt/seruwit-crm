@@ -3,7 +3,6 @@ import PageHeader from '@/Components/PageHeader';
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -821,11 +820,6 @@ export default function Index({
                 <PageHeader
                     title={t('rental.settings.title', undefined, 'Pengaturan Rental')}
                     subtitle={t('rental.settings.subtitle', undefined, 'Konfigurasi kebijakan operasional, tampilan etalase booking online, template kontrak, dan notifikasi.')}
-                    actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                        </div>
-                    }
                 />
             }
         >

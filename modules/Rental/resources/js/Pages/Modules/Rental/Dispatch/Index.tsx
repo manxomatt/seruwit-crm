@@ -3,7 +3,6 @@ import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import Select, { type SelectOption } from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -341,9 +340,7 @@ export default function DispatchIndex({ dispatches, metrics, drivers, fleetBases
                     title="Papan Antar-Jemput Armada (Runner Dispatch)"
                     subtitle="Monitor penugasan runner, waktu keberangkatan, dan status serah terima unit di bandara, hotel, maupun lokasi pelanggan."
                     actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <div className="flex items-center gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
+                        <div className="flex items-center gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('board')}
@@ -367,7 +364,6 @@ export default function DispatchIndex({ dispatches, metrics, drivers, fleetBases
                                     Tabel (List)
                                 </button>
                             </div>
-                        </div>
                     }
                 />
             }

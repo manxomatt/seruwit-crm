@@ -1,6 +1,5 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import PageHeader from '@/Components/PageHeader';
 import Select, { type SelectOption } from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -157,10 +156,8 @@ export default function CorporateContractForm({ suggestedCode, partners, contrac
                     title={isEditing ? `Edit Kontrak Korporat ${contract?.code}` : 'Buat Kontrak Sewa Korporat (B2B)'}
                     subtitle="Atur kesepakatan sewa jangka panjang perusahaan, plafon kredit (TOP), SLA kendaraan pengganti, dan skema PPN / PPh 23."
                     actions={
-                        <div className="flex flex-wrap items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <Link
-                                href={
+                        <Link
+                            href={
                                     isEditing && contract
                                         ? prefixedRoute('rental.corporate.show', contract.id)
                                         : prefixedRoute('rental.corporate.index')
@@ -169,7 +166,6 @@ export default function CorporateContractForm({ suggestedCode, partners, contrac
                             >
                                 ← {isEditing ? 'Kembali ke Detail Kontrak' : 'Kembali ke Daftar Kontrak B2B'}
                             </Link>
-                        </div>
                     }
                 />
             }

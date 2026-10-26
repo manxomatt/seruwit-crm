@@ -1,4 +1,3 @@
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import PageHeader from '@/Components/PageHeader';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ModuleLayout from '@/Layouts/ModuleLayout';
@@ -259,7 +258,6 @@ export default function CorporateContractShow({
                     subtitle={`Klien B2B: ${contract.partner_name} • TOP Net ${contract.payment_term_days} Hari • SLA Unit Pengganti Maks ${contract.sla_replacement_hours} Jam`}
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
-                            <LanguageSwitcher compact />
                             <Link
                                 href={prefixedRoute('rental.corporate.index')}
                                 className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50"

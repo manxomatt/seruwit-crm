@@ -2,7 +2,6 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import Modal from '@/Components/Modal';
 import Select, { type SelectOption } from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -260,14 +259,11 @@ export default function DutyOrdersIndex({ orders, metrics, drivers, vehicles, fi
                     title="Surat Jalan Operasional (SJO) & Kas Jalan"
                     subtitle="Kelola surat jalan pengemudi, pencairan kas jalan (UJO), pencatatan nota riil lapangan, dan rekonsiliasi lembur."
                     actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                            <Link href={prefixedRoute('rental.duty_orders.create')}>
-                                <PrimaryButton className="rounded-xl shadow-sm inline-flex items-center gap-1.5">
-                                    <span className="text-base leading-none">＋</span> Buat Surat Jalan
-                                </PrimaryButton>
-                            </Link>
-                        </div>
+                        <Link href={prefixedRoute('rental.duty_orders.create')}>
+                            <PrimaryButton className="rounded-xl shadow-sm inline-flex items-center gap-1.5">
+                                <span className="text-base leading-none">＋</span> Buat Surat Jalan
+                            </PrimaryButton>
+                        </Link>
                     }
                 />
             }

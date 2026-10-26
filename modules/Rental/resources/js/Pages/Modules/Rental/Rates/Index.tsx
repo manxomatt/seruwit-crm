@@ -1,6 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useTrans } from '@/hooks/useTrans';
 import { Head } from '@inertiajs/react';
 import RentalNav from '../../../../RentalNav';
@@ -32,11 +31,6 @@ export default function RatesIndex({
                 <PageHeader
                     title={t('rental.pages.rates.title', undefined, 'Tarif Rental Kendaraan')}
                     subtitle={t('rental.pages.rates.subtitle', undefined, 'Kelola skema harga sewa, batasan kilometer, deposit, serta aturan denda keterlambatan.')}
-                    actions={
-                        <div className="flex items-center gap-2">
-                            <LanguageSwitcher compact />
-                        </div>
-                    }
                 />
             }
         >
