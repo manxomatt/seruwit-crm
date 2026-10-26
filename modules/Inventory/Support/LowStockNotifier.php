@@ -45,7 +45,7 @@ class LowStockNotifier
             $user->notify(new GenericNotification(
                 title: "Low Stock: {$product->name}",
                 body: "Available qty in {$warehouse->name}: {$availableQty} (threshold: {$threshold})",
-                url: null,
+                url: route('module.inventory.stock.index', absolute: false),
                 icon: 'archive',
                 type: 'inventory_low_stock',
             ));

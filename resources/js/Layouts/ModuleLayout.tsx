@@ -1446,7 +1446,7 @@ export default function ModuleLayout({ header, children }: Props) {
                                             notifications.recent.map((item) => (
                                                 <MenuItem key={item.id}>
                                                     <Link
-                                                        href={item.url ?? route('module.notifications.index')}
+                                                        href={route('module.notifications.open', item.id)}
                                                         className={`block rounded-xl px-3 py-2.5 transition ${
                                                             item.read_at
                                                                 ? 'hover:bg-slate-50 dark:hover:bg-slate-800/60'

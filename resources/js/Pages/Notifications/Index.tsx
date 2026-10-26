@@ -5,14 +5,16 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import PageHeader from '@/Components/PageHeader';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
 interface Notification {
     id: string;
     title: string;
     body: string;
-    url: string | null;
+    url?: string | null;
+    action_url?: string | null;
+    link?: string | null;
     icon?: string;
     type?: string;
     read_at: string | null;
@@ -129,11 +131,10 @@ export default function Index({ notifications, counts, filters }: Props): JSX.El
     };
 
     const open = (notification: Notification) => {
-        if (!notification.read_at) {
-            router.post(route('module.notifications.read', notification.id), {}, { preserveScroll: true });
-        }
         if (notification.url) {
-            router.get(notification.url);
+            router.visit(route('module.notifications.open', notification.id));
+        } else if (!notification.read_at) {
+            router.post(route('module.notifications.read', notification.id), {}, { preserveScroll: true });
         }
     };
 
@@ -453,16 +454,15 @@ export default function Index({ notifications, counts, filters }: Props): JSX.El
                                     {/* Action Buttons */}
                                     <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0" onClick={(e) => e.stopPropagation()}>
                                         {notification.url && (
-                                            <button
-                                                type="button"
-                                                onClick={() => open(notification)}
+                                            <Link
+                                                href={route('module.notifications.open', notification.id)}
                                                 className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
                                             >
                                                 {t('notifications.open_link', undefined, 'Buka')}
                                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                                 </svg>
-                                            </button>
+                                            </Link>
                                         )}
 
                                         <button

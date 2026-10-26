@@ -158,4 +158,46 @@ class NotificationCenterTest extends TestCase
                 ->has('notifications.data', 1)
             );
     }
+
+    public function test_opening_a_notification_marks_it_as_read_and_redirects_to_target_url(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Dokumen Segera Berakhir', 'STNK Truk', 'http://localhost.test:8000/module/documents'));
+        $notification = $user->notifications()->first();
+
+        $this->assertNull($notification->read_at);
+
+        $response = $this->actingAs($user)->get(route('module.notifications.open', $notification->id));
+
+        $response->assertRedirect('/module/documents');
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_opening_a_notification_without_url_marks_it_as_read_and_redirects_to_index(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Info Sistem', 'Pemberitahuan tanpa link', null));
+        $notification = $user->notifications()->first();
+
+        $this->assertNull($notification->read_at);
+
+        $response = $this->actingAs($user)->get(route('module.notifications.open', $notification->id));
+
+        $response->assertRedirect(route('module.notifications.index'));
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_notifications_index_normalizes_url(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Payment Order', 'Bukti transfer', 'http://localhost.test:8000/module/payment-orders/1'));
+
+        $this->actingAs($user)
+            ->get(route('module.notifications.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Notifications/Index')
+                ->where('notifications.data.0.url', '/module/payment-orders/1')
+            );
+    }
 }
