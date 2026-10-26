@@ -433,6 +433,10 @@ return [
             'label' => 'Jenis Font (Typography)',
             'description' => 'Pilihan font tipografi utama untuk antarmuka pengguna.',
         ],
+        'appearance.show_dashboard_quick_actions' => [
+            'label' => 'Tampilkan Aksi Cepat di Dashboard',
+            'description' => 'Tampilkan atau sembunyikan section tombol pintas aksi cepat (Quick Actions) di dashboard utama.',
+        ],
         'social.whatsapp' => [
             'label' => 'Nomor WhatsApp',
             'description' => 'Nomor kontak WhatsApp (dengan kode negara, contoh: +62812...).',

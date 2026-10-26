@@ -215,4 +215,29 @@ class DashboardTest extends TestCase
         $this->assertArrayHasKey('maintenance', $modules);
         $this->assertGreaterThanOrEqual(1, $modules['maintenance']['open_orders']);
     }
+
+    public function test_dashboard_respects_show_dashboard_quick_actions_setting(): void
+    {
+        $user = $this->createUserWithRole();
+
+        // Enabled
+        \App\Models\Setting::query()->updateOrInsert(
+            ['key' => 'appearance.show_dashboard_quick_actions'],
+            ['value' => '1', 'group' => 'appearance', 'type' => 'boolean']
+        );
+
+        $response = $this->actingAs($user)->get(route('module.dashboard'));
+        $response->assertOk();
+        $this->assertTrue($response->original->getData()['page']['props']['showQuickActions']);
+
+        // Disabled
+        \App\Models\Setting::query()->updateOrInsert(
+            ['key' => 'appearance.show_dashboard_quick_actions'],
+            ['value' => '0', 'group' => 'appearance', 'type' => 'boolean']
+        );
+
+        $responseDisabled = $this->actingAs($user)->get(route('module.dashboard'));
+        $responseDisabled->assertOk();
+        $this->assertFalse($responseDisabled->original->getData()['page']['props']['showQuickActions']);
+    }
 }

@@ -257,6 +257,7 @@ return [
         'new_work_order' => '+ New Work Order',
         'new_partner' => '+ New Contact / Partner',
         'quick_actions_bar' => 'Operational Quick Actions',
+        'subtitle' => 'Shortcuts for quick transactions and record creation across active modules',
     ],
 
     'maintenance' => [

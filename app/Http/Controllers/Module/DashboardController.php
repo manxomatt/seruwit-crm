@@ -101,6 +101,7 @@ class DashboardController extends Controller
             'logistics' => $this->buildLegacyLogisticsSummary(),
             'alerts' => $alerts,
             'quickActions' => $quickActions,
+            'showQuickActions' => \App\Support\Appearance::truthy(Setting::getValue('appearance.show_dashboard_quick_actions', '1')),
             'stats' => $stats,
             'recentActivity' => $recentActivity,
             'recentPosts' => $recentPosts,

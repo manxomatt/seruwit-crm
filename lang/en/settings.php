@@ -433,6 +433,10 @@ return [
             'label' => 'Font Family',
             'description' => 'Primary typography font family for the interface.',
         ],
+        'appearance.show_dashboard_quick_actions' => [
+            'label' => 'Show Quick Actions on Dashboard',
+            'description' => 'Display or hide the quick action shortcut section on the main dashboard.',
+        ],
         'social.whatsapp' => [
             'label' => 'WhatsApp Number',
             'description' => 'WhatsApp contact number (with country code).',

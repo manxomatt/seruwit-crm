@@ -257,6 +257,7 @@ return [
         'new_work_order' => 'Catat Servis / WO',
         'new_partner' => 'Tambah Kontak / Mitra',
         'quick_actions_bar' => 'Aksi Cepat Operasional',
+        'subtitle' => 'Pintas transaksi dan pembuatan data cepat tanpa perlu berpindah modul',
     ],
 
     'maintenance' => [

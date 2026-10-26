@@ -197,6 +197,7 @@ interface Props {
     subscription: SubscriptionOverview | null;
     currencySymbol: string;
     onboarding?: OnboardingOverview;
+    showQuickActions?: boolean;
 }
 
 function routeExists(routeName: string): boolean {
@@ -564,6 +565,7 @@ export default function Dashboard({
     subscription,
     currencySymbol,
     onboarding,
+    showQuickActions = true,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -634,69 +636,73 @@ export default function Dashboard({
             <Head title={dashboardTitle} />
 
             <div className="space-y-8">
-                {/* Executive Welcome & Action Hero Banner */}
+                {/* Executive Welcome Hero Banner */}
                 <div className="relative overflow-hidden rounded-3xl border border-indigo-900/40 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-lg">
                     {/* Background Soft Ambient Lights */}
                     <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/10 blur-3xl" />
                     <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-gradient-to-tr from-emerald-500/15 to-indigo-500/15 blur-3xl" />
 
-                    <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="max-w-xl">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-white/15 backdrop-blur-md">
-                                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                                    {todayFormatted}
+                    <div className="relative z-10 flex flex-col gap-4 max-w-3xl">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-white/15 backdrop-blur-md">
+                                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                {todayFormatted}
+                            </span>
+                            {primaryRole && (
+                                <span className="inline-flex items-center rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-bold text-indigo-300 ring-1 ring-indigo-400/30">
+                                    {primaryRole.name}
                                 </span>
-                                {primaryRole && (
-                                    <span className="inline-flex items-center rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-bold text-indigo-300 ring-1 ring-indigo-400/30">
-                                        {primaryRole.name}
-                                    </span>
-                                )}
-                            </div>
-                            <h1 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-                                {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-indigo-300">{user.name}</span>
-                            </h1>
-                            <p className="mt-1.5 text-xs sm:text-sm text-slate-300/90 leading-relaxed">
-                                {alerts.length > 0
-                                    ? `${alerts.length} item operasional memerlukan tindak lanjut Anda hari ini.`
-                                    : t('dashboard.alerts.all_operational_good_desc', undefined, 'Semua armada dan operasional Anda terpantau siap dan berjalan lancar.')}
-                            </p>
+                            )}
                         </div>
-
-                        {/* Quick Actions Strip */}
-                        {quickActions.length > 0 && (
-                            <div className="flex flex-col gap-2">
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-200/80">
-                                    {t('dashboard.quick_actions.quick_actions_bar', undefined, 'Aksi Cepat Operasional')}
-                                </span>
-                                <div className="flex flex-wrap gap-2.5">
-                                    {quickActions.map((qa) =>
-                                        qa.route ? (
-                                            <Link
-                                                key={qa.key}
-                                                href={qa.route}
-                                                className="inline-flex items-center gap-2 rounded-2xl bg-white/95 dark:bg-slate-800/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-white shadow-sm ring-1 ring-white/20 transition-all hover:bg-white dark:hover:bg-slate-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
-                                            >
-                                                <span className="text-indigo-600 dark:text-indigo-400">
-                                                    {QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}
-                                                </span>
-                                                <span>{qa.label}</span>
-                                            </Link>
-                                        ) : (
-                                            <span
-                                                key={qa.key}
-                                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-medium text-white/50"
-                                            >
-                                                <span>{QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}</span>
-                                                <span>{qa.label}</span>
-                                            </span>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                        <h1 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+                            {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-indigo-300">{user.name}</span>
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed">
+                            {alerts.length > 0
+                                ? `${alerts.length} item operasional memerlukan tindak lanjut Anda hari ini.`
+                                : t('dashboard.alerts.all_operational_good_desc', undefined, 'Semua armada dan operasional Anda terpantau siap dan berjalan lancar.')}
+                        </p>
                     </div>
                 </div>
+
+                {/* Dedicated Quick Actions Section */}
+                {showQuickActions && quickActions.length > 0 && (
+                    <SectionCard
+                        title={t('dashboard.sections.quick_actions', undefined, 'Aksi Cepat Operasional')}
+                        subtitle={t('dashboard.quick_actions.subtitle', undefined, 'Pintas transaksi dan pembuatan data cepat tanpa perlu berpindah modul')}
+                    >
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+                            {quickActions.map((qa) =>
+                                qa.route ? (
+                                    <Link
+                                        key={qa.key}
+                                        href={qa.route}
+                                        className="group flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
+                                    >
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100/80 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 transition-transform group-hover:scale-110 shadow-xs">
+                                            {QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 line-clamp-2">
+                                            {qa.label}
+                                        </span>
+                                    </Link>
+                                ) : (
+                                    <div
+                                        key={qa.key}
+                                        className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/40 p-4 text-center opacity-50 cursor-not-allowed"
+                                    >
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                                            {QUICK_ACTION_ICONS[qa.icon] ?? QUICK_ACTION_ICONS.package}
+                                        </div>
+                                        <span className="text-xs font-medium text-slate-400 line-clamp-2">
+                                            {qa.label}
+                                        </span>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    </SectionCard>
+                )}
 
                 {/* Onboarding Guide (Shown when fleet or contacts need initial setup) */}
                 <DashboardOnboardingCTA onboarding={onboarding} />

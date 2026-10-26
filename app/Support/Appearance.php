@@ -29,6 +29,7 @@ class Appearance
             'appearance.font_family' => self::DEFAULT_FONT,
             'appearance.custom_css' => '',
             'appearance.custom_js' => '',
+            'appearance.show_dashboard_quick_actions' => '1',
         ];
     }
 

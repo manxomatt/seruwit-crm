@@ -598,6 +598,16 @@ class SettingSeeder extends Seeder
                 'is_public' => false,
                 'sort_order' => 6,
             ],
+            [
+                'key' => 'appearance.show_dashboard_quick_actions',
+                'group' => 'appearance',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Show Quick Actions on Dashboard',
+                'description' => 'Display or hide the quick action shortcut section on the tenant dashboard.',
+                'is_public' => true,
+                'sort_order' => 7,
+            ],
             // ==========================================
             // UNITS GROUP (for the Product module's Unit field)
             // ==========================================
