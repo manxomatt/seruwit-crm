@@ -83,8 +83,8 @@ return [
     ],
 
     'seruwit_wa' => [
-        'base_url'       => env('SERUWIT_WA_URL', 'http://127.0.0.1:8080'),
-        'api_key'        => env('SERUWIT_WA_API_KEY', 'seruwit-secret-key-change-me'),
+        'base_url' => env('SERUWIT_WA_URL', 'http://127.0.0.1:8080'),
+        'api_key' => env('SERUWIT_WA_API_KEY', 'seruwit-secret-key-change-me'),
         'webhook_secret' => env('SERUWIT_WA_WEBHOOK_SECRET', 'seruwit-crm-secret'),
     ],
 

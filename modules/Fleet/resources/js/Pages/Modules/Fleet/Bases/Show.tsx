@@ -75,36 +75,36 @@ interface Props {
     can: { update: boolean; delete: boolean };
 }
 
-const getKindBadge = (kind: string) => {
+const getKindBadge = (kind: string, t: (key: string, params?: Record<string, string | number>, fallback?: string) => string) => {
     switch (kind) {
         case 'depot':
             return {
                 icon: '🏢',
-                label: 'Depot Utama',
+                label: t('fleet.base_kinds.depot', undefined, 'Pool Pusat'),
                 className: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/60 dark:bg-indigo-950/60 dark:text-indigo-300 dark:ring-indigo-800',
             };
         case 'yard':
             return {
                 icon: '🅿️',
-                label: 'Yard / Pool Parkir',
+                label: t('fleet.base_kinds.yard', undefined, 'Pool Parkir / Yard'),
                 className: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-800',
             };
         case 'satellite':
             return {
                 icon: '📍',
-                label: 'Cabang Satelit',
+                label: t('fleet.base_kinds.satellite', undefined, 'Cabang Satelit'),
                 className: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200/60 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-800',
             };
         case 'workshop_base':
             return {
                 icon: '🛠️',
-                label: 'Workshop Base',
+                label: t('fleet.base_kinds.workshop_base', undefined, 'Base Bengkel'),
                 className: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800',
             };
         default:
             return {
                 icon: '🏢',
-                label: kind,
+                label: t(`fleet.base_kinds.${kind}`, undefined, kind),
                 className: 'bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300',
             };
     }
@@ -145,7 +145,7 @@ export default function Show({ base, can }: Props): JSX.Element {
     const [vehicleSearch, setVehicleSearch] = useState('');
 
     const kind = resolveKind(base.kind);
-    const kindInfo = getKindBadge(kind);
+    const kindInfo = getKindBadge(kind, t);
 
     const mapPosition = toLatLng(
         base.latitude != null ? String(base.latitude) : null,

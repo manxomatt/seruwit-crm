@@ -24,19 +24,19 @@ class WhatsAppWebhookController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error'   => 'Unauthorized',
+                'error' => 'Unauthorized',
             ], 401);
         }
 
-        $event     = $request->input('event');
+        $event = $request->input('event');
         $sessionId = $request->input('session_id');
         $timestamp = $request->input('timestamp');
-        $data      = $request->input('data', []);
+        $data = $request->input('data', []);
 
         Log::info("WhatsApp webhook received: {$event}", [
             'session_id' => $sessionId,
-            'timestamp'  => $timestamp,
-            'data'       => $data,
+            'timestamp' => $timestamp,
+            'data' => $data,
         ]);
 
         // 2. Handle specific events
@@ -73,12 +73,12 @@ class WhatsAppWebhookController extends Controller
      */
     protected function handleSessionStatus(string $sessionId, array $data): void
     {
-        $status   = $data['status'] ?? 'UNKNOWN';
-        $phone    = $data['phone'] ?? null;
+        $status = $data['status'] ?? 'UNKNOWN';
+        $phone = $data['phone'] ?? null;
         $pushName = $data['push_name'] ?? null;
 
         Log::info("WhatsApp session {$sessionId} status changed to {$status}", [
-            'phone'     => $phone,
+            'phone' => $phone,
             'push_name' => $pushName,
         ]);
 
@@ -105,10 +105,10 @@ class WhatsAppWebhookController extends Controller
     protected function handleMessageReceipt(string $sessionId, array $data): void
     {
         $messageIds = $data['message_ids'] ?? [];
-        $receipt    = $data['receipt'] ?? 'delivered';
+        $receipt = $data['receipt'] ?? 'delivered';
 
         Log::info("WhatsApp messages receipt updated to {$receipt}", [
-            'session_id'  => $sessionId,
+            'session_id' => $sessionId,
             'message_ids' => $messageIds,
         ]);
 
@@ -121,15 +121,15 @@ class WhatsAppWebhookController extends Controller
     protected function handleMessageIncoming(string $sessionId, array $data): void
     {
         $messageId = $data['message_id'] ?? null;
-        $sender    = $data['sender'] ?? null;
-        $text      = $data['text'] ?? '';
-        $pushName  = $data['push_name'] ?? null;
+        $sender = $data['sender'] ?? null;
+        $text = $data['text'] ?? '';
+        $pushName = $data['push_name'] ?? null;
 
         Log::info("WhatsApp incoming message from {$sender} on session {$sessionId}", [
             'message_id' => $messageId,
-            'sender'     => $sender,
-            'push_name'  => $pushName,
-            'text'       => $text,
+            'sender' => $sender,
+            'push_name' => $pushName,
+            'text' => $text,
         ]);
 
         // Save to chat history or notify assigned sales agent

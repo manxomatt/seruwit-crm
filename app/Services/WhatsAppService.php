@@ -9,12 +9,13 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     protected string $baseUrl;
+
     protected string $apiKey;
 
     public function __construct()
     {
         $this->baseUrl = rtrim(config('services.seruwit_wa.base_url', 'http://127.0.0.1:8080'), '/');
-        $this->apiKey  = config('services.seruwit_wa.api_key', '');
+        $this->apiKey = config('services.seruwit_wa.api_key', '');
     }
 
     /**
@@ -24,7 +25,7 @@ class WhatsAppService
     {
         return Http::withHeaders([
             'X-API-Key' => $this->apiKey,
-            'Accept'    => 'application/json',
+            'Accept' => 'application/json',
         ])->timeout(15);
     }
 
@@ -47,7 +48,7 @@ class WhatsAppService
     {
         $response = $this->client()->post("{$this->baseUrl}/api/sessions/pair-code", [
             'session_id' => $sessionId,
-            'phone'      => $phone,
+            'phone' => $phone,
         ]);
 
         return $this->formatResponse($response);
@@ -80,8 +81,8 @@ class WhatsAppService
     {
         $response = $this->client()->post("{$this->baseUrl}/api/messages/send-text", [
             'session_id' => $sessionId,
-            'to'         => $to,
-            'message'    => $message,
+            'to' => $to,
+            'message' => $message,
         ]);
 
         return $this->formatResponse($response);
@@ -95,12 +96,12 @@ class WhatsAppService
 
         Log::error('WhatsApp Gateway request failed', [
             'status' => $response->status(),
-            'body'   => $response->body(),
+            'body' => $response->body(),
         ]);
 
         return [
             'success' => false,
-            'error'   => $response->json('error') ?? 'WhatsApp Gateway service error',
+            'error' => $response->json('error') ?? 'WhatsApp Gateway service error',
         ];
     }
 }

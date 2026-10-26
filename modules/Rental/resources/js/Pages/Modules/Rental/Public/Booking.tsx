@@ -1346,7 +1346,7 @@ export default function BookingView({
                                     { done: paymentSettled, current: false, label: paymentSettled ? tr('Pembayaran selesai ✓', 'Payment completed ✓') : tr('Bayar', 'Pay') },
                                     { done: documentsReady, current: false, label: documentsReady ? tr('Dokumen diunggah ✓', 'Documents uploaded ✓') : tr('Unggah KTP/SIM', 'Upload ID/License') },
                                     { done: contractSigned, current: paymentSettled && !contractSigned && booking.status === 'confirmed', label: contractSigned ? tr('Kontrak ditandatangani ✓', 'Contract signed ✓') : tr('Tanda tangan kontrak', 'Sign contract') },
-                                    { done: unitHandedOver, current: contractSigned && !unitHandedOver, label: unitHandedOver ? tr('Unit sudah diserahkan ✓', 'Unit handed over ✓') : tr('Datang ke depot', 'Visit depot') },
+                                    { done: unitHandedOver, current: contractSigned && !unitHandedOver, label: unitHandedOver ? tr('Unit sudah diserahkan ✓', 'Unit handed over ✓') : tr('Datang ke pool / cabang', 'Visit pool / depot') },
                                 ].map((stage, index) => (
                                     <div
                                         key={`stage-${index}`}
@@ -2629,15 +2629,15 @@ export default function BookingView({
                                             {tr('Tanda tangan kontrak', 'Sign rental contract')}
                                         </h3>
                                         <p className="text-[11px] font-medium leading-relaxed text-slate-500">
-                                            {tr('Unit baru diserahkan setelah staf depot menyelesaikan serah terima.', 'The vehicle will be handed over after depot staff completes the physical handover.')}
+                                            {tr('Unit baru diserahkan setelah staf pool/cabang menyelesaikan serah terima.', 'The vehicle will be handed over after pool/branch staff completes the physical handover.')}
                                         </p>
                                     </div>
 
                                     {booking.pickup_request?.requested_at ? (
                                         <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-950 space-y-2">
                                             <div className="font-bold">{tr('Kontrak ditandatangani ✓', 'Contract signed ✓')}</div>
-                                            <p className="leading-relaxed">{tr('Tunjukkan layar ini kepada staf depot. Unit belum diserahkan.', 'Show this screen to depot staff. The vehicle has not been handed over yet.')}</p>
-                                            <p className="leading-relaxed font-medium">{tr('Datang ke depot sesuai jadwal. Staf yang akan menyerahkan kunci.', 'Visit the depot as scheduled. Staff will hand over the keys.')}</p>
+                                            <p className="leading-relaxed">{tr('Tunjukkan layar ini kepada staf pool/cabang. Unit belum diserahkan.', 'Show this screen to pool/branch staff. The vehicle has not been handed over yet.')}</p>
+                                            <p className="leading-relaxed font-medium">{tr('Datang ke pool/cabang sesuai jadwal. Staf yang akan menyerahkan kunci.', 'Visit the pool/branch as scheduled. Staff will hand over the keys.')}</p>
                                         </div>
                                     ) : !isVerified ? (
                                         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4 font-semibold text-center">

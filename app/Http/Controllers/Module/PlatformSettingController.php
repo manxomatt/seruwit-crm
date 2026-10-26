@@ -28,6 +28,7 @@ class PlatformSettingController extends Controller
         protected WhatsAppService $whatsappService,
         protected WhatsAppGatewayManager $gatewayManager,
     ) {}
+
     /**
      * Redirect to the first group's page.
      */

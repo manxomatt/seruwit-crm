@@ -156,7 +156,7 @@ export default function Search({
     );
 
     const pickupOptions = useMemo(
-        () => [{ value: '', label: t('rental.storefront_ui.pickup_placeholder', undefined, tr('Pilih Depot Penjemputan', 'Select Pickup Depot')) }, ...depotOptions],
+        () => [{ value: '', label: t('rental.storefront_ui.pickup_placeholder', undefined, tr('Pilih Pool / Lokasi Penjemputan', 'Select Pickup Pool / Depot')) }, ...depotOptions],
         [depotOptions, t, locale],
     );
 
@@ -431,7 +431,7 @@ export default function Search({
                                     <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_clean', undefined, tr('Unit Bersih & Higienis', 'Clean & Hygienic Units'))}
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-800/60 backdrop-blur-xs px-3 py-1 rounded-full border border-slate-700/60">
-                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_depot', undefined, tr('Serah Terima di Depot Resmi', 'Handover at Official Depot'))}
+                                    <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_depot', undefined, tr('Serah Terima di Pool Resmi', 'Handover at Official Pool / Depot'))}
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-800/60 backdrop-blur-xs px-3 py-1 rounded-full border border-slate-700/60">
                                     <span className="text-emerald-400 font-black">✓</span> {t('rental.storefront_ui.trust_otp', undefined, tr('Verifikasi Nomor Cepat', 'Fast Phone Verification'))}

@@ -71,37 +71,37 @@ interface Props {
 
 const STATUSES = ['active', 'inactive'] as const;
 
-const getKindInfo = (kind: string) => {
+const getKindInfo = (kind: string, t: (key: string, params?: Record<string, string | number>, fallback?: string) => string) => {
     switch (kind) {
         case 'depot':
             return {
                 icon: '🏢',
-                label: 'Depot Utama',
-                desc: 'Kantor pusat / pangkalan induk operasional armada.',
+                label: t('fleet.base_kinds.depot', undefined, 'Pool Pusat'),
+                desc: t('fleet.bases.kind_hints.depot', undefined, 'Kantor pusat / pangkalan induk operasional armada.'),
             };
         case 'yard':
             return {
                 icon: '🅿️',
-                label: 'Yard / Pool Parkir',
-                desc: 'Area parkir terbuka & tempat penyimpanan unit kendaraan.',
+                label: t('fleet.base_kinds.yard', undefined, 'Pool Parkir / Yard'),
+                desc: t('fleet.bases.kind_hints.yard', undefined, 'Area parkir terbuka & tempat penyimpanan unit kendaraan.'),
             };
         case 'satellite':
             return {
                 icon: '📍',
-                label: 'Cabang Satelit',
-                desc: 'Pos layanan cabang atau titik drop/pickup unit.',
+                label: t('fleet.base_kinds.satellite', undefined, 'Cabang Satelit'),
+                desc: t('fleet.bases.kind_hints.satellite', undefined, 'Pos layanan cabang atau titik drop/pickup unit.'),
             };
         case 'workshop_base':
             return {
                 icon: '🛠️',
-                label: 'Workshop Base',
-                desc: 'Pangkalan bengkel & pemeliharaan teknis armada.',
+                label: t('fleet.base_kinds.workshop_base', undefined, 'Base Bengkel'),
+                desc: t('fleet.bases.kind_hints.workshop_base', undefined, 'Pangkalan bengkel & pemeliharaan teknis armada.'),
             };
         default:
             return {
                 icon: '🏢',
-                label: kind,
-                desc: 'Fasilitas pangkalan armada.',
+                label: t(`fleet.base_kinds.${kind}`, undefined, kind),
+                desc: t(`fleet.bases.kind_hints.${kind}`, undefined, 'Fasilitas pangkalan armada.'),
             };
     }
 };
@@ -264,7 +264,7 @@ export default function Edit({
                             <InputLabel value="Jenis / Peruntukan Base *" />
                             <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 {kinds.map((k) => {
-                                    const info = getKindInfo(k);
+                                    const info = getKindInfo(k, t);
                                     const active = data.kind === k;
 
                                     return (

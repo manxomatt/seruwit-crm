@@ -199,7 +199,7 @@ export default function VehicleShow({
     );
 
     const pickupOptions = useMemo(
-        () => [{ value: '', label: tr('Pilih Depot Penjemputan', 'Select Pickup Depot') }, ...depotOptions],
+        () => [{ value: '', label: tr('Pilih Pool / Lokasi Penjemputan', 'Select Pickup Pool / Depot') }, ...depotOptions],
         [depotOptions, locale],
     );
 
@@ -598,7 +598,7 @@ export default function VehicleShow({
                                         </label>
                                         <div className="grid grid-cols-3 gap-2">
                                             {[
-                                                { id: 'depot', label: tr('Depot Pool', 'Depot Pool'), icon: '🏢' },
+                                                { id: 'depot', label: tr('Ambil di Pool', 'Pick up at Pool / Depot'), icon: '🏢' },
                                                 { id: 'airport', label: tr('Bandara', 'Airport'), icon: '✈️' },
                                                 { id: 'custom_address', label: tr('Alamat / Hotel', 'Address / Hotel'), icon: '📍' },
                                             ].map((del) => (
