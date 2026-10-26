@@ -393,6 +393,7 @@ function SectionCard({
     subtitle,
     action,
     badge,
+    headerExtra,
     children,
     className = '',
 }: {
@@ -400,12 +401,13 @@ function SectionCard({
     subtitle?: string;
     action?: { label: string; href: string };
     badge?: React.ReactNode;
+    headerExtra?: React.ReactNode;
     children: React.ReactNode;
     className?: string;
 }): JSX.Element {
     return (
         <section className={`overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all ${className}`}>
-            <header className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 px-6 py-4.5">
+            <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 px-6 py-4.5">
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                         <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{title}</h3>
@@ -413,7 +415,12 @@ function SectionCard({
                     </div>
                     {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
                 </div>
-                {action && (
+                {headerExtra && (
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {headerExtra}
+                    </div>
+                )}
+                {action && !headerExtra && (
                     <Link
                         href={action.href}
                         className="inline-flex shrink-0 items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-700 dark:hover:text-indigo-300"
@@ -544,6 +551,457 @@ function MiniStat({
             </div>
             {subLabel && <div className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{subLabel}</div>}
         </div>
+    );
+}
+
+interface AlertGroup {
+    module: string;
+    items: OperationalAlert[];
+    highestSeverity: 'danger' | 'warning' | 'info';
+    totalCount: number;
+    primaryActionUrl: string | null;
+    primaryActionLabel: string;
+}
+
+const MODULE_ALERT_CONFIG: Record<
+    string,
+    {
+        name: string;
+        tagLabel: string;
+        icon: (cls?: string) => JSX.Element;
+        style: {
+            border: string;
+            bg: string;
+            iconBg: string;
+            badgeBg: string;
+            btn: string;
+        };
+        summary: (count: number) => string;
+        actionLabel: string;
+        actionRouteName?: string;
+    }
+> = {
+    fleet: {
+        name: 'Armada & Dokumen',
+        tagLabel: 'Armada',
+        icon: (cls = 'h-5 w-5') => (
+            <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
+            </svg>
+        ),
+        style: {
+            border: 'border-amber-200/90 dark:border-amber-900/50',
+            bg: 'bg-amber-50/40 dark:bg-amber-950/20',
+            iconBg: 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300',
+            badgeBg: 'bg-amber-100/90 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 ring-1 ring-amber-500/20',
+            btn: 'bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500 dark:hover:bg-amber-600',
+        },
+        summary: (count: number) => `${count} armada memerlukan perpanjangan pajak STNK / kepatuhan berkala`,
+        actionLabel: 'Kelola Armada',
+        actionRouteName: 'module.fleet.vehicles.index',
+    },
+    maintenance: {
+        name: 'Pemeliharaan & Servis',
+        tagLabel: 'Maintenance',
+        icon: (cls = 'h-5 w-5') => (
+            <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.06-3.02.816l-7.79 7.79a2.25 2.25 0 01-3.182-3.182l7.79-7.79c.756-.756.907-1.944.816-3.02A4.5 4.5 0 0117.25 2.25h1.5a.75.75 0 01.75.75v1.5a.75.75 0 00.75.75h1.5a.75.75 0 01.75.75v1.5z" />
+            </svg>
+        ),
+        style: {
+            border: 'border-blue-200/90 dark:border-blue-900/50',
+            bg: 'bg-blue-50/40 dark:bg-blue-950/20',
+            iconBg: 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300',
+            badgeBg: 'bg-blue-100/90 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 ring-1 ring-blue-500/20',
+            btn: 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600',
+        },
+        summary: (count: number) => `${count} work order servis telah melewati estimasi pengerjaan (overdue)`,
+        actionLabel: 'Buka Servis',
+        actionRouteName: 'module.maintenance.work-orders.index',
+    },
+    rental: {
+        name: 'Rental & Sewa Unit',
+        tagLabel: 'Rental',
+        icon: (cls = 'h-5 w-5') => (
+            <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+            </svg>
+        ),
+        style: {
+            border: 'border-rose-200/90 dark:border-rose-900/50',
+            bg: 'bg-rose-50/40 dark:bg-rose-950/20',
+            iconBg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
+            badgeBg: 'bg-rose-100/90 text-rose-800 dark:bg-rose-950/60 dark:text-rose-200 ring-1 ring-rose-500/20',
+            btn: 'bg-rose-600 hover:bg-rose-700 text-white dark:bg-rose-500 dark:hover:bg-rose-600',
+        },
+        summary: (count: number) => `${count} unit reservasi sewa terlambat dikembalikan dari jadwal`,
+        actionLabel: 'Lihat Rental',
+        actionRouteName: 'module.rental.index',
+    },
+    shuttle: {
+        name: 'Travel & Shuttle',
+        tagLabel: 'Shuttle',
+        icon: (cls = 'h-5 w-5') => (
+            <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+            </svg>
+        ),
+        style: {
+            border: 'border-indigo-200/90 dark:border-indigo-900/50',
+            bg: 'bg-indigo-50/40 dark:bg-indigo-950/20',
+            iconBg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300',
+            badgeBg: 'bg-indigo-100/90 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200 ring-1 ring-indigo-500/20',
+            btn: 'bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-600',
+        },
+        summary: (count: number) => `${count} jadwal keberangkatan belum memiliki penugasan sopir`,
+        actionLabel: 'Tugaskan Sopir',
+        actionRouteName: 'module.shuttle.departures.index',
+    },
+    invoicing: {
+        name: 'Keuangan & Tagihan',
+        tagLabel: 'Invoice',
+        icon: (cls = 'h-5 w-5') => (
+            <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+        ),
+        style: {
+            border: 'border-rose-200/90 dark:border-rose-900/50',
+            bg: 'bg-rose-50/40 dark:bg-rose-950/20',
+            iconBg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
+            badgeBg: 'bg-rose-100/90 text-rose-800 dark:bg-rose-950/60 dark:text-rose-200 ring-1 ring-rose-500/20',
+            btn: 'bg-rose-600 hover:bg-rose-700 text-white dark:bg-rose-500 dark:hover:bg-rose-600',
+        },
+        summary: (count: number) => `${count} invoice tagihan pelanggan telah melewati masa jatuh tempo`,
+        actionLabel: 'Buka Invoice',
+        actionRouteName: 'module.invoicing.invoices.index',
+    },
+};
+
+function getModuleAlertConfig(moduleKey: string) {
+    if (MODULE_ALERT_CONFIG[moduleKey]) {
+        return MODULE_ALERT_CONFIG[moduleKey];
+    }
+    const cap = moduleKey ? moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1) : 'Umum';
+    return {
+        name: cap,
+        tagLabel: cap,
+        icon: (cls = 'h-5 w-5') => (
+            <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+        ),
+        style: {
+            border: 'border-slate-200/90 dark:border-slate-800',
+            bg: 'bg-slate-50/50 dark:bg-slate-900/20',
+            iconBg: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+            badgeBg: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 ring-1 ring-slate-500/20',
+            btn: 'bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600',
+        },
+        summary: (count: number) => `${count} kasus operasional memerlukan tindakan`,
+        actionLabel: 'Tindak Lanjuti',
+        actionRouteName: undefined,
+    };
+}
+
+const SEVERITY_BADGE_STYLE: Record<string, { label: string; badge: string; dot: string }> = {
+    danger: {
+        label: 'Mendesak',
+        badge: 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-200 ring-1 ring-rose-500/20',
+        dot: 'bg-rose-500',
+    },
+    warning: {
+        label: 'Penting',
+        badge: 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-200 ring-1 ring-amber-500/20',
+        dot: 'bg-amber-500',
+    },
+    info: {
+        label: 'Perlu Cek',
+        badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-200 ring-1 ring-blue-500/20',
+        dot: 'bg-blue-500',
+    },
+};
+
+function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX.Element {
+    const { t } = useTrans();
+    const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+    const [activeFilter, setActiveFilter] = useState<string>('all');
+
+    const groupedAlerts = useMemo<AlertGroup[]>(() => {
+        const map = new Map<string, OperationalAlert[]>();
+        alerts.forEach((alert) => {
+            const mod = alert.module || 'general';
+            if (!map.has(mod)) {
+                map.set(mod, []);
+            }
+            map.get(mod)!.push(alert);
+        });
+
+        return Array.from(map.entries()).map(([moduleKey, items]) => {
+            const hasDanger = items.some((it) => it.severity === 'danger');
+            const hasWarning = items.some((it) => it.severity === 'warning');
+            const highestSeverity: 'danger' | 'warning' | 'info' = hasDanger
+                ? 'danger'
+                : hasWarning
+                ? 'warning'
+                : 'info';
+
+            const config = getModuleAlertConfig(moduleKey);
+            const fallbackUrl = config.actionRouteName && routeExists(config.actionRouteName)
+                ? route(resolveNamedRoute(config.actionRouteName))
+                : null;
+
+            const firstItemWithUrl = items.find((it) => it.action_url);
+            const primaryActionUrl = firstItemWithUrl?.action_url ?? fallbackUrl;
+            const primaryActionLabel = config.actionLabel;
+
+            return {
+                module: moduleKey,
+                items,
+                highestSeverity,
+                totalCount: items.length,
+                primaryActionUrl,
+                primaryActionLabel,
+            };
+        });
+    }, [alerts]);
+
+    if (alerts.length === 0) {
+        return (
+            <div className="flex items-center gap-3.5 rounded-3xl border border-emerald-200/80 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-950/20 px-6 py-4 shadow-xs">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-extrabold text-emerald-950 dark:text-emerald-200">
+                        {t('dashboard.alerts.all_operational_good', undefined, 'Semua Operasional Berjalan Lancar')}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/70">
+                        {t('dashboard.alerts.all_operational_good_desc', undefined, 'Tidak ada unit sewa overdue, jadwal tanpa supir, atau dokumen pajak yang membutuhkan tindakan mendesak saat ini.')}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    const allExpanded = groupedAlerts.length > 0 && groupedAlerts.every((g) => !!expandedModules[g.module]);
+
+    const toggleAll = () => {
+        if (allExpanded) {
+            setExpandedModules({});
+        } else {
+            const next: Record<string, boolean> = {};
+            groupedAlerts.forEach((g) => {
+                next[g.module] = true;
+            });
+            setExpandedModules(next);
+        }
+    };
+
+    const toggleGroup = (moduleKey: string) => {
+        setExpandedModules((prev) => ({
+            ...prev,
+            [moduleKey]: !prev[moduleKey],
+        }));
+    };
+
+    const visibleGroups = activeFilter === 'all'
+        ? groupedAlerts
+        : groupedAlerts.filter((g) => g.module === activeFilter);
+
+    const moduleNamesText = groupedAlerts
+        .map((g) => getModuleAlertConfig(g.module).tagLabel)
+        .join(', ');
+
+    return (
+        <SectionCard
+            title={t('dashboard.sections.attention_center', undefined, 'Pusat Perhatian & Aksi Mendesak')}
+            subtitle={t(
+                'dashboard.alerts.grouped_subtitle',
+                { count: alerts.length, modules: groupedAlerts.length },
+                `${alerts.length} isu terdeteksi pada ${groupedAlerts.length} modul operasional (${moduleNamesText})`
+            )}
+            badge={
+                <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 px-2.5 py-0.5 text-xs font-black text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/20">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    {alerts.length} Perlu Tindakan
+                </span>
+            }
+            headerExtra={
+                <div className="flex flex-wrap items-center gap-2">
+                    {groupedAlerts.length > 1 && (
+                        <div className="hidden sm:inline-flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-0.5 border border-slate-200/60 dark:border-slate-800">
+                            <button
+                                type="button"
+                                onClick={() => setActiveFilter('all')}
+                                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                                    activeFilter === 'all'
+                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                Semua ({alerts.length})
+                            </button>
+                            {groupedAlerts.map((g) => {
+                                const cfg = getModuleAlertConfig(g.module);
+                                return (
+                                    <button
+                                        key={g.module}
+                                        type="button"
+                                        onClick={() => setActiveFilter(g.module)}
+                                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                                            activeFilter === g.module
+                                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {cfg.tagLabel} ({g.totalCount})
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        onClick={toggleAll}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                        <span>
+                            {allExpanded
+                                ? t('dashboard.alerts.collapse_all', undefined, 'Ringkas Semua')
+                                : t('dashboard.alerts.expand_all', undefined, 'Buka Semua Rincian')}
+                        </span>
+                    </button>
+                </div>
+            }
+        >
+            <div className={`grid gap-4 ${visibleGroups.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'}`}>
+                {visibleGroups.map((group) => {
+                    const config = getModuleAlertConfig(group.module);
+                    const isExpanded = !!expandedModules[group.module];
+                    const severityInfo = SEVERITY_BADGE_STYLE[group.highestSeverity] ?? SEVERITY_BADGE_STYLE.warning;
+                    const groupActionUrl = group.primaryActionUrl;
+                    const groupActionLabel = group.primaryActionLabel;
+
+                    return (
+                        <div
+                            key={group.module}
+                            className={`flex flex-col justify-between rounded-2xl border ${config.style.border} ${config.style.bg} p-4.5 sm:p-5 transition-all hover:shadow-xs`}
+                        >
+                            <div>
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-2xs ${config.style.iconBg}`}>
+                                            {config.icon('h-5 w-5')}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {config.name}
+                                                </h4>
+                                                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${severityInfo.badge}`}>
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${severityInfo.dot} animate-pulse`} />
+                                                    {group.totalCount} Perlu Tindakan
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                                                {config.summary(group.totalCount)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {groupActionUrl && (
+                                        <Link
+                                            href={groupActionUrl}
+                                            className={`hidden sm:inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold ${config.style.btn} shadow-xs transition-transform active:scale-95 shrink-0`}
+                                        >
+                                            <span>{groupActionLabel}</span>
+                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                            </svg>
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-200/70 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleGroup(group.module)}
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-colors"
+                                >
+                                    <span>
+                                        {isExpanded
+                                            ? t('dashboard.alerts.hide_cases', undefined, 'Sembunyikan Rincian')
+                                            : t('dashboard.alerts.view_cases', { count: group.totalCount }, `Lihat ${group.totalCount} Kasus`)}
+                                    </span>
+                                    <svg
+                                        className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth={2.5}
+                                        stroke="currentColor"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                </button>
+
+                                {groupActionUrl && (
+                                    <Link
+                                        href={groupActionUrl}
+                                        className={`sm:hidden inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold ${config.style.btn} shadow-xs`}
+                                    >
+                                        <span>{groupActionLabel}</span>
+                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </Link>
+                                )}
+                            </div>
+
+                            {isExpanded && (
+                                <div className="mt-3 space-y-2 border-t border-slate-200/60 dark:border-slate-800/80 pt-3">
+                                    {group.items.map((item, idx) => {
+                                        const cleanTitle = item.title.replace(/^\[.*?\]\s*/, '');
+                                        return (
+                                            <div
+                                                key={`${item.module}-${idx}`}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/70 p-3 px-3.5 transition-colors hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                                                            {cleanTitle}
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed pl-3.5">
+                                                        {item.message}
+                                                    </p>
+                                                </div>
+                                                {item.action_url && (
+                                                    <Link
+                                                        href={item.action_url}
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 pl-3.5 sm:pl-0 self-start sm:self-center shrink-0 transition-colors"
+                                                    >
+                                                        <span>{item.action_label ?? t('dashboard.kpi.view_details', undefined, 'Periksa →')}</span>
+                                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                        </svg>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </SectionCard>
     );
 }
 
@@ -707,76 +1165,8 @@ export default function Dashboard({
                 {/* Onboarding Guide (Shown when fleet or contacts need initial setup) */}
                 <DashboardOnboardingCTA onboarding={onboarding} />
 
-                {/* Attention Center & Operational Alerts */}
-                {alerts.length > 0 ? (
-                    <SectionCard
-                        title={t('dashboard.sections.attention_center', undefined, 'Pusat Perhatian & Aksi Mendesak')}
-                        subtitle={`${alerts.length} ${t('dashboard.kpi.action_needed', { count: alerts.length }).toLowerCase()}`}
-                        badge={
-                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 px-2.5 py-0.5 text-xs font-black text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/20">
-                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-                                {alerts.length} Perlu Tindakan
-                            </span>
-                        }
-                    >
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {alerts.map((alert, i) => {
-                                const style = ALERT_STYLES[alert.severity] ?? ALERT_STYLES.info;
-                                return (
-                                    <div
-                                        key={`${alert.module}-${i}`}
-                                        className={`flex flex-col justify-between gap-3 rounded-2xl border ${style.border} ${style.bg} p-4 transition-all hover:shadow-sm`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${style.iconBg} ${style.iconColor}`}>
-                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                                                </svg>
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className={`text-xs sm:text-sm font-bold leading-tight ${style.text}`}>
-                                                    {alert.title}
-                                                </div>
-                                                <div className={`mt-1 text-xs leading-relaxed ${style.subtext}`}>
-                                                    {alert.message}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {alert.action_url && (
-                                            <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800/60 flex justify-end">
-                                                <Link
-                                                    href={alert.action_url}
-                                                    className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold ${style.btn} shadow-xs transition-transform active:scale-95`}
-                                                >
-                                                    <span>{alert.action_label ?? t('dashboard.kpi.view_details', undefined, 'Tindak Lanjuti →')}</span>
-                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                                    </svg>
-                                                </Link>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </SectionCard>
-                ) : (
-                    <div className="flex items-center gap-3.5 rounded-3xl border border-emerald-200/80 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-950/20 px-6 py-4 shadow-xs">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-extrabold text-emerald-950 dark:text-emerald-200">
-                                {t('dashboard.alerts.all_operational_good', undefined, 'Semua Operasional Berjalan Lancar')}
-                            </h3>
-                            <p className="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/70">
-                                {t('dashboard.alerts.all_operational_good_desc', undefined, 'Tidak ada unit sewa overdue, jadwal tanpa supir, atau dokumen pajak yang membutuhkan tindakan mendesak saat ini.')}
-                            </p>
-                        </div>
-                    </div>
-                )}
+                {/* Attention Center & Operational Alerts (Consolidated / Grouped by Module) */}
+                <AttentionCenterSection alerts={alerts} />
 
                 {/* Top-Level Executive KPI Cards */}
                 {hasKpis && (

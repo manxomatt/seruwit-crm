@@ -818,7 +818,7 @@ class DashboardController extends Controller
                 ->get(['id', 'plate_number', 'name', 'stnk_expires_at']);
 
             foreach ($stnkExpiringSoon as $vehicle) {
-                $daysLeft = Carbon::now()->diffInDays($vehicle->stnk_expires_at, false);
+                $daysLeft = (int) max(0, round(Carbon::now()->diffInDays($vehicle->stnk_expires_at, false)));
                 $alerts[] = [
                     'module' => 'fleet',
                     'type' => 'stnk_expiring',

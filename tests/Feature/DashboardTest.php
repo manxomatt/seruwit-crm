@@ -178,6 +178,27 @@ class DashboardTest extends TestCase
         $this->assertNotNull($overdueAlert['action_label']);
     }
 
+    public function test_dashboard_includes_alerts_for_stnk_expiring_with_integer_days(): void
+    {
+        $user = $this->createUserWithRole();
+        Vehicle::factory()->create([
+            'plate_number' => 'BE 1234 XY',
+            'stnk_expires_at' => now()->addDays(17)->addHours(2),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('module.dashboard'));
+        $response->assertOk();
+
+        $alerts = $response->original->getData()['page']['props']['alerts'];
+        $stnkAlert = collect($alerts)->firstWhere('type', 'stnk_expiring');
+
+        $this->assertNotNull($stnkAlert);
+        $this->assertEquals('warning', $stnkAlert['severity']);
+        $this->assertEquals('fleet', $stnkAlert['module']);
+        $this->assertStringContainsString('BE 1234 XY', $stnkAlert['message']);
+        $this->assertMatchesRegularExpression('/dalam \d+ hari/', $stnkAlert['message']);
+    }
+
     public function test_dashboard_includes_recent_activity(): void
     {
         $user = $this->createUserWithRole();
