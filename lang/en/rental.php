@@ -1278,4 +1278,114 @@ return [
         'partner_missing_on_rental' => 'No customer is linked to this rental.',
         'kyc_result_unavailable' => 'AI KYC verification result is not available yet.',
     ],
+
+    'maintenance' => [
+        'title' => 'Fleet Maintenance & Auto-Blackout',
+        'subtitle' => 'Manage workshop servicing, STNK/KIR compliance monitoring, and protect rental calendar schedules from conflicting bookings.',
+        'btn_calendar' => 'Fleet Calendar',
+        'btn_create' => 'Record Service / Blackout',
+
+        // KPIs
+        'kpi_in_workshop' => 'In Workshop',
+        'kpi_in_workshop_desc' => 'Currently under repair / servicing',
+        'kpi_upcoming' => 'Scheduled Service',
+        'kpi_upcoming_desc' => 'Upcoming calendar blackouts',
+        'kpi_stnk' => 'Tax / STNK',
+        'kpi_stnk_desc' => 'Expired / ≤ 30 days remaining',
+        'kpi_kir' => 'KIR Roadworthiness',
+        'kpi_kir_desc' => 'Periodic test renewal required',
+        'kpi_completed' => 'Completed This Month',
+        'kpi_completed_desc' => 'Units ready for service again',
+
+        // Compliance Alerts
+        'compliance_title' => 'Fleet Legal Document Compliance Alerts',
+        'compliance_desc' => 'Units with expired documents are blocked from bookings. Please renew documents or schedule a maintenance blackout.',
+        'stnk_label' => 'Tax/STNK: :label (:date)',
+        'kir_label' => 'KIR Test: :label (:date)',
+        'btn_add_service' => '+ Service',
+
+        // Filters
+        'search_placeholder' => 'Search code, vehicle, workshop, reason...',
+        'all_statuses' => 'All Statuses',
+        'status_scheduled' => 'Scheduled',
+        'status_in_progress' => 'In Workshop',
+        'status_completed' => 'Completed',
+        'status_cancelled' => 'Cancelled',
+        'all_vehicles' => 'All Vehicles',
+        'btn_filter' => 'Filter',
+        'btn_reset' => 'Reset',
+        'showing_count' => 'Showing :count service & blackout schedules',
+
+        // Table
+        'col_code' => 'Code & Date',
+        'col_vehicle' => 'Vehicle',
+        'col_period' => 'Blackout Period',
+        'col_workshop' => 'Workshop / Vendor',
+        'col_reason' => 'Reason & Service',
+        'col_cost' => 'Cost',
+        'col_status' => 'Status',
+        'col_actions' => 'Actions',
+        'recorded_at' => 'Logged: :date',
+        'work_order_badge' => 'WO: :number',
+        'no_vehicle' => '—',
+        'date_to' => 'to :date',
+        'workshop_partner_fallback' => 'Partner Workshop',
+        'cost_est' => 'Est: :amount',
+        'cost_not_completed' => 'Pending completion',
+
+        // Statuses
+        'status_scheduled_badge' => 'Scheduled',
+        'status_in_progress_badge' => 'In Workshop',
+        'status_completed_badge' => 'Completed',
+        'status_cancelled_badge' => 'Cancelled',
+
+        // Actions
+        'btn_action_complete' => '✓ Complete',
+        'btn_action_complete_title' => 'Mark as Completed & Restore Vehicle Availability',
+        'btn_action_edit' => 'Edit',
+        'btn_action_edit_title' => 'Edit Schedule',
+        'btn_action_delete' => 'Delete',
+        'btn_action_delete_title' => 'Delete',
+        'delete_confirm' => 'Delete service schedule :code for vehicle :vehicle?',
+
+        // Empty state
+        'empty_title' => 'No Maintenance or Blackout Records',
+        'empty_desc' => 'Register vehicles entering maintenance to protect rental calendars from conflicting bookings.',
+        'empty_cta' => '+ Record Service / Blackout',
+
+        // Modals - Create
+        'modal_create_title' => 'Record Vehicle Service / Blackout',
+        'label_vehicle' => 'Select Fleet Vehicle',
+        'label_reason' => 'Service / Blackout Reason',
+        'placeholder_reason' => 'e.g. Periodic Service 20,000 KM, Brake Pads, KIR Inspection, Body Repair...',
+        'label_start_date' => 'Start Date',
+        'label_end_date' => 'End Date',
+        'label_initial_status' => 'Initial Status',
+        'opt_scheduled_upcoming' => 'Scheduled (Upcoming)',
+        'opt_in_progress_now' => 'In Workshop Right Now',
+        'label_vendor_partner' => 'Partner Workshop',
+        'opt_vendor_none' => 'Select Partner Workshop...',
+        'label_workshop_name' => 'Or Manual Workshop Name',
+        'placeholder_workshop_name' => 'e.g. Auto2000, Official Service Center...',
+        'label_estimated_cost' => 'Estimated Cost',
+        'label_notes' => 'Notes / Issue Details',
+        'placeholder_notes' => 'Brake complaint, engine oil, replacement parts...',
+        'checkbox_set_maintenance' => 'Mark vehicle status as Maintenance immediately',
+        'checkbox_create_work_order' => 'Create automatic Work Order in Maintenance module',
+        'btn_cancel' => 'Cancel',
+        'btn_save' => 'Save Service Schedule',
+        'saving' => 'Saving...',
+
+        // Modals - Edit
+        'modal_edit_title' => 'Edit Service Schedule :code',
+        'label_actual_cost' => 'Actual / Incurred Cost',
+        'btn_update' => 'Update Schedule',
+
+        // Modals - Complete
+        'modal_complete_title' => 'Complete Workshop Service',
+        'complete_info' => 'Marking service as complete will restore vehicle status to Active (Ready to Rent) and clear calendar availability blackout.',
+        'label_complete_actual_cost' => 'Enter Actual Workshop Cost',
+        'btn_confirm_complete' => 'Confirm Service Completed',
+        'completing' => 'Completing...',
+    ],
 ];

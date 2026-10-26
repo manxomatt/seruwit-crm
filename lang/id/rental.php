@@ -1299,4 +1299,114 @@ return [
         'partner_missing_on_rental' => 'Pelanggan tidak ditemukan pada data rental ini.',
         'kyc_result_unavailable' => 'Hasil verifikasi AI KYC belum tersedia.',
     ],
+
+    'maintenance' => [
+        'title' => 'Pemeliharaan Armada & Auto-Blackout',
+        'subtitle' => 'Manajemen servis bengkel, monitoring STNK/KIR, dan proteksi jadwal kalender rental agar unit servis tidak dapat dibooking.',
+        'btn_calendar' => 'Kalender Armada',
+        'btn_create' => 'Catat Servis / Blackout',
+
+        // KPIs
+        'kpi_in_workshop' => 'Di Bengkel',
+        'kpi_in_workshop_desc' => 'Sedang proses perbaikan / servis',
+        'kpi_upcoming' => 'Jadwal Servis',
+        'kpi_upcoming_desc' => 'Blackout mendatang di kalender',
+        'kpi_stnk' => 'STNK / Pajak',
+        'kpi_stnk_desc' => 'Kadaluarsa / sisa ≤ 30 hari',
+        'kpi_kir' => 'Uji KIR',
+        'kpi_kir_desc' => 'Perlu perpanjangan uji berkala',
+        'kpi_completed' => 'Selesai Bulan Ini',
+        'kpi_completed_desc' => 'Unit kembali siap beroperasi',
+
+        // Compliance Alerts
+        'compliance_title' => 'Peringatan Kepatuhan Dokumen Legal Armada',
+        'compliance_desc' => 'Unit dengan dokumen kadaluarsa otomatis diblokir dari sistem sewa jika masa aktif terlampaui. Segera lakukan pengurusan atau jadwalkan blackout servis.',
+        'stnk_label' => 'STNK: :label (:date)',
+        'kir_label' => 'Uji KIR: :label (:date)',
+        'btn_add_service' => '+ Servis',
+
+        // Filters
+        'search_placeholder' => 'Cari kode, armada, bengkel, alasan...',
+        'all_statuses' => 'Semua Status',
+        'status_scheduled' => 'Terjadwal',
+        'status_in_progress' => 'Sedang di Bengkel',
+        'status_completed' => 'Selesai',
+        'status_cancelled' => 'Dibatalkan',
+        'all_vehicles' => 'Semua Armada',
+        'btn_filter' => 'Filter',
+        'btn_reset' => 'Reset',
+        'showing_count' => 'Menampilkan :count jadwal servis & blackout',
+
+        // Table
+        'col_code' => 'Kode & Tanggal',
+        'col_vehicle' => 'Armada',
+        'col_period' => 'Periode Blackout',
+        'col_workshop' => 'Bengkel / Vendor',
+        'col_reason' => 'Alasan & Perbaikan',
+        'col_cost' => 'Biaya (Rp)',
+        'col_status' => 'Status',
+        'col_actions' => 'Aksi',
+        'recorded_at' => 'Dicatat: :date',
+        'work_order_badge' => 'WO: :number',
+        'no_vehicle' => '—',
+        'date_to' => 's/d :date',
+        'workshop_partner_fallback' => 'Bengkel Rekanan',
+        'cost_est' => 'Est: :amount',
+        'cost_not_completed' => 'Belum selesai',
+
+        // Statuses
+        'status_scheduled_badge' => 'Terjadwal',
+        'status_in_progress_badge' => 'Di Bengkel',
+        'status_completed_badge' => 'Selesai',
+        'status_cancelled_badge' => 'Dibatalkan',
+
+        // Actions
+        'btn_action_complete' => '✓ Selesai',
+        'btn_action_complete_title' => 'Tandai Selesai Servis & Pulihkan Ketersediaan Mobil',
+        'btn_action_edit' => 'Edit',
+        'btn_action_edit_title' => 'Edit Jadwal',
+        'btn_action_delete' => 'Hapus',
+        'btn_action_delete_title' => 'Hapus',
+        'delete_confirm' => 'Hapus jadwal servis :code untuk armada :vehicle?',
+
+        // Empty state
+        'empty_title' => 'Belum Ada Jadwal Servis atau Blackout',
+        'empty_desc' => 'Daftarkan armada yang sedang atau akan masuk bengkel untuk melindungi jadwal rental dari bentrok booking.',
+        'empty_cta' => '+ Catat Servis / Blackout Baru',
+
+        // Modals - Create
+        'modal_create_title' => 'Catat Jadwal Servis / Blackout Armada',
+        'label_vehicle' => 'Pilih Armada Kendaraan',
+        'label_reason' => 'Alasan Servis / Blackout',
+        'placeholder_reason' => 'Contoh: Servis Berkala 20.000 KM, Ganti Kanvas Rem, Uji KIR, Body Repair...',
+        'label_start_date' => 'Mulai Tanggal',
+        'label_end_date' => 'Selesai Tanggal',
+        'label_initial_status' => 'Status Awal',
+        'opt_scheduled_upcoming' => 'Terjadwal (Akan Datang)',
+        'opt_in_progress_now' => 'Sedang di Bengkel Sekarang',
+        'label_vendor_partner' => 'Bengkel Rekanan (Partner)',
+        'opt_vendor_none' => 'Pilih Bengkel Rekanan...',
+        'label_workshop_name' => 'Atau Nama Bengkel Manual',
+        'placeholder_workshop_name' => 'Contoh: Auto2000, Bengkel Berkah Jaya...',
+        'label_estimated_cost' => 'Estimasi Biaya (Rp)',
+        'label_notes' => 'Catatan / Detail Keluhan',
+        'placeholder_notes' => 'Keluhan rem, oli, suku cadang...',
+        'checkbox_set_maintenance' => 'Tandai status armada sebagai Maintenance sekarang',
+        'checkbox_create_work_order' => 'Buat Surat Perintah Kerja (Work Order) otomatis di Modul Maintenance',
+        'btn_cancel' => 'Batal',
+        'btn_save' => 'Simpan Jadwal Servis',
+        'saving' => 'Menyimpan...',
+
+        // Modals - Edit
+        'modal_edit_title' => 'Edit Jadwal Servis :code',
+        'label_actual_cost' => 'Biaya Riil / Aktual (Rp)',
+        'btn_update' => 'Perbarui Jadwal',
+
+        // Modals - Complete
+        'modal_complete_title' => 'Selesaikan Servis Bengkel',
+        'complete_info' => 'Menandai servis selesai akan memulihkan status armada menjadi Aktif (Siap Sewa) dan menghapus blokir ketersediaan kalender rental.',
+        'label_complete_actual_cost' => 'Masukkan Biaya Aktual / Riil Bengkel (Rp)',
+        'btn_confirm_complete' => 'Konfirmasi Servis Selesai',
+        'completing' => 'Menyelesaikan...',
+    ],
 ];
