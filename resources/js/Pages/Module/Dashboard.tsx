@@ -811,18 +811,9 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
         ? groupedAlerts
         : groupedAlerts.filter((g) => g.module === activeFilter);
 
-    const moduleNamesText = groupedAlerts
-        .map((g) => getModuleAlertConfig(g.module).tagLabel)
-        .join(', ');
-
     return (
         <SectionCard
             title={t('dashboard.sections.attention_center', undefined, 'Pusat Perhatian & Aksi Mendesak')}
-            subtitle={t(
-                'dashboard.alerts.grouped_subtitle',
-                { count: alerts.length, modules: groupedAlerts.length },
-                `${alerts.length} isu terdeteksi pada ${groupedAlerts.length} modul operasional (${moduleNamesText})`
-            )}
             badge={
                 <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 px-2.5 py-0.5 text-xs font-black text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/20">
                     <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
@@ -1127,7 +1118,6 @@ export default function Dashboard({
                 {showQuickActions && quickActions.length > 0 && (
                     <SectionCard
                         title={t('dashboard.sections.quick_actions', undefined, 'Aksi Cepat Operasional')}
-                        subtitle={t('dashboard.quick_actions.subtitle', undefined, 'Pintas transaksi dan pembuatan data cepat tanpa perlu berpindah modul')}
                     >
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
                             {quickActions.map((qa) =>
@@ -1337,7 +1327,6 @@ export default function Dashboard({
                         {modules.rental && (
                             <SectionCard
                                 title={t('dashboard.sections.rental')}
-                                subtitle={t('dashboard.sections.rental_status')}
                                 action={
                                     routeExists('module.rental.index')
                                         ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.rental.index')) }
@@ -1396,7 +1385,6 @@ export default function Dashboard({
                         {modules.logistics && (
                             <SectionCard
                                 title={t('dashboard.sections.logistics')}
-                                subtitle={t('dashboard.sections.logistics_status')}
                                 action={
                                     routeExists('module.orders.index')
                                         ? { label: t('dashboard.actions.view_all'), href: route(resolveNamedRoute('module.orders.index')) }
@@ -1454,7 +1442,6 @@ export default function Dashboard({
                         {modules.maintenance && (
                             <SectionCard
                                 title={t('dashboard.sections.maintenance', undefined, 'Modul: Servis & Bengkel')}
-                                subtitle={t('dashboard.sections.maintenance_status', undefined, 'Status Work Order & Perawatan')}
                                 action={
                                     routeExists('module.maintenance.work-orders.index')
                                         ? { label: t('dashboard.actions.manage'), href: route(resolveNamedRoute('module.maintenance.work-orders.index')) }
@@ -1551,7 +1538,6 @@ export default function Dashboard({
                 {hasFinance && (
                     <SectionCard
                         title={t('dashboard.sections.finance_invoice')}
-                        subtitle={t('dashboard.sections.revenue_per_line') + ' & ' + t('dashboard.sections.invoice_status')}
                         action={
                             routeExists('module.invoicing.invoices.index')
                                 ? { label: t('dashboard.actions.manage_invoices'), href: route(resolveNamedRoute('module.invoicing.invoices.index')) }
@@ -1661,7 +1647,6 @@ export default function Dashboard({
                 {recentActivity.length > 0 && (
                     <SectionCard
                         title={t('dashboard.sections.recent_activity')}
-                        subtitle="Aktivitas operasional real-time terbaru"
                     >
                         <div className="divide-y divide-slate-100 dark:divide-slate-800 -mx-3">
                             {recentActivity.map((act, i) => {
