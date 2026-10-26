@@ -4,8 +4,10 @@ import PageHeader from '@/Components/PageHeader';
 import Select, { type SelectOption } from '@/Components/Select';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import ModuleLayout from '@/Layouts/ModuleLayout';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 import RentalNav from '../../../../RentalNav';
 
@@ -162,6 +164,7 @@ export default function Index({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t, locale } = useTrans();
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
 
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [vehicleFilter, setVehicleFilter] = useState(filters.vehicle_id || 'all');
@@ -346,42 +349,54 @@ export default function Index({
     const isFiltered = statusFilter !== 'all' || vehicleFilter !== 'all' || search.trim() !== '';
 
     return (
-        <ModuleLayout>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Auto-Blackout')}
+                    subtitle={t('rental.maintenance.subtitle', undefined, 'Manajemen servis bengkel, monitoring STNK/KIR, dan proteksi jadwal kalender rental agar unit servis tidak dapat dibooking.')}
+                    actions={
+                        <div className="flex items-center gap-2">
+                            <LanguageSwitcher compact />
+                            <Link href={prefixedRoute('rental.calendar.index')}>
+                                <SecondaryButton className="gap-1.5 !rounded-xl !normal-case !tracking-normal shadow-xs">
+                                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>{t('rental.maintenance.calendar_fleet', undefined, 'Kalender Armada')}</span>
+                                </SecondaryButton>
+                            </Link>
+                            <PrimaryButton
+                                type="button"
+                                onClick={() => {
+                                    createForm.reset();
+                                    setCreateModalOpen(true);
+                                }}
+                                className="gap-1.5 !rounded-xl !normal-case !tracking-normal shadow-xs"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>{t('rental.maintenance.btn_create', undefined, 'Catat Servis / Blackout')}</span>
+                            </PrimaryButton>
+                        </div>
+                    }
+                />
+            }
+        >
             <Head title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Auto-Blackout')} />
 
-            <PageHeader
-                title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Auto-Blackout')}
-                subtitle={t('rental.maintenance.subtitle', undefined, 'Manajemen servis bengkel, monitoring STNK/KIR, dan proteksi jadwal kalender rental agar unit servis tidak dapat dibooking.')}
-                actions={
-                    <div className="flex items-center gap-2">
-                        <LanguageSwitcher compact />
-                        <Link
-                            href={prefixedRoute('rental.calendar.index')}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
-                        >
-                            <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span>{t('rental.maintenance.calendar_fleet', undefined, 'Kalender Armada')}</span>
-                        </Link>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                createForm.reset();
-                                setCreateModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition"
-                        >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span>{t('rental.maintenance.btn_create', undefined, 'Catat Servis / Blackout')}</span>
-                        </button>
-                    </div>
-                }
-            />
-
             <RentalNav />
+
+            {flash?.success && (
+                <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-xs font-semibold text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 shadow-2xs">
+                    ✓ {flash.success}
+                </div>
+            )}
+            {flash?.error && (
+                <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-xs font-semibold text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 shadow-2xs">
+                    ⚠️ {flash.error}
+                </div>
+            )}
 
             {/* KPI Cards */}
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -1267,6 +1282,6 @@ export default function Index({
                     </div>
                 </form>
             </Modal>
-        </ModuleLayout>
+        </DynamicLayout>
     );
 }
