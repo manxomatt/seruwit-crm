@@ -3,11 +3,16 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Document\Models\Document;
+use Modules\Document\Models\DocumentType;
 use Modules\Fleet\Models\FleetBase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Models\VehicleComplianceRenewal;
@@ -177,22 +182,104 @@ class FleetComplianceController extends Controller
                 break;
         }
 
-        $vehicle->save();
+        DB::transaction(function () use ($vehicle, $validated, $previousExpiresAt): void {
+            $vehicle->save();
 
-        VehicleComplianceRenewal::create([
-            'vehicle_id' => $vehicle->id,
-            'document_type' => $validated['document_type'],
-            'previous_expires_at' => $previousExpiresAt,
-            'new_expires_at' => $validated['new_expires_at'],
-            'renewal_date' => $validated['renewal_date'],
-            'cost' => $validated['cost'] ?? 0,
-            'payer' => $validated['payer'],
-            'partner_id' => $vehicle->partner_id,
-            'reference_number' => $validated['reference_number'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'created_by' => Auth::id(),
-        ]);
+            VehicleComplianceRenewal::create([
+                'vehicle_id' => $vehicle->id,
+                'document_type' => $validated['document_type'],
+                'previous_expires_at' => $previousExpiresAt,
+                'new_expires_at' => $validated['new_expires_at'],
+                'renewal_date' => $validated['renewal_date'],
+                'cost' => $validated['cost'] ?? 0,
+                'payer' => $validated['payer'],
+                'partner_id' => $vehicle->partner_id,
+                'reference_number' => $validated['reference_number'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'created_by' => Auth::id(),
+            ]);
+
+            $this->syncDocumentRecord($vehicle, $validated);
+        });
 
         return redirect()->back()->with('success', "Dokumen {$vehicle->plate_number} berhasil diperbarui.");
+    }
+
+    /**
+     * Synchronize the vehicle compliance renewal with the central Document
+     * control center so both views share a single source of truth.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function syncDocumentRecord(Vehicle $vehicle, array $validated): void
+    {
+        if (! Modules::available('document') || ! Schema::hasTable('document_types') || ! Schema::hasTable('documents')) {
+            return;
+        }
+
+        $typeConfig = match ($validated['document_type']) {
+            VehicleComplianceRenewal::TYPE_STNK_ANNUAL => [
+                'key' => 'stnk',
+                'name' => 'Pajak STNK Tahunan',
+                'validity' => 365,
+                'sort_order' => 1,
+            ],
+            VehicleComplianceRenewal::TYPE_STNK_FIVE_YEAR => [
+                'key' => 'stnk_five_year',
+                'name' => 'STNK 5 Tahunan (Plat Nomor)',
+                'validity' => 1825,
+                'sort_order' => 2,
+            ],
+            VehicleComplianceRenewal::TYPE_INSURANCE => [
+                'key' => 'insurance',
+                'name' => 'Polis Asuransi Kendaraan',
+                'validity' => 365,
+                'sort_order' => 3,
+            ],
+            VehicleComplianceRenewal::TYPE_KIR => [
+                'key' => 'kir',
+                'name' => 'Uji Berkala KIR',
+                'validity' => 180,
+                'sort_order' => 4,
+            ],
+            default => null,
+        };
+
+        if ($typeConfig === null) {
+            return;
+        }
+
+        $documentType = DocumentType::query()->firstOrCreate(
+            ['key' => $typeConfig['key']],
+            [
+                'entity_type' => DocumentType::ENTITY_VEHICLE,
+                'name' => $typeConfig['name'],
+                'is_required' => $typeConfig['key'] === 'stnk',
+                'has_expiry' => true,
+                'typical_validity_days' => $typeConfig['validity'],
+                'reminder_days' => [30, 14, 7],
+                'sort_order' => $typeConfig['sort_order'],
+            ],
+        );
+
+        Document::query()
+            ->where('documentable_type', 'vehicle')
+            ->where('documentable_id', $vehicle->id)
+            ->where('document_type_id', $documentType->id)
+            ->delete();
+
+        $documentNumber = $validated['reference_number']
+            ?? ($validated['document_type'] === VehicleComplianceRenewal::TYPE_INSURANCE ? ($validated['insurance_policy_number'] ?? $vehicle->insurance_policy_number) : null);
+
+        Document::query()->create([
+            'document_type_id' => $documentType->id,
+            'documentable_type' => 'vehicle',
+            'documentable_id' => $vehicle->id,
+            'document_number' => $documentNumber,
+            'issued_at' => $validated['renewal_date'],
+            'expires_at' => $validated['new_expires_at'],
+            'notes' => $validated['notes'] ?? null,
+            'uploaded_by' => Auth::id(),
+        ]);
     }
 }

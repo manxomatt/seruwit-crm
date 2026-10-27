@@ -8,6 +8,7 @@ return [
         'vehicles' => 'Kendaraan',
         'drivers' => 'Pengemudi',
         'all' => 'Semua Dokumen',
+        'compliance' => 'Kepatuhan & Pajak Armada',
         'types' => 'Jenis Dokumen',
     ],
 

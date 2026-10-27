@@ -34,6 +34,7 @@ class Plan extends Model
         return [
             'carousels',
             'document',
+            'driver',
             'fleet',
             'invoicing',
             'maintenance',

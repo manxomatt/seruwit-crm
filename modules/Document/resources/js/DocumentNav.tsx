@@ -1,20 +1,43 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
-const TABS = [
-    { labelKey: 'document.nav.all', route: 'documents.index', pattern: 'documents.index', icon: '📄' },
-    { labelKey: 'document.nav.types', route: 'documents.types.index', pattern: 'documents.types.*', icon: '⚙️' },
-] as const;
+interface TabItem {
+    labelKey: string;
+    fallbackLabel: string;
+    route: string;
+    pattern: string;
+    icon: string;
+    subFeatureKey?: string;
+}
+
+const TABS: Array<TabItem> = [
+    { labelKey: 'document.nav.all', fallbackLabel: 'Semua Dokumen', route: 'documents.index', pattern: 'documents.index', icon: '📄' },
+    { labelKey: 'document.nav.compliance', fallbackLabel: 'Kepatuhan & Pajak Armada', route: 'documents.compliance.index', pattern: 'documents.compliance.*', icon: '🛡️', subFeatureKey: 'document-compliance' },
+    { labelKey: 'document.nav.types', fallbackLabel: 'Jenis Dokumen', route: 'documents.types.index', pattern: 'documents.types.*', icon: '⚙️' },
+];
 
 export default function DocumentNav(): JSX.Element {
-    const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { routePrefix, prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const { disabledSubFeatures = [] } = usePage().props as {
+        disabledSubFeatures?: string[];
+    };
+
+    const tabs = TABS.filter((tab) => {
+        if (tab.subFeatureKey && disabledSubFeatures.includes(tab.subFeatureKey)) {
+            return false;
+        }
+
+        const name = `${routePrefix}.${tab.route}`;
+
+        return route().has(name) || route().has(`central.${name}`);
+    });
 
     return (
         <div className="mb-6 flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
             <nav className="flex items-center gap-2">
-                {TABS.map((tab) => {
+                {tabs.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
 
                     return (
@@ -28,7 +51,7 @@ export default function DocumentNav(): JSX.Element {
                             }`}
                         >
                             <span>{tab.icon}</span>
-                            <span>{t(tab.labelKey)}</span>
+                            <span>{t(tab.labelKey, undefined, tab.fallbackLabel)}</span>
                         </Link>
                     );
                 })}

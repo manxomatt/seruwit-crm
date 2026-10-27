@@ -7,7 +7,11 @@ use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\ModuleInstaller;
+use Modules\Document\DocumentModule;
+use Modules\Document\Models\Document;
+use Modules\Driver\DriverModule;
 use Modules\Fleet\FleetModule;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\TransportationManagementModule;
 use RuntimeException;
 use Tests\TestCase;
@@ -30,6 +34,16 @@ class ModuleRegistryTest extends TestCase
     private function fleet(): FleetModule
     {
         return app(FleetModule::class);
+    }
+
+    private function document(): DocumentModule
+    {
+        return app(DocumentModule::class);
+    }
+
+    private function driver(): DriverModule
+    {
+        return app(DriverModule::class);
     }
 
     private function transportation(): TransportationManagementModule
@@ -178,12 +192,12 @@ class ModuleRegistryTest extends TestCase
 
     public function test_installing_a_disabled_module_throws_and_installs_nothing(): void
     {
+        ModuleSetting::create(['key' => 'fleet', 'is_enabled' => false]);
+        app(\App\Modules\ModuleRegistry::class)->flushDisabledState();
+
         $tenant = $this->provisionTenant('Blocked Co', 'blocked-co', 'owner@blocked.test');
         $tenant->plan = 'pro';
         $tenant->save();
-
-        ModuleSetting::create(['key' => 'fleet', 'is_enabled' => false]);
-        app(\App\Modules\ModuleRegistry::class)->flushDisabledState();
 
         // Transportation requires fleet, so installing it should also fail —
         // proving the disabled check applies to auto-installed dependencies too.
@@ -208,8 +222,8 @@ class ModuleRegistryTest extends TestCase
         $this->actingAs($admin)->get('/module/plans')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('availableModules.4.key', 'fleet')
-                ->where('availableModules.4.is_enabled', false)
+                ->where('availableModules.5.key', 'fleet')
+                ->where('availableModules.5.is_enabled', false)
             );
     }
 
@@ -270,6 +284,120 @@ class ModuleRegistryTest extends TestCase
         app(\App\Modules\ModuleRegistry::class)->flushHiddenState();
 
         $this->actingAs($owner)->post('http://hidden-install-co.localhost/module/modules/fleet/install')
+            ->assertNotFound();
+    }
+
+    public function test_super_admin_can_toggle_fleet_and_document_sub_features(): void
+    {
+        $tenant = $this->provisionTenant('SubFeature Co', 'subfeature-co', 'owner@subfeature.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+        $owner = $this->ownerOf($tenant, 'owner@subfeature.test');
+        $admin = $this->makeCentralAdmin();
+
+        $this->installer()->install($tenant, $this->fleet());
+        $this->installer()->install($tenant, $this->document());
+        $this->installer()->install($tenant, $this->driver());
+        tenancy()->end();
+
+        foreach (['document-compliance', 'fleet-drivers', 'fleet-settlements', 'fleet-fuel'] as $subFeatureKey) {
+            $this->actingAs($admin)
+                ->patch(config('app.url')."/module/registry/{$subFeatureKey}/status")
+                ->assertRedirect()
+                ->assertSessionHas('success');
+
+            $this->assertDatabaseHas('module_settings', ['key' => $subFeatureKey, 'is_enabled' => false]);
+        }
+
+        app(\App\Modules\ModuleRegistry::class)->flushDisabledState();
+
+        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/compliance')->assertNotFound();
+        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/documents/compliance')->assertNotFound();
+        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/drivers')->assertNotFound();
+        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/settlements')->assertNotFound();
+        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/fuel')->assertNotFound();
+
+        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/vehicles')
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $disabled = $page->toArray()['props']['disabledSubFeatures'];
+                $this->assertContains('document-compliance', $disabled);
+                $this->assertContains('fleet-drivers', $disabled);
+                $this->assertContains('fleet-settlements', $disabled);
+                $this->assertContains('fleet-fuel', $disabled);
+            });
+    }
+
+    public function test_compliance_renewal_syncs_with_document_module_and_vehicle(): void
+    {
+        $tenant = $this->provisionTenant('Compliance Co', 'compliance-co', 'owner@compliance.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+        $owner = $this->ownerOf($tenant, 'owner@compliance.test');
+
+        $this->installer()->install($tenant, $this->fleet());
+        $this->installer()->install($tenant, $this->document());
+
+        $vehicleId = $tenant->run(fn () => Vehicle::factory()->create([
+            'plate_number' => 'B 1234 XYZ',
+            'stnk_expires_at' => '2026-01-01',
+        ])->id);
+        tenancy()->end();
+
+        $this->actingAs($owner)->post("http://compliance-co.localhost/module/fleet/vehicles/{$vehicleId}/compliance/renew", [
+            'document_type' => 'stnk_annual',
+            'renewal_date' => '2026-01-02',
+            'new_expires_at' => '2027-01-01',
+            'cost' => 2500000,
+            'payer' => 'tenant',
+            'reference_number' => 'STNK-2027-001',
+            'notes' => 'Perpanjangan STNK tahunan',
+        ])->assertRedirect();
+
+        $tenant->run(function () use ($vehicleId) {
+            $vehicle = Vehicle::query()->findOrFail($vehicleId);
+            $this->assertSame('2027-01-01', $vehicle->stnk_expires_at?->toDateString());
+
+            $this->assertDatabaseHas('vehicle_compliance_renewals', [
+                'vehicle_id' => $vehicleId,
+                'document_type' => 'stnk_annual',
+                'reference_number' => 'STNK-2027-001',
+            ]);
+
+            $document = Document::query()
+                ->where('documentable_type', 'vehicle')
+                ->where('documentable_id', $vehicleId)
+                ->first();
+
+            $this->assertNotNull($document);
+            $this->assertSame('STNK-2027-001', $document->document_number);
+            $this->assertSame('2027-01-01', $document->expires_at?->toDateString());
+        });
+    }
+
+    public function test_driver_module_can_be_installed_and_managed_independently(): void
+    {
+        $tenant = $this->provisionTenant('Independent Driver Co', 'indep-driver-co', 'owner@indepdriver.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+        $owner = $this->ownerOf($tenant, 'owner@indepdriver.test');
+        $admin = $this->makeCentralAdmin();
+
+        $this->installer()->install($tenant, $this->driver());
+        tenancy()->end();
+
+        $this->actingAs($owner)->get('http://indep-driver-co.localhost/module/drivers')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Modules/Driver/Index'));
+
+        $this->actingAs($admin)
+            ->patch(config('app.url').'/module/registry/driver/status')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        app(\App\Modules\ModuleRegistry::class)->flushDisabledState();
+
+        $this->actingAs($owner)->get('http://indep-driver-co.localhost/module/drivers')
             ->assertNotFound();
     }
 }

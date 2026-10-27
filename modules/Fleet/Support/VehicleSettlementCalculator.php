@@ -2,8 +2,10 @@
 
 namespace Modules\Fleet\Support;
 
+use App\Modules\Facades\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Modules\Fleet\Contracts\VehicleRevenueSource;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Models\VehicleMaintenanceLog;
 use Modules\Partners\Models\Partner;
@@ -204,51 +206,11 @@ class VehicleSettlementCalculator
      */
     private function getRentalsForVehicle(int $vehicleId, Carbon $startDate, Carbon $endDate): Collection
     {
-        if (! class_exists(\Modules\Rental\Models\Rental::class)) {
+        if (! Modules::available('rental') || ! app()->bound(VehicleRevenueSource::class)) {
             return collect();
         }
 
-        $startDateStr = $startDate->toDateString();
-        $endDateStr = $endDate->toDateString();
-
-        return \Modules\Rental\Models\Rental::query()
-            ->where('vehicle_id', $vehicleId)
-            ->whereIn('status', [
-                \Modules\Rental\Models\Rental::STATUS_COMPLETED,
-                \Modules\Rental\Models\Rental::STATUS_RETURNED,
-                \Modules\Rental\Models\Rental::STATUS_ACTIVE,
-            ])
-            ->where(function ($q) use ($startDateStr, $endDateStr) {
-                $q->whereBetween('start_date', [$startDateStr, $endDateStr])
-                    ->orWhereBetween('end_date', [$startDateStr, $endDateStr])
-                    ->orWhere(function ($sub) use ($startDateStr, $endDateStr) {
-                        $sub->where('start_date', '<=', $startDateStr)
-                            ->where('end_date', '>=', $endDateStr);
-                    });
-            })
-            ->with('partner:id,name,phone,mobile')
-            ->orderBy('start_date', 'asc')
-            ->get()
-            ->map(function ($rental) use ($startDate, $endDate): array {
-                $rStart = Carbon::parse($rental->start_date);
-                $rEnd = Carbon::parse($rental->end_date ?? $rental->start_date);
-
-                // Overlapping days in the requested window
-                $effStart = $rStart->greaterThan($startDate) ? $rStart : $startDate;
-                $effEnd = $rEnd->lessThan($endDate) ? $rEnd : $endDate;
-                $days = max(1, $effStart->diffInDays($effEnd) + 1);
-
-                return [
-                    'id' => $rental->id,
-                    'code' => $rental->code,
-                    'customer_name' => $rental->partner?->name ?? 'Pelanggan',
-                    'start_date' => $rental->start_date,
-                    'end_date' => $rental->end_date,
-                    'status' => $rental->status,
-                    'days' => $days,
-                    'total_amount' => (float) ($rental->total_amount ?? 0),
-                ];
-            });
+        return app(VehicleRevenueSource::class)->getVehicleRevenueItems($vehicleId, $startDate, $endDate);
     }
 
     /**

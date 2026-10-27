@@ -98,6 +98,34 @@ class ModuleRegistry
     public function subFeatures(): array
     {
         return [
+            'document-compliance' => [
+                'key' => 'document-compliance',
+                'parent' => 'document',
+                'label' => 'Documents — Kepatuhan Pajak, STNK, Asuransi & KIR',
+                'description' => 'Matriks pemantauan jatuh tempo pajak STNK tahunan, ganti plat 5 tahunan, polis asuransi, uji berkala KIR, dan riwayat biaya perpanjangan.',
+                'requires' => ['document', 'fleet'],
+            ],
+            'fleet-drivers' => [
+                'key' => 'fleet-drivers',
+                'parent' => 'driver',
+                'label' => 'Fleet — Manajemen Pengemudi (Drivers)',
+                'description' => 'Profil pengemudi, klasifikasi & masa berlaku SIM, skor keselamatan berkendara, dan penugasan pengemudi.',
+                'requires' => ['driver'],
+            ],
+            'fleet-settlements' => [
+                'key' => 'fleet-settlements',
+                'parent' => 'fleet',
+                'label' => 'Fleet — Bagi Hasil Investor & Sublease',
+                'description' => 'Manajemen kontrak titipan unit investor/mitra, skema bagi hasil omset/sewa tetap, dan laporan pencairan (settlement).',
+                'requires' => ['fleet', 'partners'],
+            ],
+            'fleet-fuel' => [
+                'key' => 'fleet-fuel',
+                'parent' => 'fleet',
+                'label' => 'Fleet — Log & Analitik BBM',
+                'description' => 'Pencatatan pengisian bahan bakar, rasio efisiensi KM/L, dan deteksi anomali konsumsi BBM armada.',
+                'requires' => ['fleet'],
+            ],
             'rental-corporate' => [
                 'key' => 'rental-corporate',
                 'parent' => 'rental',
@@ -123,8 +151,9 @@ class ModuleRegistry
 
     /**
      * Keys of sub-features that are currently unavailable in the active context
-     * (either platform-disabled or hidden from the current tenant), used by
-     * the frontend sidebar and module navigation bars to hide their links.
+     * (either platform-disabled, hidden from the current tenant, or whose parent
+     * module is unavailable), used by the frontend sidebar and module navigation
+     * bars to hide their links.
      *
      * @return list<string>
      */
@@ -133,7 +162,7 @@ class ModuleRegistry
         $disabled = [];
 
         foreach ($this->subFeatures() as $key => $subFeature) {
-            if (! $this->platformEnabled($key) || (tenancy()->initialized && $this->isTenantHidden($key))) {
+            if (! $this->available($key)) {
                 $disabled[] = $key;
             }
         }
@@ -353,7 +382,9 @@ class ModuleRegistry
      */
     private function hiddenKeys(): array
     {
-        if (! Schema::hasTable('module_settings')) {
+        $connection = (new ModuleSetting)->getConnectionName();
+
+        if (! Schema::connection($connection)->hasTable('module_settings')) {
             return $this->hiddenKeys ??= [];
         }
 
@@ -368,7 +399,9 @@ class ModuleRegistry
      */
     private function disabledKeys(): array
     {
-        if (! Schema::hasTable('module_settings')) {
+        $connection = (new ModuleSetting)->getConnectionName();
+
+        if (! Schema::connection($connection)->hasTable('module_settings')) {
             return $this->disabledKeys ??= [];
         }
 

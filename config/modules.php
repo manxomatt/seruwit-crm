@@ -29,6 +29,7 @@ return [
         Modules\Billing\BillingModule::class,
         Modules\Document\DocumentModule::class,
         Modules\Fleet\FleetModule::class,
+        Modules\Driver\DriverModule::class,
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,
         Modules\Purchasing\PurchasingModule::class,

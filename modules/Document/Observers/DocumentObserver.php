@@ -45,7 +45,9 @@ class DocumentObserver
     private function syncVehicle(Vehicle $vehicle, string $key, Document $document): void
     {
         match ($key) {
-            'stnk' => $vehicle->updateQuietly(['stnk_expires_at' => $document->expires_at]),
+            'stnk', 'stnk_annual' => $vehicle->updateQuietly(['stnk_expires_at' => $document->expires_at]),
+            'stnk_five_year' => $vehicle->updateQuietly(['stnk_five_year_expires_at' => $document->expires_at]),
+            'insurance' => $vehicle->updateQuietly(['insurance_expires_at' => $document->expires_at]),
             'kir' => $vehicle->updateQuietly(['kir_expires_at' => $document->expires_at]),
             default => null,
         };

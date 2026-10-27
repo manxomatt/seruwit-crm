@@ -14,6 +14,7 @@ use Modules\Document\Http\Controllers\DriverDocumentController;
 use Modules\Document\Http\Controllers\VehicleDocumentController;
 use Modules\Document\Models\Document;
 use Modules\Document\Observers\DocumentObserver;
+use Modules\Fleet\Http\Controllers\FleetComplianceController;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 
@@ -117,6 +118,19 @@ class DocumentModule implements ModuleContract
         Route::get('/documents', [DocumentController::class, 'index'])
             ->middleware('permission:document,view')
             ->name('documents.index');
+
+        // Fleet compliance & tax matrix (STNK 1/5 yr, Insurance, KIR & renewal logs)
+        Route::middleware('requires-module:document-compliance')->group(function (): void {
+            Route::get('/documents/compliance', [FleetComplianceController::class, 'index'])
+                ->middleware('permission:document,view')
+                ->name('documents.compliance.index');
+            Route::get('/fleet/compliance', [FleetComplianceController::class, 'index'])
+                ->middleware('permission:document,view')
+                ->name('fleet.compliance.index');
+            Route::post('/fleet/vehicles/{vehicle}/compliance/renew', [FleetComplianceController::class, 'renew'])
+                ->middleware('permission:document,update')
+                ->name('fleet.compliance.renew');
+        });
 
         // Document type administration (admin-only in the workspace)
         Route::get('/documents/types', [DocumentTypeController::class, 'index'])

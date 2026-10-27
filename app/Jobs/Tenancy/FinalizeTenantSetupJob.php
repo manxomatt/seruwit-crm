@@ -86,6 +86,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             'posts',
             'carousels',
             'fleet',
+            'driver',
             'rental',
             'document',
             'maintenance',
@@ -154,19 +155,19 @@ class FinalizeTenantSetupJob implements ShouldQueue
             $phone = $setup['phone'] ?? null;
             if (class_exists(\App\Models\Setting::class)) {
                 if (! empty($this->tenant->name)) {
-                    \App\Models\Setting::set('general.company_name', $this->tenant->name);
-                    \App\Models\Setting::set('general.site_name', $this->tenant->name);
+                    \App\Models\Setting::setValue('general.company_name', $this->tenant->name);
+                    \App\Models\Setting::setValue('general.site_name', $this->tenant->name);
                 }
                 if (! empty($adminUser->email)) {
-                    \App\Models\Setting::set('general.company_email', $adminUser->email);
-                    \App\Models\Setting::set('general.contact_email', $adminUser->email);
+                    \App\Models\Setting::setValue('general.company_email', $adminUser->email);
+                    \App\Models\Setting::setValue('general.contact_email', $adminUser->email);
                 }
                 if (! empty($phone)) {
-                    \App\Models\Setting::set('general.company_phone', $phone);
-                    \App\Models\Setting::set('general.contact_phone', $phone);
+                    \App\Models\Setting::setValue('general.company_phone', $phone);
+                    \App\Models\Setting::setValue('general.contact_phone', $phone);
                     $digits = preg_replace('/[^0-9]/', '', $phone);
                     if (str_starts_with($digits, '08') || str_starts_with($digits, '628')) {
-                        \App\Models\Setting::set('general.contact_whatsapp', $phone);
+                        \App\Models\Setting::setValue('general.contact_whatsapp', $phone);
                     }
                 }
             }

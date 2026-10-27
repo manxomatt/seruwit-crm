@@ -4,6 +4,7 @@ namespace Modules\Fleet\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Fleet\Contracts\VehicleTariffIntegration;
 use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Fleet\Support\VehicleRentalClass;
 
@@ -118,10 +119,10 @@ class StoreVehicleRequest extends FormRequest
                 }
             }
 
-            if (\App\Modules\Facades\Modules::available('rental') && class_exists(\Modules\Rental\Support\RentalRateCoverageChecker::class)) {
+            if (\App\Modules\Facades\Modules::available('rental') && app()->bound(VehicleTariffIntegration::class)) {
                 $rentalClass = $this->input('rental_class');
                 $vehicleType = $this->input('type');
-                $isCovered = \Modules\Rental\Support\RentalRateCoverageChecker::isCovered($rentalClass, $vehicleType);
+                $isCovered = app(VehicleTariffIntegration::class)->checkCovered($rentalClass, $vehicleType);
 
                 if (! $isCovered) {
                     $ratePerPeriod = $this->input('rental_rate.rate_per_period');

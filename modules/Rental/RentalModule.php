@@ -6,6 +6,8 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
+use Modules\Fleet\Contracts\VehicleRevenueSource;
+use Modules\Fleet\Contracts\VehicleTariffIntegration;
 use Modules\Rental\Console\Commands\RentalExpirePendingReserved;
 use Modules\Rental\Console\Commands\RentalScanEnding;
 use Modules\Rental\Http\Controllers\PartnerPortalController;
@@ -25,6 +27,8 @@ use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 use Modules\Rental\Http\Controllers\RentalReservationWizardController;
 use Modules\Rental\Http\Controllers\RentalSettingsController;
+use Modules\Rental\Support\RentalRateCoverageChecker;
+use Modules\Rental\Support\RentalVehicleRevenueSource;
 
 /**
  * Vehicle rental management: booking, checkout, return, damage reporting, and
@@ -95,6 +99,9 @@ class RentalModule implements ModuleContract
 
     public function boot(): void
     {
+        app()->bind(VehicleRevenueSource::class, RentalVehicleRevenueSource::class);
+        app()->bind(VehicleTariffIntegration::class, RentalRateCoverageChecker::class);
+
         Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
             RentalScanEnding::class,
             RentalExpirePendingReserved::class,

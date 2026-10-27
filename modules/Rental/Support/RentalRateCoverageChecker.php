@@ -2,10 +2,58 @@
 
 namespace Modules\Rental\Support;
 
+use Modules\Fleet\Contracts\VehicleTariffIntegration;
+use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\RentalRate;
 
-class RentalRateCoverageChecker
+class RentalRateCoverageChecker implements VehicleTariffIntegration
 {
+    /**
+     * @return array{
+     *     has_global_rate: bool,
+     *     covered_rental_classes: list<string>,
+     *     covered_vehicle_types: list<string>,
+     *     sample_rates: array<string, array{name: string, rate_per_period: float, period_type: string}>
+     * }
+     */
+    public function coverageSummary(): array
+    {
+        return self::getCoverageSummary();
+    }
+
+    public function checkCovered(?string $rentalClass, ?string $vehicleType): bool
+    {
+        return self::isCovered($rentalClass, $vehicleType);
+    }
+
+    /**
+     * @param  array<string, mixed>  $rateInput
+     */
+    public function createInitialRateForVehicle(Vehicle $vehicle, array $rateInput): void
+    {
+        if (empty($rateInput['rate_per_period'])) {
+            return;
+        }
+
+        $scope = $rateInput['scope'] ?? 'class';
+        $name = ! empty($rateInput['name'])
+            ? $rateInput['name']
+            : ($scope === 'class' && filled($vehicle->rental_class)
+                ? 'Tarif Kelas '.ucfirst((string) $vehicle->rental_class)
+                : 'Tarif '.$vehicle->name);
+
+        RentalRate::query()->create([
+            'name' => $name,
+            'vehicle_id' => $scope === 'vehicle' ? $vehicle->id : null,
+            'rental_class' => $scope === 'class' ? $vehicle->rental_class : null,
+            'vehicle_type' => $vehicle->type,
+            'period_type' => $rateInput['period_type'] ?? RentalRate::PERIOD_DAILY,
+            'rate_per_period' => $rateInput['rate_per_period'],
+            'deposit_amount' => $rateInput['deposit_amount'] ?? 0,
+            'is_active' => true,
+        ]);
+    }
+
     /**
      * Get active coverage status for rental classes and vehicle types.
      *

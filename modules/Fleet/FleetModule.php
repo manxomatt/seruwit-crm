@@ -6,11 +6,8 @@ use App\Models\User;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
-use Modules\Fleet\Http\Controllers\DriverAccountController;
-use Modules\Fleet\Http\Controllers\DriverController;
 use Modules\Fleet\Http\Controllers\FleetBaseAiGenerateController;
 use Modules\Fleet\Http\Controllers\FleetBaseController;
-use Modules\Fleet\Http\Controllers\FleetComplianceController;
 use Modules\Fleet\Http\Controllers\FleetDashboardController;
 use Modules\Fleet\Http\Controllers\FuelAnalyticsController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
@@ -120,7 +117,6 @@ class FleetModule implements ModuleContract
         Route::post('/fleet/vehicles/batch-destroy', [VehicleController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.batch-destroy');
         Route::get('/fleet/vehicles/{vehicle}', [VehicleController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.show');
         Route::get('/fleet/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.vehicles.edit');
-        Route::get('/fleet/vehicles/{vehicle}/settlement', [VehicleSettlementController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.settlement');
         Route::patch('/fleet/vehicles/{vehicle}', [VehicleController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.update');
         Route::delete('/fleet/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.destroy');
         Route::post('/fleet/vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->middleware('permission:fleet,update')->name('fleet.vehicles.activate');
@@ -133,28 +129,18 @@ class FleetModule implements ModuleContract
         Route::patch('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.maintenance-logs.update');
         Route::delete('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.maintenance-logs.destroy');
 
-        Route::get('/fleet/compliance', [FleetComplianceController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.compliance.index');
-        Route::post('/fleet/vehicles/{vehicle}/compliance/renew', [FleetComplianceController::class, 'renew'])->middleware('permission:fleet,update')->name('fleet.compliance.renew');
+        Route::middleware('requires-module:fleet-settlements')->group(function (): void {
+            Route::get('/fleet/vehicles/{vehicle}/settlement', [VehicleSettlementController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.settlement');
+            Route::get('/fleet/settlements', [VehicleSettlementController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.settlements.index');
+            Route::post('/fleet/settlements/generate', [VehicleSettlementController::class, 'generate'])->middleware('permission:fleet,update')->name('fleet.settlements.generate');
+            Route::post('/fleet/settlements/payout', [VehicleSettlementController::class, 'savePayout'])->middleware('permission:fleet,update')->name('fleet.settlements.payout');
+        });
 
-        Route::get('/fleet/settlements', [VehicleSettlementController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.settlements.index');
-        Route::post('/fleet/settlements/generate', [VehicleSettlementController::class, 'generate'])->middleware('permission:fleet,update')->name('fleet.settlements.generate');
-        Route::post('/fleet/settlements/payout', [VehicleSettlementController::class, 'savePayout'])->middleware('permission:fleet,update')->name('fleet.settlements.payout');
-
-        Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');
-        Route::get('/fleet/fuel/analytics', [FuelAnalyticsController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.analytics');
-        Route::post('/fleet/vehicles/{vehicle}/fuel-logs', [FuelLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.fuel-logs.store');
-        Route::delete('/fleet/vehicles/{vehicle}/fuel-logs/{fuelLog}', [FuelLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.fuel-logs.destroy');
-
-        Route::get('/fleet/drivers', [DriverController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.drivers.index');
-        Route::get('/fleet/drivers/create', [DriverController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.drivers.create');
-        Route::post('/fleet/drivers', [DriverController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.drivers.store');
-        Route::patch('/fleet/drivers/batch-status', [DriverController::class, 'batchUpdateStatus'])->middleware('permission:fleet,update')->name('fleet.drivers.batch-status');
-        Route::post('/fleet/drivers/batch-destroy', [DriverController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.drivers.batch-destroy');
-        Route::get('/fleet/drivers/{driver}', [DriverController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.drivers.show');
-        Route::get('/fleet/drivers/{driver}/edit', [DriverController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.drivers.edit');
-        Route::patch('/fleet/drivers/{driver}', [DriverController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.drivers.update');
-        Route::delete('/fleet/drivers/{driver}', [DriverController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.drivers.destroy');
-
-        Route::post('/fleet/drivers/{driver}/account', [DriverAccountController::class, 'store'])->middleware('permission:fleet,update')->name('fleet.drivers.account.store');
+        Route::middleware('requires-module:fleet-fuel')->group(function (): void {
+            Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');
+            Route::get('/fleet/fuel/analytics', [FuelAnalyticsController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.analytics');
+            Route::post('/fleet/vehicles/{vehicle}/fuel-logs', [FuelLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.fuel-logs.store');
+            Route::delete('/fleet/vehicles/{vehicle}/fuel-logs/{fuelLog}', [FuelLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.fuel-logs.destroy');
+        });
     }
 }

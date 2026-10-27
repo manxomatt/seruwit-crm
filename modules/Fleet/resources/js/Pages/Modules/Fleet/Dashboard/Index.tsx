@@ -1,7 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -189,7 +189,11 @@ function StatCard({
 export default function Index({ board, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const { disabledSubFeatures = [] } = usePage().props as {
+        disabledSubFeatures?: string[];
+    };
     const { bases, counts, drivers, expiring_docs, vehicles } = board;
+    const complianceEnabled = expiring_docs.available && !disabledSubFeatures.includes('document-compliance');
 
     const setupCounts: FleetSetupCounts = {
         bases: bases?.total ?? 0,
@@ -232,7 +236,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                         )}
 
                         {/* Stat Grid */}
-                        <div className={`grid gap-4 sm:grid-cols-2 ${expiring_docs.available ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
+                        <div className={`grid gap-4 sm:grid-cols-2 ${complianceEnabled ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
                             <StatCard
                                 label={t('fleet.dashboard.active', undefined, 'Active')}
                                 value={counts.active}
@@ -277,7 +281,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                                     { label: t('fleet.dashboard.drivers_inactive', undefined, 'Inactive'), value: drivers.inactive },
                                 ]}
                             />
-                            {expiring_docs.available && (
+                            {complianceEnabled && (
                                 <StatCard
                                     label={t('fleet.dashboard.docs_compliance', undefined, 'Docs Expiring')}
                                     value={expiring_docs.expired + expiring_docs.expiring_30}
@@ -297,7 +301,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                         </div>
 
                         {/* Expiry Alert Banner */}
-                        {expiring_docs.available && (expiring_docs.expired > 0 || expiring_docs.expiring_30 > 0) && (
+                        {complianceEnabled && (expiring_docs.expired > 0 || expiring_docs.expiring_30 > 0) && (
                             <div className="flex items-center justify-between gap-4 rounded-3xl border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/50 p-4 text-xs font-semibold text-amber-900 dark:text-amber-200 shadow-sm">
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl">⚠️</span>

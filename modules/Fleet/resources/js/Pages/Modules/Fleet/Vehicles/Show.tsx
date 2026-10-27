@@ -11,7 +11,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { formatDate } from '@/utils/date';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, type ReactNode } from 'react';
 import FleetNav from '../../../../FleetNav';
 import VehicleCheckoutModal from '../../../../Components/VehicleCheckoutModal';
@@ -193,6 +193,13 @@ export default function Show({
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
+    const { disabledSubFeatures = [] } = usePage().props as {
+        disabledSubFeatures?: string[];
+    };
+
+    const complianceEnabled = documentsEnabled && !disabledSubFeatures.includes('document-compliance');
+    const settlementsEnabled = !disabledSubFeatures.includes('fleet-settlements');
+    const fuelEnabled = !disabledSubFeatures.includes('fleet-fuel');
 
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
@@ -415,7 +422,7 @@ export default function Show({
                                 ← {t('fleet.vehicles.show_back_to_index', undefined, 'Kembali ke Daftar Armada')}
                             </Link>
 
-                            {can.create && (
+                            {can.create && fuelEnabled && (
                                 <button
                                     type="button"
                                     onClick={openFuelModal}
@@ -447,7 +454,7 @@ export default function Show({
                                 )
                             )}
 
-                            {vehicle.ownership_type && vehicle.ownership_type !== 'owned' && (
+                            {settlementsEnabled && vehicle.ownership_type && vehicle.ownership_type !== 'owned' && (
                                 <Link
                                     href={prefixedRoute('fleet.vehicles.settlement', vehicle.id)}
                                     className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
@@ -1025,7 +1032,7 @@ export default function Show({
                     {/* Right Column: Ownership, Compliance, Documents & AI Health (5 cols) */}
                     <div className="space-y-6 lg:col-span-5">
                         {/* Status Kepemilikan & Kerjasama Mitra / Investor Card */}
-                        {vehicle.ownership_type && vehicle.ownership_type !== 'owned' && (
+                        {settlementsEnabled && vehicle.ownership_type && vehicle.ownership_type !== 'owned' && (
                             <div className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-white p-6 shadow-xs dark:border-indigo-900/50 dark:bg-slate-900">
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                                     <div className="flex items-center gap-2">
@@ -1124,6 +1131,7 @@ export default function Show({
                         )}
 
                         {/* Compliance Card */}
+                        {complianceEnabled && (
                         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <div className="flex items-center gap-2">
@@ -1210,6 +1218,7 @@ export default function Show({
                                 </div>
                             </div>
                         </div>
+                        )}
 
                         {/* Documents Summary Card */}
                         {documentsEnabled && (

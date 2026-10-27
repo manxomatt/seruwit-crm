@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Contracts\VehicleTariffIntegration;
 use Modules\Fleet\Http\Requests\BatchDeleteVehiclesRequest;
 use Modules\Fleet\Http\Requests\BatchUpdateVehicleStatusRequest;
 use Modules\Fleet\Http\Requests\StoreVehicleRequest;
@@ -132,8 +133,8 @@ class VehicleController extends Controller
 
         $rentalEnabled = Modules::available('rental');
         $rentalRateCoverage = null;
-        if ($rentalEnabled && class_exists(\Modules\Rental\Support\RentalRateCoverageChecker::class)) {
-            $rentalRateCoverage = \Modules\Rental\Support\RentalRateCoverageChecker::getCoverageSummary();
+        if ($rentalEnabled && app()->bound(VehicleTariffIntegration::class)) {
+            $rentalRateCoverage = app(VehicleTariffIntegration::class)->coverageSummary();
         }
 
         return Inertia::render('Modules/Fleet/Vehicles/Create', [
@@ -173,33 +174,16 @@ class VehicleController extends Controller
         $rentalRateData = $vehicleData['rental_rate'] ?? null;
         unset($vehicleData['rental_rate']);
 
-        $createdRentalRate = null;
-        $createRentalRateCallback = function (Vehicle $vehicle) use ($rentalRateData, &$createdRentalRate): void {
+        $createRentalRateCallback = function (Vehicle $vehicle) use ($rentalRateData): void {
             if (! Modules::available('rental') || ! is_array($rentalRateData) || empty($rentalRateData['rate_per_period'])) {
                 return;
             }
 
-            if (! class_exists(\Modules\Rental\Models\RentalRate::class)) {
+            if (! app()->bound(VehicleTariffIntegration::class)) {
                 return;
             }
 
-            $scope = $rentalRateData['scope'] ?? 'class';
-            $name = ! empty($rentalRateData['name'])
-                ? $rentalRateData['name']
-                : ($scope === 'class' && filled($vehicle->rental_class)
-                    ? 'Tarif Kelas '.ucfirst((string) $vehicle->rental_class)
-                    : 'Tarif '.$vehicle->name);
-
-            $createdRentalRate = \Modules\Rental\Models\RentalRate::create([
-                'name' => $name,
-                'vehicle_id' => $scope === 'vehicle' ? $vehicle->id : null,
-                'rental_class' => $scope === 'class' ? $vehicle->rental_class : null,
-                'vehicle_type' => $vehicle->type,
-                'period_type' => $rentalRateData['period_type'] ?? \Modules\Rental\Models\RentalRate::PERIOD_DAILY,
-                'rate_per_period' => $rentalRateData['rate_per_period'],
-                'deposit_amount' => $rentalRateData['deposit_amount'] ?? 0,
-                'is_active' => true,
-            ]);
+            app(VehicleTariffIntegration::class)->createInitialRateForVehicle($vehicle, $rentalRateData);
         };
 
         if ($isPerVehicleTrial) {

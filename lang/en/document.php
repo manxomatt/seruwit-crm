@@ -8,6 +8,7 @@ return [
         'vehicles' => 'Vehicles',
         'drivers' => 'Drivers',
         'all' => 'All Documents',
+        'compliance' => 'Fleet Tax & Compliance',
         'types' => 'Document Types',
     ],
 

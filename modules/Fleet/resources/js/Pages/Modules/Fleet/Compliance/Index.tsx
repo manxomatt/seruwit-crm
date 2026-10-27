@@ -11,6 +11,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, useMemo, FormEventHandler } from 'react';
+import DocumentNav from '../../../../../../Document/resources/js/DocumentNav';
 import FleetNav from '../../../../FleetNav';
 
 interface DocumentStatus {
@@ -89,9 +90,10 @@ export default function ComplianceIndex({
     partners,
     filters,
 }: Props): JSX.Element {
-    const { prefixedRoute } = useRoutePrefix();
+    const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
+    const isDocumentContext = isCurrentRoute('documents.compliance.*');
 
     const [activeTab, setActiveTab] = useState<'board' | 'history'>('board');
     const [search, setSearch] = useState(filters.search);
@@ -157,7 +159,7 @@ export default function ComplianceIndex({
         if (merged.home_base_id) query.home_base_id = String(merged.home_base_id);
         if (merged.ownership_type) query.ownership_type = merged.ownership_type;
 
-        router.get(prefixedRoute('fleet.compliance.index'), query, {
+        router.get(prefixedRoute(isDocumentContext ? 'documents.compliance.index' : 'fleet.compliance.index'), query, {
             preserveState: true,
             replace: true,
         });
@@ -295,7 +297,7 @@ export default function ComplianceIndex({
         >
             <Head title="Kepatuhan & Pajak Armada · Fleet Compliance" />
 
-            <FleetNav />
+            {isDocumentContext ? <DocumentNav /> : <FleetNav />}
 
             <div className="space-y-6">
                 {/* KPI Summary Cards */}
