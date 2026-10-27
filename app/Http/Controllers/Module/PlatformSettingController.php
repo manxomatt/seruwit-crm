@@ -199,6 +199,7 @@ class PlatformSettingController extends Controller
             'vehicle_activation_duration_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
             'vehicle_grace_period_days' => ['sometimes', 'integer', 'min:0', 'max:30'],
             'pause_during_maintenance_enabled' => ['sometimes', 'boolean'],
+            'show_dashboard_pricing_section' => ['sometimes', 'boolean'],
         ]);
 
         PlatformSetting::setValue(CentralAiSettings::KEY, $data['ai_features_enabled'] ? '1' : '0');
@@ -227,6 +228,9 @@ class PlatformSettingController extends Controller
         }
         if (isset($data['pause_during_maintenance_enabled'])) {
             PlatformSetting::setValue(PlatformSetting::KEY_PAUSE_DURING_MAINTENANCE, $data['pause_during_maintenance_enabled'] ? '1' : '0');
+        }
+        if (isset($data['show_dashboard_pricing_section'])) {
+            PlatformSetting::setValue(PlatformSetting::KEY_SHOW_DASHBOARD_PRICING_SECTION, $data['show_dashboard_pricing_section'] ? '1' : '0');
         }
 
         PlatformSetting::applyCentralMailConfig();

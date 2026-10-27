@@ -131,6 +131,9 @@ export default function Group({
     const pauseMaintenanceIndex = findSettingIndex('pause_during_maintenance_enabled');
     const isPauseMaintenance = pauseMaintenanceIndex >= 0 ? data.settings[pauseMaintenanceIndex]?.value === '1' : false;
 
+    const showDashboardPricingIndex = findSettingIndex('capacity.show_dashboard_pricing_section');
+    const isShowDashboardPricing = showDashboardPricingIndex >= 0 ? data.settings[showDashboardPricingIndex]?.value === '1' : true;
+
     const durationDaysIndex = findSettingIndex('vehicle_activation_duration_days');
     const graceDaysIndex = findSettingIndex('vehicle_grace_period_days');
 
@@ -986,6 +989,66 @@ export default function Group({
                                     </div>
                                     <InputError
                                         message={(errors as Record<string, string>)[`settings.${pauseMaintenanceIndex}.value`]}
+                                        className="mt-1.5"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Show/Hide Tiered Pricing Section on Tenant Dashboard Toggle */}
+                            {showDashboardPricingIndex >= 0 && (
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div
+                                        onClick={() => updateValue(showDashboardPricingIndex, isShowDashboardPricing ? '0' : '1')}
+                                        className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                            isShowDashboardPricing
+                                                ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                                : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-sm">
+                                                ⚡
+                                            </span>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {t('settings.platform.capacity.show_dashboard_pricing_label', undefined, 'Tampilkan Section Tarif Berjenjang di Dashboard Tenant')}
+                                                    </span>
+                                                    <span
+                                                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                                            isShowDashboardPricing
+                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                                                : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                        }`}
+                                                    >
+                                                        {isShowDashboardPricing ? 'TAMPIL' : 'DISEMBUNYIKAN'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                    {t(
+                                                        'settings.platform.capacity.show_dashboard_pricing_desc',
+                                                        undefined,
+                                                        'Tampilkan atau sembunyikan section Paket & Harga per Kendaraan (Tarif Berjenjang Sesuai Skala Armada) pada halaman Dashboard seluruh tenant.',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div
+                                            role="switch"
+                                            aria-checked={isShowDashboardPricing}
+                                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                isShowDashboardPricing ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                    isShowDashboardPricing ? 'translate-x-5' : 'translate-x-0'
+                                                }`}
+                                            />
+                                        </div>
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${showDashboardPricingIndex}.value`]}
                                         className="mt-1.5"
                                     />
                                 </div>

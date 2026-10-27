@@ -261,4 +261,24 @@ class DashboardTest extends TestCase
         $responseDisabled->assertOk();
         $this->assertFalse($responseDisabled->original->getData()['page']['props']['showQuickActions']);
     }
+
+    public function test_dashboard_respects_show_dashboard_pricing_section_platform_setting(): void
+    {
+        $user = $this->createUserWithRole();
+
+        // Enabled by default
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_SHOW_DASHBOARD_PRICING_SECTION, '1');
+
+        $response = $this->actingAs($user)->get(route('module.dashboard'));
+        $response->assertOk();
+        $this->assertTrue($response->original->getData()['page']['props']['showSubscriptionSection']);
+
+        // Disabled from Central Admin
+        \App\Models\PlatformSetting::setValue(\App\Models\PlatformSetting::KEY_SHOW_DASHBOARD_PRICING_SECTION, '0');
+
+        $responseDisabled = $this->actingAs($user)->get(route('module.dashboard'));
+        $responseDisabled->assertOk();
+        $this->assertFalse($responseDisabled->original->getData()['page']['props']['showSubscriptionSection']);
+        $this->assertNull($responseDisabled->original->getData()['page']['props']['subscription']);
+    }
 }

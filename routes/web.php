@@ -400,6 +400,7 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/billing', [SubscriptionTierController::class, 'billingDashboard'])->name('subscription-tiers.dashboard');
         Route::get('/subscription-tiers', [SubscriptionTierController::class, 'index'])->name('subscription-tiers.index');
+        Route::post('/subscription-tiers/toggle-dashboard-section', [SubscriptionTierController::class, 'toggleDashboardSection'])->name('subscription-tiers.toggle-dashboard-section');
         Route::get('/subscription-tiers/create', [SubscriptionTierController::class, 'create'])->name('subscription-tiers.create');
         Route::post('/subscription-tiers', [SubscriptionTierController::class, 'store'])->name('subscription-tiers.store');
         Route::get('/subscription-tiers/{tier}/edit', [SubscriptionTierController::class, 'edit'])->name('subscription-tiers.edit');

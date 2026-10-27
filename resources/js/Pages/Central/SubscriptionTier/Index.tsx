@@ -19,6 +19,7 @@ interface Tier {
 
 interface Props {
     tiers: Tier[];
+    showOnTenantDashboard?: boolean;
 }
 
 const formatRupiah = (amount: number): string => {
@@ -41,14 +42,28 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function Index({ tiers }: Props): JSX.Element {
+export default function Index({ tiers, showOnTenantDashboard = true }: Props): JSX.Element {
     const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
 
     const [deletingTier, setDeletingTier] = useState<Tier | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isTogglingDashboard, setIsTogglingDashboard] = useState(false);
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+    const handleToggleDashboardSection = (): void => {
+        if (isTogglingDashboard) return;
+        setIsTogglingDashboard(true);
+        router.post(
+            route('module.subscription-tiers.toggle-dashboard-section'),
+            { show_on_tenant_dashboard: !showOnTenantDashboard },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsTogglingDashboard(false),
+            },
+        );
+    };
 
     // Interactive simulator state
     const [simVehicles, setSimVehicles] = useState<number>(20);
@@ -164,6 +179,63 @@ export default function Index({ tiers }: Props): JSX.Element {
                         </div>
                     </div>
                 )}
+
+                {/* Tenant Dashboard Section Visibility Toggle */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:px-5 shadow-sm">
+                    <div className="flex items-start sm:items-center gap-3.5">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base shadow-sm ${
+                            showOnTenantDashboard
+                                ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300'
+                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                        }`}>
+                            ⚡
+                        </div>
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                    Section &ldquo;Tarif Berjenjang Sesuai Skala Armada&rdquo; di Dashboard Tenant
+                                </h3>
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                    showOnTenantDashboard
+                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300'
+                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${showOnTenantDashboard ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                    {showOnTenantDashboard ? 'Ditampilkan' : 'Disembunyikan'}
+                                </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                Atur apakah banner & simulator Paket & Harga per Kendaraan (PAYG) tampil pada halaman Dashboard tenant.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={showOnTenantDashboard}
+                        disabled={isTogglingDashboard}
+                        onClick={handleToggleDashboardSection}
+                        className={`inline-flex items-center gap-2.5 self-end sm:self-center rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${
+                            showOnTenantDashboard
+                                ? 'border-indigo-200 bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100/70 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300'
+                                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300'
+                        } ${isTogglingDashboard ? 'opacity-60 cursor-wait' : 'cursor-pointer'}`}
+                    >
+                        <span>{showOnTenantDashboard ? 'Tampil di Dashboard' : 'Sembunyi di Dashboard'}</span>
+                        <span
+                            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                showOnTenantDashboard ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                            }`}
+                        >
+                            <span
+                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                                    showOnTenantDashboard ? 'translate-x-4' : 'translate-x-0'
+                                }`}
+                            />
+                        </span>
+                    </button>
+                </div>
 
                 {/* Hero Stat Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -231,6 +231,8 @@ return [
             'grace_period_desc' => 'Tolerance days after expiration before vehicle is locked out from operational dispatches (default: 3 days).',
             'pause_maintenance_label' => 'Freeze Active Days During Maintenance',
             'pause_maintenance_desc' => 'When enabled, active capacity days do not decrement while the vehicle is undergoing maintenance.',
+            'show_dashboard_pricing_label' => 'Show Tiered Pricing Section on Tenant Dashboard',
+            'show_dashboard_pricing_desc' => 'Show or hide the Vehicle Package & Pricing (Tiered Rates by Fleet Scale) section on the main Dashboard across all tenants.',
             'days_suffix' => 'Days',
             'units_suffix' => 'Units',
         ],

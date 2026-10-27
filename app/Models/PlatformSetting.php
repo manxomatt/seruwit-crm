@@ -35,6 +35,8 @@ class PlatformSetting extends Model
 
     public const KEY_PAUSE_DURING_MAINTENANCE = 'pause_during_maintenance_enabled';
 
+    public const KEY_SHOW_DASHBOARD_PRICING_SECTION = 'capacity.show_dashboard_pricing_section';
+
     public const MODEL_PER_VEHICLE_TRIAL = 'per_vehicle_trial';
 
     public const MODEL_TENANT_QUOTA = 'tenant_quota';
@@ -140,6 +142,13 @@ class PlatformSetting extends Model
     public static function isPauseDuringMaintenanceEnabled(): bool
     {
         $val = static::getValue(self::KEY_PAUSE_DURING_MAINTENANCE, '0');
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function isDashboardPricingSectionVisible(): bool
+    {
+        $val = static::getValue(self::KEY_SHOW_DASHBOARD_PRICING_SECTION, '1');
 
         return filter_var($val, FILTER_VALIDATE_BOOLEAN);
     }
@@ -364,6 +373,16 @@ class PlatformSetting extends Model
                 'description' => 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
                 'is_public' => false,
                 'sort_order' => 7,
+            ],
+            [
+                'key' => self::KEY_SHOW_DASHBOARD_PRICING_SECTION,
+                'group' => 'capacity',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Tampilkan Section Tarif Berjenjang di Dashboard Tenant',
+                'description' => 'Tampilkan atau sembunyikan section Paket & Harga per Kendaraan (Tarif Berjenjang Sesuai Skala Armada) pada halaman Dashboard seluruh tenant.',
+                'is_public' => true,
+                'sort_order' => 8,
             ],
 
             // EMAIL (Central Root SMTP Mailer)

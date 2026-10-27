@@ -231,6 +231,8 @@ return [
             'grace_period_desc' => 'Toleransi hari setelah masa aktif habis sebelum unit dinonaktifkan dari jadwal operasional (default: 3 hari).',
             'pause_maintenance_label' => 'Bekukan Masa Aktif Saat Masuk Bengkel',
             'pause_maintenance_desc' => 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
+            'show_dashboard_pricing_label' => 'Tampilkan Section Tarif Berjenjang di Dashboard Tenant',
+            'show_dashboard_pricing_desc' => 'Tampilkan atau sembunyikan section Paket & Harga per Kendaraan (Tarif Berjenjang Sesuai Skala Armada) pada halaman Dashboard seluruh tenant.',
             'days_suffix' => 'Hari',
             'units_suffix' => 'Unit',
         ],

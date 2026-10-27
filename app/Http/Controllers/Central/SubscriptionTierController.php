@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformSetting;
 use App\Models\SubscriptionTier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,33 @@ class SubscriptionTierController extends Controller
                 'price_per_vehicle' => $tier->price_per_vehicle,
                 'created_at' => $tier->created_at->format('Y-m-d'),
             ]),
+            'showOnTenantDashboard' => PlatformSetting::isDashboardPricingSectionVisible(),
         ]);
+    }
+
+    /**
+     * Toggle visibility of the tiered pricing section on the tenant dashboard.
+     */
+    public function toggleDashboardSection(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'show_on_tenant_dashboard' => ['required', 'boolean'],
+        ]);
+
+        PlatformSetting::ensureDefaultsExist();
+        PlatformSetting::setValue(
+            PlatformSetting::KEY_SHOW_DASHBOARD_PRICING_SECTION,
+            $validated['show_on_tenant_dashboard'] ? '1' : '0'
+        );
+
+        return redirect()
+            ->route('module.subscription-tiers.index')
+            ->with(
+                'success',
+                $validated['show_on_tenant_dashboard']
+                    ? 'Section Tarif Berjenjang sekarang ditampilkan di Dashboard Tenant.'
+                    : 'Section Tarif Berjenjang berhasil disembunyikan dari Dashboard Tenant.'
+            );
     }
 
     /**

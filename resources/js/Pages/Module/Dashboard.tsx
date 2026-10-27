@@ -195,6 +195,7 @@ interface Props {
     recentPosts: Post[];
     recentPages: Page[];
     subscription: SubscriptionOverview | null;
+    showSubscriptionSection?: boolean;
     currencySymbol: string;
     onboarding?: OnboardingOverview;
     showQuickActions?: boolean;
@@ -1012,6 +1013,7 @@ export default function Dashboard({
     recentPosts,
     recentPages,
     subscription,
+    showSubscriptionSection = true,
     currencySymbol,
     onboarding,
     showQuickActions = true,
@@ -1666,8 +1668,8 @@ export default function Dashboard({
                     </SectionCard>
                 )}
 
-                {/* Tenant PAYG Subscription & Fleet Quota Section (Always visible to tenant owner, independent of CMS!) */}
-                {subscription && subscription.tiers.length > 0 && (
+                {/* Tenant PAYG Subscription & Fleet Quota Section (Configurable from Central Admin) */}
+                {showSubscriptionSection && subscription && subscription.tiers.length > 0 && (
                     <div className="pt-2">
                         <SubscriptionPricingSection subscription={subscription} />
                     </div>

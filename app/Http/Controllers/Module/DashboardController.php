@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Models\PlatformSetting;
 use App\Models\Setting;
 use App\Models\SubscriptionTier;
 use App\Modules\Facades\Modules;
@@ -108,6 +109,7 @@ class DashboardController extends Controller
             'recentPages' => $recentPages,
             'onboarding' => $this->buildOnboardingOverview($user),
             'subscription' => $this->buildSubscriptionOverview(),
+            'showSubscriptionSection' => PlatformSetting::isDashboardPricingSectionVisible(),
             'currencySymbol' => (string) Setting::getValue('ecommerce.currency_symbol', 'Rp'),
         ]);
     }
@@ -163,6 +165,10 @@ class DashboardController extends Controller
     private function buildSubscriptionOverview(): ?array
     {
         if (! function_exists('tenancy') || ! tenancy()->initialized) {
+            return null;
+        }
+
+        if (! PlatformSetting::isDashboardPricingSectionVisible()) {
             return null;
         }
 
