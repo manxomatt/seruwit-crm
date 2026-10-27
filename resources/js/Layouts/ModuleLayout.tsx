@@ -8,7 +8,7 @@ import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Link, usePage, usePoll } from '@inertiajs/react';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 
 interface UserProfile {
     id: number;
