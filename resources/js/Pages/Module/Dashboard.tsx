@@ -1544,12 +1544,38 @@ export default function Dashboard({
                                 : undefined
                         }
                     >
-                        <div className="grid gap-8 lg:grid-cols-5">
-                            {finance.revenue_by_line && finance.revenue_by_line.length > 0 && (
-                                <div className="space-y-4 lg:col-span-3">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                        {t('dashboard.sections.revenue_per_line')}
-                                    </h4>
+                        {finance.invoices && (
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                <MiniStat
+                                    label={t('dashboard.invoice_status_summary.draft')}
+                                    value={finance.invoices.draft}
+                                    unit={t('dashboard.invoice_status_summary.unit_invoices', undefined, 'Invoice')}
+                                />
+                                <MiniStat
+                                    label={t('dashboard.invoice_status_summary.issued')}
+                                    value={finance.invoices.issued}
+                                    unit={t('dashboard.invoice_status_summary.unit_invoices', undefined, 'Invoice')}
+                                    warning={finance.invoices.issued > 0}
+                                />
+                                <MiniStat
+                                    label={t('dashboard.invoice_status_summary.paid')}
+                                    value={finance.invoices.paid}
+                                    unit={t('dashboard.invoice_status_summary.unit_invoices', undefined, 'Invoice')}
+                                    success={finance.invoices.paid > 0}
+                                />
+                                <MiniStat
+                                    label={t('dashboard.invoice_status_summary.overdue')}
+                                    value={finance.invoices.overdue}
+                                    unit={t('dashboard.invoice_status_summary.unit_invoices', undefined, 'Invoice')}
+                                    danger={finance.invoices.overdue > 0}
+                                />
+                            </div>
+                        )}
+
+                        {((finance.revenue_by_line && finance.revenue_by_line.length > 0) ||
+                            (finance.revenue_chart && finance.revenue_chart.length > 0)) && (
+                            <div className={`${finance.invoices ? 'mt-6 border-t border-slate-100 dark:border-slate-800 pt-6' : ''} grid gap-8 lg:grid-cols-2`}>
+                                {finance.revenue_by_line && finance.revenue_by_line.length > 0 && (
                                     <div className="space-y-3.5">
                                         {finance.revenue_by_line.map((line) => (
                                             <div key={line.key}>
@@ -1576,70 +1602,39 @@ export default function Dashboard({
                                             </div>
                                         ))}
                                     </div>
+                                )}
 
-                                    {/* 6-Month Revenue Bar Chart */}
-                                    {finance.revenue_chart && finance.revenue_chart.length > 0 && (
-                                        <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
-                                            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                                                {t('dashboard.sections.monthly_revenue', undefined, 'Tren Revenue 6 Bulan')}
-                                            </div>
-                                            <div className="flex items-end gap-2 sm:gap-3" style={{ height: 140 }}>
-                                                {finance.revenue_chart.map((d, i) => {
-                                                    const maxAmount = Math.max(...finance.revenue_chart!.map((x) => x.amount), 1);
-                                                    const height = (d.amount / maxAmount) * 110;
-                                                    return (
-                                                        <div key={i} className="flex flex-1 flex-col items-center gap-1 group">
-                                                            <div className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-slate-400 opacity-80 group-hover:opacity-100">
-                                                                {d.amount >= 1_000_000
-                                                                    ? `${(d.amount / 1_000_000).toFixed(1)}M`
-                                                                    : d.amount >= 1_000
-                                                                    ? `${Math.round(d.amount / 1_000)}k`
-                                                                    : d.amount}
-                                                            </div>
-                                                            <div
-                                                                className="w-full rounded-t-xl bg-gradient-to-t from-indigo-600 to-indigo-400 dark:from-indigo-700 dark:to-indigo-500 transition-all duration-300 group-hover:from-indigo-500 group-hover:to-indigo-300 shadow-xs"
-                                                                style={{ height: `${Math.max(height, 6)}px` }}
-                                                            />
-                                                            <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{d.month}</div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                {finance.revenue_chart && finance.revenue_chart.length > 0 && (
+                                    <div>
+                                        <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                            {t('dashboard.sections.monthly_revenue', undefined, 'Tren Revenue 6 Bulan')}
                                         </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Invoice Summary Status */}
-                            {finance.invoices && (
-                                <div className="lg:col-span-2">
-                                    <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                        {t('dashboard.sections.invoice_status')}
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.draft')}
-                                            value={finance.invoices.draft}
-                                        />
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.issued')}
-                                            value={finance.invoices.issued}
-                                            warning={finance.invoices.issued > 0}
-                                        />
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.paid')}
-                                            value={finance.invoices.paid}
-                                            success={finance.invoices.paid > 0}
-                                        />
-                                        <MiniStat
-                                            label={t('dashboard.invoice_status_summary.overdue')}
-                                            value={finance.invoices.overdue}
-                                            danger={finance.invoices.overdue > 0}
-                                        />
+                                        <div className="flex items-end gap-2 sm:gap-3" style={{ height: 140 }}>
+                                            {finance.revenue_chart.map((d, i) => {
+                                                const maxAmount = Math.max(...finance.revenue_chart!.map((x) => x.amount), 1);
+                                                const height = (d.amount / maxAmount) * 110;
+                                                return (
+                                                    <div key={i} className="flex flex-1 flex-col items-center gap-1 group">
+                                                        <div className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-slate-400 opacity-80 group-hover:opacity-100">
+                                                            {d.amount >= 1_000_000
+                                                                ? `${(d.amount / 1_000_000).toFixed(1)}M`
+                                                                : d.amount >= 1_000
+                                                                ? `${Math.round(d.amount / 1_000)}k`
+                                                                : d.amount}
+                                                        </div>
+                                                        <div
+                                                            className="w-full rounded-t-xl bg-gradient-to-t from-indigo-600 to-indigo-400 dark:from-indigo-700 dark:to-indigo-500 transition-all duration-300 group-hover:from-indigo-500 group-hover:to-indigo-300 shadow-sm"
+                                                            style={{ height: `${Math.max(height, 6)}px` }}
+                                                        />
+                                                        <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{d.month}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
                     </SectionCard>
                 )}
 

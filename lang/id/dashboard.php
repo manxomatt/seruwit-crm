@@ -187,6 +187,7 @@ return [
         'issued' => 'Issued',
         'paid' => 'Paid',
         'overdue' => 'Overdue',
+        'unit_invoices' => 'Invoice',
     ],
 
     'shuttle' => [
