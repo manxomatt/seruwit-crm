@@ -407,7 +407,7 @@ function SectionCard({
 }): JSX.Element {
     return (
         <section className={`overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all ${className}`}>
-            <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 px-6 py-4.5">
+            <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 px-6 py-4 sm:py-5">
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                         <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{title}</h3>
@@ -823,13 +823,13 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
             headerExtra={
                 <div className="flex flex-wrap items-center gap-2">
                     {groupedAlerts.length > 1 && (
-                        <div className="hidden sm:inline-flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-0.5 border border-slate-200/60 dark:border-slate-800">
+                        <div className="hidden sm:inline-flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200/60 dark:border-slate-800">
                             <button
                                 type="button"
                                 onClick={() => setActiveFilter('all')}
                                 className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
                                     activeFilter === 'all'
-                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                             >
@@ -844,7 +844,7 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
                                         onClick={() => setActiveFilter(g.module)}
                                         className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
                                             activeFilter === g.module
-                                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                         }`}
                                     >
@@ -879,12 +879,12 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
                     return (
                         <div
                             key={group.module}
-                            className={`flex flex-col justify-between rounded-2xl border ${config.style.border} ${config.style.bg} p-4.5 sm:p-5 transition-all hover:shadow-xs`}
+                            className={`flex flex-col justify-between rounded-2xl border ${config.style.border} ${config.style.bg} p-4 sm:p-5 transition-all hover:shadow-sm`}
                         >
                             <div>
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-2xs ${config.style.iconBg}`}>
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm ${config.style.iconBg}`}>
                                             {config.icon('h-5 w-5')}
                                         </div>
                                         <div className="min-w-0 flex-1">
@@ -906,7 +906,7 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
                                     {groupActionUrl && (
                                         <Link
                                             href={groupActionUrl}
-                                            className={`hidden sm:inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold ${config.style.btn} shadow-xs transition-transform active:scale-95 shrink-0`}
+                                            className={`hidden sm:inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold ${config.style.btn} shadow-sm transition-transform active:scale-95 shrink-0`}
                                         >
                                             <span>{groupActionLabel}</span>
                                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -942,7 +942,7 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
                                 {groupActionUrl && (
                                     <Link
                                         href={groupActionUrl}
-                                        className={`sm:hidden inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold ${config.style.btn} shadow-xs`}
+                                        className={`sm:hidden inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold ${config.style.btn} shadow-sm`}
                                     >
                                         <span>{groupActionLabel}</span>
                                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -959,7 +959,7 @@ function AttentionCenterSection({ alerts }: { alerts: OperationalAlert[] }): JSX
                                         return (
                                             <div
                                                 key={`${item.module}-${idx}`}
-                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/70 p-3 px-3.5 transition-colors hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/70 p-3 px-3.5 transition-colors hover:border-slate-300 dark:hover:border-slate-700 shadow-sm"
                                             >
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2">

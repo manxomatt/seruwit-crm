@@ -20,6 +20,9 @@ export default {
 
     theme: {
         extend: {
+            spacing: {
+                '4.5': '1.125rem',
+            },
             fontFamily: {
                 sans: ['"Plus Jakarta Sans"', 'var(--font-sans)', 'Figtree', ...defaultTheme.fontFamily.sans],
                 body: ['"Plus Jakarta Sans"', 'var(--font-sans)', ...defaultTheme.fontFamily.sans],
