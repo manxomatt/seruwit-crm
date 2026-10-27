@@ -1254,9 +1254,9 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {/* Active Vertical Modules (Adaptive Grid) */}
+                {/* Active Vertical Modules (Full-Width Rows) */}
                 {hasModulesData && (
-                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="space-y-8">
                         {/* Shuttle / Travel Module */}
                         {modules.shuttle && (
                             <SectionCard
