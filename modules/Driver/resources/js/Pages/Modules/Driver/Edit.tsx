@@ -10,7 +10,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { toDateInputValue } from '@/utils/date';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import DriverNav from '../../DriverNav';
+import DriverNav from '../../../DriverNav';
 
 interface Driver {
     id: number;

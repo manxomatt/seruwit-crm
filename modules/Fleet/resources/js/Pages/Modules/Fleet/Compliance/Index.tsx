@@ -11,7 +11,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, useMemo, FormEventHandler } from 'react';
-import DocumentNav from '../../../../../../Document/resources/js/DocumentNav';
+import DocumentNav from '../../../../../../../Document/resources/js/DocumentNav';
 import FleetNav from '../../../../FleetNav';
 
 interface DocumentStatus {

@@ -9,7 +9,7 @@ import { formatDate } from '@/utils/date';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
-import DriverNav from '../../DriverNav';
+import DriverNav from '../../../DriverNav';
 
 interface Driver {
     id: number;

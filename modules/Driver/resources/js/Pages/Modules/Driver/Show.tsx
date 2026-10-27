@@ -11,7 +11,7 @@ import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { formatDate } from '@/utils/date';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import DriverNav from '../../DriverNav';
+import DriverNav from '../../../DriverNav';
 
 interface DriverUser {
     id: number;

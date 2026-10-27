@@ -9,7 +9,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import DriverNav from '../../DriverNav';
+import DriverNav from '../../../DriverNav';
 
 const DRIVER_STATUSES = [
     { key: 'available', label: 'Tersedia / Standby', icon: '✅', desc: 'Pengemudi siap menerima penugasan perjalanan baru', color: 'emerald' },
