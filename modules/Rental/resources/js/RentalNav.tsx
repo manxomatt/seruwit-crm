@@ -9,6 +9,7 @@ interface TabItem {
     route: string;
     pattern: string;
     permissionAction?: string;
+    subFeatureKey?: string;
 }
 
 const TABS: Array<TabItem> = [
@@ -16,7 +17,7 @@ const TABS: Array<TabItem> = [
     { icon: '📋', labelKey: 'rental.nav.bookings', fallbackLabel: 'Bookings', route: 'rental.index', pattern: 'rental.index', permissionAction: 'view' },
     { icon: '🚚', labelKey: 'rental.nav.dispatch', fallbackLabel: 'Antar-Jemput (Dispatch)', route: 'rental.dispatch.index', pattern: 'rental.dispatch.*', permissionAction: 'dispatch' },
     { icon: '👨‍✈️', labelKey: 'rental.nav.duty_orders', fallbackLabel: 'Surat Jalan & Kas Jalan', route: 'rental.duty_orders.index', pattern: 'rental.duty_orders.*', permissionAction: 'dispatch' },
-    { icon: '🏢', labelKey: 'rental.nav.corporate', fallbackLabel: 'Kontrak B2B', route: 'rental.corporate.index', pattern: 'rental.corporate.*', permissionAction: 'view' },
+    { icon: '🏢', labelKey: 'rental.nav.corporate', fallbackLabel: 'Kontrak B2B', route: 'rental.corporate.index', pattern: 'rental.corporate.*', permissionAction: 'view', subFeatureKey: 'rental-corporate' },
     { icon: '🛠️', labelKey: 'rental.nav.maintenance', fallbackLabel: 'Servis & Blackout', route: 'rental.maintenance.index', pattern: 'rental.maintenance.*', permissionAction: 'view' },
     { icon: '📅', labelKey: 'rental.nav.calendar', fallbackLabel: 'Calendar', route: 'rental.calendar.index', pattern: 'rental.calendar.*', permissionAction: 'view' },
     { icon: '🚗', labelKey: 'rental.nav.availability', fallbackLabel: 'Availability', route: 'rental.availability.index', pattern: 'rental.availability.*', permissionAction: 'view' },
@@ -27,16 +28,21 @@ const TABS: Array<TabItem> = [
 export default function RentalNav(): JSX.Element {
     const { routePrefix, prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const { auth } = usePage().props as {
+    const { auth, disabledSubFeatures = [] } = usePage().props as {
         auth?: {
             user?: {
                 is_admin?: boolean;
                 permissions?: Record<string, string[]>;
             };
         };
+        disabledSubFeatures?: string[];
     };
 
     const tabs = TABS.filter((tab) => {
+        if (tab.subFeatureKey && disabledSubFeatures.includes(tab.subFeatureKey)) {
+            return false;
+        }
+
         const name = `${routePrefix}.${tab.route}`;
         const hasRoute = route().has(name) || route().has(`central.${name}`);
         if (!hasRoute) {

@@ -13,6 +13,7 @@ interface ModuleRow {
     requires: string[];
     is_enabled: boolean;
     is_hidden: boolean;
+    parent_key?: string | null;
 }
 
 interface Props {
@@ -37,9 +38,16 @@ const getModuleIcon = (key: string) => {
             );
         case 'fleet':
         case 'transportation':
+        case 'rental':
             return (
                 <svg className="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.083c.621 0 1.191.354 1.409.923.156.406.301.816.436 1.228M14.25 7.5v11.25m0-11.25h-3.75m3.75 0V4.875c0-.621-.504-1.125-1.125-1.125h-7.5C6.879 3.75 6 4.629 6 5.652v9.848m0 0a1.5 1.5 0 013 0M6 15.5h3.75" />
+                </svg>
+            );
+        case 'rental-corporate':
+            return (
+                <svg className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
                 </svg>
             );
         case 'inventory':
@@ -363,9 +371,16 @@ export default function Index({ modules }: Props): JSX.Element {
                                                     <h3 className="font-semibold text-slate-900 dark:text-white text-base">
                                                         {module.label}
                                                     </h3>
-                                                    <span className="font-mono text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                                                        {module.key}
-                                                    </span>
+                                                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                        <span className="font-mono text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                                            {module.key}
+                                                        </span>
+                                                        {module.parent_key && (
+                                                            <span className="inline-flex items-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 text-[10px] font-semibold border border-indigo-500/20">
+                                                                Sub-Fitur: {module.parent_key}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -517,6 +532,11 @@ export default function Index({ modules }: Props): JSX.Element {
                                                         <span className="font-semibold text-slate-900 dark:text-white block">
                                                             {module.label}
                                                         </span>
+                                                        {module.parent_key && (
+                                                            <span className="mt-0.5 inline-flex items-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 text-[10px] font-semibold border border-indigo-500/20">
+                                                                Sub-Fitur: {module.parent_key}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>

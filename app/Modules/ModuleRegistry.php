@@ -90,6 +90,58 @@ class ModuleRegistry
     }
 
     /**
+     * Configurable sub-features within registered modules that can be individually
+     * enabled, disabled, or hidden platform-wide from the Module Registry.
+     *
+     * @return array<string, array{key: string, parent: string, label: string, description: string, requires: list<string>}>
+     */
+    public function subFeatures(): array
+    {
+        return [
+            'rental-corporate' => [
+                'key' => 'rental-corporate',
+                'parent' => 'rental',
+                'label' => 'Rental — Kontrak B2B (Corporate Contracts)',
+                'description' => 'Kontrak sewa korporat B2B, limit kredit, SLA penggantian unit, dan konsolidasi invoice bulanan.',
+                'requires' => ['rental', 'partners', 'invoicing'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{key: string, parent: string, label: string, description: string, requires: list<string>}|null
+     */
+    public function findSubFeature(string $key): ?array
+    {
+        return $this->subFeatures()[$key] ?? null;
+    }
+
+    public function hasSubFeature(string $key): bool
+    {
+        return isset($this->subFeatures()[$key]);
+    }
+
+    /**
+     * Keys of sub-features that are currently unavailable in the active context
+     * (either platform-disabled or hidden from the current tenant), used by
+     * the frontend sidebar and module navigation bars to hide their links.
+     *
+     * @return list<string>
+     */
+    public function disabledSubFeatures(): array
+    {
+        $disabled = [];
+
+        foreach ($this->subFeatures() as $key => $subFeature) {
+            if (! $this->platformEnabled($key) || (tenancy()->initialized && $this->isTenantHidden($key))) {
+                $disabled[] = $key;
+            }
+        }
+
+        return $disabled;
+    }
+
+    /**
      * @return list<string>
      */
     public function centralModules(): array
@@ -236,6 +288,14 @@ class ModuleRegistry
      */
     public function available(string $key): bool
     {
+        if ($this->hasSubFeature($key)) {
+            $subFeature = $this->subFeatures()[$key];
+
+            return $this->available($subFeature['parent'])
+                && $this->platformEnabled($key)
+                && (! tenancy()->initialized || ! $this->isTenantHidden($key));
+        }
+
         return $this->platformEnabled($key) && $this->entitled($key) && $this->installed($key);
     }
 
@@ -246,6 +306,13 @@ class ModuleRegistry
      */
     public function platformEnabled(string $key): bool
     {
+        if ($this->hasSubFeature($key)) {
+            $subFeature = $this->subFeatures()[$key];
+
+            return $this->platformEnabled($subFeature['parent'])
+                && ! in_array($key, $this->disabledKeys(), true);
+        }
+
         if (! $this->has($key)) {
             return true;
         }
@@ -259,6 +326,13 @@ class ModuleRegistry
      */
     public function isTenantHidden(string $key): bool
     {
+        if ($this->hasSubFeature($key)) {
+            $subFeature = $this->subFeatures()[$key];
+
+            return $this->isTenantHidden($subFeature['parent'])
+                || in_array($key, $this->hiddenKeys(), true);
+        }
+
         if (! $this->has($key)) {
             return false;
         }

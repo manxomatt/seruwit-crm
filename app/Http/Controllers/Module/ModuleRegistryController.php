@@ -21,29 +21,46 @@ class ModuleRegistryController extends Controller
 {
     public function index(): Response
     {
+        $modules = collect(Modules::all())
+            ->map(fn (ModuleContract $module): array => [
+                'key' => $module->key(),
+                'label' => $module->label(),
+                'description' => $module->description(),
+                'requires' => $module->requires(),
+                'is_enabled' => Modules::platformEnabled($module->key()),
+                'is_hidden' => Modules::isTenantHidden($module->key()),
+                'parent_key' => null,
+            ])
+            ->merge(
+                collect(Modules::subFeatures())
+                    ->map(fn (array $sub): array => [
+                        'key' => $sub['key'],
+                        'label' => $sub['label'],
+                        'description' => $sub['description'],
+                        'requires' => $sub['requires'],
+                        'is_enabled' => Modules::platformEnabled($sub['key']),
+                        'is_hidden' => Modules::isTenantHidden($sub['key']),
+                        'parent_key' => $sub['parent'],
+                    ])
+            )
+            ->values()
+            ->all();
+
         return Inertia::render('Module/Registry/Index', [
-            'modules' => collect(Modules::all())
-                ->map(fn (ModuleContract $module): array => [
-                    'key' => $module->key(),
-                    'label' => $module->label(),
-                    'description' => $module->description(),
-                    'requires' => $module->requires(),
-                    'is_enabled' => Modules::platformEnabled($module->key()),
-                    'is_hidden' => Modules::isTenantHidden($module->key()),
-                ])
-                ->values()
-                ->all(),
+            'modules' => $modules,
         ]);
     }
 
     public function toggleStatus(string $key): RedirectResponse
     {
         $module = Modules::find($key);
+        $subFeature = $module ? null : Modules::findSubFeature($key);
 
-        if (! $module) {
+        if (! $module && ! $subFeature) {
             abort(404);
         }
 
+        $label = $module ? $module->label() : $subFeature['label'];
         $enabled = Modules::platformEnabled($key);
 
         ModuleSetting::query()->updateOrCreate(
@@ -54,8 +71,8 @@ class ModuleRegistryController extends Controller
         Modules::flushDisabledState();
 
         $message = $enabled
-            ? __('platform.messages.module_disabled', ['module' => $module->label()])
-            : __('platform.messages.module_enabled', ['module' => $module->label()]);
+            ? __('platform.messages.module_disabled', ['module' => $label])
+            : __('platform.messages.module_enabled', ['module' => $label]);
 
         return back()->with('success', $message);
     }
@@ -63,11 +80,13 @@ class ModuleRegistryController extends Controller
     public function toggleVisibility(string $key): RedirectResponse
     {
         $module = Modules::find($key);
+        $subFeature = $module ? null : Modules::findSubFeature($key);
 
-        if (! $module) {
+        if (! $module && ! $subFeature) {
             abort(404);
         }
 
+        $label = $module ? $module->label() : $subFeature['label'];
         $hidden = Modules::isTenantHidden($key);
 
         ModuleSetting::query()->updateOrCreate(
@@ -78,8 +97,8 @@ class ModuleRegistryController extends Controller
         Modules::flushHiddenState();
 
         $message = $hidden
-            ? __('platform.messages.module_unhidden', ['module' => $module->label()])
-            : __('platform.messages.module_hidden', ['module' => $module->label()]);
+            ? __('platform.messages.module_unhidden', ['module' => $label])
+            : __('platform.messages.module_hidden', ['module' => $label]);
 
         return back()->with('success', $message);
     }

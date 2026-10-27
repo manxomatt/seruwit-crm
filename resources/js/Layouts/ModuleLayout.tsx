@@ -784,6 +784,8 @@ export default function ModuleLayout({ header, children }: Props) {
     } | null;
     // Each registered module's declared tier, ordered by its menu sort_order.
     const moduleTiers = (pageProps.moduleTiers ?? []) as { key: string; tier: ModuleTier }[];
+    // Sub-features currently disabled or hidden by platform admin.
+    const disabledSubFeatures = (pageProps.disabledSubFeatures ?? []) as string[];
     // Modules actually installed on the central dashboard (central modules +
     // marketplace installs). Drives which module menus the central sidebar shows.
     const centralInstalled = (pageProps.centralInstalledModules ?? []) as string[];
@@ -858,6 +860,10 @@ export default function ModuleLayout({ header, children }: Props) {
             const children = MODULE_SIDEBAR_CHILDREN[module];
             if (children) {
                 children.forEach((child) => {
+                    if (disabledSubFeatures.includes(child.key)) {
+                        return;
+                    }
+
                     if (! routeExists(child.route)) {
                         return;
                     }
@@ -1090,7 +1096,7 @@ export default function ModuleLayout({ header, children }: Props) {
         }
 
         return items;
-    }, [user, isCentral, isAdmin, isReseller, centralInstalled, t, locale]);
+    }, [user, isCentral, isAdmin, isReseller, centralInstalled, disabledSubFeatures, t, locale]);
 
     // Split the flat navigation into the standalone Dashboard plus collapsible
     // groups, preserving the module order defined in MENU_GROUPS.

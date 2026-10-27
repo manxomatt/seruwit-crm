@@ -101,6 +101,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'menus' => $this->getMenus($user, $routePrefix),
             'moduleTiers' => $this->getModuleTiers(),
+            'disabledSubFeatures' => fn () => Modules::disabledSubFeatures(),
             // Modules actually installed on the central dashboard (central
             // modules + marketplace installs), so the central sidebar lists only
             // what is installed rather than the whole installable catalogue.

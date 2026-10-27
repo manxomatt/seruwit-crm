@@ -281,4 +281,49 @@ class DashboardTest extends TestCase
         $this->assertFalse($responseDisabled->original->getData()['page']['props']['showSubscriptionSection']);
         $this->assertNull($responseDisabled->original->getData()['page']['props']['subscription']);
     }
+
+    public function test_rental_corporate_contracts_can_be_disabled_and_enabled_from_central_registry(): void
+    {
+        $user = $this->createAdminUser();
+
+        \App\Models\ModuleSetting::query()->where('key', 'rental-corporate')->delete();
+        \App\Modules\Facades\Modules::flushDisabledState();
+        \App\Modules\Facades\Modules::flushHiddenState();
+
+        // Enabled by default
+        $this->assertTrue(\App\Modules\Facades\Modules::available('rental-corporate'));
+        $this->assertNotContains('rental-corporate', \App\Modules\Facades\Modules::disabledSubFeatures());
+
+        $this->actingAs($user)
+            ->get(route('module.rental.corporate.index'))
+            ->assertOk();
+
+        // Disable via Central Admin Module Registry controller action
+        $this->actingAs($user)
+            ->patch(route('module.registry.toggle-status', 'rental-corporate'))
+            ->assertRedirect();
+
+        $this->assertFalse(\App\Modules\Facades\Modules::platformEnabled('rental-corporate'));
+        $this->assertFalse(\App\Modules\Facades\Modules::available('rental-corporate'));
+        $this->assertContains('rental-corporate', \App\Modules\Facades\Modules::disabledSubFeatures());
+
+        // Route should now be blocked with 404 while other rental routes remain accessible
+        $this->actingAs($user)
+            ->get(route('module.rental.corporate.index'))
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->get(route('module.rental.dashboard'))
+            ->assertOk();
+
+        // Re-enable via Central Admin Module Registry controller action
+        $this->actingAs($user)
+            ->patch(route('module.registry.toggle-status', 'rental-corporate'))
+            ->assertRedirect();
+
+        $this->assertTrue(\App\Modules\Facades\Modules::available('rental-corporate'));
+        $this->actingAs($user)
+            ->get(route('module.rental.corporate.index'))
+            ->assertOk();
+    }
 }
