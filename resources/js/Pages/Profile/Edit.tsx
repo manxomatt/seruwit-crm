@@ -10,7 +10,7 @@ import PageHeader from '@/Components/PageHeader';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { FormEventHandler, useState, useRef, ChangeEvent } from 'react';
+import { FormEventHandler, useState, useRef, useEffect, ChangeEvent } from 'react';
 
 interface UserProfile {
     id: number;
@@ -84,7 +84,13 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'subscription' | 'delete'>('profile');
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || null);
+    const [avatarLoadError, setAvatarLoadError] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setAvatarPreview(profile?.avatar_url || null);
+        setAvatarLoadError(false);
+    }, [profile?.avatar_url]);
 
     const localeOptions = availableLocales.map((item) => ({
         value: item.code,
@@ -137,6 +143,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAvatarPreview(reader.result as string);
+                setAvatarLoadError(false);
             };
             reader.readAsDataURL(file);
 
@@ -217,10 +224,11 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                         {/* User Avatar */}
                         <div className="flex flex-col items-center pb-6 border-b border-slate-100 dark:border-slate-800/60">
                             <div className="relative group">
-                                {avatarPreview ? (
+                                {avatarPreview && !avatarLoadError ? (
                                     <img
                                         src={avatarPreview}
                                         alt={user?.name}
+                                        onError={() => setAvatarLoadError(true)}
                                         className="h-24 w-24 rounded-full object-cover shadow-md ring-4 ring-slate-100 dark:ring-slate-800"
                                     />
                                 ) : (

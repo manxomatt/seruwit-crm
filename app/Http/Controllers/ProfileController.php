@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\UserProfile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,16 +65,18 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Delete old avatar if exists
-        if ($user->profile && $user->profile->avatar_url) {
-            $oldPath = str_replace('/storage/', '', $user->profile->avatar_url);
-            if (Storage::disk('public')->exists($oldPath)) {
+        if ($user->profile && $user->profile->getRawOriginal('avatar_url')) {
+            $oldPath = UserProfile::storagePathFromUrl($user->profile->getRawOriginal('avatar_url'));
+            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
                 Storage::disk('public')->delete($oldPath);
             }
         }
 
         // Store new avatar
         $path = $request->file('avatar')->store('avatars', 'public');
-        $avatarUrl = '/storage/'.$path;
+        $avatarUrl = (function_exists('tenancy') && tenancy()->initialized)
+            ? route('stancl.tenancy.asset', ['path' => $path], false)
+            : '/storage/'.$path;
 
         // Update or create profile
         $user->profile()->updateOrCreate(
@@ -93,10 +96,10 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if ($user->profile && $user->profile->avatar_url) {
+        if ($user->profile && $user->profile->getRawOriginal('avatar_url')) {
             // Delete the file
-            $path = str_replace('/storage/', '', $user->profile->avatar_url);
-            if (Storage::disk('public')->exists($path)) {
+            $path = UserProfile::storagePathFromUrl($user->profile->getRawOriginal('avatar_url'));
+            if ($path && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
 
@@ -121,9 +124,9 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Delete avatar if exists
-        if ($user->profile && $user->profile->avatar_url) {
-            $path = str_replace('/storage/', '', $user->profile->avatar_url);
-            if (Storage::disk('public')->exists($path)) {
+        if ($user->profile && $user->profile->getRawOriginal('avatar_url')) {
+            $path = UserProfile::storagePathFromUrl($user->profile->getRawOriginal('avatar_url'));
+            if ($path && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
         }

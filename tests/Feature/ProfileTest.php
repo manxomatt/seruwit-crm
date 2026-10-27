@@ -255,4 +255,13 @@ class ProfileTest extends TestCase
         // Verify file is deleted
         Storage::disk('public')->assertMissing($path);
     }
+
+    public function test_storage_path_from_url_handles_central_and_tenant_urls(): void
+    {
+        $this->assertSame('avatars/photo.jpg', UserProfile::storagePathFromUrl('/storage/avatars/photo.jpg'));
+        $this->assertSame('avatars/photo.jpg', UserProfile::storagePathFromUrl('/tenancy/assets/avatars/photo.jpg'));
+        $this->assertSame('avatars/photo.jpg', UserProfile::storagePathFromUrl('avatars/photo.jpg'));
+        $this->assertNull(UserProfile::storagePathFromUrl('https://example.com/photo.jpg'));
+        $this->assertNull(UserProfile::storagePathFromUrl(null));
+    }
 }

@@ -284,6 +284,7 @@ const CloseIcon = () => (
 
 // Avatar component that shows image or initials
 const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'md' | 'lg' }) => {
+    const [imgError, setImgError] = useState(false);
     const sizeClasses = {
         sm: 'h-8 w-8 text-sm',
         md: 'h-9 w-9 text-sm',
@@ -292,11 +293,16 @@ const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'm
 
     const avatarUrl = user?.profile?.avatar_url;
 
-    if (avatarUrl) {
+    useEffect(() => {
+        setImgError(false);
+    }, [avatarUrl]);
+
+    if (avatarUrl && !imgError) {
         return (
             <img
                 src={avatarUrl}
                 alt={user?.name || 'User'}
+                onError={() => setImgError(true)}
                 className={`${sizeClasses[size]} rounded-full object-cover`}
             />
         );

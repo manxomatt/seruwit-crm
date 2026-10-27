@@ -45,4 +45,58 @@ class UserProfile extends Model
 
         return null;
     }
+
+    /**
+     * Resolve avatar URL for both central (/storage/...) and tenant (/tenancy/assets/...) contexts.
+     */
+    public function getAvatarUrlAttribute(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (function_exists('tenancy') && tenancy()->initialized) {
+            if (preg_match('#^/storage/(.+)$#', $value, $matches) === 1) {
+                try {
+                    return route('stancl.tenancy.asset', ['path' => $matches[1]], false);
+                } catch (\Throwable) {
+                    return $value;
+                }
+            }
+
+            if (! str_starts_with($value, 'http://') && ! str_starts_with($value, 'https://') && ! str_starts_with($value, '/')) {
+                try {
+                    return route('stancl.tenancy.asset', ['path' => $value], false);
+                } catch (\Throwable) {
+                    return '/storage/'.ltrim($value, '/');
+                }
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * Extract the relative storage disk path from an avatar URL.
+     */
+    public static function storagePathFromUrl(?string $url): ?string
+    {
+        if ($url === null || $url === '') {
+            return null;
+        }
+
+        if (preg_match('#^/storage/(.+)$#', $url, $matches) === 1) {
+            return $matches[1];
+        }
+
+        if (preg_match('#^/tenancy/assets/(.+)$#', $url, $matches) === 1) {
+            return $matches[1];
+        }
+
+        if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://') && ! str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        return null;
+    }
 }
