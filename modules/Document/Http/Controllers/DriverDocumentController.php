@@ -11,7 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Document\Models\Document;
 use Modules\Document\Models\DocumentType;
-use Modules\Fleet\Models\Driver;
+use Modules\Driver\Models\Driver;
 
 class DriverDocumentController extends Controller
 {

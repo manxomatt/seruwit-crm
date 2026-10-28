@@ -7,7 +7,7 @@ use Database\Seeders\TenantFleetDocumentDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Document\Models\Document;
 use Modules\Document\Models\DocumentType;
-use Modules\Fleet\Models\Driver;
+use Modules\Driver\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;

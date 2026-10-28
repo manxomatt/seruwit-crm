@@ -14,8 +14,8 @@ use Modules\Document\Http\Controllers\DriverDocumentController;
 use Modules\Document\Http\Controllers\VehicleDocumentController;
 use Modules\Document\Models\Document;
 use Modules\Document\Observers\DocumentObserver;
+use Modules\Driver\Models\Driver;
 use Modules\Fleet\Http\Controllers\FleetComplianceController;
-use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 
 class DocumentModule implements ModuleContract
@@ -46,12 +46,12 @@ class DocumentModule implements ModuleContract
     }
 
     /**
-     * Fleet provides Vehicle and Driver records; Media provides file storage
-     * for document scans.
+     * Fleet provides Vehicle records, Driver provides Driver records,
+     * and Media provides file storage for document scans.
      */
     public function requires(): array
     {
-        return ['fleet', 'media'];
+        return ['fleet', 'driver', 'media'];
     }
 
     public function menu(): ?array

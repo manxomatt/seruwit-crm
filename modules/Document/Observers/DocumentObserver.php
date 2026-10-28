@@ -4,7 +4,7 @@ namespace Modules\Document\Observers;
 
 use App\Modules\Facades\Modules;
 use Modules\Document\Models\Document;
-use Modules\Fleet\Models\Driver;
+use Modules\Driver\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 
 /**
