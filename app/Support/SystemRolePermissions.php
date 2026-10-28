@@ -104,7 +104,7 @@ class SystemRolePermissions
             'fleet' => ['fleet_base_head', 'fleet_base_manager'],
             'rental' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
             'canvassing' => ['salesperson'],
-            'transportation', 'driver_scoring', 'orders' => ['driver'],
+            'driver', 'transportation', 'driver_scoring', 'orders' => ['driver'],
             default => [],
         };
 
@@ -166,6 +166,7 @@ class SystemRolePermissions
                 ->where(function ($query): void {
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
+                        ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
@@ -176,6 +177,7 @@ class SystemRolePermissions
                 ->where(function ($query): void {
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
+                        ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })

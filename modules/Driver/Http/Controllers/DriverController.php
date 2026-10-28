@@ -8,6 +8,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,6 +26,31 @@ class DriverController extends Controller
     protected function getRoutePrefix(): string
     {
         return 'module';
+    }
+
+    /**
+     * Resolve a redirect URL respecting backward compatibility with fleet.drivers routes.
+     */
+    protected function redirectTarget(string $action, mixed $parameter = null): string
+    {
+        $prefix = $this->getRoutePrefix();
+        $currentName = request()->route()?->getName() ?? '';
+
+        if (str_contains($currentName, 'fleet.drivers')) {
+            $candidate = "{$prefix}.fleet.drivers.{$action}";
+            if (Route::has($candidate)) {
+                return $parameter !== null ? route($candidate, $parameter) : route($candidate);
+            }
+        }
+
+        $standalone = "{$prefix}.drivers.{$action}";
+        if (Route::has($standalone)) {
+            return $parameter !== null ? route($standalone, $parameter) : route($standalone);
+        }
+
+        $fallback = "{$prefix}.fleet.drivers.{$action}";
+
+        return $parameter !== null ? route($fallback, $parameter) : route($fallback);
     }
 
     /**
@@ -80,8 +106,8 @@ class DriverController extends Controller
     {
         $driver = Driver::create($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.fleet.drivers.show', $driver)
-            ->with('success', __('fleet.messages.driver_created'));
+        return redirect()->to($this->redirectTarget('show', $driver))
+            ->with('success', __('driver.messages.driver_created'));
     }
 
     /**
@@ -172,8 +198,8 @@ class DriverController extends Controller
     {
         $driver->update($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.fleet.drivers.show', $driver)
-            ->with('success', __('fleet.messages.driver_updated'));
+        return redirect()->to($this->redirectTarget('show', $driver))
+            ->with('success', __('driver.messages.driver_updated'));
     }
 
     /**
@@ -184,11 +210,11 @@ class DriverController extends Controller
         try {
             DB::transaction(fn () => $driver->delete());
         } catch (QueryException) {
-            return back()->with('error', __('fleet.messages.driver_in_use'));
+            return back()->with('error', __('driver.messages.driver_in_use'));
         }
 
-        return redirect()->route($this->getRoutePrefix().'.fleet.drivers.index')
-            ->with('success', __('fleet.messages.driver_deleted'));
+        return redirect()->to($this->redirectTarget('index'))
+            ->with('success', __('driver.messages.driver_deleted'));
     }
 
     /**
@@ -204,9 +230,9 @@ class DriverController extends Controller
             ->whereIn('id', $ids)
             ->update(['status' => $status]);
 
-        return back()->with('success', __('fleet.messages.drivers_status_updated', [
+        return back()->with('success', __('driver.messages.drivers_status_updated', [
             'count' => $updated,
-            'status' => __('fleet.status.'.$status),
+            'status' => __('driver.status.'.$status),
         ]));
     }
 
@@ -233,19 +259,19 @@ class DriverController extends Controller
         }
 
         if ($deleted === 0 && $blocked > 0) {
-            return back()->with('error', __('fleet.messages.drivers_batch_delete_blocked', [
+            return back()->with('error', __('driver.messages.drivers_batch_delete_blocked', [
                 'blocked' => $blocked,
             ]));
         }
 
         if ($blocked > 0) {
-            return back()->with('success', __('fleet.messages.drivers_batch_deleted_partial', [
+            return back()->with('success', __('driver.messages.drivers_batch_deleted_partial', [
                 'deleted' => $deleted,
                 'blocked' => $blocked,
             ]));
         }
 
-        return back()->with('success', __('fleet.messages.drivers_batch_deleted', [
+        return back()->with('success', __('driver.messages.drivers_batch_deleted', [
             'count' => $deleted,
         ]));
     }

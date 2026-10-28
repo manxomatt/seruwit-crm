@@ -105,13 +105,6 @@ class ModuleRegistry
                 'description' => 'Matriks pemantauan jatuh tempo pajak STNK tahunan, ganti plat 5 tahunan, polis asuransi, uji berkala KIR, dan riwayat biaya perpanjangan.',
                 'requires' => ['document', 'fleet'],
             ],
-            'fleet-drivers' => [
-                'key' => 'fleet-drivers',
-                'parent' => 'driver',
-                'label' => 'Fleet — Manajemen Pengemudi (Drivers)',
-                'description' => 'Profil pengemudi, klasifikasi & masa berlaku SIM, skor keselamatan berkendara, dan penugasan pengemudi.',
-                'requires' => ['driver'],
-            ],
             'fleet-settlements' => [
                 'key' => 'fleet-settlements',
                 'parent' => 'fleet',

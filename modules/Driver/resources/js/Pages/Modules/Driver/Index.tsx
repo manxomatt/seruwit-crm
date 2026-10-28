@@ -149,7 +149,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
 
     const applyFilters = (next: { search?: string; status?: string | null }): void => {
         router.get(
-            prefixedRoute('fleet.drivers.index'),
+            prefixedRoute('drivers.index'),
             {
                 search: (next.search ?? search) || undefined,
                 status: (next.status !== undefined ? next.status : filters.status) || undefined,
@@ -165,7 +165,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
 
     const clearFilters = (): void => {
         setSearch('');
-        router.get(prefixedRoute('fleet.drivers.index'), {}, { preserveState: true, replace: true });
+        router.get(prefixedRoute('drivers.index'), {}, { preserveState: true, replace: true });
     };
 
     const toggleRow = (id: number): void => {
@@ -200,7 +200,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
     const confirmDelete = (): void => {
         if (!driverToDelete) return;
         setProcessing(true);
-        router.delete(prefixedRoute('fleet.drivers.destroy', driverToDelete.id), {
+        router.delete(prefixedRoute('drivers.destroy', driverToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -210,7 +210,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
         if (!can.update || selected.length === 0 || !batchStatus) return;
         setProcessing(true);
         router.patch(
-            prefixedRoute('fleet.drivers.batch-status'),
+            prefixedRoute('drivers.batch-status'),
             { ids: selected, status: batchStatus },
             {
                 preserveScroll: true,
@@ -224,7 +224,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
         if (!can.delete || selected.length === 0) return;
         setProcessing(true);
         router.post(
-            prefixedRoute('fleet.drivers.batch-destroy'),
+            prefixedRoute('drivers.batch-destroy'),
             { ids: selected },
             {
                 preserveScroll: true,
@@ -252,7 +252,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                     subtitle="Kelola semua pengemudi operasional, pantau status ketersediaan, dan kelola SIM beserta akun portal pengemudi."
                     actions={
                         can.create && (
-                            <Link href={prefixedRoute('fleet.drivers.create')}>
+                            <Link href={prefixedRoute('drivers.create')}>
                                 <PrimaryButton className="rounded-xl shadow-sm">
                                     Tambah Pengemudi
                                 </PrimaryButton>
@@ -369,7 +369,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                         <button
                                             type="button"
                                             onClick={() => setViewMode('table')}
-                                            title={t('fleet.drivers.view_modes.table', undefined, 'Tampilan Tabel')}
+                                            title={t('driver.view_modes.table', undefined, 'Tampilan Tabel')}
                                             className={`rounded-lg p-1.5 transition-all ${
                                                 viewMode === 'table'
                                                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
@@ -383,7 +383,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                         <button
                                             type="button"
                                             onClick={() => setViewMode('grid')}
-                                            title={t('fleet.drivers.view_modes.grid', undefined, 'Tampilan Grid Kartu')}
+                                            title={t('driver.view_modes.grid', undefined, 'Tampilan Grid Kartu')}
                                             className={`rounded-lg p-1.5 transition-all ${
                                                 viewMode === 'grid'
                                                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
@@ -514,7 +514,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                             )}
                                                             <div>
                                                                 <Link
-                                                                    href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                                                    href={prefixedRoute('drivers.show', driver.id)}
                                                                     className="text-xs font-black text-slate-900 hover:text-indigo-700 dark:text-white dark:hover:text-indigo-400"
                                                                 >
                                                                     {driver.name}
@@ -562,7 +562,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                     {/* Login */}
                                                     <td className="whitespace-nowrap px-4 py-3">
                                                         <span className={`inline-flex items-center rounded-xl px-2 py-1 text-[10px] font-bold ${driver.user_id ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
-                                                            {driver.user_id ? '✓ Ada Login' : '○ Belum Ada'}
+                                                             {driver.user_id ? '✓ Ada Login' : '○ Belum Ada'}
                                                         </span>
                                                     </td>
 
@@ -570,7 +570,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                                         <div className="flex items-center justify-end gap-1">
                                                             <Link
-                                                                href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                                                href={prefixedRoute('drivers.show', driver.id)}
                                                                 className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                                                 title="Buka Detail"
                                                             >
@@ -592,7 +592,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                                 >
                                                                     <MenuItem>
                                                                         <Link
-                                                                            href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                                                            href={prefixedRoute('drivers.show', driver.id)}
                                                                             className={menuItemClassName}
                                                                         >
                                                                             <EyeIcon />
@@ -602,7 +602,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                                     {can.update && (
                                                                         <MenuItem>
                                                                             <Link
-                                                                                href={prefixedRoute('fleet.drivers.edit', driver.id)}
+                                                                                href={prefixedRoute('drivers.edit', driver.id)}
                                                                                 className={menuItemClassName}
                                                                             >
                                                                                 <PencilIcon />
@@ -673,7 +673,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                             )}
                                             <div className="min-w-0">
                                                 <Link
-                                                    href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                                    href={prefixedRoute('drivers.show', driver.id)}
                                                     className="block truncate text-xs font-black text-slate-900 hover:text-indigo-700 dark:text-white"
                                                 >
                                                     {driver.name}
@@ -708,7 +708,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
 
                                         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
                                             <Link
-                                                href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                                href={prefixedRoute('drivers.show', driver.id)}
                                                 className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                                             >
                                                 Lihat Detail →
@@ -716,7 +716,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                             <div className="flex items-center gap-1">
                                                 {can.update && (
                                                     <Link
-                                                        href={prefixedRoute('fleet.drivers.edit', driver.id)}
+                                                        href={prefixedRoute('drivers.edit', driver.id)}
                                                         className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
                                                         title="Edit Pengemudi"
                                                     >

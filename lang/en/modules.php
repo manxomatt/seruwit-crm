@@ -8,6 +8,7 @@ return [
     'partners' => 'Contacts',
     'products' => 'Products',
     'fleet' => 'Fleet',
+    'driver' => 'Drivers',
     'document' => 'Documents',
     'maintenance' => 'Maintenance',
     'tracking' => 'Tracking',

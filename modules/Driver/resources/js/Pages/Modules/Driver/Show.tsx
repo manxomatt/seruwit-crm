@@ -117,14 +117,14 @@ export default function Show({
 
     const confirmDelete = (): void => {
         setProcessing(true);
-        router.delete(prefixedRoute('fleet.drivers.destroy', driver.id), {
+        router.delete(prefixedRoute('drivers.destroy', driver.id), {
             onFinish: () => setProcessing(false),
         });
     };
 
     const submitAccount: FormEventHandler = (event) => {
         event.preventDefault();
-        accountForm.post(prefixedRoute('fleet.drivers.account.store', driver.id), {
+        accountForm.post(prefixedRoute('drivers.account.store', driver.id), {
             preserveScroll: true,
             onSuccess: () => accountForm.reset('password'),
         });
@@ -149,7 +149,7 @@ export default function Show({
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href={prefixedRoute('fleet.drivers.index')}
+                                href={prefixedRoute('drivers.index')}
                                 className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             >
                                 ← Kembali ke Daftar Pengemudi
@@ -157,7 +157,7 @@ export default function Show({
 
                             {documentsEnabled && (
                                 <Link
-                                    href={prefixedRoute('fleet.drivers.documents.index', driver.id)}
+                                    href={prefixedRoute('drivers.documents.index', driver.id)}
                                     className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
                                     📄 Dokumen
@@ -166,7 +166,7 @@ export default function Show({
 
                             {can.update && (
                                 <Link
-                                    href={prefixedRoute('fleet.drivers.edit', driver.id)}
+                                    href={prefixedRoute('drivers.edit', driver.id)}
                                     className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                                 >
                                     ✏️ Edit Pengemudi
@@ -487,7 +487,7 @@ export default function Show({
                                         <h3 className="text-sm font-black text-slate-900 dark:text-white">Dokumen Pengemudi</h3>
                                     </div>
                                     <Link
-                                        href={prefixedRoute('fleet.drivers.documents.index', driver.id)}
+                                        href={prefixedRoute('drivers.documents.index', driver.id)}
                                         className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                                     >
                                         Kelola Dokumen →

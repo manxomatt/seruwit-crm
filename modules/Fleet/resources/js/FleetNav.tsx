@@ -17,7 +17,6 @@ const TABS: Array<TabItem> = [
     { icon: '🚗', labelKey: 'fleet.nav.vehicles', fallbackLabel: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
     { icon: '🤝', labelKey: 'fleet.nav.settlements', fallbackLabel: 'Bagi Hasil Investor', route: 'fleet.settlements.index', pattern: 'fleet.settlements.*', subFeatureKey: 'fleet-settlements' },
     { icon: '🛡️', labelKey: 'fleet.nav.compliance', fallbackLabel: 'Kepatuhan & Pajak', route: 'fleet.compliance.index', pattern: 'fleet.compliance.*', subFeatureKey: 'document-compliance' },
-    { icon: '👨‍✈️', labelKey: 'fleet.nav.drivers', fallbackLabel: 'Drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*', subFeatureKey: 'fleet-drivers' },
     { icon: '⛽', labelKey: 'fleet.nav.fuel', fallbackLabel: 'Fuel Logs', route: 'fleet.fuel.index', pattern: 'fleet.fuel.index', subFeatureKey: 'fleet-fuel' },
     { icon: '📈', labelKey: 'fleet.nav.analytics', fallbackLabel: 'Analytics', route: 'fleet.fuel.analytics', pattern: 'fleet.fuel.analytics', subFeatureKey: 'fleet-fuel' },
 ];

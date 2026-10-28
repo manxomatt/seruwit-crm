@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Document\Models\Document;
@@ -86,7 +87,11 @@ class DriverDocumentController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
-        return redirect()->route('module.fleet.drivers.documents.index', $driver)
+        $indexRoute = Route::has('module.drivers.documents.index')
+            ? 'module.drivers.documents.index'
+            : 'module.fleet.drivers.documents.index';
+
+        return redirect()->route($indexRoute, $driver)
             ->with('success', __('document.messages.uploaded'));
     }
 
@@ -137,7 +142,11 @@ class DriverDocumentController extends Controller
     {
         $document->delete();
 
-        return redirect()->route('module.fleet.drivers.documents.index', $driver)
+        $indexRoute = Route::has('module.drivers.documents.index')
+            ? 'module.drivers.documents.index'
+            : 'module.fleet.drivers.documents.index';
+
+        return redirect()->route($indexRoute, $driver)
             ->with('success', __('document.messages.removed'));
     }
 

@@ -21,7 +21,17 @@ class CheckPermission
             abort(403, 'Unauthorized');
         }
 
-        if (! $user->hasPermissionFor($module, $action)) {
+        $modules = explode('|', $module);
+        $hasPermission = false;
+
+        foreach ($modules as $mod) {
+            if ($user->hasPermissionFor(trim($mod), $action)) {
+                $hasPermission = true;
+                break;
+            }
+        }
+
+        if (! $hasPermission) {
             abort(403, 'You do not have permission to perform this action.');
         }
 

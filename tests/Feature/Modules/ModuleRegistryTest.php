@@ -300,7 +300,7 @@ class ModuleRegistryTest extends TestCase
         $this->installer()->install($tenant, $this->driver());
         tenancy()->end();
 
-        foreach (['document-compliance', 'fleet-drivers', 'fleet-settlements', 'fleet-fuel'] as $subFeatureKey) {
+        foreach (['document-compliance', 'fleet-settlements', 'fleet-fuel'] as $subFeatureKey) {
             $this->actingAs($admin)
                 ->patch(config('app.url')."/module/registry/{$subFeatureKey}/status")
                 ->assertRedirect()
@@ -313,7 +313,6 @@ class ModuleRegistryTest extends TestCase
 
         $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/compliance')->assertNotFound();
         $this->actingAs($owner)->get('http://subfeature-co.localhost/module/documents/compliance')->assertNotFound();
-        $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/drivers')->assertNotFound();
         $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/settlements')->assertNotFound();
         $this->actingAs($owner)->get('http://subfeature-co.localhost/module/fleet/fuel')->assertNotFound();
 
@@ -322,7 +321,6 @@ class ModuleRegistryTest extends TestCase
             ->assertInertia(function ($page) {
                 $disabled = $page->toArray()['props']['disabledSubFeatures'];
                 $this->assertContains('document-compliance', $disabled);
-                $this->assertContains('fleet-drivers', $disabled);
                 $this->assertContains('fleet-settlements', $disabled);
                 $this->assertContains('fleet-fuel', $disabled);
             });

@@ -34,6 +34,8 @@ trait WithRoles
                 EnsureTenantIsActive::class,
                 ValidateCsrfToken::class,
                 VerifyCsrfToken::class,
+                \App\Http\Middleware\RedirectUnfinishedSignup::class,
+                \App\Http\Middleware\EnsureCentralUserCanAccessModule::class,
             ]);
         }
 

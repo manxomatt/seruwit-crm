@@ -39,7 +39,7 @@ class DriverAccountController extends Controller
             $driver->update(['user_id' => $user->id]);
         });
 
-        return back()->with('success', __('fleet.messages.driver_login_created'));
+        return back()->with('success', __('driver.messages.driver_login_created'));
     }
 
     /**

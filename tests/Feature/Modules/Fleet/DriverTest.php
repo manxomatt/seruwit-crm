@@ -56,7 +56,7 @@ class DriverTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.drivers.create'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Drivers/Create')
+                ->component('Modules/Driver/Create')
             );
     }
 
@@ -84,7 +84,7 @@ class DriverTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.drivers.edit', $driver))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Drivers/Edit')
+                ->component('Modules/Driver/Edit')
                 ->where('driver.id', $driver->id)
             );
     }
@@ -110,7 +110,7 @@ class DriverTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.drivers.show', $driver))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Drivers/Show')
+                ->component('Modules/Driver/Show')
                 ->where('driver.id', $driver->id)
                 ->has('documentsEnabled')
                 ->has('documentSummary')

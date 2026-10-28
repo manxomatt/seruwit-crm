@@ -37,7 +37,7 @@ export default function Create(): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(prefixedRoute('fleet.drivers.store'), {
+        post(prefixedRoute('drivers.store'), {
             onError: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
         });
     };
@@ -50,7 +50,7 @@ export default function Create(): JSX.Element {
                     subtitle="Daftarkan pengemudi operasional baru dengan foto, nomor SIM, golongan, dan informasi kontak lengkap."
                     actions={
                         <Link
-                            href={prefixedRoute('fleet.drivers.index')}
+                            href={prefixedRoute('drivers.index')}
                             className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
                             ← Kembali ke Daftar Pengemudi
@@ -59,15 +59,13 @@ export default function Create(): JSX.Element {
                 />
             }
         >
-            <Head title="Tambah Pengemudi Baru · Fleet" />
+            <Head title="Tambah Pengemudi Baru · Pengemudi" />
             <DriverNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumbs */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">Fleet</Link>
-                    <span>/</span>
-                    <Link href={prefixedRoute('fleet.drivers.index')} className="hover:text-slate-700 dark:hover:text-slate-200">Pengemudi</Link>
+                    <Link href={prefixedRoute('drivers.index')} className="hover:text-slate-700 dark:hover:text-slate-200">Pengemudi</Link>
                     <span>/</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">Tambah Pengemudi Baru</span>
                 </nav>
@@ -275,7 +273,7 @@ export default function Create(): JSX.Element {
 
                         <div className="flex gap-2">
                             <Link
-                                href={prefixedRoute('fleet.drivers.index')}
+                                href={prefixedRoute('drivers.index')}
                                 className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             >
                                 ← Batal

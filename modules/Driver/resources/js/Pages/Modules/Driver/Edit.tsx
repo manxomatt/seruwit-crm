@@ -55,7 +55,7 @@ export default function Edit({ driver }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(prefixedRoute('fleet.drivers.update', driver.id), {
+        patch(prefixedRoute('drivers.update', driver.id), {
             onError: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
         });
     };
@@ -68,7 +68,7 @@ export default function Edit({ driver }: Props): JSX.Element {
                     subtitle={`Perbarui data profil, nomor SIM, kontak, dan status operasional pengemudi.`}
                     actions={
                         <Link
-                            href={prefixedRoute('fleet.drivers.show', driver.id)}
+                            href={prefixedRoute('drivers.show', driver.id)}
                             className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
                             ← Kembali ke Detail Pengemudi
@@ -83,11 +83,9 @@ export default function Edit({ driver }: Props): JSX.Element {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumbs */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">Fleet</Link>
+                    <Link href={prefixedRoute('drivers.index')} className="hover:text-slate-700 dark:hover:text-slate-200">Pengemudi</Link>
                     <span>/</span>
-                    <Link href={prefixedRoute('fleet.drivers.index')} className="hover:text-slate-700 dark:hover:text-slate-200">Pengemudi</Link>
-                    <span>/</span>
-                    <Link href={prefixedRoute('fleet.drivers.show', driver.id)} className="hover:text-slate-700 dark:hover:text-slate-200">{driver.name}</Link>
+                    <Link href={prefixedRoute('drivers.show', driver.id)} className="hover:text-slate-700 dark:hover:text-slate-200">{driver.name}</Link>
                     <span>/</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">Edit</span>
                 </nav>
@@ -294,7 +292,7 @@ export default function Edit({ driver }: Props): JSX.Element {
 
                         <div className="flex gap-2">
                             <Link
-                                href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                href={prefixedRoute('drivers.show', driver.id)}
                                 className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             >
                                 ← Batal

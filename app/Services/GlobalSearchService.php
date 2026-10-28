@@ -590,7 +590,7 @@ class GlobalSearchService
     /** @return list<array<string, mixed>> */
     private function drivers(User $user, string $query): array
     {
-        if (! $this->canSearch($user, 'fleet', Driver::class, 'drivers')) {
+        if (! $this->canSearch($user, 'driver', Driver::class, 'drivers') && ! $this->canSearch($user, 'fleet', Driver::class, 'drivers')) {
             return [];
         }
 
@@ -608,7 +608,7 @@ class GlobalSearchService
                 'subtitle' => collect([$driver->license_number, $driver->phone, $driver->status])->filter()->implode(' • '),
                 'type' => 'driver',
                 'icon' => 'driver',
-                'url' => route('module.fleet.drivers.show', $driver),
+                'url' => route('module.drivers.show', $driver),
             ])
             ->all();
     }
@@ -1485,11 +1485,11 @@ class GlobalSearchService
         }
 
         if (in_array($type, ['driver', Driver::class], true) && $document->documentable_id) {
-            if (! $this->canAccessModule($user, 'fleet')) {
+            if (! $this->canAccessModule($user, 'driver') && ! $this->canAccessModule($user, 'fleet')) {
                 return null;
             }
 
-            return route('module.fleet.drivers.documents.show', [$document->documentable_id, $document]);
+            return route('module.drivers.documents.show', [$document->documentable_id, $document]);
         }
 
         return null;

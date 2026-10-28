@@ -170,6 +170,29 @@ class DocumentModule implements ModuleContract
             ->name('fleet.vehicles.documents.verify');
 
         // Driver documents (mirror of vehicle)
+        Route::get('/drivers/{driver}/documents', [DriverDocumentController::class, 'index'])
+            ->middleware('permission:document,view')
+            ->name('drivers.documents.index');
+        Route::get('/drivers/{driver}/documents/create', [DriverDocumentController::class, 'create'])
+            ->middleware('permission:document,create')
+            ->name('drivers.documents.create');
+        Route::post('/drivers/{driver}/documents', [DriverDocumentController::class, 'store'])
+            ->middleware('permission:document,create')
+            ->name('drivers.documents.store');
+        Route::get('/drivers/{driver}/documents/{document}', [DriverDocumentController::class, 'show'])
+            ->middleware('permission:document,view')
+            ->name('drivers.documents.show');
+        Route::patch('/drivers/{driver}/documents/{document}', [DriverDocumentController::class, 'update'])
+            ->middleware('permission:document,update')
+            ->name('drivers.documents.update');
+        Route::delete('/drivers/{driver}/documents/{document}', [DriverDocumentController::class, 'destroy'])
+            ->middleware('permission:document,delete')
+            ->name('drivers.documents.destroy');
+        Route::post('/drivers/{driver}/documents/{document}/verify', [DriverDocumentController::class, 'verify'])
+            ->middleware('permission:document,verify')
+            ->name('drivers.documents.verify');
+
+        // Driver documents legacy alias
         Route::get('/fleet/drivers/{driver}/documents', [DriverDocumentController::class, 'index'])
             ->middleware('permission:document,view')
             ->name('fleet.drivers.documents.index');

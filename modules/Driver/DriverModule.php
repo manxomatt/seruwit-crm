@@ -59,7 +59,7 @@ class DriverModule implements ModuleContract
             'name' => 'Pengemudi',
             'slug' => 'driver',
             'icon' => 'driver',
-            'route_name' => 'fleet.drivers.index',
+            'route_name' => 'drivers.index',
             'permission_module' => 'driver',
             'permission_action' => 'view',
             'sort_order' => 4,
@@ -83,30 +83,28 @@ class DriverModule implements ModuleContract
 
     public function routes(): void
     {
-        // Standalone driver routes
-        Route::get('/drivers', [DriverController::class, 'index'])->name('driver.drivers.index');
-        Route::get('/drivers/create', [DriverController::class, 'create'])->name('driver.drivers.create');
-        Route::post('/drivers', [DriverController::class, 'store'])->name('driver.drivers.store');
-        Route::patch('/drivers/batch-status', [DriverController::class, 'batchUpdateStatus'])->name('driver.drivers.batch-status');
-        Route::post('/drivers/batch-destroy', [DriverController::class, 'batchDestroy'])->name('driver.drivers.batch-destroy');
-        Route::get('/drivers/{driver}', [DriverController::class, 'show'])->name('driver.drivers.show');
-        Route::get('/drivers/{driver}/edit', [DriverController::class, 'edit'])->name('driver.drivers.edit');
-        Route::patch('/drivers/{driver}', [DriverController::class, 'update'])->name('driver.drivers.update');
-        Route::delete('/drivers/{driver}', [DriverController::class, 'destroy'])->name('driver.drivers.destroy');
-        Route::post('/drivers/{driver}/account', [DriverAccountController::class, 'store'])->name('driver.drivers.account.store');
+        // Primary standalone routes: /drivers/*
+        Route::get('/drivers', [DriverController::class, 'index'])->middleware('permission:driver|fleet,view')->name('drivers.index');
+        Route::get('/drivers/create', [DriverController::class, 'create'])->middleware('permission:driver|fleet,create')->name('drivers.create');
+        Route::post('/drivers', [DriverController::class, 'store'])->middleware('permission:driver|fleet,create')->name('drivers.store');
+        Route::patch('/drivers/batch-status', [DriverController::class, 'batchUpdateStatus'])->middleware('permission:driver|fleet,update')->name('drivers.batch-status');
+        Route::post('/drivers/batch-destroy', [DriverController::class, 'batchDestroy'])->middleware('permission:driver|fleet,delete')->name('drivers.batch-destroy');
+        Route::get('/drivers/{driver}', [DriverController::class, 'show'])->middleware('permission:driver|fleet,view')->name('drivers.show');
+        Route::get('/drivers/{driver}/edit', [DriverController::class, 'edit'])->middleware('permission:driver|fleet,update')->name('drivers.edit');
+        Route::patch('/drivers/{driver}', [DriverController::class, 'update'])->middleware('permission:driver|fleet,update')->name('drivers.update');
+        Route::delete('/drivers/{driver}', [DriverController::class, 'destroy'])->middleware('permission:driver|fleet,delete')->name('drivers.destroy');
+        Route::post('/drivers/{driver}/account', [DriverAccountController::class, 'store'])->middleware('permission:driver|fleet,update')->name('drivers.account.store');
 
-        // Backward compatibility routes under /fleet/drivers, gated by sub-feature kill switch
-        Route::middleware('requires-module:fleet-drivers')->group(function (): void {
-            Route::get('/fleet/drivers', [DriverController::class, 'index'])->name('fleet.drivers.index');
-            Route::get('/fleet/drivers/create', [DriverController::class, 'create'])->name('fleet.drivers.create');
-            Route::post('/fleet/drivers', [DriverController::class, 'store'])->name('fleet.drivers.store');
-            Route::patch('/fleet/drivers/batch-status', [DriverController::class, 'batchUpdateStatus'])->name('fleet.drivers.batch-status');
-            Route::post('/fleet/drivers/batch-destroy', [DriverController::class, 'batchDestroy'])->name('fleet.drivers.batch-destroy');
-            Route::get('/fleet/drivers/{driver}', [DriverController::class, 'show'])->name('fleet.drivers.show');
-            Route::get('/fleet/drivers/{driver}/edit', [DriverController::class, 'edit'])->name('fleet.drivers.edit');
-            Route::patch('/fleet/drivers/{driver}', [DriverController::class, 'update'])->name('fleet.drivers.update');
-            Route::delete('/fleet/drivers/{driver}', [DriverController::class, 'destroy'])->name('fleet.drivers.destroy');
-            Route::post('/fleet/drivers/{driver}/account', [DriverAccountController::class, 'store'])->name('fleet.drivers.account.store');
-        });
+        // Backward compatibility routes & names
+        Route::get('/fleet/drivers', [DriverController::class, 'index'])->middleware('permission:driver|fleet,view')->name('fleet.drivers.index');
+        Route::get('/fleet/drivers/create', [DriverController::class, 'create'])->middleware('permission:driver|fleet,create')->name('fleet.drivers.create');
+        Route::post('/fleet/drivers', [DriverController::class, 'store'])->middleware('permission:driver|fleet,create')->name('fleet.drivers.store');
+        Route::patch('/fleet/drivers/batch-status', [DriverController::class, 'batchUpdateStatus'])->middleware('permission:driver|fleet,update')->name('fleet.drivers.batch-status');
+        Route::post('/fleet/drivers/batch-destroy', [DriverController::class, 'batchDestroy'])->middleware('permission:driver|fleet,delete')->name('fleet.drivers.batch-destroy');
+        Route::get('/fleet/drivers/{driver}', [DriverController::class, 'show'])->middleware('permission:driver|fleet,view')->name('fleet.drivers.show');
+        Route::get('/fleet/drivers/{driver}/edit', [DriverController::class, 'edit'])->middleware('permission:driver|fleet,update')->name('fleet.drivers.edit');
+        Route::patch('/fleet/drivers/{driver}', [DriverController::class, 'update'])->middleware('permission:driver|fleet,update')->name('fleet.drivers.update');
+        Route::delete('/fleet/drivers/{driver}', [DriverController::class, 'destroy'])->middleware('permission:driver|fleet,delete')->name('fleet.drivers.destroy');
+        Route::post('/fleet/drivers/{driver}/account', [DriverAccountController::class, 'store'])->middleware('permission:driver|fleet,update')->name('fleet.drivers.account.store');
     }
 }

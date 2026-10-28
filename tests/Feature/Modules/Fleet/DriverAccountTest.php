@@ -20,6 +20,7 @@ class DriverAccountTest extends TestCase
 
         $this->withoutVite();
         $this->setUpRoles();
+        \Database\Seeders\RoleSeeder::seedAllSystemRoles();
     }
 
     public function test_admin_provisions_a_login_for_a_driver(): void
