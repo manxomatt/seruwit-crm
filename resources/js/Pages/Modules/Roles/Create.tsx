@@ -29,6 +29,10 @@ const getModuleIcon = (moduleKey: string): string => {
     switch (moduleKey.toLowerCase()) {
         case 'fleet':
             return '🚗';
+        case 'fleet-base':
+            return '🏢';
+        case 'driver':
+            return '👨‍✈️';
         case 'rental':
             return '🔑';
         case 'transportation':
@@ -37,6 +41,12 @@ const getModuleIcon = (moduleKey: string): string => {
             return '💰';
         case 'maintenance':
             return '🛠️';
+        case 'document':
+            return '📄';
+        case 'tracking':
+            return '📍';
+        case 'scoring':
+            return '⭐';
         case 'inventory':
             return '📦';
         case 'attendance':
@@ -113,6 +123,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
 
         Object.entries(permissions).forEach(([mod, perms]) => {
             const moduleName = (modules[mod] || mod).toLowerCase();
+            const moduleKey = mod.toLowerCase();
             const matchingPerms = perms.filter((p) => {
                 const actionLabel = (
                     p.module === 'rental' && p.action === 'view'
@@ -121,6 +132,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                 ).toLowerCase();
                 const permSlug = p.slug.toLowerCase();
                 return (
+                    moduleKey.includes(query) ||
                     moduleName.includes(query) ||
                     actionLabel.includes(query) ||
                     permSlug.includes(query) ||
@@ -383,6 +395,11 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                                             <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                                                                 {modules[module] || module}
                                                             </span>
+                                                            {modules[module] && modules[module].toLowerCase() !== module.toLowerCase() && (
+                                                                <span className="text-[10px] font-mono font-medium text-slate-400 dark:text-slate-500 lowercase">
+                                                                    ({module})
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
