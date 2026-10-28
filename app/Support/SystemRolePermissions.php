@@ -70,14 +70,14 @@ class SystemRolePermissions
                 'name' => 'Fleet Base Head',
                 'description' => 'Owns operations for a single fleet home base',
                 'is_system' => true,
-                'dashboard_path' => '/module/fleet/bases',
+                'dashboard_path' => '/module/fleet-bases',
             ],
             'fleet_base_manager' => [
                 'slug' => 'fleet_base_manager',
                 'name' => 'Fleet Base Manager',
                 'description' => 'Owns operations across one or more fleet home bases',
                 'is_system' => true,
-                'dashboard_path' => '/module/fleet/bases',
+                'dashboard_path' => '/module/fleet-bases',
             ],
             'rental_operator' => [
                 'slug' => 'rental_operator',
@@ -101,7 +101,7 @@ class SystemRolePermissions
 
         $roleSlugs = match ($moduleKey) {
             'inventory' => ['warehouse_head', 'warehouse_manager'],
-            'fleet' => ['fleet_base_head', 'fleet_base_manager'],
+            'fleet-base', 'fleet' => ['fleet_base_head', 'fleet_base_manager'],
             'rental' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
             'canvassing' => ['salesperson'],
             'driver', 'transportation', 'driver_scoring', 'orders' => ['driver'],
@@ -165,7 +165,8 @@ class SystemRolePermissions
             'fleet_base_manager' => Permission::query()
                 ->where(function ($query): void {
                     $query
-                        ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
+                        ->where(fn ($q) => $q->where('module', 'fleet-base')->whereIn('action', ['view', 'create', 'update', 'delete']))
+                        ->orWhere(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
@@ -176,7 +177,8 @@ class SystemRolePermissions
             'fleet_base_head' => Permission::query()
                 ->where(function ($query): void {
                     $query
-                        ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
+                        ->where(fn ($q) => $q->where('module', 'fleet-base')->whereIn('action', ['view', 'create', 'update']))
+                        ->orWhere(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));

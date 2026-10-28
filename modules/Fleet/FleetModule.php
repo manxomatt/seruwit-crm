@@ -2,12 +2,9 @@
 
 namespace Modules\Fleet;
 
-use App\Models\User;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
-use Modules\Fleet\Http\Controllers\FleetBaseAiGenerateController;
-use Modules\Fleet\Http\Controllers\FleetBaseController;
 use Modules\Fleet\Http\Controllers\FleetDashboardController;
 use Modules\Fleet\Http\Controllers\FuelAnalyticsController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
@@ -16,7 +13,6 @@ use Modules\Fleet\Http\Controllers\VehicleCheckoutController;
 use Modules\Fleet\Http\Controllers\VehicleController;
 use Modules\Fleet\Http\Controllers\VehicleMaintenanceLogController;
 use Modules\Fleet\Http\Controllers\VehicleSettlementController;
-use Modules\Fleet\Models\FleetBase;
 
 /**
  * Vehicle and driver records, deliberately free of any booking/dispatch
@@ -88,26 +84,12 @@ class FleetModule implements ModuleContract
      */
     public function boot(): void
     {
-        User::resolveRelationUsing(
-            'fleetBases',
-            fn (User $user) => $user->belongsToMany(FleetBase::class, 'user_fleet_base')->withTimestamps(),
-        );
+        //
     }
 
     public function routes(): void
     {
         Route::get('/fleet', [FleetDashboardController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.dashboard');
-
-        Route::get('/fleet/bases', [FleetBaseController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.bases.index');
-        Route::get('/fleet/bases/create', [FleetBaseController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.bases.create');
-        Route::post('/fleet/bases', [FleetBaseController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.bases.store');
-        Route::post('/fleet/bases/ai-generate', [FleetBaseAiGenerateController::class, 'generate'])->middleware('permission:fleet,create')->name('fleet.bases.ai-generate');
-        Route::patch('/fleet/bases/batch-status', [FleetBaseController::class, 'batchUpdateStatus'])->middleware('permission:fleet,update')->name('fleet.bases.batch-status');
-        Route::post('/fleet/bases/batch-destroy', [FleetBaseController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.bases.batch-destroy');
-        Route::get('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.bases.show');
-        Route::get('/fleet/bases/{fleetBase}/edit', [FleetBaseController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.bases.edit');
-        Route::patch('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.bases.update');
-        Route::delete('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.bases.destroy');
 
         Route::get('/fleet/vehicles', [VehicleController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.vehicles.index');
         Route::get('/fleet/vehicles/create', [VehicleController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.vehicles.create');

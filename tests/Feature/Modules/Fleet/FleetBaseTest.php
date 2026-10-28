@@ -4,12 +4,13 @@ namespace Tests\Feature\Modules\Fleet;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Support\SystemRolePermissions;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Fleet\Models\FleetBase;
+use Modules\FleetBase\Models\FleetBase;
 use Modules\Fleet\Models\Vehicle;
-use Modules\Fleet\Support\AccessibleFleetBases;
+use Modules\FleetBase\Support\AccessibleFleetBases;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -28,6 +29,8 @@ class FleetBaseTest extends TestCase
             VerifyCsrfToken::class,
         ]);
         $this->setUpRoles();
+        SystemRolePermissions::seedRolesForModule('fleet-base');
+        SystemRolePermissions::syncAllSystemRoles();
     }
 
     public function test_guests_cannot_access_fleet_bases(): void
@@ -43,7 +46,7 @@ class FleetBaseTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.bases.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Bases/Index')
+                ->component('Modules/FleetBase/Bases/Index')
                 ->has('bases.data', 15)
                 ->where('bases.per_page', 15)
                 ->where('bases.total', 16)
@@ -135,6 +138,7 @@ class FleetBaseTest extends TestCase
         $user = $this->createAdminUser();
         $first = FleetBase::factory()->create(['manager_id' => $user->id]);
         $second = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $surviving = FleetBase::factory()->create(['manager_id' => $user->id]);
 
         $this->actingAs($user)
             ->post(route('module.fleet.bases.batch-destroy'), [
@@ -145,6 +149,7 @@ class FleetBaseTest extends TestCase
 
         $this->assertDatabaseMissing('fleet_bases', ['id' => $first->id]);
         $this->assertDatabaseMissing('fleet_bases', ['id' => $second->id]);
+        $this->assertDatabaseHas('fleet_bases', ['id' => $surviving->id]);
     }
 
     public function test_batch_delete_skips_bases_still_in_use(): void
@@ -185,7 +190,7 @@ class FleetBaseTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.bases.create'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Bases/Create')
+                ->component('Modules/FleetBase/Bases/Create')
                 ->has('managers')
                 ->has('kinds')
                 ->has('locations')
@@ -260,7 +265,7 @@ class FleetBaseTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.bases.show', $base))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Bases/Show')
+                ->component('Modules/FleetBase/Bases/Show')
                 ->where('base.id', $base->id)
                 ->where('base.code', $base->code)
             );
@@ -274,7 +279,7 @@ class FleetBaseTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.bases.edit', $base))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Bases/Edit')
+                ->component('Modules/FleetBase/Bases/Edit')
                 ->where('base.id', $base->id)
                 ->has('managers')
                 ->has('kinds')
@@ -363,6 +368,9 @@ class FleetBaseTest extends TestCase
             'status' => 'active',
             'odometer_km' => 1000,
             'home_base_id' => $base->id,
+            'rental_rate' => [
+                'rate_per_period' => 350000,
+            ],
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -384,7 +392,7 @@ class FleetBaseTest extends TestCase
         $this->actingAs($head)->get(route('module.fleet.bases.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Bases/Index')
+                ->component('Modules/FleetBase/Bases/Index')
                 ->where('bases.total', 1)
                 ->where('bases.data.0.code', 'ASSIGNED')
             );

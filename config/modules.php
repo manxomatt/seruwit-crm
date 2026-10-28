@@ -28,6 +28,7 @@ return [
         Modules\Carousels\CarouselsModule::class,
         Modules\Billing\BillingModule::class,
         Modules\Document\DocumentModule::class,
+        Modules\FleetBase\FleetBaseModule::class,
         Modules\Fleet\FleetModule::class,
         Modules\Driver\DriverModule::class,
         Modules\Inventory\InventoryModule::class,

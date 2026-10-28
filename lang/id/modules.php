@@ -8,6 +8,7 @@ return [
     'partners' => 'Kontak',
     'products' => 'Produk',
     'fleet' => 'Armada',
+    'fleet-base' => 'Pool & Depo',
     'driver' => 'Pengemudi',
     'document' => 'Dokumen',
     'maintenance' => 'Perawatan',

@@ -36,6 +36,7 @@ class Plan extends Model
             'document',
             'driver',
             'fleet',
+            'fleet-base',
             'invoicing',
             'maintenance',
             'pages',

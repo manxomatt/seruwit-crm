@@ -13,7 +13,6 @@ interface TabItem {
 
 const TABS: Array<TabItem> = [
     { icon: '📊', labelKey: 'fleet.nav.dashboard', fallbackLabel: 'Dashboard', route: 'fleet.dashboard', pattern: 'fleet.dashboard' },
-    { icon: '🏢', labelKey: 'fleet.nav.bases', fallbackLabel: 'Fleet Bases', route: 'fleet.bases.index', pattern: 'fleet.bases.*' },
     { icon: '🚗', labelKey: 'fleet.nav.vehicles', fallbackLabel: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
     { icon: '🤝', labelKey: 'fleet.nav.settlements', fallbackLabel: 'Bagi Hasil Investor', route: 'fleet.settlements.index', pattern: 'fleet.settlements.*', subFeatureKey: 'fleet-settlements' },
     { icon: '🛡️', labelKey: 'fleet.nav.compliance', fallbackLabel: 'Kepatuhan & Pajak', route: 'fleet.compliance.index', pattern: 'fleet.compliance.*', subFeatureKey: 'document-compliance' },

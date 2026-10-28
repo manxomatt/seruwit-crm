@@ -60,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
             \Modules\Fleet\AI\Services\GeminiVehicleAiGeneratorService::class
         );
         $this->app->bind(
+            \Modules\FleetBase\AI\Contracts\FleetBaseAiGeneratorServiceInterface::class,
+            \Modules\FleetBase\AI\Services\GeminiFleetBaseAiGeneratorService::class
+        );
+        $this->app->bind(
             \Modules\Fleet\AI\Contracts\FleetBaseAiGeneratorServiceInterface::class,
             \Modules\Fleet\AI\Services\GeminiFleetBaseAiGeneratorService::class
         );
