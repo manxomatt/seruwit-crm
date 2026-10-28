@@ -1079,6 +1079,7 @@ return [
     ],
 
     'errors' => [
+        'rental_delete_forbidden_for_head' => 'Fleet Base Head tidak diizinkan menghapus transaksi rental.',
         'rental_access_denied' => 'Anda tidak memiliki akses ke transaksi rental di luar base armada yang ditugaskan.',
         'edit_draft_confirmed_only' => 'Hanya rental Quote, Pending, Pending Reserved, atau Siap diambil yang dapat diedit.',
         'delete_draft_only' => 'Hanya rental Quote (draft) yang dapat dihapus.',

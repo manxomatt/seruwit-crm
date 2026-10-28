@@ -40,6 +40,14 @@ class ModulePageEntrypointTest extends TestCase
         );
     }
 
+    public function test_a_page_owned_by_the_fleet_base_module_resolves_to_the_modules_copy(): void
+    {
+        $this->assertSame(
+            'modules/FleetBase/resources/js/Pages/Modules/FleetBase/Bases/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/FleetBase/Bases/Index'),
+        );
+    }
+
     public function test_a_page_owned_by_the_partners_module_resolves_to_the_modules_copy(): void
     {
         $this->assertSame(
@@ -108,6 +116,10 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/Fleet/Bases/Create',
             'Modules/Fleet/Bases/Edit',
             'Modules/Fleet/Bases/Show',
+            'Modules/FleetBase/Bases/Index',
+            'Modules/FleetBase/Bases/Create',
+            'Modules/FleetBase/Bases/Edit',
+            'Modules/FleetBase/Bases/Show',
             'Modules/Fleet/Drivers/Index',
             'Modules/Fleet/Drivers/Create',
             'Modules/Fleet/Drivers/Edit',

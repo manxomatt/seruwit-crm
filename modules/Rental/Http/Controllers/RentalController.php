@@ -274,6 +274,16 @@ class RentalController extends Controller
 
     public function destroy(Rental $rental): RedirectResponse
     {
+        $user = auth()->user();
+        if (
+            $user
+            && $user->hasRole(AccessibleFleetBases::ROLE_HEAD)
+            && ! $user->hasRole(AccessibleFleetBases::ROLE_MANAGER)
+            && ! $user->isAdmin()
+        ) {
+            abort(403, __('rental.errors.rental_delete_forbidden_for_head'));
+        }
+
         $this->ensureAccessibleRental($rental);
 
         abort_if(

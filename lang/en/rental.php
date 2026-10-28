@@ -1058,6 +1058,7 @@ return [
     ],
 
     'errors' => [
+        'rental_delete_forbidden_for_head' => 'Fleet Base Heads cannot delete rentals.',
         'rental_access_denied' => 'You do not have access to rentals outside your assigned fleet base.',
         'edit_draft_confirmed_only' => 'Only Quote, Pending, Pending Reserved, or Ready for pickup rentals can be edited.',
         'delete_draft_only' => 'Only Quote (draft) rentals can be deleted.',
