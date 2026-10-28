@@ -3,10 +3,10 @@
 namespace Modules\DriverScoring\Support;
 
 use Illuminate\Support\Carbon;
+use Modules\Driver\Models\Driver;
 use Modules\DriverScoring\Models\DriverDailyScore;
 use Modules\DriverScoring\Models\DriverIncentiveAward;
 use Modules\DriverScoring\Models\DriverIncentiveRule;
-use Modules\Fleet\Models\Driver;
 
 final class IncentiveEvaluator
 {

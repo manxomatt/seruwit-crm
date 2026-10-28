@@ -47,7 +47,7 @@ class DriverScoringModule implements ModuleContract
 
     public function requires(): array
     {
-        return ['fleet', 'tracking'];
+        return ['driver', 'fleet', 'tracking'];
     }
 
     public function menu(): ?array

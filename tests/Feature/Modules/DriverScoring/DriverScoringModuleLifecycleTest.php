@@ -29,6 +29,7 @@ class DriverScoringModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('driver_incentive_awards'));
             $this->assertDatabaseHas('permissions', ['module' => 'scoring', 'action' => 'award']);
             $this->assertDatabaseHas('menus', ['slug' => 'scoring']);
+            $this->assertDatabaseHas('installed_modules', ['key' => 'driver']);
             $this->assertDatabaseHas('installed_modules', ['key' => 'fleet']);
             $this->assertDatabaseHas('installed_modules', ['key' => 'tracking']);
         });

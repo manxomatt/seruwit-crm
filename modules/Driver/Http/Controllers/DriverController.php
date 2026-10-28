@@ -123,6 +123,7 @@ class DriverController extends Controller
             'driver' => $driver,
             'documentsEnabled' => Modules::available('document'),
             'documentSummary' => $this->driverDocumentSummary($driver),
+            'scoringEnabled' => Modules::available('scoring'),
             'can' => [
                 'update' => $user->hasPermissionFor('driver', 'update') || $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('driver', 'delete') || $user->hasPermissionFor('fleet', 'delete'),

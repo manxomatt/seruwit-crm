@@ -44,6 +44,7 @@ interface DocumentSummary {
 interface Props {
     driver: Driver;
     documentsEnabled?: boolean;
+    scoringEnabled?: boolean;
     documentSummary?: DocumentSummary | null;
     can: { update: boolean; delete: boolean };
 }
@@ -99,6 +100,7 @@ const TrashIcon = () => (
 export default function Show({
     driver,
     documentsEnabled = false,
+    scoringEnabled = false,
     documentSummary = null,
     can,
 }: Props): JSX.Element {
@@ -161,6 +163,15 @@ export default function Show({
                                     className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
                                     📄 Dokumen
+                                </Link>
+                            )}
+
+                            {scoringEnabled && (
+                                <Link
+                                    href={prefixedRoute('scoring.drivers.show', driver.id)}
+                                    className="inline-flex items-center gap-1.5 rounded-2xl border border-indigo-200 bg-indigo-50/70 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
+                                >
+                                    📊 Skor & Performa
                                 </Link>
                             )}
 

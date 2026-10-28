@@ -4,7 +4,7 @@ namespace Modules\DriverScoring\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Fleet\Models\Driver;
+use Modules\Driver\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 
 class DrivingEvent extends Model

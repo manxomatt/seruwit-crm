@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Driver\Models\Driver;
 use Modules\DriverScoring\Models\DrivingEvent;
-use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 
 class DrivingEventController extends Controller

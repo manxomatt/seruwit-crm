@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Driver\Models\Driver;
 use Modules\DriverScoring\Models\DriverDailyScore;
 use Modules\DriverScoring\Models\DrivingEvent;
 use Modules\DriverScoring\Support\DriverScoreAggregator;
-use Modules\Fleet\Models\Driver;
 
 class LeaderboardController extends Controller
 {
