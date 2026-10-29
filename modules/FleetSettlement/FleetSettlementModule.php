@@ -83,17 +83,34 @@ class FleetSettlementModule implements ModuleContract
             ->middleware('permission:fleet-settlement,view')
             ->name('fleet-settlements.index');
 
+        // Route alias for singular /fleet-settlement
+        Route::get('/fleet-settlement', [VehicleSettlementController::class, 'index'])
+            ->middleware('permission:fleet-settlement,view')
+            ->name('fleet-settlement.index');
+
         Route::post('/fleet-settlements/generate', [VehicleSettlementController::class, 'generate'])
             ->middleware('permission:fleet-settlement,update')
             ->name('fleet-settlements.generate');
+
+        Route::post('/fleet-settlement/generate', [VehicleSettlementController::class, 'generate'])
+            ->middleware('permission:fleet-settlement,update')
+            ->name('fleet-settlement.generate');
 
         Route::post('/fleet-settlements/payout', [VehicleSettlementController::class, 'savePayout'])
             ->middleware('permission:fleet-settlement,update')
             ->name('fleet-settlements.payout');
 
+        Route::post('/fleet-settlement/payout', [VehicleSettlementController::class, 'savePayout'])
+            ->middleware('permission:fleet-settlement,update')
+            ->name('fleet-settlement.payout');
+
         Route::get('/fleet-settlements/vehicles/{vehicle}', [VehicleSettlementController::class, 'show'])
             ->middleware('permission:fleet-settlement,view')
             ->name('fleet-settlements.vehicles.show');
+
+        Route::get('/fleet-settlement/vehicles/{vehicle}', [VehicleSettlementController::class, 'show'])
+            ->middleware('permission:fleet-settlement,view')
+            ->name('fleet-settlement.vehicles.show');
 
         // Backward compatibility routes for legacy fleet.settlements.*
         Route::get('/fleet/settlements', [VehicleSettlementController::class, 'index'])
