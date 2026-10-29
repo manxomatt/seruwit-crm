@@ -381,6 +381,110 @@ class FleetBaseTest extends TestCase
         $this->assertSame($base->id, $vehicle->home_base_id);
     }
 
+    public function test_admin_can_assign_vehicles_to_fleet_base(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create([
+            'manager_id' => $user->id,
+            'vehicle_capacity' => 10,
+        ]);
+        $vehicles = Vehicle::factory()->count(3)->create(['home_base_id' => null]);
+
+        $response = $this->actingAs($user)->post(route('module.fleet-bases.vehicles.assign', $base), [
+            'vehicle_ids' => $vehicles->pluck('id')->all(),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        foreach ($vehicles as $vehicle) {
+            $this->assertDatabaseHas('vehicles', [
+                'id' => $vehicle->id,
+                'home_base_id' => $base->id,
+            ]);
+        }
+    }
+
+    public function test_assign_vehicles_fails_when_exceeding_capacity(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create([
+            'manager_id' => $user->id,
+            'vehicle_capacity' => 2,
+        ]);
+        Vehicle::factory()->create(['home_base_id' => $base->id]);
+        $newVehicles = Vehicle::factory()->count(2)->create(['home_base_id' => null]);
+
+        $response = $this->actingAs($user)->post(route('module.fleet-bases.vehicles.assign', $base), [
+            'vehicle_ids' => $newVehicles->pluck('id')->all(),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+
+        foreach ($newVehicles as $vehicle) {
+            $this->assertDatabaseHas('vehicles', [
+                'id' => $vehicle->id,
+                'home_base_id' => null,
+            ]);
+        }
+    }
+
+    public function test_admin_can_detach_vehicle_from_fleet_base(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $vehicle = Vehicle::factory()->create(['home_base_id' => $base->id]);
+
+        $response = $this->actingAs($user)->delete(route('module.fleet-bases.vehicles.detach', [$base, $vehicle]));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('vehicles', [
+            'id' => $vehicle->id,
+            'home_base_id' => null,
+        ]);
+    }
+
+    public function test_admin_can_batch_detach_vehicles_from_fleet_base(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $vehicles = Vehicle::factory()->count(3)->create(['home_base_id' => $base->id]);
+
+        $response = $this->actingAs($user)->post(route('module.fleet-bases.vehicles.batch-detach', $base), [
+            'vehicle_ids' => $vehicles->pluck('id')->all(),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        foreach ($vehicles as $vehicle) {
+            $this->assertDatabaseHas('vehicles', [
+                'id' => $vehicle->id,
+                'home_base_id' => null,
+            ]);
+        }
+    }
+
+    public function test_show_page_passes_available_vehicles(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $assignedVehicle = Vehicle::factory()->create(['home_base_id' => $base->id]);
+        $unassignedVehicle = Vehicle::factory()->create(['home_base_id' => null]);
+
+        $response = $this->actingAs($user)->get(route('module.fleet-bases.show', $base));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Modules/FleetBase/Bases/Show')
+            ->has('base.vehicles', 1)
+            ->where('base.vehicles.0.id', $assignedVehicle->id)
+            ->has('availableVehicles')
+        );
+    }
+
     public function test_scoped_fleet_base_head_only_sees_assigned_bases(): void
     {
         $admin = $this->createAdminUser();

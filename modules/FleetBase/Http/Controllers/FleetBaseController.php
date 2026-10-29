@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\FleetBase\Http\Requests\AssignVehiclesToFleetBaseRequest;
 use Modules\FleetBase\Http\Requests\BatchDeleteFleetBasesRequest;
+use Modules\FleetBase\Http\Requests\BatchDetachVehiclesFromFleetBaseRequest;
 use Modules\FleetBase\Http\Requests\BatchUpdateFleetBaseStatusRequest;
 use Modules\FleetBase\Http\Requests\StoreFleetBaseRequest;
 use Modules\FleetBase\Http\Requests\UpdateFleetBaseRequest;
@@ -196,13 +198,102 @@ class FleetBaseController extends Controller
             && $totalBases > 1
             && $fleetBase->vehicles->isEmpty();
 
+        $availableVehicles = class_exists(\Modules\Fleet\Models\Vehicle::class) && Schema::hasTable('vehicles')
+            ? \Modules\Fleet\Models\Vehicle::query()
+                ->select('id', 'name', 'plate_number', 'status', 'home_base_id')
+                ->with('homeBase:id,name,code')
+                ->where(function ($query) use ($fleetBase) {
+                    $query->whereNull('home_base_id')
+                        ->orWhere('home_base_id', '!=', $fleetBase->id);
+                })
+                ->orderBy('name')
+                ->get()
+            : [];
+
         return Inertia::render('Modules/FleetBase/Bases/Show', [
             'base' => $fleetBase,
+            'availableVehicles' => $availableVehicles,
             'can' => [
                 'update' => $user->hasPermissionFor('fleet-base', 'update') || $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $canDeleteBase,
             ],
         ]);
+    }
+
+    public function assignVehicles(AssignVehiclesToFleetBaseRequest $request, FleetBase $fleetBase): RedirectResponse
+    {
+        $this->ensureAccessible($fleetBase);
+
+        $user = Auth::user();
+        if (! ($user->hasPermissionFor('fleet-base', 'update') || $user->hasPermissionFor('fleet', 'update'))) {
+            abort(403);
+        }
+
+        $vehicleIds = $request->validated()['vehicle_ids'];
+
+        if ($fleetBase->vehicle_capacity !== null) {
+            $currentCount = $fleetBase->vehicles()->count();
+            $newAssignmentsCount = \Modules\Fleet\Models\Vehicle::query()
+                ->whereIn('id', $vehicleIds)
+                ->where(function ($q) use ($fleetBase) {
+                    $q->whereNull('home_base_id')->orWhere('home_base_id', '!=', $fleetBase->id);
+                })
+                ->count();
+
+            if ($currentCount + $newAssignmentsCount > $fleetBase->vehicle_capacity) {
+                return redirect()->to($this->redirectTarget('show', $fleetBase))
+                    ->with('error', "Kapasitas base terlampaui. Maksimal {$fleetBase->vehicle_capacity} unit (saat ini terparkir: {$currentCount}, mencoba menambah: {$newAssignmentsCount}).");
+            }
+        }
+
+        \Modules\Fleet\Models\Vehicle::query()
+            ->whereIn('id', $vehicleIds)
+            ->update(['home_base_id' => $fleetBase->id]);
+
+        $count = count($vehicleIds);
+
+        return redirect()->to($this->redirectTarget('show', $fleetBase))
+            ->with('success', "{$count} kendaraan berhasil dihubungkan ke pool {$fleetBase->name}.");
+    }
+
+    public function detachVehicle(FleetBase $fleetBase, int|string $vehicleId): RedirectResponse
+    {
+        $this->ensureAccessible($fleetBase);
+
+        $user = Auth::user();
+        if (! ($user->hasPermissionFor('fleet-base', 'update') || $user->hasPermissionFor('fleet', 'update'))) {
+            abort(403);
+        }
+
+        $vehicle = \Modules\Fleet\Models\Vehicle::query()
+            ->where('id', $vehicleId)
+            ->where('home_base_id', $fleetBase->id)
+            ->firstOrFail();
+
+        $vehicle->update(['home_base_id' => null]);
+
+        return redirect()->to($this->redirectTarget('show', $fleetBase))
+            ->with('success', "Kendaraan {$vehicle->name} ({$vehicle->plate_number}) berhasil dilepas dari pool ini.");
+    }
+
+    public function batchDetachVehicles(BatchDetachVehiclesFromFleetBaseRequest $request, FleetBase $fleetBase): RedirectResponse
+    {
+        $this->ensureAccessible($fleetBase);
+
+        $user = Auth::user();
+        if (! ($user->hasPermissionFor('fleet-base', 'update') || $user->hasPermissionFor('fleet', 'update'))) {
+            abort(403);
+        }
+
+        $vehicleIds = $request->validated()['vehicle_ids'];
+
+        $count = \Modules\Fleet\Models\Vehicle::query()
+            ->whereIn('id', $vehicleIds)
+            ->where('home_base_id', $fleetBase->id)
+            ->update(['home_base_id' => null]);
+
+        return redirect()->to($this->redirectTarget('show', $fleetBase))
+            ->with('success', "{$count} kendaraan berhasil dilepas dari pool ini.");
     }
 
     public function edit(FleetBase $fleetBase): Response

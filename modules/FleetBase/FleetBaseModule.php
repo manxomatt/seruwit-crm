@@ -105,6 +105,9 @@ class FleetBaseModule implements ModuleContract
         Route::patch('/fleet-bases/batch-status', [FleetBaseController::class, 'batchUpdateStatus'])->middleware('permission:fleet-base|fleet,update')->name('fleet-bases.batch-status');
         Route::post('/fleet-bases/batch-destroy', [FleetBaseController::class, 'batchDestroy'])->middleware('permission:fleet-base|fleet,delete')->name('fleet-bases.batch-destroy');
         Route::get('/fleet-bases/{fleetBase}', [FleetBaseController::class, 'show'])->middleware('permission:fleet-base|fleet,view')->name('fleet-bases.show');
+        Route::post('/fleet-bases/{fleetBase}/vehicles', [FleetBaseController::class, 'assignVehicles'])->middleware('permission:fleet-base|fleet,update')->name('fleet-bases.vehicles.assign');
+        Route::delete('/fleet-bases/{fleetBase}/vehicles/{vehicle}', [FleetBaseController::class, 'detachVehicle'])->middleware('permission:fleet-base|fleet,update')->name('fleet-bases.vehicles.detach');
+        Route::post('/fleet-bases/{fleetBase}/vehicles/batch-detach', [FleetBaseController::class, 'batchDetachVehicles'])->middleware('permission:fleet-base|fleet,update')->name('fleet-bases.vehicles.batch-detach');
         Route::get('/fleet-bases/{fleetBase}/edit', [FleetBaseController::class, 'edit'])->middleware('permission:fleet-base|fleet,update')->name('fleet-bases.edit');
         Route::patch('/fleet-bases/{fleetBase}', [FleetBaseController::class, 'update'])->middleware('permission:fleet-base|fleet,update')->name('fleet-bases.update');
         Route::delete('/fleet-bases/{fleetBase}', [FleetBaseController::class, 'destroy'])->middleware('permission:fleet-base|fleet,delete')->name('fleet-bases.destroy');
@@ -117,6 +120,9 @@ class FleetBaseModule implements ModuleContract
         Route::patch('/fleet/bases/batch-status', [FleetBaseController::class, 'batchUpdateStatus'])->middleware('permission:fleet-base|fleet,update')->name('fleet.bases.batch-status');
         Route::post('/fleet/bases/batch-destroy', [FleetBaseController::class, 'batchDestroy'])->middleware('permission:fleet-base|fleet,delete')->name('fleet.bases.batch-destroy');
         Route::get('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'show'])->middleware('permission:fleet-base|fleet,view')->name('fleet.bases.show');
+        Route::post('/fleet/bases/{fleetBase}/vehicles', [FleetBaseController::class, 'assignVehicles'])->middleware('permission:fleet-base|fleet,update')->name('fleet.bases.vehicles.assign');
+        Route::delete('/fleet/bases/{fleetBase}/vehicles/{vehicle}', [FleetBaseController::class, 'detachVehicle'])->middleware('permission:fleet-base|fleet,update')->name('fleet.bases.vehicles.detach');
+        Route::post('/fleet/bases/{fleetBase}/vehicles/batch-detach', [FleetBaseController::class, 'batchDetachVehicles'])->middleware('permission:fleet-base|fleet,update')->name('fleet.bases.vehicles.batch-detach');
         Route::get('/fleet/bases/{fleetBase}/edit', [FleetBaseController::class, 'edit'])->middleware('permission:fleet-base|fleet,update')->name('fleet.bases.edit');
         Route::patch('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'update'])->middleware('permission:fleet-base|fleet,update')->name('fleet.bases.update');
         Route::delete('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'destroy'])->middleware('permission:fleet-base|fleet,delete')->name('fleet.bases.destroy');

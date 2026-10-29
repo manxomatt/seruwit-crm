@@ -1,6 +1,9 @@
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import LeafletMap from '@/Components/Map/LeafletMap';
+import Modal from '@/Components/Modal';
 import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
@@ -27,6 +30,19 @@ interface VehicleSummary {
     name: string;
     plate_number: string;
     status: string;
+}
+
+interface AvailableVehicle {
+    id: number;
+    name: string;
+    plate_number: string;
+    status: string;
+    home_base_id: number | null;
+    home_base?: {
+        id: number;
+        name: string;
+        code: string;
+    } | null;
 }
 
 interface LocationSummary {
@@ -73,6 +89,7 @@ interface FleetBase {
 interface Props {
     base: FleetBase;
     can: { update: boolean; delete: boolean };
+    availableVehicles?: AvailableVehicle[];
 }
 
 const getKindBadge = (kind: string, t: (key: string, params?: Record<string, string | number>, fallback?: string) => string) => {
@@ -137,12 +154,20 @@ const displayAddress = (base: FleetBase): string => {
     return parts.length > 0 ? parts.join(', ') : 'Belum ada alamat terdaftar.';
 };
 
-export default function Show({ base, can }: Props): JSX.Element {
+export default function Show({ base, can, availableVehicles = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [vehicleSearch, setVehicleSearch] = useState('');
+
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
+    const [assignSearch, setAssignSearch] = useState('');
+    const [assignProcessing, setAssignProcessing] = useState(false);
+
+    const [vehicleToDetach, setVehicleToDetach] = useState<VehicleSummary | null>(null);
+    const [detachProcessing, setDetachProcessing] = useState(false);
 
     const kind = resolveKind(base.kind);
     const kindInfo = getKindBadge(kind, t);
@@ -160,6 +185,7 @@ export default function Show({ base, can }: Props): JSX.Element {
     const capacityTotal = base.vehicle_capacity || 0;
     const currentVehicles = base.vehicles.length;
     const capacityPercent = capacityTotal > 0 ? Math.min(100, Math.round((currentVehicles / capacityTotal) * 100)) : 0;
+    const remainingCapacity = base.vehicle_capacity ? Math.max(0, base.vehicle_capacity - currentVehicles) : null;
 
     const staffWithoutManager = base.users.filter((user) => user.id !== base.manager?.id);
 
@@ -168,6 +194,78 @@ export default function Show({ base, can }: Props): JSX.Element {
         const q = vehicleSearch.toLowerCase();
         return base.vehicles.filter((v) => v.name.toLowerCase().includes(q) || v.plate_number.toLowerCase().includes(q));
     }, [base.vehicles, vehicleSearch]);
+
+    const filteredAvailableVehicles = useMemo(() => {
+        if (!assignSearch.trim()) return availableVehicles;
+        const q = assignSearch.toLowerCase();
+        return availableVehicles.filter(
+            (v) =>
+                v.name.toLowerCase().includes(q) ||
+                v.plate_number.toLowerCase().includes(q) ||
+                (v.home_base?.name && v.home_base.name.toLowerCase().includes(q)),
+        );
+    }, [availableVehicles, assignSearch]);
+
+    const handleToggleSelectVehicle = (id: number) => {
+        setSelectedVehicleIds((prev) => {
+            if (prev.includes(id)) {
+                return prev.filter((vId) => vId !== id);
+            }
+            if (remainingCapacity !== null && prev.length >= remainingCapacity) {
+                return prev;
+            }
+            return [...prev, id];
+        });
+    };
+
+    const handleSelectAllFiltered = (filteredIds: number[]) => {
+        if (remainingCapacity !== null) {
+            const allowed = filteredIds.slice(0, remainingCapacity);
+            setSelectedVehicleIds(allowed);
+        } else {
+            setSelectedVehicleIds(filteredIds);
+        }
+    };
+
+    const handleAssignSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (selectedVehicleIds.length === 0) return;
+
+        setAssignProcessing(true);
+        router.post(
+            prefixedRoute('fleet-bases.vehicles.assign', base.id),
+            { vehicle_ids: selectedVehicleIds },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setShowAssignModal(false);
+                    setSelectedVehicleIds([]);
+                    setAssignSearch('');
+                },
+                onFinish: () => {
+                    setAssignProcessing(false);
+                },
+            },
+        );
+    };
+
+    const handleDetachConfirm = () => {
+        if (!vehicleToDetach) return;
+
+        setDetachProcessing(true);
+        router.delete(
+            prefixedRoute('fleet-bases.vehicles.detach', [base.id, vehicleToDetach.id]),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setVehicleToDetach(null);
+                },
+                onFinish: () => {
+                    setDetachProcessing(false);
+                },
+            },
+        );
+    };
 
     const confirmDelete = () => {
         setProcessing(true);
@@ -412,26 +510,45 @@ export default function Show({ base, can }: Props): JSX.Element {
                                     </div>
                                 </div>
 
-                                {base.vehicles.length > 3 && (
-                                    <div className="relative min-w-[180px]">
-                                        <input
-                                            type="text"
-                                            value={vehicleSearch}
-                                            onChange={(e) => setVehicleSearch(e.target.value)}
-                                            placeholder="Cari mobil / plat..."
-                                            className="w-full rounded-xl border-slate-200 bg-slate-50 py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:border-slate-800 dark:bg-slate-850 dark:text-white"
-                                        />
-                                        {vehicleSearch && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setVehicleSearch('')}
-                                                className="absolute inset-y-0 right-2.5 flex items-center text-xs text-slate-400 hover:text-slate-600"
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {can.update && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedVehicleIds([]);
+                                                setAssignSearch('');
+                                                setShowAssignModal(true);
+                                            }}
+                                            disabled={remainingCapacity !== null && remainingCapacity <= 0}
+                                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title={remainingCapacity !== null && remainingCapacity <= 0 ? 'Kapasitas pool sudah penuh' : 'Hubungkan Kendaraan ke Pool'}
+                                        >
+                                            <span>➕</span>
+                                            <span>Hubungkan Kendaraan</span>
+                                        </button>
+                                    )}
+
+                                    {base.vehicles.length > 3 && (
+                                        <div className="relative min-w-[160px]">
+                                            <input
+                                                type="text"
+                                                value={vehicleSearch}
+                                                onChange={(e) => setVehicleSearch(e.target.value)}
+                                                placeholder="Cari mobil / plat..."
+                                                className="w-full rounded-xl border-slate-200 bg-slate-50 py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                            />
+                                            {vehicleSearch && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setVehicleSearch('')}
+                                                    className="absolute inset-y-0 right-2.5 flex items-center text-xs text-slate-400 hover:text-slate-600"
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="mt-4">
@@ -442,26 +559,65 @@ export default function Show({ base, can }: Props): JSX.Element {
                                             {base.vehicles.length === 0 ? 'Belum Ada Armada Ditugaskan' : 'Kendaraan Tidak Ditemukan'}
                                         </p>
                                         <p className="mt-0.5 text-[11px] text-slate-400">
-                                            {base.vehicles.length === 0 ? 'Atur home base pada modul kendaraan untuk menambahkan armada ke pool ini.' : 'Coba cari dengan plat nomor lain.'}
+                                            {base.vehicles.length === 0
+                                                ? 'Hubungkan kendaraan yang tersedia ke pool ini untuk memantau armada parkir.'
+                                                : 'Coba cari dengan plat nomor lain.'}
                                         </p>
+                                        {base.vehicles.length === 0 && can.update && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedVehicleIds([]);
+                                                    setAssignSearch('');
+                                                    setShowAssignModal(true);
+                                                }}
+                                                className="mt-3 inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-indigo-400"
+                                            >
+                                                <span>➕</span>
+                                                <span>Hubungkan Kendaraan Sekarang</span>
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         {filteredVehicles.map((vehicle) => (
-                                            <Link
+                                            <div
                                                 key={vehicle.id}
-                                                href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
-                                                className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 shadow-2xs transition hover:border-indigo-200 hover:bg-indigo-50/20 dark:border-slate-800 dark:bg-slate-850"
+                                                className="group flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 shadow-2xs transition hover:border-indigo-200 hover:bg-indigo-50/20 dark:border-slate-800 dark:bg-slate-850"
                                             >
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-slate-900 dark:text-white truncate">{vehicle.name}</p>
+                                                <Link
+                                                    href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
+                                                    className="min-w-0 flex-1 pr-2"
+                                                >
+                                                    <p className="font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition">
+                                                        {vehicle.name}
+                                                    </p>
                                                     <p className="font-mono text-xs font-bold text-slate-400">{vehicle.plate_number}</p>
-                                                </div>
+                                                </Link>
 
-                                                <span className={`inline-flex items-center rounded-xl px-2 py-0.5 text-[11px] font-bold ${getVehicleStatusBadge(vehicle.status)}`}>
-                                                    {t(`fleet.status.${vehicle.status}`, undefined, vehicle.status)}
-                                                </span>
-                                            </Link>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className={`inline-flex items-center rounded-xl px-2 py-0.5 text-[11px] font-bold ${getVehicleStatusBadge(vehicle.status)}`}>
+                                                        {t(`fleet.status.${vehicle.status}`, undefined, vehicle.status)}
+                                                    </span>
+
+                                                    {can.update && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                setVehicleToDetach(vehicle);
+                                                            }}
+                                                            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+                                                            title="Lepaskan armada dari pool ini"
+                                                        >
+                                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -566,6 +722,184 @@ export default function Show({ base, can }: Props): JSX.Element {
                 onConfirm={confirmDelete}
                 processing={processing}
                 message={t('fleet.bases.delete_confirm', { name: base.name }, `Apakah Anda yakin ingin menghapus base "${base.name}"?`)}
+            />
+
+            {/* Modal Hubungkan Kendaraan */}
+            <Modal show={showAssignModal} onClose={() => !assignProcessing && setShowAssignModal(false)} maxWidth="2xl">
+                <div className="p-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                        <div>
+                            <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                Hubungkan Kendaraan ke Pool
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Pilih armada untuk didaftarkan home base-nya ke <span className="font-bold text-indigo-600 dark:text-indigo-400">{base.name}</span>.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowAssignModal(false)}
+                            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {base.vehicle_capacity && (
+                        <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-850">
+                            <span className="text-slate-600 dark:text-slate-400">
+                                Kapasitas Pool: <strong className="text-slate-800 dark:text-slate-200">{base.vehicles.length} / {base.vehicle_capacity} unit</strong>
+                            </span>
+                            <span className={`font-bold ${remainingCapacity !== null && remainingCapacity <= selectedVehicleIds.length ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                Sisa Kuota: {remainingCapacity !== null ? Math.max(0, remainingCapacity - selectedVehicleIds.length) : '∞'} unit
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="mt-4 flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <input
+                                type="text"
+                                value={assignSearch}
+                                onChange={(e) => setAssignSearch(e.target.value)}
+                                placeholder="Cari armada berdasarkan nama, plat, atau pool asal..."
+                                className="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                            />
+                            {assignSearch && (
+                                <button
+                                    type="button"
+                                    onClick={() => setAssignSearch('')}
+                                    className="absolute inset-y-0 right-2.5 flex items-center text-xs text-slate-400 hover:text-slate-600"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                        {filteredAvailableVehicles.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const ids = filteredAvailableVehicles.map((v) => v.id);
+                                    if (selectedVehicleIds.length === ids.length) {
+                                        setSelectedVehicleIds([]);
+                                    } else {
+                                        handleSelectAllFiltered(ids);
+                                    }
+                                }}
+                                className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                            >
+                                {selectedVehicleIds.length > 0 ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="mt-4 max-h-80 overflow-y-auto divide-y divide-slate-100 rounded-2xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                        {filteredAvailableVehicles.length === 0 ? (
+                            <div className="py-8 text-center text-xs text-slate-400">
+                                Tidak ada kendaraan yang tersedia untuk dihubungkan.
+                            </div>
+                        ) : (
+                            filteredAvailableVehicles.map((vehicle) => {
+                                const isSelected = selectedVehicleIds.includes(vehicle.id);
+                                const isLimitReached =
+                                    remainingCapacity !== null && !isSelected && selectedVehicleIds.length >= remainingCapacity;
+
+                                return (
+                                    <label
+                                        key={vehicle.id}
+                                        className={`flex items-center justify-between p-3 cursor-pointer transition ${
+                                            isSelected
+                                                ? 'bg-indigo-50/70 dark:bg-indigo-950/40'
+                                                : isLimitReached
+                                                ? 'opacity-50 cursor-not-allowed bg-slate-50/30'
+                                                : 'hover:bg-slate-50 dark:hover:bg-slate-850'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                disabled={isLimitReached}
+                                                onChange={() => handleToggleSelectVehicle(vehicle.id)}
+                                                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700"
+                                            />
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                                    {vehicle.name}
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="font-mono text-[11px] font-bold text-slate-500">
+                                                        {vehicle.plate_number}
+                                                    </span>
+                                                    {vehicle.home_base ? (
+                                                        <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-semibold dark:bg-amber-950/50 dark:text-amber-400">
+                                                            Pindah dari: {vehicle.home_base.name}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded dark:bg-slate-800">
+                                                            Belum ada pool
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold ${getVehicleStatusBadge(vehicle.status)}`}>
+                                            {t(`fleet.status.${vehicle.status}`, undefined, vehicle.status)}
+                                        </span>
+                                    </label>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between">
+                        <span className="text-xs text-slate-500 font-semibold">
+                            {selectedVehicleIds.length} kendaraan dipilih
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                            <SecondaryButton
+                                onClick={() => setShowAssignModal(false)}
+                                disabled={assignProcessing}
+                            >
+                                Batal
+                            </SecondaryButton>
+                            <PrimaryButton
+                                onClick={handleAssignSubmit}
+                                disabled={assignProcessing || selectedVehicleIds.length === 0}
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                {assignProcessing ? 'Menyimpan...' : `Hubungkan (${selectedVehicleIds.length})`}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Confirm Detach Dialog */}
+            <ConfirmDeleteDialog
+                show={vehicleToDetach !== null}
+                onClose={() => setVehicleToDetach(null)}
+                onConfirm={handleDetachConfirm}
+                processing={detachProcessing}
+                title="Lepaskan Kendaraan dari Pool"
+                message={
+                    vehicleToDetach ? (
+                        <span>
+                            Apakah Anda yakin ingin melepaskan armada{' '}
+                            <strong className="text-slate-800 dark:text-white">
+                                {vehicleToDetach.name} ({vehicleToDetach.plate_number})
+                            </strong>{' '}
+                            dari pool ini? Status home base kendaraan akan dikosongkan.
+                        </span>
+                    ) : (
+                        ''
+                    )
+                }
+                confirmText="Lepaskan"
+                cancelText="Batal"
+                processingText="Melepaskan..."
             />
         </DynamicLayout>
     );
