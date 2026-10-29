@@ -167,6 +167,7 @@ class SystemRolePermissions
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet-base')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'fleet-settlement')->whereIn('action', ['view', 'create', 'update', 'delete']))
+                        ->orWhere(fn ($q) => $q->where('module', 'fleet-fuel')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
@@ -179,6 +180,7 @@ class SystemRolePermissions
                 ->where(function ($query): void {
                     $query
                         ->where(fn ($q) => $q->where('module', 'fleet-base')->whereIn('action', ['view', 'create', 'update']))
+                        ->orWhere(fn ($q) => $q->where('module', 'fleet-fuel')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))

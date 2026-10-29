@@ -10,6 +10,7 @@ return [
     'fleet' => 'Armada',
     'fleet-base' => 'Pool & Depo',
     'fleet-settlement' => 'Rekonsiliasi Armada',
+    'fleet-fuel' => 'Bahan Bakar Armada',
     'driver' => 'Pengemudi',
     'document' => 'Dokumen',
     'maintenance' => 'Perawatan',

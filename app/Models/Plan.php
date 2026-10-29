@@ -38,6 +38,7 @@ class Plan extends Model
             'fleet',
             'fleet-base',
             'fleet-settlement',
+            'fleet-fuel',
             'invoicing',
             'maintenance',
             'pages',

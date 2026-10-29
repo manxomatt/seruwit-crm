@@ -83,7 +83,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Gratis selamanya untuk rental mobil pemula dengan armada hingga 2 unit.',
                 'badge' => 'Gratis Selamanya',
                 'is_popular' => false,
-                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance', 'scoring', 'tracking'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance', 'scoring', 'tracking'],
                 'limits' => [
                     'max_vehicles' => 2,
                     'max_users' => 1,
@@ -112,7 +112,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Solusi ideal untuk bisnis rental mobil rintisan dengan armada hingga 5 unit.',
                 'badge' => 'Paling Hemat',
                 'is_popular' => false,
-                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance', 'scoring', 'tracking'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance', 'scoring', 'tracking'],
                 'limits' => [
                     'max_vehicles' => 5,
                     'max_users' => 2,
@@ -151,6 +151,7 @@ class PlanSeeder extends Seeder
                     'fleet',
                     'fleet-base',
                     'fleet-settlement',
+                    'fleet-fuel',
                     'invoicing',
                     'maintenance',
                     'pages',
@@ -200,6 +201,7 @@ class PlanSeeder extends Seeder
                     'fleet',
                     'fleet-base',
                     'fleet-settlement',
+                    'fleet-fuel',
                     'invoicing',
                     'maintenance',
                     'pages',

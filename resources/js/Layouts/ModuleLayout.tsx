@@ -250,6 +250,12 @@ const CommissionIcon = () => (
     </svg>
 );
 
+const GasPumpIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+    </svg>
+);
+
 const SubscriptionIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3m-3 3h3m-3 3h3m-9-9.75h.375c.621 0 1.125.504 1.125 1.125v.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375m-9-9.75v.375c0 .621.504 1.125 1.125 1.125h.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375M7.5 21h9a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0016.5 3h-9a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21z" />
@@ -429,7 +435,7 @@ const MENU_GROUPS: MenuGroup[] = [
             'rental-settings',
         ],
     },
-    { titleKey: 'fleet_compliance', modules: ['fleet', 'fleet-base', 'fleet-settlement', 'driver', 'document', 'maintenance', 'tracking', 'scoring'] },
+    { titleKey: 'fleet_compliance', modules: ['fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'driver', 'document', 'maintenance', 'tracking', 'scoring'] },
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing'] },
     { titleKey: 'intelligence', modules: ['bi', 'approvals'] },
     {
@@ -477,6 +483,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'fleet': { route: 'module.fleet.dashboard', routePattern: 'module.fleet.*' },
     'fleet-base': { route: 'module.fleet-bases.index', routePattern: 'module.fleet-bases.*' },
     'fleet-settlement': { route: 'module.fleet-settlement.index', routePattern: 'module.fleet-settlement.*' },
+    'fleet-fuel': { route: 'module.fleet-fuel.index', routePattern: 'module.fleet-fuel.*' },
     'driver': { route: 'module.drivers.index', routePattern: 'module.drivers.*' },
     'document': { route: 'module.documents.index', routePattern: 'module.documents.*' },
     'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },
@@ -684,6 +691,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'fleet': <FleetIcon />,
     'fleet-base': <BuildingIcon />,
     'fleet-settlement': <CommissionIcon />,
+    'fleet-fuel': <GasPumpIcon />,
     'driver': <DriverIcon />,
     'document': <DocumentIcon />,
     'maintenance': <WrenchIcon />,
@@ -722,6 +730,7 @@ const moduleIconMap: Record<string, ReactNode> = {
 // Module display names fall back to the module key; prefer t('modules.*') in the layout.
 const moduleDisplayNames: Record<string, string> = {
     'fleet-settlement': 'Rekonsiliasi Armada',
+    'fleet-fuel': 'Bahan Bakar Armada',
 };
 
 // Helper function to check if a route exists (tenant name or central.* twin)

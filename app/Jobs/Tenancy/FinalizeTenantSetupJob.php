@@ -88,6 +88,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             'fleet',
             'fleet-base',
             'fleet-settlement',
+            'fleet-fuel',
             'driver',
             'rental',
             'document',

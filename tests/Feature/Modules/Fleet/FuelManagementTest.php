@@ -137,7 +137,7 @@ class FuelManagementTest extends TestCase
             ->get(route('module.fleet.fuel.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Fuel/Index')
+                ->component('Modules/FleetFuel/Index')
                 ->has('logs.data')
                 ->has('logs.current_page')
                 ->has('logs.last_page')

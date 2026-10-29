@@ -10,6 +10,7 @@ return [
     'fleet' => 'Fleet',
     'fleet-base' => 'Pools & Depots',
     'fleet-settlement' => 'Fleet Settlement',
+    'fleet-fuel' => 'Fleet Fuel',
     'driver' => 'Drivers',
     'document' => 'Documents',
     'maintenance' => 'Maintenance',
