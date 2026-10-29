@@ -54,7 +54,7 @@ class FleetSettlementModule implements ModuleContract
             'name' => 'Bagi Hasil Investor',
             'slug' => 'fleet-settlement',
             'icon' => 'fleet-settlement',
-            'route_name' => 'fleet-settlements.index',
+            'route_name' => 'fleet-settlement.index',
             'permission_module' => 'fleet-settlement',
             'permission_action' => 'view',
             'sort_order' => 8,

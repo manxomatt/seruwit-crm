@@ -476,7 +476,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'products': { route: 'module.products.dashboard', routePattern: 'module.products.*' },
     'fleet': { route: 'module.fleet.dashboard', routePattern: 'module.fleet.*' },
     'fleet-base': { route: 'module.fleet-bases.index', routePattern: 'module.fleet-bases.*' },
-    'fleet-settlement': { route: 'module.fleet-settlements.index', routePattern: 'module.fleet-settlements.*' },
+    'fleet-settlement': { route: 'module.fleet-settlement.index', routePattern: 'module.fleet-settlement.*' },
     'driver': { route: 'module.drivers.index', routePattern: 'module.drivers.*' },
     'document': { route: 'module.documents.index', routePattern: 'module.documents.*' },
     'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },

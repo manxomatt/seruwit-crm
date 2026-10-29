@@ -130,7 +130,7 @@ export default function Settlement({
     const handleMonthChange = (month: string) => {
         setSelectedMonth(month);
         router.get(
-            prefixedRoute('fleet.vehicles.settlement', settlement.vehicle.id),
+            prefixedRoute('fleet-settlement.vehicles.show', settlement.vehicle.id),
             { month },
             { preserveState: true }
         );
@@ -139,7 +139,7 @@ export default function Settlement({
     const handleCustomFilter = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
-            prefixedRoute('fleet.vehicles.settlement', settlement.vehicle.id),
+            prefixedRoute('fleet-settlement.vehicles.show', settlement.vehicle.id),
             { start_date: startDate, end_date: endDate },
             { preserveState: true }
         );
@@ -173,7 +173,7 @@ export default function Settlement({
                         actions={
                             <div className="flex flex-wrap items-center gap-2">
                                 <Link
-                                    href={prefixedRoute('fleet.settlements.index', { month: currentFilter.month })}
+                                    href={prefixedRoute('fleet-settlement.index', { month: currentFilter.month })}
                                     className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
                                     🤝 Papan Bagi Hasil
@@ -304,7 +304,7 @@ export default function Settlement({
                             )}
                         </div>
                         <Link
-                            href={prefixedRoute('fleet.settlements.index', { month: currentFilter.month })}
+                            href={prefixedRoute('fleet-settlement.index', { month: currentFilter.month })}
                             className="print:hidden rounded-xl bg-white/90 px-3 py-1.5 text-[11px] font-bold text-slate-800 shadow-2xs hover:bg-white dark:bg-slate-800 dark:text-slate-100"
                         >
                             Kelola Pencairan →

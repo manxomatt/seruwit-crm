@@ -138,7 +138,7 @@ export default function SettlementsIndex({
 
     const applyFilters = (overrides: Partial<typeof filters>) => {
         router.get(
-            prefixedRoute('fleet.settlements.index'),
+            prefixedRoute('fleet-settlement.index'),
             {
                 month: overrides.month !== undefined ? overrides.month : filters.month,
                 ownership_type: overrides.ownership_type !== undefined ? overrides.ownership_type : filters.ownership_type,
@@ -158,7 +158,7 @@ export default function SettlementsIndex({
     const resetFilters = () => {
         setSearch('');
         router.get(
-            prefixedRoute('fleet.settlements.index'),
+            prefixedRoute('fleet-settlement.index'),
             { month: filters.month },
             { preserveState: true, replace: true }
         );
@@ -167,7 +167,7 @@ export default function SettlementsIndex({
     const handleGenerateAll = () => {
         setGenerating(true);
         router.post(
-            prefixedRoute('fleet.settlements.generate'),
+            prefixedRoute('fleet-settlement.generate'),
             { month: filters.month },
             {
                 preserveScroll: true,
@@ -196,7 +196,7 @@ export default function SettlementsIndex({
 
     const submitPayout: FormEventHandler = (e) => {
         e.preventDefault();
-        payoutForm.post(prefixedRoute('fleet.settlements.payout'), {
+        payoutForm.post(prefixedRoute('fleet-settlement.payout'), {
             preserveScroll: true,
             onSuccess: () => {
                 setActiveRow(null);
@@ -636,7 +636,7 @@ export default function SettlementsIndex({
                                                 <td className="px-4 py-3.5 text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <Link
-                                                            href={prefixedRoute('fleet.vehicles.settlement', {
+                                                            href={prefixedRoute('fleet-settlement.vehicles.show', {
                                                                 vehicle: row.vehicle.id,
                                                                 month: row.period_month,
                                                             })}

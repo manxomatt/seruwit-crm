@@ -29,6 +29,7 @@ class FleetSettlementTest extends TestCase
     public function test_guests_cannot_access_fleet_settlements(): void
     {
         $this->get(route('module.fleet-settlements.index'))->assertRedirect(route('login'));
+        $this->get(route('module.fleet-settlement.index'))->assertRedirect(route('login'));
     }
 
     public function test_admin_can_access_fleet_settlements_index(): void
@@ -50,6 +51,14 @@ class FleetSettlementTest extends TestCase
             'settlement_scheme' => 'revenue_share',
             'status' => 'active',
         ]);
+
+        $this->actingAs($user)->get(route('module.fleet-settlement.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/FleetSettlement/Index')
+                ->has('rows')
+                ->has('metrics')
+            );
 
         $this->actingAs($user)->get(route('module.fleet-settlements.index'))
             ->assertOk()
