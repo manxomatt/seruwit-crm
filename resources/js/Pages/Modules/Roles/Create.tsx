@@ -35,6 +35,8 @@ const getModuleIcon = (moduleKey: string): string => {
             return '🤝';
         case 'fleet-fuel':
             return '⛽';
+        case 'fleet-compliance':
+            return '🛡️';
         case 'driver':
             return '👨‍✈️';
         case 'rental':

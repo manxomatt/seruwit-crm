@@ -49,6 +49,7 @@ class FleetComplianceTest extends TestCase
             'stnk_expires_at' => Carbon::now()->addDays(60)->toDateString(),
             'stnk_five_year_expires_at' => Carbon::now()->addYears(2)->toDateString(),
             'insurance_expires_at' => Carbon::now()->addMonths(6)->toDateString(),
+            'kir_expires_at' => null,
             'status' => 'active',
         ]);
 
@@ -56,7 +57,7 @@ class FleetComplianceTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('Modules/Fleet/Compliance/Index')
+            ->component('Modules/FleetCompliance/Index')
             ->has('vehicles', 3)
             ->has('kpi')
             ->where('kpi.total_monitored', 3)

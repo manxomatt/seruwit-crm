@@ -32,6 +32,7 @@ return [
         Modules\Fleet\FleetModule::class,
         Modules\FleetSettlement\FleetSettlementModule::class,
         Modules\FleetFuel\FleetFuelModule::class,
+        Modules\FleetCompliance\FleetComplianceModule::class,
         Modules\Driver\DriverModule::class,
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,
