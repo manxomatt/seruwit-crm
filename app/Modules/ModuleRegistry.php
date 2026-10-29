@@ -321,6 +321,11 @@ class ModuleRegistry
         return $this->platformEnabled($key) && $this->entitled($key) && $this->installed($key);
     }
 
+    public function isAvailable(string $key): bool
+    {
+        return $this->available($key);
+    }
+
     /**
      * Whether a super admin has turned this module off platform-wide. This is
      * independent of any tenant's plan or install state — it overrides both.

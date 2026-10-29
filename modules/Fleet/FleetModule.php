@@ -12,7 +12,6 @@ use Modules\Fleet\Http\Controllers\VehicleAiGenerateController;
 use Modules\Fleet\Http\Controllers\VehicleCheckoutController;
 use Modules\Fleet\Http\Controllers\VehicleController;
 use Modules\Fleet\Http\Controllers\VehicleMaintenanceLogController;
-use Modules\Fleet\Http\Controllers\VehicleSettlementController;
 
 /**
  * Vehicle and driver records, deliberately free of any booking/dispatch
@@ -110,13 +109,6 @@ class FleetModule implements ModuleContract
         Route::post('/fleet/vehicles/{vehicle}/maintenance-logs', [VehicleMaintenanceLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.maintenance-logs.store');
         Route::patch('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.maintenance-logs.update');
         Route::delete('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.maintenance-logs.destroy');
-
-        Route::middleware('requires-module:fleet-settlements')->group(function (): void {
-            Route::get('/fleet/vehicles/{vehicle}/settlement', [VehicleSettlementController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.settlement');
-            Route::get('/fleet/settlements', [VehicleSettlementController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.settlements.index');
-            Route::post('/fleet/settlements/generate', [VehicleSettlementController::class, 'generate'])->middleware('permission:fleet,update')->name('fleet.settlements.generate');
-            Route::post('/fleet/settlements/payout', [VehicleSettlementController::class, 'savePayout'])->middleware('permission:fleet,update')->name('fleet.settlements.payout');
-        });
 
         Route::middleware('requires-module:fleet-fuel')->group(function (): void {
             Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');

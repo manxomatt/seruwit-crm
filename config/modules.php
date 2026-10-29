@@ -30,6 +30,7 @@ return [
         Modules\Document\DocumentModule::class,
         Modules\FleetBase\FleetBaseModule::class,
         Modules\Fleet\FleetModule::class,
+        Modules\FleetSettlement\FleetSettlementModule::class,
         Modules\Driver\DriverModule::class,
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,

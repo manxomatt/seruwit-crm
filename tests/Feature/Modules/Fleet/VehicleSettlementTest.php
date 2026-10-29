@@ -90,7 +90,7 @@ class VehicleSettlementTest extends TestCase
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Fleet/Vehicles/Settlement')
+                ->component('Modules/FleetSettlement/Show')
                 ->has('settlement')
                 ->where('settlement.vehicle.id', $vehicle->id)
                 ->where('settlement.summary.total_maintenance_cost', 200000)
