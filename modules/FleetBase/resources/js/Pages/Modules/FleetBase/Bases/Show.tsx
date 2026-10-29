@@ -11,7 +11,6 @@ import { toLatLng } from '@/utils/geo';
 import { Head, Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Marker } from 'react-leaflet';
-import FleetBaseNav from '../../../../FleetBaseNav';
 
 interface Manager {
     id: number;
@@ -315,7 +314,6 @@ export default function Show({ base, can, availableVehicles = [] }: Props): JSX.
             }
         >
             <Head title={`${base.code} · ${base.name}`} />
-            <FleetBaseNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-20">
                 {/* 1. Hero Identity & Capacity Overview Card */}

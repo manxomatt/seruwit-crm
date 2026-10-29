@@ -12,7 +12,6 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEventHandler, useCallback, useState } from 'react';
 import FleetBaseAiGeneratePanel, { ExtractedBaseData } from '../../../../Components/FleetBaseAiGeneratePanel';
-import FleetBaseNav from '../../../../FleetBaseNav';
 
 interface ManagerOption {
     id: number;
@@ -227,7 +226,6 @@ export default function Create({
             }
         >
             <Head title={t('fleet.bases.head_create', undefined, 'Tambah Base Baru · Pool Armada')} />
-            <FleetBaseNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumbs */}

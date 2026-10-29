@@ -11,7 +11,6 @@ import { useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
-import FleetBaseNav from '../../../../FleetBaseNav';
 
 interface Manager {
     id: number;
@@ -319,7 +318,6 @@ export default function Index({ bases, filters, kinds, can, quota }: Props): JSX
             }
         >
             <Head title={t('fleet.bases.title', undefined, 'Pool Armada (Bases)')} />
-            <FleetBaseNav />
 
             <div className="w-full space-y-6 pb-20">
                 {/* Quota Limit Warning Alert */}

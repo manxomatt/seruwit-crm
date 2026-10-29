@@ -11,7 +11,6 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useCallback } from 'react';
-import FleetBaseNav from '../../../../FleetBaseNav';
 
 interface ManagerOption {
     id: number;
@@ -193,7 +192,6 @@ export default function Edit({
             }
         >
             <Head title={`Edit Base · ${base.name}`} />
-            <FleetBaseNav />
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumbs */}
