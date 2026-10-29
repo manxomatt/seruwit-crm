@@ -720,7 +720,9 @@ const moduleIconMap: Record<string, ReactNode> = {
 };
 
 // Module display names fall back to the module key; prefer t('modules.*') in the layout.
-const moduleDisplayNames: Record<string, string> = {};
+const moduleDisplayNames: Record<string, string> = {
+    'fleet-settlement': 'Fleet Settlement',
+};
 
 // Helper function to check if a route exists (tenant name or central.* twin)
 const routeExists = (routeName: string): boolean => {

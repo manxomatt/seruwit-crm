@@ -9,6 +9,7 @@ return [
     'products' => 'Products',
     'fleet' => 'Fleet',
     'fleet-base' => 'Pools & Depots',
+    'fleet-settlement' => 'Fleet Settlement',
     'driver' => 'Drivers',
     'document' => 'Documents',
     'maintenance' => 'Maintenance',

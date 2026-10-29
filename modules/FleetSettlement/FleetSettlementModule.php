@@ -20,7 +20,7 @@ class FleetSettlementModule implements ModuleContract
 
     public function label(): string
     {
-        return 'Bagi Hasil Investor';
+        return 'Fleet Settlement';
     }
 
     public function description(): string
@@ -51,7 +51,7 @@ class FleetSettlementModule implements ModuleContract
     public function menu(): ?array
     {
         return [
-            'name' => 'Bagi Hasil Investor',
+            'name' => 'Fleet Settlement',
             'slug' => 'fleet-settlement',
             'icon' => 'fleet-settlement',
             'route_name' => 'fleet-settlement.index',

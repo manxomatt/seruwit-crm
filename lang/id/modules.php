@@ -9,6 +9,7 @@ return [
     'products' => 'Produk',
     'fleet' => 'Armada',
     'fleet-base' => 'Pool & Depo',
+    'fleet-settlement' => 'Fleet Settlement',
     'driver' => 'Pengemudi',
     'document' => 'Dokumen',
     'maintenance' => 'Perawatan',
