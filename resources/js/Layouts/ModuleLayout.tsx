@@ -824,6 +824,25 @@ export default function ModuleLayout({ header, children }: Props) {
     const subscriptionSummary = pageProps.subscriptionSummary as { plan_name: string | null; status: string } | null;
     const isMaintenanceMode = Boolean(pageProps.is_maintenance_mode);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+        try {
+            return localStorage.getItem('sidebar_collapsed') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const toggleSidebarCollapsed = () => {
+        setSidebarCollapsed((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('sidebar_collapsed', String(next));
+            } catch {
+                // Ignore storage errors
+            }
+            return next;
+        });
+    };
 
     // Keep the bell, review badges, and orders count fresh without a full navigation. Only the specified
     // props are re-fetched, so this is cheap.
@@ -1360,17 +1379,32 @@ export default function ModuleLayout({ header, children }: Props) {
             )}
 
             {/* Desktop sidebar */}
-            <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+            <div
+                className={`hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col transition-transform duration-300 ease-in-out ${
+                    sidebarCollapsed ? 'lg:-translate-x-full' : 'lg:translate-x-0'
+                }`}
+            >
                 <div className="brand-sidebar flex min-h-0 flex-1 flex-col">
-                    <div className={`flex h-16 shrink-0 items-center px-4 border-b ${theme.border}`}>
-                        <Link href={getDashboardRoute(user)} className="flex items-center">
+                    <div className={`flex h-16 shrink-0 items-center justify-between px-4 border-b ${theme.border}`}>
+                        <Link href={getDashboardRoute(user)} className="flex items-center min-w-0">
                             {siteLogo ? (
-                                <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
+                                <img src={siteLogo} alt={siteName} className="h-8 w-auto shrink-0" />
                             ) : (
-                                <ApplicationLogo className="h-8 w-auto text-white" />
+                                <ApplicationLogo className="h-8 w-auto text-white shrink-0" />
                             )}
-                            <span className="ml-2 text-xl font-bold text-white">{siteName}</span>
+                            <span className="ml-2 text-xl font-bold text-white truncate">{siteName}</span>
                         </Link>
+                        <button
+                            type="button"
+                            onClick={toggleSidebarCollapsed}
+                            className="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition focus:outline-none"
+                            title={t('shell.collapse_sidebar', undefined, 'Tutup menu samping')}
+                            aria-label="Collapse sidebar"
+                        >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
                     </div>
                     <SidebarNavScroll>
                         {renderNavigation()}
@@ -1398,7 +1432,7 @@ export default function ModuleLayout({ header, children }: Props) {
             </div>
 
             {/* Main content */}
-            <div className="lg:pl-64">
+            <div className={`transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'}`}>
                 {/* Maintenance Mode Warning Banner */}
                 {isMaintenanceMode && (
                     <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 sm:px-6 lg:px-8 text-amber-900 dark:text-amber-200">
@@ -1422,17 +1456,45 @@ export default function ModuleLayout({ header, children }: Props) {
                 )}
 
                 {/* Top navigation */}
-                <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
+                <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-3 sm:gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:px-6 lg:px-8">
+                    {/* Mobile hamburger menu button */}
                     <button
                         type="button"
-                        className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-200 lg:hidden"
+                        className="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:hidden focus:outline-none"
                         onClick={() => setSidebarOpen(true)}
+                        title={t('shell.open_menu', undefined, 'Buka menu')}
+                        aria-label="Open mobile menu"
                     >
                         <MenuIcon />
                     </button>
 
+                    {/* Desktop sidebar collapse/expand toggle button */}
+                    <button
+                        type="button"
+                        className="-m-2.5 hidden lg:flex p-2.5 text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition focus:outline-none"
+                        onClick={toggleSidebarCollapsed}
+                        title={sidebarCollapsed ? t('shell.expand_sidebar', undefined, 'Buka menu samping') : t('shell.collapse_sidebar', undefined, 'Tutup menu samping')}
+                        aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    >
+                        <MenuIcon />
+                    </button>
+
+                    {/* Desktop brand logo when sidebar is collapsed */}
+                    {sidebarCollapsed && (
+                        <Link href={getDashboardRoute(user)} className="hidden lg:flex items-center gap-2 mr-1 transition group">
+                            {siteLogo ? (
+                                <img src={siteLogo} alt={siteName} className="h-7 w-auto" />
+                            ) : (
+                                <ApplicationLogo className="h-7 w-auto text-indigo-600 dark:text-indigo-400" />
+                            )}
+                            <span className="font-bold text-gray-900 dark:text-white text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                                {siteName}
+                            </span>
+                        </Link>
+                    )}
+
                     {/* Separator */}
-                    <div className="h-6 w-px bg-gray-200 lg:hidden" />
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-800" />
 
                     <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                         {/* Global Search */}

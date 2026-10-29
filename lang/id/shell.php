@@ -5,6 +5,8 @@ return [
     'profile' => 'Profil',
     'active_workspace' => 'Workspace Aktif',
     'switch_workspace' => 'Pindah Workspace',
+    'collapse_sidebar' => 'Tutup menu samping',
+    'expand_sidebar' => 'Buka menu samping',
     'central_console' => 'Central Platform',
     'log_out' => 'Keluar',
     'language' => 'Bahasa',

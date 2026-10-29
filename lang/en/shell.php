@@ -5,6 +5,8 @@ return [
     'profile' => 'Profile',
     'active_workspace' => 'Active Workspace',
     'switch_workspace' => 'Switch Workspace',
+    'collapse_sidebar' => 'Collapse sidebar',
+    'expand_sidebar' => 'Expand sidebar',
     'central_console' => 'Central Platform',
     'log_out' => 'Log Out',
     'language' => 'Language',
