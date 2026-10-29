@@ -20,7 +20,7 @@ class FleetSettlementModule implements ModuleContract
 
     public function label(): string
     {
-        return 'Fleet Settlement';
+        return 'Rekonsiliasi Armada';
     }
 
     public function description(): string
@@ -51,7 +51,7 @@ class FleetSettlementModule implements ModuleContract
     public function menu(): ?array
     {
         return [
-            'name' => 'Fleet Settlement',
+            'name' => 'Rekonsiliasi Armada',
             'slug' => 'fleet-settlement',
             'icon' => 'fleet-settlement',
             'route_name' => 'fleet-settlement.index',
