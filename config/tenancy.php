@@ -20,6 +20,7 @@ return [
         '127.0.0.1',
         'localhost',
         'localhost.test',
+        'seruwit-crm.test',
         env('CENTRAL_DOMAIN'),
         parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: null,
     ]))),

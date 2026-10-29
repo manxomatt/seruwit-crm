@@ -133,15 +133,20 @@ export default function ComplianceIndex({
         });
     };
 
-    const getRenewTargetRoute = (vehicleId: number): string => {
-        if (routeExists(prefixedRoute('fleet-compliance.vehicles.renew', vehicleId))) {
-            return prefixedRoute('fleet-compliance.vehicles.renew', vehicleId);
-        }
-        return prefixedRoute('fleet.compliance.renew', vehicleId);
+    const routeExists = (routeName: string): boolean => {
+        return (
+            route().has(routeName) ||
+            route().has(`central.${routeName}`) ||
+            route().has(`module.${routeName}`) ||
+            route().has(`central.module.${routeName}`)
+        );
     };
 
-    const routeExists = (routeName: string): boolean => {
-        return route().has(routeName) || route().has(`central.${routeName}`);
+    const getRenewTargetRoute = (vehicleId: number): string => {
+        if (routeExists('fleet-compliance.renew') || routeExists('fleet-compliance.vehicles.renew')) {
+            return prefixedRoute('fleet-compliance.renew', vehicleId);
+        }
+        return prefixedRoute('fleet.compliance.renew', vehicleId);
     };
 
     const handleRenewSubmit: FormEventHandler = (e) => {
@@ -167,7 +172,7 @@ export default function ComplianceIndex({
         if (merged.home_base_id) query.home_base_id = String(merged.home_base_id);
         if (merged.ownership_type) query.ownership_type = merged.ownership_type;
 
-        const target = routeExists(prefixedRoute('fleet-compliance.index'))
+        const target = routeExists('fleet-compliance.index')
             ? prefixedRoute('fleet-compliance.index')
             : (isCurrentRoute('documents.compliance.*') ? prefixedRoute('documents.compliance.index') : prefixedRoute('fleet.compliance.index'));
 
