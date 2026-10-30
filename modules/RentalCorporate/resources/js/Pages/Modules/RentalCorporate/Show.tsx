@@ -146,6 +146,8 @@ export default function CorporateContractShow({
     );
     const [showConsolidateModal, setShowConsolidateModal] = useState(false);
     const [showAttachModal, setShowAttachModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [statementInvoice, setStatementInvoice] = useState<ConsolidatedInvoiceRow | null>(null);
 
     const currentMonth = new Date().toISOString().slice(0, 7);
@@ -242,6 +244,16 @@ export default function CorporateContractShow({
         });
     };
 
+    const confirmDeleteContract = () => {
+        setIsDeleting(true);
+        router.delete(prefixedRoute('rental.corporate.destroy', contract.id), {
+            onFinish: () => {
+                setIsDeleting(false);
+                setShowDeleteModal(false);
+            },
+        });
+    };
+
     const handlePeriodChange = (period: string) => {
         router.get(
             prefixedRoute('rental.corporate.show', contract.id),
@@ -270,6 +282,13 @@ export default function CorporateContractShow({
                             >
                                 ✏️ Edit Kontrak
                             </Link>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteModal(true)}
+                                className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 px-3.5 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition"
+                            >
+                                🗑️ Hapus Kontrak
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => setShowAttachModal(true)}
@@ -987,6 +1006,67 @@ export default function CorporateContractShow({
                                 className="rounded-xl bg-slate-900 px-5 py-2 text-xs font-bold text-white hover:bg-slate-800"
                             >
                                 🖨️ Cetak / Simpan PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Delete / Soft Delete Confirmation */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+                    <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl">
+                        <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/60 text-lg">
+                                ⚠️
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Hapus Kontrak Korporat?
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    {contract.code} — {contract.title}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 p-3.5 text-xs text-amber-800 dark:text-amber-200 space-y-2">
+                            <p className="font-semibold">
+                                Perhatian penting penghapusan (Soft Delete):
+                            </p>
+                            <ul className="list-disc pl-4 space-y-1 text-[11px] text-amber-700 dark:text-amber-300">
+                                <li>
+                                    Kontrak akan diarsipkan dan disembunyikan dari daftar aktif.
+                                </li>
+                                {rentals.length > 0 && (
+                                    <li>
+                                        Tautan <strong>{rentals.length} booking sewa</strong> akan dilepaskan dari kontrak ini (data unit dan sewa tetap tersimpan aman).
+                                    </li>
+                                )}
+                                {invoices.length > 0 && (
+                                    <li>
+                                        <strong>{invoices.length} invoice</strong> yang pernah diterbitkan tetap aman di pembukuan dan modul Invoicing.
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                disabled={isDeleting}
+                                onClick={() => setShowDeleteModal(false)}
+                                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isDeleting}
+                                onClick={confirmDeleteContract}
+                                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50"
+                            >
+                                {isDeleting ? 'Menghapus...' : 'Ya, Hapus Kontrak'}
                             </button>
                         </div>
                     </div>

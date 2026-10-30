@@ -114,6 +114,39 @@ class RentalCorporateContractTest extends TestCase
         $this->assertStringEndsWith('-0001', $code1);
     }
 
+    public function test_admin_can_soft_delete_corporate_contract(): void
+    {
+        $user = $this->createAdminUser();
+
+        $partner = Partner::query()->create([
+            'code' => 'PTN-CORP-DEL',
+            'name' => 'PT Hapus Kontrak',
+            'account_type' => 'company',
+            'status' => 'active',
+        ]);
+
+        $contract = RentalCorporateContract::query()->create([
+            'code' => RentalCorporateContract::generateCode(),
+            'partner_id' => $partner->id,
+            'title' => 'Kontrak Percobaan untuk Dihapus',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+            'billing_cycle' => 'monthly',
+            'payment_term_days' => 14,
+            'credit_limit' => 10000000,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('module.rental.corporate.destroy', $contract->id))
+            ->assertRedirect(route('module.rental.corporate.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('rental_corporate_contracts', [
+            'id' => $contract->id,
+        ]);
+    }
+
     public function test_backward_compatible_model_alias_works(): void
     {
         $contract = new \Modules\Rental\Models\RentalCorporateContract;

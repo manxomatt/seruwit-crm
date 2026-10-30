@@ -291,6 +291,25 @@ class RentalCorporateContractController extends Controller
             ->with('success', "Kontrak Korporat {$contract->code} berhasil diperbarui.");
     }
 
+    public function destroy(RentalCorporateContract $contract): RedirectResponse
+    {
+        $this->ensureSchemaExists();
+
+        $code = $contract->code;
+
+        // Release any attached rentals so their foreign key is cleared cleanly
+        $contract->rentals()->update([
+            'corporate_contract_id' => null,
+            'client_po_number' => null,
+        ]);
+
+        $contract->delete();
+
+        return redirect()
+            ->route($this->getRoutePrefix().'.rental.corporate.index')
+            ->with('success', "Kontrak Korporat {$code} berhasil diarsipkan.");
+    }
+
     public function show(Request $request, RentalCorporateContract $contract): Response
     {
         $period = (string) $request->string('period', 'all');
@@ -828,6 +847,12 @@ class RentalCorporateContractController extends Controller
         if (! Schema::hasColumn('rentals', 'client_po_number')) {
             Schema::table('rentals', function (Blueprint $table) {
                 $table->string('client_po_number', 100)->nullable()->after('corporate_contract_id');
+            });
+        }
+
+        if (Schema::hasTable('rental_corporate_contracts') && ! Schema::hasColumn('rental_corporate_contracts', 'deleted_at')) {
+            Schema::table('rental_corporate_contracts', function (Blueprint $table) {
+                $table->softDeletes();
             });
         }
     }

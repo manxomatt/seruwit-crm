@@ -6,11 +6,14 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 
 class RentalCorporateContract extends Model
 {
+    use SoftDeletes;
+
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_ACTIVE = 'active';
@@ -68,6 +71,7 @@ class RentalCorporateContract extends Model
             'includes_maintenance' => 'boolean',
             'includes_insurance' => 'boolean',
             'includes_driver' => 'boolean',
+            'deleted_at' => 'datetime',
         ];
     }
 

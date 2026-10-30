@@ -101,6 +101,11 @@ class RentalCorporateModule implements ModuleContract
             ->middleware('permission:rental-corporate|rental,bookings')
             ->name('rental.corporate.update');
 
+        Route::delete('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'destroy'])
+            ->whereNumber('contract')
+            ->middleware('permission:rental-corporate|rental,bookings')
+            ->name('rental.corporate.destroy');
+
         Route::post('/rental/corporate-contracts/{contract}/attach-rentals', [RentalCorporateContractController::class, 'attachRentals'])
             ->whereNumber('contract')
             ->middleware('permission:rental-corporate|rental,bookings')
@@ -120,5 +125,10 @@ class RentalCorporateModule implements ModuleContract
             ->whereNumber('contract')
             ->middleware('permission:rental-corporate|rental,view')
             ->name('rental-corporate.contracts.show');
+
+        Route::delete('/rental-corporate/contracts/{contract}', [RentalCorporateContractController::class, 'destroy'])
+            ->whereNumber('contract')
+            ->middleware('permission:rental-corporate|rental,bookings')
+            ->name('rental-corporate.contracts.destroy');
     }
 }
