@@ -50,6 +50,7 @@ class Plan extends Model
             'rental-duty-order',
             'rental-dispatch',
             'rental-storefront',
+            'rental-ai',
             'scoring',
             'shuttle',
             'tracking',

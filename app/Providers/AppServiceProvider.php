@@ -31,26 +31,36 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
         $this->app->bind(
-            \Modules\Rental\AI\Contracts\VisionInspectionServiceInterface::class,
-            \Modules\Rental\AI\Services\GeminiVisionInspectionService::class
+            \Modules\RentalAi\Contracts\VisionInspectionServiceInterface::class,
+            \Modules\RentalAi\Services\GeminiVisionInspectionService::class
         );
         $this->app->bind(
-            \Modules\Rental\AI\Contracts\DocumentKycServiceInterface::class,
-            function ($app) {
-                $driver = (string) config('services.kyc.driver', 'auto');
-                $groqKey = (string) config('services.groq.api_key', '');
+            \Modules\Rental\AI\Contracts\VisionInspectionServiceInterface::class,
+            \Modules\RentalAi\Contracts\VisionInspectionServiceInterface::class
+        );
 
-                if ($driver === 'groq' || ($driver === 'auto' && filled($groqKey))) {
-                    return $app->make(\Modules\Rental\AI\Services\GroqDocumentKycService::class);
-                }
+        $kycResolver = function ($app) {
+            $driver = (string) config('services.kyc.driver', 'auto');
+            $groqKey = (string) config('services.groq.api_key', '');
 
-                return $app->make(\Modules\Rental\AI\Services\GeminiDocumentKycService::class);
+            if ($driver === 'groq' || ($driver === 'auto' && filled($groqKey))) {
+                return $app->make(\Modules\RentalAi\Services\GroqDocumentKycService::class);
             }
+
+            return $app->make(\Modules\RentalAi\Services\GeminiDocumentKycService::class);
+        };
+        $this->app->bind(\Modules\RentalAi\Contracts\DocumentKycServiceInterface::class, $kycResolver);
+        $this->app->bind(\Modules\Rental\AI\Contracts\DocumentKycServiceInterface::class, \Modules\RentalAi\Contracts\DocumentKycServiceInterface::class);
+
+        $this->app->bind(
+            \Modules\RentalAi\Contracts\DynamicPricingServiceInterface::class,
+            \Modules\RentalAi\Services\GeminiDynamicPricingService::class
         );
         $this->app->bind(
             \Modules\Rental\AI\Contracts\DynamicPricingServiceInterface::class,
-            \Modules\Rental\AI\Services\GeminiDynamicPricingService::class
+            \Modules\RentalAi\Contracts\DynamicPricingServiceInterface::class
         );
+
         $this->app->bind(
             \Modules\Maintenance\AI\Contracts\PredictiveMaintenanceServiceInterface::class,
             \Modules\Maintenance\AI\Services\GeminiPredictiveMaintenanceService::class
@@ -68,8 +78,12 @@ class AppServiceProvider extends ServiceProvider
             \Modules\Fleet\AI\Services\GeminiFleetBaseAiGeneratorService::class
         );
         $this->app->bind(
+            \Modules\RentalAi\Contracts\RentalRateAiGeneratorServiceInterface::class,
+            \Modules\RentalAi\Services\GeminiRentalRateAiGeneratorService::class
+        );
+        $this->app->bind(
             \Modules\Rental\AI\Contracts\RentalRateAiGeneratorServiceInterface::class,
-            \Modules\Rental\AI\Services\GeminiRentalRateAiGeneratorService::class
+            \Modules\RentalAi\Contracts\RentalRateAiGeneratorServiceInterface::class
         );
     }
 
