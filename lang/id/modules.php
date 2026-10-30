@@ -8,6 +8,8 @@ return [
     'partners' => 'Kontak',
     'products' => 'Produk',
     'fleet' => 'Armada',
+    'fleet-dashboard' => 'Dashboard',
+    'fleet-vehicles' => 'Kendaraan',
     'fleet-base' => 'Pool & Depo',
     'fleet-settlement' => 'Rekonsiliasi Armada',
     'fleet-fuel' => 'Bahan Bakar Armada',

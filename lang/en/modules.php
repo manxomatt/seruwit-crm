@@ -8,6 +8,8 @@ return [
     'partners' => 'Contacts',
     'products' => 'Products',
     'fleet' => 'Fleet',
+    'fleet-dashboard' => 'Dashboard',
+    'fleet-vehicles' => 'Vehicles',
     'fleet-base' => 'Pools & Depots',
     'fleet-settlement' => 'Fleet Settlement',
     'fleet-fuel' => 'Fleet Fuel',

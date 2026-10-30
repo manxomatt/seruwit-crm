@@ -441,7 +441,7 @@ const MENU_GROUPS: MenuGroup[] = [
             'rental-settings',
         ],
     },
-    { titleKey: 'fleet_compliance', modules: ['fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'document', 'maintenance', 'tracking', 'scoring'] },
+    { titleKey: 'fleet_compliance', modules: ['fleet-dashboard', 'fleet-vehicles', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'document', 'maintenance', 'tracking', 'scoring'] },
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing'] },
     { titleKey: 'intelligence', modules: ['bi', 'approvals'] },
     {
@@ -487,6 +487,8 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'partners': { route: 'module.partners.dashboard', routePattern: 'module.partners.*' },
     'products': { route: 'module.products.dashboard', routePattern: 'module.products.*' },
     'fleet': { route: 'module.fleet.dashboard', routePattern: 'module.fleet.*' },
+    'fleet-dashboard': { route: 'module.fleet.dashboard', routePattern: 'module.fleet.dashboard.*' },
+    'fleet-vehicles': { route: 'module.fleet.vehicles.index', routePattern: 'module.fleet.vehicles.*' },
     'fleet-base': { route: 'module.fleet-bases.index', routePattern: 'module.fleet-bases.*' },
     'fleet-settlement': { route: 'module.fleet-settlement.index', routePattern: 'module.fleet-settlement.*' },
     'fleet-fuel': { route: 'module.fleet-fuel.index', routePattern: 'module.fleet-fuel.*' },
@@ -532,6 +534,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
 type ModuleSidebarChild = {
     key: string;
     labelKey: string;
+    fallbackLabel?: string;
     route: string;
     routePatterns: string[];
     icon: ReactNode;
@@ -540,6 +543,32 @@ type ModuleSidebarChild = {
 };
 
 const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
+    fleet: [
+        {
+            key: 'fleet-dashboard',
+            labelKey: 'fleet.nav.dashboard',
+            fallbackLabel: 'Dashboard',
+            route: 'module.fleet.dashboard',
+            routePatterns: ['module.fleet.dashboard', 'module.fleet.dashboard.*'],
+            icon: <DashboardIcon />,
+            permissionAction: 'view',
+        },
+        {
+            key: 'fleet-vehicles',
+            labelKey: 'fleet.nav.vehicles',
+            fallbackLabel: 'Kendaraan',
+            route: 'module.fleet.vehicles.index',
+            routePatterns: [
+                'module.fleet.vehicles.*',
+                'module.fleet.vehicles.index',
+                'module.fleet.vehicles.create',
+                'module.fleet.vehicles.show',
+                'module.fleet.vehicles.edit',
+            ],
+            icon: <FleetIcon />,
+            permissionAction: 'view',
+        },
+    ],
     partners: [
         {
             key: 'partners-dashboard',
@@ -696,6 +725,8 @@ const moduleIconMap: Record<string, ReactNode> = {
     'partners': <CustomersIcon />,
     'products': <ProductIcon />,
     'fleet': <FleetIcon />,
+    'fleet-dashboard': <DashboardIcon />,
+    'fleet-vehicles': <FleetIcon />,
     'fleet-base': <BuildingIcon />,
     'fleet-settlement': <CommissionIcon />,
     'fleet-fuel': <GasPumpIcon />,
@@ -737,6 +768,8 @@ const moduleIconMap: Record<string, ReactNode> = {
 
 // Module display names fall back to the module key; prefer t('modules.*') in the layout.
 const moduleDisplayNames: Record<string, string> = {
+    'fleet-dashboard': 'Dashboard',
+    'fleet-vehicles': 'Kendaraan',
     'fleet-settlement': 'Rekonsiliasi Armada',
     'fleet-fuel': 'Bahan Bakar Armada',
     'fleet-compliance': 'Kepatuhan Armada',
@@ -924,7 +957,7 @@ export default function ModuleLayout({ header, children }: Props) {
                     }
 
                     items.push({
-                        name: t(child.labelKey),
+                        name: t(child.labelKey, undefined, child.fallbackLabel),
                         href: child.params
                             ? route(resolveNamedRoute(child.route), child.params)
                             : route(resolveNamedRoute(child.route)),
