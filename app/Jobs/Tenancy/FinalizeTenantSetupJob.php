@@ -92,6 +92,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             'fleet-compliance',
             'driver',
             'rental',
+            'rental-corporate',
             'document',
             'maintenance',
             'scoring',

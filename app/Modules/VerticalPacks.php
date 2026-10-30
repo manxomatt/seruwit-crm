@@ -34,6 +34,7 @@ class VerticalPacks
                     'invoicing',
                     'receivables',
                     'rental',
+                    'rental-corporate',
                 ],
                 'seeders' => [
                     \Database\Seeders\TenantRentalDemoSeeder::class,

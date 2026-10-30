@@ -102,7 +102,7 @@ class SystemRolePermissions
         $roleSlugs = match ($moduleKey) {
             'inventory' => ['warehouse_head', 'warehouse_manager'],
             'fleet-base', 'fleet' => ['fleet_base_head', 'fleet_base_manager'],
-            'rental' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
+            'rental', 'rental-corporate' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
             'canvassing' => ['salesperson'],
             'driver', 'transportation', 'driver_scoring', 'orders' => ['driver'],
             default => [],
@@ -172,6 +172,7 @@ class SystemRolePermissions
                         ->orWhere(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update', 'delete']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental-corporate')->whereIn('action', ['view', 'bookings', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')
@@ -186,6 +187,7 @@ class SystemRolePermissions
                         ->orWhere(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'driver')->whereIn('action', ['view', 'create', 'update']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental-corporate')->whereIn('action', ['view', 'bookings', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')
@@ -195,6 +197,7 @@ class SystemRolePermissions
                 ->where(function ($query): void {
                     $query
                         ->where(fn ($q) => $q->where('module', 'rental')->whereIn('action', ['view', 'bookings', 'dispatch', 'damages', 'finance']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental-corporate')->whereIn('action', ['view', 'bookings', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')

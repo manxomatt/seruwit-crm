@@ -15,6 +15,7 @@ use Modules\Maintenance\Support\WorkOrderShopHold;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Database\Factories\RentalFactory;
 use Modules\Rental\Support\RentalStatusHint;
+use Modules\RentalCorporate\Models\RentalCorporateContract;
 
 class Rental extends Model
 {

@@ -18,7 +18,6 @@ use Modules\Rental\Http\Controllers\RentalAiPricingController;
 use Modules\Rental\Http\Controllers\RentalAvailabilityController;
 use Modules\Rental\Http\Controllers\RentalCalendarController;
 use Modules\Rental\Http\Controllers\RentalController;
-use Modules\Rental\Http\Controllers\RentalCorporateContractController;
 use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalDispatchController;
 use Modules\Rental\Http\Controllers\RentalDutyOrderController;
@@ -198,18 +197,6 @@ class RentalModule implements ModuleContract
         Route::post('/rental/duty-orders/{dutyOrder}/overtime', [RentalDutyOrderController::class, 'updateOvertime'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.overtime');
         Route::post('/rental/duty-orders/{dutyOrder}/settle', [RentalDutyOrderController::class, 'settle'])->middleware('permission:rental,finance')->name('rental.duty_orders.settle');
         Route::get('/rental/duty-orders/{dutyOrder}/print', [RentalDutyOrderController::class, 'print'])->middleware('permission:rental,dispatch')->name('rental.duty_orders.print');
-
-        // B2B Corporate Contracts & Consolidated Invoicing (before {rental} wildcard)
-        Route::middleware('requires-module:rental-corporate')->group(function (): void {
-            Route::get('/rental/corporate-contracts', [RentalCorporateContractController::class, 'index'])->middleware('permission:rental,view')->name('rental.corporate.index');
-            Route::get('/rental/corporate-contracts/create', [RentalCorporateContractController::class, 'create'])->middleware('permission:rental,bookings')->name('rental.corporate.create');
-            Route::post('/rental/corporate-contracts', [RentalCorporateContractController::class, 'store'])->middleware('permission:rental,bookings')->name('rental.corporate.store');
-            Route::get('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'show'])->whereNumber('contract')->middleware('permission:rental,view')->name('rental.corporate.show');
-            Route::get('/rental/corporate-contracts/{contract}/edit', [RentalCorporateContractController::class, 'edit'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.edit');
-            Route::put('/rental/corporate-contracts/{contract}', [RentalCorporateContractController::class, 'update'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.update');
-            Route::post('/rental/corporate-contracts/{contract}/attach-rentals', [RentalCorporateContractController::class, 'attachRentals'])->whereNumber('contract')->middleware('permission:rental,bookings')->name('rental.corporate.attach_rentals');
-            Route::post('/rental/corporate-contracts/{contract}/consolidate-invoice', [RentalCorporateContractController::class, 'consolidateInvoice'])->whereNumber('contract')->middleware('permission:rental,finance')->name('rental.corporate.consolidate_invoice');
-        });
 
         // Fleet Maintenance, Service Reminders & Blackout Calendar (before {rental} wildcard)
         Route::get('/rental/maintenance', [RentalMaintenanceController::class, 'index'])->middleware('permission:rental,view')->name('rental.maintenance.index');
