@@ -36,6 +36,10 @@ class Rental extends Model
 
     public const STATUS_CONFIRMED = 'confirmed';
 
+    public const STATUS_RESERVED = 'confirmed';
+
+    public const STATUS_OVERDUE = 'overdue';
+
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_RETURNED = 'returned';

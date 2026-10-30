@@ -729,9 +729,9 @@ class RentalCorporateContractController extends Controller
     {
         $rentals = $contract->rentals;
         $activeCount = $rentals->whereIn('status', [
-            Rental::STATUS_RESERVED,
+            Rental::STATUS_CONFIRMED,
             Rental::STATUS_ACTIVE,
-            Rental::STATUS_OVERDUE,
+            Rental::STATUS_PENDING_RESERVED,
         ])->count();
 
         $unbilledAmount = 0.0;

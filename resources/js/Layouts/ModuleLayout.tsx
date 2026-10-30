@@ -515,6 +515,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'billing': { route: 'module.billing.dashboard', routePattern: 'module.billing.*' },
     'invoicing': { route: 'module.invoicing.dashboard', routePattern: 'module.invoicing.*' },
     'rental': { route: 'module.rental.dashboard', routePattern: 'module.rental.*' },
+    'rental-corporate': { route: 'module.rental.corporate.index', routePattern: 'module.rental.corporate.*' },
     'shuttle': { route: 'module.shuttle.dashboard', routePattern: 'module.shuttle.*' },
     'canvassing': { route: 'module.canvassing.index', routePattern: 'module.canvassing.*' },
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
@@ -659,6 +660,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
         {
             key: 'rental-corporate',
             labelKey: 'rental.nav.corporate',
+            fallbackLabel: 'Kontrak B2B',
             route: 'module.rental.corporate.index',
             routePatterns: ['module.rental.corporate.*'],
             icon: <BuildingIcon />,
@@ -773,6 +775,7 @@ const moduleDisplayNames: Record<string, string> = {
     'fleet-settlement': 'Rekonsiliasi Armada',
     'fleet-fuel': 'Bahan Bakar Armada',
     'fleet-compliance': 'Kepatuhan Armada',
+    'rental-corporate': 'Kontrak Korporat B2B',
 };
 
 // Helper function to check if a route exists (tenant name or central.* twin)
