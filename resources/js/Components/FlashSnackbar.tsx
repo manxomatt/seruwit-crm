@@ -1,24 +1,34 @@
 import { usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-type FlashTone = 'success' | 'error' | 'warning';
+export type FlashTone = 'success' | 'error' | 'warning';
 
-interface FlashProps {
+export interface FlashProps {
     success?: string | null;
     error?: string | null;
     warning?: string | null;
 }
 
-interface SnackbarItem {
+export interface SnackbarItem {
     id: string;
     tone: FlashTone;
     message: string;
 }
 
+export function triggerSnackbar(message: string, tone: FlashTone = 'error'): void {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+            new CustomEvent('app:flash-snackbar', {
+                detail: { message, tone },
+            }),
+        );
+    }
+}
+
 const TONE_STYLES: Record<FlashTone, string> = {
-    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    error: 'border-red-200 bg-red-50 text-red-900',
-    warning: 'border-amber-200 bg-amber-50 text-amber-950',
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    error: 'border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200',
+    warning: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200',
 };
 
 const TONE_ICON: Record<FlashTone, string> = {
@@ -62,7 +72,10 @@ export default function FlashSnackbar() {
             return;
         }
 
-        setItems(incoming);
+        setItems((current) => [
+            ...current.filter((item) => !incoming.some((inc) => inc.id === item.id)),
+            ...incoming,
+        ]);
 
         const timers = incoming.map((item) =>
             window.setTimeout(() => {
@@ -74,6 +87,30 @@ export default function FlashSnackbar() {
             timers.forEach((timer) => window.clearTimeout(timer));
         };
     }, [incoming]);
+
+    useEffect(() => {
+        const handleCustomSnackbar = (event: Event) => {
+            const customEvent = event as CustomEvent<{ message: string; tone?: FlashTone }>;
+            if (!customEvent.detail?.message) return;
+
+            const newItem: SnackbarItem = {
+                id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                tone: customEvent.detail.tone || 'error',
+                message: customEvent.detail.message,
+            };
+
+            setItems((current) => [...current, newItem]);
+
+            window.setTimeout(() => {
+                setItems((current) => current.filter((row) => row.id !== newItem.id));
+            }, dismissMsFor(newItem.message));
+        };
+
+        window.addEventListener('app:flash-snackbar', handleCustomSnackbar);
+        return () => {
+            window.removeEventListener('app:flash-snackbar', handleCustomSnackbar);
+        };
+    }, []);
 
     if (items.length === 0) {
         return null;

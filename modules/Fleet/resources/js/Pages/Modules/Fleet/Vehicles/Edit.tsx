@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { triggerSnackbar } from '@/Components/FlashSnackbar';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
@@ -144,8 +145,34 @@ export default function Edit({ vehicle, bases = [], partners = [] }: Props): JSX
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         patch(prefixedRoute('fleet.vehicles.update', vehicle.id), {
-            onError: () => {
+            onError: (formErrors) => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                const errorEntries = Object.entries(formErrors);
+                const count = errorEntries.length;
+
+                if (count > 0) {
+                    const topMessages = errorEntries.slice(0, 3).map(([_, msg]) => `• ${msg}`);
+                    let snackbarText = t(
+                        'fleet.vehicles.update_failed_snackbar',
+                        undefined,
+                        'Gagal memperbarui data kendaraan. Periksa kembali isian formulir:'
+                    );
+                    snackbarText += `\n${topMessages.join('\n')}`;
+                    if (count > 3) {
+                        snackbarText += `\n...dan ${count - 3} kolom lainnya belum sesuai.`;
+                    }
+                    triggerSnackbar(snackbarText, 'error');
+                } else {
+                    triggerSnackbar(
+                        t(
+                            'fleet.vehicles.update_failed_generic',
+                            undefined,
+                            'Gagal memperbarui data kendaraan. Silakan periksa kembali formulir.'
+                        ),
+                        'error'
+                    );
+                }
             },
         });
     };
@@ -187,6 +214,30 @@ export default function Edit({ vehicle, bases = [], partners = [] }: Props): JSX
                     <span>/</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">Edit</span>
                 </nav>
+
+                {/* Error Summary Banner when validation fails */}
+                {Object.keys(errors).length > 0 && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-xs dark:border-red-900/50 dark:bg-red-950/40">
+                        <div className="flex items-start gap-3">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-black text-red-700 dark:bg-red-900/80 dark:text-red-200">
+                                !
+                            </span>
+                            <div className="flex-1 text-xs">
+                                <h4 className="font-bold text-sm text-red-950 dark:text-red-100">
+                                    {t('fleet.vehicles.update_failed_title', undefined, 'Gagal Memperbarui Data Kendaraan')}
+                                </h4>
+                                <p className="mt-1 text-red-800 dark:text-red-300">
+                                    {t('fleet.vehicles.update_failed_desc', undefined, 'Terdapat beberapa data yang belum diisi dengan benar. Silakan periksa kolom berikut:')}
+                                </p>
+                                <ul className="mt-2 list-disc list-inside space-y-1 font-medium text-red-800 dark:text-red-300">
+                                    {Object.entries(errors).map(([field, msg]) => (
+                                        <li key={field}>{msg}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <form id="fleet-vehicle-edit-form" onSubmit={submit} className="space-y-6">
                     {/* 1. Identitas & Foto Kendaraan */}
