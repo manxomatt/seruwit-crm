@@ -15,7 +15,7 @@ interface TabItem {
 const TABS: Array<TabItem> = [
     { icon: '📊', labelKey: 'rental.nav.dashboard', fallbackLabel: 'Dashboard', route: 'rental.dashboard', pattern: 'rental.dashboard', permissionAction: 'view' },
     { icon: '📋', labelKey: 'rental.nav.bookings', fallbackLabel: 'Bookings', route: 'rental.index', pattern: 'rental.index', permissionAction: 'view' },
-    { icon: '🚚', labelKey: 'rental.nav.dispatch', fallbackLabel: 'Antar-Jemput (Dispatch)', route: 'rental.dispatch.index', pattern: 'rental.dispatch.*', permissionAction: 'dispatch' },
+    { icon: '🚚', labelKey: 'rental.nav.dispatch', fallbackLabel: 'Antar-Jemput (Dispatch)', route: 'rental.dispatch.index', pattern: 'rental.dispatch.*', permissionAction: 'dispatch', subFeatureKey: 'rental-dispatch' },
     { icon: '👨‍✈️', labelKey: 'rental.nav.duty_orders', fallbackLabel: 'Surat Jalan & Kas Jalan', route: 'rental.duty_orders.index', pattern: 'rental.duty_orders.*', permissionAction: 'dispatch' },
     { icon: '🏢', labelKey: 'rental.nav.corporate', fallbackLabel: 'Kontrak B2B', route: 'rental.corporate.index', pattern: 'rental.corporate.*', permissionAction: 'view', subFeatureKey: 'rental-corporate' },
     { icon: '🛠️', labelKey: 'rental.nav.maintenance', fallbackLabel: 'Servis & Blackout', route: 'rental.maintenance.index', pattern: 'rental.maintenance.*', permissionAction: 'view' },
@@ -57,11 +57,15 @@ export default function RentalNav(): JSX.Element {
             const rentalPerms = auth?.user?.permissions?.rental || [];
             const corpPerms = auth?.user?.permissions?.['rental-corporate'] || [];
             const dutyPerms = auth?.user?.permissions?.['rental-duty-order'] || [];
+            const dispatchPerms = auth?.user?.permissions?.['rental-dispatch'] || [];
             if (tab.subFeatureKey === 'rental-corporate') {
                 return corpPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);
             }
             if (tab.route === 'rental.duty_orders.index') {
                 return dutyPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);
+            }
+            if (tab.route === 'rental.dispatch.index') {
+                return dispatchPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);
             }
             return rentalPerms.includes(tab.permissionAction);
         }

@@ -36,6 +36,7 @@ class VerticalPacks
                     'rental',
                     'rental-corporate',
                     'rental-duty-order',
+                    'rental-dispatch',
                 ],
                 'seeders' => [
                     \Database\Seeders\TenantRentalDemoSeeder::class,

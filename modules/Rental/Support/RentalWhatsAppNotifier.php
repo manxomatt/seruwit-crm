@@ -6,9 +6,9 @@ use App\Models\Setting;
 use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Illuminate\Support\Facades\Log;
 use Modules\Rental\Models\Rental;
-use Modules\Rental\Models\RentalDispatch;
 use Modules\Rental\Models\RentalDutyOrder;
 use Modules\Rental\Models\RentalExtensionRequest;
+use Modules\RentalDispatch\Models\RentalDispatch;
 use Throwable;
 
 class RentalWhatsAppNotifier

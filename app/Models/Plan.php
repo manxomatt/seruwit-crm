@@ -48,6 +48,7 @@ class Plan extends Model
             'rental',
             'rental-corporate',
             'rental-duty-order',
+            'rental-dispatch',
             'scoring',
             'shuttle',
             'tracking',

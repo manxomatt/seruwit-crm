@@ -94,6 +94,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             'rental',
             'rental-corporate',
             'rental-duty-order',
+            'rental-dispatch',
             'document',
             'maintenance',
             'scoring',

@@ -16,6 +16,7 @@ use Modules\Partners\Models\Partner;
 use Modules\Rental\Database\Factories\RentalFactory;
 use Modules\Rental\Support\RentalStatusHint;
 use Modules\RentalCorporate\Models\RentalCorporateContract;
+use Modules\RentalDispatch\Models\RentalDispatch;
 use Modules\RentalDutyOrder\Models\RentalDutyOrder;
 
 class Rental extends Model

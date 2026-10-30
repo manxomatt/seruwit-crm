@@ -74,7 +74,7 @@ class RentalDispatchTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('Modules/Rental/Dispatch/Index')
+            ->component('Modules/RentalDispatch/Index')
             ->has('dispatches', 2)
             ->has('metrics')
             ->where('metrics.today_total', 2)
