@@ -516,6 +516,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'invoicing': { route: 'module.invoicing.dashboard', routePattern: 'module.invoicing.*' },
     'rental': { route: 'module.rental.dashboard', routePattern: 'module.rental.*' },
     'rental-corporate': { route: 'module.rental.corporate.index', routePattern: 'module.rental.corporate.*' },
+    'rental-duty-order': { route: 'module.rental.duty_orders.index', routePattern: 'module.rental.duty_orders.*' },
     'shuttle': { route: 'module.shuttle.dashboard', routePattern: 'module.shuttle.*' },
     'canvassing': { route: 'module.canvassing.index', routePattern: 'module.canvassing.*' },
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
@@ -756,6 +757,8 @@ const moduleIconMap: Record<string, ReactNode> = {
     'payment-orders': <PaymentOrdersIcon />,
     'invoicing': <InvoicingIcon />,
     'rental': <RentalIcon />,
+    'rental-corporate': <BuildingIcon />,
+    'rental-duty-order': <OrdersIcon />,
     'shuttle': <TransportationIcon />,
     'canvassing': <CanvassingIcon />,
     'analytics': <AnalyticsIcon />,
@@ -776,6 +779,7 @@ const moduleDisplayNames: Record<string, string> = {
     'fleet-fuel': 'Bahan Bakar Armada',
     'fleet-compliance': 'Kepatuhan Armada',
     'rental-corporate': 'Kontrak Korporat B2B',
+    'rental-duty-order': 'Surat Jalan & Kas Jalan',
 };
 
 // Helper function to check if a route exists (tenant name or central.* twin)

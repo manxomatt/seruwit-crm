@@ -16,8 +16,8 @@ use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
-use Modules\Rental\Models\RentalDutyOrder;
 use Modules\RentalCorporate\Models\RentalCorporateContract;
+use Modules\RentalDutyOrder\Models\RentalDutyOrder;
 
 class RentalCorporateContractController extends Controller
 {

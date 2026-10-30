@@ -47,6 +47,7 @@ class Plan extends Model
             'receivables',
             'rental',
             'rental-corporate',
+            'rental-duty-order',
             'scoring',
             'shuttle',
             'tracking',

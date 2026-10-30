@@ -56,8 +56,12 @@ export default function RentalNav(): JSX.Element {
         if (tab.permissionAction) {
             const rentalPerms = auth?.user?.permissions?.rental || [];
             const corpPerms = auth?.user?.permissions?.['rental-corporate'] || [];
+            const dutyPerms = auth?.user?.permissions?.['rental-duty-order'] || [];
             if (tab.subFeatureKey === 'rental-corporate') {
                 return corpPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);
+            }
+            if (tab.route === 'rental.duty_orders.index') {
+                return dutyPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);
             }
             return rentalPerms.includes(tab.permissionAction);
         }

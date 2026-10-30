@@ -54,6 +54,7 @@ return [
         Modules\TransportationManagement\TransportationManagementModule::class,
         Modules\Rental\RentalModule::class,
         Modules\RentalCorporate\RentalCorporateModule::class,
+        Modules\RentalDutyOrder\RentalDutyOrderModule::class,
         Modules\Shuttle\ShuttleModule::class,
         Modules\Canvassing\CanvassingModule::class,
     ],
