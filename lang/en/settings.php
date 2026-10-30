@@ -233,6 +233,8 @@ return [
             'pause_maintenance_desc' => 'When enabled, active capacity days do not decrement while the vehicle is undergoing maintenance.',
             'show_dashboard_pricing_label' => 'Show Tiered Pricing Section on Tenant Dashboard',
             'show_dashboard_pricing_desc' => 'Show or hide the Vehicle Package & Pricing (Tiered Rates by Fleet Scale) section on the main Dashboard across all tenants.',
+            'show_vehicle_quota_section_label' => 'Show Fleet Capacity Bar/Gauge on Vehicles Page',
+            'show_vehicle_quota_section_desc' => 'Show or hide the Active Vehicle Capacity section (trial quota, credit balance, and progress bar) on the /module/fleet/vehicles page across all tenants.',
             'days_suffix' => 'Days',
             'units_suffix' => 'Units',
         ],

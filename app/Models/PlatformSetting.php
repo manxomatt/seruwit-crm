@@ -37,6 +37,8 @@ class PlatformSetting extends Model
 
     public const KEY_SHOW_DASHBOARD_PRICING_SECTION = 'capacity.show_dashboard_pricing_section';
 
+    public const KEY_SHOW_VEHICLE_QUOTA_SECTION = 'capacity.show_vehicle_quota_section';
+
     public const MODEL_PER_VEHICLE_TRIAL = 'per_vehicle_trial';
 
     public const MODEL_TENANT_QUOTA = 'tenant_quota';
@@ -149,6 +151,13 @@ class PlatformSetting extends Model
     public static function isDashboardPricingSectionVisible(): bool
     {
         $val = static::getValue(self::KEY_SHOW_DASHBOARD_PRICING_SECTION, '1');
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function isVehicleQuotaSectionVisible(): bool
+    {
+        $val = static::getValue(self::KEY_SHOW_VEHICLE_QUOTA_SECTION, '1');
 
         return filter_var($val, FILTER_VALIDATE_BOOLEAN);
     }
@@ -383,6 +392,16 @@ class PlatformSetting extends Model
                 'description' => 'Tampilkan atau sembunyikan section Paket & Harga per Kendaraan (Tarif Berjenjang Sesuai Skala Armada) pada halaman Dashboard seluruh tenant.',
                 'is_public' => true,
                 'sort_order' => 8,
+            ],
+            [
+                'key' => self::KEY_SHOW_VEHICLE_QUOTA_SECTION,
+                'group' => 'capacity',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Tampilkan Bar/Gauge Kapasitas di Halaman Armada Kendaraan',
+                'description' => 'Tampilkan atau sembunyikan section info Kapasitas Unit Kendaraan Aktif (kuota trial, saldo kredit, dan progress bar) pada halaman /module/fleet/vehicles seluruh tenant.',
+                'is_public' => true,
+                'sort_order' => 9,
             ],
 
             // EMAIL (Central Root SMTP Mailer)

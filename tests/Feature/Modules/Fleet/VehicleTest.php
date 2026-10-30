@@ -490,6 +490,33 @@ class VehicleTest extends TestCase
             );
     }
 
+    public function test_vehicles_index_respects_show_vehicle_quota_section_platform_setting(): void
+    {
+        $user = $this->createAdminUser();
+
+        // 1. Visible by default
+        PlatformSetting::setValue(PlatformSetting::KEY_SHOW_VEHICLE_QUOTA_SECTION, '1');
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.vehicles.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Index')
+                ->where('show_quota_section', true)
+            );
+
+        // 2. Hidden when disabled in Central Admin Platform Settings
+        PlatformSetting::setValue(PlatformSetting::KEY_SHOW_VEHICLE_QUOTA_SECTION, '0');
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.vehicles.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Index')
+                ->where('show_quota_section', false)
+            );
+    }
+
     public function test_creating_vehicle_requires_rental_rate_when_uncovered(): void
     {
         $user = $this->createAdminUser();

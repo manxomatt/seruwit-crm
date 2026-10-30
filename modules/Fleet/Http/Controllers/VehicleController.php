@@ -100,6 +100,7 @@ class VehicleController extends Controller
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),
             ],
+            'show_quota_section' => PlatformSetting::isVehicleQuotaSectionVisible(),
             'quota' => [
                 'max' => $maxLimit !== null ? (int) $maxLimit : null,
                 'current' => $billableVehicles,

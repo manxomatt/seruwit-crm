@@ -68,6 +68,7 @@ interface Props {
     bases?: HomeBase[];
     can: { create: boolean; update: boolean; delete: boolean };
     quota?: { max: number | null; current: number; reached: boolean };
+    show_quota_section?: boolean;
     available_credits?: number;
     business_model?: string;
     trial_duration_days?: number;
@@ -256,6 +257,7 @@ export default function Index({
     bases = [],
     can,
     quota,
+    show_quota_section = true,
     available_credits,
     business_model = 'per_vehicle_trial',
     trial_duration_days,
@@ -435,7 +437,7 @@ export default function Index({
                     subtitle={t('fleet.vehicles.index_subtitle', undefined, 'Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan.')}
                     actions={
                         <div className="flex items-center gap-2.5">
-                            {isTrialMode && quota?.reached && (
+                            {show_quota_section && isTrialMode && quota?.reached && (
                                 <button
                                     type="button"
                                     onClick={() => router.visit(prefixedRoute('subscription.index'))}
@@ -444,7 +446,7 @@ export default function Index({
                                     <span>⚡ {t('fleet.quota.topup_btn', undefined, 'Top-Up Saldo Kredit')}</span>
                                 </button>
                             )}
-                            {!isTrialMode && quota?.reached ? (
+                            {show_quota_section && !isTrialMode && quota?.reached ? (
                                 <button
                                     type="button"
                                     onClick={() => setShowUpgradeModal(true)}
@@ -470,7 +472,7 @@ export default function Index({
 
             <div className="w-full space-y-6 pb-20">
                 {/* Vehicle Quota Gauge */}
-                {quota && (
+                {show_quota_section && quota && (
                     <VehicleQuotaGauge
                         current={quota.current}
                         max={quota.max}

@@ -200,6 +200,7 @@ class PlatformSettingController extends Controller
             'vehicle_grace_period_days' => ['sometimes', 'integer', 'min:0', 'max:30'],
             'pause_during_maintenance_enabled' => ['sometimes', 'boolean'],
             'show_dashboard_pricing_section' => ['sometimes', 'boolean'],
+            'show_vehicle_quota_section' => ['sometimes', 'boolean'],
         ]);
 
         PlatformSetting::setValue(CentralAiSettings::KEY, $data['ai_features_enabled'] ? '1' : '0');
@@ -231,6 +232,9 @@ class PlatformSettingController extends Controller
         }
         if (isset($data['show_dashboard_pricing_section'])) {
             PlatformSetting::setValue(PlatformSetting::KEY_SHOW_DASHBOARD_PRICING_SECTION, $data['show_dashboard_pricing_section'] ? '1' : '0');
+        }
+        if (isset($data['show_vehicle_quota_section'])) {
+            PlatformSetting::setValue(PlatformSetting::KEY_SHOW_VEHICLE_QUOTA_SECTION, $data['show_vehicle_quota_section'] ? '1' : '0');
         }
 
         PlatformSetting::applyCentralMailConfig();

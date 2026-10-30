@@ -233,6 +233,8 @@ return [
             'pause_maintenance_desc' => 'Jika diaktifkan, masa aktif kendaraan tidak berkurang saat kendaraan berstatus dalam perbaikan (maintenance).',
             'show_dashboard_pricing_label' => 'Tampilkan Section Tarif Berjenjang di Dashboard Tenant',
             'show_dashboard_pricing_desc' => 'Tampilkan atau sembunyikan section Paket & Harga per Kendaraan (Tarif Berjenjang Sesuai Skala Armada) pada halaman Dashboard seluruh tenant.',
+            'show_vehicle_quota_section_label' => 'Tampilkan Bar/Gauge Kapasitas di Halaman Armada Kendaraan',
+            'show_vehicle_quota_section_desc' => 'Tampilkan atau sembunyikan section info Kapasitas Unit Kendaraan Aktif (kuota trial, saldo kredit, dan progress bar) pada halaman /module/fleet/vehicles seluruh tenant.',
             'days_suffix' => 'Hari',
             'units_suffix' => 'Unit',
         ],
