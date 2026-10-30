@@ -435,6 +435,15 @@ export default function Index({
                     subtitle={t('fleet.vehicles.index_subtitle', undefined, 'Pantau ketersediaan armada, status pemeliharaan, nomor polisi, home base pool, dan riwayat operasional kendaraan.')}
                     actions={
                         <div className="flex items-center gap-2.5">
+                            {isTrialMode && quota?.reached && (
+                                <button
+                                    type="button"
+                                    onClick={() => router.visit(prefixedRoute('subscription.index'))}
+                                    className="inline-flex items-center gap-2 rounded-2xl bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 border border-indigo-200 transition hover:bg-indigo-100 active:scale-95 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800"
+                                >
+                                    <span>⚡ {t('fleet.quota.topup_btn', undefined, 'Top-Up Saldo Kredit')}</span>
+                                </button>
+                            )}
                             {!isTrialMode && quota?.reached ? (
                                 <button
                                     type="button"
@@ -443,14 +452,13 @@ export default function Index({
                                 >
                                     <span>⚠️ {t('fleet.quota.full_btn', undefined, 'Kapasitas Penuh (Upgrade)')}</span>
                                 </button>
-                            ) : (
-                                can.create && (
-                                    <Link href={prefixedRoute('fleet.vehicles.create')}>
-                                        <PrimaryButton className="rounded-xl shadow-sm">
-                                            {t('fleet.vehicles.add_new', undefined, 'Tambah Kendaraan Baru')}
-                                        </PrimaryButton>
-                                    </Link>
-                                )
+                            ) : null}
+                            {can.create && (
+                                <Link href={prefixedRoute('fleet.vehicles.create')}>
+                                    <PrimaryButton className="rounded-xl shadow-sm">
+                                        {t('fleet.vehicles.add_new', undefined, 'Tambah Kendaraan Baru')}
+                                    </PrimaryButton>
+                                </Link>
                             )}
                         </div>
                     }

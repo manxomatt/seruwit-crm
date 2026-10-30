@@ -706,13 +706,36 @@ export default function Create({
                                 />
                                 <InputError message={errors.status} className="mt-1" />
                                 {data.status === 'active' && is_trial_mode && (
-                                    <div className="mt-2.5 rounded-2xl bg-cyan-50/70 p-3 text-xs border border-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200">
-                                        <div className="flex items-center gap-2">
-                                            <span>
-                                                🎁 {t('fleet.vehicles.trial_active_notice', { days: trial_duration_days }, `Unit baru akan langsung aktif dengan masa uji coba Free Trial ${trial_duration_days} Hari.`)}
-                                            </span>
+                                    has_reached_trial_limit ? (
+                                        available_credits > 0 ? (
+                                            <div className="mt-2.5 rounded-2xl bg-indigo-50/70 p-3 text-xs border border-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 text-slate-700 dark:text-slate-300">
+                                                <div className="flex items-center justify-between">
+                                                    <span>
+                                                        ⚡ {t('fleet.vehicles.trial_exhausted_credit_notice', { days: trial_duration_days }, `Batas trial terpenuhi. Mendaftarkan unit aktif akan menggunakan 1 Kredit Unit (${trial_duration_days} hari masa aktif).`)}
+                                                    </span>
+                                                    <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                                                        {t('fleet.vehicles.credit_balance', { count: available_credits }, `Saldo: ${available_credits} Unit`)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="mt-2.5 rounded-2xl bg-amber-50/70 p-3 text-xs border border-amber-200 dark:border-amber-900/50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200">
+                                                <div className="flex items-center gap-2">
+                                                    <span>
+                                                        ℹ️ {t('fleet.vehicles.trial_exhausted_inactive_notice', undefined, 'Batas kuota trial terpenuhi & saldo kredit 0. Unit ini akan otomatis disimpan dengan status Non-Aktif (Draft) sampai Anda melakukan aktivasi atau top-up kredit.')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="mt-2.5 rounded-2xl bg-cyan-50/70 p-3 text-xs border border-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200">
+                                            <div className="flex items-center gap-2">
+                                                <span>
+                                                    🎁 {t('fleet.vehicles.trial_active_notice', { days: trial_duration_days }, `Unit baru akan langsung aktif dengan masa uji coba Free Trial ${trial_duration_days} Hari.`)}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )
                                 )}
                                 {data.status === 'active' && !is_trial_mode && (
                                     <div className="mt-2.5 rounded-2xl bg-indigo-50/70 p-3 text-xs border border-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 text-slate-700 dark:text-slate-300">

@@ -43,8 +43,10 @@ class VehicleCapacityActivationTest extends TestCase
         });
         $this->tenant->domains()->create(['domain' => 'transexpress.seruwit.test']);
 
-        // Bind tenant to container
-        app()->instance('tenant', $this->tenant);
+        // Bind tenant to container so tenant() helper always returns this tenant during HTTP tests
+        app()->bind(\Stancl\Tenancy\Contracts\Tenant::class, fn () => $this->tenant);
+        app()->bind(\App\Models\Tenant::class, fn () => $this->tenant);
+        app()->bind('tenant', fn () => $this->tenant);
     }
 
     public function test_service_can_activate_vehicle_consuming_credit(): void
@@ -244,6 +246,9 @@ class VehicleCapacityActivationTest extends TestCase
             'type' => 'car',
             'fuel_type' => 'petrol',
             'status' => Vehicle::STATUS_ACTIVE,
+            'rental_rate' => [
+                'rate_per_period' => 350000,
+            ],
         ]);
 
         $response->assertRedirect();
@@ -262,6 +267,9 @@ class VehicleCapacityActivationTest extends TestCase
             'type' => 'car',
             'fuel_type' => 'petrol',
             'status' => Vehicle::STATUS_ACTIVE,
+            'rental_rate' => [
+                'rate_per_period' => 400000,
+            ],
         ]);
 
         $response4->assertRedirect();
@@ -271,5 +279,14 @@ class VehicleCapacityActivationTest extends TestCase
         $this->assertNotNull($vehicle4);
         $this->assertSame(Vehicle::STATUS_INACTIVE, $vehicle4->status);
         $this->assertFalse($vehicle4->is_trial);
+
+        // Verify index still allows creation (can.create = true) in Per-Vehicle Trial mode even when limit reached
+        $indexResponse = $this->actingAs($this->user)->get(route('module.fleet.vehicles.index'));
+        $indexResponse->assertOk();
+        $indexResponse->assertInertia(fn ($page) => $page
+            ->component('Modules/Fleet/Vehicles/Index')
+            ->where('can.create', true)
+            ->where('quota.reached', true)
+        );
     }
 }

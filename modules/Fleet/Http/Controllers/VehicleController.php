@@ -96,7 +96,7 @@ class VehicleController extends Controller
             ],
             'bases' => $this->homeBaseOptions(),
             'can' => [
-                'create' => $user->hasPermissionFor('fleet', 'create') && ! $isLimitReached,
+                'create' => $user->hasPermissionFor('fleet', 'create') && ($isPerVehicleTrial || ! $isLimitReached),
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),
             ],
