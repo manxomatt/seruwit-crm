@@ -23,7 +23,9 @@ use App\Http\Controllers\TodoController;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
 use Modules\Orders\Http\Controllers\PublicTrackingController;
-use Modules\Rental\Http\Controllers\PublicRentalBookingController;
+use Modules\RentalStorefront\Http\Controllers\CustomerAuthController;
+use Modules\RentalStorefront\Http\Controllers\CustomerPortalController;
+use Modules\RentalStorefront\Http\Controllers\PublicRentalBookingController;
 use Modules\Shuttle\Http\Controllers\PublicPassengerBookingController;
 
 /*
@@ -110,29 +112,29 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
 
     // Customer Authentication (Option A+C)
     Route::middleware('guest:customer')->group(function (): void {
-        Route::get('/login', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'showLogin'])->name('login');
-        Route::post('/login/otp', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'sendOtp'])->name('login.otp');
-        Route::post('/login/verify-otp', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'verifyOtp'])->name('login.verify_otp');
-        Route::post('/login/password', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'loginWithPassword'])->name('login.password');
-        Route::get('/register', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'showRegister'])->name('register');
-        Route::post('/register', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'register'])->name('register.submit');
+        Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login');
+        Route::post('/login/otp', [CustomerAuthController::class, 'sendOtp'])->name('login.otp');
+        Route::post('/login/verify-otp', [CustomerAuthController::class, 'verifyOtp'])->name('login.verify_otp');
+        Route::post('/login/password', [CustomerAuthController::class, 'loginWithPassword'])->name('login.password');
+        Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [CustomerAuthController::class, 'register'])->name('register.submit');
     });
 
-    Route::post('/logout', [\Modules\Rental\Http\Controllers\CustomerAuthController::class, 'logout'])
+    Route::post('/logout', [CustomerAuthController::class, 'logout'])
         ->middleware('auth:customer')
         ->name('logout');
 
     // Customer Portal (Option A+C)
     Route::middleware('auth:customer')->prefix('portal')->name('portal.')->group(function (): void {
-        Route::get('/', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'dashboard'])->name('dashboard');
-        Route::get('/rentals', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'rentals'])->name('rentals.index');
-        Route::get('/rentals/{code}', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'showRental'])->name('rentals.show');
-        Route::get('/documents', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'documents'])->name('documents.index');
-        Route::post('/documents', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateDocuments'])->name('documents.update');
-        Route::post('/documents/scan', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'scanDocument'])->name('documents.scan');
-        Route::get('/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'profile'])->name('profile');
-        Route::match(['put', 'post'], '/profile', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updateProfile'])->name('profile.update');
-        Route::put('/profile/password', [\Modules\Rental\Http\Controllers\CustomerPortalController::class, 'updatePassword'])->name('profile.password');
+        Route::get('/', [CustomerPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/rentals', [CustomerPortalController::class, 'rentals'])->name('rentals.index');
+        Route::get('/rentals/{code}', [CustomerPortalController::class, 'showRental'])->name('rentals.show');
+        Route::get('/documents', [CustomerPortalController::class, 'documents'])->name('documents.index');
+        Route::post('/documents', [CustomerPortalController::class, 'updateDocuments'])->name('documents.update');
+        Route::post('/documents/scan', [CustomerPortalController::class, 'scanDocument'])->name('documents.scan');
+        Route::get('/profile', [CustomerPortalController::class, 'profile'])->name('profile');
+        Route::match(['put', 'post'], '/profile', [CustomerPortalController::class, 'updateProfile'])->name('profile.update');
+        Route::put('/profile/password', [CustomerPortalController::class, 'updatePassword'])->name('profile.password');
     });
 });
 

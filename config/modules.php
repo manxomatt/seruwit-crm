@@ -56,6 +56,7 @@ return [
         Modules\RentalCorporate\RentalCorporateModule::class,
         Modules\RentalDutyOrder\RentalDutyOrderModule::class,
         Modules\RentalDispatch\RentalDispatchModule::class,
+        Modules\RentalStorefront\RentalStorefrontModule::class,
         Modules\Shuttle\ShuttleModule::class,
         Modules\Canvassing\CanvassingModule::class,
     ],

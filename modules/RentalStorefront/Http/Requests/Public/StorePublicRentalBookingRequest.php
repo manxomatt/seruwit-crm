@@ -1,0 +1,86 @@
+<?php
+
+namespace Modules\RentalStorefront\Http\Requests\Public;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StorePublicRentalBookingRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        $requireOtp = \Modules\Rental\Support\RentalWhatsAppSettings::isOtpRequired();
+        $phone = $this->input('booker_phone') ?? '';
+        $isVerified = ($phone !== '' && app(\Modules\Shuttle\Support\PassengerOtpService::class)->isVerified($phone)) || auth('customer')->check();
+        $hydrator = app(\Modules\Rental\Support\RentalLocationHydrator::class);
+        $depotRequired = $hydrator->depotOptions() !== [];
+
+        return [
+            'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'pickup_time' => ['nullable', 'date_format:H:i'],
+            'return_time' => ['nullable', 'date_format:H:i'],
+            'period_type' => ['required', 'string', Rule::in(['daily', 'weekly', 'monthly'])],
+            'customer_name' => ['required', 'string', 'max:120'],
+            'customer_email' => $requireOtp
+                ? ['nullable', 'email', 'max:255']
+                : ['required', 'email', 'max:255'],
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ($requireOtp && ! $isVerified)
+                ? ['required', 'string', 'size:6']
+                : ['nullable', 'string'],
+            'pickup_location_id' => $hydrator->depotIdRules($depotRequired),
+            'return_location_id' => $hydrator->depotIdRules(),
+            'service_type' => ['nullable', 'string', Rule::in(['self_drive', 'with_driver'])],
+            'delivery_type' => ['nullable', 'string', Rule::in(['depot', 'airport', 'hotel', 'custom_address'])],
+            'delivery_address' => ['nullable', 'string', 'max:500'],
+            'delivery_landmark' => ['nullable', 'string', 'max:255'],
+            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'return_delivery_type' => ['nullable', 'string', Rule::in(['depot', 'airport', 'hotel', 'custom_address'])],
+            'return_delivery_address' => ['nullable', 'string', 'max:500'],
+            'return_delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'passenger_guarantor_doc_type' => ['nullable', 'string', 'max:64'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:120'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:32'],
+            'emergency_contact_relation' => ['nullable', 'string', 'max:64'],
+            'social_media_account' => ['nullable', 'string', 'max:120'],
+            'pickup_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
+            'return_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
+            'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
+            'with_deposit' => ['nullable', 'boolean'],
+            'deposit_amount' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'idempotency_key' => ['nullable', 'uuid'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'customer_name.required' => __('rental.public.validation.customer_name_required'),
+            'customer_email.required' => 'Alamat email wajib diisi untuk registrasi dan konfirmasi pemesanan.',
+            'customer_email.email' => 'Format alamat email tidak valid.',
+            'booker_phone.required' => __('rental.public.validation.booker_phone_required'),
+            'otp_code.required' => __('rental.public.validation.otp_required'),
+            'otp_code.size' => __('rental.public.validation.otp_size'),
+            'pickup_location_id.required' => __('rental.public.validation.pickup_required'),
+            'pickup_time.date_format' => __('rental.public.validation.pickup_time'),
+            'return_time.date_format' => __('rental.public.validation.return_time'),
+            'vehicle_id.required' => __('rental.public.validation.vehicle_required'),
+            'start_date.required' => __('rental.public.validation.start_date_required'),
+            'end_date.required' => __('rental.public.validation.end_date_required'),
+        ];
+    }
+}

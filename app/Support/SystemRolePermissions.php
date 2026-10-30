@@ -102,7 +102,7 @@ class SystemRolePermissions
         $roleSlugs = match ($moduleKey) {
             'inventory' => ['warehouse_head', 'warehouse_manager'],
             'fleet-base', 'fleet' => ['fleet_base_head', 'fleet_base_manager'],
-            'rental', 'rental-corporate', 'rental-duty-order', 'rental-dispatch' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
+            'rental', 'rental-corporate', 'rental-duty-order', 'rental-dispatch', 'rental-storefront' => ['fleet_base_head', 'fleet_base_manager', 'rental_operator'],
             'canvassing' => ['salesperson'],
             'driver', 'transportation', 'driver_scoring', 'orders', 'rental-duty-order', 'rental-dispatch' => ['driver'],
             default => [],
@@ -177,6 +177,7 @@ class SystemRolePermissions
                         ->orWhere(fn ($q) => $q->where('module', 'rental-corporate')->whereIn('action', ['view', 'bookings', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental-duty-order')->whereIn('action', ['view', 'dispatch', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental-dispatch')->whereIn('action', ['view', 'dispatch']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental-storefront')->whereIn('action', ['view', 'manage_storefront']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')
@@ -194,6 +195,7 @@ class SystemRolePermissions
                         ->orWhere(fn ($q) => $q->where('module', 'rental-corporate')->whereIn('action', ['view', 'bookings', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental-duty-order')->whereIn('action', ['view', 'dispatch', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental-dispatch')->whereIn('action', ['view', 'dispatch']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental-storefront')->whereIn('action', ['view', 'manage_storefront']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')
@@ -206,6 +208,7 @@ class SystemRolePermissions
                         ->orWhere(fn ($q) => $q->where('module', 'rental-corporate')->whereIn('action', ['view', 'bookings', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental-duty-order')->whereIn('action', ['view', 'dispatch', 'finance']))
                         ->orWhere(fn ($q) => $q->where('module', 'rental-dispatch')->whereIn('action', ['view', 'dispatch']))
+                        ->orWhere(fn ($q) => $q->where('module', 'rental-storefront')->whereIn('action', ['view', 'manage_storefront']))
                         ->orWhere(fn ($q) => $q->where('module', 'media')->whereIn('action', ['view', 'create']));
                 })
                 ->pluck('id')
