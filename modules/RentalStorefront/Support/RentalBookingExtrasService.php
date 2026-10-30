@@ -5,6 +5,8 @@ namespace Modules\RentalStorefront\Support;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalInsurancePackage;
+use Modules\Rental\Support\RentalAddonCatalog;
+use Modules\Rental\Support\RentalInvoiceService;
 
 /**
  * Applies one-way fee and insurance package charges when a rental is confirmed.

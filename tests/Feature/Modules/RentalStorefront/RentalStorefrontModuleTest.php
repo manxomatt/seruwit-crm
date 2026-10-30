@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\RentalStorefront;
 
+use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use App\Support\SystemRolePermissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,18 @@ class RentalStorefrontModuleTest extends TestCase
         $this->setUpRoles();
         SystemRolePermissions::seedRolesForModule('rental-storefront');
         SystemRolePermissions::syncAllSystemRoles();
+
+        Setting::query()->updateOrCreate(
+            ['key' => 'rental.passenger_booking_enabled'],
+            [
+                'group' => 'rental',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Passenger rental',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+        );
     }
 
     public function test_module_is_registered_with_correct_properties(): void
@@ -53,7 +66,7 @@ class RentalStorefrontModuleTest extends TestCase
 
     public function test_customer_portal_login_page_is_accessible_to_guests(): void
     {
-        $response = $this->get(route('book.rental.portal.login'));
+        $response = $this->get(route('book.rental.login'));
 
         $response->assertOk();
     }
@@ -61,11 +74,14 @@ class RentalStorefrontModuleTest extends TestCase
     public function test_public_vehicle_detail_page_loads_for_active_vehicle(): void
     {
         $vehicle = Vehicle::factory()->create([
-            'status' => Vehicle::STATUS_AVAILABLE,
-            'is_active' => true,
+            'status' => Vehicle::STATUS_ACTIVE,
         ]);
 
-        $response = $this->get(route('book.rental.vehicle', $vehicle->id));
+        $response = $this->get(route('book.rental.vehicles.show', [
+            'vehicle' => $vehicle->id,
+            'start_date' => now()->addDay()->format('Y-m-d 09:00'),
+            'end_date' => now()->addDays(2)->format('Y-m-d 09:00'),
+        ]));
 
         $response->assertOk();
     }

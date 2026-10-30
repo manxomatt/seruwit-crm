@@ -12,6 +12,16 @@ use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
+use Modules\Rental\Support\MobilePassengerPartnerResolver;
+use Modules\Rental\Support\RentalAccountingService;
+use Modules\Rental\Support\RentalBookingPolicy;
+use Modules\Rental\Support\RentalConfirmationService;
+use Modules\Rental\Support\RentalEligibility;
+use Modules\Rental\Support\RentalGeneralSettings;
+use Modules\Rental\Support\RentalLocationHydrator;
+use Modules\Rental\Support\RentalMailer;
+use Modules\Rental\Support\RentalPriceEngine;
+use Modules\Rental\Support\RentalRateResolver;
 
 /**
  * Passenger-facing rental booking façade over staff domain services.

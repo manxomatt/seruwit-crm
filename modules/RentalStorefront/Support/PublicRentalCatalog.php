@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Lang;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Support\RentalRateResolver;
 
 /**
  * Public storefront grouping and labels so customers see a model, not an internal unit code.

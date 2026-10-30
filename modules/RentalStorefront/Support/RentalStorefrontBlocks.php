@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
+use Modules\Rental\Support\RentalRateResolver;
+use Modules\Rental\Support\RentalTestimonials;
 use Throwable;
 
 /**
