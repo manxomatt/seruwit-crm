@@ -268,12 +268,12 @@ class RentalUsageCalendar
      */
     private function resolveDayStatus(Vehicle $vehicle, Collection $dayBookings, array $shopHeldVehicleIds, bool $hasBlackout = false): string
     {
-        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
-            return 'unavailable';
+        if ($hasBlackout || $vehicle->status === Vehicle::STATUS_MAINTENANCE) {
+            return 'maintenance';
         }
 
-        if ($hasBlackout) {
-            return 'maintenance';
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
+            return 'unavailable';
         }
 
         if ($dayBookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_ACTIVE)) {
@@ -296,12 +296,12 @@ class RentalUsageCalendar
      */
     private function resolvePeriodAvailability(Vehicle $vehicle, Collection $bookings, array $shopHeldVehicleIds, bool $hasBlackout = false): string
     {
-        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
-            return 'unavailable';
+        if ($hasBlackout || $vehicle->status === Vehicle::STATUS_MAINTENANCE) {
+            return 'maintenance';
         }
 
-        if ($hasBlackout) {
-            return 'maintenance';
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE || isset($shopHeldVehicleIds[$vehicle->id])) {
+            return 'unavailable';
         }
 
         if ($bookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_ACTIVE)) {

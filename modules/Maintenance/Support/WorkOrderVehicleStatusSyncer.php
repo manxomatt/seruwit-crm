@@ -42,6 +42,8 @@ class WorkOrderVehicleStatusSyncer
         if ($workOrder->status === WorkOrder::STATUS_COMPLETED && $originalStatus !== WorkOrder::STATUS_COMPLETED) {
             self::touchSchedules($workOrder);
         }
+
+        self::syncRentalBlackouts($workOrder);
     }
 
     /**
@@ -144,5 +146,28 @@ class WorkOrderVehicleStatusSyncer
 
                 $schedule->recalculateNextService();
             });
+    }
+
+    private static function syncRentalBlackouts(WorkOrder $workOrder): void
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('rental_maintenance_blackouts')) {
+            return;
+        }
+
+        $newBlackoutStatus = match ($workOrder->status) {
+            WorkOrder::STATUS_IN_PROGRESS => 'in_progress',
+            WorkOrder::STATUS_COMPLETED => 'completed',
+            WorkOrder::STATUS_CANCELLED => 'cancelled',
+            default => 'scheduled',
+        };
+
+        \Illuminate\Support\Facades\DB::table('rental_maintenance_blackouts')
+            ->where('work_order_id', $workOrder->id)
+            ->update([
+                'status' => $newBlackoutStatus,
+                'completed_at' => $workOrder->status === WorkOrder::STATUS_COMPLETED ? now() : null,
+                'actual_cost' => (float) ($workOrder->actual_labor_cost + $workOrder->actual_parts_cost),
+                'updated_at' => now(),
+            ]);
     }
 }

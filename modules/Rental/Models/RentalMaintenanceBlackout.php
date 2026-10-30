@@ -157,24 +157,56 @@ class RentalMaintenanceBlackout extends Model
      */
     public static function findOverlappingBlackout(int $vehicleId, string $start, string $end, ?int $excludingId = null): ?self
     {
-        if (! Schema::hasTable('rental_maintenance_blackouts')) {
-            return null;
+        if (Schema::hasTable('rental_maintenance_blackouts')) {
+            self::ensurePreventRentalsColumn();
+
+            $query = static::query()
+                ->where('vehicle_id', $vehicleId)
+                ->whereIn('status', self::blockingStatuses())
+                ->where('start_date', '<=', $end)
+                ->where('end_date', '>=', $start)
+                ->when($excludingId, fn (Builder $q) => $q->where('id', '!=', $excludingId));
+
+            if (Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+                $query->where('prevent_rentals', true);
+            }
+
+            $blackout = $query->first();
+            if ($blackout) {
+                return $blackout;
+            }
         }
 
-        self::ensurePreventRentalsColumn();
+        // Bridge active WorkOrders from Maintenance module if Maintenance is installed
+        if (class_exists(WorkOrder::class) && Schema::hasTable('work_orders')) {
+            $wo = WorkOrder::query()
+                ->where('vehicle_id', $vehicleId)
+                ->whereIn('status', [WorkOrder::STATUS_APPROVED, WorkOrder::STATUS_IN_PROGRESS])
+                ->where(function (Builder $q) use ($start, $end) {
+                    $q->where(function (Builder $sq) use ($start, $end) {
+                        $sq->whereNotNull('scheduled_date')
+                            ->where('scheduled_date', '<=', $end)
+                            ->where('scheduled_date', '>=', $start);
+                    })->orWhere('status', WorkOrder::STATUS_IN_PROGRESS);
+                })
+                ->first();
 
-        $query = static::query()
-            ->where('vehicle_id', $vehicleId)
-            ->whereIn('status', self::blockingStatuses())
-            ->where('start_date', '<=', $end)
-            ->where('end_date', '>=', $start)
-            ->when($excludingId, fn (Builder $q) => $q->where('id', '!=', $excludingId));
+            if ($wo) {
+                $stub = new static;
+                $stub->id = 0;
+                $stub->code = $wo->reference_number;
+                $stub->vehicle_id = $wo->vehicle_id;
+                $stub->reason = "Work Order [{$wo->reference_number}]: {$wo->title}";
+                $stub->start_date = $wo->started_at?->toDateString() ?? $wo->scheduled_date ?? $start;
+                $stub->end_date = $wo->completed_at?->toDateString() ?? $end;
+                $stub->status = $wo->status === WorkOrder::STATUS_IN_PROGRESS ? self::STATUS_IN_PROGRESS : self::STATUS_SCHEDULED;
+                $stub->work_order_id = $wo->id;
 
-        if (Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
-            $query->where('prevent_rentals', true);
+                return $stub;
+            }
         }
 
-        return $query->first();
+        return null;
     }
 
     /**
@@ -184,24 +216,63 @@ class RentalMaintenanceBlackout extends Model
      */
     public static function activeBlackoutsBetween(string $start, string $end): Collection
     {
-        if (! Schema::hasTable('rental_maintenance_blackouts')) {
-            return collect();
+        $result = collect();
+
+        if (Schema::hasTable('rental_maintenance_blackouts')) {
+            self::ensurePreventRentalsColumn();
+
+            $query = static::query()
+                ->whereIn('status', self::blockingStatuses())
+                ->where('start_date', '<=', $end)
+                ->where('end_date', '>=', $start)
+                ->with(['vehicle:id,name,plate_number', 'vendorPartner:id,name'])
+                ->orderBy('start_date');
+
+            if (Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
+                $query->where('prevent_rentals', true);
+            }
+
+            $result = $query->get()->groupBy('vehicle_id');
         }
 
-        self::ensurePreventRentalsColumn();
+        // Bridge active WorkOrders from Maintenance module if not already represented in blackouts
+        if (class_exists(WorkOrder::class) && Schema::hasTable('work_orders')) {
+            $knownWoIds = $result->flatten()->pluck('work_order_id')->filter()->all();
 
-        $query = static::query()
-            ->whereIn('status', self::blockingStatuses())
-            ->where('start_date', '<=', $end)
-            ->where('end_date', '>=', $start)
-            ->with(['vehicle:id,name,plate_number', 'vendorPartner:id,name'])
-            ->orderBy('start_date');
+            $workOrders = WorkOrder::query()
+                ->with(['vehicle:id,name,plate_number'])
+                ->whereIn('status', [WorkOrder::STATUS_APPROVED, WorkOrder::STATUS_IN_PROGRESS])
+                ->when($knownWoIds !== [], fn (Builder $q) => $q->whereNotIn('id', $knownWoIds))
+                ->where(function (Builder $q) use ($start, $end) {
+                    $q->where(function (Builder $sq) use ($start, $end) {
+                        $sq->whereNotNull('scheduled_date')
+                            ->where('scheduled_date', '<=', $end)
+                            ->where('scheduled_date', '>=', $start);
+                    })->orWhere('status', WorkOrder::STATUS_IN_PROGRESS);
+                })
+                ->get();
 
-        if (Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals')) {
-            $query->where('prevent_rentals', true);
+            foreach ($workOrders as $wo) {
+                $stub = new static;
+                $stub->id = 0;
+                $stub->code = $wo->reference_number;
+                $stub->vehicle_id = $wo->vehicle_id;
+                $stub->reason = "Work Order [{$wo->reference_number}]: {$wo->title}";
+                $stub->start_date = $wo->started_at?->toDateString() ?? $wo->scheduled_date ?? $start;
+                $stub->end_date = $wo->completed_at?->toDateString() ?? $end;
+                $stub->status = $wo->status === WorkOrder::STATUS_IN_PROGRESS ? self::STATUS_IN_PROGRESS : self::STATUS_SCHEDULED;
+                $stub->work_order_id = $wo->id;
+                $stub->setRelation('vehicle', $wo->vehicle);
+
+                if (! $result->has($wo->vehicle_id)) {
+                    $result->put($wo->vehicle_id, collect([$stub]));
+                } else {
+                    $result->get($wo->vehicle_id)->push($stub);
+                }
+            }
         }
 
-        return $query->get()->groupBy('vehicle_id');
+        return $result;
     }
 
     /**

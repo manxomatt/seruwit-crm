@@ -5,6 +5,9 @@ namespace Tests\Feature\Modules\Rental;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\Models\MaintenanceCategory;
+use Modules\Maintenance\Models\WorkOrder;
+use Modules\Maintenance\Support\WorkOrderVehicleStatusSyncer;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalMaintenanceBlackout;
 use Modules\Rental\Support\RentalAvailabilityBoard;
@@ -166,5 +169,110 @@ class RentalMaintenanceBlackoutTest extends TestCase
 
         // After self-healing, prevent_rentals must be restored
         $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('rental_maintenance_blackouts', 'prevent_rentals'));
+    }
+
+    public function test_work_order_created_in_maintenance_module_blocks_rental_availability(): void
+    {
+        $vehicle = Vehicle::factory()->create(['name' => 'Fortuner VRZ', 'status' => Vehicle::STATUS_ACTIVE]);
+        $category = MaintenanceCategory::firstOrCreate(['key' => 'general'], ['name' => 'General Maintenance']);
+
+        $wo = WorkOrder::create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'reference_number' => 'WO-TEST-001',
+            'title' => 'Overhaul Mesin & Transmisi',
+            'status' => WorkOrder::STATUS_IN_PROGRESS,
+            'priority' => WorkOrder::PRIORITY_HIGH,
+            'type' => WorkOrder::TYPE_CORRECTIVE,
+            'scheduled_date' => '2026-10-25',
+        ]);
+
+        $blackout = RentalMaintenanceBlackout::findOverlappingBlackout($vehicle->id, '2026-10-25', '2026-10-28');
+        $this->assertNotNull($blackout);
+        $this->assertEquals($wo->id, $blackout->work_order_id);
+        $this->assertStringContainsString('WO-TEST-001', $blackout->reason);
+
+        // Verification in Rental booking availability reasons
+        $reasons = Rental::vehicleAvailabilityReasons($vehicle, '2026-10-25', '2026-10-28');
+        $this->assertNotEmpty($reasons);
+        $this->assertTrue(collect($reasons)->contains(fn ($r) => str_contains($r, 'WO-TEST-001')));
+    }
+
+    public function test_work_order_appears_in_rental_availability_board_and_calendar(): void
+    {
+        Carbon::setTestNow('2026-10-25');
+
+        $vehicle = Vehicle::factory()->create(['name' => 'HiAce Premio', 'status' => Vehicle::STATUS_ACTIVE]);
+        $category = MaintenanceCategory::firstOrCreate(['key' => 'general'], ['name' => 'General Maintenance']);
+
+        $wo = WorkOrder::create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'reference_number' => 'WO-TEST-002',
+            'title' => 'Ganti Shockbreaker Depan',
+            'status' => WorkOrder::STATUS_IN_PROGRESS,
+            'priority' => WorkOrder::PRIORITY_NORMAL,
+            'type' => WorkOrder::TYPE_CORRECTIVE,
+            'scheduled_date' => '2026-10-25',
+        ]);
+
+        /** @var RentalAvailabilityBoard $board */
+        $board = app(RentalAvailabilityBoard::class);
+        $avail = $board->build('2026-10-25', '2026-10-27');
+
+        $this->assertGreaterThanOrEqual(1, $avail['counts']['maintenance']);
+        $vehicleRow = collect($avail['vehicles'])->firstWhere('id', $vehicle->id);
+        $this->assertNotNull($vehicleRow);
+        $this->assertEquals('maintenance', $vehicleRow['availability']);
+        $this->assertNotNull($vehicleRow['blackout']);
+        $this->assertStringContainsString('WO-TEST-002', $vehicleRow['blackout']['reason']);
+
+        /** @var RentalUsageCalendar $calendar */
+        $calendar = app(RentalUsageCalendar::class);
+        $cal = $calendar->build('week', '2026-10-25');
+
+        $calVehicle = collect($cal['vehicles'])->firstWhere('id', $vehicle->id);
+        $this->assertNotNull($calVehicle);
+        $this->assertEquals('maintenance', $calVehicle['cells']['2026-10-25']['status']);
+    }
+
+    public function test_work_order_status_sync_updates_linked_rental_blackout(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_MAINTENANCE]);
+        $category = MaintenanceCategory::firstOrCreate(['key' => 'general'], ['name' => 'General Maintenance']);
+
+        $wo = WorkOrder::create([
+            'vehicle_id' => $vehicle->id,
+            'category_id' => $category->id,
+            'reference_number' => 'WO-TEST-003',
+            'title' => 'Servis Rem',
+            'status' => WorkOrder::STATUS_IN_PROGRESS,
+            'priority' => WorkOrder::PRIORITY_NORMAL,
+            'type' => WorkOrder::TYPE_CORRECTIVE,
+            'scheduled_date' => '2026-10-25',
+        ]);
+
+        $blackout = RentalMaintenanceBlackout::create([
+            'code' => 'MNT-202610-9999',
+            'vehicle_id' => $vehicle->id,
+            'work_order_id' => $wo->id,
+            'reason' => 'Servis Rem Berkala',
+            'start_date' => '2026-10-25',
+            'end_date' => '2026-10-26',
+            'status' => RentalMaintenanceBlackout::STATUS_IN_PROGRESS,
+        ]);
+
+        // Complete the WorkOrder via Syncer
+        $wo->status = WorkOrder::STATUS_COMPLETED;
+        $wo->actual_labor_cost = 250000;
+        $wo->actual_parts_cost = 150000;
+        $wo->save();
+
+        WorkOrderVehicleStatusSyncer::sync($wo, WorkOrder::STATUS_IN_PROGRESS);
+
+        $blackout->refresh();
+        $this->assertEquals(RentalMaintenanceBlackout::STATUS_COMPLETED, $blackout->status);
+        $this->assertEquals(400000, $blackout->actual_cost);
+        $this->assertNotNull($blackout->completed_at);
     }
 }
