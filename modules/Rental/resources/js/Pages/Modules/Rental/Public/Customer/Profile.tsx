@@ -1,3 +1,3 @@
-import Profile from '../../../../../../../RentalStorefront/resources/js/Pages/Modules/RentalStorefront/Customer/Profile';
+import Profile from '../../../../../../../../RentalStorefront/resources/js/Pages/Modules/RentalStorefront/Customer/Profile';
 
 export default Profile;

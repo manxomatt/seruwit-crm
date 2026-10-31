@@ -4,7 +4,25 @@ import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import axios from 'axios';
-import type { RateTier, Vehicle } from '../Pages/Modules/Rental/Rates/shared';
+
+export interface RateTier {
+    id?: number;
+    tier_type?: 'period_volume' | 'loyalty_count';
+    min_threshold?: string | number;
+    max_threshold?: string | number;
+    rate_per_period?: string | number;
+    discount_percent?: string | number;
+    discount_flat?: string | number;
+    priority?: string | number;
+    is_active?: boolean;
+}
+
+export interface Vehicle {
+    id: number;
+    name: string;
+    plate_number?: string;
+    type?: string;
+}
 
 export interface ExtractedRateData {
     name?: string;

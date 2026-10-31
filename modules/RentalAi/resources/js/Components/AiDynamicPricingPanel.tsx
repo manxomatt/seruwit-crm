@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { router } from '@inertiajs/react';
-import { csrfToken } from '../ReservationWizard/types';
+
+function csrfToken(): string {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+}
 
 export interface PricingRecommendation {
     id: string;
