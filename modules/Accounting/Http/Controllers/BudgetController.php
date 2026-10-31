@@ -57,7 +57,9 @@ class BudgetController extends Controller
             'total_actual' => $report['total_actual'] ?? 0,
             'total_variance' => $report['total_variance'] ?? 0,
             'can' => [
-                'manage' => auth()->user()?->hasPermissionFor('accounting', 'manage_budget') ?? false,
+                'manage' => (auth()->user()?->hasPermissionFor('accounting', 'manage_budget') ?? false)
+                    || (auth()->user()?->hasPermissionFor('budgeting', 'manage_budget') ?? false)
+                    || (auth()->user()?->hasPermissionFor('budgeting', 'create') ?? false),
             ],
         ]);
     }

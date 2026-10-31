@@ -63,8 +63,13 @@ class VerticalPacks
             ],
             self::FINANCE => [
                 'label' => 'Finance Suite',
-                'description' => 'Accounting (core), invoicing, receivables, purchasing, payables, billing + demo data. Billing also brings orders/transportation/fleet.',
+                'description' => 'Accounting (core), cash & bank, tax, fixed assets, budgeting, expenses & petty cash, invoicing, receivables, purchasing, payables, billing + demo data.',
                 'modules' => [
+                    'cash-bank',
+                    'tax',
+                    'fixed-assets',
+                    'budgeting',
+                    'expenses',
                     'invoicing',
                     'receivables',
                     'purchasing',

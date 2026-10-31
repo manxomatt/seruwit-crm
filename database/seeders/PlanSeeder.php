@@ -83,7 +83,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Gratis selamanya untuk rental mobil pemula dengan armada hingga 2 unit.',
                 'badge' => 'Gratis Selamanya',
                 'is_popular' => false,
-                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance', 'scoring', 'tracking'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'rental', 'invoicing', 'receivables', 'cash-bank', 'expenses', 'document', 'maintenance', 'scoring', 'tracking'],
                 'limits' => [
                     'max_vehicles' => 2,
                     'max_users' => 1,
@@ -112,7 +112,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Solusi ideal untuk bisnis rental mobil rintisan dengan armada hingga 5 unit.',
                 'badge' => 'Paling Hemat',
                 'is_popular' => false,
-                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance', 'scoring', 'tracking'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'rental', 'invoicing', 'receivables', 'cash-bank', 'expenses', 'tax', 'document', 'maintenance', 'scoring', 'tracking'],
                 'limits' => [
                     'max_vehicles' => 5,
                     'max_users' => 2,
@@ -145,9 +145,13 @@ class PlanSeeder extends Seeder
                 'modules' => [
                     'approvals',
                     'bi',
+                    'budgeting',
                     'carousels',
+                    'cash-bank',
                     'document',
                     'driver',
+                    'expenses',
+                    'fixed-assets',
                     'fleet',
                     'fleet-base',
                     'fleet-settlement',
@@ -161,6 +165,7 @@ class PlanSeeder extends Seeder
                     'rental',
                     'scoring',
                     'shuttle',
+                    'tax',
                     'tracking',
                 ],
                 'limits' => [
@@ -196,9 +201,13 @@ class PlanSeeder extends Seeder
                 'modules' => [
                     'approvals',
                     'bi',
+                    'budgeting',
                     'carousels',
+                    'cash-bank',
                     'document',
                     'driver',
+                    'expenses',
+                    'fixed-assets',
                     'fleet',
                     'fleet-base',
                     'fleet-settlement',
@@ -212,6 +221,7 @@ class PlanSeeder extends Seeder
                     'rental',
                     'scoring',
                     'shuttle',
+                    'tax',
                     'tracking',
                 ],
                 'limits' => [

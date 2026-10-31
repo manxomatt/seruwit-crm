@@ -53,7 +53,9 @@ class TaxPolicyController extends Controller
                 'enabled' => $default['enabled'],
             ],
             'can' => [
-                'manage' => auth()->user()?->hasPermissionFor('accounting', 'manage_tax') ?? false,
+                'manage' => (auth()->user()?->hasPermissionFor('accounting', 'manage_tax') ?? false)
+                    || (auth()->user()?->hasPermissionFor('tax', 'manage_tax') ?? false)
+                    || (auth()->user()?->hasPermissionFor('tax', 'update') ?? false),
             ],
         ]);
     }

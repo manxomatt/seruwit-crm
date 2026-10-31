@@ -66,7 +66,9 @@ class BankReconciliationController extends Controller
                 'company_bank_account_id' => $accountId,
             ],
             'can' => [
-                'bank' => $user?->hasPermissionFor('accounting', 'bank') ?? false,
+                'bank' => ($user?->hasPermissionFor('accounting', 'bank') ?? false)
+                    || ($user?->hasPermissionFor('cash-bank', 'bank') ?? false)
+                    || ($user?->hasPermissionFor('cash-bank', 'reconcile') ?? false),
             ],
         ]);
     }
@@ -147,7 +149,9 @@ class BankReconciliationController extends Controller
             'counts' => $counts,
             'csvHelp' => __('accounting.recon.csv_help'),
             'can' => [
-                'bank' => request()->user()?->hasPermissionFor('accounting', 'bank') ?? false,
+                'bank' => (request()->user()?->hasPermissionFor('accounting', 'bank') ?? false)
+                    || (request()->user()?->hasPermissionFor('cash-bank', 'bank') ?? false)
+                    || (request()->user()?->hasPermissionFor('cash-bank', 'reconcile') ?? false),
             ],
         ]);
     }

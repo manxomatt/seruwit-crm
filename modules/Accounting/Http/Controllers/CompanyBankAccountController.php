@@ -59,7 +59,9 @@ class CompanyBankAccountController extends Controller
             'methods' => PaymentMethodAccountMap::METHODS,
             'maps' => $maps,
             'can' => [
-                'bank' => auth()->user()?->hasPermissionFor('accounting', 'bank') ?? false,
+                'bank' => (auth()->user()?->hasPermissionFor('accounting', 'bank') ?? false)
+                    || (auth()->user()?->hasPermissionFor('cash-bank', 'bank') ?? false)
+                    || (auth()->user()?->hasPermissionFor('cash-bank', 'create') ?? false),
             ],
         ]);
     }

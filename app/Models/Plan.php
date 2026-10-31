@@ -32,9 +32,13 @@ class Plan extends Model
     public static function trialModuleKeys(): array
     {
         return [
+            'budgeting',
             'carousels',
+            'cash-bank',
             'document',
             'driver',
+            'expenses',
+            'fixed-assets',
             'fleet',
             'fleet-base',
             'fleet-settlement',
@@ -53,6 +57,7 @@ class Plan extends Model
             'rental-ai',
             'scoring',
             'shuttle',
+            'tax',
             'tracking',
         ];
     }

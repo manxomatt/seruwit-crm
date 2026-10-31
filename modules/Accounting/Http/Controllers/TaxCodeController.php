@@ -35,7 +35,9 @@ class TaxCodeController extends Controller
         return inertia('Modules/Accounting/TaxCodes/Index', [
             'codes' => $codes,
             'can' => [
-                'manage' => auth()->user()?->hasPermissionFor('accounting', 'manage_tax') ?? false,
+                'manage' => (auth()->user()?->hasPermissionFor('accounting', 'manage_tax') ?? false)
+                    || (auth()->user()?->hasPermissionFor('tax', 'manage_tax') ?? false)
+                    || (auth()->user()?->hasPermissionFor('tax', 'create') ?? false),
             ],
         ]);
     }

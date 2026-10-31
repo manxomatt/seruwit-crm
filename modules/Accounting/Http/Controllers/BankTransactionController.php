@@ -84,7 +84,9 @@ class BankTransactionController extends Controller
                 'to' => $request->string('to')->toString() ?: null,
             ],
             'can' => [
-                'bank' => $user?->hasPermissionFor('accounting', 'bank') ?? false,
+                'bank' => ($user?->hasPermissionFor('accounting', 'bank') ?? false)
+                    || ($user?->hasPermissionFor('cash-bank', 'bank') ?? false)
+                    || ($user?->hasPermissionFor('cash-bank', 'create') ?? false),
             ],
         ]);
     }

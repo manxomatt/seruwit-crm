@@ -73,6 +73,11 @@ class Account extends Model
         return $this->hasMany(JournalLine::class);
     }
 
+    public static function findByCode(string $code): ?self
+    {
+        return static::query()->where('code', $code)->first();
+    }
+
     public static function defaultNormalBalance(string $type): string
     {
         return match ($type) {

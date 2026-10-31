@@ -817,6 +817,24 @@ class AccountingBridge
         );
     }
 
+    public static function expensePosted(\Modules\Expenses\Models\ExpenseClaim $claim): ?\Modules\Expenses\Models\ExpenseClaim
+    {
+        if (! self::available() || ! class_exists(\Modules\Expenses\Support\ExpenseService::class)) {
+            return null;
+        }
+
+        return app(\Modules\Expenses\Support\ExpenseService::class)->post($claim);
+    }
+
+    public static function cashAdvanceDisbursed(\Modules\Expenses\Models\CashAdvance $advance): ?\Modules\Expenses\Models\CashAdvance
+    {
+        if (! self::available() || ! class_exists(\Modules\Expenses\Support\CashAdvanceService::class)) {
+            return null;
+        }
+
+        return app(\Modules\Expenses\Support\CashAdvanceService::class)->disburse($advance);
+    }
+
     private static function invoiceHasRentalCharges(Invoice $invoice): bool
     {
         $invoice->loadMissing('lines');

@@ -47,7 +47,9 @@ class FixedAssetController extends Controller
             'assets' => $assets,
             'periods' => FiscalPeriod::query()->orderByDesc('starts_on')->limit(24)->get(['id', 'name']),
             'can' => [
-                'manage' => auth()->user()?->hasPermissionFor('accounting', 'manage_assets') ?? false,
+                'manage' => (auth()->user()?->hasPermissionFor('accounting', 'manage_assets') ?? false)
+                    || (auth()->user()?->hasPermissionFor('fixed-assets', 'manage_assets') ?? false)
+                    || (auth()->user()?->hasPermissionFor('fixed-assets', 'create') ?? false),
             ],
         ]);
     }
