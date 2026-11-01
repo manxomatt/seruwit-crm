@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Maintenance\Support\WorkOrderShopHold;
@@ -546,20 +547,22 @@ class Rental extends Model
             'deposit_settled_at' => now(),
         ];
 
-        if (! empty($amounts['deposit_refund_proof_path'])) {
-            $updates['deposit_refund_proof_path'] = $amounts['deposit_refund_proof_path'];
-            $updates['deposit_refund_status'] = self::REFUND_STATUS_REFUNDED;
-            $updates['deposit_refunded_at'] = now();
-        } elseif ($refunded <= 0) {
-            $updates['deposit_refund_status'] = self::REFUND_STATUS_FORFEITED;
-        } else {
-            $updates['deposit_refund_status'] = filled($this->deposit_refund_bank_name)
-                ? self::REFUND_STATUS_APPROVED
-                : self::REFUND_STATUS_PENDING_BANK;
-        }
+        if (Schema::hasColumn('rentals', 'deposit_refund_status')) {
+            if (! empty($amounts['deposit_refund_proof_path'])) {
+                $updates['deposit_refund_proof_path'] = $amounts['deposit_refund_proof_path'];
+                $updates['deposit_refund_status'] = self::REFUND_STATUS_REFUNDED;
+                $updates['deposit_refunded_at'] = now();
+            } elseif ($refunded <= 0) {
+                $updates['deposit_refund_status'] = self::REFUND_STATUS_FORFEITED;
+            } else {
+                $updates['deposit_refund_status'] = filled($this->deposit_refund_bank_name)
+                    ? self::REFUND_STATUS_APPROVED
+                    : self::REFUND_STATUS_PENDING_BANK;
+            }
 
-        if (array_key_exists('deposit_refund_notes', $amounts)) {
-            $updates['deposit_refund_notes'] = $amounts['deposit_refund_notes'];
+            if (array_key_exists('deposit_refund_notes', $amounts)) {
+                $updates['deposit_refund_notes'] = $amounts['deposit_refund_notes'];
+            }
         }
 
         $this->update($updates);
