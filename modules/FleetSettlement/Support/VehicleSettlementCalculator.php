@@ -25,11 +25,17 @@ class VehicleSettlementCalculator
 
         $rentals = $this->getRentalsForVehicle($vehicle->id, $startDate, $endDate);
         $maintenanceLogs = $this->getMaintenanceLogsForVehicle($vehicle->id, $startDate, $endDate);
+        $complianceRenewals = $this->getComplianceRenewalsForVehicle($vehicle->id, $startDate, $endDate);
 
         $totalRevenue = (float) $rentals->sum('total_amount');
         $totalRentalDays = (int) $rentals->sum('days');
         $totalOrders = $rentals->count();
-        $totalMaintenanceCost = (float) $maintenanceLogs->sum('cost');
+        $baseMaintenanceCost = (float) $maintenanceLogs->sum('cost');
+        $complianceCost = (float) $complianceRenewals->sum('cost');
+        $complianceDeduction = $vehicle->ownership_type === 'owned'
+            ? 0.0
+            : round((float) $complianceRenewals->sum('owner_deduction'), 2);
+        $totalMaintenanceCost = round($baseMaintenanceCost + $complianceCost, 2);
 
         $scheme = $vehicle->settlement_scheme ?? 'revenue_share';
         $ownerPct = (float) ($vehicle->revenue_share_owner_pct ?? 70);
@@ -66,14 +72,14 @@ class VehicleSettlementCalculator
             $maintenanceDeduction = 0.0;
             $maintenancePayerLabel = 'Milik Sendiri (0% dipotong)';
         } elseif ($payer === 'owner') {
-            $maintenanceDeduction = $totalMaintenanceCost;
+            $maintenanceDeduction = round($baseMaintenanceCost + $complianceDeduction, 2);
             $maintenancePayerLabel = 'Ditanggung Pemilik (100% dipotong dari hak bagi hasil)';
         } elseif ($payer === 'shared') {
-            $maintenanceDeduction = round($totalMaintenanceCost * 0.5, 2);
+            $maintenanceDeduction = round(($baseMaintenanceCost * 0.5) + $complianceDeduction, 2);
             $maintenancePayerLabel = 'Bagi Dua / 50:50 (50% dipotong dari hak bagi hasil)';
         } else {
-            // tenant pays
-            $maintenanceDeduction = 0.0;
+            // tenant pays maintenance, but per-document compliance payer (owner/shared) still applies
+            $maintenanceDeduction = $complianceDeduction;
             $maintenancePayerLabel = 'Ditanggung Rental (0% dipotong dari hak bagi hasil)';
         }
 
@@ -138,7 +144,8 @@ class VehicleSettlementCalculator
             'metrics' => $summaryData,
             'breakdown' => [
                 'rentals' => $rentals->values()->all(),
-                'maintenance_logs' => $maintenanceLogs->values()->all(),
+                'maintenance_logs' => $maintenanceLogs->merge($complianceRenewals)->values()->all(),
+                'compliance_renewals' => $complianceRenewals->values()->all(),
             ],
         ];
     }
@@ -302,5 +309,48 @@ class VehicleSettlementCalculator
             ]);
 
         return $items->merge($localLogs);
+    }
+
+    /**
+     * Get vehicle document/compliance renewals (STNK, KIR, Insurance) in range.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function getComplianceRenewalsForVehicle(int $vehicleId, Carbon $startDate, Carbon $endDate): Collection
+    {
+        if (! class_exists(\Modules\FleetCompliance\Models\VehicleComplianceRenewal::class)
+            || ! \Illuminate\Support\Facades\Schema::hasTable('vehicle_compliance_renewals')) {
+            return collect();
+        }
+
+        $startDateStr = $startDate->toDateString();
+        $endDateStr = $endDate->toDateString();
+
+        return \Modules\FleetCompliance\Models\VehicleComplianceRenewal::query()
+            ->where('vehicle_id', $vehicleId)
+            ->whereBetween('renewal_date', [$startDateStr, $endDateStr])
+            ->where('cost', '>', 0)
+            ->get()
+            ->map(function ($renewal): array {
+                $cost = round((float) $renewal->cost, 2);
+                $payer = (string) ($renewal->payer ?? 'tenant');
+                $ownerDeduction = match ($payer) {
+                    'owner' => $cost,
+                    'shared' => round($cost * 0.5, 2),
+                    default => 0.0,
+                };
+
+                return [
+                    'id' => $renewal->id,
+                    'source' => 'compliance_renewal',
+                    'reference' => $renewal->reference_number ?: "DOC-{$renewal->id}",
+                    'date' => $renewal->renewal_date?->toDateString(),
+                    'title' => 'Perpanjangan Dokumen ('.strtoupper((string) $renewal->document_type).')',
+                    'status' => 'completed',
+                    'payer' => $payer,
+                    'cost' => $cost,
+                    'owner_deduction' => $ownerDeduction,
+                ];
+            });
     }
 }

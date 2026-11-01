@@ -126,6 +126,34 @@ class ModuleRegistry
                 'description' => 'Kontrak sewa korporat B2B, limit kredit, SLA penggantian unit, dan konsolidasi invoice bulanan.',
                 'requires' => ['rental', 'partners', 'invoicing'],
             ],
+            'accounting-reconciliation' => [
+                'key' => 'accounting-reconciliation',
+                'parent' => 'accounting',
+                'label' => 'Accounting — Rekonsiliasi Rekening Koran & Kas/Bank',
+                'description' => 'Impor mutasi rekening koran CSV, pencocokan otomatis/manual transaksi bank, dan penyelesaian selisih.',
+                'requires' => ['accounting'],
+            ],
+            'accounting-tax' => [
+                'key' => 'accounting-tax',
+                'parent' => 'accounting',
+                'label' => 'Accounting — Pajak (PPN, PPh/WHT & Register Pajak)',
+                'description' => 'Manajemen tarif PPN 11%/12%, pemotongan PPh 23/4(2), kebijakan pajak per kanal, dan ekspor register pajak.',
+                'requires' => ['accounting'],
+            ],
+            'accounting-assets' => [
+                'key' => 'accounting-assets',
+                'parent' => 'accounting',
+                'label' => 'Accounting — Aset Tetap & Penyusutan Bulanan',
+                'description' => 'Register aset tetap, kalkulasi nilai buku, dan posting otomatis jurnal penyusutan bulanan.',
+                'requires' => ['accounting'],
+            ],
+            'accounting-budgets' => [
+                'key' => 'accounting-budgets',
+                'parent' => 'accounting',
+                'label' => 'Accounting — Anggaran Fiskal (Budget vs Actual)',
+                'description' => 'Penyusunan anggaran tahunan per akun COA dan laporan varians realisasi anggaran vs aktual.',
+                'requires' => ['accounting'],
+            ],
         ];
     }
 

@@ -192,7 +192,7 @@ class FleetComplianceController extends Controller
         DB::transaction(function () use ($vehicle, $validated, $previousExpiresAt): void {
             $vehicle->save();
 
-            VehicleComplianceRenewal::create([
+            $renewal = VehicleComplianceRenewal::create([
                 'vehicle_id' => $vehicle->id,
                 'document_type' => $validated['document_type'],
                 'previous_expires_at' => $previousExpiresAt,
@@ -207,6 +207,10 @@ class FleetComplianceController extends Controller
             ]);
 
             $this->syncDocumentRecord($vehicle, $validated);
+
+            if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+                app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncComplianceRenewal($renewal->loadMissing('vehicle'));
+            }
         });
 
         return redirect()->back()->with('success', "Dokumen {$vehicle->plate_number} berhasil diperbarui.");

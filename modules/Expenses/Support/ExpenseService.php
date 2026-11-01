@@ -157,6 +157,7 @@ class ExpenseService
                     'debit' => round((float) $line->amount, 2),
                     'credit' => 0,
                     'partner_id' => $claim->partner_id,
+                    'vehicle_id' => $line->vehicle_id ?? $claim->vehicle_id,
                     'memo' => $line->description,
                 ];
             }
@@ -166,6 +167,7 @@ class ExpenseService
                 'debit' => 0,
                 'credit' => $totalCredit,
                 'partner_id' => $claim->partner_id,
+                'vehicle_id' => $claim->vehicle_id,
                 'memo' => "Pembayaran {$claim->code} - {$claim->title}",
             ];
 

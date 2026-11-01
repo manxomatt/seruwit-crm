@@ -91,6 +91,10 @@ class TripAllowanceController extends Controller
             'issued_at' => now(),
         ]);
 
+        if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+            app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncTripAllowanceIssued($allowance);
+        }
+
         return redirect()->route($this->getRoutePrefix().'.billing.allowances.show', $allowance)
             ->with('success', __('billing.messages.allowance_issued'));
     }
@@ -124,6 +128,10 @@ class TripAllowanceController extends Controller
     {
         if ($allowance->status !== TripAllowance::STATUS_ISSUED) {
             return back()->with('error', __('billing.messages.allowance_settled_locked'));
+        }
+
+        if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+            app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->voidTripAllowance($allowance);
         }
 
         $allowance->delete();
@@ -179,6 +187,10 @@ class TripAllowanceController extends Controller
             'status' => TripAllowance::STATUS_SETTLED,
             'settled_at' => now(),
         ]);
+
+        if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+            app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncTripAllowanceSettled($allowance->fresh(['trip', 'expenses']));
+        }
 
         $balance = $allowance->balance();
         $formatted = number_format(abs($balance), 0, ',', '.');

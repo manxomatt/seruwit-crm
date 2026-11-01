@@ -9,6 +9,18 @@ use Modules\Accounting\Models\Account;
 
 class ExpenseCategory extends Model
 {
+    public const CODE_FUEL = 'FUEL';
+
+    public const CODE_TOLL_PARKING = 'TOLL_PARKING';
+
+    public const CODE_MAINTENANCE = 'MAINTENANCE';
+
+    public const CODE_VEHICLE_DOC = 'VEHICLE_DOC';
+
+    public const CODE_MEAL_TRAVEL = 'MEAL_TRAVEL';
+
+    public const CODE_OFFICE_OPEX = 'OFFICE_OPEX';
+
     protected $table = 'expense_categories';
 
     /** @var list<string> */

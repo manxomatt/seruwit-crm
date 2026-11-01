@@ -159,6 +159,9 @@ class JournalService
                 'credit' => $credit,
                 'partner_id' => $line['partner_id'] ?? null,
                 'warehouse_id' => $line['warehouse_id'] ?? null,
+                'vehicle_id' => $line['vehicle_id'] ?? null,
+                'fleet_base_id' => $line['fleet_base_id'] ?? null,
+                'cost_center_id' => $line['cost_center_id'] ?? null,
                 'memo' => $line['memo'] ?? null,
                 'sort_order' => $index + 1,
             ]);

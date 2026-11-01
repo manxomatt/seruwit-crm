@@ -5,6 +5,7 @@ namespace Modules\Receivables\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
@@ -32,6 +33,8 @@ class GatewayCharge extends Model
     /** @var list<string> */
     protected $fillable = [
         'purpose',
+        'chargeable_type',
+        'chargeable_id',
         'rental_id',
         'invoice_id',
         'shuttle_booking_id',
@@ -66,6 +69,11 @@ class GatewayCharge extends Model
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
+    }
+
+    public function chargeable(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     /** @return BelongsTo<Invoice, $this> */

@@ -207,6 +207,10 @@ class AccountingModule implements ModuleContract
                     ->name('reports.wht-payable');
                 Route::get('/reports/travel-revenue', [TravelRevenueReportController::class, 'show'])
                     ->name('reports.travel-revenue');
+                Route::get('/reports/vehicle-profitability', [\Modules\Accounting\Http\Controllers\FleetProfitabilityController::class, 'vehicleIndex'])
+                    ->name('reports.vehicle-profitability');
+                Route::get('/reports/pool-profitability', [\Modules\Accounting\Http\Controllers\FleetProfitabilityController::class, 'poolIndex'])
+                    ->name('reports.pool-profitability');
 
                 Route::get('/fixed-assets', [FixedAssetController::class, 'index'])->name('fixed-assets.index');
                 Route::get('/fixed-assets/create', [FixedAssetController::class, 'create'])

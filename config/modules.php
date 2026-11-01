@@ -45,6 +45,8 @@ return [
         Modules\FixedAssets\FixedAssetsModule::class,
         Modules\Budgeting\BudgetingModule::class,
         Modules\Expenses\ExpensesModule::class,
+        Modules\DriverPayroll\DriverPayrollModule::class,
+        Modules\Collections\CollectionsModule::class,
         Modules\Approvals\ApprovalsModule::class,
         Modules\DriverScoring\DriverScoringModule::class,
         Modules\TradePromotions\TradePromotionsModule::class,

@@ -48,6 +48,7 @@ class Invoice extends Model
         'tax_code_id',
         'tax_code',
         'tax_calculation',
+        'revenue_role',
         'subtotal',
         'tax_amount',
         'total',
@@ -88,6 +89,38 @@ class Invoice extends Model
     public function isOpen(): bool
     {
         return in_array($this->status, [self::STATUS_ISSUED, self::STATUS_PARTIALLY_PAID], true);
+    }
+
+    public function resolveRevenueRole(): ?string
+    {
+        if (! empty($this->revenue_role)) {
+            return (string) $this->revenue_role;
+        }
+
+        $this->loadMissing('lines');
+
+        foreach ($this->lines as $line) {
+            if (! empty($line->revenue_role)) {
+                return (string) $line->revenue_role;
+            }
+        }
+
+        foreach ($this->lines as $line) {
+            $sourceType = (string) ($line->source_type ?? '');
+            if ($sourceType === '') {
+                continue;
+            }
+
+            if (str_contains($sourceType, 'RentalCharge') || str_ends_with($sourceType, '\\Rental') || $sourceType === 'rental') {
+                return 'rental_revenue';
+            }
+
+            if (str_contains($sourceType, 'ShuttleBooking') || $sourceType === 'shuttle_booking') {
+                return 'shuttle_revenue';
+            }
+        }
+
+        return null;
     }
 
     /**

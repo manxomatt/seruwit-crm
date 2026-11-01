@@ -42,10 +42,35 @@ class AccountingBridge
             'tax_code_id' => $invoice->tax_code_id ?? null,
         ];
 
-        if (self::invoiceHasRentalCharges($invoice)) {
+        $resolvedRole = method_exists($invoice, 'resolveRevenueRole')
+            ? $invoice->resolveRevenueRole()
+            : null;
+
+        if ($resolvedRole !== null) {
+            $context['revenue_role'] = $resolvedRole;
+        } elseif (self::invoiceHasRentalCharges($invoice)) {
             $context['revenue_role'] = 'rental_revenue';
         } elseif (self::invoiceHasShuttleBookings($invoice)) {
             $context['revenue_role'] = 'shuttle_revenue';
+        }
+
+        $vehicleId = null;
+        $fleetBaseId = null;
+        if ($invoice->relationLoaded('lines') || $invoice->lines()->exists()) {
+            foreach ($invoice->lines as $line) {
+                if ($line->source_type && str_ends_with((string) $line->source_type, 'RentalCharge')) {
+                    $charge = $line->source;
+                    if ($charge && $charge->relationLoaded('rental') && $charge->rental) {
+                        $vehicleId = $charge->rental->vehicle_id;
+                        $fleetBaseId = $charge->rental->vehicle?->home_base_id;
+                        break;
+                    } elseif ($charge && method_exists($charge, 'rental') && $charge->rental) {
+                        $vehicleId = $charge->rental->vehicle_id;
+                        $fleetBaseId = $charge->rental->vehicle?->home_base_id;
+                        break;
+                    }
+                }
+            }
         }
 
         return app(AccountingPoster::class)->post(new SourceEvent(
@@ -59,6 +84,8 @@ class AccountingBridge
                 'total' => (float) $invoice->total,
             ],
             partnerId: (int) $invoice->partner_id,
+            vehicleId: $vehicleId,
+            fleetBaseId: $fleetBaseId,
             memo: __('accounting.messages.source_invoice', ['code' => $invoice->code]),
             context: $context,
         ));

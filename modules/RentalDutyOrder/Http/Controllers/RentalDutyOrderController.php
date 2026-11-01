@@ -219,6 +219,10 @@ class RentalDutyOrderController extends Controller
             Rental::where('id', $validated['rental_id'])->update(['driver_id' => $validated['driver_id']]);
         }
 
+        if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+            app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncDutyOrderCreated($dutyOrder);
+        }
+
         try {
             $notifier = app(\Modules\Rental\Support\RentalWhatsAppNotifier::class);
             $notifier->sendDutyOrderToDriver($dutyOrder);
@@ -403,6 +407,22 @@ class RentalDutyOrderController extends Controller
             'is_overtime_billed_to_customer' => $isBilled,
         ]);
 
+        if ($isBilled && $dutyOrder->rental_id && ($overtimeHours * $customerRate) > 0 && class_exists(\Modules\Rental\Support\RentalInvoiceService::class)) {
+            $dutyOrder->loadMissing('rental');
+            if ($dutyOrder->rental !== null) {
+                try {
+                    app(\Modules\Rental\Support\RentalInvoiceService::class)->invoiceDutyOrderOvertime(
+                        rental: $dutyOrder->rental,
+                        overtimeAmount: (float) ($overtimeHours * $customerRate),
+                        overtimeHours: (float) $overtimeHours,
+                        dutyOrderNumber: (string) $dutyOrder->duty_order_number,
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('[RentalDutyOrderController] invoiceDutyOrderOvertime skipped: '.$e->getMessage());
+                }
+            }
+        }
+
         return back()->with('success', 'Data jam kerja & lembur supir berhasil diperbarui.');
     }
 
@@ -424,6 +444,10 @@ class RentalDutyOrderController extends Controller
             'settled_by' => Auth::id(),
             'settlement_notes' => $validated['settlement_notes'] ?? null,
         ]);
+
+        if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+            app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncDutyOrderSettled($dutyOrder->fresh(['expenses', 'driver']));
+        }
 
         return back()->with('success', 'Uang jalan dan pengeluaran berhasil diselesaikan (Settled).');
     }

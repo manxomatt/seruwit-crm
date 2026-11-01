@@ -152,6 +152,48 @@ class RentalInvoiceService
     }
 
     /**
+     * Bill customer overtime from a Driver Duty Order (SPPD) when is_overtime_billed_to_customer is enabled.
+     */
+    public function invoiceDutyOrderOvertime(Rental $rental, float $overtimeAmount, float $overtimeHours, string $dutyOrderNumber): ?Invoice
+    {
+        if (! $this->isAvailable() || $overtimeAmount <= 0) {
+            return null;
+        }
+
+        $addonCode = "OVERTIME-{$dutyOrderNumber}";
+        $description = "Biaya Lembur Supir ({$overtimeHours} Jam) — SPPD {$dutyOrderNumber} [{$rental->code}]";
+
+        $charge = RentalCharge::query()
+            ->where('rental_id', $rental->id)
+            ->where('kind', RentalCharge::KIND_ADDON)
+            ->where('addon_code', $addonCode)
+            ->first();
+
+        if ($charge) {
+            if (! $this->chargeHasActiveInvoice($charge)) {
+                $charge->update([
+                    'amount' => $overtimeAmount,
+                    'description' => $description,
+                ]);
+            }
+        } else {
+            $charge = RentalCharge::query()->create([
+                'rental_id' => $rental->id,
+                'kind' => RentalCharge::KIND_ADDON,
+                'addon_code' => $addonCode,
+                'amount' => $overtimeAmount,
+                'description' => $description,
+            ]);
+        }
+
+        return $this->invoiceCharge(
+            $rental,
+            $charge->fresh(),
+            "Tagihan Lembur Supir SPPD {$dutyOrderNumber} [{$rental->code}]",
+        );
+    }
+
+    /**
      * @return array{
      *     status: string,
      *     total_invoiced: float,
@@ -317,7 +359,7 @@ class RentalInvoiceService
 
             $issueDate = now()->toDateString();
 
-            $invoice = Invoice::create([
+            $invoiceAttrs = [
                 'code' => Invoice::nextCode(),
                 'partner_id' => $rental->partner_id,
                 'status' => Invoice::STATUS_DRAFT,
@@ -329,15 +371,27 @@ class RentalInvoiceService
                 'total' => 0,
                 'amount_paid' => 0,
                 'notes' => $notes,
-            ]);
+            ];
 
-            InvoiceLine::create([
+            if (Schema::hasColumn('invoices', 'revenue_role')) {
+                $invoiceAttrs['revenue_role'] = 'rental_revenue';
+            }
+
+            $invoice = Invoice::create($invoiceAttrs);
+
+            $lineAttrs = [
                 'invoice_id' => $invoice->id,
                 'description' => $charge->description,
                 'amount' => $charge->amount,
                 'source_type' => $charge->getMorphClass(),
                 'source_id' => $charge->id,
-            ]);
+            ];
+
+            if (Schema::hasColumn('invoice_lines', 'revenue_role')) {
+                $lineAttrs['revenue_role'] = 'rental_revenue';
+            }
+
+            InvoiceLine::create($lineAttrs);
 
             $invoice->recalculate();
 

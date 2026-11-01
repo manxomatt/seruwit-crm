@@ -4,6 +4,8 @@ namespace Modules\Accounting\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Fleet\Models\FleetBase;
+use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 
 class JournalLine extends Model
@@ -15,6 +17,9 @@ class JournalLine extends Model
         'credit',
         'partner_id',
         'warehouse_id',
+        'vehicle_id',
+        'fleet_base_id',
+        'cost_center_id',
         'memo',
         'sort_order',
     ];
@@ -31,6 +36,8 @@ class JournalLine extends Model
             'credit' => 'decimal:2',
             'partner_id' => 'integer',
             'warehouse_id' => 'integer',
+            'vehicle_id' => 'integer',
+            'fleet_base_id' => 'integer',
             'sort_order' => 'integer',
         ];
     }
@@ -48,5 +55,15 @@ class JournalLine extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function fleetBase(): BelongsTo
+    {
+        return $this->belongsTo(FleetBase::class);
     }
 }

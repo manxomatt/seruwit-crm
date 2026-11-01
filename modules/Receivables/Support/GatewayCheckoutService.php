@@ -9,12 +9,54 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Receivables\Contracts\PayableViaGatewayContract;
 use Modules\Receivables\Models\GatewayCharge;
 use Modules\Receivables\Models\Payment;
 use Modules\Receivables\Models\PaymentGatewayConfig;
 
 class GatewayCheckoutService
 {
+    /**
+     * Custom fulfillment handlers keyed by purpose, allowing Vertical modules
+     * to register their own settlement callback without modifying Receivables.
+     *
+     * @var array<string, callable(GatewayCharge, array<string, mixed>, string): void>
+     */
+    private static array $fulfillmentHandlers = [];
+
+    /**
+     * @param  callable(GatewayCharge, array<string, mixed>, string): void  $handler
+     */
+    public static function registerFulfillmentHandler(string $purpose, callable $handler): void
+    {
+        self::$fulfillmentHandlers[$purpose] = $handler;
+    }
+
+    public static function clearFulfillmentHandlers(): void
+    {
+        self::$fulfillmentHandlers = [];
+    }
+
+    public function createPayableCharge(PayableViaGatewayContract $payable, ?string $finishPath = null): GatewayCharge
+    {
+        $customer = $payable->getGatewayCustomerDetails();
+        $chargeableType = method_exists($payable, 'getMorphClass') ? $payable->getMorphClass() : get_class($payable);
+        $chargeableId = method_exists($payable, 'getKey') ? (int) $payable->getKey() : null;
+
+        return $this->createCharge([
+            'purpose' => $payable->getGatewayPurpose(),
+            'chargeable_type' => $chargeableType,
+            'chargeable_id' => $chargeableId,
+            'partner_id' => $payable->getGatewayPartnerId(),
+            'amount' => round($payable->getGatewayAmount(), 2),
+            'item_name' => $payable->getGatewayItemName(),
+            'customer_name' => $customer['name'] ?? null,
+            'customer_email' => $customer['email'] ?? null,
+            'customer_phone' => $customer['phone'] ?? null,
+            'finish_path' => $finishPath ?? $payable->getGatewayFinishPath(),
+        ]);
+    }
+
     public function config(): PaymentGatewayConfig
     {
         return PaymentGatewayConfig::current();
@@ -245,7 +287,7 @@ class GatewayCheckoutService
         $client = new MidtransClient($config);
         $snap = $client->createSnapTransaction($payload);
 
-        return GatewayCharge::query()->create([
+        $attributes = [
             'purpose' => $input['purpose'],
             'rental_id' => $input['rental_id'] ?? null,
             'invoice_id' => $input['invoice_id'] ?? null,
@@ -259,7 +301,14 @@ class GatewayCheckoutService
             'redirect_url' => $snap['redirect_url'],
             'raw_request' => $payload,
             'created_by' => Auth::id(),
-        ]);
+        ];
+
+        if (Schema::hasColumn('gateway_charges', 'chargeable_type')) {
+            $attributes['chargeable_type'] = $input['chargeable_type'] ?? null;
+            $attributes['chargeable_id'] = $input['chargeable_id'] ?? null;
+        }
+
+        return GatewayCharge::query()->create($attributes);
     }
 
     /**
@@ -336,6 +385,21 @@ class GatewayCheckoutService
     {
         $method = $this->mapPaymentType((string) ($notification['payment_type'] ?? ''));
         $reference = (string) ($notification['transaction_id'] ?? $charge->order_id);
+
+        if (isset(self::$fulfillmentHandlers[$charge->purpose])) {
+            (self::$fulfillmentHandlers[$charge->purpose])($charge, $notification, $method);
+
+            return;
+        }
+
+        if (! empty($charge->chargeable_type) && ! empty($charge->chargeable_id) && class_exists($charge->chargeable_type)) {
+            $chargeable = $charge->chargeable()->lockForUpdate()->first();
+            if ($chargeable instanceof PayableViaGatewayContract) {
+                $chargeable->onGatewayPaymentSettled($charge, $notification, $method);
+
+                return;
+            }
+        }
 
         if ($charge->purpose === GatewayCharge::PURPOSE_RENTAL_DEPOSIT) {
             if (! class_exists(\Modules\Rental\Models\Rental::class)

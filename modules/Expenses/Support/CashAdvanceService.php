@@ -110,6 +110,7 @@ class CashAdvanceService
                         'debit' => $amount,
                         'credit' => 0,
                         'partner_id' => $advance->partner_id,
+                        'vehicle_id' => $advance->vehicle_id,
                         'memo' => "Uang muka kerja {$advance->code}",
                     ],
                     [
@@ -117,6 +118,7 @@ class CashAdvanceService
                         'debit' => 0,
                         'credit' => $amount,
                         'partner_id' => $advance->partner_id,
+                        'vehicle_id' => $advance->vehicle_id,
                         'memo' => "Pencairan kasbon {$advance->code}",
                     ],
                 ],
@@ -278,6 +280,7 @@ class CashAdvanceService
                     'debit' => $lineRow['amount'],
                     'credit' => 0,
                     'partner_id' => $advance->partner_id,
+                    'vehicle_id' => $lineRow['vehicle_id'] ?? $advance->vehicle_id,
                     'memo' => $lineRow['description'],
                 ];
             }
@@ -288,6 +291,7 @@ class CashAdvanceService
                     'debit' => $returnedAmount,
                     'credit' => 0,
                     'partner_id' => $advance->partner_id,
+                    'vehicle_id' => $advance->vehicle_id,
                     'memo' => "Pengembalian sisa kasbon {$advance->code}",
                 ];
             }
@@ -297,6 +301,7 @@ class CashAdvanceService
                 'debit' => 0,
                 'credit' => $advanceAmount,
                 'partner_id' => $advance->partner_id,
+                'vehicle_id' => $advance->vehicle_id,
                 'memo' => "Penyelesaian uang muka {$advance->code}",
             ];
 
@@ -306,6 +311,7 @@ class CashAdvanceService
                     'debit' => 0,
                     'credit' => $reimbursedAmount,
                     'partner_id' => $advance->partner_id,
+                    'vehicle_id' => $advance->vehicle_id,
                     'memo' => "Reimbursement kurang bayar kasbon {$advance->code}",
                 ];
             }

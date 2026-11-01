@@ -397,8 +397,14 @@ class WorkOrderController extends Controller
 
         if ($newStatus === WorkOrder::STATUS_COMPLETED && $originalStatus !== WorkOrder::STATUS_COMPLETED) {
             MaintenanceStockRecorder::deduct($workOrder);
+            if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+                app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncWorkOrderCompleted($workOrder->fresh(['vehicle']));
+            }
         } elseif ($originalStatus === WorkOrder::STATUS_COMPLETED && $newStatus !== WorkOrder::STATUS_COMPLETED) {
             MaintenanceStockRecorder::reverse($workOrder);
+            if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+                app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->reverseWorkOrderExpense($workOrder);
+            }
         }
     }
 
@@ -425,6 +431,9 @@ class WorkOrderController extends Controller
         DB::transaction(function () use ($workOrder): void {
             WorkOrderVehicleStatusSyncer::releaseOnDelete($workOrder);
             MaintenanceStockRecorder::reverse($workOrder->load('items.product'));
+            if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+                app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->reverseWorkOrderExpense($workOrder);
+            }
             $workOrder->delete();
         });
 

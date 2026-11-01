@@ -17,6 +17,7 @@ use Modules\Shuttle\Http\Controllers\PartnerPortalController;
 use Modules\Shuttle\Http\Controllers\ScheduleController;
 use Modules\Shuttle\Http\Controllers\SettingsController;
 use Modules\Shuttle\Http\Controllers\ShuttleDashboardController;
+use Modules\Shuttle\Http\Controllers\TravelRevenueReportController;
 
 /**
  * Scheduled intercity shuttle travel: corridors, seat bookings, door/pool
@@ -99,6 +100,10 @@ class ShuttleModule implements ModuleContract
         Route::get('/shuttle/directions', DirectionsController::class)
             ->middleware('permission:shuttle,view')
             ->name('shuttle.directions');
+
+        Route::get('/shuttle/reports/travel-revenue', [TravelRevenueReportController::class, 'show'])
+            ->middleware('permission:shuttle|accounting,view')
+            ->name('shuttle.reports.travel-revenue');
 
         // Settings (general + cities + pools)
         Route::get('/shuttle/settings', [SettingsController::class, 'index'])->middleware('permission:shuttle,view')->name('shuttle.settings.index');

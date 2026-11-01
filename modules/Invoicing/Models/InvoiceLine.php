@@ -41,6 +41,7 @@ class InvoiceLine extends Model
         'amount',
         'source_type',
         'source_id',
+        'revenue_role',
     ];
 
     /**

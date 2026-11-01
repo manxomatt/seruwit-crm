@@ -83,6 +83,10 @@ class AccountingPoster
                 'created_by' => Auth::id(),
             ]);
 
+            $vehicleId = $event->vehicleId ?? (isset($event->context['vehicle_id']) ? (int) $event->context['vehicle_id'] : null);
+            $fleetBaseId = $event->fleetBaseId ?? (isset($event->context['fleet_base_id']) ? (int) $event->context['fleet_base_id'] : null);
+            $costCenterId = $event->costCenterId ?? (isset($event->context['cost_center_id']) ? (string) $event->context['cost_center_id'] : null);
+
             foreach ($lines as $index => $line) {
                 JournalLine::query()->create([
                     'journal_entry_id' => $entry->id,
@@ -91,6 +95,9 @@ class AccountingPoster
                     'credit' => $line['credit'],
                     'partner_id' => $event->partnerId,
                     'warehouse_id' => $event->warehouseId,
+                    'vehicle_id' => $line['vehicle_id'] ?? $vehicleId,
+                    'fleet_base_id' => $line['fleet_base_id'] ?? $fleetBaseId,
+                    'cost_center_id' => $line['cost_center_id'] ?? $costCenterId,
                     'memo' => $line['memo'] ?? null,
                     'sort_order' => $index + 1,
                 ]);

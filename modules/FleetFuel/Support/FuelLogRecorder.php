@@ -76,7 +76,13 @@ class FuelLogRecorder
                 $vehicle->update(['odometer_km' => $odometer]);
             }
 
-            return $fill->fresh(['driver', 'vehicle']);
+            $freshFill = $fill->fresh(['driver', 'vehicle']);
+
+            if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+                app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->syncFuelLog($freshFill, $attributes);
+            }
+
+            return $freshFill;
         });
     }
 

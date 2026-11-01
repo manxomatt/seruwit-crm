@@ -90,6 +90,10 @@ class FuelLogController extends Controller
             abort(404);
         }
 
+        if (class_exists(\Modules\Expenses\Support\OperationalExpenseBridge::class)) {
+            app(\Modules\Expenses\Support\OperationalExpenseBridge::class)->voidFuelLog($fuelLog);
+        }
+
         $fuelLog->delete();
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)

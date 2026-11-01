@@ -70,6 +70,8 @@ class VerticalPacks
                     'fixed-assets',
                     'budgeting',
                     'expenses',
+                    'driver-payroll',
+                    'collections',
                     'invoicing',
                     'receivables',
                     'purchasing',

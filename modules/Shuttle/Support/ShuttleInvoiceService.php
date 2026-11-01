@@ -69,7 +69,7 @@ class ShuttleInvoiceService
 
             $issueDate = now()->toDateString();
 
-            $invoice = Invoice::create([
+            $invoiceAttrs = [
                 'code' => Invoice::nextCode(),
                 'partner_id' => $booking->partner_id,
                 'status' => Invoice::STATUS_DRAFT,
@@ -81,15 +81,27 @@ class ShuttleInvoiceService
                 'total' => 0,
                 'amount_paid' => 0,
                 'notes' => __('shuttle.invoice.notes', ['booking' => $booking->booking_number]),
-            ]);
+            ];
 
-            InvoiceLine::create([
+            if (Schema::hasColumn('invoices', 'revenue_role')) {
+                $invoiceAttrs['revenue_role'] = 'shuttle_revenue';
+            }
+
+            $invoice = Invoice::create($invoiceAttrs);
+
+            $lineAttrs = [
                 'invoice_id' => $invoice->id,
                 'description' => $description,
                 'amount' => $booking->total_fare,
                 'source_type' => $booking->getMorphClass(),
                 'source_id' => $booking->id,
-            ]);
+            ];
+
+            if (Schema::hasColumn('invoice_lines', 'revenue_role')) {
+                $lineAttrs['revenue_role'] = 'shuttle_revenue';
+            }
+
+            InvoiceLine::create($lineAttrs);
 
             $invoice->recalculate();
 
@@ -150,7 +162,7 @@ class ShuttleInvoiceService
         $amount = -1 * abs((float) $booking->total_fare);
 
         return DB::transaction(function () use ($booking, $original, $taxAttrs, $amount): Invoice {
-            $invoice = Invoice::create([
+            $invoiceAttrs = [
                 'code' => Invoice::nextCode(),
                 'partner_id' => $booking->partner_id,
                 'status' => Invoice::STATUS_DRAFT,
@@ -165,9 +177,15 @@ class ShuttleInvoiceService
                     'booking' => $booking->booking_number,
                     'invoice' => $original->code,
                 ]),
-            ]);
+            ];
 
-            InvoiceLine::create([
+            if (Schema::hasColumn('invoices', 'revenue_role')) {
+                $invoiceAttrs['revenue_role'] = 'shuttle_revenue';
+            }
+
+            $invoice = Invoice::create($invoiceAttrs);
+
+            $lineAttrs = [
                 'invoice_id' => $invoice->id,
                 'description' => __('shuttle.invoice.credit_line', [
                     'booking' => $booking->booking_number,
@@ -177,7 +195,13 @@ class ShuttleInvoiceService
                 // (unique source_type/source_id), and Postgres treats NULL as distinct.
                 'source_type' => null,
                 'source_id' => null,
-            ]);
+            ];
+
+            if (Schema::hasColumn('invoice_lines', 'revenue_role')) {
+                $lineAttrs['revenue_role'] = 'shuttle_revenue';
+            }
+
+            InvoiceLine::create($lineAttrs);
 
             $invoice->recalculate();
             $invoice->update(['status' => Invoice::STATUS_ISSUED]);

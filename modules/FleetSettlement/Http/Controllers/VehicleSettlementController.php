@@ -275,6 +275,9 @@ class VehicleSettlementController extends Controller
             'bank_account_number' => ['nullable', 'string', 'max:60'],
             'bank_account_holder' => ['nullable', 'string', 'max:120'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
+            'company_bank_account_id' => ['nullable', 'integer'],
+            'wht_tax_code_id' => ['nullable', 'integer'],
+            'wht_amount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -314,7 +317,7 @@ class VehicleSettlementController extends Controller
             $paidBy = null;
         }
 
-        VehicleSettlement::query()->updateOrCreate(
+        $settlementRecord = VehicleSettlement::query()->updateOrCreate(
             [
                 'vehicle_id' => $vehicle->id,
                 'period_month' => $month,
@@ -353,6 +356,12 @@ class VehicleSettlementController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]
         );
+
+        app(\Modules\FleetSettlement\Support\SettlementAccountingBridge::class)->sync($settlementRecord, [
+            'company_bank_account_id' => $validated['company_bank_account_id'] ?? null,
+            'wht_tax_code_id' => $validated['wht_tax_code_id'] ?? null,
+            'wht_amount' => $validated['wht_amount'] ?? null,
+        ]);
 
         $statusLabel = match ($newStatus) {
             'paid' => 'Lunas Ditransfer (Paid)',
