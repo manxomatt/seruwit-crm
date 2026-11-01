@@ -188,7 +188,16 @@ class ModuleRegistry
             }
         }
 
-        return $disabled;
+        foreach (array_keys($this->all()) as $key) {
+            if (! $this->available($key)) {
+                $disabled[] = $key;
+                if ($key === 'rental-duty-order') {
+                    $disabled[] = 'rental-duty-orders';
+                }
+            }
+        }
+
+        return array_values(array_unique($disabled));
     }
 
     /**
@@ -408,16 +417,24 @@ class ModuleRegistry
      */
     private function hiddenKeys(): array
     {
-        $connection = (new ModuleSetting)->getConnectionName();
-
-        if (! Schema::connection($connection)->hasTable('module_settings')) {
-            return $this->hiddenKeys ??= [];
+        if ($this->hiddenKeys !== null) {
+            return $this->hiddenKeys;
         }
 
-        return $this->hiddenKeys ??= ModuleSetting::query()
-            ->where('is_hidden', true)
-            ->pluck('key')
-            ->all();
+        try {
+            $connection = (new ModuleSetting)->getConnectionName();
+
+            if (! Schema::connection($connection)->hasTable('module_settings')) {
+                return $this->hiddenKeys = [];
+            }
+
+            return $this->hiddenKeys = ModuleSetting::query()
+                ->where('is_hidden', true)
+                ->pluck('key')
+                ->all();
+        } catch (\Throwable) {
+            return $this->hiddenKeys = [];
+        }
     }
 
     /**
@@ -425,16 +442,24 @@ class ModuleRegistry
      */
     private function disabledKeys(): array
     {
-        $connection = (new ModuleSetting)->getConnectionName();
-
-        if (! Schema::connection($connection)->hasTable('module_settings')) {
-            return $this->disabledKeys ??= [];
+        if ($this->disabledKeys !== null) {
+            return $this->disabledKeys;
         }
 
-        return $this->disabledKeys ??= ModuleSetting::query()
-            ->where('is_enabled', false)
-            ->pluck('key')
-            ->all();
+        try {
+            $connection = (new ModuleSetting)->getConnectionName();
+
+            if (! Schema::connection($connection)->hasTable('module_settings')) {
+                return $this->disabledKeys = [];
+            }
+
+            return $this->disabledKeys = ModuleSetting::query()
+                ->where('is_enabled', false)
+                ->pluck('key')
+                ->all();
+        } catch (\Throwable) {
+            return $this->disabledKeys = [];
+        }
     }
 
     /**

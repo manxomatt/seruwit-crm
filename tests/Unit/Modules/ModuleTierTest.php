@@ -70,4 +70,19 @@ class ModuleTierTest extends TestCase
             );
         }
     }
+
+    public function test_disabled_sub_features_includes_disabled_registered_modules(): void
+    {
+        $registry = app(ModuleRegistry::class);
+        $reflection = new \ReflectionClass($registry);
+        $property = $reflection->getProperty('disabledKeys');
+        $property->setAccessible(true);
+        $property->setValue($registry, ['rental-dispatch', 'rental-duty-order']);
+
+        $disabled = $registry->disabledSubFeatures();
+
+        $this->assertContains('rental-dispatch', $disabled);
+        $this->assertContains('rental-duty-order', $disabled);
+        $this->assertContains('rental-duty-orders', $disabled);
+    }
 }

@@ -972,7 +972,10 @@ export default function ModuleLayout({ header, children }: Props) {
             const children = MODULE_SIDEBAR_CHILDREN[module];
             if (children) {
                 children.forEach((child) => {
-                    if (disabledSubFeatures.includes(child.key)) {
+                    if (
+                        disabledSubFeatures.includes(child.key) ||
+                        disabledSubFeatures.includes(child.key.replace(/-orders$/, '-order'))
+                    ) {
                         return;
                     }
 

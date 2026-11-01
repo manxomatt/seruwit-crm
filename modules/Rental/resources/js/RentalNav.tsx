@@ -16,7 +16,7 @@ const TABS: Array<TabItem> = [
     { icon: '📊', labelKey: 'rental.nav.dashboard', fallbackLabel: 'Dashboard', route: 'rental.dashboard', pattern: 'rental.dashboard', permissionAction: 'view' },
     { icon: '📋', labelKey: 'rental.nav.bookings', fallbackLabel: 'Bookings', route: 'rental.index', pattern: 'rental.index', permissionAction: 'view' },
     { icon: '🚚', labelKey: 'rental.nav.dispatch', fallbackLabel: 'Antar-Jemput (Dispatch)', route: 'rental.dispatch.index', pattern: 'rental.dispatch.*', permissionAction: 'dispatch', subFeatureKey: 'rental-dispatch' },
-    { icon: '👨‍✈️', labelKey: 'rental.nav.duty_orders', fallbackLabel: 'Surat Jalan & Kas Jalan', route: 'rental.duty_orders.index', pattern: 'rental.duty_orders.*', permissionAction: 'dispatch' },
+    { icon: '👨‍✈️', labelKey: 'rental.nav.duty_orders', fallbackLabel: 'Surat Jalan & Kas Jalan', route: 'rental.duty_orders.index', pattern: 'rental.duty_orders.*', permissionAction: 'dispatch', subFeatureKey: 'rental-duty-order' },
     { icon: '🏢', labelKey: 'rental.nav.corporate', fallbackLabel: 'Kontrak B2B', route: 'rental.corporate.index', pattern: 'rental.corporate.*', permissionAction: 'view', subFeatureKey: 'rental-corporate' },
     { icon: '🛠️', labelKey: 'rental.nav.maintenance', fallbackLabel: 'Servis & Blackout', route: 'rental.maintenance.index', pattern: 'rental.maintenance.*', permissionAction: 'view' },
     { icon: '📅', labelKey: 'rental.nav.calendar', fallbackLabel: 'Calendar', route: 'rental.calendar.index', pattern: 'rental.calendar.*', permissionAction: 'view' },
@@ -39,7 +39,7 @@ export default function RentalNav(): JSX.Element {
     };
 
     const tabs = TABS.filter((tab) => {
-        if (tab.subFeatureKey && disabledSubFeatures.includes(tab.subFeatureKey)) {
+        if (tab.subFeatureKey && (disabledSubFeatures.includes(tab.subFeatureKey) || disabledSubFeatures.includes(`${tab.subFeatureKey}s`))) {
             return false;
         }
 
