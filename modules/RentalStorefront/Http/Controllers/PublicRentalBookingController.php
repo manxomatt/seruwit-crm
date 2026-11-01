@@ -834,7 +834,7 @@ class PublicRentalBookingController extends Controller
             }
         }
 
-        if (CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
+        if (Modules::available('rental-ai') && CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
             try {
                 $kycResult = app(DocumentKycServiceInterface::class)->analyzeRentalKyc($rental);
                 $extractedName = trim((string) ($kycResult->ktp['name'] ?? $kycResult->sim['name'] ?? ''));
@@ -860,7 +860,7 @@ class PublicRentalBookingController extends Controller
 
         $rental = $this->findPassengerBooking($token);
 
-        if (! CentralAiSettings::isOcrEnabled() || ! (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
+        if (! Modules::available('rental-ai') || ! CentralAiSettings::isOcrEnabled() || ! (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI OCR Dokumen']),
@@ -1077,7 +1077,7 @@ class PublicRentalBookingController extends Controller
             __('rental.errors.return_active_only'),
         );
 
-        if (! CentralAiSettings::isEnabled() || ! (bool) (RentalGeneralSettings::all()['ai_inspection_enabled'] ?? false)) {
+        if (! Modules::available('rental-ai') || ! CentralAiSettings::isEnabled() || ! (bool) (RentalGeneralSettings::all()['ai_inspection_enabled'] ?? false)) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Visual Inspection']),
@@ -2069,7 +2069,7 @@ class PublicRentalBookingController extends Controller
                 'ktp_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
                 'sim_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
                 'guarantor_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_guarantor_doc_path),
-                'ai_ocr_enabled' => CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false),
+                'ai_ocr_enabled' => Modules::available('rental-ai') && CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false),
                 'ai_kyc_assessment' => $rental->ai_kyc_assessment,
                 'partner_identity' => [
                     'id_number' => $rental->partner?->id_number,
@@ -2094,7 +2094,7 @@ class PublicRentalBookingController extends Controller
                 'can_request' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at) && $upfrontPaid,
             ],
             'can_self_return' => $rental->status === Rental::STATUS_ACTIVE,
-            'ai_inspection_enabled' => CentralAiSettings::isEnabled() && (bool) (RentalGeneralSettings::all()['ai_inspection_enabled'] ?? false),
+            'ai_inspection_enabled' => Modules::available('rental-ai') && CentralAiSettings::isEnabled() && (bool) (RentalGeneralSettings::all()['ai_inspection_enabled'] ?? false),
             'handover_checklist_keys' => RentalHandoverChecklist::itemKeys(),
             'fuel_levels' => RentalHandoverChecklist::fuelLevels(),
             'checkout_details' => [

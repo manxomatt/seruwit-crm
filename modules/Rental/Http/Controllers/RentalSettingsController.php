@@ -4,6 +4,7 @@ namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Modules\Facades\Modules;
 use App\Services\WhatsApp\WhatsAppGatewayManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -58,7 +59,7 @@ class RentalSettingsController extends Controller
             'documents' => DocumentTemplateManager::all(),
             'whatsapp' => RentalWhatsAppSettings::all(),
             'deviceStatus' => $whatsappManager->getDeviceStatus(),
-            'centralAiEnabled' => \App\Support\CentralAiSettings::isEnabled(),
+            'centralAiEnabled' => Modules::available('rental-ai') && \App\Support\CentralAiSettings::isEnabled(),
         ]);
     }
 

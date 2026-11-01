@@ -3,6 +3,7 @@
 namespace Modules\RentalAi\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Rental\Support\RentalGeneralSettings;
@@ -20,7 +21,7 @@ class RentalAiPricingController extends Controller
      */
     public function analyze(Request $request): JsonResponse
     {
-        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
+        if (! Modules::available('rental-ai') || ! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Smart Dynamic Pricing']),
@@ -56,7 +57,7 @@ class RentalAiPricingController extends Controller
      */
     public function apply(Request $request): JsonResponse
     {
-        if (! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
+        if (! Modules::available('rental-ai') || ! \App\Support\CentralAiSettings::isEnabled() || ! RentalGeneralSettings::all()['ai_pricing_optimizer_enabled']) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Smart Dynamic Pricing']),

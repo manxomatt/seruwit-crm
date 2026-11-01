@@ -3,6 +3,7 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -46,9 +47,9 @@ class RentalRateController extends Controller
                 ])
                 ->values()
                 ->all(),
-            'aiPricingOptimizerEnabled' => (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
-            'aiPricingAnalyzeUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_analyze'),
-            'aiPricingApplyUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_apply'),
+            'aiPricingOptimizerEnabled' => Modules::available('rental-ai') && (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
+            'aiPricingAnalyzeUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_pricing_analyze') : null,
+            'aiPricingApplyUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_pricing_apply') : null,
         ]);
     }
 
@@ -68,9 +69,9 @@ class RentalRateController extends Controller
                 ->values()
                 ->all(),
             'mode' => 'create',
-            'aiPricingOptimizerEnabled' => (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
-            'aiPricingAnalyzeUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_analyze'),
-            'aiPricingApplyUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_apply'),
+            'aiPricingOptimizerEnabled' => Modules::available('rental-ai') && (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
+            'aiPricingAnalyzeUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_pricing_analyze') : null,
+            'aiPricingApplyUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_pricing_apply') : null,
         ]);
     }
 
@@ -92,9 +93,9 @@ class RentalRateController extends Controller
                 ->values()
                 ->all(),
             'mode' => 'edit',
-            'aiPricingOptimizerEnabled' => (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
-            'aiPricingAnalyzeUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_analyze'),
-            'aiPricingApplyUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_apply'),
+            'aiPricingOptimizerEnabled' => Modules::available('rental-ai') && (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
+            'aiPricingAnalyzeUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_pricing_analyze') : null,
+            'aiPricingApplyUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_pricing_apply') : null,
         ]);
     }
 

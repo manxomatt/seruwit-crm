@@ -3,6 +3,7 @@
 namespace Modules\RentalStorefront\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use App\Support\CentralAiSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -162,7 +163,7 @@ class CustomerPortalController extends Controller
         return Inertia::render('Modules/Rental/Public/Customer/Documents', [
             'brand' => $this->brand(),
             'customer' => $customer->only(['id', 'name', 'phone']),
-            'ocrEnabled' => CentralAiSettings::isOcrEnabled() && RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'ocrEnabled' => Modules::available('rental-ai') && CentralAiSettings::isOcrEnabled() && RentalGeneralSettings::all()['ai_kyc_enabled'],
             'partner' => [
                 'kyc_status' => $partner?->kyc_status ?? Partner::KYC_STATUS_UNVERIFIED,
                 'kyc_extracted_name' => $partner?->kyc_extracted_name,
@@ -182,7 +183,7 @@ class CustomerPortalController extends Controller
 
     public function scanDocument(Request $request, DocumentKycServiceInterface $kycService): JsonResponse
     {
-        if (! CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+        if (! Modules::available('rental-ai') || ! CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI OCR Dokumen']),
@@ -285,7 +286,7 @@ class CustomerPortalController extends Controller
         }
 
         if (blank($validated['kyc_extracted_name'] ?? null) && ($request->hasFile('ktp') || $request->hasFile('sim'))) {
-            if (CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
+            if (Modules::available('rental-ai') && CentralAiSettings::isOcrEnabled() && (bool) (RentalGeneralSettings::all()['ai_kyc_enabled'] ?? false)) {
                 try {
                     $scanPath = $validated['id_card_photo_path'] ?? $validated['driver_license_photo_path'] ?? null;
                     if (filled($scanPath)) {

@@ -3,6 +3,7 @@
 namespace Modules\RentalAi\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class RentalAiKycController extends Controller
      */
     public function scanRentalDocuments(Request $request, Rental $rental): JsonResponse|RedirectResponse
     {
-        if (! \App\Support\CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+        if (! Modules::available('rental-ai') || ! \App\Support\CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
             $message = __('rental.ai.feature_disabled', ['feature' => 'AI Smart KYC / OCR']);
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 403);
@@ -66,7 +67,7 @@ class RentalAiKycController extends Controller
      */
     public function scanSingleDocument(Request $request): JsonResponse
     {
-        if (! \App\Support\CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
+        if (! Modules::available('rental-ai') || ! \App\Support\CentralAiSettings::isOcrEnabled() || ! RentalGeneralSettings::all()['ai_kyc_enabled']) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI OCR Dokumen']),

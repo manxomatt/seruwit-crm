@@ -56,6 +56,7 @@ export default function FormPage({
     vehicles,
     rentalClasses,
     mode,
+    aiPricingOptimizerEnabled = false,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -193,7 +194,7 @@ export default function FormPage({
                     }
                     actions={
                         <div className="flex items-center gap-2">
-                            {mode === 'create' && (
+                            {mode === 'create' && aiPricingOptimizerEnabled && (
                                 <button
                                     type="button"
                                     onClick={() => setIsAiModalOpen(true)}
@@ -285,7 +286,7 @@ export default function FormPage({
             </div>
 
             {/* Modal AI Auto-Fill Form Tarif Rental (Only in create mode) */}
-            {mode === 'create' && (
+            {mode === 'create' && aiPricingOptimizerEnabled && (
                 <RentalRateAiGenerateModal
                     isOpen={isAiModalOpen}
                     onClose={() => setIsAiModalOpen(false)}

@@ -3,6 +3,7 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
@@ -138,8 +139,8 @@ class RentalController extends Controller
             'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
             'quoteUrl' => route($this->getRoutePrefix().'.rental.reservations.quote'),
             'walkInUrl' => route($this->getRoutePrefix().'.rental.walk_in_customers.store'),
-            'aiKycEnabled' => \App\Support\CentralAiSettings::isOcrEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
-            'aiScanDocUrl' => \App\Support\CentralAiSettings::isOcrEnabled() ? route($this->getRoutePrefix().'.rental.ai_scan_document') : null,
+            'aiKycEnabled' => Modules::available('rental-ai') && \App\Support\CentralAiSettings::isOcrEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'aiScanDocUrl' => Modules::available('rental-ai') && \App\Support\CentralAiSettings::isOcrEnabled() ? route($this->getRoutePrefix().'.rental.ai_scan_document') : null,
         ]);
     }
 
@@ -527,14 +528,14 @@ class RentalController extends Controller
             'partner:id,name,code,phone',
         ]);
 
-        $aiInspectionEnabled = config('services.gemini.api_key') !== null || config('rental.ai.inspection_enabled', true);
+        $aiInspectionEnabled = Modules::available('rental-ai') && \App\Support\CentralAiSettings::isEnabled() && \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled'];
 
         return Inertia::render('Modules/Rental/Return', [
             'rental' => $rental->append('is_overdue'),
             'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
             'checklistItems' => RentalHandoverChecklist::itemKeys(),
             'aiInspectionEnabled' => (bool) $aiInspectionEnabled,
-            'aiInspectLiveUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental),
+            'aiInspectLiveUrl' => Modules::available('rental-ai') ? route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental) : null,
         ]);
     }
 

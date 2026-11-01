@@ -3,6 +3,7 @@
 namespace Modules\RentalAi\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class RentalAiInspectionController extends Controller
      */
     public function inspectLive(Request $request, Rental $rental): JsonResponse
     {
-        if (! \App\Support\CentralAiSettings::isEnabled() || ! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
+        if (! Modules::available('rental-ai') || ! \App\Support\CentralAiSettings::isEnabled() || ! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
             return response()->json([
                 'success' => false,
                 'message' => __('rental.ai.feature_disabled', ['feature' => 'AI Visual Inspection']),
@@ -95,7 +96,7 @@ class RentalAiInspectionController extends Controller
      */
     public function inspectExisting(Request $request, Rental $rental): JsonResponse|RedirectResponse
     {
-        if (! \App\Support\CentralAiSettings::isEnabled() || ! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
+        if (! Modules::available('rental-ai') || ! \App\Support\CentralAiSettings::isEnabled() || ! \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled']) {
             $message = __('rental.ai.feature_disabled', ['feature' => 'AI Visual Inspection']);
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 403);
