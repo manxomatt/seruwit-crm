@@ -272,6 +272,7 @@ return [
         'dispatch' => 'Antar-Jemput (Dispatch)',
         'duty_orders' => 'Surat Jalan & Kas Jalan',
         'corporate' => 'Kontrak B2B',
+        'storefront' => 'Storefront & Portal',
         'maintenance' => 'Servis & Blackout',
         'availability' => 'Ketersediaan',
         'calendar' => 'Kalender',

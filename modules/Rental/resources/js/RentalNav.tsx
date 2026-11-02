@@ -18,6 +18,7 @@ const TABS: Array<TabItem> = [
     { icon: '🚚', labelKey: 'rental.nav.dispatch', fallbackLabel: 'Antar-Jemput (Dispatch)', route: 'rental.dispatch.index', pattern: 'rental.dispatch.*', permissionAction: 'dispatch', subFeatureKey: 'rental-dispatch' },
     { icon: '👨‍✈️', labelKey: 'rental.nav.duty_orders', fallbackLabel: 'Surat Jalan & Kas Jalan', route: 'rental.duty_orders.index', pattern: 'rental.duty_orders.*', permissionAction: 'dispatch', subFeatureKey: 'rental-duty-order' },
     { icon: '🏢', labelKey: 'rental.nav.corporate', fallbackLabel: 'Kontrak B2B', route: 'rental.corporate.index', pattern: 'rental.corporate.*', permissionAction: 'view', subFeatureKey: 'rental-corporate' },
+    { icon: '🌐', labelKey: 'rental.nav.storefront', fallbackLabel: 'Storefront & Portal', route: 'rental.storefront.index', pattern: 'rental.storefront.*', permissionAction: 'manage_storefront', subFeatureKey: 'rental-storefront' },
     { icon: '🛠️', labelKey: 'rental.nav.maintenance', fallbackLabel: 'Servis & Blackout', route: 'rental.maintenance.index', pattern: 'rental.maintenance.*', permissionAction: 'view' },
     { icon: '📅', labelKey: 'rental.nav.calendar', fallbackLabel: 'Calendar', route: 'rental.calendar.index', pattern: 'rental.calendar.*', permissionAction: 'view' },
     { icon: '🚗', labelKey: 'rental.nav.availability', fallbackLabel: 'Availability', route: 'rental.availability.index', pattern: 'rental.availability.*', permissionAction: 'view' },
@@ -58,8 +59,12 @@ export default function RentalNav(): JSX.Element {
             const corpPerms = auth?.user?.permissions?.['rental-corporate'] || [];
             const dutyPerms = auth?.user?.permissions?.['rental-duty-order'] || [];
             const dispatchPerms = auth?.user?.permissions?.['rental-dispatch'] || [];
+            const storefrontPerms = auth?.user?.permissions?.['rental-storefront'] || [];
             if (tab.subFeatureKey === 'rental-corporate') {
                 return corpPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);
+            }
+            if (tab.subFeatureKey === 'rental-storefront') {
+                return storefrontPerms.includes(tab.permissionAction) || rentalPerms.includes('settings') || rentalPerms.includes('manage_storefront');
             }
             if (tab.route === 'rental.duty_orders.index') {
                 return dutyPerms.includes(tab.permissionAction) || rentalPerms.includes(tab.permissionAction);

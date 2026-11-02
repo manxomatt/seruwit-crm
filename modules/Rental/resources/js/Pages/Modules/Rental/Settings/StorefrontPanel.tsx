@@ -108,8 +108,12 @@ function SectionCard({ icon, iconClass, title, subtitle, children }: SectionCard
 
 export default function StorefrontPanel({
     storefront = DEFAULT_STOREFRONT,
+    submitRoute,
+    showDedicatedNotice = false,
 }: {
     storefront?: StorefrontSettings;
+    submitRoute?: string;
+    showDedicatedNotice?: boolean;
 }): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -130,11 +134,35 @@ export default function StorefrontPanel({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(prefixedRoute('rental.settings.storefront.update'), { preserveScroll: true });
+        patch(submitRoute || prefixedRoute('rental.settings.storefront.update'), { preserveScroll: true });
     };
 
     return (
         <form onSubmit={submit} className="space-y-6">
+            {showDedicatedNotice && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/30">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-lg">
+                            🌐
+                        </span>
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                Pusat Kendali Storefront Mandiri
+                            </h4>
+                            <p className="text-xs text-slate-600 dark:text-slate-300">
+                                Modul Storefront kini memiliki halaman admin terdedikasi lengkap dengan statistik reservasi web publik dan manajemen portal mandiri.
+                            </p>
+                        </div>
+                    </div>
+                    <a
+                        href={prefixedRoute('rental.storefront.index')}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                    >
+                        <span>Buka Admin Storefront</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            )}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                 {/* Left column */}
                 <div className="space-y-6 lg:col-span-8">

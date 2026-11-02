@@ -251,6 +251,7 @@ return [
         'dispatch' => 'Dispatch (Delivery & Pickup)',
         'duty_orders' => 'Duty Orders & Cash Advance',
         'corporate' => 'B2B Contracts',
+        'storefront' => 'Storefront & Portal',
         'maintenance' => 'Maintenance & Blackouts',
         'availability' => 'Availability',
         'calendar' => 'Calendar',

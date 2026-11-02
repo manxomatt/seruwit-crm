@@ -24,8 +24,10 @@ const EMPTY: TestimonialItem = {
 
 export default function TestimonialsPanel({
     testimonials = [],
+    submitRoute,
 }: {
     testimonials?: TestimonialItem[];
+    submitRoute?: string;
 }): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -52,7 +54,7 @@ export default function TestimonialsPanel({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(prefixedRoute('rental.settings.testimonials.update'), { preserveScroll: true });
+        patch(submitRoute || prefixedRoute('rental.settings.testimonials.update'), { preserveScroll: true });
     };
 
     return (

@@ -5,6 +5,7 @@ namespace Modules\RentalStorefront;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\RentalStorefront\Http\Controllers\Admin\RentalStorefrontAdminController;
 
 /**
  * Public Rental Storefront & Customer Self-Service Portal module:
@@ -49,7 +50,7 @@ class RentalStorefrontModule implements ModuleContract
             'name' => 'Storefront & Portal Online',
             'slug' => 'rental-storefront',
             'icon' => 'globe-alt',
-            'route_name' => 'rental.settings.index',
+            'route_name' => 'rental.storefront.index',
             'permission_module' => 'rental-storefront',
             'permission_action' => 'manage_storefront',
             'sort_order' => 14,
@@ -73,8 +74,24 @@ class RentalStorefrontModule implements ModuleContract
 
     public function routes(): void
     {
+        Route::get('/rental/storefront', [RentalStorefrontAdminController::class, 'index'])
+            ->middleware('permission:rental-storefront|rental,manage_storefront|settings')
+            ->name('rental.storefront.index');
+
+        Route::patch('/rental/storefront/settings', [RentalStorefrontAdminController::class, 'updateSettings'])
+            ->middleware('permission:rental-storefront|rental,manage_storefront|settings')
+            ->name('rental.storefront.settings.update');
+
+        Route::patch('/rental/storefront/testimonials', [RentalStorefrontAdminController::class, 'updateTestimonials'])
+            ->middleware('permission:rental-storefront|rental,manage_storefront|settings')
+            ->name('rental.storefront.testimonials.update');
+
+        Route::patch('/rental/storefront/policy', [RentalStorefrontAdminController::class, 'updatePolicy'])
+            ->middleware('permission:rental-storefront|rental,manage_storefront|settings')
+            ->name('rental.storefront.policy.update');
+
         Route::get('/rental-storefront/settings', function () {
-            return redirect()->route('module.rental.settings.index');
+            return redirect()->route('module.rental.storefront.index');
         })->middleware('permission:rental-storefront|rental,manage_storefront|settings')
             ->name('rental-storefront.settings');
     }

@@ -848,7 +848,7 @@ export default function Index({
 
             {tab === 'addons' && <AddonsPanel addons={addons} />}
 
-            {tab === 'storefront' && <StorefrontPanel storefront={storefront} />}
+            {tab === 'storefront' && <StorefrontPanel storefront={storefront} showDedicatedNotice={true} />}
 
             {tab === 'testimonials' && <TestimonialsPanel testimonials={testimonials} />}
 

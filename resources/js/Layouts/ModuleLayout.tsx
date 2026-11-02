@@ -530,7 +530,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'rental-corporate': { route: 'module.rental.corporate.index', routePattern: 'module.rental.corporate.*' },
     'rental-duty-order': { route: 'module.rental.duty_orders.index', routePattern: 'module.rental.duty_orders.*' },
     'rental-dispatch': { route: 'module.rental.dispatch.index', routePattern: 'module.rental.dispatch.*' },
-    'rental-storefront': { route: 'module.rental.settings.index', routePattern: 'module.rental.settings.*', params: { tab: 'storefront' } },
+    'rental-storefront': { route: 'module.rental.storefront.index', routePattern: 'module.rental.storefront.*' },
     'rental-ai': { route: 'module.rental.rates.index', routePattern: 'module.rental.rates.*' },
     'shuttle': { route: 'module.shuttle.dashboard', routePattern: 'module.shuttle.*' },
     'canvassing': { route: 'module.canvassing.index', routePattern: 'module.canvassing.*' },
