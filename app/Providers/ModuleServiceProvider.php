@@ -55,7 +55,9 @@ class ModuleServiceProvider extends ServiceProvider
         }
 
         if ($viewsPath = $module->viewsPath()) {
-            $this->loadViewsFrom($viewsPath, $module->key());
+            if (is_dir($viewsPath)) {
+                $this->loadViewsFrom($viewsPath, $module->key());
+            }
         }
 
         $module->boot();

@@ -58,7 +58,7 @@ class RentalAiModule implements ModuleContract
 
     public function viewsPath(): ?string
     {
-        return __DIR__.'/resources/views';
+        return null;
     }
 
     public function boot(): void
