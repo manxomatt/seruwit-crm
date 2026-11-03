@@ -808,7 +808,6 @@ export default function Index({
     const tabs = [
         { key: 'general' as const, label: t('rental.settings.tab_general', undefined, 'Umum') },
         { key: 'addons' as const, label: '📦 Katalog Add-on' },
-        { key: 'storefront' as const, label: t('rental.settings.tab_storefront', undefined, 'Tampilan Storefront') },
         { key: 'testimonials' as const, label: t('rental.settings.tab_testimonials', undefined, 'Testimoni') },
         { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Template Dokumen') },
         { key: 'whatsapp' as const, label: '💬 WhatsApp Gateway' },
