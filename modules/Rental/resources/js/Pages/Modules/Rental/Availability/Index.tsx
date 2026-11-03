@@ -613,7 +613,7 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                             tone="maintenance"
                             active={filter === 'maintenance'}
                             onClick={() => setFilter('maintenance')}
-                            subtext="Bengkel / Blackout"
+                            subtext="Bengkel / Nonaktif"
                         />
                     )}
                 </div>

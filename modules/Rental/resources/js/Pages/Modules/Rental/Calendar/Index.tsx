@@ -385,7 +385,7 @@ export default function Index({ board, calendarClickToBook = true, rentalClasses
                         onClick={() => setStatusFilter(statusFilter === 'in_use' ? 'all' : 'in_use')}
                     />
                     <StatCard
-                        title={t('rental.nav.maintenance', undefined, 'Servis/Blackout')}
+                        title={t('rental.nav.maintenance', undefined, 'Servis & Jadwal Nonaktif')}
                         count={board.counts.maintenance ?? 0}
                         total={board.counts.total}
                         icon="🛠️"

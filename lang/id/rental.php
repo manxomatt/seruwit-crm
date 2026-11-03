@@ -273,7 +273,7 @@ return [
         'duty_orders' => 'Surat Jalan & Kas Jalan',
         'corporate' => 'Kontrak B2B',
         'storefront' => 'Storefront & Portal',
-        'maintenance' => 'Servis & Blackout',
+        'maintenance' => 'Servis & Jadwal Nonaktif',
         'availability' => 'Ketersediaan',
         'calendar' => 'Kalender',
         'rates' => 'Tarif',
@@ -1215,7 +1215,7 @@ return [
         'storefront_color_invalid' => 'Warna harus berupa kode heksadesimal 6 digit, mis. #0f766e.',
         'vehicle_not_active' => 'Kendaraan :name berstatus :status, bukan aktif.',
         'vehicle_queued_for_workshop' => 'Kendaraan :name sedang mengantri servis di bengkel.',
-        'vehicle_maintenance_blackout' => 'Kendaraan :name dalam jadwal pemeliharaan/bengkel (:reason dari :start s/d :end).',
+        'vehicle_maintenance_blackout' => 'Kendaraan :name dalam jadwal nonaktif/servis (:reason dari :start s/d :end).',
         'vehicle_capacity_expired' => 'Masa operasional kendaraan :name telah kedaluwarsa (:date). Silakan perpanjang masa aktif unit terlebih dahulu.',
         'vehicle_capacity_expired_for_booking' => 'Masa aktif kendaraan :name (s/d :date) berakhir sebelum tanggal sewa (:start).',
         'vehicle_rental_overlap' => 'Kendaraan :name sudah memiliki rental pada periode ini.',
@@ -1304,16 +1304,16 @@ return [
     ],
 
     'maintenance' => [
-        'title' => 'Pemeliharaan Armada & Auto-Blackout',
+        'title' => 'Pemeliharaan Armada & Jadwal Nonaktif',
         'subtitle' => 'Manajemen servis bengkel, monitoring STNK/KIR, dan proteksi jadwal kalender rental agar unit servis tidak dapat dibooking.',
         'btn_calendar' => 'Kalender Armada',
-        'btn_create' => 'Catat Servis / Blackout',
+        'btn_create' => 'Blokir Jadwal Sewa',
 
         // KPIs
         'kpi_in_workshop' => 'Di Bengkel',
         'kpi_in_workshop_desc' => 'Sedang proses perbaikan / servis',
         'kpi_upcoming' => 'Jadwal Servis',
-        'kpi_upcoming_desc' => 'Blackout mendatang di kalender',
+        'kpi_upcoming_desc' => 'Jadwal nonaktif mendatang di kalender',
         'kpi_stnk' => 'STNK / Pajak',
         'kpi_stnk_desc' => 'Kadaluarsa / sisa ≤ 30 hari',
         'kpi_kir' => 'Uji KIR',
@@ -1323,7 +1323,7 @@ return [
 
         // Compliance Alerts
         'compliance_title' => 'Peringatan Kepatuhan Dokumen Legal Armada',
-        'compliance_desc' => 'Unit dengan dokumen kadaluarsa otomatis diblokir dari sistem sewa jika masa aktif terlampaui. Segera lakukan pengurusan atau jadwalkan blackout servis.',
+        'compliance_desc' => 'Unit dengan dokumen kadaluarsa otomatis diblokir dari sistem sewa jika masa aktif terlampaui. Segera lakukan pengurusan atau jadwalkan nonaktif/servis.',
         'stnk_label' => 'STNK: :label (:date)',
         'kir_label' => 'Uji KIR: :label (:date)',
         'btn_add_service' => '+ Servis',
@@ -1338,12 +1338,12 @@ return [
         'all_vehicles' => 'Semua Armada',
         'btn_filter' => 'Filter',
         'btn_reset' => 'Reset',
-        'showing_count' => 'Menampilkan :count jadwal servis & blackout',
+        'showing_count' => 'Menampilkan :count jadwal servis & nonaktif',
 
         // Table
         'col_code' => 'Kode & Tanggal',
         'col_vehicle' => 'Armada',
-        'col_period' => 'Periode Blackout',
+        'col_period' => 'Periode Nonaktif',
         'col_workshop' => 'Bengkel / Vendor',
         'col_reason' => 'Alasan & Perbaikan',
         'col_cost' => 'Biaya (Rp)',
@@ -1373,14 +1373,14 @@ return [
         'delete_confirm' => 'Hapus jadwal servis :code untuk armada :vehicle?',
 
         // Empty state
-        'empty_title' => 'Belum Ada Jadwal Servis atau Blackout',
+        'empty_title' => 'Belum Ada Jadwal Servis atau Jadwal Nonaktif',
         'empty_desc' => 'Daftarkan armada yang sedang atau akan masuk bengkel untuk melindungi jadwal rental dari bentrok booking.',
-        'empty_cta' => '+ Catat Servis / Blackout Baru',
+        'empty_cta' => '+ Blokir Jadwal Sewa Baru',
 
         // Modals - Create
-        'modal_create_title' => 'Catat Jadwal Servis / Blackout Armada',
+        'modal_create_title' => 'Blokir Jadwal Sewa / Servis Armada',
         'label_vehicle' => 'Pilih Armada Kendaraan',
-        'label_reason' => 'Alasan Servis / Blackout',
+        'label_reason' => 'Alasan Servis / Nonaktif',
         'placeholder_reason' => 'Contoh: Servis Berkala 20.000 KM, Ganti Kanvas Rem, Uji KIR, Body Repair...',
         'label_start_date' => 'Mulai Tanggal',
         'label_end_date' => 'Selesai Tanggal',

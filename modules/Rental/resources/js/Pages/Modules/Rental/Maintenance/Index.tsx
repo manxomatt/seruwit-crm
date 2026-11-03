@@ -351,7 +351,7 @@ export default function Index({
         <DynamicLayout
             header={
                 <PageHeader
-                    title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Auto-Blackout')}
+                    title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Jadwal Nonaktif')}
                     subtitle={t('rental.maintenance.subtitle', undefined, 'Manajemen servis bengkel, monitoring STNK/KIR, dan proteksi jadwal kalender rental agar unit servis tidak dapat dibooking.')}
                     actions={
                         <div className="flex items-center gap-2">
@@ -383,14 +383,14 @@ export default function Index({
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
-                                <span>{t('rental.maintenance.btn_create', undefined, 'Catat Servis / Blackout')}</span>
+                                <span>{t('rental.maintenance.btn_create', undefined, 'Blokir Jadwal Sewa')}</span>
                             </PrimaryButton>
                         </div>
                     }
                 />
             }
         >
-            <Head title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Auto-Blackout')} />
+            <Head title={t('rental.maintenance.title', undefined, 'Pemeliharaan Armada & Jadwal Nonaktif')} />
 
             <RentalNav />
 
@@ -443,7 +443,7 @@ export default function Index({
                         {kpis.upcoming_count}
                     </div>
                     <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        {t('rental.maintenance.kpi_upcoming_sub', undefined, 'Blackout mendatang di kalender')}
+                        {t('rental.maintenance.kpi_upcoming_sub', undefined, 'Jadwal nonaktif mendatang di kalender')}
                     </p>
                 </div>
 
@@ -522,7 +522,7 @@ export default function Index({
                         </h3>
                     </div>
                     <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
-                        {t('rental.maintenance.compliance_subtitle', undefined, 'Unit dengan dokumen kadaluarsa otomatis diblokir dari sistem sewa jika masa aktif terlampaui. Segera lakukan pengurusan atau jadwalkan blackout servis.')}
+                        {t('rental.maintenance.compliance_subtitle', undefined, 'Unit dengan dokumen kadaluarsa otomatis diblokir dari sistem sewa jika masa aktif terlampaui. Segera lakukan pengurusan atau jadwalkan nonaktif/servis.')}
                     </p>
 
                     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -643,7 +643,7 @@ export default function Index({
                     </div>
 
                     <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
-                        {t('rental.maintenance.showing_count', { count: blackouts.length }, `Menampilkan ${blackouts.length} jadwal servis & blackout`)}
+                        {t('rental.maintenance.showing_count', { count: blackouts.length }, `Menampilkan ${blackouts.length} jadwal servis & nonaktif`)}
                     </div>
                 </form>
             </div>
@@ -656,7 +656,7 @@ export default function Index({
                             <tr className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
                                 <th className="px-4 py-3.5">{t('rental.maintenance.col_code_date', undefined, 'Kode & Tanggal')}</th>
                                 <th className="px-4 py-3.5">{t('rental.maintenance.col_vehicle', undefined, 'Armada')}</th>
-                                <th className="px-4 py-3.5">{t('rental.maintenance.col_period', undefined, 'Periode Blackout')}</th>
+                                <th className="px-4 py-3.5">{t('rental.maintenance.col_period', undefined, 'Periode Nonaktif')}</th>
                                 <th className="px-4 py-3.5">{t('rental.maintenance.col_workshop', undefined, 'Bengkel / Vendor')}</th>
                                 <th className="px-4 py-3.5">{t('rental.maintenance.col_reason', undefined, 'Alasan & Perbaikan')}</th>
                                 <th className="px-4 py-3.5">{t('rental.maintenance.col_cost', undefined, 'Biaya (Rp)')}</th>
@@ -675,7 +675,7 @@ export default function Index({
                                                 </svg>
                                             </div>
                                             <h4 className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
-                                                {t('rental.maintenance.empty_title', undefined, 'Belum ada jadwal servis atau blackout yang tercatat.')}
+                                                {t('rental.maintenance.empty_title', undefined, 'Belum ada jadwal servis atau jadwal nonaktif yang tercatat.')}
                                             </h4>
                                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                                 {t('rental.maintenance.empty_sub', undefined, 'Klik tombol di atas untuk mendaftarkan armada yang sedang atau akan masuk bengkel.')}
@@ -691,7 +691,7 @@ export default function Index({
                                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                                 </svg>
-                                                <span>{t('rental.maintenance.btn_create', undefined, 'Catat Servis / Blackout')}</span>
+                                                <span>{t('rental.maintenance.btn_create', undefined, 'Blokir Jadwal Sewa')}</span>
                                             </button>
                                         </div>
                                     </td>
@@ -880,7 +880,7 @@ export default function Index({
                                 </svg>
                             </span>
                             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                {t('rental.maintenance.modal_create_title', undefined, 'Catat Jadwal Servis / Blackout Armada')}
+                                {t('rental.maintenance.modal_create_title', undefined, 'Blokir Jadwal Sewa / Servis Armada')}
                             </h3>
                         </div>
                         <button
@@ -914,7 +914,7 @@ export default function Index({
                         {/* Reason */}
                         <div>
                             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                {t('rental.maintenance.modal_label_reason', undefined, 'Alasan Servis / Blackout')} <span className="text-rose-500">*</span>
+                                {t('rental.maintenance.modal_label_reason', undefined, 'Alasan Servis / Nonaktif')} <span className="text-rose-500">*</span>
                             </label>
                             <input
                                 type="text"
