@@ -508,6 +508,7 @@ return [
         'free' => 'Available',
         'booked' => 'Booked',
         'in_use' => 'In use',
+        'maintenance' => 'Maintenance / Service',
         'unavailable' => 'Unavailable',
         'column' => 'Availability',
         'bookings' => 'Bookings',

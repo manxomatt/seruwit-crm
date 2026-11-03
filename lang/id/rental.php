@@ -529,6 +529,7 @@ return [
         'free' => 'Tersedia',
         'booked' => 'Dibooking',
         'in_use' => 'Digunakan',
+        'maintenance' => 'Servis / Perbaikan',
         'unavailable' => 'Tidak tersedia',
         'column' => 'Ketersediaan',
         'bookings' => 'Booking',

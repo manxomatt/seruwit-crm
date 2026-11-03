@@ -20,6 +20,15 @@ interface Booking {
     partner: string | null;
 }
 
+interface Blackout {
+    id: number;
+    code: string;
+    reason: string;
+    status: string;
+    start_date: string | null;
+    end_date: string | null;
+}
+
 interface VehicleRow {
     id: number;
     name: string;
@@ -28,15 +37,16 @@ interface VehicleRow {
     rental_class?: string | null;
     status: string;
     photo_url: string | null;
-    availability: 'free' | 'booked' | 'in_use' | 'unavailable';
+    availability: 'free' | 'booked' | 'in_use' | 'unavailable' | 'maintenance';
     has_rate: boolean;
+    blackout?: Blackout | null;
     bookings: Booking[];
 }
 
 interface Board {
     from: string;
     to: string;
-    counts: { total: number; free: number; booked: number; in_use: number };
+    counts: { total: number; free: number; booked: number; in_use: number; maintenance?: number };
     vehicles: VehicleRow[];
 }
 
@@ -46,7 +56,7 @@ interface Props {
     rentalClasses?: Array<{ value: string; label: string }>;
 }
 
-type AvailabilityFilter = 'all' | 'free' | 'booked' | 'in_use' | 'unavailable';
+type AvailabilityFilter = 'all' | 'free' | 'booked' | 'in_use' | 'maintenance' | 'unavailable';
 type RateFilter = 'all' | 'with_rate' | 'without_rate';
 type ViewMode = 'grid' | 'timeline' | 'table';
 
@@ -77,6 +87,14 @@ const AVAIL_CONFIG: Record<
         dot: 'bg-sky-500',
         bgSoft: 'bg-sky-50/50 dark:bg-sky-950/20',
         border: 'border-sky-500/30',
+    },
+    maintenance: {
+        labelKey: 'rental.availability.maintenance',
+        fallback: 'Servis / Perbaikan',
+        badge: 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20 dark:bg-rose-950/60 dark:text-rose-300 dark:ring-rose-500/30',
+        dot: 'bg-rose-500',
+        bgSoft: 'bg-rose-50/50 dark:bg-rose-950/20',
+        border: 'border-rose-500/30',
     },
     unavailable: {
         labelKey: 'rental.availability.unavailable',
@@ -136,8 +154,15 @@ function getDateRangeArray(from: string, to: string, maxDays = 31): string[] {
 }
 
 /** Day availability resolution for mini timeline */
-function resolveDayStatus(vehicle: VehicleRow, dayStr: string): { status: 'free' | 'booked' | 'in_use' | 'unavailable'; booking?: Booking } {
+function resolveDayStatus(vehicle: VehicleRow, dayStr: string): { status: 'free' | 'booked' | 'in_use' | 'unavailable' | 'maintenance'; booking?: Booking } {
+    if (vehicle.blackout && (!vehicle.blackout.start_date || vehicle.blackout.start_date <= dayStr) && (!vehicle.blackout.end_date || vehicle.blackout.end_date >= dayStr)) {
+        return { status: 'maintenance' };
+    }
+
     if (vehicle.status !== 'active') {
+        if (vehicle.status === 'maintenance') {
+            return { status: 'maintenance' };
+        }
         return { status: 'unavailable' };
     }
 
@@ -158,6 +183,10 @@ function resolveDayStatus(vehicle: VehicleRow, dayStr: string): { status: 'free'
         return { status: 'booked', booking: reservedBooking };
     }
 
+    if (vehicle.availability === 'maintenance') {
+        return { status: 'maintenance' };
+    }
+
     return { status: 'free' };
 }
 
@@ -168,7 +197,7 @@ interface StatCardProps {
     icon: string;
     active: boolean;
     onClick: () => void;
-    tone: 'all' | 'free' | 'booked' | 'in_use';
+    tone: 'all' | 'free' | 'booked' | 'in_use' | 'maintenance';
     subtext?: string;
 }
 
@@ -199,6 +228,12 @@ function StatCard({ title, count, total, icon, active, onClick, tone, subtext }:
             activeRing: 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/40 ring-2 ring-sky-500/30',
             iconBg: 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
             countText: 'text-sky-600 dark:text-sky-400',
+        },
+        maintenance: {
+            bg: 'from-rose-500/10 via-rose-500/5 to-transparent',
+            activeRing: 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/40 ring-2 ring-rose-500/30',
+            iconBg: 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300',
+            countText: 'text-rose-600 dark:text-rose-400',
         },
     }[tone];
 
@@ -528,7 +563,7 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                 </section>
 
                 {/* 2. Interactive KPI Stats Bar (Click to filter) */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${(board.counts.maintenance ?? 0) > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
                     <StatCard
                         title={t('rental.availability.total', undefined, 'Total Armada')}
                         count={board.counts.total}
@@ -569,6 +604,18 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                         onClick={() => setFilter('in_use')}
                         subtext="Unit aktif di jalan"
                     />
+                    {(board.counts.maintenance ?? 0) > 0 && (
+                        <StatCard
+                            title={t('rental.availability.maintenance', undefined, 'Servis / Perbaikan')}
+                            count={board.counts.maintenance ?? 0}
+                            total={board.counts.total}
+                            icon="🔧"
+                            tone="maintenance"
+                            active={filter === 'maintenance'}
+                            onClick={() => setFilter('maintenance')}
+                            subtext="Bengkel / Blackout"
+                        />
+                    )}
                 </div>
 
                 {/* 3. Filter Hub & View Switcher Bar */}
@@ -711,7 +758,7 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                         {viewMode === 'grid' && (
                             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                                 {paginatedVehicles.map((vehicle) => {
-                                    const cfg = AVAIL_CONFIG[vehicle.availability];
+                                    const cfg = AVAIL_CONFIG[vehicle.availability] || AVAIL_CONFIG.unavailable;
 
                                     return (
                                         <article
@@ -780,17 +827,24 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                         {timelineDates.map((dayStr) => {
                                                             const res = resolveDayStatus(vehicle, dayStr);
                                                             const dayNum = parseInt(dayStr.split('-')[2], 10);
-                                                            const dayColor = {
+                                                            const dayColor = ({
                                                                 free: 'bg-emerald-500 hover:bg-emerald-600',
                                                                 booked: 'bg-amber-500 hover:bg-amber-600',
                                                                 in_use: 'bg-sky-500 hover:bg-sky-600',
+                                                                maintenance: 'bg-rose-500 hover:bg-rose-600',
                                                                 unavailable: 'bg-slate-300 dark:bg-slate-700',
-                                                            }[res.status];
+                                                            } as Record<string, string>)[res.status] || 'bg-slate-300 dark:bg-slate-700';
 
                                                             return (
                                                                 <div
                                                                     key={dayStr}
-                                                                    title={`${dayStr}: ${res.status === 'free' ? 'Tersedia' : res.booking?.code || res.status}${res.booking?.partner ? ` (${res.booking.partner})` : ''}`}
+                                                                    title={`${dayStr}: ${
+                                                                        res.status === 'free'
+                                                                            ? 'Tersedia'
+                                                                            : res.status === 'maintenance'
+                                                                            ? `Servis (${vehicle.blackout?.reason || 'Maintenance'})`
+                                                                            : res.booking?.code || res.status
+                                                                    }${res.booking?.partner ? ` (${res.booking.partner})` : ''}`}
                                                                     className={`flex h-6 min-w-[20px] flex-1 items-center justify-center rounded-md text-[9px] font-bold text-white transition ${dayColor}`}
                                                                 >
                                                                     {dayNum}
@@ -802,6 +856,17 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
 
                                                 {/* Booking List / Schedule Details */}
                                                 <div className="mt-3">
+                                                    {vehicle.blackout && (
+                                                        <div className="mb-2 flex items-center justify-between rounded-xl border border-rose-200/80 bg-rose-50/70 px-3 py-2 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="font-bold">🔧 {vehicle.blackout.reason || 'Servis / Perbaikan'}</p>
+                                                                <p className="text-[11px] text-rose-600 dark:text-rose-400">
+                                                                    {vehicle.blackout.start_date || '—'} → {vehicle.blackout.end_date || '—'}
+                                                                </p>
+                                                            </div>
+                                                            <span className="font-mono text-[10px] font-bold uppercase">{vehicle.blackout.code}</span>
+                                                        </div>
+                                                    )}
                                                     {vehicle.bookings.length > 0 ? (
                                                         <div className="space-y-1.5">
                                                             {vehicle.bookings.slice(0, 2).map((b) => (
@@ -832,6 +897,16 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                                 </p>
                                                             )}
                                                         </div>
+                                                    ) : vehicle.availability === 'maintenance' ? (
+                                                        <div className="flex items-center gap-2 rounded-xl bg-rose-50/60 px-3 py-2 text-xs font-semibold text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                                                            <span>🔧</span>
+                                                            <span>{vehicle.blackout?.reason ? `Perawatan armada: ${vehicle.blackout.reason}` : 'Armada dalam jadwal servis / perbaikan'}</span>
+                                                        </div>
+                                                    ) : vehicle.availability === 'unavailable' ? (
+                                                        <div className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                            <span>⛔</span>
+                                                            <span>Armada saat ini tidak aktif beroperasi</span>
+                                                        </div>
                                                     ) : (
                                                         <div className="flex items-center gap-2 rounded-xl bg-emerald-50/60 px-3 py-2 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
                                                             <span>✨</span>
@@ -857,6 +932,21 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                             <span>{t('rental.availability.setup_rate', undefined, 'Atur Tarif')}</span>
                                                         </SecondaryButton>
                                                     </Link>
+                                                ) : vehicle.availability === 'maintenance' ? (
+                                                    <div className="flex gap-2">
+                                                        <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)} className="flex-1">
+                                                            <SecondaryButton className="w-full justify-center border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 py-2 text-xs font-bold dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+                                                                <span>🔧</span>
+                                                                <span>Detail Armada</span>
+                                                            </SecondaryButton>
+                                                        </Link>
+                                                        <Link href={prefixedRoute('rental.calendar.index', { from: filters.from })} className="flex-1">
+                                                            <SecondaryButton className="w-full justify-center py-2 text-xs font-bold">
+                                                                <span>📅</span>
+                                                                <span>Kalender</span>
+                                                            </SecondaryButton>
+                                                        </Link>
+                                                    </div>
                                                 ) : (
                                                     <div className="flex gap-2">
                                                         {vehicle.bookings.length > 0 && (
@@ -914,7 +1004,7 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                             {paginatedVehicles.map((vehicle) => {
-                                                const cfg = AVAIL_CONFIG[vehicle.availability];
+                                                const cfg = AVAIL_CONFIG[vehicle.availability] || AVAIL_CONFIG.unavailable;
 
                                                 return (
                                                     <tr key={vehicle.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
@@ -952,17 +1042,24 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                         {/* Day Blocks */}
                                                         {timelineDates.map((dayStr) => {
                                                             const res = resolveDayStatus(vehicle, dayStr);
-                                                            const colorClass = {
+                                                            const colorClass = ({
                                                                 free: 'bg-emerald-500',
                                                                 booked: 'bg-amber-500',
                                                                 in_use: 'bg-sky-500',
+                                                                maintenance: 'bg-rose-500',
                                                                 unavailable: 'bg-slate-300 dark:bg-slate-700',
-                                                            }[res.status];
+                                                            } as Record<string, string>)[res.status] || 'bg-slate-300 dark:bg-slate-700';
 
                                                             return (
                                                                 <td key={dayStr} className="p-1 text-center">
                                                                     <div
-                                                                        title={`${vehicle.name} · ${dayStr}: ${res.status === 'free' ? 'Tersedia' : res.booking?.code || res.status}`}
+                                                                        title={`${vehicle.name} · ${dayStr}: ${
+                                                                            res.status === 'free'
+                                                                                ? 'Tersedia'
+                                                                                : res.status === 'maintenance'
+                                                                                ? `Servis (${vehicle.blackout?.reason || 'Maintenance'})`
+                                                                                : res.booking?.code || res.status
+                                                                        }`}
                                                                         className={`mx-auto h-7 w-7 rounded-lg transition-transform hover:scale-110 flex items-center justify-center text-[9px] font-bold text-white ${colorClass}`}
                                                                     >
                                                                         {res.status === 'free' ? '✓' : '•'}
@@ -983,6 +1080,12 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                                 <Link href={prefixedRoute('rental.rates.create', { vehicle_id: vehicle.id })}>
                                                                     <span className="text-[11px] font-bold text-amber-600 hover:underline">
                                                                         + Tarif
+                                                                    </span>
+                                                                </Link>
+                                                            ) : vehicle.availability === 'maintenance' ? (
+                                                                <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)}>
+                                                                    <span className="text-[11px] font-bold text-rose-600 hover:underline">
+                                                                        Detail
                                                                     </span>
                                                                 </Link>
                                                             ) : (
@@ -1027,7 +1130,7 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {paginatedVehicles.map((vehicle) => {
-                                            const cfg = AVAIL_CONFIG[vehicle.availability];
+                                            const cfg = AVAIL_CONFIG[vehicle.availability] || AVAIL_CONFIG.unavailable;
 
                                             return (
                                                 <tr key={vehicle.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
@@ -1074,7 +1177,14 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                     </td>
 
                                                     <td className="px-4 py-3.5 text-xs">
-                                                        {vehicle.bookings.length > 0 ? (
+                                                        {vehicle.blackout ? (
+                                                            <div className="space-y-0.5 text-rose-600 dark:text-rose-400">
+                                                                <p className="font-bold">🔧 {vehicle.blackout.reason || 'Servis / Perbaikan'}</p>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                                    {vehicle.blackout.start_date || '—'} → {vehicle.blackout.end_date || '—'}
+                                                                </p>
+                                                            </div>
+                                                        ) : vehicle.bookings.length > 0 ? (
                                                             <div className="space-y-1">
                                                                 {vehicle.bookings.map((b) => (
                                                                     <div key={b.id} className="flex items-center gap-2">
@@ -1106,6 +1216,12 @@ export default function Index({ board, filters, rentalClasses = [] }: Props): JS
                                                             <Link href={prefixedRoute('rental.rates.create', { vehicle_id: vehicle.id })}>
                                                                 <SecondaryButton className="py-1.5 px-3 text-xs font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/40">
                                                                     <span>Atur Tarif</span>
+                                                                </SecondaryButton>
+                                                            </Link>
+                                                        ) : vehicle.availability === 'maintenance' ? (
+                                                            <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)}>
+                                                                <SecondaryButton className="py-1.5 px-3 text-xs font-bold text-rose-700 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800">
+                                                                    <span>Detail</span>
                                                                 </SecondaryButton>
                                                             </Link>
                                                         ) : (
