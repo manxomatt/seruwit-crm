@@ -21,8 +21,13 @@ class RentalStorefrontAdminController extends Controller
     public function index(Request $request): InertiaResponse
     {
         $general = RentalGeneralSettings::all();
+        $tab = $request->string('tab', 'theme')->toString();
+        if (! in_array($tab, ['theme', 'policy', 'testimonials'], true)) {
+            $tab = 'theme';
+        }
 
         return Inertia::render('Modules/RentalStorefront/Admin/Index', [
+            'tab' => $tab,
             'storefront' => RentalStorefrontSettings::all(),
             'testimonials' => RentalTestimonials::all(),
             'onlinePolicy' => [

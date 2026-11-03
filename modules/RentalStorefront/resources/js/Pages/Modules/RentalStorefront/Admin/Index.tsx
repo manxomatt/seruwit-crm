@@ -31,6 +31,7 @@ interface PublicUrls {
 }
 
 interface Props {
+    tab?: 'theme' | 'policy' | 'testimonials';
     storefront: StorefrontSettings;
     testimonials: TestimonialItem[];
     onlinePolicy: OnlinePolicy;
@@ -220,6 +221,7 @@ function PolicyPanel({
 }
 
 export default function StorefrontAdminIndex({
+    tab = 'theme',
     storefront,
     testimonials,
     onlinePolicy,
@@ -228,8 +230,17 @@ export default function StorefrontAdminIndex({
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
-    const [activeTab, setActiveTab] = useState<'theme' | 'policy' | 'testimonials'>('theme');
+    const [activeTab, setActiveTab] = useState<'theme' | 'policy' | 'testimonials'>(tab);
     const [copied, setCopied] = useState(false);
+
+    const switchTab = (newTab: 'theme' | 'policy' | 'testimonials'): void => {
+        setActiveTab(newTab);
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', newTab);
+            window.history.replaceState({}, '', url.toString());
+        }
+    };
 
     const copyBookingUrl = (): void => {
         if (navigator.clipboard && publicUrls.booking) {
@@ -378,7 +389,7 @@ export default function StorefrontAdminIndex({
                 <nav className="-mb-px flex gap-6 overflow-x-auto">
                     <button
                         type="button"
-                        onClick={() => setActiveTab('theme')}
+                        onClick={() => switchTab('theme')}
                         className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-bold transition-colors ${
                             activeTab === 'theme'
                                 ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
@@ -389,7 +400,7 @@ export default function StorefrontAdminIndex({
                     </button>
                     <button
                         type="button"
-                        onClick={() => setActiveTab('policy')}
+                        onClick={() => switchTab('policy')}
                         className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-bold transition-colors ${
                             activeTab === 'policy'
                                 ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
@@ -400,7 +411,7 @@ export default function StorefrontAdminIndex({
                     </button>
                     <button
                         type="button"
-                        onClick={() => setActiveTab('testimonials')}
+                        onClick={() => switchTab('testimonials')}
                         className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-bold transition-colors ${
                             activeTab === 'testimonials'
                                 ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'

@@ -32,7 +32,7 @@ use Modules\Rental\Support\RentalWhatsAppSettings;
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'addons', 'storefront', 'testimonials', 'documents', 'whatsapp'];
+    public const TABS = ['general', 'addons', 'documents', 'whatsapp'];
 
     protected function getRoutePrefix(): string
     {
@@ -41,11 +41,21 @@ class RentalSettingsController extends Controller
 
     public function index(Request $request, WhatsAppGatewayManager $whatsappManager): InertiaResponse|RedirectResponse
     {
+        $requestedTab = $request->string('tab')->toString();
+
+        if (in_array($requestedTab, ['testimonials', 'storefront'], true)) {
+            if (Modules::available('rental-storefront')) {
+                return redirect()->route($this->getRoutePrefix().'.rental.storefront.index', [
+                    'tab' => $requestedTab === 'testimonials' ? 'testimonials' : 'theme',
+                ]);
+            }
+        }
+
         if (! $request->has('tab')) {
             return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'general']);
         }
 
-        $tab = $request->string('tab')->toString();
+        $tab = $requestedTab;
         if (! in_array($tab, self::TABS, true)) {
             $tab = 'general';
         }
@@ -54,8 +64,6 @@ class RentalSettingsController extends Controller
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
             'addons' => RentalAddon::query()->orderBy('sort_order')->orderBy('id')->get(),
-            'storefront' => RentalStorefrontSettings::all(),
-            'testimonials' => RentalTestimonials::all(),
             'documents' => DocumentTemplateManager::all(),
             'whatsapp' => RentalWhatsAppSettings::all(),
             'deviceStatus' => $whatsappManager->getDeviceStatus(),

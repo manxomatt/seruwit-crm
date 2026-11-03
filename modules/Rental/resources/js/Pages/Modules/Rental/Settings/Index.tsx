@@ -14,8 +14,6 @@ import { FormEventHandler } from 'react';
 import RentalNav from '../../../../RentalNav';
 import AddonsPanel, { RentalAddonItem } from './AddonsPanel';
 import DocumentsPanel from './DocumentsPanel';
-import StorefrontPanel, { DEFAULT_STOREFRONT, StorefrontSettings } from './StorefrontPanel';
-import TestimonialsPanel, { TestimonialItem } from './TestimonialsPanel';
 import WhatsappPanel, { DeviceStatus, WhatsappSettings } from './WhatsappPanel';
 
 interface GeneralSettings {
@@ -49,11 +47,9 @@ interface DocumentTemplate {
 }
 
 interface Props {
-    tab: 'general' | 'addons' | 'storefront' | 'testimonials' | 'rates' | 'documents' | 'whatsapp';
+    tab: 'general' | 'addons' | 'documents' | 'whatsapp';
     general?: GeneralSettings;
     addons?: RentalAddonItem[];
-    storefront?: StorefrontSettings;
-    testimonials?: TestimonialItem[];
     documents?: Record<string, DocumentTemplate>;
     whatsapp?: WhatsappSettings;
     deviceStatus?: DeviceStatus;
@@ -795,8 +791,6 @@ export default function Index({
     tab,
     general = DEFAULT_GENERAL,
     addons = [],
-    storefront = DEFAULT_STOREFRONT,
-    testimonials = [],
     documents = DEFAULT_DOCUMENTS,
     whatsapp = DEFAULT_WHATSAPP,
     deviceStatus,
@@ -808,7 +802,6 @@ export default function Index({
     const tabs = [
         { key: 'general' as const, label: t('rental.settings.tab_general', undefined, 'Umum') },
         { key: 'addons' as const, label: '📦 Katalog Add-on' },
-        { key: 'testimonials' as const, label: t('rental.settings.tab_testimonials', undefined, 'Testimoni') },
         { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Template Dokumen') },
         { key: 'whatsapp' as const, label: '💬 WhatsApp Gateway' },
     ];
@@ -846,10 +839,6 @@ export default function Index({
             {tab === 'general' && <GeneralPanel general={general} centralAiEnabled={centralAiEnabled} />}
 
             {tab === 'addons' && <AddonsPanel addons={addons} />}
-
-            {tab === 'storefront' && <StorefrontPanel storefront={storefront} showDedicatedNotice={true} />}
-
-            {tab === 'testimonials' && <TestimonialsPanel testimonials={testimonials} />}
 
             {tab === 'documents' && (
                 <DocumentsPanel documents={documents} prefixedRoute={prefixedRoute} />
