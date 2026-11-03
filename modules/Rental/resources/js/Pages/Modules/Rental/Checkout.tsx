@@ -119,7 +119,7 @@ export default function Checkout({
         >
             <Head title={`${t('rental.pages.checkout.title', undefined, 'Serah terima unit')} ${rental.code} - ${rental.vehicle.name}`} />
 
-            <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+            <form onSubmit={handleSubmit} className="space-y-6 pb-6">
                 {/* Validation / Submission Error Summary */}
                 {errorMessages.length > 0 && (
                     <div className="rounded-2xl border border-rose-300/80 bg-rose-50/90 p-4 text-xs text-rose-900 shadow-2xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
@@ -400,15 +400,15 @@ export default function Checkout({
                 </div>
 
                 {/* Sticky Action Footer */}
-                <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
-                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+                <div className="sticky bottom-4 z-20 rounded-3xl border border-slate-200/80 bg-white/95 p-4 sm:p-5 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+                    <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4">
                         <Link href={prefixedRoute('rental.show', rental.id)}>
-                            <SecondaryButton type="button" className="rounded-2xl px-5 py-2.5 text-xs font-bold shadow-2xs">
-                                ← {t('common.cancel', undefined, 'Batal & Kembali')}
+                            <SecondaryButton type="button" className="w-full sm:w-auto justify-center rounded-2xl px-5 py-2.5 text-xs font-bold shadow-2xs">
+                                ← {t('rental.pages.checkout.cancel_and_return', undefined, 'Batal & Kembali')}
                             </SecondaryButton>
                         </Link>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             {depositBlocksCheckout ? (
                                 <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
                                     ⚠️ {t('rental.pages.checkout.deposit_required', undefined, 'Deposit harus diterima sebelum unit diserahkan')}
@@ -417,7 +417,7 @@ export default function Checkout({
                             <PrimaryButton
                                 type="submit"
                                 disabled={form.processing || depositBlocksCheckout}
-                                className="rounded-2xl px-6 py-3 text-sm font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+                                className="w-full sm:w-auto justify-center rounded-2xl px-6 py-3 text-sm font-black shadow-md !bg-indigo-600 hover:!bg-indigo-700 focus:!ring-indigo-500"
                             >
                                 {form.processing
                                     ? t('rental.pages.checkout.submitting', undefined, 'Menyimpan serah terima…')
