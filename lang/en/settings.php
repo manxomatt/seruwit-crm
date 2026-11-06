@@ -162,10 +162,12 @@ return [
         'count_hint' => ':count platform settings in this group',
         'empty' => 'No settings in this group yet',
         'groups' => [
-            'general' => 'General & AI',
+            'general' => 'General (System)',
+            'ai' => 'Artificial Intelligence (AI)',
             'capacity' => 'Fleet & Capacity',
             'billing' => 'Billing & Payments',
             'email' => 'Central Email',
+            'whatsapp' => 'WhatsApp Gateway',
             'security' => 'Platform Security',
         ],
         'system_mode' => [

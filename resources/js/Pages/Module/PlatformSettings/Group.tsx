@@ -35,6 +35,7 @@ interface Props {
 
 const GROUP_ICONS: Record<string, string> = {
     general: '⚙️',
+    ai: '🧠',
     capacity: '🚗',
     billing: '💳',
     email: '✉️',
@@ -373,7 +374,12 @@ export default function Group({
                                     />
                                 </div>
                             )}
+                        </div>
+                    )}
 
+                    {/* SPECIFIC VIEW: AI (ARTIFICIAL INTELLIGENCE) GROUP */}
+                    {currentGroup === 'ai' && (
+                        <div className="space-y-6">
                             {/* Master AI Toggle Modern Card */}
                             {aiFeaturesIndex >= 0 && (
                                 <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
@@ -1621,7 +1627,7 @@ export default function Group({
                     )}
 
                     {/* GENERIC FALLBACK FOR OTHER GROUPS */}
-                    {currentGroup !== 'general' && currentGroup !== 'capacity' && currentGroup !== 'email' && currentGroup !== 'security' && currentGroup !== 'whatsapp' && (
+                    {currentGroup !== 'general' && currentGroup !== 'ai' && currentGroup !== 'capacity' && currentGroup !== 'email' && currentGroup !== 'security' && currentGroup !== 'whatsapp' && (
                         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <div className="flex items-center gap-3">

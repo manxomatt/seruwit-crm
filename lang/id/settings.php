@@ -162,10 +162,12 @@ return [
         'count_hint' => ':count pengaturan platform di grup ini',
         'empty' => 'Belum ada pengaturan di grup ini',
         'groups' => [
-            'general' => 'Umum & AI',
+            'general' => 'Umum (Sistem)',
+            'ai' => 'Kecerdasan Buatan (AI)',
             'capacity' => 'Armada & Kapasitas',
             'billing' => 'Billing & Pembayaran',
             'email' => 'Email Sentral',
+            'whatsapp' => 'WhatsApp Gateway',
             'security' => 'Keamanan Platform',
         ],
         'system_mode' => [

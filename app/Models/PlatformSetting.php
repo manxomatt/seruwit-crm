@@ -290,33 +290,33 @@ class PlatformSetting extends Model
             ],
             [
                 'key' => 'general.ai_features_enabled',
-                'group' => 'general',
+                'group' => 'ai',
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'Fitur AI (Artificial Intelligence)',
                 'description' => 'Master switch untuk mengaktifkan atau menonaktifkan seluruh fitur AI (Visual Handover, Smart KYC, Dynamic Pricing, Predictive Maintenance, AI Smart Quick-Fill Armada) di semua workspace tenant.',
                 'is_public' => true,
-                'sort_order' => 2,
+                'sort_order' => 1,
             ],
             [
                 'key' => self::KEY_AI_OCR_ENABLED,
-                'group' => 'general',
+                'group' => 'ai',
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'Fitur AI OCR Dokumen (KTP / SIM)',
                 'description' => 'Kontrol ketersediaan fitur pemindaian cepat (OCR) foto KTP dan SIM pelanggan pada form booking dan walk-in di seluruh tenant. Jika dinonaktifkan, scanner OCR disembunyikan dari halaman tenant.',
                 'is_public' => true,
-                'sort_order' => 3,
+                'sort_order' => 2,
             ],
             [
                 'key' => self::KEY_AI_QUICK_FILL_ENABLED,
-                'group' => 'general',
+                'group' => 'ai',
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'Fitur AI Smart Quick-Fill (Asisten Armada)',
                 'description' => 'Kontrol ketersediaan asisten pengisian otomatis spesifikasi unit armada (AI Smart Quick-Fill) pada form pendaftaran kendaraan baru di seluruh tenant. Jika dinonaktifkan, panel asisten AI disembunyikan dari halaman tenant.',
                 'is_public' => true,
-                'sort_order' => 4,
+                'sort_order' => 3,
             ],
 
             // CAPACITY
@@ -651,6 +651,13 @@ class PlatformSetting extends Model
                     $def
                 );
             }
+
+            // Sync AI platform settings to dedicated 'ai' group
+            static::query()->whereIn('key', [
+                'general.ai_features_enabled',
+                self::KEY_AI_OCR_ENABLED,
+                self::KEY_AI_QUICK_FILL_ENABLED,
+            ])->where('group', '!=', 'ai')->update(['group' => 'ai']);
         } catch (\Throwable) {
             // Gracefully ignore if database connection is unavailable during boot
         }
@@ -665,6 +672,7 @@ class PlatformSetting extends Model
     {
         return [
             'general',
+            'ai',
             'capacity',
             'email',
             'whatsapp',

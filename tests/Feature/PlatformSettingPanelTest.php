@@ -45,6 +45,17 @@ class PlatformSettingPanelTest extends TestCase
                 ->has('systemModes'));
     }
 
+    public function test_admin_can_view_ai_platform_settings_group(): void
+    {
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.platform-settings.group', 'ai'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Module/PlatformSettings/Group')
+                ->where('currentGroup', 'ai')
+                ->has('groupSettings', 3));
+    }
+
     public function test_non_admin_cannot_view_platform_settings_panel(): void
     {
         $this->actingAs($this->createUserWithRole())
@@ -58,7 +69,7 @@ class PlatformSettingPanelTest extends TestCase
 
         $this->actingAs($this->createAdminUser())
             ->post(route('module.platform-settings.bulk-update'), [
-                'group' => 'general',
+                'group' => $setting->group,
                 'settings' => [
                     [
                         'id' => $setting->id,
@@ -66,7 +77,7 @@ class PlatformSettingPanelTest extends TestCase
                     ],
                 ],
             ])
-            ->assertRedirect(route('module.platform-settings.group', 'general'));
+            ->assertRedirect(route('module.platform-settings.group', $setting->group));
 
         $this->assertSame('0', PlatformSetting::getValue(CentralAiSettings::KEY));
         $this->assertFalse(CentralAiSettings::isEnabled());
