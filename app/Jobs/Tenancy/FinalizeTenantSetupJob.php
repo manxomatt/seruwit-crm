@@ -78,28 +78,21 @@ class FinalizeTenantSetupJob implements ShouldQueue
             }
         });
 
-        // Install default modules (pages, posts, carousels, fleet, rental, document, maintenance, scoring) first.
-        // Their tables and menus must exist before the page seeders run, and they must be ready
-        // before any vertical pack is installed.
+        // Install core default modules (CMS content, fleet, base, driver, rental, invoicing, receivables, document, maintenance).
+        // Advanced add-on modules (rental-corporate, rental-duty-order, rental-dispatch, rental-storefront, rental-ai, etc.)
+        // remain optional and can be installed on-demand from the tenant's Module Catalog.
         $defaultModules = [
             'pages',
             'posts',
             'carousels',
             'fleet',
             'fleet-base',
-            'fleet-settlement',
-            'fleet-fuel',
-            'fleet-compliance',
             'driver',
             'rental',
-            'rental-corporate',
-            'rental-duty-order',
-            'rental-dispatch',
-            'rental-storefront',
-            'rental-ai',
+            'invoicing',
+            'receivables',
             'document',
             'maintenance',
-            'scoring',
         ];
 
         foreach ($defaultModules as $defaultModuleKey) {

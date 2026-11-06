@@ -83,7 +83,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Gratis selamanya untuk rental mobil pemula dengan armada hingga 2 unit.',
                 'badge' => 'Gratis Selamanya',
                 'is_popular' => false,
-                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'rental', 'invoicing', 'receivables', 'cash-bank', 'expenses', 'document', 'maintenance', 'scoring', 'tracking'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'driver', 'rental', 'invoicing', 'receivables', 'document', 'maintenance'],
                 'limits' => [
                     'max_vehicles' => 2,
                     'max_users' => 1,
@@ -112,7 +112,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Solusi ideal untuk bisnis rental mobil rintisan dengan armada hingga 5 unit.',
                 'badge' => 'Paling Hemat',
                 'is_popular' => false,
-                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'fleet-settlement', 'fleet-fuel', 'fleet-compliance', 'driver', 'rental', 'invoicing', 'receivables', 'cash-bank', 'expenses', 'tax', 'document', 'maintenance', 'scoring', 'tracking'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'fleet-base', 'driver', 'rental', 'invoicing', 'receivables', 'cash-bank', 'expenses', 'document', 'maintenance'],
                 'limits' => [
                     'max_vehicles' => 5,
                     'max_users' => 2,

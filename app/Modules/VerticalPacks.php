@@ -25,20 +25,16 @@ class VerticalPacks
         return [
             self::RENTAL_MOBIL => [
                 'label' => 'Rental Mobil',
-                'description' => 'Fleet, documents, maintenance, tracking, invoicing, receivables, rental + demo data.',
+                'description' => 'Fleet, pool base, driver, rental core, invoicing, receivables, document & maintenance.',
                 'modules' => [
                     'fleet',
-                    'document',
-                    'maintenance',
-                    'tracking',
+                    'fleet-base',
+                    'driver',
+                    'rental',
                     'invoicing',
                     'receivables',
-                    'rental',
-                    'rental-corporate',
-                    'rental-duty-order',
-                    'rental-dispatch',
-                    'rental-storefront',
-                    'rental-ai',
+                    'document',
+                    'maintenance',
                 ],
                 'seeders' => [
                     \Database\Seeders\TenantRentalDemoSeeder::class,
