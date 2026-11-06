@@ -102,6 +102,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerDomainEventListeners();
 
         \App\Models\PlatformSetting::applyCentralMailConfig();
+        \App\Models\PlatformSetting::applyCentralAiConfig();
 
         Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
 

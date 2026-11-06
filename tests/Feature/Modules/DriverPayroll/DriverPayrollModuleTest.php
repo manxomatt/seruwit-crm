@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Modules\DriverPayroll;
 
-use App\Models\User;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleTier;
 use Illuminate\Foundation\Testing\RefreshDatabase;

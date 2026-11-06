@@ -23,6 +23,20 @@ class PlatformSetting extends Model
 
     public const KEY_AI_QUICK_FILL_ENABLED = 'general.ai_quick_fill_enabled';
 
+    public const KEY_AI_GEMINI_API_KEY = 'ai.gemini_api_key';
+
+    public const KEY_AI_GEMINI_MODEL = 'ai.gemini_model';
+
+    public const KEY_AI_GEMINI_BASE_URL = 'ai.gemini_base_url';
+
+    public const KEY_AI_KYC_DRIVER = 'ai.kyc_driver';
+
+    public const KEY_AI_GROQ_API_KEY = 'ai.groq_api_key';
+
+    public const KEY_AI_GROQ_MODEL = 'ai.groq_model';
+
+    public const KEY_AI_GROQ_BASE_URL = 'ai.groq_base_url';
+
     public const KEY_VEHICLE_TRIAL_DURATION_DAYS = 'capacity.vehicle_trial_duration_days';
 
     public const KEY_MAX_TRIAL_VEHICLES_PER_TENANT = 'capacity.max_trial_vehicles_per_tenant';
@@ -238,6 +252,48 @@ class PlatformSetting extends Model
     }
 
     /**
+     * Dynamically apply Platform AI settings to Laravel runtime config.
+     */
+    public static function applyCentralAiConfig(): void
+    {
+        try {
+            $geminiApiKey = static::getValue(self::KEY_AI_GEMINI_API_KEY);
+            $geminiModel = static::getValue(self::KEY_AI_GEMINI_MODEL);
+            $geminiBaseUrl = static::getValue(self::KEY_AI_GEMINI_BASE_URL);
+
+            $kycDriver = static::getValue(self::KEY_AI_KYC_DRIVER);
+            $groqApiKey = static::getValue(self::KEY_AI_GROQ_API_KEY);
+            $groqModel = static::getValue(self::KEY_AI_GROQ_MODEL);
+            $groqBaseUrl = static::getValue(self::KEY_AI_GROQ_BASE_URL);
+
+            if (filled($geminiApiKey)) {
+                config(['services.gemini.api_key' => $geminiApiKey]);
+            }
+            if (filled($geminiModel)) {
+                config(['services.gemini.model' => $geminiModel]);
+            }
+            if (filled($geminiBaseUrl)) {
+                config(['services.gemini.base_url' => $geminiBaseUrl]);
+            }
+
+            if (filled($kycDriver)) {
+                config(['services.kyc.driver' => $kycDriver]);
+            }
+            if (filled($groqApiKey)) {
+                config(['services.groq.api_key' => $groqApiKey]);
+            }
+            if (filled($groqModel)) {
+                config(['services.groq.model' => $groqModel]);
+            }
+            if (filled($groqBaseUrl)) {
+                config(['services.groq.base_url' => $groqBaseUrl]);
+            }
+        } catch (\Throwable) {
+            // Gracefully ignore during early boot
+        }
+    }
+
+    /**
      * Create or update a platform setting value by key, filling required columns
      * with sensible defaults on first write.
      */
@@ -317,6 +373,76 @@ class PlatformSetting extends Model
                 'description' => 'Kontrol ketersediaan asisten pengisian otomatis spesifikasi unit armada (AI Smart Quick-Fill) pada form pendaftaran kendaraan baru di seluruh tenant. Jika dinonaktifkan, panel asisten AI disembunyikan dari halaman tenant.',
                 'is_public' => true,
                 'sort_order' => 3,
+            ],
+            [
+                'key' => self::KEY_AI_GEMINI_API_KEY,
+                'group' => 'ai',
+                'value' => (string) config('services.gemini.api_key', ''),
+                'type' => 'password',
+                'label' => 'Google Gemini API Key',
+                'description' => 'API Key dari Google AI Studio (https://aistudio.google.com/app/apikey) untuk menjalankan engine Vision & AI Seruwit.',
+                'is_public' => false,
+                'sort_order' => 10,
+            ],
+            [
+                'key' => self::KEY_AI_GEMINI_MODEL,
+                'group' => 'ai',
+                'value' => (string) config('services.gemini.model', 'gemini-3.6-flash'),
+                'type' => 'text',
+                'label' => 'Google Gemini Model',
+                'description' => 'Model Google Gemini yang aktif (contoh: gemini-3.6-flash, gemini-2.5-flash, gemini-1.5-flash).',
+                'is_public' => false,
+                'sort_order' => 11,
+            ],
+            [
+                'key' => self::KEY_AI_GEMINI_BASE_URL,
+                'group' => 'ai',
+                'value' => (string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta'),
+                'type' => 'text',
+                'label' => 'Google Gemini Base URL',
+                'description' => 'Base endpoint Google Gemini API (default: https://generativelanguage.googleapis.com/v1beta).',
+                'is_public' => false,
+                'sort_order' => 12,
+            ],
+            [
+                'key' => self::KEY_AI_KYC_DRIVER,
+                'group' => 'ai',
+                'value' => (string) config('services.kyc.driver', 'auto'),
+                'type' => 'select',
+                'label' => 'Provider Driver OCR & KYC Dokumen',
+                'description' => 'Pilih driver utama untuk pemindaian KTP & SIM (auto = utamakan Groq jika terpasang, lalu Gemini; groq = hanya Groq; gemini = hanya Gemini).',
+                'is_public' => false,
+                'sort_order' => 20,
+            ],
+            [
+                'key' => self::KEY_AI_GROQ_API_KEY,
+                'group' => 'ai',
+                'value' => (string) config('services.groq.api_key', ''),
+                'type' => 'password',
+                'label' => 'Groq Cloud API Key',
+                'description' => 'API Key Groq Cloud gratis (https://console.groq.com/keys) untuk alternatif scanner dokumen super cepat.',
+                'is_public' => false,
+                'sort_order' => 21,
+            ],
+            [
+                'key' => self::KEY_AI_GROQ_MODEL,
+                'group' => 'ai',
+                'value' => (string) config('services.groq.model', 'qwen/qwen3.6-27b'),
+                'type' => 'text',
+                'label' => 'Groq Cloud Vision Model',
+                'description' => 'Model Vision pada Groq Cloud (contoh: qwen/qwen3.6-27b, meta-llama/llama-4-scenic-12b).',
+                'is_public' => false,
+                'sort_order' => 22,
+            ],
+            [
+                'key' => self::KEY_AI_GROQ_BASE_URL,
+                'group' => 'ai',
+                'value' => (string) config('services.groq.base_url', 'https://api.groq.com/openai/v1'),
+                'type' => 'text',
+                'label' => 'Groq Cloud Base URL',
+                'description' => 'Endpoint API Groq Cloud (default: https://api.groq.com/openai/v1).',
+                'is_public' => false,
+                'sort_order' => 23,
             ],
 
             // CAPACITY
@@ -657,7 +783,28 @@ class PlatformSetting extends Model
                 'general.ai_features_enabled',
                 self::KEY_AI_OCR_ENABLED,
                 self::KEY_AI_QUICK_FILL_ENABLED,
+                self::KEY_AI_GEMINI_API_KEY,
+                self::KEY_AI_GEMINI_MODEL,
+                self::KEY_AI_GEMINI_BASE_URL,
+                self::KEY_AI_KYC_DRIVER,
+                self::KEY_AI_GROQ_API_KEY,
+                self::KEY_AI_GROQ_MODEL,
+                self::KEY_AI_GROQ_BASE_URL,
             ])->where('group', '!=', 'ai')->update(['group' => 'ai']);
+
+            // If Gemini API key in database is blank but exists in config, migrate it
+            $geminiKey = static::getValue(self::KEY_AI_GEMINI_API_KEY);
+            if (blank($geminiKey) && filled(config('services.gemini.api_key'))) {
+                static::query()->where('key', self::KEY_AI_GEMINI_API_KEY)->update([
+                    'value' => (string) config('services.gemini.api_key'),
+                ]);
+            }
+            $groqKey = static::getValue(self::KEY_AI_GROQ_API_KEY);
+            if (blank($groqKey) && filled(config('services.groq.api_key'))) {
+                static::query()->where('key', self::KEY_AI_GROQ_API_KEY)->update([
+                    'value' => (string) config('services.groq.api_key'),
+                ]);
+            }
         } catch (\Throwable) {
             // Gracefully ignore if database connection is unavailable during boot
         }

@@ -9,6 +9,4 @@ use Modules\FleetBase\Support\AccessibleFleetBases as BaseAccessibleFleetBases;
  *
  * @deprecated Use {@see \Modules\FleetBase\Support\AccessibleFleetBases} directly.
  */
-class AccessibleFleetBases extends BaseAccessibleFleetBases
-{
-}
+class AccessibleFleetBases extends BaseAccessibleFleetBases {}

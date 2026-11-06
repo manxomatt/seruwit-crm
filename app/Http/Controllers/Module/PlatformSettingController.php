@@ -61,6 +61,8 @@ class PlatformSettingController extends Controller
 
         // Check if SMTP password exists in DB
         $hasSmtpPassword = filled(PlatformSetting::getValue('email.smtp_password'));
+        $hasGeminiApiKey = filled(PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_API_KEY));
+        $hasGroqApiKey = filled(PlatformSetting::getValue(PlatformSetting::KEY_AI_GROQ_API_KEY));
 
         $deviceStatus = null;
         $whatsappSessionId = null;
@@ -102,6 +104,8 @@ class PlatformSettingController extends Controller
             'currentGroup' => $group,
             'systemModes' => SystemMode::values(),
             'hasSmtpPassword' => $hasSmtpPassword,
+            'hasGeminiApiKey' => $hasGeminiApiKey,
+            'hasGroqApiKey' => $hasGroqApiKey,
             'deviceStatus' => $deviceStatus,
             'sessionId' => $whatsappSessionId,
         ]);
@@ -131,16 +135,18 @@ class PlatformSettingController extends Controller
                 ]);
             }
 
-            // Keep existing password if blank is submitted
-            if ($setting->key === 'email.smtp_password' && blank($value) && filled($setting->value)) {
+            // Keep existing password/secret if blank is submitted
+            if (in_array($setting->key, ['email.smtp_password', PlatformSetting::KEY_AI_GEMINI_API_KEY, PlatformSetting::KEY_AI_GROQ_API_KEY], true)
+                && blank($value) && filled($setting->value)) {
                 continue;
             }
 
             $setting->update(['value' => $value]);
         }
 
-        // Dynamically re-apply updated mail configuration
+        // Dynamically re-apply updated configurations
         PlatformSetting::applyCentralMailConfig();
+        PlatformSetting::applyCentralAiConfig();
 
         return redirect()->route('module.platform-settings.group', $data['group'])
             ->with('success', __('settings.messages.bulk_updated'));
@@ -331,5 +337,149 @@ class PlatformSettingController extends Controller
         $result = $this->whatsappService->sendText($this->gatewayManager->getSessionId(), $phone, $text);
 
         return response()->json($result);
+    }
+
+    /**
+     * Test connection to an AI provider (gemini or groq) using saved or passed credentials.
+     */
+    public function testAiConnection(Request $request): JsonResponse
+    {
+        Gate::authorize('manage-platform-settings');
+
+        $data = $request->validate([
+            'provider' => ['required', Rule::in(['gemini', 'groq'])],
+            'api_key' => ['nullable', 'string'],
+            'model' => ['nullable', 'string'],
+            'base_url' => ['nullable', 'string'],
+        ]);
+
+        $provider = $data['provider'];
+
+        if ($provider === 'gemini') {
+            $apiKey = filled($data['api_key'] ?? null)
+                ? (string) $data['api_key']
+                : (string) PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_API_KEY);
+
+            if (blank($apiKey)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'API Key Google Gemini belum diisi.',
+                ], 422);
+            }
+
+            $model = filled($data['model'] ?? null)
+                ? (string) $data['model']
+                : (string) PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_MODEL, 'gemini-2.5-flash');
+            $model = str_replace('models/', '', $model);
+
+            $baseUrl = filled($data['base_url'] ?? null)
+                ? (string) $data['base_url']
+                : (string) PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_BASE_URL, 'https://generativelanguage.googleapis.com/v1beta');
+
+            $endpoint = rtrim($baseUrl, '/')."/models/{$model}:generateContent?key={$apiKey}";
+
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(15)
+                    ->post($endpoint, [
+                        'contents' => [
+                            [
+                                'parts' => [
+                                    ['text' => 'Ping. Balas dengan kata PONG saja.'],
+                                ],
+                            ],
+                        ],
+                        'generationConfig' => [
+                            'maxOutputTokens' => 10,
+                        ],
+                    ]);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    $reply = $json['candidates'][0]['content']['parts'][0]['text'] ?? 'OK';
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Koneksi Google Gemini ({$model}) berhasil! Respon: ".trim((string) $reply),
+                    ]);
+                }
+
+                $err = $response->json('error.message') ?? $response->body();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Gagal terhubung ke Gemini: {$err}",
+                ], 400);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kesalahan koneksi atau timeout: {$e->getMessage()}",
+                ], 500);
+            }
+        }
+
+        if ($provider === 'groq') {
+            $apiKey = filled($data['api_key'] ?? null)
+                ? (string) $data['api_key']
+                : (string) PlatformSetting::getValue(PlatformSetting::KEY_AI_GROQ_API_KEY);
+
+            if (blank($apiKey)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'API Key Groq Cloud belum diisi.',
+                ], 422);
+            }
+
+            $model = filled($data['model'] ?? null)
+                ? (string) $data['model']
+                : (string) PlatformSetting::getValue(PlatformSetting::KEY_AI_GROQ_MODEL, 'qwen/qwen3.6-27b');
+
+            $baseUrl = filled($data['base_url'] ?? null)
+                ? (string) $data['base_url']
+                : (string) PlatformSetting::getValue(PlatformSetting::KEY_AI_GROQ_BASE_URL, 'https://api.groq.com/openai/v1');
+
+            $endpoint = rtrim($baseUrl, '/').'/chat/completions';
+
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(15)
+                    ->withToken($apiKey)
+                    ->post($endpoint, [
+                        'model' => $model,
+                        'messages' => [
+                            [
+                                'role' => 'user',
+                                'content' => 'Ping. Balas dengan kata PONG saja.',
+                            ],
+                        ],
+                        'max_completion_tokens' => 10,
+                    ]);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    $reply = $json['choices'][0]['message']['content'] ?? 'OK';
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Koneksi Groq Cloud ({$model}) berhasil! Respon: ".trim((string) $reply),
+                    ]);
+                }
+
+                $err = $response->json('error.message') ?? $response->body();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Gagal terhubung ke Groq: {$err}",
+                ], 400);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kesalahan koneksi atau timeout: {$e->getMessage()}",
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Provider tidak didukung.',
+        ], 422);
     }
 }

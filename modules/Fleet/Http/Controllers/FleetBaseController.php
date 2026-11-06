@@ -9,6 +9,4 @@ use Modules\FleetBase\Http\Controllers\FleetBaseController as BaseFleetBaseContr
  *
  * @deprecated Use {@see \Modules\FleetBase\Http\Controllers\FleetBaseController} directly.
  */
-class FleetBaseController extends BaseFleetBaseController
-{
-}
+class FleetBaseController extends BaseFleetBaseController {}

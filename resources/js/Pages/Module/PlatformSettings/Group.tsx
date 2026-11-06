@@ -9,6 +9,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { FormEventHandler, useState } from 'react';
 
 interface PlatformSetting {
@@ -29,6 +30,8 @@ interface Props {
     currentGroup: string;
     systemModes: string[];
     hasSmtpPassword?: boolean;
+    hasGeminiApiKey?: boolean;
+    hasGroqApiKey?: boolean;
     deviceStatus?: DeviceStatus | null;
     sessionId?: string | null;
 }
@@ -49,6 +52,8 @@ export default function Group({
     currentGroup,
     systemModes,
     hasSmtpPassword = false,
+    hasGeminiApiKey = false,
+    hasGroqApiKey = false,
     deviceStatus = null,
     sessionId = null,
 }: Props): JSX.Element {
@@ -60,6 +65,15 @@ export default function Group({
 
     const [showTestEmailModal, setShowTestEmailModal] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // AI credentials testing state
+    const [testingGemini, setTestingGemini] = useState(false);
+    const [geminiTestResult, setGeminiTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [showGeminiKey, setShowGeminiKey] = useState(false);
+
+    const [testingGroq, setTestingGroq] = useState(false);
+    const [groqTestResult, setGroqTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [showGroqKey, setShowGroqKey] = useState(false);
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         group: currentGroup,
@@ -98,6 +112,44 @@ export default function Group({
         });
     };
 
+    const handleTestGemini = async () => {
+        setTestingGemini(true);
+        setGeminiTestResult(null);
+        try {
+            const res = await axios.post(route('module.platform-settings.test-ai'), {
+                provider: 'gemini',
+                api_key: geminiApiKeyIndex >= 0 ? data.settings[geminiApiKeyIndex]?.value : '',
+                model: geminiModelIndex >= 0 ? data.settings[geminiModelIndex]?.value : '',
+                base_url: geminiBaseUrlIndex >= 0 ? data.settings[geminiBaseUrlIndex]?.value : '',
+            });
+            setGeminiTestResult({ success: true, message: res.data.message });
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Gagal terhubung ke Gemini.';
+            setGeminiTestResult({ success: false, message: msg });
+        } finally {
+            setTestingGemini(false);
+        }
+    };
+
+    const handleTestGroq = async () => {
+        setTestingGroq(true);
+        setGroqTestResult(null);
+        try {
+            const res = await axios.post(route('module.platform-settings.test-ai'), {
+                provider: 'groq',
+                api_key: groqApiKeyIndex >= 0 ? data.settings[groqApiKeyIndex]?.value : '',
+                model: groqModelIndex >= 0 ? data.settings[groqModelIndex]?.value : '',
+                base_url: groqBaseUrlIndex >= 0 ? data.settings[groqBaseUrlIndex]?.value : '',
+            });
+            setGroqTestResult({ success: true, message: res.data.message });
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Gagal terhubung ke Groq.';
+            setGroqTestResult({ success: false, message: msg });
+        } finally {
+            setTestingGroq(false);
+        }
+    };
+
     const formatGroupLabel = (group: string): string => {
         return t(
             `settings.platform.groups.${group}`,
@@ -118,6 +170,15 @@ export default function Group({
 
     const aiQuickFillIndex = findSettingIndex('general.ai_quick_fill_enabled');
     const isAiQuickFillEnabled = aiQuickFillIndex >= 0 ? data.settings[aiQuickFillIndex]?.value === '1' : true;
+
+    // AI Configuration & Provider indices
+    const geminiApiKeyIndex = findSettingIndex('ai.gemini_api_key');
+    const geminiModelIndex = findSettingIndex('ai.gemini_model');
+    const geminiBaseUrlIndex = findSettingIndex('ai.gemini_base_url');
+    const aiKycDriverIndex = findSettingIndex('ai.kyc_driver');
+    const groqApiKeyIndex = findSettingIndex('ai.groq_api_key');
+    const groqModelIndex = findSettingIndex('ai.groq_model');
+    const groqBaseUrlIndex = findSettingIndex('ai.groq_base_url');
 
     // Capacity indices
     const businessModelIndex = findSettingIndex('capacity.business_model');
@@ -735,6 +796,471 @@ export default function Group({
                                     />
                                 </div>
                             )}
+
+                            {/* GOOGLE GEMINI CONFIGURATION CARD */}
+                            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xs">
+                                            <span className="material-symbols-outlined text-[20px]">smart_toy</span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.ai_credentials.gemini_title', undefined, 'Google Gemini AI Engine (Multimodal & Generation)')}
+                                                </h3>
+                                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                                    Google AI
+                                                </span>
+                                            </div>
+                                            <p className="mt-0.5 text-xs text-slate-500">
+                                                {t('settings.platform.ai_credentials.gemini_desc', undefined, 'Digunakan untuk AI Smart Quick-Fill armada, inspeksi foto kendaraan, dynamic pricing, dan analisis rental.')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        className={`flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-bold sm:self-center ${
+                                            hasGeminiApiKey || (geminiApiKeyIndex >= 0 && Boolean(data.settings[geminiApiKeyIndex]?.value))
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full ${
+                                                hasGeminiApiKey || (geminiApiKeyIndex >= 0 && Boolean(data.settings[geminiApiKeyIndex]?.value))
+                                                    ? 'bg-emerald-500'
+                                                    : 'bg-amber-500'
+                                            }`}
+                                        />
+                                        {hasGeminiApiKey || (geminiApiKeyIndex >= 0 && Boolean(data.settings[geminiApiKeyIndex]?.value))
+                                            ? t('settings.platform.ai_credentials.configured_badge', undefined, 'Tersimpan & Aktif')
+                                            : t('settings.platform.ai_credentials.not_configured_badge', undefined, 'Belum Dikonfigurasi')}
+                                    </span>
+                                </div>
+
+                                {/* Gemini Inputs Grid */}
+                                <div className="space-y-5">
+                                    {/* Gemini API Key */}
+                                    {geminiApiKeyIndex >= 0 && (
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <InputLabel
+                                                    htmlFor="gemini_api_key"
+                                                    value={t('settings.platform.ai_credentials.gemini_key_label', undefined, 'Google Gemini API Key')}
+                                                />
+                                                <a
+                                                    href="https://aistudio.google.com/app/apikey"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                                >
+                                                    Dapatkan Kunci API Google AI Studio
+                                                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                                                </a>
+                                            </div>
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.gemini_key_desc', undefined, 'Kunci API Google Gemini dari Google AI Studio. Nilai tersimpan di database dan menggantikan file .env.')}
+                                            </p>
+                                            <div className="relative">
+                                                <TextInput
+                                                    id="gemini_api_key"
+                                                    type={showGeminiKey ? 'text' : 'password'}
+                                                    value={data.settings[geminiApiKeyIndex]?.value}
+                                                    onChange={(e) => updateValue(geminiApiKeyIndex, e.target.value)}
+                                                    placeholder={
+                                                        hasGeminiApiKey
+                                                            ? t('settings.platform.ai_credentials.keep_existing', undefined, '•••••••••••••••• (Tersimpan di database, biarkan kosong jika tidak ingin mengubah)')
+                                                            : 'AIzaSy...'
+                                                    }
+                                                    className="w-full pr-10 font-mono text-xs"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">
+                                                        {showGeminiKey ? 'visibility_off' : 'visibility'}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${geminiApiKeyIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Gemini Model */}
+                                    {geminiModelIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                htmlFor="gemini_model"
+                                                value={t('settings.platform.ai_credentials.gemini_model_label', undefined, 'Model Google Gemini')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.gemini_model_desc', undefined, 'Model Gemini yang aktif (contoh: gemini-2.5-flash, gemini-1.5-flash, gemini-2.5-pro).')}
+                                            </p>
+                                            <TextInput
+                                                id="gemini_model"
+                                                type="text"
+                                                value={data.settings[geminiModelIndex]?.value}
+                                                onChange={(e) => updateValue(geminiModelIndex, e.target.value)}
+                                                placeholder="gemini-2.5-flash"
+                                                className="w-full font-mono text-xs"
+                                            />
+                                            {/* Quick Model Presets */}
+                                            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                                                <span className="text-[11px] text-slate-400">Preset Rekomendasi:</span>
+                                                {[
+                                                    { name: 'gemini-2.5-flash', tag: 'Default (Rekomendasi Cepat & Cerdas)' },
+                                                    { name: 'gemini-1.5-flash', tag: 'Stabil' },
+                                                    { name: 'gemini-2.5-pro', tag: 'Akurasi Ekstrem' },
+                                                ].map((preset) => (
+                                                    <button
+                                                        key={preset.name}
+                                                        type="button"
+                                                        onClick={() => updateValue(geminiModelIndex, preset.name)}
+                                                        className={`rounded-lg border px-2 py-0.5 text-[11px] transition-colors ${
+                                                            data.settings[geminiModelIndex]?.value === preset.name
+                                                                ? 'border-indigo-500 bg-indigo-50 font-bold text-indigo-700 dark:border-indigo-400 dark:bg-indigo-950 dark:text-indigo-300'
+                                                                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                        }`}
+                                                    >
+                                                        {preset.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${geminiModelIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Gemini Base URL */}
+                                    {geminiBaseUrlIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                htmlFor="gemini_base_url"
+                                                value={t('settings.platform.ai_credentials.gemini_url_label', undefined, 'Base Endpoint Google Gemini')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.gemini_url_desc', undefined, 'URL dasar Google Generative Language API.')}
+                                            </p>
+                                            <TextInput
+                                                id="gemini_base_url"
+                                                type="text"
+                                                value={data.settings[geminiBaseUrlIndex]?.value}
+                                                onChange={(e) => updateValue(geminiBaseUrlIndex, e.target.value)}
+                                                placeholder="https://generativelanguage.googleapis.com/v1beta"
+                                                className="w-full font-mono text-xs"
+                                            />
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${geminiBaseUrlIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Test Connection Button & Result Alert */}
+                                    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
+                                        <SecondaryButton
+                                            type="button"
+                                            onClick={handleTestGemini}
+                                            disabled={testingGemini}
+                                            className="inline-flex items-center justify-center gap-2 text-xs"
+                                        >
+                                            {testingGemini ? (
+                                                <>
+                                                    <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                                                    <span>{t('settings.platform.ai_credentials.testing', undefined, 'Menguji...')}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-[16px] text-blue-600">bolt</span>
+                                                    <span>{t('settings.platform.ai_credentials.test_gemini', undefined, 'Uji Koneksi Gemini')}</span>
+                                                </>
+                                            )}
+                                        </SecondaryButton>
+                                        <span className="text-[11px] text-slate-400">
+                                            Kirim prompt uji coba langsung ke API Gemini untuk memvalidasi kunci.
+                                        </span>
+                                    </div>
+
+                                    {geminiTestResult && (
+                                        <div
+                                            className={`rounded-2xl border p-3.5 text-xs transition-all ${
+                                                geminiTestResult.success
+                                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                    : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-2">
+                                                <span className="material-symbols-outlined shrink-0 text-[18px]">
+                                                    {geminiTestResult.success ? 'check_circle' : 'error'}
+                                                </span>
+                                                <span>{geminiTestResult.message}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* GROQ CLOUD & OCR SCANNER CONFIGURATION CARD */}
+                            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+                                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xs">
+                                            <span className="material-symbols-outlined text-[20px]">speed</span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.ai_credentials.groq_title', undefined, 'Groq Cloud & Fast OCR Scanner (Fast LPU)')}
+                                                </h3>
+                                                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                                                    Groq LPU
+                                                </span>
+                                            </div>
+                                            <p className="mt-0.5 text-xs text-slate-500">
+                                                {t('settings.platform.ai_credentials.groq_desc', undefined, 'Digunakan untuk pemindaian OCR dokumen KTP/SIM pelanggan dengan inferensi ultra-cepat.')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        className={`flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-bold sm:self-center ${
+                                            hasGroqApiKey || (groqApiKeyIndex >= 0 && Boolean(data.settings[groqApiKeyIndex]?.value))
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full ${
+                                                hasGroqApiKey || (groqApiKeyIndex >= 0 && Boolean(data.settings[groqApiKeyIndex]?.value))
+                                                    ? 'bg-emerald-500'
+                                                    : 'bg-amber-500'
+                                            }`}
+                                        />
+                                        {hasGroqApiKey || (groqApiKeyIndex >= 0 && Boolean(data.settings[groqApiKeyIndex]?.value))
+                                            ? t('settings.platform.ai_credentials.configured_badge', undefined, 'Tersimpan & Aktif')
+                                            : t('settings.platform.ai_credentials.not_configured_badge', undefined, 'Belum Dikonfigurasi')}
+                                    </span>
+                                </div>
+
+                                {/* Groq Inputs Grid */}
+                                <div className="space-y-5">
+                                    {/* Primary KYC Driver Selection */}
+                                    {aiKycDriverIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                value={t('settings.platform.ai_credentials.kyc_driver_label', undefined, 'Penyedia Utama Scanner OCR Dokumen')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.kyc_driver_desc', undefined, 'Pilih driver default untuk OCR KTP dan SIM pelanggan.')}
+                                            </p>
+                                            <div className="grid gap-2 sm:grid-cols-3">
+                                                {[
+                                                    { value: 'auto', label: 'Otomatis', desc: 'Prioritas Groq, fallback ke Gemini jika offline' },
+                                                    { value: 'groq', label: 'Groq Cloud LPU', desc: 'Inferensi ultra cepat ~500ms' },
+                                                    { value: 'gemini', label: 'Google Gemini Vision', desc: 'Akurasi pembacaan foto resolusi tinggi' },
+                                                ].map((opt) => (
+                                                    <div
+                                                        key={opt.value}
+                                                        onClick={() => updateValue(aiKycDriverIndex, opt.value)}
+                                                        className={`cursor-pointer rounded-2xl border p-3 transition-all ${
+                                                            (data.settings[aiKycDriverIndex]?.value || 'auto') === opt.value
+                                                                ? 'border-orange-500 bg-orange-50/50 ring-1 ring-orange-500/30 dark:border-orange-500 dark:bg-orange-950/30'
+                                                                : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/40'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                                {opt.label}
+                                                            </span>
+                                                            {(data.settings[aiKycDriverIndex]?.value || 'auto') === opt.value && (
+                                                                <span className="material-symbols-outlined text-[16px] text-orange-600">
+                                                                    check_circle
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-1 text-[11px] text-slate-500">{opt.desc}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${aiKycDriverIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Groq API Key */}
+                                    {groqApiKeyIndex >= 0 && (
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <InputLabel
+                                                    htmlFor="groq_api_key"
+                                                    value={t('settings.platform.ai_credentials.groq_key_label', undefined, 'Groq Cloud API Key')}
+                                                />
+                                                <a
+                                                    href="https://console.groq.com/keys"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
+                                                >
+                                                    Dapatkan Kunci API Groq Console
+                                                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                                                </a>
+                                            </div>
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.groq_key_desc', undefined, 'Kunci API Groq Cloud dari console.groq.com. Nilai tersimpan di database dan menggantikan file .env.')}
+                                            </p>
+                                            <div className="relative">
+                                                <TextInput
+                                                    id="groq_api_key"
+                                                    type={showGroqKey ? 'text' : 'password'}
+                                                    value={data.settings[groqApiKeyIndex]?.value}
+                                                    onChange={(e) => updateValue(groqApiKeyIndex, e.target.value)}
+                                                    placeholder={
+                                                        hasGroqApiKey
+                                                            ? t('settings.platform.ai_credentials.keep_existing', undefined, '•••••••••••••••• (Tersimpan di database, biarkan kosong jika tidak ingin mengubah)')
+                                                            : 'gsk_...'
+                                                    }
+                                                    className="w-full pr-10 font-mono text-xs"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowGroqKey(!showGroqKey)}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">
+                                                        {showGroqKey ? 'visibility_off' : 'visibility'}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${groqApiKeyIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Groq Model */}
+                                    {groqModelIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                htmlFor="groq_model"
+                                                value={t('settings.platform.ai_credentials.groq_model_label', undefined, 'Model Groq Cloud')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.groq_model_desc', undefined, 'Model OCR Groq Cloud yang aktif (contoh: qwen/qwen3.6-27b, qwen/qwen3.8-27b, llama-3.3-70b-versatile).')}
+                                            </p>
+                                            <TextInput
+                                                id="groq_model"
+                                                type="text"
+                                                value={data.settings[groqModelIndex]?.value}
+                                                onChange={(e) => updateValue(groqModelIndex, e.target.value)}
+                                                placeholder="qwen/qwen3.6-27b"
+                                                className="w-full font-mono text-xs"
+                                            />
+                                            {/* Quick Model Presets */}
+                                            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                                                <span className="text-[11px] text-slate-400">Preset Rekomendasi:</span>
+                                                {[
+                                                    { name: 'qwen/qwen3.6-27b', tag: 'Default (Rekomendasi OCR)' },
+                                                    { name: 'qwen/qwen3.8-27b', tag: 'Versi Terbaru' },
+                                                    { name: 'llama-3.3-70b-versatile', tag: 'Llama 70B' },
+                                                ].map((preset) => (
+                                                    <button
+                                                        key={preset.name}
+                                                        type="button"
+                                                        onClick={() => updateValue(groqModelIndex, preset.name)}
+                                                        className={`rounded-lg border px-2 py-0.5 text-[11px] transition-colors ${
+                                                            data.settings[groqModelIndex]?.value === preset.name
+                                                                ? 'border-orange-500 bg-orange-50 font-bold text-orange-700 dark:border-orange-400 dark:bg-orange-950 dark:text-orange-300'
+                                                                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                        }`}
+                                                    >
+                                                        {preset.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${groqModelIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Groq Base URL */}
+                                    {groqBaseUrlIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                htmlFor="groq_base_url"
+                                                value={t('settings.platform.ai_credentials.groq_url_label', undefined, 'Base Endpoint Groq Cloud')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.ai_credentials.groq_url_desc', undefined, 'URL API OpenAI-compatible dari Groq.')}
+                                            </p>
+                                            <TextInput
+                                                id="groq_base_url"
+                                                type="text"
+                                                value={data.settings[groqBaseUrlIndex]?.value}
+                                                onChange={(e) => updateValue(groqBaseUrlIndex, e.target.value)}
+                                                placeholder="https://api.groq.com/openai/v1"
+                                                className="w-full font-mono text-xs"
+                                            />
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${groqBaseUrlIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Test Connection Button & Result Alert */}
+                                    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
+                                        <SecondaryButton
+                                            type="button"
+                                            onClick={handleTestGroq}
+                                            disabled={testingGroq}
+                                            className="inline-flex items-center justify-center gap-2 text-xs"
+                                        >
+                                            {testingGroq ? (
+                                                <>
+                                                    <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                                                    <span>{t('settings.platform.ai_credentials.testing', undefined, 'Menguji...')}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-[16px] text-orange-600">bolt</span>
+                                                    <span>{t('settings.platform.ai_credentials.test_groq', undefined, 'Uji Koneksi Groq')}</span>
+                                                </>
+                                            )}
+                                        </SecondaryButton>
+                                        <span className="text-[11px] text-slate-400">
+                                            Kirim prompt uji coba langsung ke API Groq untuk memvalidasi kunci.
+                                        </span>
+                                    </div>
+
+                                    {groqTestResult && (
+                                        <div
+                                            className={`rounded-2xl border p-3.5 text-xs transition-all ${
+                                                groqTestResult.success
+                                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                    : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-2">
+                                                <span className="material-symbols-outlined shrink-0 text-[18px]">
+                                                    {groqTestResult.success ? 'check_circle' : 'error'}
+                                                </span>
+                                                <span>{groqTestResult.message}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 

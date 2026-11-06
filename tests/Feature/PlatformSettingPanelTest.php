@@ -53,7 +53,106 @@ class PlatformSettingPanelTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Module/PlatformSettings/Group')
                 ->where('currentGroup', 'ai')
-                ->has('groupSettings', 3));
+                ->has('groupSettings', 10)
+                ->has('hasGeminiApiKey')
+                ->has('hasGroqApiKey'));
+    }
+
+    public function test_admin_bulk_update_persists_ai_credentials_and_applies_config(): void
+    {
+        $geminiKeySetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_AI_GEMINI_API_KEY)->firstOrFail();
+        $geminiModelSetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_AI_GEMINI_MODEL)->firstOrFail();
+        $groqKeySetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_AI_GROQ_API_KEY)->firstOrFail();
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.platform-settings.bulk-update'), [
+                'group' => 'ai',
+                'settings' => [
+                    ['id' => $geminiKeySetting->id, 'value' => 'AIzaSyTestGeminiKey123'],
+                    ['id' => $geminiModelSetting->id, 'value' => 'gemini-2.5-pro'],
+                    ['id' => $groqKeySetting->id, 'value' => 'gsk_TestGroqKey456'],
+                ],
+            ])
+            ->assertRedirect(route('module.platform-settings.group', 'ai'));
+
+        $this->assertSame('AIzaSyTestGeminiKey123', PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_API_KEY));
+        $this->assertSame('gemini-2.5-pro', PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_MODEL));
+        $this->assertSame('gsk_TestGroqKey456', PlatformSetting::getValue(PlatformSetting::KEY_AI_GROQ_API_KEY));
+
+        $this->assertSame('AIzaSyTestGeminiKey123', config('services.gemini.api_key'));
+        $this->assertSame('gemini-2.5-pro', config('services.gemini.model'));
+        $this->assertSame('gsk_TestGroqKey456', config('services.groq.api_key'));
+    }
+
+    public function test_admin_blank_api_key_submission_preserves_existing_key(): void
+    {
+        $geminiKeySetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_AI_GEMINI_API_KEY)->firstOrFail();
+        $geminiKeySetting->update(['value' => 'precious-stored-gemini-key']);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.platform-settings.bulk-update'), [
+                'group' => 'ai',
+                'settings' => [
+                    ['id' => $geminiKeySetting->id, 'value' => ''],
+                ],
+            ])
+            ->assertRedirect(route('module.platform-settings.group', 'ai'));
+
+        $this->assertSame('precious-stored-gemini-key', PlatformSetting::getValue(PlatformSetting::KEY_AI_GEMINI_API_KEY));
+    }
+
+    public function test_admin_can_test_gemini_connection_successful(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            'generativelanguage.googleapis.com/*' => \Illuminate\Support\Facades\Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => 'PONG'],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->postJson(route('module.platform-settings.test-ai'), [
+                'provider' => 'gemini',
+                'api_key' => 'AIzaSyMockKey',
+                'model' => 'gemini-2.5-flash',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+            ]);
+    }
+
+    public function test_admin_can_test_groq_connection_successful(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            'api.groq.com/*' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => 'PONG',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->postJson(route('module.platform-settings.test-ai'), [
+                'provider' => 'groq',
+                'api_key' => 'gsk_mock_key',
+                'model' => 'qwen/qwen3.6-27b',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+            ]);
     }
 
     public function test_non_admin_cannot_view_platform_settings_panel(): void

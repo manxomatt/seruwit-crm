@@ -9,6 +9,4 @@ use Modules\FleetBase\Http\Controllers\FleetBaseAiGenerateController as BaseFlee
  *
  * @deprecated Use {@see \Modules\FleetBase\Http\Controllers\FleetBaseAiGenerateController} directly.
  */
-class FleetBaseAiGenerateController extends BaseFleetBaseAiGenerateController
-{
-}
+class FleetBaseAiGenerateController extends BaseFleetBaseAiGenerateController {}

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Modules\Collections;
 
-use App\Models\User;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleTier;
 use Carbon\Carbon;

@@ -107,6 +107,7 @@ Route::domain($centralDomain)
         Route::get('/platform-settings', [PlatformSettingController::class, 'index'])->name('platform-settings.index');
         Route::post('/platform-settings/bulk-update', [PlatformSettingController::class, 'bulkUpdate'])->name('platform-settings.bulk-update');
         Route::post('/platform-settings/test-email', [PlatformSettingController::class, 'testEmail'])->name('platform-settings.test-email');
+        Route::post('/platform-settings/test-ai', [PlatformSettingController::class, 'testAiConnection'])->name('platform-settings.test-ai');
         Route::post('/platform-settings/whatsapp/start', [PlatformSettingController::class, 'startWhatsApp'])->name('platform-settings.whatsapp.start');
         Route::post('/platform-settings/whatsapp/pair-code', [PlatformSettingController::class, 'pairWhatsAppWithCode'])->name('platform-settings.whatsapp.pair');
         Route::get('/platform-settings/whatsapp/status', [PlatformSettingController::class, 'whatsappStatus'])->name('platform-settings.whatsapp.status');
