@@ -19,6 +19,22 @@ class PlatformSetting extends Model
 {
     public const KEY_CAPACITY_BUSINESS_MODEL = 'capacity.business_model';
 
+    public const KEY_PLATFORM_NAME = 'general.platform_name';
+
+    public const KEY_PLATFORM_TAGLINE = 'general.platform_tagline';
+
+    public const KEY_ADMIN_EMAIL = 'general.admin_email';
+
+    public const KEY_SUPPORT_URL = 'general.support_url';
+
+    public const KEY_ALLOW_PUBLIC_REGISTRATION = 'general.allow_public_registration';
+
+    public const KEY_DEFAULT_TENANT_TRIAL_DAYS = 'general.default_tenant_trial_days';
+
+    public const KEY_MAINTENANCE_MODE = 'general.maintenance_mode';
+
+    public const KEY_MAINTENANCE_MESSAGE = 'general.maintenance_message';
+
     public const KEY_AI_OCR_ENABLED = 'general.ai_ocr_enabled';
 
     public const KEY_AI_QUICK_FILL_ENABLED = 'general.ai_quick_fill_enabled';
@@ -111,6 +127,26 @@ class PlatformSetting extends Model
     public static function isAiOcrEnabled(): bool
     {
         return static::getValue(self::KEY_AI_OCR_ENABLED, '1') === '1';
+    }
+
+    public static function isMaintenanceMode(): bool
+    {
+        return static::getValue(self::KEY_MAINTENANCE_MODE, '0') === '1';
+    }
+
+    public static function isPublicRegistrationAllowed(): bool
+    {
+        return static::getValue(self::KEY_ALLOW_PUBLIC_REGISTRATION, '1') === '1';
+    }
+
+    public static function platformName(): string
+    {
+        return (string) static::getValue(self::KEY_PLATFORM_NAME, config('app.name', 'Seruwit'));
+    }
+
+    public static function defaultTenantTrialDays(): int
+    {
+        return (int) static::getValue(self::KEY_DEFAULT_TENANT_TRIAL_DAYS, 30);
     }
 
     public static function isAiQuickFillEnabled(): bool
@@ -343,6 +379,86 @@ class PlatformSetting extends Model
                 'description' => 'Development menonaktifkan email keluar & menampilkan OTP di layar. Production mengaktifkan email nyata dan proteksi keamanan penuh.',
                 'is_public' => false,
                 'sort_order' => 1,
+            ],
+            [
+                'key' => self::KEY_MAINTENANCE_MODE,
+                'group' => 'general',
+                'value' => '0',
+                'type' => 'boolean',
+                'label' => 'Mode Pemeliharaan (Maintenance Mode)',
+                'description' => 'Aktifkan mode pemeliharaan untuk menghentikan akses sementara bagi seluruh pengguna publik saat pembaruan sistem.',
+                'is_public' => true,
+                'sort_order' => 2,
+            ],
+            [
+                'key' => self::KEY_MAINTENANCE_MESSAGE,
+                'group' => 'general',
+                'value' => 'Sistem sedang dalam peningkatan performa berkala. Silakan coba beberapa saat lagi.',
+                'type' => 'textarea',
+                'label' => 'Pesan Pemeliharaan Sistem',
+                'description' => 'Pesan pemberitahuan yang ditampilkan kepada pengunjung saat mode pemeliharaan aktif.',
+                'is_public' => true,
+                'sort_order' => 3,
+            ],
+            [
+                'key' => self::KEY_ALLOW_PUBLIC_REGISTRATION,
+                'group' => 'general',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Pendaftaran Tenant Mandiri (Public Registration)',
+                'description' => 'Jika dinonaktifkan, pendaftaran akun dan workspace baru ditutup dari publik (hanya via undangan/manual admin).',
+                'is_public' => true,
+                'sort_order' => 4,
+            ],
+            [
+                'key' => self::KEY_DEFAULT_TENANT_TRIAL_DAYS,
+                'group' => 'general',
+                'value' => '30',
+                'type' => 'number',
+                'label' => 'Durasi Trial Default Tenant Baru (Hari)',
+                'description' => 'Jumlah hari masa percobaan gratis yang didapat workspace tenant baru saat pertama kali registrasi.',
+                'is_public' => false,
+                'sort_order' => 5,
+            ],
+            [
+                'key' => self::KEY_PLATFORM_NAME,
+                'group' => 'general',
+                'value' => (string) config('app.name', 'Seruwit'),
+                'type' => 'text',
+                'label' => 'Nama Platform Sentral',
+                'description' => 'Nama resmi platform yang tampil pada header aplikasi, email notifikasi sentral, dan tab peramban.',
+                'is_public' => true,
+                'sort_order' => 6,
+            ],
+            [
+                'key' => self::KEY_PLATFORM_TAGLINE,
+                'group' => 'general',
+                'value' => 'Sistem Manajemen Armada & Rental Terintegrasi',
+                'type' => 'text',
+                'label' => 'Slogan / Tagline Platform',
+                'description' => 'Deskripsi singkat platform yang muncul pada halaman login dan onboarding sentral.',
+                'is_public' => true,
+                'sort_order' => 7,
+            ],
+            [
+                'key' => self::KEY_ADMIN_EMAIL,
+                'group' => 'general',
+                'value' => 'admin@seruwit.com',
+                'type' => 'email',
+                'label' => 'Email Administrator Sentral',
+                'description' => 'Alamat email utama administrator platform untuk menerima laporan sistem dan notifikasi pendaftaran tenant.',
+                'is_public' => false,
+                'sort_order' => 8,
+            ],
+            [
+                'key' => self::KEY_SUPPORT_URL,
+                'group' => 'general',
+                'value' => '',
+                'type' => 'url',
+                'label' => 'URL Layanan Bantuan / Helpdesk',
+                'description' => 'Tautan layanan pelanggan atau nomor WhatsApp resmi pengembang (contoh: https://wa.me/628123456789).',
+                'is_public' => true,
+                'sort_order' => 9,
             ],
             [
                 'key' => 'general.ai_features_enabled',

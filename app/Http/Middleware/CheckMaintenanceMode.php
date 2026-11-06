@@ -24,7 +24,9 @@ class CheckMaintenanceMode
 
         // 2. Safe check if maintenance mode is enabled
         try {
-            $isMaintenance = Setting::getValue('general.maintenance_mode') === '1';
+            $isMaintenance = tenancy()->initialized
+                ? Setting::getValue('general.maintenance_mode') === '1'
+                : \App\Models\PlatformSetting::isMaintenanceMode();
         } catch (\Throwable) {
             return $next($request);
         }

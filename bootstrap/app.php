@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             append: [
                 \App\Http\Middleware\CaptureResellerReferral::class,
                 \App\Http\Middleware\SetLocale::class,
+                \App\Http\Middleware\CheckMaintenanceMode::class,
                 \App\Http\Middleware\HandleInertiaRequests::class,
                 \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
                 \App\Http\Middleware\EnsureCentralUserCanAccessModule::class,

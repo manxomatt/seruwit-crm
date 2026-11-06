@@ -15,9 +15,13 @@ class MaintenanceModePage
      */
     public static function toResponse(Request $request): Response
     {
+        $customMessage = tenancy()->initialized
+            ? null
+            : \App\Models\PlatformSetting::getValue(\App\Models\PlatformSetting::KEY_MAINTENANCE_MESSAGE);
+
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Layanan sedang dalam pemeliharaan (Under Maintenance). Silakan coba beberapa saat lagi.',
+                'message' => $customMessage ?: 'Layanan sedang dalam pemeliharaan (Under Maintenance). Silakan coba beberapa saat lagi.',
             ], 503, ['Retry-After' => '3600']);
         }
 
@@ -33,6 +37,13 @@ class MaintenanceModePage
         $phone = $settings['site.phone'] ?? null;
         $whatsapp = $settings['social.whatsapp'] ?? null;
         $workingHours = $settings['site.working_hours'] ?? null;
+
+        if (! tenancy()->initialized) {
+            $siteName = \App\Models\PlatformSetting::platformName();
+            $siteTagline = (string) (\App\Models\PlatformSetting::getValue(\App\Models\PlatformSetting::KEY_PLATFORM_TAGLINE) ?: $siteTagline);
+            $siteDescription = (string) ($customMessage ?: $siteDescription);
+            $contactEmail = (string) (\App\Models\PlatformSetting::getValue(\App\Models\PlatformSetting::KEY_ADMIN_EMAIL) ?: $contactEmail);
+        }
 
         if (tenancy()->initialized) {
             $tenant = tenant();

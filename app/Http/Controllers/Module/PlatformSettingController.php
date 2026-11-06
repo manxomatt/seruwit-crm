@@ -405,6 +405,10 @@ class PlatformSettingController extends Controller
 
                 $err = $response->json('error.message') ?? $response->body();
 
+                if (str_contains($err, 'free tier is not available for this project')) {
+                    $err .= ' (Catatan: Project Google Cloud untuk API key ini berada di akun Google Workspace organisasi atau mewajibkan aktivasi billing. Solusi tercepat: Buat API key baru di https://aistudio.google.com dengan opsi "Create API key in new project" menggunakan akun Gmail pribadi, atau aktifkan billing di https://aistudio.google.com/billing).';
+                }
+
                 return response()->json([
                     'success' => false,
                     'message' => "Gagal terhubung ke Gemini: {$err}",

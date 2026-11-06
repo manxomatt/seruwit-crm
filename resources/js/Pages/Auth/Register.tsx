@@ -9,6 +9,7 @@ interface Props {
     settings?: Record<string, string>;
     initialCompanyName?: string;
     initialPlan?: string;
+    allowPublicRegistration?: boolean;
 }
 
 interface RegisterForm {
@@ -22,7 +23,12 @@ interface RegisterForm {
     plan: string;
 }
 
-export default function Register({ settings, initialCompanyName = '', initialPlan = '' }: Props) {
+export default function Register({
+    settings,
+    initialCompanyName = '',
+    initialPlan = '',
+    allowPublicRegistration = true,
+}: Props) {
     const { t } = useTrans();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -246,6 +252,21 @@ export default function Register({ settings, initialCompanyName = '', initialPla
                                             {t('auth_ui.register_form_subtitle')}
                                         </p>
                                     </div>
+
+                                    {/* Closed Registration Banner */}
+                                    {!allowPublicRegistration && (
+                                        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 shadow-2xs">
+                                            <div className="flex items-start gap-2.5">
+                                                <span className="material-symbols-outlined shrink-0 text-amber-600">lock</span>
+                                                <div>
+                                                    <p className="font-bold text-amber-900">Pendaftaran Publik Ditutup</p>
+                                                    <p className="mt-0.5 text-[11px] leading-relaxed text-amber-700">
+                                                        Pendaftaran akun baru saat ini hanya dibuka melalui undangan khusus atau dibuat langsung oleh administrator platform.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Registration Form */}
                                     <form onSubmit={submit} className="space-y-3.5">
@@ -518,7 +539,7 @@ export default function Register({ settings, initialCompanyName = '', initialPla
                                         {/* Primary CTA Submit Button */}
                                         <button
                                             type="submit"
-                                            disabled={processing}
+                                            disabled={processing || !allowPublicRegistration}
                                             className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-sky-500 active:scale-[0.99] py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                                         >
                                             {processing ? (

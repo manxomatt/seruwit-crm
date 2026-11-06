@@ -49,6 +49,7 @@ class RegisteredUserController extends Controller
             'settings' => $settings,
             'initialCompanyName' => $request->query('company_name', session('onboarding_company_name', '')),
             'initialPlan' => $request->query('plan', session('onboarding_plan', '')),
+            'allowPublicRegistration' => \App\Models\PlatformSetting::isPublicRegistrationAllowed(),
         ]);
     }
 
@@ -58,6 +59,12 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         abort_if(tenancy()->initialized, 404);
+
+        if (! \App\Models\PlatformSetting::isPublicRegistrationAllowed()) {
+            return back()->withErrors([
+                'email' => 'Pendaftaran akun baru saat ini sedang ditutup oleh administrator sistem.',
+            ]);
+        }
 
         $request->validate([
             'name' => 'required|string|max:255',

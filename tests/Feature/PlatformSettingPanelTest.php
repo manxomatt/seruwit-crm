@@ -215,4 +215,41 @@ class PlatformSettingPanelTest extends TestCase
             DB::table('settings')->whereIn('key', Setting::centralOnlyKeys())->count(),
         );
     }
+
+    public function test_admin_bulk_update_general_settings_persists(): void
+    {
+        $maintSetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_MAINTENANCE_MODE)->firstOrFail();
+        $regSetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_ALLOW_PUBLIC_REGISTRATION)->firstOrFail();
+        $nameSetting = PlatformSetting::query()->where('key', PlatformSetting::KEY_PLATFORM_NAME)->firstOrFail();
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.platform-settings.bulk-update'), [
+                'group' => 'general',
+                'settings' => [
+                    ['id' => $maintSetting->id, 'value' => '1'],
+                    ['id' => $regSetting->id, 'value' => '0'],
+                    ['id' => $nameSetting->id, 'value' => 'Seruwit Enterprise Cloud'],
+                ],
+            ])
+            ->assertRedirect(route('module.platform-settings.group', 'general'));
+
+        $this->assertTrue(PlatformSetting::isMaintenanceMode());
+        $this->assertFalse(PlatformSetting::isPublicRegistrationAllowed());
+        $this->assertSame('Seruwit Enterprise Cloud', PlatformSetting::platformName());
+    }
+
+    public function test_public_registration_blocked_when_disabled(): void
+    {
+        PlatformSetting::setValue(PlatformSetting::KEY_ALLOW_PUBLIC_REGISTRATION, '0');
+
+        $response = $this->post(route('register'), [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+            'terms' => true,
+        ]);
+
+        $response->assertSessionHasErrors('email');
+    }
 }
