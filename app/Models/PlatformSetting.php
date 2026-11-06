@@ -35,6 +35,22 @@ class PlatformSetting extends Model
 
     public const KEY_MAINTENANCE_MESSAGE = 'general.maintenance_message';
 
+    public const KEY_REQUIRE_TENANT_VERIFICATION = 'general.require_tenant_verification';
+
+    public const KEY_DEFAULT_TIMEZONE = 'general.default_timezone';
+
+    public const KEY_DEFAULT_LOCALE = 'general.default_locale';
+
+    public const KEY_DEFAULT_CURRENCY = 'general.default_currency';
+
+    public const KEY_TERMS_URL = 'general.terms_url';
+
+    public const KEY_PRIVACY_URL = 'general.privacy_url';
+
+    public const KEY_PLATFORM_LOGO = 'general.platform_logo';
+
+    public const KEY_PLATFORM_FAVICON = 'general.platform_favicon';
+
     public const KEY_AI_OCR_ENABLED = 'general.ai_ocr_enabled';
 
     public const KEY_AI_QUICK_FILL_ENABLED = 'general.ai_quick_fill_enabled';
@@ -459,6 +475,86 @@ class PlatformSetting extends Model
                 'description' => 'Tautan layanan pelanggan atau nomor WhatsApp resmi pengembang (contoh: https://wa.me/628123456789).',
                 'is_public' => true,
                 'sort_order' => 9,
+            ],
+            [
+                'key' => self::KEY_REQUIRE_TENANT_VERIFICATION,
+                'group' => 'general',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Wajib Verifikasi Kontak Pemilik Tenant',
+                'description' => 'Mewajibkan verifikasi alamat email atau nomor WhatsApp sebelum workspace tenant baru dapat dioperasikan penuh.',
+                'is_public' => false,
+                'sort_order' => 10,
+            ],
+            [
+                'key' => self::KEY_DEFAULT_TIMEZONE,
+                'group' => 'general',
+                'value' => 'Asia/Jakarta',
+                'type' => 'select',
+                'label' => 'Zona Waktu Default Platform',
+                'description' => 'Zona waktu acuan standar untuk workspace baru dan log server sentral.',
+                'is_public' => true,
+                'sort_order' => 11,
+            ],
+            [
+                'key' => self::KEY_DEFAULT_LOCALE,
+                'group' => 'general',
+                'value' => 'id',
+                'type' => 'select',
+                'label' => 'Bahasa Default Platform',
+                'description' => 'Bahasa antarmuka standar untuk workspace baru dan email notifikasi sistem.',
+                'is_public' => true,
+                'sort_order' => 12,
+            ],
+            [
+                'key' => self::KEY_DEFAULT_CURRENCY,
+                'group' => 'general',
+                'value' => 'IDR',
+                'type' => 'select',
+                'label' => 'Mata Uang Acuan Sentral',
+                'description' => 'Mata uang default platform untuk penagihan invoice langganan dan paket kapasitas.',
+                'is_public' => true,
+                'sort_order' => 13,
+            ],
+            [
+                'key' => self::KEY_TERMS_URL,
+                'group' => 'general',
+                'value' => '',
+                'type' => 'url',
+                'label' => 'URL Syarat & Ketentuan Layanan (Terms of Service)',
+                'description' => 'Tautan ke dokumen resmi Syarat dan Ketentuan penggunaan platform Seruwit.',
+                'is_public' => true,
+                'sort_order' => 14,
+            ],
+            [
+                'key' => self::KEY_PRIVACY_URL,
+                'group' => 'general',
+                'value' => '',
+                'type' => 'url',
+                'label' => 'URL Kebijakan Privasi (Privacy Policy)',
+                'description' => 'Tautan ke dokumen resmi Kebijakan Privasi dan perlindungan data pengguna.',
+                'is_public' => true,
+                'sort_order' => 15,
+            ],
+            [
+                'key' => self::KEY_PLATFORM_LOGO,
+                'group' => 'general',
+                'value' => '',
+                'type' => 'text',
+                'label' => 'URL Logo Resmi Platform',
+                'description' => 'Tautan gambar atau path file logo resmi platform untuk header dan branding sentral.',
+                'is_public' => true,
+                'sort_order' => 16,
+            ],
+            [
+                'key' => self::KEY_PLATFORM_FAVICON,
+                'group' => 'general',
+                'value' => '',
+                'type' => 'text',
+                'label' => 'URL Favicon Platform',
+                'description' => 'Tautan ikon favicon peramban resmi platform.',
+                'is_public' => true,
+                'sort_order' => 17,
             ],
             [
                 'key' => 'general.ai_features_enabled',

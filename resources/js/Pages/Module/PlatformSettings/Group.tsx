@@ -176,6 +176,18 @@ export default function Group({
     const platformTaglineIndex = findSettingIndex('general.platform_tagline');
     const adminEmailIndex = findSettingIndex('general.admin_email');
     const supportUrlIndex = findSettingIndex('general.support_url');
+    const platformLogoIndex = findSettingIndex('general.platform_logo');
+    const platformFaviconIndex = findSettingIndex('general.platform_favicon');
+
+    const requireVerificationIndex = findSettingIndex('general.require_tenant_verification');
+    const isRequireVerification = requireVerificationIndex >= 0 ? data.settings[requireVerificationIndex]?.value === '1' : true;
+
+    const defaultTimezoneIndex = findSettingIndex('general.default_timezone');
+    const defaultLocaleIndex = findSettingIndex('general.default_locale');
+    const defaultCurrencyIndex = findSettingIndex('general.default_currency');
+
+    const termsUrlIndex = findSettingIndex('general.terms_url');
+    const privacyUrlIndex = findSettingIndex('general.privacy_url');
 
     const aiFeaturesIndex = findSettingIndex('general.ai_features_enabled');
     const isAiEnabled = aiFeaturesIndex >= 0 ? data.settings[aiFeaturesIndex]?.value === '1' : false;
@@ -709,6 +721,51 @@ export default function Group({
                                             />
                                         </div>
                                     )}
+
+                                    {/* Require Tenant Contact Verification Switch */}
+                                    {requireVerificationIndex >= 0 && (
+                                        <div className="mt-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+                                            <div
+                                                onClick={() => updateValue(requireVerificationIndex, isRequireVerification ? '0' : '1')}
+                                                className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                                    isRequireVerification
+                                                        ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                                        : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="material-symbols-outlined text-[20px] text-indigo-600 dark:text-indigo-400">
+                                                        verified_user
+                                                    </span>
+                                                    <div>
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                            {t('settings.platform.general_settings.require_verification_label', undefined, 'Wajib Verifikasi Kontak Tenant Baru')}
+                                                        </span>
+                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {t(
+                                                                'settings.platform.general_settings.require_verification_desc',
+                                                                undefined,
+                                                                'Mewajibkan pemilik tenant memverifikasi email atau nomor telepon sebelum workspace aktif penuh.',
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    role="switch"
+                                                    aria-checked={isRequireVerification}
+                                                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                        isRequireVerification ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                            isRequireVerification ? 'translate-x-5' : 'translate-x-0'
+                                                        }`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -834,8 +891,244 @@ export default function Group({
                                             />
                                         </div>
                                     )}
+
+                                    {/* Platform Logo */}
+                                    {platformLogoIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                htmlFor="platform_logo"
+                                                value={t('settings.platform.general_settings.logo_label', undefined, 'URL Logo Resmi Platform')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.general_settings.logo_desc', undefined, 'URL atau path file gambar logo sentral.')}
+                                            </p>
+                                            <TextInput
+                                                id="platform_logo"
+                                                type="text"
+                                                value={data.settings[platformLogoIndex]?.value ?? ''}
+                                                onChange={(e) => updateValue(platformLogoIndex, e.target.value)}
+                                                placeholder="/images/logo.png"
+                                                className="w-full text-xs font-mono"
+                                            />
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${platformLogoIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Platform Favicon */}
+                                    {platformFaviconIndex >= 0 && (
+                                        <div>
+                                            <InputLabel
+                                                htmlFor="platform_favicon"
+                                                value={t('settings.platform.general_settings.favicon_label', undefined, 'URL Favicon Platform')}
+                                            />
+                                            <p className="mb-2 text-[11px] text-slate-500">
+                                                {t('settings.platform.general_settings.favicon_desc', undefined, 'URL ikon favicon browser untuk domain central.')}
+                                            </p>
+                                            <TextInput
+                                                id="platform_favicon"
+                                                type="text"
+                                                value={data.settings[platformFaviconIndex]?.value ?? ''}
+                                                onChange={(e) => updateValue(platformFaviconIndex, e.target.value)}
+                                                placeholder="/favicon.ico"
+                                                className="w-full text-xs font-mono"
+                                            />
+                                            <InputError
+                                                message={(errors as Record<string, string>)[`settings.${platformFaviconIndex}.value`]}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Central Localization & Standards Card */}
+                            {(defaultTimezoneIndex >= 0 || defaultLocaleIndex >= 0 || defaultCurrencyIndex >= 0) && (
+                                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs">
+                                                <span className="material-symbols-outlined text-[20px]">language</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.general_settings.localization_title', undefined, 'Lokalisasi & Standar Format Sentral')}
+                                                </h3>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {t(
+                                                        'settings.platform.general_settings.localization_desc',
+                                                        undefined,
+                                                        'Pengaturan acuan zona waktu, bahasa bawaan, dan mata uang platform.',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid gap-5 sm:grid-cols-3">
+                                        {/* Default Timezone */}
+                                        {defaultTimezoneIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="default_timezone"
+                                                    value={t('settings.platform.general_settings.timezone_label', undefined, 'Zona Waktu Default (Timezone)')}
+                                                />
+                                                <p className="mb-2 text-[11px] text-slate-500">
+                                                    {t('settings.platform.general_settings.timezone_desc', undefined, 'Zona waktu standar untuk workspace baru dan pencatatan riwayat sistem.')}
+                                                </p>
+                                                <select
+                                                    id="default_timezone"
+                                                    value={data.settings[defaultTimezoneIndex]?.value ?? 'Asia/Jakarta'}
+                                                    onChange={(e) => updateValue(defaultTimezoneIndex, e.target.value)}
+                                                    className="w-full rounded-2xl border-slate-200 text-xs shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                >
+                                                    <option value="Asia/Jakarta">Asia/Jakarta (WIB - UTC+7)</option>
+                                                    <option value="Asia/Makassar">Asia/Makassar (WITA - UTC+8)</option>
+                                                    <option value="Asia/Jayapura">Asia/Jayapura (WIT - UTC+9)</option>
+                                                    <option value="UTC">UTC (Universal Time)</option>
+                                                </select>
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${defaultTimezoneIndex}.value`]}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Default Locale */}
+                                        {defaultLocaleIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="default_locale"
+                                                    value={t('settings.platform.general_settings.locale_label', undefined, 'Bahasa Default Sistem')}
+                                                />
+                                                <p className="mb-2 text-[11px] text-slate-500">
+                                                    {t('settings.platform.general_settings.locale_desc', undefined, 'Bahasa bawaan antarmuka pengguna untuk workspace baru.')}
+                                                </p>
+                                                <select
+                                                    id="default_locale"
+                                                    value={data.settings[defaultLocaleIndex]?.value ?? 'id'}
+                                                    onChange={(e) => updateValue(defaultLocaleIndex, e.target.value)}
+                                                    className="w-full rounded-2xl border-slate-200 text-xs shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                >
+                                                    <option value="id">Bahasa Indonesia (id)</option>
+                                                    <option value="en">English (en)</option>
+                                                </select>
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${defaultLocaleIndex}.value`]}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Default Currency */}
+                                        {defaultCurrencyIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="default_currency"
+                                                    value={t('settings.platform.general_settings.currency_label', undefined, 'Mata Uang Acuan Sistem')}
+                                                />
+                                                <p className="mb-2 text-[11px] text-slate-500">
+                                                    {t('settings.platform.general_settings.currency_desc', undefined, 'Mata uang default untuk penagihan invoice platform dan biaya operasional.')}
+                                                </p>
+                                                <select
+                                                    id="default_currency"
+                                                    value={data.settings[defaultCurrencyIndex]?.value ?? 'IDR'}
+                                                    onChange={(e) => updateValue(defaultCurrencyIndex, e.target.value)}
+                                                    className="w-full rounded-2xl border-slate-200 text-xs shadow-2xs focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                >
+                                                    <option value="IDR">IDR (Rupiah Indonesia - Rp)</option>
+                                                    <option value="USD">USD (US Dollar - $)</option>
+                                                    <option value="SGD">SGD (Singapore Dollar - S$)</option>
+                                                    <option value="MYR">MYR (Ringgit Malaysia - RM)</option>
+                                                </select>
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${defaultCurrencyIndex}.value`]}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Legal Policies Card */}
+                            {(termsUrlIndex >= 0 || privacyUrlIndex >= 0) && (
+                                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xs">
+                                                <span className="material-symbols-outlined text-[20px]">gavel</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {t('settings.platform.general_settings.legal_title', undefined, 'Kebijakan Hukum & Syarat Ketentuan')}
+                                                </h3>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {t(
+                                                        'settings.platform.general_settings.legal_desc',
+                                                        undefined,
+                                                        'Tautan ke dokumen legalitas resmi yang disematkan pada formulir pendaftaran tenant dan dokumen publik.',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        {/* Terms URL */}
+                                        {termsUrlIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="terms_url"
+                                                    value={t('settings.platform.general_settings.terms_url_label', undefined, 'URL Syarat & Ketentuan (Terms of Service)')}
+                                                />
+                                                <p className="mb-2 text-[11px] text-slate-500">
+                                                    {t('settings.platform.general_settings.terms_url_desc', undefined, 'Tautan ke dokumen syarat & ketentuan layanan.')}
+                                                </p>
+                                                <TextInput
+                                                    id="terms_url"
+                                                    type="url"
+                                                    value={data.settings[termsUrlIndex]?.value ?? ''}
+                                                    onChange={(e) => updateValue(termsUrlIndex, e.target.value)}
+                                                    placeholder="https://seruwit.com/terms"
+                                                    className="w-full text-xs font-mono"
+                                                />
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${termsUrlIndex}.value`]}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Privacy URL */}
+                                        {privacyUrlIndex >= 0 && (
+                                            <div>
+                                                <InputLabel
+                                                    htmlFor="privacy_url"
+                                                    value={t('settings.platform.general_settings.privacy_url_label', undefined, 'URL Kebijakan Privasi (Privacy Policy)')}
+                                                />
+                                                <p className="mb-2 text-[11px] text-slate-500">
+                                                    {t('settings.platform.general_settings.privacy_url_desc', undefined, 'Tautan ke dokumen kebijakan privasi dan perlindungan data pengguna.')}
+                                                </p>
+                                                <TextInput
+                                                    id="privacy_url"
+                                                    type="url"
+                                                    value={data.settings[privacyUrlIndex]?.value ?? ''}
+                                                    onChange={(e) => updateValue(privacyUrlIndex, e.target.value)}
+                                                    placeholder="https://seruwit.com/privacy"
+                                                    className="w-full text-xs font-mono"
+                                                />
+                                                <InputError
+                                                    message={(errors as Record<string, string>)[`settings.${privacyUrlIndex}.value`]}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
