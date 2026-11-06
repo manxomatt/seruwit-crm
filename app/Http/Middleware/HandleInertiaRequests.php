@@ -132,6 +132,7 @@ class HandleInertiaRequests extends Middleware
             'pendingPartnerKycReviewCount' => fn () => $this->resolvePendingPartnerKycReviewCount($user),
             'settings' => $settings,
             'aiFeaturesEnabled' => \App\Support\CentralAiSettings::isEnabled(),
+            'aiQuickFillEnabled' => \App\Support\CentralAiSettings::isQuickFillEnabled(),
             // The tenant *domain* we're currently on (null on the central domain).
             // Named distinctly so it never collides with page props that carry a
             // tenant record (e.g. the tenant management detail page).

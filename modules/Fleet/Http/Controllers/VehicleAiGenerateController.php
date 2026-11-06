@@ -3,6 +3,7 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\CentralAiSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Fleet\AI\Contracts\VehicleAiGeneratorServiceInterface;
@@ -19,6 +20,13 @@ class VehicleAiGenerateController extends Controller
      */
     public function generate(Request $request): JsonResponse
     {
+        if (! CentralAiSettings::isQuickFillEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fitur AI Smart Quick-Fill dinonaktifkan oleh administrator central.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'text' => ['required', 'string', 'min:3', 'max:5000'],
             'bases' => ['nullable', 'array'],

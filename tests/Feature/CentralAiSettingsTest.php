@@ -70,11 +70,49 @@ class CentralAiSettingsTest extends TestCase
             ->postJson(route('module.maintenance.ai_predictive_vehicle', $vehicle))
             ->assertStatus(403)
             ->assertJsonPath('success', false);
+
+        // 5. Fleet vehicle AI generate blocked
+        $this->actingAs($user)
+            ->postJson(route('module.fleet.vehicles.ai-generate'), [
+                'text' => 'Avanza 1.5 G MT 2023 Putih plat D 1234 ABC',
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
     }
 
     public function test_central_ai_ocr_is_enabled_by_default(): void
     {
         $this->assertTrue(CentralAiSettings::isOcrEnabled());
+    }
+
+    public function test_central_ai_quick_fill_is_enabled_by_default(): void
+    {
+        $this->assertTrue(CentralAiSettings::isQuickFillEnabled());
+    }
+
+    public function test_disabling_central_quick_fill_setting_blocks_quick_fill(): void
+    {
+        PlatformSetting::setValue(CentralAiSettings::KEY_QUICK_FILL, '0');
+
+        $this->assertFalse(CentralAiSettings::isQuickFillEnabled());
+        $this->assertTrue(CentralAiSettings::isEnabled());
+
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)
+            ->postJson(route('module.fleet.vehicles.ai-generate'), [
+                'text' => 'Avanza 1.5 G MT 2023 Putih plat D 1234 ABC',
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.vehicles.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Create')
+                ->where('ai_quick_fill_enabled', false)
+            );
     }
 
     public function test_disabling_central_ocr_setting_blocks_ocr_and_hides_tenant_urls(): void
@@ -116,5 +154,6 @@ class CentralAiSettingsTest extends TestCase
     {
         $this->assertContains(CentralAiSettings::KEY, Setting::centralOnlyKeys());
         $this->assertContains(CentralAiSettings::KEY_OCR, Setting::centralOnlyKeys());
+        $this->assertContains(CentralAiSettings::KEY_QUICK_FILL, Setting::centralOnlyKeys());
     }
 }

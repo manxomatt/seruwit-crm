@@ -8,7 +8,7 @@ import TextInput from '@/Components/TextInput';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEventHandler, useCallback, useState } from 'react';
 import FleetBaseAiGeneratePanel, { ExtractedBaseData } from '../../../../Components/FleetBaseAiGeneratePanel';
@@ -89,6 +89,12 @@ export default function Create({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const { aiFeaturesEnabled, aiQuickFillEnabled } = usePage().props as {
+        aiFeaturesEnabled?: boolean;
+        aiQuickFillEnabled?: boolean;
+    };
+    const isQuickFillActive = aiQuickFillEnabled ?? aiFeaturesEnabled ?? true;
+
     const { data, setData, post, processing, errors } = useForm({
         code: '',
         name: '',
@@ -247,7 +253,7 @@ export default function Create({
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 items-start">
                     {/* Kolom Kiri: Form Utama */}
-                    <div className="lg:col-span-8 space-y-6">
+                    <div className={`${isQuickFillActive ? 'lg:col-span-8' : 'lg:col-span-12 max-w-5xl mx-auto w-full'} space-y-6`}>
                         <form id="fleet-base-create-form" onSubmit={submit} className="space-y-6">
                             {/* 1. Identitas & Jenis Base */}
                             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
@@ -801,9 +807,11 @@ export default function Create({
                     </div>
 
                     {/* Kolom Kanan: Panel AI Asisten (Sticky) */}
-                    <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
-                        <FleetBaseAiGeneratePanel managers={managers} onApply={handleApplyAiData} />
-                    </div>
+                    {isQuickFillActive && (
+                        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
+                            <FleetBaseAiGeneratePanel managers={managers} onApply={handleApplyAiData} />
+                        </div>
+                    )}
                 </div>
             </div>
         </DynamicLayout>

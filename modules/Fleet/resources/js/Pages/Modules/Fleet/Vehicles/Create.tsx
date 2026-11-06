@@ -10,7 +10,7 @@ import { triggerSnackbar } from '@/Components/FlashSnackbar';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import VehicleAiGeneratePanel, { ExtractedVehicleData } from '../../../../Components/VehicleAiGeneratePanel';
 import FleetNav from '../../../../FleetNav';
@@ -73,6 +73,7 @@ interface Props {
     remaining_trial_slots?: number | null;
     rental_module_enabled?: boolean;
     rental_rate_coverage?: RentalRateCoverage | null;
+    ai_quick_fill_enabled?: boolean;
 }
 
 export default function Create({
@@ -87,9 +88,16 @@ export default function Create({
     remaining_trial_slots = null,
     rental_module_enabled = false,
     rental_rate_coverage = null,
+    ai_quick_fill_enabled,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const { aiFeaturesEnabled, aiQuickFillEnabled } = usePage().props as {
+        aiFeaturesEnabled?: boolean;
+        aiQuickFillEnabled?: boolean;
+    };
+    const isQuickFillActive = ai_quick_fill_enabled ?? aiQuickFillEnabled ?? aiFeaturesEnabled ?? true;
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         plate_number: '',
@@ -295,7 +303,7 @@ export default function Create({
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 items-start">
                     {/* Kolom Kiri: Form Utama */}
-                    <div className="lg:col-span-8 space-y-6">
+                    <div className={`${isQuickFillActive ? 'lg:col-span-8' : 'lg:col-span-12 max-w-5xl mx-auto w-full'} space-y-6`}>
                         {is_trial_mode && (
                             has_reached_trial_limit ? (
                                 <div className="flex items-center gap-4 rounded-3xl border border-amber-200/80 bg-amber-50/60 p-5 shadow-xs dark:border-amber-800/60 dark:bg-amber-950/20">
@@ -1289,9 +1297,11 @@ export default function Create({
             </div>
 
             {/* Kolom Kanan: Panel AI Asisten (Sticky) */}
-            <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
-                <VehicleAiGeneratePanel bases={bases} onApply={handleApplyAiData} />
-            </div>
+            {isQuickFillActive && (
+                <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
+                    <VehicleAiGeneratePanel bases={bases} onApply={handleApplyAiData} />
+                </div>
+            )}
         </div>
     </div>
 </DynamicLayout>

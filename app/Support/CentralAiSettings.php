@@ -11,6 +11,8 @@ final class CentralAiSettings
 
     public const KEY_OCR = 'general.ai_ocr_enabled';
 
+    public const KEY_QUICK_FILL = 'general.ai_quick_fill_enabled';
+
     /**
      * Determine if AI features are enabled at the platform / central admin level.
      */
@@ -35,6 +37,24 @@ final class CentralAiSettings
         }
 
         $value = self::storedValue(self::KEY_OCR);
+
+        if ($value === null) {
+            return true;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Determine if AI Smart Quick-Fill features are enabled at the platform level.
+     */
+    public static function isQuickFillEnabled(): bool
+    {
+        if (! self::isEnabled()) {
+            return false;
+        }
+
+        $value = self::storedValue(self::KEY_QUICK_FILL);
 
         if ($value === null) {
             return true;

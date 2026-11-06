@@ -150,6 +150,7 @@ class VehicleController extends Controller
             'remaining_trial_slots' => $capacityService->getRemainingTrialSlots(),
             'rental_module_enabled' => $rentalEnabled,
             'rental_rate_coverage' => $rentalRateCoverage,
+            'ai_quick_fill_enabled' => \App\Support\CentralAiSettings::isQuickFillEnabled(),
         ]);
     }
 

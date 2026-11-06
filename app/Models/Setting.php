@@ -83,6 +83,7 @@ class Setting extends Model
             'general.system_mode',
             'general.ai_features_enabled',
             'general.ai_ocr_enabled',
+            'general.ai_quick_fill_enabled',
         ];
     }
 

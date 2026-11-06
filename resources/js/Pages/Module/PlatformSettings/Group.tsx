@@ -115,6 +115,9 @@ export default function Group({
     const aiOcrIndex = findSettingIndex('general.ai_ocr_enabled');
     const isAiOcrEnabled = aiOcrIndex >= 0 ? data.settings[aiOcrIndex]?.value === '1' : true;
 
+    const aiQuickFillIndex = findSettingIndex('general.ai_quick_fill_enabled');
+    const isAiQuickFillEnabled = aiQuickFillIndex >= 0 ? data.settings[aiQuickFillIndex]?.value === '1' : true;
+
     // Capacity indices
     const businessModelIndex = findSettingIndex('capacity.business_model');
     const businessModel = businessModelIndex >= 0 ? data.settings[businessModelIndex]?.value || 'per_vehicle_trial' : 'per_vehicle_trial';
@@ -488,10 +491,127 @@ export default function Group({
                                                 <span className="text-indigo-600 dark:text-indigo-400 font-bold">🛠️</span>
                                                 <span>{t('settings.platform.ai_features.modules.maintenance', undefined, 'Predictive Maintenance & Jadwal Servis Cerdas')}</span>
                                             </div>
+                                            <div className="flex items-center gap-2 rounded-xl bg-white p-2.5 text-xs text-slate-700 shadow-2xs dark:bg-slate-900 dark:text-slate-300 sm:col-span-2">
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">✨</span>
+                                                <span>{t('settings.platform.ai_features.modules.quick_fill', undefined, 'AI Smart Quick-Fill & Asisten Pengisian Spesifikasi Armada')}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <InputError
                                         message={(errors as Record<string, string>)[`settings.${aiFeaturesIndex}.value`]}
+                                        className="mt-2"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Dedicated AI Quick-Fill Switcher Card */}
+                            {aiQuickFillIndex >= 0 && (
+                                <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-sky-600 text-white shadow-xs">
+                                                <span className="material-symbols-outlined text-[20px]">auto_fix_high</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {t('settings.platform.ai_quick_fill.label', undefined, 'Fitur AI Smart Quick-Fill (Asisten Armada)')}
+                                                    </h3>
+                                                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                        {t('settings.platform.ai_quick_fill.badge', undefined, 'Vehicle Quick-Fill Switch')}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {t(
+                                                        'settings.platform.ai_quick_fill.description',
+                                                        undefined,
+                                                        'Kontrol ketersediaan panel asisten AI Smart Quick-Fill di form penambahan armada seluruh tenant.',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                                isAiQuickFillEnabled && isAiEnabled
+                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`h-1.5 w-1.5 rounded-full ${
+                                                    isAiQuickFillEnabled && isAiEnabled ? 'bg-emerald-500' : 'bg-slate-400'
+                                                }`}
+                                            />
+                                            {isAiQuickFillEnabled && isAiEnabled
+                                                ? t('settings.platform.ai_quick_fill.status_active', undefined, 'AKTIF DI TENANT')
+                                                : t('settings.platform.ai_quick_fill.status_inactive', undefined, 'NONAKTIF DI TENANT')}
+                                        </span>
+                                    </div>
+
+                                    {/* Toggle Bar */}
+                                    <div className="mt-5">
+                                        <div
+                                            onClick={() => isAiEnabled && updateValue(aiQuickFillIndex, isAiQuickFillEnabled ? '0' : '1')}
+                                            className={`flex items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                                !isAiEnabled
+                                                    ? 'cursor-not-allowed opacity-60 border-slate-200 bg-slate-100/50 dark:border-slate-800 dark:bg-slate-800/30'
+                                                    : isAiQuickFillEnabled
+                                                    ? 'cursor-pointer border-indigo-200 bg-gradient-to-r from-indigo-50/60 via-sky-50/40 to-white dark:border-indigo-900/60 dark:from-indigo-950/30 dark:via-sky-950/20 dark:to-slate-900'
+                                                    : 'cursor-pointer border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:bg-slate-800/90'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-xs">
+                                                    ✨
+                                                </span>
+                                                <div>
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {!isAiEnabled
+                                                            ? t('settings.platform.ai_quick_fill.disabled_by_master_label', undefined, 'Dinonaktifkan oleh Master Switch AI')
+                                                            : isAiQuickFillEnabled
+                                                            ? t('settings.platform.ai_quick_fill.active_label', undefined, 'Panel Quick-Fill Muncul di Form Armada')
+                                                            : t('settings.platform.ai_quick_fill.inactive_label', undefined, 'Panel Quick-Fill Disembunyikan dari Form Armada')}
+                                                    </span>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                        {!isAiEnabled
+                                                            ? t('settings.platform.ai_quick_fill.disabled_by_master_desc', undefined, 'Aktifkan Master Switch AI terlebih dahulu untuk menggunakan fitur ini.')
+                                                            : isAiQuickFillEnabled
+                                                            ? t(
+                                                                  'settings.platform.ai_quick_fill.active_desc',
+                                                                  undefined,
+                                                                  'Form pendaftaran kendaraan armada di seluruh tenant menampilkan panel asisten AI Smart Quick-Fill.',
+                                                              )
+                                                            : t(
+                                                                  'settings.platform.ai_quick_fill.inactive_desc',
+                                                                  undefined,
+                                                                  'Panel asisten AI disembunyikan. Petugas tenant mengisi spesifikasi unit secara manual tanpa asisten AI.',
+                                                              )}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Reliable Animated Switch */}
+                                            <div
+                                                role="switch"
+                                                aria-checked={isAiQuickFillEnabled && isAiEnabled}
+                                                className={`relative inline-flex h-7 w-12 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                    !isAiEnabled
+                                                        ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'
+                                                        : isAiQuickFillEnabled
+                                                        ? 'bg-indigo-600 cursor-pointer'
+                                                        : 'bg-slate-300 dark:bg-slate-700 cursor-pointer'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                        isAiQuickFillEnabled && isAiEnabled ? 'translate-x-5' : 'translate-x-0'
+                                                    }`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <InputError
+                                        message={(errors as Record<string, string>)[`settings.${aiQuickFillIndex}.value`]}
                                         className="mt-2"
                                     />
                                 </div>

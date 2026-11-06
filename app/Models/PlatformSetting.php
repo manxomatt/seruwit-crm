@@ -21,6 +21,8 @@ class PlatformSetting extends Model
 
     public const KEY_AI_OCR_ENABLED = 'general.ai_ocr_enabled';
 
+    public const KEY_AI_QUICK_FILL_ENABLED = 'general.ai_quick_fill_enabled';
+
     public const KEY_VEHICLE_TRIAL_DURATION_DAYS = 'capacity.vehicle_trial_duration_days';
 
     public const KEY_MAX_TRIAL_VEHICLES_PER_TENANT = 'capacity.max_trial_vehicles_per_tenant';
@@ -95,6 +97,11 @@ class PlatformSetting extends Model
     public static function isAiOcrEnabled(): bool
     {
         return static::getValue(self::KEY_AI_OCR_ENABLED, '1') === '1';
+    }
+
+    public static function isAiQuickFillEnabled(): bool
+    {
+        return static::getValue(self::KEY_AI_QUICK_FILL_ENABLED, '1') === '1';
     }
 
     public static function getBusinessModel(): string
@@ -287,7 +294,7 @@ class PlatformSetting extends Model
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'Fitur AI (Artificial Intelligence)',
-                'description' => 'Master switch untuk mengaktifkan atau menonaktifkan seluruh fitur AI (Visual Handover, Smart KYC, Dynamic Pricing, Predictive Maintenance) di semua workspace tenant.',
+                'description' => 'Master switch untuk mengaktifkan atau menonaktifkan seluruh fitur AI (Visual Handover, Smart KYC, Dynamic Pricing, Predictive Maintenance, AI Smart Quick-Fill Armada) di semua workspace tenant.',
                 'is_public' => true,
                 'sort_order' => 2,
             ],
@@ -297,9 +304,19 @@ class PlatformSetting extends Model
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'Fitur AI OCR Dokumen (KTP / SIM)',
-                'description' => 'Kontrol ketersediaan fitur pemindaian cepat (OCR) foto KTP dan SIM pelanggan pada form reservasi dan walk-in di seluruh tenant. Jika dinonaktifkan, scanner OCR disembunyikan dari halaman tenant.',
+                'description' => 'Kontrol ketersediaan fitur pemindaian cepat (OCR) foto KTP dan SIM pelanggan pada form booking dan walk-in di seluruh tenant. Jika dinonaktifkan, scanner OCR disembunyikan dari halaman tenant.',
                 'is_public' => true,
                 'sort_order' => 3,
+            ],
+            [
+                'key' => self::KEY_AI_QUICK_FILL_ENABLED,
+                'group' => 'general',
+                'value' => '1',
+                'type' => 'boolean',
+                'label' => 'Fitur AI Smart Quick-Fill (Asisten Armada)',
+                'description' => 'Kontrol ketersediaan asisten pengisian otomatis spesifikasi unit armada (AI Smart Quick-Fill) pada form pendaftaran kendaraan baru di seluruh tenant. Jika dinonaktifkan, panel asisten AI disembunyikan dari halaman tenant.',
+                'is_public' => true,
+                'sort_order' => 4,
             ],
 
             // CAPACITY
