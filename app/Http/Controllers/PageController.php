@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PlatformSetting;
 use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use App\Support\MaintenanceModePage;
@@ -49,7 +50,8 @@ class PageController extends Controller
      */
     public function homepage(): Response|InertiaResponse
     {
-        if (Setting::getValue('general.maintenance_mode') === '1' && ! Auth::guard('web')->check()) {
+        $isMaintenance = rescue(fn () => PlatformSetting::isMaintenanceMode() || Setting::getValue('general.maintenance_mode') === '1', false, false);
+        if ($isMaintenance && ! Auth::guard('web')->check()) {
             return MaintenanceModePage::toResponse(request());
         }
         $page = Modules::available('pages')

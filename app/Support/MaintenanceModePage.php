@@ -15,9 +15,10 @@ class MaintenanceModePage
      */
     public static function toResponse(Request $request): Response
     {
+        $platformMessage = \App\Models\PlatformSetting::getValue(\App\Models\PlatformSetting::KEY_MAINTENANCE_MESSAGE);
         $customMessage = tenancy()->initialized
-            ? null
-            : \App\Models\PlatformSetting::getValue(\App\Models\PlatformSetting::KEY_MAINTENANCE_MESSAGE);
+            ? (Setting::getValue('general.maintenance_message') ?: $platformMessage)
+            : $platformMessage;
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -139,6 +140,8 @@ class MaintenanceModePage
             'whatsapp' => $whatsapp,
             'workingHours' => $workingHours,
             'loginUrl' => route('login'),
+            'isAdmin' => (bool) ($request->user()?->can('manage-platform-settings') || $request->user()?->hasRole('admin')),
+            'adminUrl' => ! tenancy()->initialized ? route('module.platform-settings.group', 'general') : url('/admin'),
         ])->toResponse($request)->setStatusCode(503)->header('Retry-After', '3600');
     }
 }

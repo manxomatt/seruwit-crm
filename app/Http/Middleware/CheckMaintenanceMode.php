@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\PlatformSetting;
 use App\Models\Setting;
 use App\Support\MaintenanceModePage;
 use Closure;
@@ -12,8 +13,9 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckMaintenanceMode
 {
     /**
-     * Intercept public requests when general.maintenance_mode is enabled.
-     * Authenticated staff and essential auth/webhook endpoints are allowed through.
+     * Intercept public requests when maintenance mode is enabled.
+     * Platform maintenance mode applies globally across central and all tenants.
+     * Authenticated administrators retain access to management panels.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -24,9 +26,9 @@ class CheckMaintenanceMode
 
         // 2. Safe check if maintenance mode is enabled
         try {
-            $isMaintenance = tenancy()->initialized
-                ? Setting::getValue('general.maintenance_mode') === '1'
-                : \App\Models\PlatformSetting::isMaintenanceMode();
+            $isPlatformMaintenance = PlatformSetting::isMaintenanceMode();
+            $isLegacyOrTenantMaintenance = Setting::getValue('general.maintenance_mode') === '1';
+            $isMaintenance = $isPlatformMaintenance || $isLegacyOrTenantMaintenance;
         } catch (\Throwable) {
             return $next($request);
         }
@@ -40,7 +42,7 @@ class CheckMaintenanceMode
             return $next($request);
         }
 
-        // 4. Allow authentication, password reset, and impersonation routes so staff can log in
+        // 4. Allow authentication, password reset, and essential routes so staff can log in
         if ($this->isExemptRoute($request)) {
             return $next($request);
         }

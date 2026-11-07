@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Menu;
+use App\Models\PlatformSetting;
 use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use App\Support\LocaleResolver;
@@ -142,7 +143,13 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'workspacesUrl' => rtrim(config('app.url'), '/').'/workspaces',
             'subscriptionSummary' => fn () => $this->resolveSubscriptionSummary(),
-            'is_maintenance_mode' => fn () => rescue(fn () => Setting::getValue('general.maintenance_mode') === '1', false, false),
+            'is_maintenance_mode' => fn () => rescue(function () {
+                if (PlatformSetting::isMaintenanceMode()) {
+                    return true;
+                }
+
+                return tenancy()->initialized && Setting::getValue('general.maintenance_mode') === '1';
+            }, false, false),
         ];
     }
 

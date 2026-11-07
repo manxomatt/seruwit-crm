@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import LandingApp from './WelcomeLanding/App';
 import TenantRentalLandingApp from './TenantRentalLanding/App';
 import { DEFAULT_SITE_NAME } from './WelcomeLanding/constants';
@@ -36,6 +36,11 @@ export default function Welcome({
     isTenant = false,
     tenantRentalData,
 }: WelcomeProps): JSX.Element {
+    const { auth, is_maintenance_mode } = usePage().props as {
+        auth?: { user?: { is_admin?: boolean } | null };
+        is_maintenance_mode?: boolean;
+    };
+
     const siteName =
         (isTenant && tenantRentalData?.brand?.name) ||
         settings?.['general.site_name'] ||
@@ -44,6 +49,22 @@ export default function Welcome({
     return (
         <>
             <Head title={siteName} />
+            {is_maintenance_mode && auth?.user && (
+                <div className="sticky top-0 inset-x-0 z-50 bg-amber-400 text-slate-950 font-medium text-xs sm:text-sm px-4 py-2.5 shadow-md flex items-center justify-between gap-3 border-b border-amber-500">
+                    <div className="flex items-center gap-2">
+                        <span className="flex h-2.5 w-2.5 rounded-full bg-red-600 shrink-0" />
+                        <span>
+                            <strong>Mode Pemeliharaan Aktif (HTTP 503):</strong> Halaman publik saat ini tertutup bagi pengunjung umum. Anda dapat melihat halaman ini karena sedang login.
+                        </span>
+                    </div>
+                    <a
+                        href="/module/platform-settings/general"
+                        className="shrink-0 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 transition"
+                    >
+                        Panel Pengaturan
+                    </a>
+                </div>
+            )}
             {isTenant ? (
                 <TenantRentalLandingApp
                     settings={settings}

@@ -75,7 +75,7 @@ export default function Group({
     const [groqTestResult, setGroqTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [showGroqKey, setShowGroqKey] = useState(false);
 
-    const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
+    const { data, setData, post, processing, errors, recentlySuccessful, isDirty } = useForm({
         group: currentGroup,
         settings: groupSettings.map((s) => ({
             id: s.id,
@@ -555,6 +555,12 @@ export default function Group({
                                                 />
                                             </div>
                                         </div>
+                                        {isDirty && (
+                                            <p className="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                                                <span>⚠️</span>
+                                                <span>Pengaturan belum tersimpan — klik tombol <strong>"Simpan Pengaturan Platform"</strong> di bawah untuk menerapkan.</span>
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Maintenance Message Textarea */}
@@ -2963,12 +2969,19 @@ export default function Group({
                         </div>
                     )}
 
-                    {/* Bottom Action Card */}
-                    <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    {/* Sticky Bottom Action Bar */}
+                    <div className="sticky bottom-4 z-40 flex items-center justify-between rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {t('settings.platform.groups.' + currentGroup, undefined, formatGroupLabel(currentGroup))}
-                            </span>
+                            {isDirty ? (
+                                <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 animate-pulse">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                    <span>Perubahan belum disimpan — klik tombol Simpan</span>
+                                </span>
+                            ) : (
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    {t('settings.platform.groups.' + currentGroup, undefined, formatGroupLabel(currentGroup))}
+                                </span>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -2980,7 +2993,11 @@ export default function Group({
                             )}
                             <PrimaryButton
                                 disabled={processing}
-                                className="!rounded-xl px-5 py-2.5 text-xs font-bold shadow-xs hover:shadow-sm"
+                                className={`!rounded-xl px-6 py-2.5 text-xs font-bold shadow-md transition-all ${
+                                    isDirty
+                                        ? '!bg-gradient-to-r !from-indigo-600 !to-sky-600 !text-white ring-2 ring-indigo-500/30 shadow-indigo-500/20'
+                                        : ''
+                                }`}
                             >
                                 {t('settings.platform.save', undefined, 'Simpan Pengaturan Platform')}
                             </PrimaryButton>

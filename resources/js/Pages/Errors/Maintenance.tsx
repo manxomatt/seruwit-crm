@@ -11,6 +11,8 @@ interface Props {
     whatsapp?: string | null;
     workingHours?: string | null;
     loginUrl: string;
+    isAdmin?: boolean;
+    adminUrl?: string;
 }
 
 export default function Maintenance({
@@ -22,6 +24,8 @@ export default function Maintenance({
     whatsapp,
     workingHours,
     loginUrl,
+    isAdmin = false,
+    adminUrl = '',
 }: Props): JSX.Element {
     const handleReload = () => {
         window.location.reload();
@@ -56,13 +60,23 @@ export default function Maintenance({
 
                     <div className="flex items-center gap-3">
                         <LanguageSwitcher compact className="bg-slate-800 text-slate-300" />
-                        <Link
-                            href={loginUrl}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition"
-                        >
-                            <span>🔐</span>
-                            <span>Login Staf</span>
-                        </Link>
+                        {isAdmin && adminUrl ? (
+                            <a
+                                href={adminUrl}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/60 bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/30 hover:text-amber-200 transition"
+                            >
+                                <span>🛡️</span>
+                                <span>Buka Panel Admin</span>
+                            </a>
+                        ) : (
+                            <Link
+                                href={loginUrl}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition"
+                            >
+                                <span>🔐</span>
+                                <span>Login Staf</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
