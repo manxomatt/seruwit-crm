@@ -402,7 +402,7 @@ export default function CentralWhatsAppPanel({
                         )}
 
                         {pairingMode === 'code' && (
-                            <div className="max-w-md space-y-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-800/20">
+                            <div className="w-full space-y-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-800/20">
                                 <div>
                                     <InputLabel value="Nomor WhatsApp Bisnis Central" className="!text-xs" />
                                     <div className="mt-1 flex gap-2">
@@ -456,7 +456,7 @@ export default function CentralWhatsAppPanel({
                     </div>
                 </div>
 
-                <div className="mt-6 space-y-4 max-w-xl">
+                <div className="mt-6 w-full space-y-4">
                     <div>
                         <InputLabel value="Nomor WhatsApp Penerima Uji Coba *" className="!text-xs" />
                         <TextInput

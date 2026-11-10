@@ -273,7 +273,7 @@ export default function Group({
         >
             <Head title={t('settings.platform.title', undefined, 'Pengaturan Platform')} />
 
-            <div className="mx-auto max-w-5xl space-y-6 pb-12">
+            <div className="w-full space-y-6 pb-12">
                 {/* Global Scope Banner */}
                 <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/40 p-4 shadow-xs dark:border-indigo-950/60 dark:from-indigo-950/30 dark:via-slate-900 dark:to-indigo-950/20">
                     <div className="flex items-center gap-3">
@@ -2974,7 +2974,7 @@ export default function Group({
                                                     </p>
                                                 )}
 
-                                                <div className="mt-3 max-w-xl">
+                                                <div className="mt-3 w-full">
                                                     {setting.type === 'textarea' || setting.type === 'json' ? (
                                                         <textarea
                                                             id={`value-${setting.id}`}
