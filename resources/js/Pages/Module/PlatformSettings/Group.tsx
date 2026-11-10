@@ -165,6 +165,9 @@ export default function Group({
     const maintenanceModeIndex = findSettingIndex('general.maintenance_mode');
     const isMaintenanceMode = maintenanceModeIndex >= 0 ? data.settings[maintenanceModeIndex]?.value === '1' : false;
 
+    const tenantMaintenanceModeIndex = findSettingIndex('general.tenant_maintenance_mode');
+    const isTenantMaintenanceMode = tenantMaintenanceModeIndex >= 0 ? data.settings[tenantMaintenanceModeIndex]?.value === '1' : false;
+
     const maintenanceMsgIndex = findSettingIndex('general.maintenance_message');
 
     const allowPublicRegIndex = findSettingIndex('general.allow_public_registration');
@@ -491,24 +494,29 @@ export default function Group({
                                         </div>
                                         <span
                                             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                                                isMaintenanceMode
+                                                isMaintenanceMode || isTenantMaintenanceMode
                                                     ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300'
                                                     : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
                                             }`}
                                         >
                                             <span
                                                 className={`h-1.5 w-1.5 rounded-full ${
-                                                    isMaintenanceMode ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'
+                                                    isMaintenanceMode || isTenantMaintenanceMode ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'
                                                 }`}
                                             />
-                                            {isMaintenanceMode
-                                                ? t('settings.platform.general_settings.maintenance_active', undefined, 'MODE PEMELIHARAAN AKTIF')
-                                                : t('settings.platform.general_settings.maintenance_inactive', undefined, 'SISTEM NORMAL')}
+                                            {isMaintenanceMode && isTenantMaintenanceMode
+                                                ? t('settings.platform.general_settings.maintenance_both_active', undefined, 'CENTRAL & TENANT TERKUNCI')
+                                                : isMaintenanceMode
+                                                  ? t('settings.platform.general_settings.maintenance_active', undefined, 'CENTRAL MAINTENANCE AKTIF')
+                                                  : isTenantMaintenanceMode
+                                                    ? t('settings.platform.general_settings.tenant_maintenance_active', undefined, 'SELURUH TENANT TERKUNCI')
+                                                    : t('settings.platform.general_settings.maintenance_inactive', undefined, 'SISTEM NORMAL')}
                                         </span>
                                     </div>
 
-                                    {/* Maintenance Toggle */}
-                                    <div className="mt-5">
+                                    {/* Maintenance Toggles */}
+                                    <div className="mt-5 space-y-3">
+                                        {/* Switch 1: Central Domain Maintenance */}
                                         <div
                                             onClick={() => updateValue(maintenanceModeIndex, isMaintenanceMode ? '0' : '1')}
                                             className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
@@ -522,20 +530,25 @@ export default function Group({
                                                     🛠️
                                                 </span>
                                                 <div>
-                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                        {t('settings.platform.general_settings.maintenance_toggle_label', undefined, 'Aktifkan Mode Pemeliharaan Platform')}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                            {t('settings.platform.general_settings.maintenance_toggle_label', undefined, 'Mode Pemeliharaan Website Domain Central')}
+                                                        </span>
+                                                        <span className="rounded-md bg-slate-200/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                                                            CENTRAL ONLY
+                                                        </span>
+                                                    </div>
                                                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                                                         {isMaintenanceMode
                                                             ? t(
                                                                   'settings.platform.general_settings.maintenance_toggle_active_desc',
                                                                   undefined,
-                                                                  'Pengunjung umum akan melihat halaman Under Maintenance (HTTP 503). Administrator login tetap dapat mengakses sistem.',
+                                                                  'Pengunjung publik di Domain Central melihat halaman Under Maintenance (HTTP 503). Admin yang login tetap memiliki akses.',
                                                               )
                                                             : t(
                                                                   'settings.platform.general_settings.maintenance_toggle_inactive_desc',
                                                                   undefined,
-                                                                  'Platform beroperasi normal dan dapat diakses oleh semua pengguna dan pengunjung.',
+                                                                  'Website publik Domain Central beroperasi normal untuk semua pengunjung.',
                                                               )}
                                                     </p>
                                                 </div>
@@ -555,6 +568,62 @@ export default function Group({
                                                 />
                                             </div>
                                         </div>
+
+                                        {/* Switch 2: Global Tenant Domains Maintenance */}
+                                        {tenantMaintenanceModeIndex >= 0 && (
+                                            <div
+                                                onClick={() => updateValue(tenantMaintenanceModeIndex, isTenantMaintenanceMode ? '0' : '1')}
+                                                className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition-all ${
+                                                    isTenantMaintenanceMode
+                                                        ? 'border-rose-300 bg-rose-50/50 dark:border-rose-900/60 dark:bg-rose-950/30'
+                                                        : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:bg-slate-800/90'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`flex h-8 w-8 items-center justify-center rounded-xl text-sm text-white shadow-xs ${isTenantMaintenanceMode ? 'bg-rose-600' : 'bg-slate-500'}`}>
+                                                        🔒
+                                                    </span>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                                {t('settings.platform.general_settings.tenant_maintenance_toggle_label', undefined, 'Kunci Seluruh Website Domain Tenant')}
+                                                            </span>
+                                                            <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                                ALL TENANTS
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {isTenantMaintenanceMode
+                                                                ? t(
+                                                                      'settings.platform.general_settings.tenant_maintenance_toggle_active_desc',
+                                                                      undefined,
+                                                                      'Seluruh website domain & subdomain tenant saat ini terkunci serentak dan menampilkan halaman Under Maintenance (HTTP 503).',
+                                                                  )
+                                                                : t(
+                                                                      'settings.platform.general_settings.tenant_maintenance_toggle_inactive_desc',
+                                                                      undefined,
+                                                                      'Seluruh website domain & subdomain tenant beroperasi normal dan dapat diakses oleh pelanggan.',
+                                                                  )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    role="switch"
+                                                    aria-checked={isTenantMaintenanceMode}
+                                                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                                        isTenantMaintenanceMode ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-700'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                            isTenantMaintenanceMode ? 'translate-x-5' : 'translate-x-0'
+                                                        }`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {isDirty && (
                                             <p className="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                                                 <span>⚠️</span>

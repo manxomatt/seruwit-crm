@@ -26,9 +26,14 @@ class CheckMaintenanceMode
 
         // 2. Safe check if maintenance mode is enabled
         try {
-            $isPlatformMaintenance = PlatformSetting::isMaintenanceMode();
-            $isLegacyOrTenantMaintenance = Setting::getValue('general.maintenance_mode') === '1';
-            $isMaintenance = $isPlatformMaintenance || $isLegacyOrTenantMaintenance;
+            if (tenancy()->initialized) {
+                $isGlobalTenantLock = PlatformSetting::isTenantMaintenanceMode();
+                $isLocalTenantMaintenance = Setting::getValue('general.maintenance_mode') === '1';
+                $isMaintenance = $isGlobalTenantLock || $isLocalTenantMaintenance;
+            } else {
+                $isGlobalTenantLock = false;
+                $isMaintenance = PlatformSetting::isMaintenanceMode() || Setting::getValue('general.maintenance_mode') === '1';
+            }
         } catch (\Throwable) {
             return $next($request);
         }
@@ -37,17 +42,27 @@ class CheckMaintenanceMode
             return $next($request);
         }
 
-        // 3. Allow authenticated staff / admin users on the web guard
+        // 3. When Central Superadmin locks all tenant domains globally, block all tenant traffic
+        // except essential webhooks and logout.
+        if ($isGlobalTenantLock) {
+            if ($request->is('logout', 'webhooks/*')) {
+                return $next($request);
+            }
+
+            return MaintenanceModePage::toResponse($request);
+        }
+
+        // 4. Allow authenticated staff / admin users on the web guard
         if (Auth::guard('web')->check()) {
             return $next($request);
         }
 
-        // 4. Allow authentication, password reset, and essential routes so staff can log in
+        // 5. Allow authentication, password reset, and essential routes so staff can log in
         if ($this->isExemptRoute($request)) {
             return $next($request);
         }
 
-        // 5. Render Maintenance Mode 503 response
+        // 6. Render Maintenance Mode 503 response
         return MaintenanceModePage::toResponse($request);
     }
 

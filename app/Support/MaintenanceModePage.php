@@ -17,7 +17,7 @@ class MaintenanceModePage
     {
         $platformMessage = \App\Models\PlatformSetting::getValue(\App\Models\PlatformSetting::KEY_MAINTENANCE_MESSAGE);
         $customMessage = tenancy()->initialized
-            ? (Setting::getValue('general.maintenance_message') ?: $platformMessage)
+            ? (\App\Models\PlatformSetting::isTenantMaintenanceMode() ? $platformMessage : (Setting::getValue('general.maintenance_message') ?: $platformMessage))
             : $platformMessage;
 
         if ($request->expectsJson()) {

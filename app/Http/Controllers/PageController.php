@@ -30,7 +30,7 @@ class PageController extends Controller
      */
     public function render(string $slug): Response
     {
-        if (Setting::getValue('general.maintenance_mode') === '1' && ! Auth::guard('web')->check()) {
+        if ($this->shouldRenderMaintenancePage()) {
             return MaintenanceModePage::toResponse(request());
         }
 
@@ -50,8 +50,7 @@ class PageController extends Controller
      */
     public function homepage(): Response|InertiaResponse
     {
-        $isMaintenance = rescue(fn () => PlatformSetting::isMaintenanceMode() || Setting::getValue('general.maintenance_mode') === '1', false, false);
-        if ($isMaintenance && ! Auth::guard('web')->check()) {
+        if ($this->shouldRenderMaintenancePage()) {
             return MaintenanceModePage::toResponse(request());
         }
         $page = Modules::available('pages')
@@ -83,6 +82,26 @@ class PageController extends Controller
         }
 
         return response()->view('pages::render', ['page' => $page]);
+    }
+
+    /**
+     * Determine whether the public page should render the 503 maintenance screen.
+     */
+    private function shouldRenderMaintenancePage(): bool
+    {
+        return (bool) rescue(function (): bool {
+            if (tenancy()->initialized) {
+                if (PlatformSetting::isTenantMaintenanceMode()) {
+                    return true;
+                }
+
+                return Setting::getValue('general.maintenance_mode') === '1' && ! Auth::guard('web')->check();
+            }
+
+            $isCentralMaintenance = PlatformSetting::isMaintenanceMode() || Setting::getValue('general.maintenance_mode') === '1';
+
+            return $isCentralMaintenance && ! Auth::guard('web')->check();
+        }, false, false);
     }
 
     /**

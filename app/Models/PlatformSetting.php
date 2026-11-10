@@ -33,6 +33,8 @@ class PlatformSetting extends Model
 
     public const KEY_MAINTENANCE_MODE = 'general.maintenance_mode';
 
+    public const KEY_TENANT_MAINTENANCE_MODE = 'general.tenant_maintenance_mode';
+
     public const KEY_MAINTENANCE_MESSAGE = 'general.maintenance_message';
 
     public const KEY_REQUIRE_TENANT_VERIFICATION = 'general.require_tenant_verification';
@@ -122,6 +124,19 @@ class PlatformSetting extends Model
     }
 
     /**
+     * Explicitly qualify the central public schema when tenancy is active on PostgreSQL,
+     * ensuring queries resolve even if the active search_path points at a tenant schema.
+     */
+    public function getTable(): string
+    {
+        if (function_exists('tenancy') && tenancy()->initialized && $this->getConnection()->getDriverName() === 'pgsql') {
+            return 'public.platform_settings';
+        }
+
+        return parent::getTable();
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -148,6 +163,11 @@ class PlatformSetting extends Model
     public static function isMaintenanceMode(): bool
     {
         return static::getValue(self::KEY_MAINTENANCE_MODE, '0') === '1';
+    }
+
+    public static function isTenantMaintenanceMode(): bool
+    {
+        return static::getValue(self::KEY_TENANT_MAINTENANCE_MODE, '0') === '1';
     }
 
     public static function isPublicRegistrationAllowed(): bool
@@ -401,10 +421,20 @@ class PlatformSetting extends Model
                 'group' => 'general',
                 'value' => '0',
                 'type' => 'boolean',
-                'label' => 'Mode Pemeliharaan (Maintenance Mode)',
-                'description' => 'Aktifkan mode pemeliharaan untuk menghentikan akses sementara bagi seluruh pengguna publik saat pembaruan sistem.',
+                'label' => 'Mode Pemeliharaan Domain Central',
+                'description' => 'Aktifkan mode pemeliharaan untuk menghentikan akses sementara bagi pengunjung publik di Domain Central.',
                 'is_public' => true,
                 'sort_order' => 2,
+            ],
+            [
+                'key' => self::KEY_TENANT_MAINTENANCE_MODE,
+                'group' => 'general',
+                'value' => '0',
+                'type' => 'boolean',
+                'label' => 'Kunci Seluruh Domain Tenant (Global Tenant Maintenance)',
+                'description' => 'Aktifkan untuk mengunci akses ke seluruh website domain dan subdomain tenant secara serentak (HTTP 503).',
+                'is_public' => true,
+                'sort_order' => 3,
             ],
             [
                 'key' => self::KEY_MAINTENANCE_MESSAGE,
@@ -414,7 +444,7 @@ class PlatformSetting extends Model
                 'label' => 'Pesan Pemeliharaan Sistem',
                 'description' => 'Pesan pemberitahuan yang ditampilkan kepada pengunjung saat mode pemeliharaan aktif.',
                 'is_public' => true,
-                'sort_order' => 3,
+                'sort_order' => 4,
             ],
             [
                 'key' => self::KEY_ALLOW_PUBLIC_REGISTRATION,

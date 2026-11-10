@@ -144,11 +144,11 @@ class HandleInertiaRequests extends Middleware
             'workspacesUrl' => rtrim(config('app.url'), '/').'/workspaces',
             'subscriptionSummary' => fn () => $this->resolveSubscriptionSummary(),
             'is_maintenance_mode' => fn () => rescue(function () {
-                if (PlatformSetting::isMaintenanceMode()) {
-                    return true;
+                if (tenancy()->initialized) {
+                    return PlatformSetting::isTenantMaintenanceMode() || Setting::getValue('general.maintenance_mode') === '1';
                 }
 
-                return tenancy()->initialized && Setting::getValue('general.maintenance_mode') === '1';
+                return PlatformSetting::isMaintenanceMode() || Setting::getValue('general.maintenance_mode') === '1';
             }, false, false),
         ];
     }
