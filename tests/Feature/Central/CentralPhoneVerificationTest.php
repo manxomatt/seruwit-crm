@@ -200,4 +200,21 @@ class CentralPhoneVerificationTest extends TestCase
         // OTP cache cleared after max attempts
         $this->assertNull(Cache::get('central_phone_otp:'.$phone));
     }
+
+    public function test_production_mode_rejects_otp_dispatch_when_whatsapp_gateway_is_disabled(): void
+    {
+        PlatformSetting::setValue(\App\Support\SystemMode::KEY, \App\Support\SystemMode::PRODUCTION);
+        PlatformSetting::query()->updateOrCreate(
+            ['key' => 'whatsapp.is_enabled'],
+            ['group' => 'whatsapp', 'value' => '0']
+        );
+
+        $user = User::factory()->create(['name' => 'Prod User']);
+
+        $service = app(CentralPhoneVerificationService::class);
+        $result = $service->sendOtp($user, '081234567890');
+
+        $this->assertFalse($result['success']);
+        $this->assertNull($result['debug_code']);
+    }
 }

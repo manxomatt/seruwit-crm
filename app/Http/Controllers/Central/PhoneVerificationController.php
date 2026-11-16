@@ -85,6 +85,10 @@ class PhoneVerificationController extends Controller
             }
 
             if (! $result['success']) {
+                if (! empty($result['debug_code'])) {
+                    return back()->with('status', 'Mode Development: Gateway WhatsApp belum terhubung, gunakan kode OTP debug yang tampil di layar.');
+                }
+
                 return back()->with('error', $result['error'] ?? 'Gagal mengirim kode OTP WhatsApp.');
             }
 

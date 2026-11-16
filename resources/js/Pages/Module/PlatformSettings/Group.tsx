@@ -29,6 +29,7 @@ interface Props {
     groups: string[];
     currentGroup: string;
     systemModes: string[];
+    productionReadinessIssues?: string[];
     hasSmtpPassword?: boolean;
     hasGeminiApiKey?: boolean;
     hasGroqApiKey?: boolean;
@@ -51,6 +52,7 @@ export default function Group({
     groups,
     currentGroup,
     systemModes,
+    productionReadinessIssues = [],
     hasSmtpPassword = false,
     hasGeminiApiKey = false,
     hasGroqApiKey = false,
@@ -463,6 +465,30 @@ export default function Group({
                                         message={(errors as Record<string, string>)[`settings.${systemModeIndex}.value`]}
                                         className="mt-2"
                                     />
+
+                                    {currentSystemMode === 'production' && productionReadinessIssues.length > 0 && (
+                                        <div className="mt-4 rounded-2xl border border-amber-300/80 bg-amber-50/70 p-4 dark:border-amber-700/60 dark:bg-amber-950/30">
+                                            <div className="flex items-start gap-2.5">
+                                                <span className="material-symbols-outlined mt-0.5 text-[18px] text-amber-600 dark:text-amber-400">
+                                                    warning
+                                                </span>
+                                                <div className="space-y-1 text-xs text-amber-900 dark:text-amber-200">
+                                                    <p className="font-bold">
+                                                        {t(
+                                                            'settings.platform.system_mode.readiness_warning_title',
+                                                            undefined,
+                                                            'Perhatian Kesiapan Mode Production:',
+                                                        )}
+                                                    </p>
+                                                    <ul className="list-disc space-y-1 pl-4 text-[11px] text-amber-800 dark:text-amber-300">
+                                                        {productionReadinessIssues.map((issue, idx) => (
+                                                            <li key={idx}>{issue}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

@@ -103,6 +103,7 @@ class PlatformSettingController extends Controller
             'groups' => $groups,
             'currentGroup' => $group,
             'systemModes' => SystemMode::values(),
+            'productionReadinessIssues' => SystemMode::productionReadinessIssues(),
             'hasSmtpPassword' => $hasSmtpPassword,
             'hasGeminiApiKey' => $hasGeminiApiKey,
             'hasGroqApiKey' => $hasGroqApiKey,
@@ -125,6 +126,8 @@ class PlatformSettingController extends Controller
             'settings.*.value' => ['nullable', 'string'],
         ]);
 
+        $transitionedToProduction = false;
+
         foreach ($data['settings'] as $index => $settingData) {
             $setting = PlatformSetting::query()->findOrFail($settingData['id']);
             $value = $settingData['value'];
@@ -133,6 +136,11 @@ class PlatformSettingController extends Controller
                 $request->validate([
                     "settings.{$index}.value" => ['required', Rule::in(SystemMode::values())],
                 ]);
+
+                SystemMode::transitionTo((string) $value);
+                $transitionedToProduction = $value === SystemMode::PRODUCTION;
+
+                continue;
             }
 
             // Keep existing password/secret if blank is submitted
@@ -148,8 +156,17 @@ class PlatformSettingController extends Controller
         PlatformSetting::applyCentralMailConfig();
         PlatformSetting::applyCentralAiConfig();
 
-        return redirect()->route('module.platform-settings.group', $data['group'])
+        $redirect = redirect()->route('module.platform-settings.group', $data['group'])
             ->with('success', __('settings.messages.bulk_updated'));
+
+        if ($transitionedToProduction) {
+            $issues = SystemMode::productionReadinessIssues();
+            if ($issues !== []) {
+                $redirect->with('warning', implode(' ', $issues));
+            }
+        }
+
+        return $redirect;
     }
 
     /**
@@ -210,7 +227,7 @@ class PlatformSettingController extends Controller
         ]);
 
         PlatformSetting::setValue(CentralAiSettings::KEY, $data['ai_features_enabled'] ? '1' : '0');
-        PlatformSetting::setValue(SystemMode::KEY, $data['system_mode']);
+        SystemMode::transitionTo($data['system_mode']);
 
         if (isset($data['capacity_business_model'])) {
             PlatformSetting::setValue(PlatformSetting::KEY_CAPACITY_BUSINESS_MODEL, $data['capacity_business_model']);

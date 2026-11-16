@@ -34,7 +34,7 @@ class EmailVerificationPromptController extends Controller
         $isDevelopment = SystemMode::isDevelopment();
         $devUrl = session('dev_verification_url');
 
-        $verificationUrl = ($isDevelopment || $devUrl)
+        $verificationUrl = $isDevelopment
             ? ($devUrl ?: EmailVerificationUrl::for($request->user()))
             : null;
 

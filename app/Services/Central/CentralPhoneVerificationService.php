@@ -219,6 +219,14 @@ class CentralPhoneVerificationService
     protected function dispatchWhatsAppOtp(CentralUser|User $user, string $phone, string $code): bool
     {
         try {
+            if (SystemMode::isProduction() && ! PlatformSetting::isWhatsAppEnabled()) {
+                Log::warning('[CentralPhoneVerificationService] WhatsApp OTP blocked because WhatsApp gateway is disabled in production mode.', [
+                    'phone' => $phone,
+                ]);
+
+                return false;
+            }
+
             $template = (string) PlatformSetting::getValue(
                 'whatsapp.otp_template',
                 "🔐 *KODE VERIFIKASI SERUWIT*\n\nHalo *{user_name}*,\nGunakan kode berikut untuk memverifikasi nomor WhatsApp akun bisnis Anda:\n\n👉 *{code}*\n\nKode ini berlaku selama *5 menit*. Jangan bagikan kode ini kepada siapa pun demi keamanan akun Anda.\n\nSalam,\n*Tim Seruwit Platform*"

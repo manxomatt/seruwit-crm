@@ -43,6 +43,7 @@ return [
     'shared_groups' => [
         'shell',
         'common',
+        'errors',
         'auth_ui',
         'modules',
         'menu_groups',

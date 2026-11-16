@@ -98,4 +98,22 @@ class DevelopmentVerificationTest extends TestCase
                 ->where('verificationUrl', fn ($url) => is_string($url) && str_contains((string) $url, 'verify-email'))
             );
     }
+
+    public function test_production_mode_never_exposes_verification_url_even_if_session_has_stale_dev_url(): void
+    {
+        $this->withoutVite();
+        $this->seedSystemMode(SystemMode::PRODUCTION);
+
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)
+            ->withSession(['dev_verification_url' => 'http://localhost/verify-email/stale'])
+            ->get('/verify-email')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/VerifyEmail')
+                ->where('isDevelopment', false)
+                ->where('verificationUrl', null)
+            );
+    }
 }

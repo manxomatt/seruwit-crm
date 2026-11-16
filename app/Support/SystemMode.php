@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Models\PlatformSetting;
 use App\Models\Setting;
+use App\Models\Tenant;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -64,6 +66,85 @@ final class SystemMode
     public static function shouldExposeDebugOtp(): bool
     {
         return self::isDevelopment();
+    }
+
+    /**
+     * Transition the platform system mode and synchronize dependent state.
+     *
+     * When moving to production:
+     * - Persists the mode to central `platform_settings` (and updates any legacy shadow row in `settings`).
+     * - Purges development debug session artifacts (`dev_verification_url`, `dev_reset_url`, `debug_otp`).
+     * - Revokes `can_install_demo_data` on existing tenants so development demo flags do not remain active.
+     */
+    public static function transitionTo(string $mode): void
+    {
+        $normalized = strtolower(trim($mode));
+
+        if (! in_array($normalized, self::values(), true)) {
+            throw new InvalidArgumentException("Invalid system mode [{$mode}].");
+        }
+
+        PlatformSetting::setValue(self::KEY, $normalized);
+
+        try {
+            if ((! function_exists('tenancy') || ! tenancy()->initialized) && class_exists(Setting::class)) {
+                Setting::query()->where('key', self::KEY)->update(['value' => $normalized]);
+            }
+        } catch (Throwable) {
+            // Ignore when settings table is not yet migrated
+        }
+
+        if ($normalized === self::PRODUCTION) {
+            try {
+                if (function_exists('session') && session()->isStarted()) {
+                    session()->forget(['dev_verification_url', 'dev_reset_url', 'debug_otp']);
+                }
+            } catch (Throwable) {
+                // Ignore outside HTTP session context
+            }
+
+            try {
+                if (class_exists(Tenant::class)) {
+                    Tenant::query()->get()->each(function (Tenant $tenant): void {
+                        if ($tenant->canInstallDemoData()) {
+                            $tenant->update(['can_install_demo_data' => false]);
+                        }
+                    });
+                }
+            } catch (Throwable) {
+                // Ignore when tenants table is unavailable
+            }
+        }
+    }
+
+    /**
+     * Inspect central configuration for missing production dependencies (SMTP, WhatsApp Gateway).
+     *
+     * @return list<string>
+     */
+    public static function productionReadinessIssues(): array
+    {
+        $issues = [];
+
+        try {
+            $smtpHost = PlatformSetting::getValue('email.smtp_host');
+            if (blank($smtpHost)) {
+                $issues[] = 'SMTP Central belum dikonfigurasi (email.smtp_host kosong). Email verifikasi & reset password tidak akan terkirim di mode Production.';
+            }
+
+            $requirePhoneVerification = filter_var(
+                PlatformSetting::getValue('whatsapp.require_phone_verification', '0'),
+                FILTER_VALIDATE_BOOLEAN
+            );
+
+            if ($requirePhoneVerification && ! PlatformSetting::isWhatsAppEnabled()) {
+                $issues[] = 'Verifikasi Nomor WhatsApp wajib (whatsapp.require_phone_verification aktif), namun Gateway WhatsApp Central masih nonaktif (whatsapp.is_enabled = false).';
+            }
+        } catch (Throwable) {
+            // Ignore when platform_settings table is not ready
+        }
+
+        return $issues;
     }
 
     private static function storedValue(): ?string
