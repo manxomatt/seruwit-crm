@@ -43,10 +43,6 @@ export default function NotFound({
         siteName || pageProps.settings?.['general.site_name'] || DEFAULT_SITE_NAME;
     const resolvedLogo = siteLogo || pageProps.settings?.['site.logo'] || null;
     const hasLocales = (pageProps.availableLocales?.length ?? 0) > 0;
-    const primaryUrl = isAuthenticated ? dashboardUrl : homeUrl;
-    const primaryLabel = isAuthenticated
-        ? t('errors.not_found.back_dashboard', {}, 'Buka Dashboard')
-        : t('errors.not_found.back_home', {}, 'Kembali ke Beranda');
 
     const handleGoBack = () => {
         if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -213,22 +209,12 @@ export default function NotFound({
                                 </button>
                             </div>
 
-                            {/* Primary & Secondary Actions */}
-                            <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
-                                <Link
-                                    href={primaryUrl}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-slate-900 sm:w-auto"
-                                >
-                                    <span className="material-symbols-outlined text-[19px]">
-                                        {isAuthenticated ? 'space_dashboard' : 'home'}
-                                    </span>
-                                    <span>{primaryLabel}</span>
-                                </Link>
-
+                            {/* Primary Action */}
+                            <div className="mt-8 flex w-full items-center justify-center sm:w-auto">
                                 <button
                                     type="button"
                                     onClick={handleGoBack}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-slate-900 sm:w-auto"
                                 >
                                     <span className="material-symbols-outlined text-[19px]">arrow_back</span>
                                     <span>{t('errors.not_found.go_back', {}, 'Halaman Sebelumnya')}</span>
