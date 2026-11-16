@@ -3,41 +3,31 @@ import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 
 interface NotFoundProps {
     siteName?: string;
     siteTagline?: string | null;
     siteLogo?: string | null;
-    contactEmail?: string | null;
     homeUrl: string;
     dashboardUrl: string;
     loginUrl: string;
     isAuthenticated?: boolean;
-    isTenant?: boolean;
-    requestedPath?: string;
-    requestMethod?: string;
 }
 
 export default function NotFound({
     siteName,
     siteTagline,
     siteLogo,
-    contactEmail,
     homeUrl,
     dashboardUrl,
     loginUrl,
     isAuthenticated = false,
-    requestedPath = '/',
-    requestMethod = 'GET',
 }: NotFoundProps): JSX.Element {
     const { t } = useTrans();
     const pageProps = usePage().props as {
         availableLocales?: Array<{ code: string; label: string }>;
         settings?: Record<string, string>;
     };
-
-    const [copied, setCopied] = useState(false);
 
     const resolvedSiteName =
         siteName || pageProps.settings?.['general.site_name'] || DEFAULT_SITE_NAME;
@@ -52,20 +42,6 @@ export default function NotFound({
         }
 
         window.location.assign(homeUrl);
-    };
-
-    const handleCopyPath = async () => {
-        if (typeof window === 'undefined' || !navigator?.clipboard) {
-            return;
-        }
-
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 2000);
-        } catch {
-            // Clipboard permission denied; ignore silently.
-        }
     };
 
     return (
@@ -184,31 +160,6 @@ export default function NotFound({
                                 )}
                             </p>
 
-                            {/* Requested Path Pill */}
-                            <div className="mt-6 flex max-w-full items-center gap-2 rounded-2xl border border-slate-200/90 bg-slate-100/80 px-3.5 py-2 text-xs dark:border-slate-800 dark:bg-slate-950/70">
-                                <span className="shrink-0 rounded-md bg-slate-200/90 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                    {requestMethod}
-                                </span>
-                                <code className="truncate font-mono text-slate-700 dark:text-slate-300" title={requestedPath}>
-                                    {requestedPath}
-                                </code>
-                                <button
-                                    type="button"
-                                    onClick={handleCopyPath}
-                                    className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
-                                    title={t('errors.not_found.copy_path', {}, 'Salin URL')}
-                                >
-                                    <span className="material-symbols-outlined text-[14px]">
-                                        {copied ? 'check' : 'content_copy'}
-                                    </span>
-                                    <span className="hidden sm:inline">
-                                        {copied
-                                            ? t('errors.not_found.copied', {}, 'Tersalin')
-                                            : t('errors.not_found.copy_path', {}, 'Salin URL')}
-                                    </span>
-                                </button>
-                            </div>
-
                             {/* Primary Action */}
                             <div className="mt-8 flex w-full items-center justify-center sm:w-auto">
                                 <button
@@ -219,78 +170,6 @@ export default function NotFound({
                                     <span className="material-symbols-outlined text-[19px]">arrow_back</span>
                                     <span>{t('errors.not_found.go_back', {}, 'Halaman Sebelumnya')}</span>
                                 </button>
-                            </div>
-                        </div>
-
-                        {/* Quick Navigation Cards */}
-                        <div className="mt-10 border-t border-slate-200/80 pt-8 dark:border-slate-800/80">
-                            <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                                {t('errors.not_found.quick_links_title', {}, 'Navigasi Cepat')}
-                            </p>
-
-                            <div
-                                className={`grid grid-cols-1 gap-3 ${
-                                    contactEmail ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
-                                }`}
-                            >
-                                <Link
-                                    href={homeUrl}
-                                    className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 text-left transition hover:border-primary/40 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/50 dark:hover:border-primary/40 dark:hover:bg-slate-800/70"
-                                >
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:scale-105 dark:bg-primary/20 dark:text-sky-400">
-                                        <span className="material-symbols-outlined text-[20px]">home</span>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                            {t('errors.not_found.cards.home_title', {}, 'Halaman Utama')}
-                                        </p>
-                                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                            {t('errors.not_found.cards.home_desc', {}, 'Mulai ulang dari beranda utama platform.')}
-                                        </p>
-                                    </div>
-                                </Link>
-
-                                <Link
-                                    href={isAuthenticated ? dashboardUrl : loginUrl}
-                                    className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 text-left transition hover:border-secondary/40 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/50 dark:hover:border-secondary/40 dark:hover:bg-slate-800/70"
-                                >
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-secondary transition group-hover:scale-105 dark:bg-secondary/20 dark:text-emerald-400">
-                                        <span className="material-symbols-outlined text-[20px]">
-                                            {isAuthenticated ? 'dashboard' : 'lock_open'}
-                                        </span>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                            {isAuthenticated
-                                                ? t('errors.not_found.cards.dashboard_title', {}, 'Dashboard Kerja')
-                                                : t('errors.not_found.cards.login_title', {}, 'Portal Masuk')}
-                                        </p>
-                                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                            {isAuthenticated
-                                                ? t('errors.not_found.cards.dashboard_desc', {}, 'Akses ringkasan operasional dan modul Anda.')
-                                                : t('errors.not_found.cards.login_desc', {}, 'Masuk untuk mengakses ruang kerja dan data Anda.')}
-                                        </p>
-                                    </div>
-                                </Link>
-
-                                {contactEmail && (
-                                    <a
-                                        href={`mailto:${contactEmail}`}
-                                        className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 text-left transition hover:border-amber-500/40 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/50 dark:hover:border-amber-500/40 dark:hover:bg-slate-800/70"
-                                    >
-                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 transition group-hover:scale-105 dark:bg-amber-500/20 dark:text-amber-400">
-                                            <span className="material-symbols-outlined text-[20px]">support_agent</span>
-                                        </span>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                {t('errors.not_found.cards.support_title', {}, 'Butuh Bantuan?')}
-                                            </p>
-                                            <p className="mt-0.5 truncate text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                                {contactEmail}
-                                            </p>
-                                        </div>
-                                    </a>
-                                )}
                             </div>
                         </div>
                     </div>
